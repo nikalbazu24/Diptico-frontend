@@ -398,7 +398,7 @@ fun PanelCentro(e: Estado) {
                 Modifier.fillMaxWidth().fillMaxHeight(0.94f)
                     .graphicsLayer { translationY = bajar.value * alto.toPx() }
                     .clip(RoundedCornerShape(bottomStart = esc.d(28), bottomEnd = esc.d(28)))
-                    .background(Brush.verticalGradient(listOf(p.fondo2.copy(alpha = 0.93f), p.fondo2.copy(alpha = 0.80f))))
+                    .background(Brush.verticalGradient(listOf(p.fondo2.copy(alpha = if (Estilo.efectosCompletos) 0.93f else 0.98f), p.fondo2.copy(alpha = if (Estilo.efectosCompletos) 0.84f else 0.96f))))
                     .sinCerrar()
                     .padding(start = esc.d(14), end = esc.d(14), top = esc.d(10), bottom = esc.d(8)),
             ) {

@@ -394,10 +394,10 @@ private fun PreviaEstante(e: Estado) {
             }
             "cuadricula" -> {
                 val cols = when { t < 0.9f -> 5; t < 1.1f -> 4; t < 1.3f -> 3; else -> 3 }
-                Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
                     juegos.chunked(cols).take(2).forEach { fila ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
-                            fila.forEach { j -> MiniCaja(j, Modifier.weight(1f)) }
+                        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                            fila.forEach { j -> MiniCaja(j, Modifier.weight(1f).fillMaxHeight()) }
                             repeat(cols - fila.size) { Spacer(Modifier.weight(1f)) }
                         }
                     }
@@ -405,7 +405,7 @@ private fun PreviaEstante(e: Estado) {
             }
             else -> Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
                 juegos.take(if (t > 1.2f) 3 else 4).forEachIndexed { i, j ->
-                    MiniCaja(j, Modifier.weight(if (i == 0) 1.25f else 1f).graphicsLayer { if (i != 0) alpha = 0.8f })
+                    MiniCaja(j, Modifier.weight(if (i == 0) 1.25f else 1f).fillMaxHeight(if (i == 0) 0.95f else 0.8f).graphicsLayer { if (i != 0) alpha = 0.8f })
                 }
             }
         }
@@ -416,8 +416,9 @@ private fun PreviaEstante(e: Estado) {
 private fun MiniCaja(j: cl.nikalbazu.diptico.data.Juego, modifier: Modifier) {
     val esc = LocalEscala.current
     val img = rememberImagen(j.portada, 220)
-    Box(modifier.aspectRatio(0.72f).clip(RoundedCornerShape(esc.d(6))).background(colorDe(j.clave))) {
+    Box(modifier.clip(RoundedCornerShape(esc.d(6))).background(Brush.verticalGradient(listOf(colorDe(j.clave), colorDe(j.clave).copy(alpha = 0.7f))))) {
         if (img != null) androidx.compose.foundation.Image(img, null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+        else Texto(j.titulo, 9.5f, color = Color.White, lineas = 3, modifier = Modifier.align(Alignment.BottomStart).padding(esc.d(5)))
     }
 }
 

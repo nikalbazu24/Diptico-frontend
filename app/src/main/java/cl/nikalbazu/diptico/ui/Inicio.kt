@@ -384,8 +384,11 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                 Diptico.opcionesCentro().take(if (tam >= 2) 6 else 4).forEach { o ->
                     Column(Modifier.clip(RoundedCornerShape(esc.d(12))).clickable { o.accion() }.padding(esc.d(4)), horizontalAlignment = Alignment.CenterHorizontally) {
-                        o.icono?.let { IconoDiptico(it, p.tinta, 22f, acento = Coral) }
-                        Texto(o.titulo, 10.5f, color = p.tenue, lineas = 1)
+                        Box(Modifier.size(esc.d(40)).clip(CircleShape).background(p.fondo.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
+                            o.icono?.let { IconoDiptico(it, p.tinta, 22f, acento = Coral) }
+                        }
+                        // Con una sola fila de alto no caben los nombres.
+                        if (al >= 2) Texto(o.titulo, 10.5f, color = p.tenue, lineas = 1)
                     }
                 }
             }

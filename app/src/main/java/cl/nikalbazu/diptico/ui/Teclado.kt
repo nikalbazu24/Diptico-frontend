@@ -63,7 +63,7 @@ fun TecladoDiptico(e: Estado) {
         e.textoPara == "sgdb" || e.textoPara == "ia_clave" -> "Pega o escribe tu clave"
         else -> "Escribe"
     }
-    val oculto = e.textoPara == "sgdb" || e.textoPara == "ia_clave"
+    val oculto = e.panel == Panel.CLAVE && (e.textoPara == "sgdb" || e.textoPara == "ia_clave")
     Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = 0.94f)).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(14), vertical = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
