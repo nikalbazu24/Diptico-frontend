@@ -26,8 +26,48 @@ object Pantallas {
     }
 }
 
+/** Una app instalada que se puede abrir (para elegir ports). */
+data class App(val paquete: String, val nombre: String)
+
 /** Abre juegos con su emulador, en la pantalla elegida. */
 object Lanzador {
+    /** Todas las apps que se pueden abrir, ordenadas por nombre (sin Díptico). */
+    fun apps(ctx: Context): List<App> {
+        val pm = ctx.packageManager
+        val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        return pm.queryIntentActivities(i, 0)
+            .map { App(it.activityInfo.packageName, it.loadLabel(pm).toString()) }
+            .filter { it.paquete != ctx.packageName }
+            .distinctBy { it.paquete }
+            .sortedBy { it.nombre.lowercase() }
+    }
+
+    fun nombreApp(ctx: Context, paquete: String): String? = try {
+        val pm = ctx.packageManager
+        pm.getApplicationLabel(pm.getApplicationInfo(paquete, 0)).toString()
+    } catch (e: Exception) {
+        null
+    }
+
+    /** Abre una app (un port) en la pantalla elegida. */
+    fun lanzarApp(ctx: Context, paquete: String, nombre: String, displayId: Int?): String? {
+        val i = ctx.packageManager.getLaunchIntentForPackage(paquete) ?: return "$nombre ya no está instalado."
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val opciones = ActivityOptions.makeBasic()
+        if (displayId != null) opciones.launchDisplayId = displayId
+        return try {
+            ctx.startActivity(i, opciones.toBundle())
+            null
+        } catch (e: Exception) {
+            try {
+                ctx.startActivity(i)
+                null
+            } catch (e2: Exception) {
+                "No pude abrir $nombre: ${e2.message ?: "error desconocido"}"
+            }
+        }
+    }
+
     data class Opcion(val emulador: Emulador, val paquete: String) {
         /** Lo que se guarda en los ajustes: "paquete" o "paquete#núcleo". */
         val id: String get() = emulador.id(paquete)

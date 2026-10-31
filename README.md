@@ -2,22 +2,21 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.1
+## Qué hace la v0.2
 
-- **Animación de entrada sincronizada en las dos pantallas.** El panel coral sube desde la pantalla de abajo, cruza la bisagra y encaja bajo el uva para formar el logo. Se salta con cualquier botón y se puede apagar en Ajustes.
-- **Tutorial guiado** que se adapta a una o dos pantallas: modo de pantallas, qué va en cada una, carpeta de juegos, emuladores, portadas, tema y una prueba del control. Se puede repetir desde Ajustes.
-- **Dos pantallas.** Arriba ves el arte del juego desvanecido, con su título y tu próximo paso. Abajo están las consolas, el estante de juegos y la barra de acciones.
-- **Abre tus juegos con su emulador**, en la pantalla de arriba o en la de abajo.
-- **Tu próximo paso.** Al volver de jugar, te pregunta dónde quedaste y te lo recuerda la próxima vez.
-- **Tiempo jugado y "Continuar"** para volver a tu último juego.
-- **Pantalla de abajo atenuada** con el nombre del juego mientras juegas arriba. Se despierta al tocarla.
-- **Una o dos pantallas, como en iiSU.** En modo una pantalla todo pasa arriba, como en una tele. La de abajo puede quedar en negro (ahorra batería) o libre para otras apps. Se elige en el primer arranque y se cambia en Ajustes.
-- **Control completo con botones**, modo claro y oscuro, e intercambio de pantallas.
+- **Funciona con una o dos pantallas.** El tutorial parte siempre en una sola pantalla y ahí eliges el modo. Sirve igual en la AYN Thor, una Odin 2 Portal, una tele o un teléfono.
+- **Letra más grande y adaptable.** Todo se dibuja en proporción a la pantalla, también con las pantallas intercambiadas. Hay tres tamaños de letra: normal, grande y muy grande.
+- **Menú nuevo con secciones e íconos propios:** Pantallas, Apariencia, Música, Emuladores, Portadas, Biblioteca y Sistema. Con dos pantallas, la de arriba explica en grande la opción elegida.
+- **Música de fondo propia**, con tres pistas originales (Bisagra, Cartucho y Medianoche), una mezcla o tu propia carpeta de canciones. Se calla sola al jugar o si pones Spotify o YouTube Music.
+- **RetroArch con sus núcleos** para SNES, N64, PSX, GBA, GameCube, DS, PS2 y PSP, igual que en ES-DE.
+- **Descarga de portadas, imágenes y títulos** desde libretro (gratis) y, con tu clave, logos y arte grande desde SteamGridDB. Se configura en el tutorial.
+- **Intercambiar pantallas** desde la barra de abajo o con Select.
+- Animación de entrada, próximo paso, tiempo jugado, "Continuar" y pantalla atenuada al jugar, como en la v0.1.
 
 ## Cómo instalarla
 
 1. Desde la Thor, entra a la pestaña **Releases** de este repositorio.
-2. Descarga el archivo `Diptico-v0.1.X.apk` más reciente y ábrelo para instalar.
+2. Descarga el archivo `Diptico-v0.2.X.apk` más reciente y ábrelo para instalar.
 3. Al abrir Díptico, elige tu carpeta de juegos.
 
 Las versiones nuevas se instalan encima de la anterior, sin perder tus datos.
@@ -28,16 +27,16 @@ Dentro de tu carpeta de juegos debe haber una carpeta por consola, igual que en 
 
 | Carpeta | Consola | Emuladores que Díptico sabe abrir |
 |---|---|---|
-| `snes` | Super Nintendo | Snes9x EX+ |
-| `n64` | Nintendo 64 | Mupen64Plus FZ / AE |
-| `psx` | PlayStation | DuckStation |
-| `gba` | Game Boy Advance | Pizza Boy GBA |
-| `gc` | GameCube | Dolphin, Dolphin MMJR2 |
-| `nds` | Nintendo DS | melonDS, DraStic |
-| `ps2` | PlayStation 2 | NetherSX2 |
+| `snes` | Super Nintendo | Snes9x EX+, RetroArch |
+| `n64` | Nintendo 64 | Mupen64Plus FZ / AE, RetroArch |
+| `psx` | PlayStation | DuckStation, RetroArch |
+| `gba` | Game Boy Advance | Pizza Boy GBA, RetroArch |
+| `gc` | GameCube | Dolphin, Dolphin MMJR2, RetroArch |
+| `nds` | Nintendo DS | melonDS, DraStic, RetroArch |
+| `ps2` | PlayStation 2 | NetherSX2, RetroArch |
 | `ps3` | PlayStation 3 | ARMSX3, aPS3e |
 | `ps4` | PlayStation 4 | Bachata S4 |
-| `psp` | PSP | PPSSPP |
+| `psp` | PSP | PPSSPP, RetroArch |
 
 ### PS3 y PS4
 
@@ -48,7 +47,13 @@ Los dos emuladores son experimentales: algunos juegos andarán bien y otros no.
 
 ### Portadas
 
-Díptico usa una imagen con el mismo nombre que el juego, ya sea al lado del juego o dentro de una carpeta `covers`. También puedes conectar la carpeta `downloaded_media` de ES-DE desde Ajustes. Si no hay imagen, dibuja una portada de ejemplo.
+Díptico usa una imagen con el mismo nombre que el juego, ya sea al lado del juego o dentro de una carpeta `covers`. También puedes conectar la carpeta `downloaded_media` de ES-DE.
+
+Para lo que falte, en **Menú › Portadas › Descargar lo que falta** Díptico busca en libretro-thumbnails (gratis, sin cuenta). Si además pegas tu clave de [SteamGridDB](https://www.steamgriddb.com) (Preferencias › API), también trae logos y arte grande. Si no encuentra nada, dibuja una portada de ejemplo.
+
+### RetroArch
+
+En **Menú › Emuladores** aprieta A sobre una consola para pasar por los emuladores instalados, incluido cada núcleo de RetroArch. El núcleo tiene que estar descargado dentro de RetroArch (Menú principal › Cargar núcleo › Descargar un núcleo).
 
 ## Botones
 
@@ -60,8 +65,9 @@ Díptico usa una imagen con el mismo nombre que el juego, ya sea al lado del jue
 | A | Jugar (mantén presionado para el menú rápido) |
 | B | Volver o cerrar |
 | Y | Anotar tu próximo paso |
-| Start | Ajustes |
+| Select | Intercambiar pantallas |
+| Start | Menú (en el menú: ← → cambian de columna, L1/R1 de sección) |
 
 ## Cómo se construye
 
-Cada cambio en `main` hace que GitHub Actions compile el APK y publique una versión nueva en Releases. Las órdenes para abrir cada emulador vienen de las reglas de ES-DE para Android.
+Cada cambio en `main` hace que GitHub Actions compile el APK, saque fotos de todas las pantallas con el tamaño de la Thor y publique ambas cosas en Releases. Las órdenes para abrir cada emulador vienen de las reglas de ES-DE para Android.

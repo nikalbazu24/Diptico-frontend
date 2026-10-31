@@ -3,7 +3,7 @@ package cl.nikalbazu.diptico.data
 import androidx.compose.ui.graphics.Color
 
 /** Formato físico de cada consola: define el ícono de la cinta de consolas. */
-enum class Medio { CARTUCHO_ANCHO, CARTUCHO_N64, CD, CARTUCHO_CHICO, MINIDISCO, TARJETA, DVD, BLURAY, UMD, TODOS }
+enum class Medio { CARTUCHO_ANCHO, CARTUCHO_N64, CD, CARTUCHO_CHICO, MINIDISCO, TARJETA, DVD, BLURAY, UMD, APP, TODOS }
 
 /** Detalle de plástico que lleva la caja del juego (bisagra, ventana, franja...). */
 enum class Banda { NINGUNA, BISAGRA, LATERAL_CLARA, ARRIBA_CLARA, ARRIBA_OSCURA, ABAJO_CLARA }
@@ -68,9 +68,23 @@ data class Consola(
     val carpetasSonJuegos: Boolean = false,
     /** Nombre del sistema en libretro-thumbnails, para descargar portadas. */
     val libretro: String? = null,
+) {
+    /** Nombre para leer cómodo: "Super Nintendo", "Game Boy Advance"... */
+    val bonito: String get() = BONITOS[id] ?: nombre
+
+    /** Los ports son apps de Android, no archivos. */
+    val esPorts: Boolean get() = id == Consolas.PORTS
+}
+
+private val BONITOS = mapOf(
+    "snes" to "Super Nintendo", "n64" to "Nintendo 64", "psx" to "PlayStation", "gba" to "Game Boy Advance",
+    "gc" to "GameCube", "nds" to "Nintendo DS", "ps2" to "PlayStation 2", "ps3" to "PlayStation 3",
+    "ps4" to "PlayStation 4", "psp" to "PSP", "ports" to "Ports y apps",
 )
 
 object Consolas {
+    const val PORTS = "ports"
+
     private const val VIEW = "android.intent.action.VIEW"
     private const val MAIN = "android.intent.action.MAIN"
 
@@ -289,6 +303,14 @@ object Consolas {
                 ),
                 ra("PPSSPP", "ppsspp"),
             ),
+        ),
+        // Ports nativos (Ship of Harkinian, Doom, Mario 64…) y otras apps: se eligen desde el menú.
+        Consola(
+            id = PORTS, nombre = "Ports", nombreLargo = "PORTS",
+            carpetas = emptyList(), extensiones = emptySet(),
+            medio = Medio.APP, color = Color(0xFF2EC4A6),
+            caja = FormaCaja(104f, 104f, 26f, Banda.NINGUNA),
+            emuladores = emptyList(),
         ),
     )
 

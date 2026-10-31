@@ -33,6 +33,11 @@
         <package android:name="aenu.aps3e.premium" />
         <package android:name="com.bachatas4.android" />
         <package android:name="com.bachatas4.android.github" />
+        <!-- Para elegir ports y apps que se pueden abrir -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:mimeType="*/*" />

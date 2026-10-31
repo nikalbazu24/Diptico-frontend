@@ -14,6 +14,7 @@ import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.data.Descargas
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.data.MediosJuego
+import cl.nikalbazu.diptico.emu.App
 import cl.nikalbazu.diptico.emu.Lanzador
 import cl.nikalbazu.diptico.emu.Pantallas
 import kotlinx.coroutines.CoroutineScope
@@ -28,19 +29,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE }
+enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
 
 /** Pasos del tutorial guiado del primer arranque. */
-enum class PasoTuto { BIENVENIDA, PANTALLAS, TEXTO, DISPOSICION, JUEGOS, CARPETA, EMULADORES, PORTADAS, MUSICA, APARIENCIA, CONTROLES, LISTO }
+enum class PasoTuto { BIENVENIDA, PANTALLAS, TEXTO, DISPOSICION, JUEGOS, CARPETA, EMULADORES, PORTS, PORTADAS, MUSICA, APARIENCIA, CONTROLES, LISTO }
 
 /** Íconos propios de Díptico (se dibujan en ui/Iconos.kt). */
 enum class Icono {
     PANTALLAS, UNA, NEGRO, LIBRE, INTERCAMBIAR, TEXTO, TEMA, INTRO, MUSICA, VOLUMEN, SILENCIO, CARPETA, EMULADOR,
     PORTADA, DESCARGA, CLAVE, TITULO, BORRAR, BIBLIOTECA, BUSCAR, TUTORIAL, INFO, CERRAR, JUGAR, DADO, LAPIZ,
-    CONTINUAR, MENU, CHECK, ARRIBA, ABAJO, ESTRELLA,
+    CONTINUAR, MENU, CHECK, ARRIBA, ABAJO, ESTRELLA, APPS,
 }
 
 /** Secciones del menú principal. */
@@ -109,6 +110,9 @@ data class Estado(
     val titulosBonitos: Boolean = true,
     val descarga: Descarga? = null,
     val aLaVista: Int = 0,
+    val ports: List<String> = emptyList(),
+    val apps: List<App> = emptyList(),
+    val cargandoApps: Boolean = false,
 ) {
     /** Todo Díptico vive en una sola pantalla (siempre durante el tutorial). */
     val unaPantalla: Boolean
@@ -116,6 +120,10 @@ data class Estado(
 
     val consolasConJuegos: List<Consola>
         get() = Consolas.todas.filter { c -> juegos.any { it.consolaId == c.id } }
+
+    /** Consolas que usan emulador (todas menos Ports). */
+    val consolasEmu: List<Consola>
+        get() = consolasConJuegos.filter { !it.esPorts }
 
     val pestanas: List<String>
         get() = listOf("todo") + consolasConJuegos.map { it.id }
@@ -190,7 +198,9 @@ object Diptico {
             carpetaMusica = almacen.carpetaMusica,
             claveSgdb = almacen.claveSgdb,
             titulosBonitos = almacen.titulosBonitos,
+            ports = almacen.ports,
         )
+        publicarJuegos()
         if (carpeta != null) escanear()
         // La música sigue al estado: suena con Díptico a la vista y sin juego abierto.
         scope.launch {
@@ -262,9 +272,18 @@ object Diptico {
         }
     }
 
-    /** Junta lo escaneado con lo descargado y lo muestra. */
+    /** Los ports elegidos, como juegos de la consola "Ports". */
+    private fun juegosPorts(): List<Juego> = estado.value.ports.mapNotNull { pkg ->
+        val nombre = Lanzador.nombreApp(app, pkg) ?: return@mapNotNull null
+        val icono = Uri.parse("app://$pkg")
+        Juego("${Consolas.PORTS}/$pkg", Consolas.PORTS, nombre, pkg, icono, pkg, portada = icono)
+    }.sortedBy { it.titulo.lowercase() }
+
+    private fun todosCrudos(): List<Juego> = crudos + juegosPorts()
+
+    /** Junta lo escaneado, los ports y lo descargado, y lo muestra. */
     private fun publicarJuegos() {
-        val lista = Descargas.aplicar(crudos, medios, estado.value.titulosBonitos)
+        val lista = Descargas.aplicar(todosCrudos(), medios, estado.value.titulosBonitos)
         actualizar { e ->
             val sigue = lista.any { it.clave == e.juegoSel }
             val consolaSigue = e.consolaSel == "todo" || lista.any { it.consolaId == e.consolaSel }
@@ -411,6 +430,7 @@ object Diptico {
         }
         add(PasoTuto.CARPETA)
         add(PasoTuto.EMULADORES)
+        add(PasoTuto.PORTS)
         add(PasoTuto.PORTADAS)
         add(PasoTuto.MUSICA)
         add(PasoTuto.APARIENCIA)
@@ -532,13 +552,23 @@ object Diptico {
                     Opcion("Elegir otra carpeta", icono = Icono.CARPETA) { pedirCarpeta?.invoke(Carpeta.JUEGOS) },
                 )
             }
-            PasoTuto.EMULADORES -> listOf(Opcion("Continuar", icono = Icono.CHECK) { siguientePaso() }) + e.consolasConJuegos.map { c ->
+            PasoTuto.EMULADORES -> listOf(Opcion("Continuar", icono = Icono.CHECK) { siguientePaso() }) + e.consolasEmu.map { c ->
                 Opcion(
-                    c.nombreLargo.lowercase().replaceFirstChar { it.uppercase() },
+                    c.bonito,
                     if (emuladorListo(c)) nombreEmulador(c) else "Falta: ${c.emuladores.first().nombre}",
                     Icono.EMULADOR,
                 ) { ciclarEmulador(c) }
             }
+            PasoTuto.PORTS -> listOf(
+                Opcion(
+                    "Elegir mis ports",
+                    if (e.ports.isEmpty()) "Juegos hechos para Android" else "${e.ports.size} elegidos ✓",
+                    Icono.APPS,
+                ) { abrirPorts() },
+                Opcion(if (e.ports.isEmpty()) "Ahora no" else "Continuar", "Lo encuentras en el menú, en Biblioteca", Icono.CONTINUAR) {
+                    siguientePaso()
+                },
+            )
             PasoTuto.PORTADAS -> listOf(
                 Opcion(
                     if (e.descarga != null) "Descargando…" else "Descargar portadas ahora",
@@ -672,7 +702,8 @@ object Diptico {
         val destino = pantalla ?: e.datos[juego.clave]?.pantalla ?: if (e.unaPantalla) "arriba" else e.pantallaJuegos
         val inferior = Pantallas.inferior(app)
         val displayId = if (destino == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
-        val error = Lanzador.lanzar(app, juego, consola, e.emuladores[consola.id], displayId)
+        val error = if (consola.esPorts) Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
+        else Lanzador.lanzar(app, juego, consola, e.emuladores[consola.id], displayId)
         if (error != null) {
             avisar(error)
             return
@@ -754,6 +785,26 @@ object Diptico {
         }
     }
 
+    /** Lista de apps instaladas para marcar cuáles son ports. */
+    fun abrirPorts() {
+        actualizar { it.copy(panel = Panel.PORTS, indice = 0, cargandoApps = true) }
+        scope.launch {
+            val lista = withContext(Dispatchers.IO) { try { Lanzador.apps(app) } catch (e: Exception) { emptyList() } }
+            // Primero las ya elegidas, después el resto.
+            val elegidas = estado.value.ports.toSet()
+            val orden = lista.filter { it.paquete in elegidas } + lista.filter { it.paquete !in elegidas }
+            actualizar { it.copy(apps = orden, cargandoApps = false) }
+        }
+    }
+
+    fun alternarPort(paquete: String) {
+        val actual = estado.value.ports
+        val nuevo = if (paquete in actual) actual - paquete else actual + paquete
+        almacen.ports = nuevo
+        actualizar { it.copy(ports = nuevo) }
+        publicarJuegos()
+    }
+
     fun abrirClave() {
         actualizar { it.copy(panel = Panel.CLAVE, borrador = it.claveSgdb) }
     }
@@ -763,6 +814,10 @@ object Diptico {
         // Desde la clave, se vuelve a donde estabas (menú o tutorial).
         if (e.panel == Panel.CLAVE && e.configurado) {
             actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.PORTADAS, enOpciones = true) }
+            return
+        }
+        if (e.panel == Panel.PORTS && e.configurado) {
+            actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.BIBLIOTECA, enOpciones = true, indice = 0) }
             return
         }
         actualizar { it.copy(panel = Panel.NINGUNO, pregunta = false) }
@@ -831,6 +886,10 @@ object Diptico {
                 val total = opcionesRapido().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta + total) % total) }
             }
+            Panel.PORTS -> {
+                val total = e.apps.size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
             else -> Unit
         }
     }
@@ -861,6 +920,7 @@ object Diptico {
         when (e.panel) {
             Panel.MENU -> if (!e.enOpciones) columnaMenu(true) else opcionesSeccion(e.seccion).getOrNull(e.indice)?.accion?.invoke()
             Panel.RAPIDO -> opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
+            Panel.PORTS -> e.apps.getOrNull(e.indice)?.let { alternarPort(it.paquete) }
             else -> Unit
         }
     }
@@ -993,10 +1053,10 @@ object Diptico {
                 ) { pedirCarpeta?.invoke(Carpeta.MUSICA) }
             }
             Seccion.EMULADORES -> {
-                val consolas = e.consolasConJuegos.ifEmpty { Consolas.todas }
+                val consolas = e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.esPorts } }
                 for (c in consolas) {
                     lista += Opcion(
-                        c.nombreLargo.lowercase().replaceFirstChar { it.uppercase() },
+                        c.bonito,
                         if (emuladorListo(c)) nombreEmulador(c) else "Falta: ${c.emuladores.first().nombre}",
                         Icono.EMULADOR,
                         "Aprieta A para pasar al siguiente emulador instalado. Con RetroArch puedes elegir el núcleo; " +
@@ -1053,6 +1113,11 @@ object Diptico {
                     "Cambiar carpeta de juegos", icono = Icono.CARPETA,
                     ayuda = "La carpeta que tiene una carpeta por consola: snes, psx, nds, ps2…",
                 ) { pedirCarpeta?.invoke(Carpeta.JUEGOS) }
+                lista += Opcion(
+                    "Ports y apps", if (e.ports.isEmpty()) "Elegir" else "${e.ports.size} elegidos", Icono.APPS,
+                    "Los ports son juegos hechos para Android (Ship of Harkinian, los de Doom, Mario 64…). " +
+                        "Márcalos y aparecen en su propio estante, con tiempo jugado y próximo paso.",
+                ) { abrirPorts() }
                 lista += Opcion("Ir a lo último que jugaste", icono = Icono.CONTINUAR, ayuda = "Salta directo a tu último juego.") {
                     cerrarPanel(); continuar()
                 }
@@ -1095,7 +1160,7 @@ object Diptico {
     fun descargarPortadas(todo: Boolean) {
         if (descargaJob?.isActive == true) return
         val e = estado.value
-        val pendientes = crudos.filter { j ->
+        val pendientes = todosCrudos().filter { j ->
             val m = medios[j.clave]
             todo || (j.portada == null && m?.portada == null) || (j.arte == null && m?.arte == null) ||
                 (e.claveSgdb.isNotBlank() && m?.logo == null)
@@ -1115,6 +1180,7 @@ object Diptico {
             pendientes.forEachIndexed { i, j ->
                 actualizar { it.copy(descarga = Descarga(i, pendientes.size, j.titulo, encontrados)) }
                 val c = Consolas.porId(j.consolaId) ?: return@forEachIndexed
+                if (c.esPorts && clave.isBlank()) return@forEachIndexed
                 val previo = if (todo) null else medios[j.clave]
                 val r = withContext(Dispatchers.IO) {
                     try { Descargas.buscar(app, j, c, previo, clave) } catch (ex: Exception) { null }
@@ -1144,7 +1210,7 @@ object Diptico {
     }
 
     private fun descargarUno(j: Juego) {
-        val crudo = crudos.firstOrNull { it.clave == j.clave } ?: return
+        val crudo = todosCrudos().firstOrNull { it.clave == j.clave } ?: return
         val c = Consolas.porId(crudo.consolaId) ?: return
         avisar("Buscando ${j.titulo}…")
         scope.launch {

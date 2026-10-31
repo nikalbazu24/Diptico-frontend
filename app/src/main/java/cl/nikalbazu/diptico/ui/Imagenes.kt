@@ -10,6 +10,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -20,6 +21,14 @@ object Imagenes {
     fun cargar(ctx: Context, uri: Uri, maxLado: Int): ImageBitmap? {
         val clave = "$uri@$maxLado"
         cache.get(clave)?.let { return it }
+        if (uri.scheme == "app") {
+            // Ícono de una app instalada (ports).
+            val d = ctx.packageManager.getApplicationIcon(uri.host ?: return null)
+            val lado = maxLado.coerceAtMost(512)
+            val img = d.toBitmap(lado, lado).asImageBitmap()
+            cache.put(clave, img)
+            return img
+        }
         val cr = ctx.contentResolver
         val limites = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, limites) }

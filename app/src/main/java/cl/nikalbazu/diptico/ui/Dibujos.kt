@@ -118,10 +118,20 @@ fun DrawScope.portadaGenerada(d: Dibujo, color: Color, u: Float) {
 @Composable
 fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modifier = Modifier) {
     val uri = if (preferirArte) (juego.arte ?: juego.portada) else juego.portada
-    val img = rememberImagen(uri, maxLado)
+    val esIcono = uri?.scheme == "app"
+    val img = rememberImagen(uri, if (esIcono) 256 else maxLado)
     val u = with(LocalDensity.current) { LocalEscala.current.d(1f).toPx() }
     Box(modifier) {
-        if (img != null) {
+        if (img != null && esIcono) {
+            // El ícono de una app (un port): sobre un fondo de color, centrado y sin estirarse.
+            val color = colorDe(juego.clave)
+            Canvas(Modifier.fillMaxSize()) { portadaGenerada(dibujoDe(juego.clave), color, u) }
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.25f)))
+            Image(
+                img, contentDescription = null, contentScale = ContentScale.Fit,
+                modifier = Modifier.align(Alignment.Center).fillMaxSize(if (preferirArte) 0.42f else 0.62f),
+            )
+        } else if (img != null) {
             Image(img, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         } else {
             val color = colorDe(juego.clave)
@@ -136,7 +146,7 @@ fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modif
 fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, escala: Float = 1f) {
     val esc = LocalEscala.current
     val f = consola.caja
-    val tieneImagen = juego.portada != null
+    val tieneImagen = juego.portada != null && juego.portada.scheme != "app"
     Box(
         modifier
             .size(esc.d(f.ancho * escala), esc.d(f.alto * escala))
@@ -157,7 +167,7 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
         }
         if (!tieneImagen) {
             Texto(
-                juego.titulo, if (f.ancho * escala < 90) 10.5f else 11.5f,
+                juego.titulo, if (f.ancho * escala < 70) 9.5f else if (f.ancho * escala < 90) 10.5f else 11.5f,
                 modifier = Modifier.align(Alignment.BottomStart).padding(start = esc.d(8), end = esc.d(8), bottom = esc.d(7)),
                 color = Color.White, lineas = 3, interlineado = 13f, sombra = true,
             )
@@ -242,6 +252,13 @@ fun IconoMedio(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Mo
                 }
                 drawPath(path, color)
                 drawCircle(Color.White.copy(alpha = 0.8f), 9 * k, Offset(cx, cy - 3 * k))
+            }
+            Medio.APP -> {
+                rr(5f, 5f, 34f, 34f, 10f, color)
+                drawCircle(Color.White.copy(alpha = 0.9f), 4.2f * k, Offset(cx - 6.5f * k, cy - 6.5f * k))
+                drawCircle(Color.White.copy(alpha = 0.9f), 4.2f * k, Offset(cx + 6.5f * k, cy - 6.5f * k))
+                drawCircle(Color.White.copy(alpha = 0.9f), 4.2f * k, Offset(cx - 6.5f * k, cy + 6.5f * k))
+                drawCircle(Sol, 4.2f * k, Offset(cx + 6.5f * k, cy + 6.5f * k))
             }
             Medio.TODOS -> {
                 rr(18f, 4f, 22f, 28f, 5f, Sol)

@@ -128,6 +128,10 @@ private fun infoPaso(e: Estado, paso: PasoTuto): InfoPaso = when (paso) {
             )
         }
     }
+    PasoTuto.PORTS -> InfoPaso(
+        "Ports", if (e.ports.isEmpty()) "¿Tienes ports?" else "¡${e.ports.size} ports en tu estante!",
+        "Son juegos hechos para Android, como Ship of Harkinian, los de Doom o Mario 64. Márcalos y tendrán su propio estante.",
+    )
     PasoTuto.PORTADAS -> InfoPaso(
         "Portadas", "Portadas, imágenes y títulos",
         "Las bajo gratis de libretro. Con una clave de SteamGridDB también traigo logos y arte grande.",
@@ -316,6 +320,7 @@ private fun Ilustracion(e: Estado, paso: PasoTuto, s: Float) {
     ) {
         when (paso) {
             PasoTuto.TEXTO -> MuestraTexto(e.tamTexto)
+            PasoTuto.PORTS -> EstantePorts()
             PasoTuto.MUSICA -> Ecualizador(e)
             PasoTuto.BIENVENIDA -> MiniThor(Noche, Noche, arriba = { Logo(24f, Color.White) }, abajo = { MiniEstante() })
             PasoTuto.PANTALLAS -> {
@@ -444,8 +449,8 @@ private fun ArbolCarpetas() {
 private fun RejillaConsolas(e: Estado, conEstado: Boolean) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val hay = e.consolasConJuegos.isNotEmpty()
-    val lista = if (hay) e.consolasConJuegos else Consolas.todas
+    val hay = e.consolasEmu.isNotEmpty()
+    val lista = if (hay) e.consolasEmu else Consolas.todas.filter { !it.esPorts }
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
         lista.chunked(4).forEach { fila ->
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
@@ -611,6 +616,31 @@ private fun ChecklistControles(e: Estado) {
                 Texto(texto, 15f, modifier = Modifier.weight(1f), lineas = 1)
                 Texto(if (ok) "✓" else "Pruébalo", 13f, color = if (ok) Sol else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold)
             }
+        }
+    }
+}
+
+/** Íconos de apps sobre un estante, para el paso de ports. */
+@Composable
+private fun EstantePorts() {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(18)), verticalAlignment = Alignment.Bottom) {
+            listOf(Color(0xFF2EC4A6) to Icono.JUGAR, Uva to Icono.ESTRELLA, Coral to Icono.EMULADOR, Sol to Icono.DADO)
+                .forEachIndexed { i, (c, ic) ->
+                    Box(
+                        Modifier.size(esc.d(if (i == 1) 96f else 80f)).clip(RoundedCornerShape(esc.d(24))).background(c),
+                        contentAlignment = Alignment.Center,
+                    ) { IconoDiptico(ic, if (c == Sol) Tinta else Color.White, if (i == 1) 46f else 38f) }
+                }
+        }
+        Box(Modifier.padding(top = esc.d(10)).size(esc.d(400), esc.d(4)).clip(RoundedCornerShape(50)).background(p.estante))
+        Spacer(Modifier.height(esc.d(18)))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconoMedio(cl.nikalbazu.diptico.data.Medio.APP, Color(0xFF2EC4A6), p.fondo, tam = 40f)
+            Spacer(Modifier.width(esc.d(12)))
+            Texto("Ports", 32f)
         }
     }
 }

@@ -245,6 +245,8 @@ object Descargas {
         var encontrado = false
 
         fun existe(r: String?) = r != null && File(r).exists()
+        // El ícono de un port no cuenta como portada: se puede mejorar con SteamGridDB.
+        val tienePortada = juego.portada != null && juego.portada.scheme != "app"
 
         val sistema = consola.libretro
         if (sistema != null) {
@@ -257,7 +259,7 @@ object Descargas {
             if (caja != null) {
                 encontrado = true
                 if (m.titulo == null) m = m.copy(titulo = tituloBonito(caja))
-                if (juego.portada == null && !existe(m.portada)) {
+                if (!tienePortada && !existe(m.portada)) {
                     val f = File(dir, "$base-portada.png")
                     if (bajarLibretro(sistema, "Named_Boxarts", caja, f)) m = m.copy(portada = f.absolutePath)
                 }
@@ -293,7 +295,7 @@ object Descargas {
                         if (bajar(u, f)) m = m.copy(logo = f.absolutePath)
                     }
                 }
-                if (juego.portada == null && !existe(m.portada)) {
+                if (!tienePortada && !existe(m.portada)) {
                     urlSgdb("/grids/game/$id?dimensions=600x900", claveSgdb)?.let { u ->
                         val f = File(dir, "$base-portada.${extension(u)}")
                         if (bajar(u, f)) m = m.copy(portada = f.absolutePath)
@@ -312,7 +314,7 @@ object Descargas {
         val m = medios[j.clave] ?: return@map j
         fun uri(r: String?) = r?.let { File(it) }?.takeIf { it.exists() }?.let { Uri.fromFile(it) }
         j.copy(
-            portada = j.portada ?: uri(m.portada),
+            portada = if (j.portada?.scheme == "app") (uri(m.portada) ?: j.portada) else (j.portada ?: uri(m.portada)),
             arte = j.arte ?: uri(m.arte),
             logo = j.logo ?: uri(m.logo),
             titulo = if (titulos && m.titulo != null) m.titulo else j.titulo,

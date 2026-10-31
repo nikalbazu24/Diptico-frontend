@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.data.Juego
+import cl.nikalbazu.diptico.emu.App
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Panel
@@ -129,6 +130,38 @@ class Capturas {
     @Test fun t23_jugando_atenuada() = foto(
         "23_jugando_abajo_atenuada", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 65_000, 99, false)), Rol.INFERIOR,
     )
+
+    // ---------- Ports ----------
+
+    private fun port(pkg: String, titulo: String) = Uri.parse("app://$pkg").let {
+        Juego("ports/$pkg", "ports", titulo, pkg, it, pkg, portada = it)
+    }
+
+    private fun conPorts() = base().copy(
+        juegos = juegos + listOf(port("com.ejemplo.harkinian", "Ship of Harkinian"), port("com.ejemplo.doom", "Doom Clásico"), port("com.ejemplo.sm64", "Mario 64 Port")),
+        consolaSel = "ports", juegoSel = "ports/com.ejemplo.harkinian",
+        ports = listOf("com.ejemplo.harkinian", "com.ejemplo.doom", "com.ejemplo.sm64"),
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t25_ports_estante() = foto("25_ports_estante", conPorts(), Rol.INFERIOR)
+
+    @Test fun t26_ports_arriba() = foto("26_ports_arriba", conPorts(), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t27_ports_elegir() = foto(
+        "27_ports_elegir",
+        conPorts().copy(
+            panel = Panel.PORTS, indice = 1,
+            apps = listOf(
+                App("com.ejemplo.harkinian", "Ship of Harkinian"), App("com.ejemplo.doom", "Doom Clásico"),
+                App("com.ejemplo.sm64", "Mario 64 Port"), App("com.ejemplo.musica", "Mi reproductor"), App("com.ejemplo.notas", "Notas"),
+            ),
+        ),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t28_tutorial_ports() = foto("28_tutorial_ports", tuto(PasoTuto.PORTS), Rol.UNICA)
 
     @Config(qualifiers = ABAJO)
     @Test fun t24_letra_muy_grande() = foto("24_abajo_letra_muy_grande", base().copy(tamTexto = 1.3f), Rol.INFERIOR)

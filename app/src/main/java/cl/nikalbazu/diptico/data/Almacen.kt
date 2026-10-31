@@ -78,6 +78,11 @@ class Almacen(ctx: Context) {
         get() = p.getBoolean("titulosBonitos", true)
         set(v) = p.edit().putBoolean("titulosBonitos", v).apply()
 
+    /** Paquetes de las apps elegidas como ports. */
+    var ports: List<String>
+        get() = (p.getString("ports", "") ?: "").split('\n').filter { it.isNotBlank() }
+        set(v) = p.edit().putString("ports", v.joinToString("\n")).apply()
+
     fun medios(): Map<String, MediosJuego> {
         val o = try { JSONObject(p.getString("medios", "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
         val salida = HashMap<String, MediosJuego>()

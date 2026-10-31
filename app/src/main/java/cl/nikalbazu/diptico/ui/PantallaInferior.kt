@@ -78,7 +78,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             else -> Column(Modifier.fillMaxSize()) {
                 Cinta(e)
                 Box(Modifier.padding(horizontal = esc.d(16)).fillMaxWidth().height(esc.d(1)).background(p.linea))
-                Estante(e, alto = 184f, escala = 0.94f)
+                if (esc.angosta) Estante(e, alto = 192f, escala = 1.08f) else Estante(e, alto = 214f, escala = 1.18f)
                 Info(e)
                 Spacer(Modifier.weight(1f))
                 Dock(e)
@@ -96,6 +96,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
         Panel.RAPIDO -> PanelRapido(e)
         Panel.PASO -> PanelPaso(e)
         Panel.CLAVE -> PanelClave(e)
+        Panel.PORTS -> PanelPorts(e)
         Panel.NINGUNO -> Unit
     }
     Aviso(e.aviso, Modifier.align(Alignment.BottomCenter), abajo = if (e.panel == Panel.NINGUNO) 70f else 16f)
@@ -190,7 +191,7 @@ fun Estante(e: Estado, alto: Float = 184f, escala: Float = 1f) {
                             .then(
                                 if (elegido) Modifier
                                     .shadow(esc.d(16), forma, ambientColor = color, spotColor = color)
-                                    .border(esc.d(3), Color.White, forma)
+                                    .border(esc.d(3), if (p == PaletaOscura) Color.White else Uva, forma)
                                 else Modifier,
                             ),
                     ) { CajaJuego(j, c, escala = escala) }
@@ -403,6 +404,66 @@ private fun PanelPaso(e: Estado) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
                 BotonGrande("Guardar", Uva, Color.White, Modifier.weight(1.4f)) { Diptico.guardarPaso() }
             }
+        }
+    }
+}
+
+/** Marcar qué apps instaladas son ports: aparecen en su propio estante. */
+@Composable
+private fun PanelPorts(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val lista = rememberLazyListState()
+    LaunchedEffect(e.indice) { if (e.apps.isNotEmpty()) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+        Column(Modifier.fillMaxSize().padding(start = esc.d(16), end = esc.d(16), top = esc.d(12), bottom = esc.d(10))) {
+            Row(Modifier.fillMaxWidth().height(esc.d(40)), verticalAlignment = Alignment.CenterVertically) {
+                IconoMedio(Medio.APP, Color(0xFF2EC4A6), p.fondo2, tam = 28f)
+                Spacer(Modifier.width(esc.d(10)))
+                Column(Modifier.weight(1f)) {
+                    Texto("Tus ports", 21f, lineas = 1)
+                }
+                Detalle("${e.ports.size} elegidos", 14f, lineas = 1)
+            }
+            Detalle("Marca los juegos hechos para Android. Puedes agregar cualquier app.", 13.5f, lineas = 2)
+            Spacer(Modifier.height(esc.d(8)))
+            if (e.cargandoApps) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Girador(22f)
+                    Spacer(Modifier.width(esc.d(10)))
+                    Texto("Buscando tus apps…", 16f)
+                }
+            }
+            LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                itemsIndexed(e.apps, key = { _, a -> a.paquete }) { i, a ->
+                    val activa = i == e.indice
+                    val marcada = a.paquete in e.ports
+                    Row(
+                        Modifier.fillMaxWidth().height(esc.d(54)).clip(RoundedCornerShape(esc.d(18)))
+                            .background(if (activa) Uva else p.superficie.copy(alpha = 0.75f))
+                            .clickable { Diptico.elegirIndice(i) }
+                            .padding(start = esc.d(10), end = esc.d(12)),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        val icono = rememberImagen(android.net.Uri.parse("app://${a.paquete}"), 96)
+                        Box(Modifier.size(esc.d(36)).clip(RoundedCornerShape(esc.d(10))).background(p.fondo), contentAlignment = Alignment.Center) {
+                            if (icono != null) Image(icono, contentDescription = null, modifier = Modifier.fillMaxSize())
+                        }
+                        Spacer(Modifier.width(esc.d(12)))
+                        Texto(a.nombre, 16f, color = if (activa) Color.White else p.tinta, lineas = 1, modifier = Modifier.weight(1f))
+                        Box(
+                            Modifier.size(esc.d(28)).clip(CircleShape)
+                                .background(if (marcada) (if (activa) Color.White else Color(0xFF2EC4A6)) else Color.Transparent)
+                                .border(esc.d(2), if (activa) Color.White else p.tenue, CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (marcada) IconoDiptico(Icono.CHECK, if (activa) Uva else Color.White, 18f)
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(esc.d(6)))
+            Pistas("A" to "Marcar", "B" to "Listo")
         }
     }
 }

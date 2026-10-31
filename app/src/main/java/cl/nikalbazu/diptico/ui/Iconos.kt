@@ -181,6 +181,12 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             caja(4f, 3f, 16f, 8.5f, 2.2f)
             caja(6.5f, 13.5f, 11f, 7.5f, 2.2f, a, lleno = true)
         }
+        Icono.APPS -> {
+            caja(3.5f, 3.5f, 7.5f, 7.5f, 2.2f)
+            caja(13f, 3.5f, 7.5f, 7.5f, 2.2f)
+            caja(3.5f, 13f, 7.5f, 7.5f, 2.2f)
+            caja(13f, 13f, 7.5f, 7.5f, 2.2f, a, lleno = true)
+        }
         Icono.ESTRELLA -> {
             camino(lleno = true) {
                 m(12f, 3f); l(14.4f, 9f); l(21f, 9.4f); l(15.9f, 13.6f); l(17.6f, 20f)
