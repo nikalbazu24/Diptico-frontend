@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Emuladores que Díptico sabe abrir (Android 11+ necesita declararlos para verlos) -->
+    <queries>
+        <package android:name="com.explusalpha.Snes9xPlus" />
+        <package android:name="org.mupen64plusae.v3.fzurita.pro" />
+        <package android:name="org.mupen64plusae.v3.fzurita" />
+        <package android:name="org.mupen64plusae.v3.fzurita.amazon" />
+        <package android:name="org.mupen64plusae.v3.alpha" />
+        <package android:name="com.github.stenzek.duckstation" />
+        <package android:name="it.dbtecno.pizzaboygbapro" />
+        <package android:name="it.dbtecno.pizzaboygba" />
+        <package android:name="org.dolphinemu.dolphinemu" />
+        <package android:name="org.dolphinemu.mmjr" />
+        <package android:name="me.magnum.melonds" />
+        <package android:name="me.magnum.melonds.nightly" />
+        <package android:name="me.magnum.melondualds" />
+        <package android:name="com.dsemu.drastic" />
+        <package android:name="xyz.aethersx2.android" />
+        <package android:name="org.ppsspp.ppssppgold" />
+        <package android:name="org.ppsspp.ppsspp" />
+        <package android:name="com.armsx3" />
+        <package android:name="com.armsx3.play" />
+        <package android:name="aenu.aps3e" />
+        <package android:name="aenu.aps3e.premium" />
+        <package android:name="com.bachatas4.android" />
+        <package android:name="com.bachatas4.android.github" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="*/*" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".DipticoApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:resizeableActivity="true"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Diptico">
+
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".InferiorActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity="cl.nikalbazu.diptico.inferior"
+            android:windowSoftInputMode="adjustResize" />
+    </application>
+</manifest>

@@ -1,0 +1,68 @@
+package cl.nikalbazu.diptico
+
+import android.os.Build
+import android.os.Bundle
+import android.view.KeyEvent
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import cl.nikalbazu.diptico.estado.Diptico
+import cl.nikalbazu.diptico.estado.Teclas
+
+/** Lo común a las dos pantallas: pantalla completa, botones del control y selector de carpetas. */
+abstract class BaseActivity : ComponentActivity() {
+
+    private val elegirJuegos = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) Diptico.carpetaElegida(uri, esDeJuegos = true)
+    }
+
+    private val elegirImagenes = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) Diptico.carpetaElegida(uri, esDeJuegos = false)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Diptico.iniciar(this)
+        pantallaCompleta()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Diptico.pedirCarpeta = { deJuegos ->
+            try {
+                if (deJuegos) elegirJuegos.launch(null) else elegirImagenes.launch(null)
+            } catch (e: Exception) {
+                Diptico.avisar("No pude abrir el selector de carpetas")
+            }
+        }
+        Diptico.alVolver(miDisplay())
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) pantallaCompleta()
+    }
+
+    fun miDisplay(): Int =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display?.displayId ?: 0
+        } else {
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.displayId
+        }
+
+    private fun pantallaCompleta() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (Teclas.manejar(event)) return true
+        return super.dispatchKeyEvent(event)
+    }
+}
