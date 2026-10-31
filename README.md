@@ -2,7 +2,25 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.4
+## Qué hace la v0.5
+
+- **Centro de control desplegable**: baja como una cortina translúcida con el fondo difuminado (mantén Start o toca la campana). Wi-Fi, Bluetooth, volumen, pantalla, batería, archivos, estadísticas, las apps de la consola (AYN, Odin, Thor y herramientas como OdinTools) y Spotify / YouTube Music.
+- **Teclado en la otra pantalla**: al escribir, el teclado de Díptico aparece en la pantalla contraria. Se usa con la cruceta y A (B borra, X espacio, Y mayúsculas, Start listo) o tocando.
+- **Ficha con carrusel**: el texto en una pantalla y las fotos del juego (Wikipedia, libretro y tu biblioteca) pasando en la otra.
+- **Elegir portada, hero y logo** entre varias opciones de libretro, SteamGridDB y Wikipedia.
+- **Pellizco con dos dedos** sobre los juegos para agrandarlos o achicarlos (lista → cuadrícula → estante).
+- **Inicio con páginas**: desliza de lado entre páginas y hacia abajo si hay más filas; grilla a tu medida (4–8 columnas, 3–8 filas); widgets de imagen o GIF propio y fondo propio.
+- **Widgets nuevos**: estadísticas, sugerencia, accesos y notificaciones. El de tiempo jugado abre el resumen de horas y partidas.
+- **Vistas previas en el menú**: temas, estante, botones, inicio y música se ven antes de elegirlos.
+- **12 temas nuevos** (Chile, Cyberpunk, Patagonia, Retro 80…), **fechas chilenas** (Glorias Navales, San Pedro, La Tirana, Día del Patrimonio…) y una **cueca** como música.
+- **Efectos de botones**: liso, degradado, brillo o vidrio.
+- **Sonidos al navegar**, **protector de pantalla** con tus juegos y las dos pantallas atenuadas, y **fluidez** según tu consola.
+- **Juegos repetidos**: si tienes el mismo juego en varios formatos o regiones, queda uno solo.
+- La IA ahora explica sus errores y prueba otros modelos si uno no responde.
+
+Próximamente (v0.6): varios idiomas, asistente con IA y RetroAchievements.
+
+### Lo que trajo la v0.4
 
 - **Switch arreglado:** Díptico ahora le pasa a Eden, Kenji-NX y compañía el juego de una forma que pueden abrir. También reconoce Citron, Sudachi y Yuzu.
 - **Varias carpetas de juegos** (memoria interna, SD…). Si una carpeta no tiene el nombre de una consola, eliges la consola a mano.

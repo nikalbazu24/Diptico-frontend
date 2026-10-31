@@ -21,6 +21,8 @@ import cl.nikalbazu.diptico.ui.Lienzo
 import cl.nikalbazu.diptico.estado.Tema
 import cl.nikalbazu.diptico.estado.Temas
 import cl.nikalbazu.diptico.estado.Trabajo
+import cl.nikalbazu.diptico.estado.Widget
+import cl.nikalbazu.diptico.estado.Widgets
 import cl.nikalbazu.diptico.data.FichaInfo
 import cl.nikalbazu.diptico.ui.Raiz
 import cl.nikalbazu.diptico.ui.Rol
@@ -67,6 +69,7 @@ class Capturas {
         Diptico.fijarParaPrueba(e)
         Estilo.tema = tema ?: Temas.incluidos[0]
         Estilo.decoraciones = true
+        Estilo.efecto = e.efecto
         regla.mainClock.autoAdvance = false
         regla.setContent {
             Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { Raiz(e, rol, 0) }
@@ -266,6 +269,67 @@ class Capturas {
 
     @Config(qualifiers = ABAJO)
     @Test fun t24_letra_muy_grande() = foto("24_abajo_letra_muy_grande", base().copy(tamTexto = 1.3f), Rol.INFERIOR)
+
+    // ---------- v0.5 ----------
+
+    private fun conHoras() = base().copy(
+        datos = mapOf(
+            "snes/1" to DatosJuego(tiempo = 12 * 3600 + 25 * 60, sesiones = 18, ultimo = 1_730_000_000_000L),
+            "psx/3" to DatosJuego(tiempo = 7 * 3600 + 10 * 60, sesiones = 9, ultimo = 1_729_800_000_000L),
+            "n64/6" to DatosJuego(tiempo = 3 * 3600, sesiones = 6, ultimo = 1_729_500_000_000L),
+            "gba/2" to DatosJuego(tiempo = 95 * 60, sesiones = 4, ultimo = 1_729_000_000_000L),
+            "ps2/5" to DatosJuego(tiempo = 40 * 60, sesiones = 2, ultimo = 1_728_000_000_000L),
+        ),
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t50_estadisticas() = foto("50_estadisticas", conHoras().copy(panel = Panel.ESTADISTICAS), Rol.INFERIOR)
+
+    @Test fun t51_protector() = foto("51_protector_de_pantalla", base().copy(protector = true), Rol.SUPERIOR)
+
+    @Test fun t52_teclado_arriba() = foto("52_teclado_en_la_otra_pantalla", base().copy(panel = Panel.PASO, borrador = "Me falta la llave del ", teclaFila = 2, teclaCol = 3, mayus = false), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t53_paso_abajo() = foto("53_escribiendo_abajo", base().copy(panel = Panel.PASO, borrador = "Me falta la llave del "), Rol.INFERIOR)
+
+    @Test fun t54_previa_tema() = foto(
+        "54_menu_vista_previa_tema",
+        base().copy(panel = Panel.MENU, seccion = Seccion.TEMAS, enOpciones = true, indice = 2 + Temas.incluidos.indexOfFirst { it.id == "chile" }),
+        Rol.SUPERIOR,
+    )
+
+    @Test fun t55_previa_estante() = foto("55_menu_vista_previa_estante", base().copy(panel = Panel.MENU, seccion = Seccion.ESTANTE, enOpciones = true, vista = "cuadricula"), Rol.SUPERIOR)
+
+    @Test fun t56_previa_inicio() = foto("56_menu_vista_previa_inicio", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true), Rol.SUPERIOR)
+
+    @Test fun t57_previa_botones() = foto("57_menu_vista_previa_botones", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 1, efecto = "vidrio"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t58_tema_chile() = foto("58_tema_chile", base(), Rol.INFERIOR, Temas.incluidos.first { it.id == "chile" })
+
+    @Test fun t59_tema_cyber() = foto("59_tema_cyberpunk", base(), Rol.SUPERIOR, Temas.incluidos.first { it.id == "cyber" })
+
+    @Test fun t60_inicio_paginas() = foto(
+        "60_inicio_pagina_2",
+        conHoras().copy(
+            inicio = "widgets", paginas = 3, paginaInicio = 1,
+            widgets = Widgets.porDefecto + listOf(
+                Widget("estadisticas", 0, 0, 3, 2, pagina = 1),
+                Widget("accesos", 3, 0, 3, 1, pagina = 1),
+                Widget("notificaciones", 3, 1, 3, 2, pagina = 1),
+                Widget("sugerencia", 0, 2, 3, 2, pagina = 1),
+            ),
+        ),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t61_centro_nuevo() = foto("61_centro_de_control", base().copy(panel = Panel.CENTRO, indice = 2), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t62_elegir_imagen() = foto("62_elegir_portada", base().copy(panel = Panel.IMAGENES, fichaDe = "snes/1", candidatoPara = "portada", buscandoCandidatos = true), Rol.INFERIOR)
+
+    @Test fun t63_previa_musica() = foto("63_menu_vista_previa_musica", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true), Rol.SUPERIOR)
 }
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"
