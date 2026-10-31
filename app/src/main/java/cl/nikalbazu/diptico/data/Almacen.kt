@@ -171,6 +171,8 @@ class Almacen(ctx: Context) {
                 emulador = d.optString("emulador", "").ifEmpty { null },
                 sesiones = d.optInt("sesiones", 0),
                 oculto = d.optBoolean("oculto", false),
+                lupa = d.optBoolean("lupa", false),
+                zonaLupa = d.optString("zonaLupa", "").ifEmpty { null },
             )
         }
         return salida
@@ -194,6 +196,8 @@ class Almacen(ctx: Context) {
             d.emulador?.let { j.put("emulador", it) }
             if (d.sesiones > 0) j.put("sesiones", d.sesiones)
             if (d.oculto) j.put("oculto", true)
+            if (d.lupa) j.put("lupa", true)
+            d.zonaLupa?.let { j.put("zonaLupa", it) }
             o.put(k, j)
         }
         p.edit().putString("datos", o.toString()).apply()

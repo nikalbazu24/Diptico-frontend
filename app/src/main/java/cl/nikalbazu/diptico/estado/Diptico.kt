@@ -218,6 +218,8 @@ data class Estado(
     /** Burbuja flotante de Bisa: abierta (ventanita) y con aviso. */
     val burbujaAbierta: Boolean = false,
     val burbujaAlerta: Boolean = false,
+    /** La lupa está copiando la pantalla de arriba. */
+    val lupaActiva: Boolean = false,
     /** Idioma de Díptico: es, en, pt, zh, ja. */
     val idioma: String = "es",
     val fiesta: Fiesta? = null,
@@ -999,12 +1001,20 @@ object Diptico {
 
     // ---------- Jugar ----------
 
-    fun jugar(pantalla: String? = null) {
+    fun jugar(pantalla: String? = null, conLupaLista: Boolean = false) {
         val e = estado.value
         val juego = e.seleccionado ?: return
         val consola = Consolas.porId(juego.consolaId) ?: return
         val destino = pantalla ?: e.datos[juego.clave]?.pantalla ?: if (e.unaPantalla) "arriba" else e.pantallaJuegos
         val inferior = Pantallas.inferior(app)
+        // Lupa: antes de abrir el juego se pide el permiso para copiar la pantalla de arriba (una vez).
+        if (!conLupaLista && e.datos[juego.clave]?.lupa == true && destino == "arriba" && inferior != null && !e.unaPantalla &&
+            !cl.nikalbazu.diptico.lupa.LupaServicio.activa
+        ) {
+            pantallaPendiente = pantalla
+            pedirPermisoLupa(luegoJugar = true)
+            return
+        }
         val displayId = if (destino == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
         else Lanzador.lanzar(app, juego, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(juego))
@@ -1027,6 +1037,50 @@ object Diptico {
             val sinPantallaLibre = consola.dosPantallas || estado.value.unaPantalla || inferior == null
             cl.nikalbazu.diptico.bisa.BurbujaBisa.acompanar(app, juego.titulo, atascado, sinPantallaLibre)
             if (atascado && !sinPantallaLibre) prepararAyuda()
+        }
+    }
+
+    // ---------- Lupa ----------
+
+    private var pantallaPendiente: String? = null
+
+    fun pedirPermisoLupa(luegoJugar: Boolean) {
+        try {
+            app.startActivity(
+                Intent(app, cl.nikalbazu.diptico.lupa.PermisoLupaActivity::class.java)
+                    .putExtra("luegoJugar", luegoJugar).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        } catch (_: Exception) {
+            avisar("No pude pedir el permiso de la lupa")
+        }
+    }
+
+    /** Android dio permiso: si estaba por abrir un juego, ahora sí. */
+    fun lupaPermitida(luegoJugar: Boolean) {
+        if (luegoJugar) scope.launch { delay(350); jugar(pantallaPendiente, conLupaLista = true) }
+    }
+
+    fun lupaCambio(activa: Boolean) = actualizar { it.copy(lupaActiva = activa) }
+
+    fun zonaLupa(clave: String): android.graphics.RectF {
+        val s = estado.value.datos[clave]?.zonaLupa?.split(",")?.mapNotNull { it.toFloatOrNull() }
+        return if (s != null && s.size == 4) android.graphics.RectF(s[0], s[1], s[0] + s[2], s[1] + s[3])
+        else android.graphics.RectF(0.75f, 0f, 1f, 0.33f)
+    }
+
+    fun guardarZonaLupa(clave: String, r: android.graphics.RectF) {
+        cambiarDatos(clave) { it.copy(zonaLupa = "${r.left},${r.top},${r.width()},${r.height()}") }
+    }
+
+    /** Enciende o apaga la lupa para un juego (si se está jugando, se pide el permiso al tiro). */
+    fun alternarLupaJuego(clave: String, encender: Boolean = estado.value.datos[clave]?.lupa != true) {
+        cambiarDatos(clave) { it.copy(lupa = encender) }
+        if (encender) {
+            if (estado.value.sesion != null && !cl.nikalbazu.diptico.lupa.LupaServicio.activa) pedirPermisoLupa(false)
+            avisar("Lupa encendida: al jugar, la pantalla de abajo amplía una parte de la de arriba")
+        } else {
+            cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
+            avisar("Lupa apagada")
         }
     }
 
@@ -1070,6 +1124,7 @@ object Diptico {
         Asistente.intentos += Triple(s.clave, s.inicio, System.currentTimeMillis())
         if (Asistente.intentos.size > 40) Asistente.intentos.removeAt(0)
         cl.nikalbazu.diptico.bisa.BurbujaBisa.detener(app)
+        cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
         val datos = estado.value.datos.toMutableMap()
         val d = datos[s.clave] ?: DatosJuego()
         datos[s.clave] = d.copy(
@@ -1562,6 +1617,10 @@ object Diptico {
         lista += Opcion("Ficha", "Historia y guías", Icono.TUTORIAL) { abrirFicha() }
         lista += Opcion("Mi próximo paso", d?.paso?.take(30) ?: "", Icono.LAPIZ) { abrirPaso() }
         lista += Opcion(if (d?.favorito == true) "Favorito ✓" else "Favorito", icono = Icono.CORAZON) { alternarFavorito(juego.clave) }
+        if (!e.unaPantalla) lista += Opcion(
+            "Lupa en la pantalla de abajo", if (d?.lupa == true) "Sí" else "No", Icono.BUSCAR,
+            "Mientras juegas arriba, la pantalla de abajo muestra ampliada una parte de la de arriba: el minimapa, la vida, los subtítulos. La zona se elige en la misma lupa.",
+        ) { alternarLupaJuego(juego.clave) }
         lista += Opcion(
             if (d?.oculto == true) "Mostrar este juego" else "Ocultar este juego",
             if (d?.oculto == true) "Vuelve al estante" else "Se ve con el filtro Ocultos", Icono.OCULTAR,

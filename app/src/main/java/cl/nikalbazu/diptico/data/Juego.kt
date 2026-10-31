@@ -50,6 +50,10 @@ data class DatosJuego(
     val sesiones: Int = 0,
     /** Oculto del estante (se ve con el filtro "Ocultos"). */
     val oculto: Boolean = false,
+    /** Lupa: ampliar una parte de la pantalla de arriba en la de abajo mientras se juega. */
+    val lupa: Boolean = false,
+    /** Zona de la lupa: "x,y,ancho,alto" en fracciones de la pantalla. */
+    val zonaLupa: String? = null,
 )
 
 /** Una carpeta de juegos elegida por la persona. [consola]: consola fija, o null para reconocerla sola. */

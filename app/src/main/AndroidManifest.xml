@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Para encontrar los emuladores, ports y juegos de Android instalados (Díptico es un launcher) -->
@@ -99,6 +100,19 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Asistente de juegos que se muestra como burbuja flotante mientras la persona juega" />
         </service>
+
+        <!-- Lupa: copia la pantalla de arriba para ampliar una parte en la de abajo. -->
+        <service
+            android:name=".lupa.LupaServicio"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <activity
+            android:name=".lupa.PermisoLupaActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <activity
             android:name=".bisa.AyudaActivity"

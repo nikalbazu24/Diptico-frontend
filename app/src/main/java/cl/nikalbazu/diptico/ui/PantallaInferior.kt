@@ -374,6 +374,11 @@ private fun EnJuego(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val s = e.sesion ?: return
+    // Lupa: el juego está arriba y aquí se ve ampliada una parte de esa pantalla.
+    if (e.datos[s.clave]?.lupa == true && s.displayId == android.view.Display.DEFAULT_DISPLAY && !s.dosPantallas) {
+        cl.nikalbazu.diptico.lupa.PanelLupa(e, s.clave)
+        return
+    }
     val juego = e.juegos.firstOrNull { it.clave == s.clave }
     val c = juego?.let { Consolas.porId(it.consolaId) }
     var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -411,6 +416,11 @@ private fun EnJuego(e: Estado) {
                     Texto(juego?.titulo ?: "Jugando", 40f, color = Color.White, lineas = 3, interlineado = 44f, alinear = TextAlign.Center)
                 }
             }
+            // Bisa siempre a mano, arriba a la derecha.
+            cl.nikalbazu.diptico.bisa.AvatarBisa(
+                esc.d(44).value,
+                Modifier.align(Alignment.TopEnd).padding(esc.d(14)).clickable { Diptico.prepararAyuda() },
+            )
             Texto(
                 "Sesión · $reloj", 15f, color = Color(0xFF8E8AAE),
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(46)),
@@ -434,6 +444,12 @@ private fun EnJuego(e: Estado) {
                 Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                     BotonGrande("Anotar mi paso", Coral, Tinta, Modifier.weight(1f), alto = 64f) { Diptico.abrirPaso() }
                     BotonGrande("Atenuar", Sol, Tinta, Modifier.weight(1f), alto = 64f) { Diptico.atenuar() }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                    BotonGrande("Pedir ayuda a Bisa", p.superficie, p.tinta, Modifier.weight(1f), alto = 64f) { Diptico.prepararAyuda() }
+                    if (s.displayId == android.view.Display.DEFAULT_DISPLAY) {
+                        BotonGrande("Lupa", p.superficie, p.tinta, Modifier.weight(1f), alto = 64f) { Diptico.alternarLupaJuego(s.clave, true) }
+                    }
                 }
                 BotonGrande("Terminé de jugar", Uva, Color.White, Modifier.fillMaxWidth(), alto = 64f) { Diptico.cerrarSesion(preguntar = true) }
                 Spacer(Modifier.weight(1f))

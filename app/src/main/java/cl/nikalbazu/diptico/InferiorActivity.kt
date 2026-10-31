@@ -78,7 +78,10 @@ class InferiorActivity : BaseActivity() {
      */
     private fun aplicarBrillo(e: Estado) {
         val s = e.sesion
-        val atenuarJuego = s != null && s.displayId != miDisplay() && !s.dosPantallas && !e.despierta && !e.intercambiar && e.panel != cl.nikalbazu.diptico.estado.Panel.ASISTENTE
+        val lupa = s != null && s.displayId != miDisplay() && !s.dosPantallas && e.datos[s.clave]?.lupa == true
+        // Con la lupa a la vista, esta pantalla no le quita el control al juego aunque la toques.
+        if (lupa) window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE) else window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        val atenuarJuego = !lupa && s != null && s.displayId != miDisplay() && !s.dosPantallas && !e.despierta && !e.intercambiar && e.panel != cl.nikalbazu.diptico.estado.Panel.ASISTENTE
         val valor = when {
             !e.configurado -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
             e.unaPantalla -> 0.01f
