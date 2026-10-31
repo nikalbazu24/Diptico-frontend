@@ -32,10 +32,11 @@ for f in sorted(glob.glob(os.path.join(AQUI, "t*.tsv"))):
         i = int(partes[0])
         agregar(base[i], partes[1:], f"{os.path.basename(f)}:{n}")
 
-for n, linea in enumerate(open(os.path.join(AQUI, "extras.tsv"), encoding="utf-8").read().split("\n"), 1):
-    if not linea.strip(): continue
-    partes = linea.split("\t")
-    agregar(partes[0], partes[1:], f"extras.tsv:{n}")
+for ex in sorted(glob.glob(os.path.join(AQUI, "extras*.tsv"))):
+    for n, linea in enumerate(open(ex, encoding="utf-8").read().split("\n"), 1):
+        if not linea.strip(): continue
+        partes = linea.split("\t")
+        agregar(partes[0], partes[1:], f"{os.path.basename(ex)}:{n}")
 
 os.makedirs(DESTINO, exist_ok=True)
 for c in IDIOMAS:

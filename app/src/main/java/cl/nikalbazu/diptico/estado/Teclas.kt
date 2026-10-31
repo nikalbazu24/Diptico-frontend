@@ -372,10 +372,11 @@ object Teclas {
         val arriba = ev.action == KeyEvent.ACTION_UP
         if (abajo) {
             when (code) {
-                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(if (e.enOpciones) -1 else -columnasMenu)
-                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(if (e.enOpciones) 1 else columnasMenu)
-                KeyEvent.KEYCODE_DPAD_LEFT -> if (e.enOpciones) { if (ev.repeatCount == 0) Diptico.columnaMenu(false) } else Diptico.moverIndice(-1)
-                KeyEvent.KEYCODE_DPAD_RIGHT -> if (!e.enOpciones) Diptico.moverIndice(1)
+                // Columna de secciones a la izquierda y opciones a la derecha.
+                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(-1)
+                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(1)
+                KeyEvent.KEYCODE_DPAD_LEFT -> if (e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(false)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> if (!e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(true)
                 KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) {
                     val s = Seccion.values()
                     Diptico.elegirSeccion(s[(e.seccion.ordinal - 1 + s.size) % s.size])
@@ -393,6 +394,7 @@ object Teclas {
                 esA(code) -> Diptico.aceptar()
                 esB(code) -> Diptico.atras()
                 code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.cerrarPanel()
+                code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.abrirTexto("buscar_ajuste", e.buscarAjuste)
                 code in botonesControl || code in cruceta -> Unit
                 else -> return false
             }

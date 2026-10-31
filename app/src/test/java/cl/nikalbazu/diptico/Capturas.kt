@@ -64,7 +64,7 @@ class Capturas {
         datos = mapOf("snes/1" to DatosJuego(tiempo = 3 * 3600 + 25 * 60, paso = "Buscar la llave del templo del agua", ultimo = 1L)),
     )
 
-    private fun foto(nombre: String, e: Estado, rol: Rol, tema: Tema? = null) {
+    private fun foto(nombre: String, e: Estado, rol: Rol, tema: Tema? = null, mi: Int = 0) {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(e)
         Estilo.tema = tema ?: Temas.incluidos[0]
@@ -73,7 +73,7 @@ class Capturas {
         cl.nikalbazu.diptico.estado.Idioma.fijar(ApplicationProvider.getApplicationContext(), e.idioma)
         regla.mainClock.autoAdvance = false
         regla.setContent {
-            Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { Raiz(e, rol, 0) }
+            Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { Raiz(e, rol, mi) }
         }
         regla.mainClock.advanceTimeBy(1600)
         regla.onRoot().captureRoboImage("capturas/$nombre.png")
@@ -399,6 +399,72 @@ class Capturas {
 
     @Config(qualifiers = ABAJO)
     @Test fun t75_menu_secciones() = foto("75_menu_secciones", base().copy(panel = Panel.MENU, seccion = Seccion.ASISTENTE, enOpciones = false), Rol.INFERIOR)
+
+    // ---------- v0.7 ----------
+
+    @Test fun t76_teclado_mitad() = foto(
+        "76_teclado_a_media_pantalla",
+        base().copy(panel = Panel.PASO, borrador = "Me falta la llave del templo", cursor = 22, ancla = 12, teclaFila = 0, teclaCol = 4),
+        Rol.SUPERIOR,
+    )
+
+    @Test fun t77_editar_widgets() = foto(
+        "77_acomodar_widgets_libre",
+        base().copy(
+            inicio = "widgets", editandoWidgets = true, widgetSel = 1,
+            widgets = cl.nikalbazu.diptico.estado.Widgets.porDefecto.mapIndexed { i, w -> if (i == 1) w.copy(estilo = "vidrio") else if (i == 2) w.copy(estilo = "solido") else w },
+        ),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t78_tienda_imagenes() = foto(
+        "78_tienda_de_imagenes",
+        base().copy(
+            panel = Panel.IMAGENES, fichaDe = "snes/1", candidatoPara = "portada", nombreImagen = "Leyenda del Bosque",
+            candidatos = (1..9).map { cl.nikalbazu.diptico.data.ImagenWeb("https://ejemplo/$it.png", "https://ejemplo/$it.png", if (it % 3 == 0) "libretro" else "SteamGridDB") },
+        ),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t79_menu_nuevo() = foto("79_menu_ajustes_nuevo", base().copy(panel = Panel.MENU, seccion = Seccion.ESENCIAL, enOpciones = false), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t80_menu_buscar() = foto("80_menu_buscar_ajuste", base().copy(panel = Panel.MENU, seccion = Seccion.ESENCIAL, enOpciones = true, buscarAjuste = "música", indice = 1), Rol.INFERIOR)
+
+    @Test fun t81_caratulas() = foto("81_inicio_caratulas", conHoras().copy(datos = conHoras().datos + ("snes/1" to DatosJuego(tiempo = 3 * 3600, sesiones = 7, ultimo = System.currentTimeMillis() - 2 * 86_400_000L, paso = "Buscar la llave del templo del agua", favorito = true))), Rol.SUPERIOR)
+
+    @Test fun t82_centro_arriba() = foto("82_centro_de_control_arriba", base().copy(panel = Panel.CENTRO, indice = 1), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t83_bisa_en_juego() = foto(
+        "83_bisa_ayuda_mientras_juegas",
+        base().copy(
+            sesion = Sesion("snes/1", System.currentTimeMillis() - 600_000, 0, false), panel = Panel.ASISTENTE, claveIa = "x",
+            chat = listOf(
+                cl.nikalbazu.diptico.estado.MensajeChat(
+                    "ia", "Veo que llevas varios intentos seguidos en Leyenda del Bosque. ¡Tranqui, nos pasa a todos! ¿Te doy una pista suave o prefieres la solución?",
+                    listOf(
+                        cl.nikalbazu.diptico.estado.AccionChat("preguntar", "x", "Dame una pista suave"),
+                        cl.nikalbazu.diptico.estado.AccionChat("preguntar", "y", "Me matan siempre en lo mismo"),
+                    ),
+                ),
+            ),
+            indice = 1,
+        ),
+        Rol.INFERIOR, mi = 1,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t84_companero_juego() = foto(
+        "84_companero_con_bisa_y_lupa",
+        base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 600_000, 0, false), despierta = true),
+        Rol.INFERIOR, mi = 1,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t85_menu_rapido_juego() = foto("85_opciones_del_juego", base().copy(panel = Panel.RAPIDO), Rol.INFERIOR)
 }
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"

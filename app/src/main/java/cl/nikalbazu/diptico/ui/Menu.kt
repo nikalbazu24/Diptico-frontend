@@ -61,6 +61,7 @@ import cl.nikalbazu.diptico.estado.Seccion
 import cl.nikalbazu.diptico.estado.Teclas
 
 fun colorSeccion(s: Seccion): Color = when (s) {
+    Seccion.ESENCIAL -> Color(0xFFFF6E8A)
     Seccion.PANTALLAS -> Color(0xFF6B4EFF)
     Seccion.INICIO -> Color(0xFF00ACC1)
     Seccion.ESTANTE -> Color(0xFFFF8A5B)
@@ -80,86 +81,82 @@ fun colorSeccion(s: Seccion): Color = when (s) {
 private fun tintaSobre(c: Color) = if (c.luminance() > 0.55f) Tinta else Color.White
 
 /**
- * El menú: primero una grilla de secciones con su color e ícono; al entrar, la página de la sección
- * con sus opciones (los Sí/No se ven como interruptores).
+ * El menú de ajustes: a la izquierda todas las secciones (siempre a la vista), a la derecha sus opciones.
+ * Arriba de las secciones, "Buscar un ajuste" (Y). Así nada queda escondido.
  */
 @Composable
 fun PanelMenu(e: Estado, conAyuda: Boolean) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
-        Box(
-            Modifier.align(Alignment.TopEnd).size(esc.d(360))
-                .background(Brush.radialGradient(listOf(colorSeccion(e.seccion).copy(alpha = 0.2f), Color.Transparent))),
-        )
-        AnimatedContent(
-            targetState = e.enOpciones,
-            transitionSpec = {
-                if (targetState) (fadeIn(tween(240)) + slideInHorizontally(tween(300)) { it / 6 }) togetherWith fadeOut(tween(140))
-                else (fadeIn(tween(240)) + scaleIn(tween(300), initialScale = 0.96f)) togetherWith fadeOut(tween(140))
-            },
-            label = "menu",
-            modifier = Modifier.fillMaxSize(),
-        ) { adentro ->
-            if (adentro) PaginaSeccion(e, conAyuda) else GrillaSecciones(e)
+        Row(Modifier.fillMaxSize()) {
+            ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta) 148f else 196f)).fillMaxHeight())
+            Box(Modifier.fillMaxHeight().width(esc.d(1)).background(p.linea))
+            PaginaSeccion(e, conAyuda, Modifier.weight(1f).fillMaxHeight())
         }
     }
 }
 
 @Composable
-private fun GrillaSecciones(e: Estado) {
+private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
-        Row(Modifier.fillMaxWidth().height(esc.d(40)), verticalAlignment = Alignment.CenterVertically) {
-            MarcaLogo(14f)
-            Spacer(Modifier.width(esc.d(10)))
-            Texto("Menú", 22f)
-            Spacer(Modifier.weight(1f))
-            Box(
-                Modifier.size(esc.d(36)).clip(CircleShape).background(p.superficie).clickable { Diptico.cerrarPanel() },
-                contentAlignment = Alignment.Center,
-            ) { IconoDiptico(Icono.CERRAR, p.tinta, 18f) }
+    val secciones = remember { Diptico.seccionesMenu() }
+    val lista = rememberLazyListState()
+    LaunchedEffect(e.seccion) {
+        val i = e.seccion.ordinal
+        val vis = lista.layoutInfo.visibleItemsInfo
+        // Solo se desplaza si la sección elegida quedó fuera de la vista (así no salta en cada paso).
+        if (vis.isEmpty() || i < vis.first().index + 1 || i > vis.last().index - 1) lista.animateScrollToItem((i - 2).coerceAtLeast(0))
+    }
+    Column(modifier.background(p.fondo.copy(alpha = 0.55f)).padding(top = esc.d(10), bottom = esc.d(8))) {
+        Row(Modifier.padding(horizontal = esc.d(12)), verticalAlignment = Alignment.CenterVertically) {
+            MarcaLogo(12f)
+            Spacer(Modifier.width(esc.d(8)))
+            Texto("Ajustes", 18f, lineas = 1)
         }
         Spacer(Modifier.height(esc.d(8)))
-        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
-            val anchoU = maxWidth.value / esc.factor
-            val cols = if (anchoU < 560f) 3 else 4
-            SideEffect { Teclas.columnasMenu = cols }
-            val estado = rememberLazyGridState()
-            LaunchedEffect(e.seccion) { estado.animateScrollToItem((e.seccion.ordinal - cols).coerceAtLeast(0)) }
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(cols), state = estado, modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(esc.d(8)), verticalArrangement = Arrangement.spacedBy(esc.d(8)),
-                contentPadding = PaddingValues(bottom = esc.d(4)),
-            ) {
-                itemsIndexed(Diptico.seccionesMenu()) { _, s ->
-                    val activa = s == e.seccion
-                    val color = colorSeccion(s)
-                    val tam by animateFloatAsState(if (activa) 1.04f else 1f, spring(dampingRatio = 0.55f), label = "tile")
-                    Column(
-                        Modifier.height(esc.d(92)).graphicsLayer { scaleX = tam; scaleY = tam }
-                            .clip(RoundedCornerShape(esc.d(20)))
-                            .then(
-                                if (activa) Modifier.fondoBoton(color)
-                                else Modifier.background(Brush.linearGradient(listOf(p.superficie, p.superficie.copy(alpha = 0.7f)))),
-                            )
-                            .then(if (activa) Modifier.border(esc.d(2), Color.White.copy(alpha = 0.5f), RoundedCornerShape(esc.d(20))) else Modifier)
-                            .clickable { Diptico.elegirSeccion(s) }
-                            .padding(esc.d(10)),
-                        verticalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Box(
-                            Modifier.size(esc.d(36)).clip(CircleShape).background(if (activa) Color.White.copy(alpha = 0.22f) else color.copy(alpha = 0.18f)),
-                            contentAlignment = Alignment.Center,
-                        ) { IconoDiptico(s.icono, if (activa) tintaSobre(color) else color, 20f, acento = if (activa) tintaSobre(color) else color) }
-                        Texto(s.titulo, 14.5f, color = if (activa) tintaSobre(color) else p.tinta, lineas = 1)
-                    }
+        // Buscar un ajuste
+        Row(
+            Modifier.padding(horizontal = esc.d(8)).fillMaxWidth().clip(RoundedCornerShape(50)).background(p.superficie)
+                .clickable { Diptico.abrirTexto("buscar_ajuste", e.buscarAjuste) }.padding(horizontal = esc.d(10), vertical = esc.d(7)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconoDiptico(Icono.BUSCAR, p.tenue, 15f, acento = Coral)
+            Spacer(Modifier.width(esc.d(6)))
+            Texto(e.buscarAjuste.ifBlank { "Buscar" }, 12.5f, color = p.tenue, lineas = 1, modifier = Modifier.weight(1f))
+            Texto("Y", 11f, color = p.tenue, traducir = false)
+        }
+        Spacer(Modifier.height(esc.d(6)))
+        LazyColumn(
+            state = lista, modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = esc.d(8), vertical = esc.d(4)),
+            verticalArrangement = Arrangement.spacedBy(esc.d(3)),
+        ) {
+            itemsIndexed(secciones, key = { _, s -> s.name }) { _, s ->
+                val activa = s == e.seccion
+                val color = colorSeccion(s)
+                val enfoque = activa && !e.enOpciones
+                val fondo by animateColorAsState(
+                    when { enfoque -> color.copy(alpha = 0.32f); activa -> color.copy(alpha = 0.16f); else -> Color.Transparent },
+                    tween(140), label = "seccion",
+                )
+                Row(
+                    Modifier.fillMaxWidth().height(esc.d(42)).clip(RoundedCornerShape(esc.d(14))).background(fondo)
+                        .then(if (enfoque) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(14))) else Modifier)
+                        .clickable { Diptico.elegirSeccion(s) }.padding(horizontal = esc.d(8)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        Modifier.size(esc.d(28)).clip(CircleShape).background(if (activa) color else color.copy(alpha = 0.16f)),
+                        contentAlignment = Alignment.Center,
+                    ) { IconoDiptico(s.icono, if (activa) tintaSobre(color) else color, 16f, acento = if (activa) tintaSobre(color) else color) }
+                    Spacer(Modifier.width(esc.d(8)))
+                    Texto(s.titulo, 13.5f, color = if (activa) p.tinta else p.tenue, lineas = 1)
                 }
             }
         }
-        Spacer(Modifier.height(esc.d(6)))
-        Pistas("A" to "Entrar", "B" to "Cerrar", "L1 R1" to "Sección")
+        Pistas("L1 R1" to "Sección", modifier = Modifier.padding(start = esc.d(12), top = esc.d(4)))
     }
 }
 
@@ -167,46 +164,50 @@ private fun GrillaSecciones(e: Estado) {
 private fun esInterruptor(o: Opcion) = o.valor == "Sí" || o.valor == "No"
 
 @Composable
-private fun PaginaSeccion(e: Estado, conAyuda: Boolean) {
+private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val s = e.seccion
     val color = colorSeccion(s)
     // Las opciones se arman solo cuando cambia algo (no en cada cuadro de una animación).
     val opciones = remember(s, e) { Diptico.opcionesSeccion(s) }
-    Column(Modifier.fillMaxSize()) {
+    Column(modifier.graphicsLayer { alpha = if (e.enOpciones) 1f else 0.82f }) {
         // Encabezado con el color de la sección.
         Row(
-            Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.35f), Color.Transparent)))
-                .padding(start = esc.d(10), end = esc.d(14), top = esc.d(10), bottom = esc.d(10)),
+            Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.3f), Color.Transparent)))
+                .padding(start = esc.d(14), end = esc.d(10), top = esc.d(10), bottom = esc.d(10)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.size(esc.d(36)).clip(CircleShape).clickable { Diptico.columnaMenu(false) }, contentAlignment = Alignment.Center) {
-                Texto("‹", 26f, color = p.tinta)
-            }
-            Box(Modifier.size(esc.d(40)).clip(CircleShape).background(color), contentAlignment = Alignment.Center) {
-                IconoDiptico(s.icono, tintaSobre(color), 22f, acento = tintaSobre(color))
-            }
-            Spacer(Modifier.width(esc.d(10)))
             Column(Modifier.weight(1f)) {
-                Etiqueta("Menú", p.tenue, 11f)
-                Texto(s.titulo, 21f, lineas = 1)
+                Texto(s.titulo, 20f, lineas = 1)
+                Detalle(s.ayuda, 12f, lineas = 1)
             }
+            Box(
+                Modifier.size(esc.d(34)).clip(CircleShape).background(p.superficie).clickable { Diptico.cerrarPanel() },
+                contentAlignment = Alignment.Center,
+            ) { IconoDiptico(Icono.CERRAR, p.tinta, 16f) }
         }
         val lista = rememberLazyListState()
-        LaunchedEffect(e.indice) { if (opciones.isNotEmpty()) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+        LaunchedEffect(e.indice, e.enOpciones) {
+            if (!e.enOpciones || opciones.isEmpty()) { lista.scrollToItem(0); return@LaunchedEffect }
+            val vis = lista.layoutInfo.visibleItemsInfo
+            if (vis.isEmpty() || e.indice < vis.first().index + 1 || e.indice > vis.last().index - 1) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0))
+        }
         LazyColumn(
             state = lista, modifier = Modifier.weight(1f).fillMaxWidth(),
-            contentPadding = PaddingValues(start = esc.d(12), end = esc.d(12), top = esc.d(6), bottom = esc.d(6)),
+            contentPadding = PaddingValues(start = esc.d(12), end = esc.d(12), top = esc.d(8), bottom = esc.d(8)),
             verticalArrangement = Arrangement.spacedBy(esc.d(6)),
         ) {
-            itemsIndexed(opciones) { i, o -> FilaOpcion(o, i == e.indice, color) { Diptico.elegirIndice(i) } }
+            itemsIndexed(opciones) { i, o -> FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) } }
         }
-        if (conAyuda) {
+        if (conAyuda && e.enOpciones) {
             val o = opciones.getOrNull(e.indice)
             Detalle(o?.ayuda?.ifEmpty { null } ?: s.ayuda, 13.5f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(14)))
         }
-        Pistas("↑ ↓" to "Moverte", "A" to "Cambiar", "B" to "Secciones", modifier = Modifier.padding(start = esc.d(14), top = esc.d(4), bottom = esc.d(10)))
+        Pistas(
+            *(if (e.enOpciones) arrayOf("↑ ↓" to "Moverte", "A" to "Cambiar", "B" to "Secciones") else arrayOf("↑ ↓" to "Sección", "A" to "Entrar", "B" to "Cerrar")),
+            modifier = Modifier.padding(start = esc.d(14), top = esc.d(4), bottom = esc.d(10)),
+        )
     }
 }
 
@@ -217,7 +218,7 @@ private fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () ->
     val esc = LocalEscala.current
     val fondo by animateColorAsState(if (activa) p.superficie else p.superficie.copy(alpha = 0.45f), label = "fila")
     Row(
-        Modifier.fillMaxWidth().height(esc.d(56)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
+        Modifier.fillMaxWidth().height(esc.d(54)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
             .then(if (activa) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(16))) else Modifier)
             .clickable { alPulsar() }
             .graphicsLayer { alpha = if (o.apagada) 0.5f else 1f }
@@ -265,7 +266,8 @@ fun AyudaMenu(e: Estado) {
         BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
         AnimatedContent(
             targetState = Triple(s, o?.titulo, o?.valor),
-            transitionSpec = { (fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 14 }) togetherWith fadeOut(tween(140)) },
+            // Transición corta: así recorrer opciones con la cruceta se siente fluido.
+            transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(90)) },
             label = "ayuda",
             modifier = Modifier.fillMaxSize().padding(start = esc.d(36), end = esc.d(36), top = esc.d(60), bottom = esc.d(54)),
         ) { (sec, titulo, valor) ->

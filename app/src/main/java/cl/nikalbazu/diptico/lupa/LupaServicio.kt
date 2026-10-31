@@ -74,8 +74,8 @@ class LupaServicio : Service() {
         nm?.createNotificationChannel(NotificationChannel(CANAL, "Lupa", NotificationManager.IMPORTANCE_LOW))
         val aviso = Notification.Builder(this, CANAL)
             .setSmallIcon(R.drawable.ic_bisa)
-            .setContentTitle("Lupa encendida")
-            .setContentText("Ampliando una parte de la pantalla de arriba en la de abajo")
+            .setContentTitle(cl.nikalbazu.diptico.estado.Idioma.t("Lupa encendida"))
+            .setContentText(cl.nikalbazu.diptico.estado.Idioma.t("Ampliando una parte de la pantalla de arriba en la de abajo"))
             .setOngoing(true)
             .build()
         try {

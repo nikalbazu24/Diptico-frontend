@@ -55,6 +55,7 @@ enum class Icono {
 
 /** Secciones del menú principal. */
 enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String) {
+    ESENCIAL("Lo esencial", Icono.ESTRELLA, "Lo que más se cambia, todo junto. Y para buscar cualquier ajuste por su nombre."),
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una y el tamaño de la letra."),
     INICIO("Inicio", Icono.APPS, "Cómo se ve la pantalla principal: el juego en grande o tu inicio con widgets."),
     ESTANTE("Estante", Icono.VISTA, "Cómo se ven tus juegos: vista, tamaño, orden y la forma de las cajas de cada consola."),
@@ -222,6 +223,8 @@ data class Estado(
     val lupaActiva: Boolean = false,
     /** Idioma de Díptico: es, en, pt, zh, ja. */
     val idioma: String = "es",
+    /** Lo que se escribió para buscar un ajuste (en "Lo esencial"). */
+    val buscarAjuste: String = "",
     val fiesta: Fiesta? = null,
     val ficha: FichaInfo? = null,
     val fichaDe: String? = null,
@@ -1252,6 +1255,10 @@ object Diptico {
             actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
             return
         }
+        if (e.panel == Panel.CLAVE && e.textoPara == "buscar_ajuste") {
+            actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.ESENCIAL, enOpciones = false) }
+            return
+        }
         if (e.panel == Panel.CLAVE && e.textoPara == "buscar_imagen") {
             actualizar { it.copy(panel = Panel.IMAGENES, indice = 0) }
             return
@@ -1678,7 +1685,40 @@ object Diptico {
 
     fun seccionesMenu(): List<Seccion> = Seccion.values().toList()
 
+    private var cacheOpciones: Pair<Estado, HashMap<Seccion, List<Opcion>>>? = null
+
+    /** Las opciones de una sección. Se arman una vez por cada cambio de estado (las dos pantallas las comparten). */
     fun opcionesSeccion(s: Seccion): List<Opcion> {
+        val e = estado.value
+        val c = cacheOpciones?.takeIf { it.first === e }?.second ?: HashMap<Seccion, List<Opcion>>().also { cacheOpciones = e to it }
+        return c.getOrPut(s) { armarOpciones(s) }
+    }
+
+    /** Ajustes que más se usan, sacados de todas las secciones. O, si se buscó algo, lo que coincide. */
+    private fun opcionesEsenciales(e: Estado): List<Opcion> {
+        val todas = Seccion.values().filter { it != Seccion.ESENCIAL }.flatMap { s -> armarOpciones(s).map { s to it } }
+        if (e.buscarAjuste.isNotBlank()) {
+            val q = Busqueda.normalizar(e.buscarAjuste)
+            val res = todas.filter { (s, o) ->
+                listOf(o.titulo, o.ayuda, s.titulo, Idioma.t(o.titulo), Idioma.t(s.titulo)).any { Busqueda.normalizar(it).contains(q) }
+            }.map { (s, o) -> o.copy(valor = o.valor.ifEmpty { s.titulo }) }
+            return listOf(Opcion("Quitar la búsqueda", "\"${e.buscarAjuste}\" · ${res.size}", Icono.CERRAR) { actualizar { it.copy(buscarAjuste = "", indice = 0) } }) + res
+        }
+        val elegidos = listOf(
+            "Modo", "Tamaño de letra", "Modo de pantallas", "Intercambiar pantallas", "Teclado", "Música de fondo",
+            "Sonidos al moverte", "Fechas especiales", "Efecto de los botones", "Fluidez", "Bisa mientras juegas",
+        )
+        val lista = mutableListOf(
+            Opcion("Buscar un ajuste", "Y", Icono.BUSCAR, "Escribe una palabra (música, tema, teclado…) y te muestro dónde está.") { abrirTexto("buscar_ajuste") },
+            Opcion("Idioma", Idioma.IDIOMAS.first { it.first == e.idioma }.second, Icono.IDIOMA) { abrirMenu(Seccion.IDIOMA) },
+            Opcion("Acomodar el inicio", icono = Icono.EDITAR, ayuda = "Mueve, agranda y cambia el estilo de tus widgets. También manteniendo apretado el inicio.") { cerrarPanel(); editarWidgets() },
+            Opcion("Hablar con Bisa", icono = Icono.BISA) { abrirAsistente() },
+        )
+        for (t in elegidos) todas.firstOrNull { it.second.titulo == t }?.let { lista += it.second }
+        return lista
+    }
+
+    private fun armarOpciones(s: Seccion): List<Opcion> {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
@@ -1743,6 +1783,7 @@ object Diptico {
             Seccion.INICIO -> lista += opcionesInicio(e)
             Seccion.TEMAS -> lista += opcionesTemas(e)
             Seccion.LOGROS -> lista += opcionesLogros(e)
+            Seccion.ESENCIAL -> lista += opcionesEsenciales(e)
             Seccion.ASISTENTE -> {
                 lista += Opcion("Hablar con Bisa", icono = Icono.BISA, ayuda = "Bisa es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
                 lista += Opcion(
@@ -2865,6 +2906,10 @@ object Diptico {
         when (e.textoPara) {
             "titulo" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(titulo = t.ifEmpty { null }) } }
             "notas" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(notas = e.borrador) } }
+            "buscar_ajuste" -> {
+                actualizar { it.copy(buscarAjuste = t, panel = Panel.MENU, seccion = Seccion.ESENCIAL, enOpciones = true, indice = 0) }
+                return
+            }
             "buscar_imagen" -> {
                 buscarCandidatos(e.candidatoPara, t)
                 return

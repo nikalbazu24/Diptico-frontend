@@ -2,7 +2,20 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.6
+## Qué hace la v0.7
+
+- **Lupa**: mientras juegas arriba, la pantalla de abajo muestra ampliada una parte de la de arriba (el minimapa de Genshin, la vida, los subtítulos). Se enciende por juego en sus opciones (Y) y la zona se guarda para cada juego.
+- **Bisa**, la asistente: con nombre y cara propia, más lista (usa los modelos más capaces y puede buscar guías en internet), da pistas por niveles (suave, más directa, solución). Si reintentas varias veces seguidas un juego, te ofrece ayuda en la pantalla libre o en una burbuja flotante encima del juego (DS, 3DS o modo una pantalla).
+- **Teclado a media pantalla** con cursor, seleccionar, copiar, cortar y pegar.
+- **Inicio con widgets mucho más libre**: mantener apretado para editar, cualquier tamaño (ancho y alto por separado), 5 estilos, sin que se monten, y barra de herramientas con la grilla, páginas y fondo a mano.
+- **Tienda de imágenes**: portada, hero y logo se eligen entre libretro, SteamGridDB y Wikipedia (con pestañas), o desde tus archivos.
+- **Ajustes rediseñados**: secciones siempre a la vista, "Lo esencial" y un buscador de ajustes.
+- **Centro de control siempre en la pantalla de arriba**, con difuminado, y se queda abierto al soltar Start.
+- **Ocultar juegos** desde sus opciones (se ven con el filtro Ocultos).
+- **Inicio con carátulas**: datos del juego, botones rápidos y consejos de Bisa.
+- **Más fluido**: ahora se instala la versión optimizada.
+
+### Lo que trajo la v0.6
 
 - **Varios idiomas**: español, English, Português, 中文 y 日本語 (Menú › Idioma, o en la bienvenida). La historia de los juegos se busca en Wikipedia en tu idioma.
 - **Asistente con IA**: conoce tu biblioteca, recomienda qué jugar, da trucos y propone botones para jugar, ver la ficha o cambiar el tema y la vista. Corre en la nube con tu clave de Claude: no ocupa memoria ni hace más lenta la consola.
