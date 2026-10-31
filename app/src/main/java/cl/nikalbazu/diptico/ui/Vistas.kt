@@ -405,7 +405,7 @@ fun PanelCentro(e: Estado) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Texto(rememberHora(), 24f)
                     Spacer(Modifier.width(esc.d(10)))
-                    Detalle(SimpleDateFormat("EEEE d 'de' MMMM", Locale("es")).format(Date()), 13.5f, lineas = 1, modifier = Modifier.weight(1f))
+                    Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM"), 13.5f, lineas = 1, modifier = Modifier.weight(1f))
                     IconoDiptico(Icono.CAMPANA, p.tinta, 20f, acento = Coral)
                     Spacer(Modifier.width(esc.d(6)))
                     Texto(if (avisos.isEmpty()) "Sin avisos" else "${avisos.size}", 13f, color = p.tenue)

@@ -1,5 +1,8 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,7 +77,7 @@ fun PanelEstadisticas(e: Estado) {
                 }
                 if (recientes.isNotEmpty()) {
                     Etiqueta("Últimas partidas", Coral, 12f)
-                    val fecha = SimpleDateFormat("EEE d MMM · HH:mm", Locale("es"))
+                    val fecha = cl.nikalbazu.diptico.estado.Idioma.formato("EEEdMMMHHmm")
                     for ((k, d) in recientes) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Texto(titulo(k), 14.5f, lineas = 1, modifier = Modifier.weight(1f))
@@ -82,7 +85,45 @@ fun PanelEstadisticas(e: Estado) {
                         }
                     }
                 }
-                Detalle("Los logros de RetroAchievements llegan en la próxima versión.", 12.5f)
+                // RetroAchievements
+                val ra = e.perfilRA
+                if (ra != null) {
+                    Etiqueta("RetroAchievements", Sol, 12f)
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(p.superficie).padding(esc.d(10)),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        val foto = rememberImagen(android.net.Uri.parse(ra.foto), 128)
+                        Box(Modifier.size(esc.d(46)).clip(CircleShape).background(p.fondo)) {
+                            if (foto != null) Image(foto, null, Modifier.fillMaxSize())
+                        }
+                        Spacer(Modifier.width(esc.d(10)))
+                        Column(Modifier.weight(1f)) {
+                            Texto(ra.usuario, 16f, lineas = 1)
+                            Detalle(if (ra.desde.isNotEmpty()) "Desde ${ra.desde}" else "", 12f, lineas = 1)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Texto("${ra.puntos}", 18f, color = Sol)
+                            Detalle("puntos", 12f)
+                        }
+                    }
+                    for ((juego, l) in ra.recientes.take(5)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            val img = rememberImagen(android.net.Uri.parse(l.imagen), 96)
+                            Box(Modifier.size(esc.d(30)).clip(RoundedCornerShape(esc.d(8))).background(p.fondo)) {
+                                if (img != null) Image(img, null, Modifier.fillMaxSize())
+                            }
+                            Spacer(Modifier.width(esc.d(8)))
+                            Column(Modifier.weight(1f)) {
+                                Texto(l.titulo, 13.5f, lineas = 1)
+                                Detalle(juego, 11.5f, lineas = 1)
+                            }
+                            Texto("+${l.puntos}", 13f, color = Sol)
+                        }
+                    }
+                } else if (e.usuarioRA.isBlank()) {
+                    Detalle("Conecta RetroAchievements en Menú › Logros para ver aquí tus puntos y tus últimos logros.", 12.5f)
+                }
             }
             Spacer(Modifier.height(esc.d(6)))
             Pistas("B" to "Cerrar")

@@ -1,5 +1,6 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.horizontalScroll
 import android.net.Uri
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
@@ -93,7 +94,7 @@ private fun TextoFicha(e: Estado, pestana: Int, tamTexto: Float) {
         }
         pestana == 0 -> Column(verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
             Detalle(f.resumen, tamTexto, color = p.tinta)
-            Detalle("Fuente: Wikipedia (${if (f.idioma == "es") "español" else "inglés"})", 12f)
+            Detalle("Fuente: Wikipedia (${cl.nikalbazu.diptico.estado.Idioma.IDIOMAS.firstOrNull { it.first == f.idioma }?.second ?: f.idioma})", 12f)
         }
         else -> Column(verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
             val partes = listOf("Cómo se creó" to f.historia, "El juego" to f.juego, "Cómo le fue" to f.recepcion).filter { it.second.isNotBlank() }
@@ -114,7 +115,7 @@ private fun Datos(d: DatosJuego?) {
     val esc = LocalEscala.current
     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
         Chip(if ((d?.tiempo ?: 0) > 0) formatoTiempo(d!!.tiempo) else "Sin jugar")
-        if ((d?.ultimo ?: 0) > 1) Chip("Última vez: " + SimpleDateFormat("d MMM", Locale("es")).format(Date(d!!.ultimo)))
+        if ((d?.ultimo ?: 0) > 1) Chip("Última vez: " + cl.nikalbazu.diptico.estado.Idioma.fecha("dMMM", Date(d!!.ultimo)))
         if (d?.favorito == true) Chip("♥ Favorito", Coral)
     }
 }
@@ -150,7 +151,7 @@ fun PanelFicha(e: Estado) {
             }
             Spacer(Modifier.height(esc.d(10)))
             // Pestañas
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
                 Diptico.PESTANAS_FICHA.forEachIndexed { i, t ->
                     val activa = i == e.pestanaFicha
                     val fondo by animateColorAsState(if (activa) Uva else p.superficie, label = "pestana")
@@ -169,7 +170,9 @@ fun PanelFicha(e: Estado) {
                 label = "pestanaFicha",
                 modifier = Modifier.weight(1f),
             ) { pestana ->
-                if (pestana >= 2) {
+                if (pestana == 4) {
+                    ListaLogros(e)
+                } else if (pestana >= 2) {
                     val opciones = Diptico.opcionesFicha()
                     val lista = rememberLazyListState()
                     LaunchedEffect(e.indice) { if (opciones.isNotEmpty()) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
@@ -209,6 +212,7 @@ fun LecturaFicha(e: Estado) {
     if (e.panel == Panel.IMAGENES) { VistaCandidato(e); return }
     // Resumen e Historia: el texto queda en la otra pantalla y aquí pasan las fotos del juego.
     if (e.pestanaFicha <= 1 && e.fichaImagenes.isNotEmpty()) { Carrusel(e, j.titulo); return }
+    if (e.pestanaFicha == 4) { LogroGrande(e, j.titulo); return }
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         Heroe(j, if (esc.angosta) 1f else 0.55f)
         Box(
@@ -378,6 +382,126 @@ fun PanelImagenes(e: Estado) {
             }
             Spacer(Modifier.height(esc.d(6)))
             Pistas("A" to "Usar esta", "Cruceta" to "Elegir", "B" to "Volver")
+        }
+    }
+}
+
+
+// ---------- Logros (RetroAchievements) ----------
+
+/** Lista de logros del juego: los ganados a color, los que faltan en gris. */
+@Composable
+private fun ListaLogros(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val l = e.logrosFicha
+    when {
+        e.usuarioRA.isBlank() || e.claveRA.isBlank() -> Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            Texto("Conecta RetroAchievements", 18f)
+            Detalle("Escribe tu usuario y tu clave en Menú › Logros para ver aquí los logros de cada juego, cuáles tienes y cuántos puntos llevas.", 14.5f)
+            Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.LOGROS) }.padding(horizontal = esc.d(14), vertical = esc.d(8))) {
+                Texto("Conectar mi cuenta", 14f, color = SobreUva)
+            }
+        }
+        e.cargandoLogros -> Row(verticalAlignment = Alignment.CenterVertically) {
+            Girador(20f)
+            Spacer(Modifier.width(esc.d(10)))
+            Texto("Buscando tus logros…", 16f)
+        }
+        l == null -> Detalle(e.errorLogros ?: "No encontré logros para este juego.", 15f)
+        l.total == 0 -> Detalle("Este juego todavía no tiene logros en RetroAchievements.", 15f)
+        else -> {
+            val lista = rememberLazyListState()
+            LaunchedEffect(e.indice) { lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+            Column {
+                // Avance
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Texto("${l.ganados} de ${l.total}", 17f, color = p.acentoTexto)
+                    Spacer(Modifier.width(esc.d(8)))
+                    Detalle("${l.puntosGanados} / ${l.puntos} puntos", 13f, lineas = 1, modifier = Modifier.weight(1f))
+                    Detalle("${(l.ganados * 100) / l.total.coerceAtLeast(1)}%", 13f)
+                }
+                Spacer(Modifier.height(esc.d(5)))
+                Box(Modifier.fillMaxWidth().height(esc.d(8)).clip(RoundedCornerShape(50)).background(p.linea)) {
+                    Box(Modifier.fillMaxWidth(l.ganados / l.total.toFloat().coerceAtLeast(1f)).height(esc.d(8)).clip(RoundedCornerShape(50)).fondoBoton(Sol))
+                }
+                Spacer(Modifier.height(esc.d(8)))
+                LazyColumn(state = lista, modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    itemsIndexed(l.logros, key = { _, x -> x.id }) { i, x -> FilaLogro(x, i == e.indice) { Diptico.elegirIndice(i) } }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilaLogro(x: cl.nikalbazu.diptico.data.Logro, activo: Boolean, alPulsar: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val img = rememberImagen(Uri.parse(x.imagen), 128)
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14)))
+            .background(if (activo) Uva.copy(alpha = 0.25f) else p.superficie.copy(alpha = 0.7f))
+            .border(esc.d(if (activo) 2f else 0f), if (activo) Uva else Color.Transparent, RoundedCornerShape(esc.d(14)))
+            .clickable { alPulsar() }.padding(esc.d(8)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(esc.d(44)).clip(RoundedCornerShape(esc.d(10))).background(p.fondo)) {
+            if (img != null) Image(img, null, Modifier.fillMaxSize().alpha(if (x.conseguido) 1f else 0.6f))
+        }
+        Spacer(Modifier.width(esc.d(10)))
+        Column(Modifier.weight(1f)) {
+            Texto(x.titulo, 14.5f, lineas = 1, color = if (x.conseguido) p.tinta else p.tenue)
+            Detalle(x.descripcion, 12.5f, lineas = 2)
+        }
+        Spacer(Modifier.width(esc.d(8)))
+        Column(horizontalAlignment = Alignment.End) {
+            Texto("${x.puntos}", 15f, color = if (x.conseguido) Sol else p.tenue)
+            if (x.conseguido) Detalle(if (x.dificil) "★ difícil" else "✓", 11f, color = Sol)
+        }
+    }
+}
+
+/** En la otra pantalla: el logro elegido, en grande. */
+@Composable
+private fun LogroGrande(e: Estado, titulo: String) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val l = e.logrosFicha
+    val x = l?.logros?.getOrNull(e.indice)
+    Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Sol.copy(alpha = 0.18f), p.fondo), radius = 1400f))) {
+        BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
+        Row(
+            Modifier.fillMaxSize().padding(start = esc.d(36), end = esc.d(36), top = esc.d(60), bottom = esc.d(30)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (x != null) {
+                val img = rememberImagen(Uri.parse(x.imagen), 256)
+                Box(Modifier.size(esc.d(150)).clip(RoundedCornerShape(esc.d(28))).background(p.superficie), contentAlignment = Alignment.Center) {
+                    if (img != null) Image(img, null, Modifier.fillMaxSize())
+                }
+                Spacer(Modifier.width(esc.d(28)))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                    Etiqueta("Logros · $titulo", Sol, 12.5f)
+                    Texto(x.titulo, 30f, lineas = 2, interlineado = 34f)
+                    Detalle(x.descripcion, 17f, lineas = 4)
+                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                        Chip("${x.puntos} puntos", Sol)
+                        Chip(if (x.conseguido) "Ganado el ${x.ganado}" else "Te falta", if (x.conseguido) Uva else p.tenue)
+                    }
+                    if (l.total > 0) Detalle("Llevas ${l.ganados} de ${l.total} logros en este juego.", 14f)
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                    Etiqueta("Logros · $titulo", Sol, 12.5f)
+                    Texto("RetroAchievements", 32f)
+                    Detalle(
+                        if (e.usuarioRA.isBlank()) "Conecta tu cuenta en Menú › Logros para ver tus logros de cada juego."
+                        else e.errorLogros ?: if (e.cargandoLogros) "Buscando tus logros…" else "Elige un logro para verlo en grande.",
+                        17f,
+                    )
+                }
+            }
         }
     }
 }

@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES }
+enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -49,7 +49,7 @@ enum class Icono {
     PANTALLAS, UNA, NEGRO, LIBRE, INTERCAMBIAR, TEXTO, TEMA, INTRO, MUSICA, VOLUMEN, SILENCIO, CARPETA, EMULADOR,
     PORTADA, DESCARGA, CLAVE, TITULO, BORRAR, BIBLIOTECA, BUSCAR, TUTORIAL, INFO, CERRAR, JUGAR, DADO, LAPIZ,
     CONTINUAR, MENU, CHECK, ARRIBA, ABAJO, ESTRELLA, APPS, RELOJ, PALETA, MOVIL, CHISPA, CORAZON, MUNDO, WEB,
-    CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA, MANDO, BATERIA,
+    CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA, MANDO, BATERIA, TROFEO, ASISTENTE, IDIOMA,
 }
 
 /** Secciones del menú principal. */
@@ -62,6 +62,9 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String) {
     MUSICA("Música", Icono.MUSICA, "La música de fondo. Se calla sola al abrir un juego o si pones Spotify o YouTube Music."),
     EMULADORES("Emuladores", Icono.EMULADOR, "Con qué emulador, o con qué núcleo de RetroArch, se abre cada consola."),
     PORTADAS("Portadas", Icono.PORTADA, "Descarga portadas, imágenes, logos y títulos de internet."),
+    ASISTENTE("Asistente", Icono.ASISTENTE, "Un asistente con IA que conoce tus juegos: recomienda, explica y cambia cosas de Díptico por ti."),
+    IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
+    LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
     BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Tu carpeta de juegos y las imágenes que ya tengas de ES-DE."),
     CONSOLA("Consola", Icono.CAMPANA, "Notificaciones, Díptico como launcher principal y accesos rápidos de Android."),
     SISTEMA("Sistema", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
@@ -123,6 +126,7 @@ object Widgets {
         Widget("favoritos", 0, 0, 3, 2, false), Widget("frase", 0, 0, 6, 1, false),
         Widget("estadisticas", 0, 0, 3, 2, false), Widget("sugerencia", 0, 0, 2, 2, false),
         Widget("accesos", 0, 0, 3, 1, false), Widget("notificaciones", 0, 0, 3, 2, false),
+        Widget("logros", 0, 0, 3, 2, false), Widget("asistente", 0, 0, 3, 1, false),
     )
 
     fun nombre(tipo: String) = when (tipo) {
@@ -131,6 +135,7 @@ object Widgets {
         "tiempo" -> "Tiempo jugado"; "bateria" -> "Batería"; "consolas" -> "Tu colección"
         "favoritos" -> "Favoritos"; "frase" -> "Saludo del día"; "estadisticas" -> "Estadísticas"
         "sugerencia" -> "¿Qué juego hoy?"; "accesos" -> "Accesos rápidos"; "notificaciones" -> "Notificaciones"
+        "logros" -> "Logros (RetroAchievements)"; "asistente" -> "Asistente con IA"
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -191,6 +196,18 @@ data class Estado(
     val decoraciones: Boolean = true,
     val temasPropios: List<Tema> = emptyList(),
     val claveIa: String = "",
+    /** Cuenta de RetroAchievements. */
+    val usuarioRA: String = "",
+    val claveRA: String = "",
+    val perfilRA: cl.nikalbazu.diptico.data.PerfilRA? = null,
+    val logrosFicha: cl.nikalbazu.diptico.data.LogrosJuego? = null,
+    val cargandoLogros: Boolean = false,
+    val errorLogros: String? = null,
+    /** Conversación con el asistente. */
+    val chat: List<MensajeChat> = emptyList(),
+    val pensando: Boolean = false,
+    /** Idioma de Díptico: es, en, pt, zh, ja. */
+    val idioma: String = "es",
     val fiesta: Fiesta? = null,
     val ficha: FichaInfo? = null,
     val fichaDe: String? = null,
@@ -343,8 +360,11 @@ object Diptico {
         val carpeta = almacen.carpeta
         medios = almacen.medios()
         crudos = almacen.biblioteca()
+        val idioma = almacen.texto("idioma").ifEmpty { Idioma.delSistema() }
+        Idioma.fijar(app, idioma)
         _estado.value = Estado(
             listo = true,
+            idioma = idioma,
             configurado = almacen.configurado && carpeta != null,
             tieneCarpeta = carpeta != null,
             tieneMedia = almacen.media != null,
@@ -373,6 +393,8 @@ object Diptico {
             decoraciones = almacen.bool("decoraciones", true),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             claveIa = almacen.texto("claveIa"),
+            usuarioRA = almacen.texto("usuarioRA"),
+            claveRA = almacen.texto("claveRA"),
             inicio = almacen.texto("inicio", "heroe"),
             widgets = leerWidgets(almacen.texto("widgets")),
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
@@ -731,7 +753,13 @@ object Diptico {
     fun opcionesTuto(): List<Opcion> {
         val e = estado.value
         return when (e.pasoTuto) {
-            PasoTuto.BIENVENIDA -> listOf(Opcion("¡Comencemos!", "Toma unos 2 minutos", Icono.JUGAR) { siguientePaso() })
+            PasoTuto.BIENVENIDA -> listOf(
+                Opcion("¡Comencemos!", "Toma unos 2 minutos", Icono.JUGAR) { siguientePaso() },
+                Opcion("Idioma", Idioma.IDIOMAS.first { it.first == e.idioma }.second, Icono.IDIOMA) {
+                    val l = Idioma.IDIOMAS.map { it.first }
+                    cambiarIdioma(l[(l.indexOf(estado.value.idioma) + 1).mod(l.size)])
+                },
+            )
             PasoTuto.PANTALLAS -> listOf(
                 Opcion(
                     "Dos pantallas",
@@ -1091,7 +1119,7 @@ object Diptico {
 
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave", "ia_pedido", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 1, teclaCol = 0, simbolos = false, mayus = inicial.isEmpty() && para != "sgdb" && para != "ia_clave") }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 1, teclaCol = 0, simbolos = false, mayus = inicial.isEmpty() && para != "sgdb" && para != "ia_clave" && !para.startsWith("ra_")) }
     }
 
     fun cerrarPanel() {
@@ -1101,8 +1129,18 @@ object Diptico {
             actualizar { it.copy(panel = Panel.FICHA) }
             return
         }
+        if (e.panel == Panel.CLAVE && (e.textoPara == "asistente" || e.textoPara == "ia_clave" && claveParaAsistente)) {
+            claveParaAsistente = false
+            actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
+            return
+        }
         if (e.panel == Panel.CLAVE && e.configurado) {
-            val s = if (e.textoPara.startsWith("ia")) Seccion.TEMAS else Seccion.PORTADAS
+            val s = when {
+                e.textoPara.startsWith("ra_") -> Seccion.LOGROS
+                e.textoPara.startsWith("ia") && e.seccion == Seccion.ASISTENTE -> Seccion.ASISTENTE
+                e.textoPara.startsWith("ia") -> Seccion.TEMAS
+                else -> Seccion.PORTADAS
+            }
             actualizar { it.copy(panel = Panel.MENU, seccion = s, enOpciones = true, indice = 0) }
             return
         }
@@ -1272,6 +1310,10 @@ object Diptico {
                 val total = opcionesRapido().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
+            Panel.ASISTENTE -> {
+                val total = elementosAsistente().size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
             Panel.IMAGENES -> {
                 val total = e.candidatos.size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
@@ -1293,7 +1335,11 @@ object Diptico {
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
             Panel.FICHA -> {
-                val total = if (e.pestanaFicha >= 2) opcionesFicha().size else 40
+                val total = when {
+                    e.pestanaFicha == 4 -> e.logrosFicha?.logros?.size ?: 0
+                    e.pestanaFicha >= 2 -> opcionesFicha().size
+                    else -> 40
+                }
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
             Panel.WIDGETS -> {
@@ -1338,6 +1384,7 @@ object Diptico {
             }
             Panel.CARPETAS -> aceptarCarpetas()
             Panel.IMAGENES -> usarCandidato()
+            Panel.ASISTENTE -> elementosAsistente().getOrNull(e.indice)?.accion?.invoke()
             Panel.CENTRO -> {
                 val acciones = opcionesCentro()
                 if (e.indice < acciones.size) acciones[e.indice].accion() else Avisos.lista.value.getOrNull(e.indice - acciones.size)?.let { abrirAviso(it) }
@@ -1488,6 +1535,18 @@ object Diptico {
             }
             Seccion.INICIO -> lista += opcionesInicio(e)
             Seccion.TEMAS -> lista += opcionesTemas(e)
+            Seccion.LOGROS -> lista += opcionesLogros(e)
+            Seccion.ASISTENTE -> {
+                lista += Opcion("Abrir el asistente", icono = Icono.ASISTENTE, ayuda = "Chatea con la IA: te recomienda juegos de tu biblioteca, te da trucos y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
+                lista += Opcion(
+                    "Clave de IA (Claude)", if (e.claveIa.isBlank()) "Pegar" else "Guardada ✓", Icono.CLAVE,
+                    "El asistente y los temas con IA usan tu clave de console.anthropic.com. Corre en la nube: no ocupa memoria ni hace más lenta tu consola.",
+                ) { abrirTexto("ia_clave", estado.value.claveIa) }
+                lista += Opcion("Borrar la conversación", if (e.chat.isEmpty()) "Vacía" else "${e.chat.size} mensajes", Icono.BORRAR) { borrarChat(); avisar("Conversación borrada") }
+            }
+            Seccion.IDIOMA -> Idioma.IDIOMAS.forEach { (cod, nombre) ->
+                lista += Opcion(nombre, if (e.idioma == cod) "En uso ✓" else "", Icono.IDIOMA, Idioma.ayuda(cod)) { cambiarIdioma(cod) }
+            }
             Seccion.APARIENCIA -> {
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
@@ -2165,7 +2224,7 @@ object Diptico {
 
     // ---------- Ficha del juego ----------
 
-    val PESTANAS_FICHA = listOf("Resumen", "Historia", "Guías y trucos", "Personalizar")
+    val PESTANAS_FICHA = listOf("Resumen", "Historia", "Guías y trucos", "Personalizar", "Logros")
 
     fun abrirFicha() {
         val e = estado.value
@@ -2176,6 +2235,8 @@ object Diptico {
                 panel = Panel.FICHA, pestanaFicha = if (misma) it.pestanaFicha else 0, indice = 0, fichaDe = j.clave,
                 ficha = if (misma) it.ficha else null,
                 fichaImagenes = if (misma) it.fichaImagenes else emptyList(),
+                logrosFicha = if (misma) it.logrosFicha else null,
+                errorLogros = if (misma) it.errorLogros else null,
             )
         }
         if (misma && e.ficha != null) return
@@ -2202,9 +2263,163 @@ object Diptico {
 
     fun cambiarPestanaFicha(delta: Int) {
         actualizar { it.copy(pestanaFicha = (it.pestanaFicha + delta).mod(PESTANAS_FICHA.size), indice = 0) }
+        if (estado.value.pestanaFicha == 4) cargarLogros()
     }
 
-    fun elegirPestanaFicha(i: Int) = actualizar { it.copy(pestanaFicha = i, indice = 0) }
+    fun elegirPestanaFicha(i: Int) {
+        actualizar { it.copy(pestanaFicha = i, indice = 0) }
+        if (i == 4) cargarLogros()
+    }
+
+    // ---------- Asistente ----------
+
+    fun cambiarIdioma(cod: String) {
+        almacen.guardarTexto("idioma", cod)
+        Idioma.fijar(app, cod)
+        actualizar { it.copy(idioma = cod, fichaDe = null, ficha = null) }
+        avisar(Idioma.IDIOMAS.first { it.first == cod }.second)
+    }
+
+    fun abrirAsistente() {
+        actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
+    }
+
+    private var claveParaAsistente = false
+
+    fun escribirAlAsistente() {
+        if (estado.value.claveIa.isBlank()) { claveParaAsistente = true; abrirTexto("ia_clave"); avisar("El asistente usa tu clave de IA (Claude). Pégala primero."); return }
+        abrirTexto("asistente")
+    }
+
+    fun borrarChat() {
+        actualizar { it.copy(chat = emptyList(), indice = 0) }
+    }
+
+    /** Lo que se puede elegir con la cruceta en el asistente: escribir, los botones de la última respuesta o las sugerencias. */
+    fun elementosAsistente(): List<Opcion> {
+        val e = estado.value
+        val lista = mutableListOf(Opcion("Escribir una pregunta", icono = Icono.TEXTO) { escribirAlAsistente() })
+        val ultima = e.chat.lastOrNull()
+        if (ultima?.rol == "ia") ultima.acciones.forEach { a -> lista += Opcion(a.etiqueta, a.tipo, Icono.CHISPA) { ejecutarAccion(a) } }
+        if (e.chat.isEmpty() || !e.pensando && ultima?.acciones.isNullOrEmpty()) {
+            val sug = if (e.chat.isEmpty()) Asistente.sugerencias else Asistente.sugerencias.shuffled(java.util.Random(e.chat.size.toLong())).take(3)
+            sug.forEach { s -> lista += Opcion(s, "sugerencia", Icono.ASISTENTE) { preguntar(s) } }
+        }
+        return lista
+    }
+
+    fun preguntar(texto: String) {
+        val e = estado.value
+        if (e.pensando) return
+        if (e.claveIa.isBlank()) { claveParaAsistente = true; abrirTexto("ia_clave"); avisar("El asistente usa tu clave de IA (Claude). Pégala primero."); return }
+        val chat = e.chat + MensajeChat("yo", texto)
+        actualizar { it.copy(chat = chat, pensando = true, indice = 0) }
+        scope.launch {
+            val r = withContext(Dispatchers.IO) {
+                try {
+                    val sistema = Asistente.sistema(estado.value)
+                    val historia = chat.takeLast(12).map { (if (it.rol == "yo") "user" to it.texto else "assistant" to it.texto) }
+                    Result.success(IA.conversar(estado.value.claveIa, sistema, historia, 700))
+                } catch (ex: Exception) {
+                    Result.failure(ex)
+                }
+            }
+            val msg = r.fold({ Asistente.interpretar(it) }, { MensajeChat("ia", "⚠ " + (it.message ?: "No pude hablar con la IA.")) })
+            actualizar { it.copy(chat = it.chat + msg, pensando = false, indice = if (msg.acciones.isNotEmpty()) 1 else 0) }
+        }
+    }
+
+    /** Hace lo que propuso el asistente. */
+    fun ejecutarAccion(a: AccionChat) {
+        when (a.tipo) {
+            "jugar", "ver", "ficha" -> {
+                if (estado.value.juegos.none { it.clave == a.valor }) { avisar("No encontré ese juego"); return }
+                actualizar { it.copy(consolaSel = "todo", juegoSel = a.valor, panel = Panel.NINGUNO) }
+                when (a.tipo) { "jugar" -> jugar(); "ficha" -> abrirFicha() }
+            }
+            "tema" -> if (todosLosTemas().any { it.id == a.valor }) { elegirTema(a.valor); avisar("Tema: ${todosLosTemas().first { it.id == a.valor }.nombre}") } else avisar("No encontré ese tema")
+            "vista" -> if (a.valor in VISTAS) {
+                almacen.guardarTexto("vista", a.valor)
+                actualizar { it.copy(vista = a.valor, panel = Panel.NINGUNO) }
+            }
+            "buscar" -> actualizar { it.copy(panel = Panel.BUSCAR, busqueda = a.valor.take(40), indice = 0) }
+            "menu" -> Seccion.values().firstOrNull { it.name.equals(a.valor, true) }?.let { abrirMenu(it) }
+        }
+    }
+
+    // ---------- RetroAchievements ----------
+
+    private val idsRA = HashMap<String, Int?>()
+
+    /** Trae los logros del juego de la ficha (si tienes cuenta conectada). */
+    fun cargarLogros(forzar: Boolean = false) {
+        val e = estado.value
+        val j = juegoFicha() ?: return
+        if (e.usuarioRA.isBlank() || e.claveRA.isBlank()) { actualizar { it.copy(logrosFicha = null, errorLogros = null) }; return }
+        if (!forzar && e.logrosFicha != null && e.logrosFicha.titulo.isNotEmpty() && idsRA[j.clave] == e.logrosFicha.idJuego) return
+        if (!cl.nikalbazu.diptico.data.Logros.tieneLogros(j.consolaId)) {
+            actualizar { it.copy(logrosFicha = null, errorLogros = "RetroAchievements no tiene logros para esta consola.") }
+            return
+        }
+        actualizar { it.copy(cargandoLogros = true, errorLogros = null, logrosFicha = null) }
+        scope.launch {
+            val r = withContext(Dispatchers.IO) {
+                try {
+                    val crudo = todosCrudos().firstOrNull { it.clave == j.clave }
+                    val id = idsRA.getOrPut(j.clave) {
+                        cl.nikalbazu.diptico.data.Logros.buscarJuego(app, j.consolaId, listOfNotNull(j.titulo, crudo?.titulo, crudo?.archivo?.substringBeforeLast('.')), e.claveRA)
+                    } ?: return@withContext Result.failure<cl.nikalbazu.diptico.data.LogrosJuego>(IllegalStateException("No encontré \"${j.titulo}\" en RetroAchievements. Prueba cambiando el título en Personalizar."))
+                    Result.success(cl.nikalbazu.diptico.data.Logros.deJuego(id, e.usuarioRA, e.claveRA))
+                } catch (ex: Exception) {
+                    Result.failure(ex)
+                }
+            }
+            if (estado.value.fichaDe != j.clave) return@launch
+            actualizar {
+                it.copy(cargandoLogros = false, logrosFicha = r.getOrNull(), errorLogros = r.exceptionOrNull()?.message)
+            }
+        }
+    }
+
+    /** Revisa la cuenta y trae tu perfil y tus últimos logros. */
+    fun cargarPerfilRA(avisarSiOk: Boolean = false) {
+        val e = estado.value
+        if (e.usuarioRA.isBlank() || e.claveRA.isBlank()) return
+        scope.launch {
+            val r = withContext(Dispatchers.IO) { try { Result.success(cl.nikalbazu.diptico.data.Logros.perfil(e.usuarioRA, e.claveRA)) } catch (ex: Exception) { Result.failure(ex) } }
+            r.onSuccess { p ->
+                actualizar { it.copy(perfilRA = p) }
+                if (avisarSiOk) avisar("¡Conectado! ${p.usuario} · ${p.puntos} puntos")
+            }.onFailure { if (avisarSiOk) avisar(it.message ?: "No pude conectar con RetroAchievements") }
+        }
+    }
+
+    private fun opcionesLogros(e: Estado): List<Opcion> = listOf(
+        Opcion(
+            "Tu usuario", e.usuarioRA.ifBlank { "Escribir" }, Icono.TITULO,
+            "Tu nombre de usuario de retroachievements.org. Si no tienes cuenta, créala gratis en la web.",
+        ) { abrirTexto("ra_usuario", estado.value.usuarioRA) },
+        Opcion(
+            "Tu clave (Web API Key)", if (e.claveRA.isBlank()) "Pegar" else "Guardada ✓", Icono.CLAVE,
+            "En retroachievements.org entra a Settings (Ajustes) y copia tu \"Web API Key\". Solo se guarda en tu consola.",
+        ) { abrirTexto("ra_clave") },
+        Opcion(
+            "Probar la conexión", e.perfilRA?.let { "${it.puntos} puntos" } ?: if (e.usuarioRA.isBlank()) "Falta tu cuenta" else "Probar", Icono.TROFEO,
+            "Trae tu perfil y tus últimos logros.",
+        ) { if (estado.value.usuarioRA.isBlank() || estado.value.claveRA.isBlank()) avisar("Primero escribe tu usuario y tu clave") else cargarPerfilRA(true) },
+        Opcion("Conseguir mi clave", "Abre la web", Icono.WEB, "Abre retroachievements.org en el navegador para crear tu cuenta o copiar tu clave.") {
+            abrirWeb("https://retroachievements.org/settings")
+        },
+        Opcion(
+            "Cómo se ganan los logros", icono = Icono.INFO,
+            ayuda = "Los logros se ganan jugando en RetroArch (o en otros emuladores compatibles) con tu cuenta iniciada allá: en RetroArch ve a Ajustes › Logros. Díptico te muestra cuáles tienes y cuáles faltan en la ficha de cada juego.",
+        ) { avisar("En RetroArch: Ajustes › Logros, inicia sesión con tu misma cuenta") },
+        Opcion("Desconectar la cuenta", icono = Icono.BORRAR, apagada = e.usuarioRA.isBlank()) {
+            almacen.guardarTexto("usuarioRA", ""); almacen.guardarTexto("claveRA", "")
+            actualizar { it.copy(usuarioRA = "", claveRA = "", perfilRA = null, logrosFicha = null) }
+            avisar("Cuenta de RetroAchievements desconectada")
+        },
+    )
 
     private fun juegoFicha(): Juego? = estado.value.let { e -> e.juegos.firstOrNull { it.clave == e.fichaDe } }
 
@@ -2318,10 +2533,36 @@ object Diptico {
         when (e.textoPara) {
             "titulo" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(titulo = t.ifEmpty { null }) } }
             "notas" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(notas = e.borrador) } }
+            "asistente" -> {
+                actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
+                if (t.isNotEmpty()) preguntar(t)
+                return
+            }
+            "ra_usuario" -> {
+                almacen.guardarTexto("usuarioRA", t)
+                actualizar { it.copy(usuarioRA = t, perfilRA = null) }
+                if (t.isNotEmpty() && estado.value.claveRA.isBlank()) {
+                    abrirTexto("ra_clave")
+                    avisar("Ahora pega tu Web API Key")
+                    return
+                }
+                cargarPerfilRA(true)
+            }
+            "ra_clave" -> {
+                almacen.guardarTexto("claveRA", t)
+                actualizar { it.copy(claveRA = t, perfilRA = null) }
+                cargarPerfilRA(true)
+            }
             "ia_clave" -> {
                 almacen.guardarTexto("claveIa", t)
                 actualizar { it.copy(claveIa = t) }
-                if (t.isNotEmpty()) {
+                if (t.isNotEmpty() && claveParaAsistente) {
+                    claveParaAsistente = false
+                    abrirTexto("asistente")
+                    avisar("Clave guardada. Ahora escribe tu pregunta.")
+                    return
+                }
+                if (t.isNotEmpty() && estado.value.seccion != Seccion.ASISTENTE) {
                     abrirTexto("ia_pedido")
                     avisar("Clave guardada. Ahora escribe tu idea (o déjalo vacío).")
                     return
@@ -2679,6 +2920,7 @@ object Diptico {
         Opcion("Pantalla", icono = Icono.BRILLO) { abrirIntent(Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS), "No pude abrir la pantalla") },
         Opcion("Archivos", icono = Icono.CARPETA) { abrirArchivos() },
         Opcion("Batería", icono = Icono.BATERIA) { abrirIntent(Intent(Intent.ACTION_POWER_USAGE_SUMMARY), "No pude abrir la batería") },
+        Opcion("Asistente", icono = Icono.ASISTENTE) { abrirAsistente() },
         Opcion("Estadísticas", icono = Icono.RELOJ) { abrirEstadisticas() },
         Opcion("Protector", icono = Icono.ESTRELLA) { cerrarPanel(); actualizar { it.copy(protector = true) } },
         Opcion("Ajustes", icono = Icono.AJUSTES) { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },
@@ -2945,7 +3187,10 @@ object Diptico {
 
     // ---------- Estadísticas ----------
 
-    fun abrirEstadisticas() = actualizar { it.copy(panel = Panel.ESTADISTICAS, indice = 0) }
+    fun abrirEstadisticas() {
+        actualizar { it.copy(panel = Panel.ESTADISTICAS, indice = 0) }
+        if (estado.value.perfilRA == null) cargarPerfilRA()
+    }
 
     // ---------- Grilla y páginas del inicio ----------
 

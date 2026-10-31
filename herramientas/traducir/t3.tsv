@@ -1,0 +1,287 @@
+660	Customize	Personalizar	个性化	カスタマイズ
+661	Tab	Aba	标签页	タブ
+662	Asking the AI for a theme…	Pedindo um tema à IA…	正在向 AI 请求主题…	AI にテーマを依頼中…
+667	Puts the shelf on top and the selected game on the bottom. It's also in the bottom bar.	Coloca a estante em cima e o jogo escolhido embaixo. Também está na barra de baixo.	把游戏架放在上屏、所选游戏放在下屏。底部栏中也有此选项。	棚を上、選んだゲームを下にします。下のバーからも切り替えられます。
+668	Cover	Capa	封面	カバー
+669	Covers	Capas	封面	カバー
+670	Covers · {0}	Capas · {0}	封面 · {0}	カバー · {0}
+671	Covers, images and titles	Capas, imagens e títulos	封面、图片和标题	カバー、画像、タイトル
+672	Ports	Ports	移植游戏	移植作
+673	Ports and Android	Ports e Android	移植游戏与 Android	移植作と Android
+674	Ports and apps	Ports e apps	移植游戏与应用	移植作とアプリ
+675	Ports and Android games	Ports e jogos de Android	移植游戏与 Android 游戏	移植作と Android ゲーム
+676	Handheld	Portátil	掌机	携帯機
+677	Classic handheld	Portátil clássica	经典掌机	クラシックな携帯機
+678	Ask	Perguntar	提问	質問する
+679	Ask the assistant	Pergunte ao assistente	问问助手	アシスタントに聞く
+680	Ask me anything	Pergunte o que quiser	想问什么都可以	何でも聞いてください
+681	First choose your games folder	Primeiro escolha sua pasta de jogos	请先选择游戏文件夹	まずゲームフォルダを選んでください
+682	First pick a console on the shelf with L1 or R1	Primeiro escolha um console na estante com L1 ou R1	请先在游戏架中用 L1 或 R1 选择主机	まず棚で L1 か R1 で機種を選んでください
+683	First enter your username and your key	Primeiro escreva seu usuário e sua chave	请先填写用户名和密钥	まずユーザー名とキーを入力してください
+684	First you need games	Primeiro você precisa de jogos	你需要先有游戏	まずゲームが必要です
+685	Testing the key…	Testando a chave…	正在测试密钥…	キーを確認中…
+686	Test	Testar	测试	試す
+687	Test the connection	Testar a conexão	测试连接	接続を確認
+688	Try holiday themes	Experimentar temas de festas	试试节日主题	祝日のテーマを試す
+689	Let's try the controller	Vamos testar o controle	来试试手柄吧	コントローラーを試そう
+690	Custom ✓	Própria ✓	自定义 ✓	カスタム ✓
+691	Custom ✓	Próprio ✓	自定义 ✓	カスタム ✓
+692	Screensaver	Protetor	屏保	スクリーンセーバー
+693	Screensaver	Protetor de tela	屏幕保护	スクリーンセーバー
+694	Try it	Experimente	试试看	試してみよう
+695	Next holiday	Próxima festa	下一个节日	次の祝日
+696	Next step saved	Próximo passo salvo	下一步已保存	次の目標を保存しました
+697	You can choose it from the menu	Você pode escolher no menu	可以在菜单中选择	メニューから選べます
+698	You can install them later. RetroArch works for SNES, GBA, N64, PSX and more.	Você pode instalar depois. O RetroArch serve para SNES, GBA, N64, PSX e mais.	可以稍后再安装。RetroArch 支持 SNES、GBA、N64、PSX 等。	あとでインストールできます。RetroArch は SNES、GBA、N64、PSX などに対応。
+699	Pages	Páginas	页数	ページ
+700	Petals	Pétalas	花瓣	花びら
+701	Ask the AI for a theme	Peça um tema à IA	让 AI 帮你做主题	AI にテーマを頼む
+702	Poster	Pôster	海报	ポスター
+703	Removes customizations	Remove o personalizado	移除自定义内容	カスタマイズを解除
+704	Removed from favorites	Removido dos favoritos	已从收藏中移除	お気に入りから外しました
+705	Remove	Remover	移除	削除
+706	Remove key	Remover chave	移除密钥	キーを削除
+707	Remove from favorites	Remover dos favoritos	从收藏中移除	お気に入りから外す
+708	Remove custom background	Remover fundo próprio	移除自定义背景	自分の背景を削除
+709	Remove custom icon for {0}	Remover ícone próprio de {0}	移除 {0} 的自定义图标	{0} のカスタムアイコンを削除
+710	What to play, tips, or change Díptico	O que jogar, dicas, ou mudar o Díptico	玩什么、技巧，或修改 Díptico	何を遊ぶか、コツ、Díptico の変更
+711	How loud Díptico's music plays. It's separate from your games' volume.	O volume da música do Díptico. É independente do volume dos seus jogos.	Díptico 音乐的音量，与游戏音量互不影响。	Díptico の音楽の音量。ゲームの音量とは別です。
+712	Recommended	Recomendado	推荐	おすすめ
+713	Recommended: it's the big one	Recomendado: é a grande	推荐：这是大屏	おすすめ：大きい画面です
+714	Recognize names with AI	Reconhecer nomes com IA	用 AI 识别名称	AI で名前を認識
+715	Recognize game names	Reconhecer nomes dos jogos	识别游戏名称	ゲーム名を認識
+716	Detect by itself (automatic)	Reconhecer sozinho (automático)	自动识别	自動で判定
+717	Recognizing names	Reconhecendo nomes	正在识别名称	名前を認識中
+718	I recognized the name of {0} games	Reconheci o nome de {0} jogos	已识别 {0} 款游戏的名称	{0} 本のゲーム名を認識しました
+719	Browse the world's holiday themes whenever you like.	Percorra os temas das festas do mundo quando quiser.	随时浏览世界各地的节日主题。	世界の祝日テーマをいつでも試せます。
+720	Remember to drink water between sessions.	Lembre de beber água entre as partidas.	游戏间隙记得喝水。	プレイの合間に水分補給を。
+721	Clock and date	Relógio e data	时钟与日期	時計と日付
+722	Repeat the tutorial	Repetir o tutorial	重新进行教程	チュートリアルをもう一度
+723	Repeat the tutorial or see Díptico's version.	Repita o tutorial ou veja a versão do Díptico.	重新进行教程或查看 Díptico 版本。	チュートリアルのやり直しやバージョンの確認。
+724	Summary	Resumo	概要	概要
+727	RetroAchievements has no achievements for this console.	O RetroAchievements não tem conquistas para este console.	RetroAchievements 没有这个主机的成就。	RetroAchievements にはこの機種の実績がありません。
+729	Make sure there are folders like snes, gba or psx with your games inside, and choose the folder again.	Confira se dentro há pastas como snes, gba ou psx com seus jogos e escolha a pasta de novo.	请确认里面有 snes、gba 或 psx 等装有游戏的文件夹，然后重新选择。	中に snes、gba、psx などのゲームフォルダがあるか確認して、もう一度選んでください。
+732	Jump straight to your last game.	Vá direto ao seu último jogo.	直接跳到上次玩的游戏。	最後に遊んだゲームへすぐ移動。
+733	Greeting of the day	Saudação do dia	每日问候	今日のあいさつ
+734	St. Patrick's Day	São Patrício	圣帕特里克节	聖パトリックの日
+735	Saints Peter and Paul	São Pedro e São Paulo	圣彼得和圣保罗节	聖ペトロ・パウロの日
+736	Valentine's Day	Dia dos Namorados	情人节	バレンタインデー
+740	It dims itself again in a few seconds.	Volta a escurecer sozinha em alguns segundos.	几秒后会自动再次调暗。	数秒後にまた自動で暗くなります。
+741	Sections	Seções	分区	セクション
+742	Section	Seção	分区	セクション
+744	Follows the menu	Conforme o menu	跟随菜单	メニューに合わせる
+745	Follows the mode	Conforme o modo	跟随模式	モードに合わせる
+747	{0} session	Sessão de {0}	{0} 的游戏时段	{0} のセッション
+748	Session · {0}	Sessão · {0}	游戏时段 · {0}	セッション · {0}
+750	If you don't use the console, it shows your games with both screens dimmed. Any button closes it.	Se você não usar o console, mostra seus jogos com as duas telas escurecidas. Qualquer botão fecha.	闲置时，以调暗的双屏展示你的游戏。按任意键关闭。	使っていないと、2 画面を暗くしてゲームを表示します。どのボタンでも閉じます。
+751	If you already use ES-DE	Se você já usa o ES-DE	如果你已经在用 ES-DE	ES-DE を使っているなら
+752	If you already use ES-DE, choose its downloaded_media folder and I'll use those covers.	Se você já usa o ES-DE, escolha a pasta downloaded_media e eu uso essas capas.	如果你已经在用 ES-DE，选择它的 downloaded_media 文件夹，我会使用那些封面。	ES-DE を使っているなら、downloaded_media フォルダを選べばそのカバーを使います。
+753	Abbreviations	Siglas	缩写	略称
+754	Total silence	Silêncio total	完全静音	完全に無音
+755	Not noted	Sem anotar	未记录	未記入
+756	No alerts	Sem avisos	无通知	通知なし
+757	No decoration	Sem decoração	无装饰	装飾なし
+758	Unplayed	Sem jogar	未玩过	未プレイ
+759	No music	Sem música	无音乐	音楽なし
+760	No options	Sem opções	没有选项	候補なし
+761	Untitled	Sem título	无标题	無題
+762	System	Sistema	系统	システム
+763	Playing ✓	Tocando ✓	播放中 ✓	再生中 ✓
+764	Songkran	Songkran	泼水节	ソンクラーン
+765	Sounds as you move	Sons ao navegar	移动时的音效	操作音
+769	Plays while you choose. It stops when you open a game or another app plays music.	Toca enquanto você escolhe. Para ao abrir um jogo ou se outro app tocar música.	选择时播放。打开游戏或其他应用播放音乐时会停止。	選んでいる間に流れます。ゲームを開くか、他のアプリが音楽を流すと止まります。
+773	Arcade synthwave	Synthwave arcade	街机合成波	アーケード・シンセウェイヴ
+774	Yes	Sim	是	はい
+775	Thailand	Tailândia	泰国	タイ
+776	Text size	Tamanho da letra	文字大小	文字サイズ
+777	Game size	Tamanho dos jogos	游戏大小	ゲームのサイズ
+778	Size on the bottom screen	Tamanho na tela de baixo	下屏大小	下の画面のサイズ
+779	Size on the top screen	Tamanho na tela de cima	上屏大小	上の画面のサイズ
+780	Also with B or Start.	Também com B ou Start.	也可以按 B 或 Start。	B や Start でも。
+781	Also with L3 (press the left stick).	Também com L3 (aperte o analógico esquerdo).	也可以按 L3（按下左摇杆）。	L3（左スティック押し込み）でも。
+782	Card	Cartão	卡片	カード
+783	I'll help you get everything ready. Use the D-pad and A, or touch the screen.	Vou te ajudar a deixar tudo pronto. Use o direcional e o A, ou toque na tela.	我来帮你把一切准备好。使用十字键和 A，或触摸屏幕。	準備をお手伝いします。十字キーと A、または画面タッチで操作してください。
+784	Still missing	Falta	未获得	未獲得
+785	I recommend the game on top, on the big screen, and the shelf below to pick with your finger.	Recomendo o jogo em cima, na tela grande, e a estante embaixo para escolher com o dedo.	推荐上方大屏显示游戏，下屏放游戏架方便用手指选择。	ゲームは上の大きい画面、棚は下にして指で選ぶのがおすすめです。
+786	Keyboard	Teclado	键盘	キーボード
+787	AI theme	Tema IA	AI 主题	AI テーマ
+788	Theme: {0}	Tema: {0}	主题：{0}	テーマ：{0}
+789	Themes	Temas	主题	テーマ
+790	Cherry blossom season	Época das cerejeiras	樱花季	桜の季節
+791	I'm done playing	Terminei de jogar	我玩完了	遊び終わった
+792	Play time	Tempo jogado	游玩时长	プレイ時間
+793	Tap here and type a name	Toque aqui e escreva um nome	点击此处输入名称	ここをタップして名前を入力
+794	Tap or press a button to open the companion	Toque ou aperte um botão para abrir o companheiro	点击或按任意键打开伴侣屏	タップかボタンでコンパニオンを開く
+795	Tap or press a button to close	Toque ou aperte um botão para fechar	点击或按任意键关闭	タップかボタンで閉じる
+796	Tap or press a button to skip	Toque ou aperte um botão para pular	点击或按任意键跳过	タップかボタンでスキップ
+797	Tap to connect RetroAchievements	Toque para conectar o RetroAchievements	点击连接 RetroAchievements	タップして RetroAchievements を接続
+798	Tap to grant permission and see what's playing on Spotify or YouTube Music.	Toque para dar permissão e ver o que toca no Spotify ou YouTube Music.	点击授予权限，查看 Spotify 或 YouTube Music 正在播放的内容。	タップして許可すると、Spotify や YouTube Music の再生中の曲が見られます。
+799	Tap a console to change its emulator. With RetroArch you pick the core (snes9x, mgba…).	Toque num console para mudar o emulador. Com o RetroArch você escolhe o núcleo (snes9x, mgba…).	点击主机更换模拟器。使用 RetroArch 时可选择核心（snes9x、mgba…）。	機種をタップしてエミュレーターを変更。RetroArch ではコアを選べます（snes9x、mgba…）。
+800	All of them, one after another	Todas, uma depois da outra	全部依次播放	すべてを順番に
+801	No achievements earned this month yet. Let's play!	Ainda não ganhou conquistas este mês. Bora jogar!	本月还没有获得成就。快去玩吧！	今月はまだ実績がありません。遊ぼう！
+802	You haven't played anything with Díptico yet	Você ainda não jogou nada com o Díptico	你还没有用 Díptico 玩过任何游戏	まだ Díptico で何も遊んでいません
+803	You haven't played with Díptico yet. When you do, you'll see your hours, favorite games and more here.	Você ainda não jogou com o Díptico. Quando jogar, verá aqui suas horas, seus jogos favoritos e mais.	你还没有用 Díptico 玩过游戏。玩过之后，这里会显示你的时长、最爱的游戏等。	まだ Díptico で遊んでいません。遊ぶとここにプレイ時間やお気に入りなどが表示されます。
+804	You haven't played anything with Díptico yet	Você ainda não jogou nada com o Díptico	你还没有用 Díptico 玩过任何游戏	まだ Díptico で何も遊んでいません
+805	All	Tudo	全部	すべて
+806	The whole world	O mundo todo	全世界	世界中
+807	All on your screen	Tudo na sua tela	全部显示在你的屏幕上	すべて画面に
+808	All quiet.	Tudo tranquilo.	一切安好。	静かです。
+809	All	Todos	全部	すべて
+810	All your games already have a name	Todos os seus jogos já têm nome	你的游戏都已有名称	すべてのゲームに名前があります
+811	All your games already have a cover	Todos os seus jogos já têm capa	你的游戏都已有封面	すべてのゲームにカバーがあります
+812	All, favorites only, recently played, most played or the ones you haven't played.	Todos, só favoritos, jogados recentemente, os mais jogados ou os que você não jogou.	全部、仅收藏、最近游玩、玩得最多或尚未玩过的。	すべて、お気に入りのみ、最近遊んだ、よく遊ぶ、未プレイ。
+813	Takes about 2 minutes	Leva uns 2 minutos	大约需要 2 分钟	約 2 分で終わります
+814	Brings your profile and latest achievements.	Traz seu perfil e suas últimas conquistas.	获取你的资料和最新成就。	プロフィールと最新の実績を取得します。
+815	Your library	Sua biblioteca	你的游戏库	あなたのライブラリ
+816	Your song	Sua música	你的歌曲	あなたの曲
+817	Your games folder and any ES-DE images you already have.	Sua pasta de jogos e as imagens do ES-DE que você já tiver.	你的游戏文件夹以及已有的 ES-DE 图片。	ゲームフォルダと、手持ちの ES-DE の画像。
+818	Your key (Web API Key)	Sua chave (Web API Key)	你的密钥（Web API Key）	キー（Web API Key）
+819	Your collection	Sua coleção	你的收藏	コレクション
+820	Your game collection,	Sua coleção de jogos,	你的游戏收藏，	あなたのゲームコレクションを、
+821	Your game collection, on one or two screens	Sua coleção de jogos, em uma ou duas telas	你的游戏收藏，一块或两块屏幕	あなたのゲームコレクションを 1 画面でも 2 画面でも
+822	Your device has one screen, so everything happens here. If you connect another, you can change it in the menu.	Seu aparelho tem uma tela, então tudo acontece aqui. Se conectar outra, pode mudar no menu.	你的设备只有一块屏幕，所以一切都在这里。连接另一块屏幕后可在菜单中更改。	この端末は画面が 1 つなので、すべてここで行います。別の画面をつないだらメニューで変更できます。
+823	Your music	Sua música	你的音乐	あなたの音楽
+824	Your music: {0} songs	Sua música: {0} faixas	你的音乐：{0} 首	あなたの音楽：{0} 曲
+825	Your retroachievements.org username. If you don't have an account, create one for free on the website.	Seu nome de usuário do retroachievements.org. Se não tiver conta, crie grátis no site.	你在 retroachievements.org 的用户名。没有账号可以在网站上免费注册。	retroachievements.org のユーザー名です。アカウントがなければサイトで無料作成できます。
+826	Your username on retroachievements.org (not your email).	Seu nome de usuário no retroachievements.org (não o e-mail).	你在 retroachievements.org 的用户名（不是邮箱）。	retroachievements.org のユーザー名（メールアドレスではありません）。
+827	Your next step	Seu próximo passo	你的下一步	次の目標
+828	Your next step: find the temple key	Seu próximo passo: buscar a chave do templo	你的下一步：寻找神殿钥匙	次の目標：神殿の鍵を探す
+829	Your username	Seu usuário	你的用户名	ユーザー名
+830	Your RetroAchievements username	Seu usuário do RetroAchievements	你的 RetroAchievements 用户名	RetroAchievements のユーザー名
+831	Your emulators are ready	Seus emuladores estão prontos	模拟器已准备就绪	エミュレーターの準備ができました
+832	Your stats	Suas estatísticas	你的统计	あなたの統計
+833	Your games	Seus jogos	你的游戏	あなたのゲーム
+834	Your most played	Seus mais jogados	你玩得最多的	よく遊ぶゲーム
+835	Your notes and the best guides online. Pick a search and it opens in the browser.	Suas notas e os melhores guias da internet. Escolha uma busca e ela abre no navegador.	你的笔记以及网上最好的攻略。选择一个搜索，会在浏览器中打开。	自分のメモとネットの攻略。検索を選ぶとブラウザで開きます。
+836	Your ports	Seus ports	你的移植游戏	あなたの移植作
+837	Title	Título	标题	タイトル
+838	Game title	Título do jogo	游戏标题	ゲームのタイトル
+839	Title, images, music	Título, imagens, música	标题、图片、音乐	タイトル、画像、音楽
+840	libretro titles	Títulos do libretro	libretro 标题	libretro のタイトル
+841	An AI assistant that knows your games: it recommends, explains and changes Díptico for you.	Um assistente com IA que conhece seus jogos: recomenda, explica e muda coisas do Díptico por você.	了解你游戏的 AI 助手：推荐、讲解，还能帮你修改 Díptico。	あなたのゲームを知る AI アシスタント：おすすめ、解説、Díptico の変更もお任せ。
+842	One more level and you'll stop. (Sure you will.)	Mais uma fase e você para. (Até parece.)	再玩一关就停。（才怪。）	あと 1 面でやめる。（たぶん無理。）
+843	A soft sound when you move, choose, go back and open a game.	Um som suave ao navegar, escolher, voltar e abrir um jogo.	移动、选择、返回和打开游戏时播放轻柔的音效。	移動、決定、戻る、ゲーム起動時にやさしい音が鳴ります。
+844	One (there's no other)	Uma (não há outra)	单屏（没有第二块）	1 つ（他にありません）
+845	One screen	Uma tela	单屏	1 画面
+846	One screen, bottom free	Uma tela, a de baixo livre	单屏，下屏空闲	1 画面、下は自由
+847	One · bottom black	Uma · embaixo preta	单屏 · 下屏黑屏	1 画面 · 下は黒
+848	One · bottom free	Uma · embaixo livre	单屏 · 下屏空闲	1 画面 · 下は自由
+849	Use any image from your phone as this console's icon. Pick the console on the shelf before opening the menu.	Use qualquer imagem do seu aparelho como ícone deste console. Escolha o console na estante antes de abrir o menu.	使用设备中的任意图片作为该主机的图标。请先在游戏架中选择主机再打开菜单。	端末の好きな画像をこの機種のアイコンにできます。メニューを開く前に棚で機種を選んでください。
+850	Use an image or animated GIF as your widget home's background.	Use uma imagem ou GIF animado como fundo do seu início com widgets.	使用图片或 GIF 动图作为小组件主页的背景。	画像やアニメ GIF をウィジェットホームの背景にします。
+851	Use this one	Usar esta	使用这张	これを使う
+852	You'll use {0}, with {1} games. You can change everything later in the menu, with Start.	Você vai usar {0}, com {1} jogos. Tudo se muda depois no menu, com Start.	你将使用{0}，共 {1} 款游戏。之后可以随时按 Start 在菜单中更改。	{0}、ゲーム {1} 本で使います。あとで Start のメニューから何でも変更できます。
+854	RetroAchievements username	Usuário do RetroAchievements	RetroAchievements 用户名	RetroAchievements のユーザー名
+855	Empty	Vazia	空	空
+856	Several options	Várias opções	多个选项	いくつかの候補
+857	See the screensaver now	Ver o protetor agora	立即查看屏保	今すぐスクリーンセーバーを見る
+858	See the animation now	Ver a animação agora	立即查看动画	今すぐアニメーションを見る
+859	Version {0}	Versão {0}	版本 {0}	バージョン {0}
+860	Glass	Vidro	玻璃	ガラス
+861	View	Visualização	视图	表示
+862	Preview	Prévia	预览	プレビュー
+863	View: {0}	Visualização: {0}	视图：{0}	表示：{0}
+865	Volume	Volume	音量	音量
+866	Back	Voltar	返回	戻る
+867	Search for games again	Procurar jogos de novo	重新查找游戏	ゲームを再検索
+868	Restore original	Voltar ao original	恢复原样	元に戻す
+869	Back to the original order	Voltar à ordem original	恢复原来的排序	元の並び順に戻す
+870	Searches titles, art and logos again for every game.	Busca de novo títulos, arte e logos para todos os jogos.	为所有游戏重新查找标题、美术图和标志。	すべてのゲームのタイトル、アート、ロゴを再検索します。
+871	Set everything up again step by step.	Configura tudo de novo passo a passo.	一步步重新设置一切。	すべてを一から設定し直します。
+872	We Tripantu and Inti Raymi	We Tripantu e Inti Raymi	We Tripantu 与太阳节	ウェ・トリパントゥとインティ・ライミ
+874	Wi-Fi, Bluetooth, volume, files and your notifications. Also by holding Start or tapping the bell.	Wi-Fi, Bluetooth, volume, arquivos e suas notificações. Também segurando Start ou tocando no sino.	Wi-Fi、蓝牙、音量、文件和通知。也可以长按 Start 或点击铃铛图标打开。	Wi-Fi、Bluetooth、音量、ファイル、通知。Start 長押しかベルのタップでも開けます。
+875	Music widget	Widget de música	音乐小组件	音楽ウィジェット
+876	Widgets	Widgets	小组件	ウィジェット
+877	Widgets as at the start	Widgets como no começo	恢复初始小组件	ウィジェットを最初の状態に
+881	Wikipedia doesn't have the story of how it was made. See the Summary or search in Guides.	A Wikipédia não tem a história da criação. Veja o Resumo ou busque em Guias.	维基百科没有它的诞生经过。请查看概要或在攻略中搜索。	Wikipedia に開発の経緯がありません。概要を見るか攻略で検索してください。
+883	X clears the search and filters	X limpa a busca e os filtros	X 清除搜索和筛选	X で検索とフィルターをクリア
+890	on two screens.	em duas telas.	双屏呈现。	2 つの画面で。
+891	in {0} consoles	em {0} consoles	分布在 {0} 个主机	{0} 機種
+892	old format	formato antigo	旧格式	旧形式
+893	big image	imagem grande	大图	大きな画像
+895	games played	jogos jogados	玩过的游戏	遊んだゲーム
+897	both screens	as duas telas	双屏	2 つの画面
+898	less than 1 min	menos de 1 min	不到 1 分钟	1 分未満
+899	an emulator	um emulador	一个模拟器	エミュレーター
+900	one screen	uma tela	单屏	1 画面
+901	one screen, with the bottom one black	uma tela, com a de baixo preta	单屏，下屏黑屏	1 画面（下は黒）
+902	one screen, with the bottom one free	uma tela, com a de baixo livre	单屏，下屏空闲	1 画面（下は自由）
+904	{0} / {1} points	{0} / {1} pontos	{0} / {1} 分	{0} / {1} ポイント
+905	{0} in view	{0} à vista	显示 {0} 个	{0} 件表示
+906	{0} of {1} · keeps going in the background	{0} de {1} · continua sozinho em segundo plano	{0} / {1} · 在后台继续	{1} 中 {0} · バックグラウンドで続行
+907	{0} chosen ✓	{0} escolhidos ✓	已选择 {0} 个 ✓	{0} 件選択 ✓
+908	{0} found ✓	{0} encontrados ✓	找到 {0} 个 ✓	{0} 件見つかりました ✓
+909	{0} h {1} min	{0} h {1} min	{0} 小时 {1} 分钟	{0} 時間 {1} 分
+910	{0} games found	{0} jogos encontrados	找到 {0} 款游戏	{0} 本のゲームが見つかりました
+911	{0} without a cover	{0} sem capa	{0} 款无封面	カバーなし {0}
+913	{0} × {1} · {2} pages	{0} × {1} · {2} pág.	{0} × {1} · {2} 页	{0} × {1} · {2} ページ
+914	{0}. Choosing it turns off "Music by theme".	{0}. Escolhê-la desliga "Música conforme o tema".	{0}。选择后将关闭“随主题切换音乐”。	{0}。選ぶと「テーマに合わせた音楽」がオフになります。
+915	Let's play!	Bora jogar!	开玩吧！	遊ぼう！
+916	Key connected! Now I can download logos and big art	Chave conectada! Agora posso baixar logos e arte grande	密钥已连接！现在可以下载标志和大图了	キーを接続しました！ロゴと大きなアートをダウンロードできます
+917	Let's get started!	Vamos começar!	开始吧！	はじめよう！
+918	Connected! {0} · {1} points	Conectado! {0} · {1} pontos	已连接！{0} · {1} 分	接続しました！{0} · {1} ポイント
+919	Eid Mubarak!	Eid Mubarak!	开斋节快乐！	イード・ムバラク！
+920	Start playing!	Começar a jogar!	开始游戏！	遊び始めよう！
+921	I found {0} games!	Encontrei {0} jogos!	找到了 {0} 款游戏！	{0} 本のゲームが見つかりました！
+922	Happy Chilean Independence Days!	Felizes Festas Pátrias!	智利国庆快乐！	チリ独立記念日おめでとう！
+923	Happy Easter!	Feliz Páscoa!	复活节快乐！	ハッピーイースター！
+924	Happy Lunar New Year!	Feliz Ano Novo Lunar!	新春快乐！	旧正月おめでとう！
+925	Happy Carnival!	Feliz Carnaval!	狂欢节快乐！	ハッピーカーニバル！
+926	Happy Diwali, festival of lights!	Feliz Diwali, festa das luzes!	排灯节快乐！	ハッピーディワリ、光の祭り！
+927	Happy Thanksgiving!	Feliz Dia de Ação de Graças!	感恩节快乐！	ハッピーサンクスギビング！
+928	Happy Three Kings' Day!	Feliz Dia de Reis!	三王节快乐！	公現祭おめでとう！
+929	Happy Music Day!	Feliz Dia da Música!	音乐日快乐！	音楽の日おめでとう！
+930	Happy Gamer Day!	Feliz Dia do Gamer!	玩家节快乐！	ゲーマーの日おめでとう！
+931	Happy Children's Day!	Feliz Dia das Crianças!	儿童节快乐！	こどもの日おめでとう！
+932	Happy Heritage Day!	Feliz Dia do Patrimônio!	文化遗产日快乐！	文化遺産の日おめでとう！
+933	Happy Labor Day!	Feliz Dia do Trabalhador!	劳动节快乐！	メーデーおめでとう！
+934	Happy Halloween!	Feliz Halloween!	万圣节快乐！	ハッピーハロウィン！
+935	Happy Holi, festival of colors!	Feliz Holi, festa das cores!	洒红节快乐！	ハッピーホーリー、色の祭り！
+936	Merry Christmas!	Feliz Natal!	圣诞快乐！	メリークリスマス！
+937	Happy St. Patrick's Day!	Feliz São Patrício!	圣帕特里克节快乐！	ハッピー・セント・パトリックス・デー！
+938	Happy Saints Peter and Paul Day!	Feliz São Pedro e São Paulo!	圣彼得和圣保罗节快乐！	聖ペトロ・パウロの日おめでとう！
+939	Happy Songkran!	Feliz Songkran!	泼水节快乐！	ハッピーソンクラーン！
+940	Happy Indigenous New Year!	Feliz Ano Novo dos povos originários!	原住民新年快乐！	先住民の新年おめでとう！
+941	Happy New Year!	Feliz Ano Novo!	新年快乐！	あけましておめでとう！
+942	Happy Valentine's Day!	Feliz Dia dos Namorados!	情人节快乐！	ハッピーバレンタイン！
+943	Hello from down here!	Olá daqui de baixo!	来自下屏的问候！	下の画面からこんにちは！
+944	Hi! I'm Díptico	Olá! Eu sou o Díptico	你好！我是 Díptico	こんにちは！Díptico です
+945	Hi! How can I help?	Olá! Como posso ajudar?	你好！有什么可以帮你？	こんにちは！何をお手伝いしましょう？
+946	Today is {0}!	Hoje é {0}!	今天是{0}！	今日は{0}！
+947	Happy Hanukkah!	Feliz Hanukkah!	光明节快乐！	ハッピーハヌカ！
+948	Play!	Jogar!	开始游戏！	プレイ！
+949	Done!	Pronto!	完成！	完了！
+950	Done! Change saved	Pronto! Mudança salva	完成！更改已保存	完了！変更を保存しました
+951	Done! New images for {0}	Pronto! Imagens novas para {0}	完成！已为 {0} 获取新图片	完了！{0} の新しい画像
+952	Done! New {0} for {1}	Pronto! Nova {0} para {1}	完成！已为 {1} 更换{0}	完了！{1} の新しい{0}
+953	Done! Theme "{0}" created	Pronto! Tema "{0}" criado	完成！已创建主题“{0}”	完了！テーマ「{0}」を作成しました
+955	All set!	Tudo pronto!	一切就绪！	準備完了！
+956	Long live La Tirana!	Viva La Tirana!	拉蒂拉纳节万岁！	ラ・ティラナ万歳！
+957	Long live independence!	Viva a independência!	独立万岁！	独立万歳！
+958	Light or dark?	Claro ou escuro?	浅色还是深色？	ライトかダークか？
+959	What reads best?	Como lê melhor?	怎样看得最清楚？	どれが読みやすい？
+960	Which console is it?	De qual console é?	这是哪个主机的？	どの機種？
+961	Where are your games?	Onde estão seus jogos?	你的游戏在哪里？	ゲームはどこ？
+962	Where did you leave off?	Onde você parou?	你玩到哪里了？	どこまで進んだ？
+963	Where do games open?	Onde os jogos abrem?	游戏在哪里打开？	ゲームはどこで開く？
+964	What to play today?	Que jogo hoje?	今天玩什么？	今日は何を遊ぶ？
+965	What goes on each screen?	O que vai em cada tela?	每块屏幕显示什么？	それぞれの画面に何を表示する？
+966	One screen or two?	Uma tela ou duas?	单屏还是双屏？	1 画面か 2 画面か？
+967	What if today you try a game you've never played?	E se hoje você testar um jogo que nunca jogou?	今天试试一款从没玩过的游戏怎么样？	今日はまだ遊んだことのないゲームを試してみては？
+968	Icon changed	Ícone alterado	图标已更改	アイコンを変更しました
+969	Custom icon for {0}	Ícone próprio para {0}	{0} 的自定义图标	{0} のカスタムアイコン
+970	Console icons	Ícones de console	主机图标	機種アイコン
+971	Last time: 	Última vez: 	上次：	前回：
+972	Recent sessions	Últimas partidas	最近游玩记录	最近のプレイ
+973	Last played	Último jogado	上次游玩	最後に遊んだ
+974	Last played	Últimos jogados	最近游玩	最近遊んだ順
+975	Use it when you add new games to your folder.	Use quando adicionar jogos novos à sua pasta.	在文件夹中添加新游戏时使用。	フォルダに新しいゲームを追加したときに使います。
+976	Useful for games on a small screen	Útil para jogos de uma tela pequena	适合小屏游戏	小さい画面のゲームに便利
+978	"What game do you recommend today?", "Give me a tip for Zelda", "Put on a Christmas theme"…	"Que jogo você recomenda hoje?", "Me dá uma dica para Zelda", "Coloque um tema de Natal"…	“今天推荐什么游戏？”“给我一个塞尔达的技巧”“换成圣诞主题”…	「今日のおすすめは？」「ゼルダのコツを教えて」「クリスマスのテーマにして」…
+979	…and so on with each console	…e assim com cada console	…其他主机以此类推	…ほかの機種も同様に
+980	⌫ delete	⌫ apagar	⌫ 删除	⌫ 削除
+981	▶  Game	▶  Jogo	▶  游戏	▶  ゲーム
+982	▶  Play	▶  Jogar	▶  开始游戏	▶  プレイ
+983	▶ Play	▶ Jogar	▶ 开始游戏	▶ プレイ
+984	★ hard	★ difícil	★ 困难	★ ハード
+985	♥ Favorite	♥ Favorito	♥ 收藏	♥ お気に入り
+986	♪ Mix	♪ Mix	♪ 混合	♪ ミックス

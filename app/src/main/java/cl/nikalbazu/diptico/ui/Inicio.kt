@@ -104,7 +104,7 @@ fun PantallaInicio(e: Estado) {
                     Texto(if (e.editandoWidgets) "Acomodando tu inicio" else saludo(), 24f, lineas = 1)
                     Detalle(
                         if (e.editandoWidgets) "Arrastra o usa la cruceta · L1 R1 tamaño · L2 R2 otro widget · Y agregar · B listo"
-                        else SimpleDateFormat("EEEE d 'de' MMMM", Locale("es")).format(Date()).replaceFirstChar { it.uppercase() } +
+                        else cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() } +
                             (e.fiesta?.let { " · ${it.nombre}" } ?: ""),
                         13.5f, lineas = 1,
                     )
@@ -282,13 +282,13 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
                     Texto(rememberHora(), 30f)
                     Spacer(Modifier.width(esc.d(10)))
-                    Detalle(SimpleDateFormat("EEE d MMM", Locale("es")).format(Date()), 13f, lineas = 1)
+                    Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEdMMM"), 13f, lineas = 1)
                 }
                 return@Tarjeta
             }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Texto(rememberHora(), if (al >= 3) 72f else if (tam >= 2) 58f else 44f, interlineado = if (al >= 3) 74f else if (tam >= 2) 60f else 46f)
-                Detalle(SimpleDateFormat("EEEE d 'de' MMMM", Locale("es")).format(Date()).replaceFirstChar { it.uppercase() }, 14f, lineas = 1)
+                Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 14f, lineas = 1)
             }
         }
         "bateria" -> Tarjeta {
@@ -377,6 +377,49 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                         Spacer(Modifier.width(esc.d(8)))
                         Texto(j.titulo, 15f, lineas = 3)
                     }
+                }
+            }
+        }
+        "logros" -> Tarjeta(alPulsar = { if (e.usuarioRA.isBlank()) Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.LOGROS) else Diptico.abrirEstadisticas() }) {
+            val ra = e.perfilRA
+            LaunchedEffect(e.usuarioRA) { if (ra == null) Diptico.cargarPerfilRA() }
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconoDiptico(Icono.TROFEO, Sol, 18f, acento = Coral)
+                    Spacer(Modifier.width(esc.d(8)))
+                    Etiqueta("Logros", p.tenue, 11f, Modifier.weight(1f))
+                    if (ra != null) Texto("${ra.puntos} pts", 15f, color = Sol)
+                }
+                Spacer(Modifier.height(esc.d(6)))
+                when {
+                    e.usuarioRA.isBlank() -> Detalle("Toca para conectar RetroAchievements", 13.5f, lineas = 2)
+                    ra == null -> Detalle("Cargando tu perfil…", 13.5f)
+                    ra.recientes.isEmpty() -> Detalle("Todavía no ganas logros este mes. ¡A jugar!", 13.5f, lineas = 2)
+                    else -> ra.recientes.take(if (al >= 3) 4 else if (compacto) 1 else 2).forEach { (juego, l) ->
+                        Row(Modifier.padding(vertical = esc.d(2)), verticalAlignment = Alignment.CenterVertically) {
+                            val img = rememberImagen(android.net.Uri.parse(l.imagen), 96)
+                            Box(Modifier.size(esc.d(28)).clip(RoundedCornerShape(esc.d(7))).background(p.fondo)) {
+                                if (img != null) Image(img, null, Modifier.fillMaxSize())
+                            }
+                            Spacer(Modifier.width(esc.d(8)))
+                            Column(Modifier.weight(1f)) {
+                                Texto(l.titulo, 13f, lineas = 1)
+                                if (!compacto) Detalle(juego, 11f, lineas = 1)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        "asistente" -> Tarjeta(alPulsar = { Diptico.abrirAsistente() }) {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(esc.d(40)).clip(CircleShape).fondoBoton(Uva), contentAlignment = Alignment.Center) {
+                    IconoDiptico(Icono.ASISTENTE, SobreUva, 22f, acento = SobreUva)
+                }
+                Spacer(Modifier.width(esc.d(10)))
+                Column(Modifier.weight(1f)) {
+                    Texto("Pregúntale al asistente", 15f, lineas = 1)
+                    if (!compacto) Detalle("Qué jugar, trucos, o cambiar Díptico", 12.5f, lineas = 1)
                 }
             }
         }

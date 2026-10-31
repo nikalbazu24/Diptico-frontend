@@ -60,10 +60,12 @@ fun TecladoDiptico(e: Estado) {
         e.textoPara == "titulo" -> "Nombre del juego"
         e.textoPara == "notas" -> "Notas y trucos"
         e.textoPara == "ia_pedido" -> "Pídele un tema a la IA"
-        e.textoPara == "sgdb" || e.textoPara == "ia_clave" -> "Pega o escribe tu clave"
+        e.textoPara == "sgdb" || e.textoPara == "ia_clave" || e.textoPara == "ra_clave" -> "Pega o escribe tu clave"
+        e.textoPara == "ra_usuario" -> "Tu usuario de RetroAchievements"
+        e.textoPara == "asistente" -> "Pregúntale al asistente"
         else -> "Escribe"
     }
-    val oculto = e.panel == Panel.CLAVE && (e.textoPara == "sgdb" || e.textoPara == "ia_clave")
+    val oculto = e.panel == Panel.CLAVE && (e.textoPara == "sgdb" || e.textoPara == "ia_clave" || e.textoPara == "ra_clave")
     Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = 0.94f)).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(14), vertical = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {

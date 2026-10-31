@@ -1,0 +1,52 @@
+espacio	space	espaço	空格	スペース
+jugadas	played	jogadas	游玩时长	プレイ時間
+partidas	sessions	partidas	次游玩	回プレイ
+puntos	points	pontos	分	ポイント
+{0} letras	{0} characters	{0} letras	{0} 个字符	{0} 文字
+Captura	Screenshot	Captura	截图	スクリーンショット
+Pantalla de título	Title screen	Tela de título	标题画面	タイトル画面
+Consolas a color	Color consoles	Consoles coloridos	彩色主机	カラーの機種
+Contornos	Outlines	Contornos	轮廓	アウトライン
+Controles retro	Retro controllers	Controles retrô	复古手柄	レトロなコントローラー
+Pixel art	Pixel art	Pixel art	像素画	ドット絵
+Siluetas	Silhouettes	Silhuetas	剪影	シルエット
+Cámbiame a un tema de Halloween	Switch me to a Halloween theme	Mude para um tema de Halloween	帮我换成万圣节主题	ハロウィンのテーマにして
+Dame un truco para el juego elegido	Give me a tip for the selected game	Me dá uma dica para o jogo escolhido	给我一个当前游戏的技巧	選んでいるゲームのコツを教えて
+Quiero algo corto para 20 minutos	I want something short for 20 minutes	Quero algo curto para 20 minutos	我想玩 20 分钟左右的短游戏	20 分くらいで遊べるものがいい
+¿Cuál es mi juego más jugado?	What's my most played game?	Qual é meu jogo mais jogado?	我玩得最多的游戏是哪个？	一番遊んでいるゲームは？
+¿Qué juego me recomiendas hoy?	What game do you recommend today?	Que jogo você recomenda hoje?	今天推荐我玩什么？	今日のおすすめゲームは？
+¿Qué juegos clásicos me faltan?	Which classics am I missing?	Quais clássicos estão faltando?	我还缺哪些经典游戏？	足りない名作は？
+Guías en YouTube	Guides on YouTube	Guias no YouTube	YouTube 攻略	YouTube の攻略
+Guía completa (Google)	Full walkthrough (Google)	Guia completo (Google)	完整攻略（Google）	完全攻略（Google）
+Trucos y secretos	Tips and secrets	Truques e segredos	技巧与秘密	裏技と秘密
+Wiki de fans	Fan wiki	Wiki de fãs	粉丝 Wiki	ファン Wiki
+Logros y 100%	Achievements and 100%	Conquistas e 100%	成就与全收集	実績と 100%
+La IA está ocupada o llegaste al límite. Prueba en un rato.	The AI is busy or you hit the limit. Try again in a bit.	A IA está ocupada ou você chegou ao limite. Tente daqui a pouco.	AI 正忙或已达到上限。请稍后再试。	AI が混雑しているか上限に達しました。少ししてからお試しください。
+La IA respondió con un error ({0}): {1}	The AI replied with an error ({0}): {1}	A IA respondeu com um erro ({0}): {1}	AI 返回了错误（{0}）：{1}	AI がエラーを返しました（{0}）：{1}
+La clave de IA no es válida. Revísala en Menú › Temas › Clave de IA.	The AI key isn't valid. Check it in Menu › Assistant › AI key.	A chave de IA não é válida. Confira em Menu › Assistente › Chave de IA.	AI 密钥无效。请在 菜单 › 助手 › AI 密钥 中检查。	AI キーが無効です。メニュー › アシスタント › AI キー で確認してください。
+La clave no tiene permiso para usar la IA ({0}).	The key isn't allowed to use the AI ({0}).	A chave não tem permissão para usar a IA ({0}).	该密钥无权使用 AI（{0}）。	このキーには AI の使用権限がありません（{0}）。
+Los servidores de la IA están saturados. Prueba en un rato.	The AI servers are overloaded. Try again in a bit.	Os servidores da IA estão sobrecarregados. Tente daqui a pouco.	AI 服务器繁忙。请稍后再试。	AI のサーバーが混み合っています。少ししてからお試しください。
+Tu cuenta de Anthropic no tiene saldo. Agrega créditos en console.anthropic.com › Billing.	Your Anthropic account has no balance. Add credits at console.anthropic.com › Billing.	Sua conta da Anthropic está sem saldo. Adicione créditos em console.anthropic.com › Billing.	你的 Anthropic 账户余额不足。请在 console.anthropic.com › Billing 充值。	Anthropic アカウントの残高がありません。console.anthropic.com › Billing でクレジットを追加してください。
+No encontré ese usuario en RetroAchievements.	I couldn't find that user on RetroAchievements.	Não encontrei esse usuário no RetroAchievements.	在 RetroAchievements 上找不到该用户。	RetroAchievements でそのユーザーが見つかりません。
+No pude conectar con RetroAchievements. Revisa tu internet.	I couldn't connect to RetroAchievements. Check your internet.	Não consegui conectar ao RetroAchievements. Confira sua internet.	无法连接 RetroAchievements。请检查网络。	RetroAchievements に接続できません。インターネットを確認してください。
+RetroAchievements no aceptó tu usuario o tu clave. Revísalos en Menú › Logros.	RetroAchievements didn't accept your username or key. Check them in Menu › Achievements.	O RetroAchievements não aceitou seu usuário ou sua chave. Confira em Menu › Conquistas.	RetroAchievements 不接受你的用户名或密钥。请在 菜单 › 成就 中检查。	RetroAchievements がユーザー名かキーを受け付けませんでした。メニュー › 実績 で確認してください。
+RetroAchievements pide esperar un poco. Prueba en un minuto.	RetroAchievements asks you to wait a bit. Try again in a minute.	O RetroAchievements pede para esperar um pouco. Tente em um minuto.	RetroAchievements 要求稍等。请一分钟后再试。	RetroAchievements が少し待つよう求めています。1 分後にお試しください。
+RetroAchievements respondió con un error ({0}).	RetroAchievements replied with an error ({0}).	O RetroAchievements respondeu com um erro ({0}).	RetroAchievements 返回了错误（{0}）。	RetroAchievements がエラーを返しました（{0}）。
+Abrir {0} con… (te sugiero {1})	Open {0} with… (I suggest {1})	Abrir {0} com… (sugiro {1})	用…打开 {0}（推荐 {1}）	{0} を開くアプリ…（おすすめ：{1}）
+No encontré con qué abrir {0}. Instala {1}.	I couldn't find anything to open {0}. Install {1}.	Não encontrei com o que abrir {0}. Instale {1}.	找不到可以打开 {0} 的应用。请安装 {1}。	{0} を開くアプリが見つかりません。{1} をインストールしてください。
+No pude abrir {0}: {1}	I couldn't open {0}: {1}	Não consegui abrir {0}: {1}	无法打开 {0}：{1}	{0} を開けませんでした：{1}
+No pude preparar {0}: {1}	I couldn't prepare {0}: {1}	Não consegui preparar {0}: {1}	无法准备 {0}：{1}	{0} を準備できませんでした：{1}
+No pude encontrar la ruta de {0}. Usa una carpeta de la memoria interna o la SD.	I couldn't find the path of {0}. Use a folder on internal storage or the SD card.	Não encontrei o caminho de {0}. Use uma pasta da memória interna ou do SD.	找不到 {0} 的路径。请使用内部存储或 SD 卡中的文件夹。	{0} のパスが見つかりません。内部ストレージか SD のフォルダを使ってください。
+Para abrir {0} necesitas instalar {1}.	To open {0} you need to install {1}.	Para abrir {0} você precisa instalar {1}.	打开 {0} 需要安装 {1}。	{0} を開くには {1} のインストールが必要です。
+El archivo de {0} debe tener adentro un número.	The {0} file must contain a number.	O arquivo de {0} precisa ter um número dentro.	{0} 的文件中必须包含一个数字。	{0} のファイルには数字が必要です。
+El archivo {0} debe tener adentro el código del juego (por ejemplo CUSA00900).	The file {0} must contain the game code (for example CUSA00900).	O arquivo {0} precisa ter o código do jogo (por exemplo CUSA00900).	文件 {0} 中必须包含游戏代码（例如 CUSA00900）。	ファイル {0} にはゲームコード（例：CUSA00900）が必要です。
+El archivo {0} debe tener adentro el nombre de la app.	The file {0} must contain the app's name.	O arquivo {0} precisa ter o nome do app.	文件 {0} 中必须包含应用名称。	ファイル {0} にはアプリ名が必要です。
+{0} ya no está instalado.	{0} is no longer installed.	{0} não está mais instalado.	{0} 已被卸载。	{0} はもうインストールされていません。
+Usar Díptico en español.	Use Díptico in Spanish.	Usar o Díptico em espanhol.	以西班牙语使用 Díptico。	Díptico をスペイン語で使います。
+Toca o aprieta un botón para abrir el compañero	Tap or press a button to open the companion	Toque ou aperte um botão para abrir o companheiro	点击或按任意键打开伴侣屏	タップかボタンでコンパニオンを開く
+Pregúntale al asistente	Ask the assistant	Pergunte ao assistente	问问助手	アシスタントに聞く
+Tu usuario de RetroAchievements	Your RetroAchievements username	Seu usuário do RetroAchievements	你的 RetroAchievements 用户名	RetroAchievements のユーザー名
+Escribe	Type	Escreva	输入	入力
+Consola	Console	Console	主机	本体
+Opción	Option	Opção	选项	候補
+Logros	Achievements	Conquistas	成就	実績

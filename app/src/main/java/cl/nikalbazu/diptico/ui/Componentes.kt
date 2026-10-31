@@ -103,7 +103,9 @@ fun rememberBateria(): Int {
 /** Letra chica en mayúsculas, para etiquetas. */
 @Composable
 fun Etiqueta(texto: String, color: Color = LocalPaleta.current.tenue, tam: Float = 12f, modifier: Modifier = Modifier) {
-    Texto(texto.uppercase(), tam, modifier, color = color, familia = Nunito, peso = FontWeight.ExtraBold, espaciado = 1.4f, lineas = 1)
+    val idioma = cl.nikalbazu.diptico.estado.Idioma.actual
+    val t = if (idioma == "es") texto else cl.nikalbazu.diptico.estado.Idioma.t(texto)
+    Texto(t.uppercase(cl.nikalbazu.diptico.estado.Idioma.locale), tam, modifier, color = color, familia = Nunito, peso = FontWeight.ExtraBold, espaciado = if (idioma == "zh" || idioma == "ja") 0.6f else 1.4f, lineas = 1, traducir = false)
 }
 
 /** Texto secundario en Nunito. */
@@ -387,7 +389,7 @@ fun RelojGrande(e: Estado) {
                 Texto(segundos.toString().padStart(2, '0'), 34f, color = Coral, modifier = Modifier.padding(bottom = esc.d(22)))
             }
             Detalle(
-                SimpleDateFormat("EEEE d 'de' MMMM", Locale("es")).format(Date()).replaceFirstChar { it.uppercase() },
+                cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() },
                 22f, color = p.tinta, lineas = 1,
             )
             Spacer(Modifier.height(esc.d(10)))

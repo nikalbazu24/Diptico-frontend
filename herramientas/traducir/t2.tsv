@@ -1,0 +1,383 @@
+250	International Women's Day	Dia Internacional da Mulher	国际妇女节	国際女性デー
+251	Day of the Dead	Dia dos Mortos	亡灵节	死者の日
+252	Three Kings' Day	Dia de Reis	三王节	公現祭
+253	Women's Day	Dia da Mulher	妇女节	女性の日
+254	Music Day	Dia da Música	音乐日	音楽の日
+255	Earth Day	Dia da Terra	地球日	アースデイ
+256	Gamer Day	Dia do Gamer	玩家节	ゲーマーの日
+257	Children's Day	Dia das Crianças	儿童节	こどもの日
+258	Heritage Day	Dia do Patrimônio	文化遗产日	文化遺産の日
+259	Labor Day	Dia do Trabalhador	劳动节	メーデー
+261	Díptico as the main launcher	Díptico como launcher principal	将 Díptico 设为默认启动器	Díptico をメインのランチャーに
+262	Díptico is in single-screen mode · change it in the menu	O Díptico está no modo de uma tela · mude no menu	Díptico 处于单屏模式 · 可在菜单中更改	Díptico は 1 画面モードです · メニューで変更できます
+263	Díptico {0} · made with love for playing	Díptico {0} · feito com carinho para jogar	Díptico {0} · 为游戏用心打造	Díptico {0} · 遊ぶために心を込めて
+264	Díptico's, on the other screen	O do Díptico, na outra tela	Díptico 键盘，在另一块屏幕上	Díptico のもの（反対の画面）
+268	Edit	Editar	编辑	編集
+269	Button effect	Efeito dos botões	按钮效果	ボタンのエフェクト
+270	Effect: {0} · {1}	Efeito: {0} · {1}	效果：{0} · {1}	エフェクト：{0} · {1}
+272	E.g.: Lunar New Year with lanterns	Ex.: Ano Novo Lunar com lanternas	例如：挂满灯笼的农历新年	例：ちょうちんの旧正月
+273	E.g.: Nikalbazu	Ex.: Nikalbazu	例如：Nikalbazu	例：Nikalbazu
+274	E.g.: the chest code is 4-2-1	Ex.: o código do baú é 4-2-1	例如：宝箱密码是 4-2-1	例：宝箱のコードは 4-2-1
+275	E.g.: I still need the temple boss key	Ex.: falta a chave do chefe do templo	例如：还差神殿首领的钥匙	例：神殿のボスの鍵がまだ
+276	E.g.: what short game would you recommend?	Ex.: que jogo curto você recomenda?	例如：推荐一款短一点的游戏？	例：短めのおすすめゲームは？
+277	The assistant uses your AI key (Claude). Paste it first.	O assistente usa sua chave de IA (Claude). Cole-a primeiro.	助手需要你的 AI 密钥（Claude）。请先粘贴。	アシスタントには AI キー（Claude）が必要です。先に貼り付けてください。
+278	The assistant and AI themes use your key from console.anthropic.com. It runs in the cloud: it takes no memory and doesn't slow your console down.	O assistente e os temas com IA usam sua chave de console.anthropic.com. Roda na nuvem: não ocupa memória nem deixa seu console mais lento.	助手和 AI 主题使用你在 console.anthropic.com 获取的密钥。它在云端运行：不占内存，也不会拖慢主机。	アシスタントと AI テーマは console.anthropic.com のキーを使います。クラウドで動くので、メモリを使わず本体も重くなりません。
+279	Android's	O do Android	Android 键盘	Android のもの
+280	The console's	O do console	主机默认	本体のもの
+281	Díptico's language: Spanish, English, Portuguese, Chinese or Japanese.	O idioma do Díptico: espanhol, inglês, português, chinês ou japonês.	Díptico 的语言：西班牙语、英语、葡萄牙语、中文或日语。	Díptico の言語：スペイン語、英語、ポルトガル語、中国語、日本語。
+282	The game	O jogo	游戏内容	ゲーム内容
+283	Dark saves battery on OLED screens. Some themes always use their own.	O escuro economiza bateria em telas OLED. Alguns temas sempre usam o seu.	深色在 OLED 屏幕上更省电。部分主题始终使用自己的模式。	ダークは OLED 画面で節電になります。テーマによっては固定です。
+284	The keyboard is on the other screen	O teclado está na outra tela	键盘在另一块屏幕上	キーボードは反対の画面にあります
+285	The tutorial is on the other screen	O tutorial está na outra tela	教程在另一块屏幕上	チュートリアルは反対の画面にあります
+286	The music widget already has permission	O widget de música já tem permissão	音乐小组件已获得权限	音楽ウィジェットはすでに許可されています
+287	Chosen ✓	Escolhida ✓	已选择 ✓	選択済み ✓
+288	Choose	Escolher	选择	選ぶ
+289	Choose when opening	Escolher ao abrir	打开时选择	開くときに選ぶ
+290	Choose song	Escolher música	选择歌曲	曲を選ぶ
+291	Choose folder	Escolher pasta	选择文件夹	フォルダを選ぶ
+292	Choose games folder	Escolher pasta de jogos	选择游戏文件夹	ゲームフォルダを選ぶ
+293	Choose image	Escolher imagem	选择图片	画像を選ぶ
+294	Choose big image (hero)	Escolher imagem grande (hero)	选择大图（hero）	大きな画像を選ぶ（ヒーロー）
+295	Choose logo from the internet	Escolher logo da internet	从网上选择标志	ネットからロゴを選ぶ
+296	Choose my ports	Escolher meus ports	选择我的移植游戏	移植作を選ぶ
+297	Choose another folder	Escolher outra pasta	选择其他文件夹	別のフォルダを選ぶ
+298	Choose cover from the internet	Escolher capa da internet	从网上选择封面	ネットからカバーを選ぶ
+299	Choose the folder that has one folder per console: snes, gba, psx, nds, ps2… just like ES-DE.	Escolha a pasta que tem uma pasta por console: snes, gba, psx, nds, ps2… igual ao ES-DE.	选择每个主机各有一个子文件夹的目录：snes、gba、psx、nds、ps2…与 ES-DE 相同。	機種ごとにフォルダがあるフォルダを選んでください：snes、gba、psx、nds、ps2…ES-DE と同じです。
+300	Choose the box shape for this console. For another console, pick it on the shelf before opening the menu.	Escolha o formato das caixas deste console. Para outro, escolha-o na estante antes de abrir o menu.	选择该主机的盒子形状。其他主机请先在游戏架中选中再打开菜单。	この機種の箱の形を選びます。別の機種は、メニューを開く前に棚で選んでください。
+301	Choose the background music	Escolha a música de fundo	选择背景音乐	BGM を選ぶ
+302	Choose the {0}	Escolha a {0}	选择{0}	{0}を選ぶ
+303	Choose which widgets appear on your home.	Escolha quais widgets aparecem no seu início.	选择主页上显示哪些小组件。	ホームに表示するウィジェットを選びます。
+304	Choose a game	Escolha um jogo	选择游戏	ゲームを選ぶ
+305	Choose a game on the shelf	Escolha um jogo na estante	在游戏架中选择游戏	棚でゲームを選んでください
+306	Pick an achievement to see it big.	Escolha uma conquista para vê-la em destaque.	选择一个成就放大查看。	実績を選ぶと大きく表示されます。
+307	Choose a folder with songs	Escolha uma pasta com músicas	选择包含歌曲的文件夹	曲の入ったフォルダを選ぶ
+308	Choose a folder with songs (mp3, ogg, m4a, flac). They play in random order.	Escolha uma pasta com músicas (mp3, ogg, m4a, flac). Tocam em ordem aleatória.	选择包含歌曲的文件夹（mp3、ogg、m4a、flac），随机播放。	曲の入ったフォルダを選んでください（mp3、ogg、m4a、flac）。ランダムに再生します。
+309	Choose a console	Escolha um console	选择主机	機種を選ぶ
+310	Choose an image or animated GIF from your console; it appears as a widget on the current page.	Escolha uma imagem ou GIF animado do seu console; aparece como widget na página atual.	从主机中选择图片或 GIF 动图，它会作为小组件出现在当前页面。	本体の画像やアニメ GIF を選ぶと、今のページにウィジェットとして表示されます。
+311	Emulator	Emulador	模拟器	エミュレーター
+312	Emulators	Emuladores	模拟器	エミュレーター
+313	In RetroArch: Settings › Achievements, sign in with the same account	No RetroArch: Ajustes › Conquistas, entre com a mesma conta	在 RetroArch 中：设置 › 成就，用同一个账号登录	RetroArch で：設定 › 実績 から同じアカウントでログイン
+314	On the shelf, pick a console (L1 R1) and come back here to change its box shape.	Na estante, escolha um console (L1 R1) e volte aqui para mudar o formato das caixas.	在游戏架中选择主机（L1 R1），然后回到这里更改盒子形状。	棚で機種を選んで（L1 R1）、ここに戻ると箱の形を変更できます。
+315	On the bottom screen	Na tela de baixo	在下屏	下の画面で
+316	On the top screen	Na tela de cima	在上屏	上の画面で
+317	On retroachievements.org go to Settings and copy your "Web API Key". It's only saved on your console.	No retroachievements.org entre em Settings (Ajustes) e copie sua "Web API Key". Só fica salva no seu console.	在 retroachievements.org 进入 Settings（设置）并复制你的 "Web API Key"。只保存在你的主机上。	retroachievements.org の Settings で「Web API Key」をコピーしてください。本体にだけ保存されます。
+318	On retroachievements.org go to Settings and copy your "Web API Key". It's only saved on your console.	No retroachievements.org entre em Settings e copie sua "Web API Key". Só fica salva no seu console.	在 retroachievements.org 进入 Settings 并复制你的 "Web API Key"。只保存在你的主机上。	retroachievements.org の Settings で「Web API Key」をコピーしてください。本体にだけ保存されます。
+319	In use ✓	Em uso ✓	使用中 ✓	使用中 ✓
+320	Columbus Day	Encontro de Dois Mundos	两个世界相遇日	二つの世界の出会いの日
+321	Huge	Enorme	超大	特大
+322	Go to console.anthropic.com, open API Keys, create a key and paste it here. It's only saved on your console.	Entre em console.anthropic.com, vá em API Keys, crie uma chave e cole aqui. Só fica salva no seu console.	前往 console.anthropic.com，进入 API Keys，创建密钥并粘贴到这里。只保存在你的主机上。	console.anthropic.com の API Keys でキーを作成し、ここに貼り付けてください。本体にだけ保存されます。
+323	Enter	Entrar	进入	入る
+324	Balanced	Equilibrada	均衡	バランス
+325	It's free: go to steamgriddb.com, sign in, open Preferences › API and copy your key here.	É grátis: entre em steamgriddb.com, faça login, vá em Preferences › API e copie sua chave aqui.	免费：前往 steamgriddb.com 登录，进入 Preferences › API，把密钥复制到这里。	無料です：steamgriddb.com にログインし、Preferences › API でキーをコピーしてここへ。
+326	It's what happens when you press A. For a specific game you can change it by holding A.	É o que acontece ao apertar A. Para um jogo específico, mude segurando A.	这是按 A 时的行为。针对某款游戏，可长按 A 更改。	A を押したときの動作です。特定のゲームは A 長押しで変更できます。
+327	That app isn't installed	Esse app não está instalado	该应用未安装	そのアプリはインストールされていません
+328	Type	Escreva	输入	入力
+329	Write something like "Japanese Halloween" or "Christmas on the beach", or leave it empty and the AI picks the world holiday closest to today.	Escreva algo como "Halloween japonês" ou "Natal na praia", ou deixe vazio e a IA escolhe a festa do mundo mais próxima de hoje.	写点什么，比如“日式万圣节”或“海边圣诞”，留空的话 AI 会选择离今天最近的世界节日。	「和風ハロウィン」「海辺のクリスマス」などと書くか、空欄なら AI が今日に一番近い世界の祝日を選びます。
+330	Type with the D-pad and A, or by tapping the keys	Escreva com o direcional e A, ou tocando nas teclas	用十字键和 A 输入，或直接点按按键	十字キーと A、またはキーをタップして入力
+331	Type the title	Escreva o título	输入标题	タイトルを入力
+332	Write your idea	Escreva sua ideia	写下你的想法	アイデアを入力
+333	Write your idea, like "Japanese Halloween" or "Christmas on the beach". If you leave it empty, the AI picks the world holiday closest to today.	Escreva sua ideia, como "Halloween japonês" ou "Natal na praia". Se deixar vazio, a IA escolhe a festa do mundo mais próxima de hoje.	写下你的想法，比如“日式万圣节”或“海边圣诞”。留空的话，AI 会选择离今天最近的世界节日。	「和風ハロウィン」「海辺のクリスマス」などアイデアを書いてください。空欄なら AI が今日に一番近い世界の祝日を選びます。
+334	Enter your username and key in Menu › Achievements to see each game's achievements here, which ones you have and how many points you've earned.	Escreva seu usuário e sua chave em Menu › Conquistas para ver aqui as conquistas de cada jogo, quais você tem e quantos pontos leva.	在 菜单 › 成就 中填写用户名和密钥，即可在这里查看每款游戏的成就、已获得的成就和积分。	メニュー › 実績 でユーザー名とキーを入力すると、各ゲームの実績、獲得済みのもの、ポイントがここに表示されます。
+335	Write	Escrever	写	書く
+336	Ask a question	Escrever uma pergunta	提个问题	質問を書く
+337	Listen while you browse. It goes quiet when you play or if you put on Spotify or YouTube Music.	Ouça enquanto navega. Fica em silêncio ao jogar ou se você tocar Spotify ou YouTube Music.	浏览时播放。玩游戏或播放 Spotify、YouTube Music 时会自动静音。	操作中に流れます。ゲーム中や Spotify・YouTube Music の再生中は自動で止まります。
+338	Space	Espaço	空格	スペース
+339	Spain and Latin America	Espanha e América Latina	西班牙与拉丁美洲	スペインと中南米
+340	United States and Canada	Estados Unidos e Canadá	美国与加拿大	アメリカとカナダ
+341	Stats	Estatísticas	统计	統計
+342	Shelf	Estante	游戏架	棚
+343	Shelf on top, game on the bottom	Estante em cima, jogo embaixo	上屏游戏架，下屏游戏	上に棚、下にゲーム
+344	Shelf with boxes, cover grid or list. Switch quickly with R3 (press the right stick).	Estante com caixas, grade de capas ou lista. Troque rápido com R3 (aperte o analógico direito).	盒子游戏架、封面网格或列表。按 R3（按下右摇杆）快速切换。	箱の棚、カバーのグリッド、リスト。R3（右スティック押し込み）ですぐ切り替え。
+345	This device has only one screen	Este aparelho tem só uma tela	该设备只有一块屏幕	この端末は画面が 1 つだけです
+346	This device has only one screen. Choose "One screen".	Este aparelho tem só uma tela. Escolha "Uma tela".	该设备只有一块屏幕。请选择“单屏”。	この端末は画面が 1 つだけです。「1 画面」を選んでください。
+347	This game doesn't have achievements on RetroAchievements yet.	Este jogo ainda não tem conquistas no RetroAchievements.	这款游戏在 RetroAchievements 上还没有成就。	このゲームには RetroAchievements の実績がまだありません。
+348	Home style	Estilo do início	主页样式	ホームのスタイル
+349	Stars	Estrelas	星星	星
+350	They're in {0} consoles. If one is missing, check its folder name.	Estão em {0} consoles. Se faltar algum, confira o nome da pasta.	分布在 {0} 个主机中。如果缺少某个，请检查其文件夹名称。	{0} 機種にあります。足りない場合はフォルダ名を確認してください。
+352	1 emulator missing	Falta 1 emulador	缺少 1 个模拟器	エミュレーターが 1 つ不足
+353	Your account is missing	Falta sua conta	尚未连接账号	アカウントが未設定
+354	Missing: {0}	Falta: {0}	缺少：{0}	不足：{0}
+355	{0} emulators missing	Faltam {0} emuladores	缺少 {0} 个模拟器	エミュレーターが {0} 個不足
+356	Ghost	Fantasma	幽灵	ゴースト
+357	Lanterns	Lanternas	灯笼	ちょうちん
+358	Favorite	Favorito	收藏	お気に入り
+359	Favorite ✓	Favorito ✓	已收藏 ✓	お気に入り ✓
+360	Favorites	Favoritos	收藏	お気に入り
+361	Special dates	Datas especiais	特殊日期	特別な日
+362	Game info	Ficha	游戏资料	ゲーム情報
+363	Game info · {0}	Ficha · {0}	游戏资料 · {0}	ゲーム情報 · {0}
+364	Party	Festa	派对	パーティー
+365	Holidays	Festas	节日	祝日
+366	Chile's Independence Days	Festas Pátrias	智利国庆节	チリ独立記念日
+367	Independence Days	Festas da Independência	独立纪念日	独立記念日
+368	World holidays	Festas do mundo	世界节日	世界の祝日
+369	Grid rows	Linhas da grade	网格行数	グリッドの行数
+370	Japanese flute and koto	Flauta e koto japonês	日本笛与筝	和笛と琴
+371	Smoothness	Fluidez	流畅度	なめらかさ
+372	Folk with flute	Folk com flauta	长笛民谣	フルートのフォーク
+373	Home background	Fundo do início	主页背景	ホームの背景
+374	Home background changed	Fundo do início alterado	主页背景已更改	ホームの背景を変更しました
+375	Box shape	Formato das caixas	盒子形状	箱の形
+376	Díptico formats	Formatos do Díptico	Díptico 样式	Díptico の形式
+377	Strip	Faixa	横条	帯
+378	Fire	Fogo	火焰	炎
+379	Fireworks	Fogos de artifício	烟花	花火
+380	Source: Wikipedia ({0})	Fonte: Wikipédia ({0})	来源：维基百科（{0}）	出典：Wikipedia（{0}）
+385	Earned on {0}	Ganha em {0}	获得于 {0}	{0} に獲得
+387	Genshin, Minecraft and any installed game. They get their own shelf, info, guides and customization.	Genshin, Minecraft e qualquer jogo instalado. Têm estante, ficha, guias e personalização próprias.	原神、Minecraft 以及任何已安装的游戏。它们有自己的游戏架、资料、攻略和个性化设置。	原神、マインクラフトなどインストール済みのゲーム。専用の棚、情報、攻略、カスタマイズがあります。
+388	Genshin, Minecraft and more	Genshin, Minecraft e mais	原神、Minecraft 等	原神、マインクラフトなど
+389	Navy Day	Glórias Navais	海军荣耀日	海軍記念日
+390	Large	Grande	大	大
+391	Free at steamgriddb.com: sign in, open Preferences › API and copy your key. Brings big art and logos.	Grátis em steamgriddb.com: entre, vá em Preferences › API e copie sua chave. Traz arte grande e logos.	在 steamgriddb.com 免费获取：登录后进入 Preferences › API 复制密钥。可获取大图和标志。	steamgriddb.com で無料：ログインして Preferences › API でキーをコピー。大きなアートとロゴが手に入ります。
+392	Free, from libretro · {0} without a cover	Grátis, do libretro · {0} sem capa	免费，来自 libretro · {0} 款无封面	無料、libretro から · カバーなし {0}
+393	Save before the final boss.	Salve antes do chefe final.	最终首领前记得存档。	ラスボスの前にセーブしよう。
+394	Saved ✓	Salva ✓	已保存 ✓	保存済み ✓
+395	Save	Salvar	保存	保存
+396	Guitar, accordion and clapping	Violão, acordeão e palmas	吉他、手风琴与拍手	ギター、アコーディオン、手拍子
+397	Guides	Guias	攻略	攻略
+398	Guides and tips	Guias e dicas	攻略与技巧	攻略とコツ
+400	Do it later	Fazer depois	稍后再做	あとでやる
+402	Hanami	Hanami	赏花	花見
+403	Made for the AYN Thor and single-screen consoles. Opens emulators using ES-DE's rules.	Feito para o AYN Thor e consoles de uma tela. Abre os emuladores com as regras do ES-DE.	为 AYN Thor 和单屏掌机打造。按照 ES-DE 的规则启动模拟器。	AYN Thor と 1 画面の機種向け。ES-DE のルールでエミュレーターを開きます。
+404	Ice	Gelo	冰	氷
+405	History	História	历史	歴史
+406	History and guides	História e guias	历史与攻略	歴史と攻略
+407	Leaves	Folhas	落叶	木の葉
+409	Hours per console	Horas por console	各主机游玩时长	機種ごとの時間
+410	Horizontal	Horizontal	横向	横
+411	Today's a good day to finish that pending game.	Hoje é um bom dia para terminar aquele jogo pendente.	今天是通关那款搁置游戏的好日子。	積みゲーを終わらせるのにいい日です。
+412	Today the {0} theme is on. Turn off "Special dates" to use this one.	Hoje vale o tema de {0}. Desligue "Datas especiais" para usar este.	今天使用{0}主题。关闭“特殊日期”即可使用此主题。	今日は{0}のテーマです。これを使うには「特別な日」をオフに。
+413	Today: {0}	Hoje: {0}	今天：{0}	今日：{0}
+414	AI: {0}	IA: {0}	AI：{0}	AI：{0}
+415	Language	Idioma	语言	言語
+416	Image added to your home	Imagem adicionada ao seu início	图片已添加到主页	画像をホームに追加しました
+417	Big image (top)	Imagem grande (em cima)	大图（上屏）	大きな画像（上）
+418	Image or GIF	Imagem ou GIF	图片或 GIF	画像または GIF
+419	Images	Imagens	图片	画像
+420	ES-DE images	Imagens do ES-DE	ES-DE 图片	ES-DE の画像
+421	ES-DE images connected	Imagens do ES-DE conectadas	已连接 ES-DE 图片	ES-DE の画像を接続しました
+422	ES-DE images connected ✓	Imagens do ES-DE conectadas ✓	已连接 ES-DE 图片 ✓	ES-DE の画像を接続済み ✓
+423	{0} images	Imagens de {0}	{0} 的图片	{0} の画像
+424	Includes the ones that already have them	Inclui os que já têm	包括已有的	すでにあるものも含む
+425	India and Nepal	Índia e Nepal	印度与尼泊尔	インドとネパール
+426	India and the world	Índia e o mundo	印度与全世界	インドと世界
+427	Home	Início	主页	ホーム
+428	Home saved	Início salvo	主页已保存	ホームを保存しました
+429	Swap	Trocar	交换	入れ替え
+430	Swap screens	Trocar as telas	交换屏幕	画面を入れ替え
+431	Swapping works when you use both screens	Trocar serve quando você usa as duas telas	使用双屏时才能交换	入れ替えは 2 画面使用時のみです
+432	Go to the last thing you played	Ir ao último que você jogou	前往上次玩的游戏	最後に遊んだゲームへ
+433	Ireland and the world	Irlanda e o mundo	爱尔兰与全世界	アイルランドと世界
+435	Hanukkah	Hanukkah	光明节	ハヌカ
+436	Japan	Japão	日本	日本
+437	Play for a while and you'll see your hours per console here.	Jogue um pouco e aqui verá suas horas por console.	玩一会儿，这里就会显示各主机的游玩时长。	少し遊ぶと、ここに機種ごとの時間が表示されます。
+438	Game	Jogo	游戏	ゲーム
+439	Game on top, shelf on the bottom	Jogo em cima, estante embaixo	上屏游戏，下屏游戏架	上にゲーム、下に棚
+440	Selected game	Jogo escolhido	当前游戏	選択中のゲーム
+441	Game and shelf	Jogo e estante	游戏与游戏架	ゲームと棚
+442	Games	Jogos	游戏	ゲーム
+443	Android games	Jogos de Android	Android 游戏	Android ゲーム
+444	Recently played	Jogados recentemente	最近游玩	最近遊んだゲーム
+445	Playing	Jogando	游戏中	プレイ中
+446	Playing now	Jogando agora	正在游玩	プレイ中
+447	Play	Jogar	开始游戏	プレイ
+450	The AI is recognizing your games	A IA está reconhecendo seus jogos	AI 正在识别你的游戏	AI がゲームを認識中
+451	The AI recognizes games libretro doesn't know (Switch, PS3, files with odd names) and gives them their real name.	A IA reconhece os jogos que o libretro não conhece (Switch, PS3, arquivos com nomes estranhos) e coloca o nome real.	AI 会识别 libretro 不认识的游戏（Switch、PS3、文件名奇怪的游戏），并为其加上真实名称。	AI が libretro にないゲーム（Switch、PS3、変な名前のファイル）を認識して正式名を付けます。
+452	The AI recognized {0} games	A IA reconheceu {0} jogos	AI 识别了 {0} 款游戏	AI が {0} 本のゲームを認識しました
+453	The AI replied with an error ({0}). Try again.	A IA respondeu com um erro ({0}). Tente de novo.	AI 返回了错误（{0}）。请重试。	AI がエラーを返しました（{0}）。もう一度お試しください。
+454	La Tirana festival	La Tirana	拉蒂拉纳节	ラ・ティラナ祭り
+455	The Díptico logo animation at startup.	A animação com o logo do Díptico ao ligar.	开机时的 Díptico 标志动画。	起動時の Díptico ロゴのアニメーション。
+456	The AI key isn't valid.	A chave de IA não é válida.	AI 密钥无效。	AI キーが無効です。
+457	The key didn't work. Check it or your connection.	A chave não funcionou. Confira ou teste sua conexão.	密钥无效。请检查密钥或网络连接。	キーが使えませんでした。キーか接続を確認してください。
+458	The bottom one stays black	A de baixo fica preta	下屏保持黑屏	下の画面は黒のまま
+459	The best console is the one you have on hand.	O melhor console é o que está à mão.	最好的主机就是手边的那台。	最高のゲーム機は、手元にある一台。
+460	Background music. It goes quiet by itself when you open a game or put on Spotify or YouTube Music.	A música de fundo. Fica em silêncio sozinha ao abrir um jogo ou se você tocar Spotify ou YouTube Music.	背景音乐。打开游戏或播放 Spotify、YouTube Music 时会自动静音。	BGM です。ゲームを開いたり Spotify・YouTube Music を再生すると自動で止まります。
+461	The Thor's bottom screen is almost square: on automatic everything adapts to that shape.	A tela de baixo do Thor é quase quadrada: no automático tudo se ajusta a esse formato.	Thor 的下屏接近正方形：自动模式下一切都会适应这个形状。	Thor の下画面はほぼ正方形です。自動ならその形に合わせます。
+462	The screen where the emulator opens when you press A. For a specific game, hold A on it.	A tela onde o emulador abre ao apertar A. Para um jogo específico, segure A sobre ele.	按 A 时模拟器打开的屏幕。针对某款游戏，在它上面长按 A。	A を押したときにエミュレーターが開く画面。特定のゲームは A 長押しで。
+463	The first time may take a moment.	Na primeira vez pode demorar um pouco.	第一次可能需要一点时间。	初回は少し時間がかかることがあります。
+464	The one with snes, psx, nds…	A que tem snes, psx, nds…	包含 snes、psx、nds…的那个	snes、psx、nds…が入っているもの
+465	I download them free from libretro. With a SteamGridDB key I also bring logos and big art.	Baixo de graça do libretro. Com uma chave do SteamGridDB também trago logos e arte grande.	我会从 libretro 免费下载。有 SteamGridDB 密钥时还能获取标志和大图。	libretro から無料でダウンロードします。SteamGridDB のキーがあればロゴと大きなアートも。
+466	Notifications are already on	As notificações já estão ativadas	通知已开启	通知はすでにオンです
+467	All three, one after another	As três, uma depois da outra	三首依次播放	3 曲を順番に
+468	Latin America	América Latina	拉丁美洲	中南米
+469	Lava	Lava	熔岩	溶岩
+470	Lavender	Lavanda	薰衣草	ラベンダー
+471	Text	Letra	文字	文字
+472	Legend of the Forest	Lenda da Floresta	森林传说	森の伝説
+473	Frees up space. Your own images aren't touched.	Libera espaço. Suas imagens não são mexidas.	释放空间。不会动你自己的图片。	容量を空けます。自分の画像はそのままです。
+474	Clear	Limpar	清除	クリア
+475	Flat	Liso	纯色	フラット
+476	Flat, gradient, with a passing shine, or glass. You'll see it on the Play button, the menu and selected options.	Liso, degradê, com um brilho que passa, ou de vidro. Aparece no botão Jogar, no menu e nas opções escolhidas.	纯色、渐变、流光或玻璃效果。会显示在“开始游戏”按钮、菜单和选中的选项上。	フラット、グラデーション、流れる光、ガラス。プレイボタン、メニュー、選択中の項目に表示されます。
+477	List	Lista	列表	リスト
+478	Done	Pronto	完成	完了
+479	Done ✓	Pronto ✓	完成 ✓	完了 ✓
+480	Done, I deleted the downloaded images	Pronto, apaguei as imagens baixadas	完成，已删除下载的图片	ダウンロードした画像を削除しました
+481	Done, {0} is back to how it was	Pronto, {0} voltou a ser como era	完成，{0} 已恢复原样	{0} を元に戻しました
+482	Done: found {0} of {1} games	Pronto: encontrei {0} de {1} jogos	完成：找到了 {1} 款中的 {0} 款	完了：{1} 本中 {0} 本見つかりました
+483	You have {0} of {1} achievements in this game.	Você tem {0} de {1} conquistas neste jogo.	你在这款游戏中获得了 {1} 个成就中的 {0} 个。	このゲームの実績は {1} 個中 {0} 個獲得しています。
+484	You'll find it in the menu, under Library	Fica no menu, em Biblioteca	在菜单的“游戏库”中	メニューの「ライブラリ」にあります
+485	You'll find it in the menu, under Covers	Fica no menu, em Capas	在菜单的“封面”中	メニューの「カバー」にあります
+486	You can change it whenever you want	Você pode mudar quando quiser	随时可以更改	いつでも変更できます
+487	Anything: what to play, how to beat a part, tips, or to change something in Díptico.	O que quiser: o que jogar, como passar uma parte, dicas, ou que eu mude algo do Díptico.	什么都行：玩什么、怎么过某一关、技巧，或者修改 Díptico 的设置。	何でもどうぞ：何を遊ぶか、攻略、コツ、Díptico の設定変更など。
+488	Chill lofi	Lofi tranquilo	舒缓 Lo-fi	まったり Lo-fi
+489	Logo	Logo	标志	ロゴ
+490	Achievements	Conquistas	成就	実績
+491	Achievements (RetroAchievements)	Conquistas (RetroAchievements)	成就（RetroAchievements）	実績（RetroAchievements）
+492	Achievements · {0}	Conquistas · {0}	成就 · {0}	実績 · {0}
+493	Classics never go out of style.	Os clássicos nunca saem de moda.	经典永不过时。	名作は色あせない。
+494	Díptico's drawings, abbreviations, or RetroArch icon packs (downloaded once).	Os desenhos do Díptico, siglas, ou pacotes de ícones do RetroArch (baixados uma vez).	Díptico 的图画、缩写，或 RetroArch 图标包（只需下载一次）。	Díptico のイラスト、略称、または RetroArch のアイコンパック（一度だけダウンロード）。
+495	Games open on	Os jogos abrem na	游戏打开于	ゲームを開く画面
+496	Achievements are earned by playing in RetroArch (or other compatible emulators) while signed in there: in RetroArch go to Settings › Achievements. Díptico shows which ones you have and which are missing in each game's info.	As conquistas são ganhas jogando no RetroArch (ou outros emuladores compatíveis) com sua conta conectada lá: no RetroArch vá em Ajustes › Conquistas. O Díptico mostra quais você tem e quais faltam na ficha de cada jogo.	成就需要在 RetroArch（或其他兼容模拟器）中登录账号后游玩获得：在 RetroArch 中进入 设置 › 成就。Díptico 会在每款游戏的资料中显示已获得和未获得的成就。	実績は RetroArch（または対応エミュレーター）でログインして遊ぶと獲得できます：RetroArch の 設定 › 実績。Díptico は各ゲーム情報で獲得済みと未獲得を表示します。
+497	Ports (Ship of Harkinian, Doom, Mario 64…) and your Android games (Genshin, Minecraft…) get their own shelf, info and guides.	Os ports (Ship of Harkinian, Doom, Mario 64…) e seus jogos de Android (Genshin, Minecraft…) têm estante, ficha e guias próprias.	移植游戏（Ship of Harkinian、Doom、Mario 64…）和你的 Android 游戏（原神、Minecraft…）有自己的游戏架、资料和攻略。	移植作（Ship of Harkinian、Doom、Mario 64…）や Android ゲーム（原神、マインクラフト…）には専用の棚、情報、攻略があります。
+498	Ports are games made for Android (Ship of Harkinian, the Doom ones, Mario 64…). Check them and they appear on their own shelf, with play time and next step.	Os ports são jogos feitos para Android (Ship of Harkinian, os de Doom, Mario 64…). Marque-os e eles aparecem na própria estante, com tempo jogado e próximo passo.	移植游戏是为 Android 制作的游戏（Ship of Harkinian、Doom 系列、Mario 64…）。勾选后会出现在专属游戏架上，并记录游玩时长和下一步。	移植作は Android 向けに作られたゲームです（Ship of Harkinian、Doom、Mario 64…）。チェックすると専用の棚に並び、プレイ時間と次の目標も記録されます。
+501	Mark favorites with Y on a game	Marque favoritos com Y sobre um jogo	在游戏上按 Y 加入收藏	ゲームの上で Y を押してお気に入りに
+502	Check the games made for Android. You can add any app.	Marque os jogos feitos para Android. Você pode adicionar qualquer app.	勾选为 Android 制作的游戏。任何应用都可以添加。	Android 向けのゲームにチェックを。どのアプリでも追加できます。
+503	Check	Marcar	勾选	チェック
+504	Mark as favorite	Marcar como favorito	加入收藏	お気に入りにする
+505	Shift	Maiús	大写	Shift
+506	Medium	Médio	中	中
+507	Midnight	Meia-noite	午夜	真夜中
+508	Medium	Médio	中	中
+510	Mint	Menta	薄荷	ミント
+511	Menu	Menu	菜单	メニュー
+512	Menu · {0}	Menu · {0}	菜单 · {0}	メニュー · {0}
+513	Pride Month	Mês do Orgulho	骄傲月	プライド月間
+514	Mix	Mix	混合	ミックス
+515	Mix of all three	Mix das três	三首混合	3 曲をミックス
+516	My own music	Minha própria música	我自己的音乐	自分の音楽
+517	My next step	Meu próximo passo	我的下一步	次の目標
+518	My theme	Meu tema	我的主题	マイテーマ
+519	My theme · color 2	Meu tema · cor 2	我的主题 · 颜色 2	マイテーマ · カラー 2
+520	My theme · color 3	Meu tema · cor 3	我的主题 · 颜色 3	マイテーマ · カラー 3
+521	My theme · main color	Meu tema · cor principal	我的主题 · 主色	マイテーマ · メインカラー
+522	My theme · decoration	Meu tema · decoração	我的主题 · 装饰	マイテーマ · 装飾
+523	My theme · background	Meu tema · fundo	我的主题 · 背景	マイテーマ · 背景
+524	Watch it change as you choose. Dark saves battery on OLED screens.	Veja como muda enquanto escolhe. O escuro economiza bateria em telas OLED.	选择时可以看到变化。深色在 OLED 屏幕上更省电。	選ぶと変化が見られます。ダークは OLED 画面で節電になります。
+525	My tips and notes	Minhas dicas e notas	我的技巧与笔记	自分の攻略メモ
+526	Halloween mystery	Mistério de Halloween	万圣节之谜	ハロウィンの謎
+527	Mode	Modo	模式	モード
+528	Light mode	Modo claro	浅色模式	ライトモード
+529	Screen mode	Modo de telas	屏幕模式	画面モード
+530	Dark mode	Modo escuro	深色模式	ダークモード
+531	Monochrome	Monocromático	单色	モノクロ
+532	Show	Mostrar	显示	表示
+533	Show or hide	Mostrar ou ocultar	显示或隐藏	表示／非表示
+534	Move	Mover	移动	移動
+535	Move around the shelf	Andar pela estante	在游戏架中移动	棚を移動
+536	Shows the game's official name instead of the file name.	Mostra o nome oficial do jogo em vez do nome do arquivo.	显示游戏的官方名称，而非文件名。	ファイル名ではなくゲームの正式名を表示します。
+537	Shows the cover, a gameplay screenshot or its logo.	Mostra a capa, uma captura do jogo ou o logo.	显示封面、游戏截图或标志。	カバー、ゲーム画面、ロゴのいずれかを表示します。
+538	Shows a small alert when a notification arrives (never while you play).	Mostra um aviso pequeno quando chega uma notificação (nunca enquanto você joga).	收到通知时显示小提醒（游戏时不会显示）。	通知が届くと小さく知らせます（プレイ中は表示しません）。
+539	Move widgets with the D-pad or your finger, change their size with L1 and R1 (10 sizes and shapes).	Mova os widgets com o direcional ou o dedo, mude o tamanho com L1 e R1 (10 tamanhos e formatos).	用十字键或手指移动小组件，用 L1 和 R1 改变大小（10 种尺寸和形状）。	十字キーか指でウィジェットを動かし、L1・R1 でサイズ変更（10 種類）。
+540	Bats	Morcegos	蝙蝠	コウモリ
+541	Very compact	Muito compacto	非常紧凑	とてもコンパクト
+542	Very large	Muito grande	非常大	とても大きい
+543	Move between the options and see everything change right away.	Passe pelas opções e veja tudo mudar na hora.	在选项间移动，立刻看到变化。	項目を移動すると、すぐに変化が見られます。
+544	Smaller to see more games, or bigger to see them better.	Menor para ver mais jogos, ou maior para vê-los melhor.	调小可显示更多游戏，调大看得更清楚。	小さくするとたくさん、大きくすると見やすく。
+545	Easier to read	Mais fácil de ler	更易阅读	読みやすい
+546	Most played: {0} ({1})	Mais jogado: {0} ({1})	玩得最多：{0}（{1}）	一番遊んだゲーム：{0}（{1}）
+547	Most played	Mais jogados	玩得最多	よく遊ぶゲーム
+548	Brighter	Mais luminoso	更明亮	より明るい
+549	Most time	Mais tempo	时长最长	プレイ時間順
+550	Mexico and Central America	México e América Central	墨西哥与中美洲	メキシコと中米
+551	Mexico and Latin America	México e América Latina	墨西哥与拉丁美洲	メキシコと中南米
+552	Music	Música	音乐	音楽
+553	Music (Spotify, YouTube Music…)	Música (Spotify, YouTube Music…)	音乐（Spotify、YouTube Music…）	音楽（Spotify、YouTube Music…）
+554	Music off	Música desligada	音乐已关闭	音楽オフ
+555	Background music	Música de fundo	背景音乐	BGM
+556	Game music	Música do jogo	游戏音乐	ゲームの音楽
+557	Music by theme	Música conforme o tema	随主题切换音乐	テーマに合わせた音楽
+558	Nothing yet	Nada ainda	暂无	まだありません
+559	Nothing for "{0}"	Nada com "{0}"	没有找到“{0}”	「{0}」は見つかりません
+560	Nothing playing	Nada tocando	没有正在播放的内容	再生中の曲はありません
+562	Christmas	Natal	圣诞节	クリスマス
+563	Needs a key	Precisa de chave	需要密钥	キーが必要
+564	Needs a key	Precisa de uma chave	需要密钥	キーが必要
+565	I need internet to recognize the names	Preciso de internet para reconhecer os nomes	识别名称需要联网	名前の認識にはインターネットが必要です
+566	I need internet, and the title has to look like the game's real name. You can change the title in Customize.	Preciso de internet, e que o título se pareça com o nome real do jogo. Dá para mudar o título em Personalizar.	需要联网，且标题要与游戏真实名称相近。可在“个性化”中更改标题。	インターネットが必要で、タイトルが正式名に近い必要があります。タイトルはカスタマイズで変更できます。
+567	Pure black	Preto puro	纯黑	完全な黒
+569	Neon	Neon	霓虹	ネオン
+570	Snow	Neve	雪	雪
+571	Snow at Christmas, bats on Halloween, petals in spring… depending on the theme.	Neve no Natal, morcegos no Halloween, pétalas na primavera… conforme o tema.	圣诞飘雪、万圣节蝙蝠、春天花瓣…随主题而变。	クリスマスは雪、ハロウィンはコウモリ、春は花びら…テーマに合わせて。
+573	No	Não	否	いいえ
+574	I don't detect a second screen	Não detecto uma segunda tela	未检测到第二块屏幕	2 つ目の画面が見つかりません
+575	I couldn't find "{0}" on RetroAchievements. Try changing the title in Customize.	Não encontrei "{0}" no RetroAchievements. Tente mudar o título em Personalizar.	在 RetroAchievements 上找不到“{0}”。试试在“个性化”中修改标题。	RetroAchievements で「{0}」が見つかりません。カスタマイズでタイトルを変えてみてください。
+576	I didn't find songs in that folder	Não encontrei músicas nessa pasta	该文件夹中没有找到歌曲	そのフォルダに曲が見つかりません
+577	I couldn't find that game	Não encontrei esse jogo	找不到该游戏	そのゲームが見つかりません
+578	I couldn't find that theme	Não encontrei esse tema	找不到该主题	そのテーマが見つかりません
+579	I didn't find images for {0}	Não encontrei imagens para {0}	没有找到{0}的图片	{0} の画像が見つかりません
+580	I didn't find games	Não encontrei jogos	没有找到游戏	ゲームが見つかりません
+581	I didn't find new Android games	Não encontrei jogos de Android novos	没有找到新的 Android 游戏	新しい Android ゲームは見つかりません
+582	I didn't find games in your folder	Não encontrei jogos na sua pasta	你的文件夹中没有找到游戏	フォルダにゲームが見つかりません
+583	I couldn't find this game's story	Não encontrei a história deste jogo	找不到这款游戏的历史	このゲームの歴史が見つかりません
+584	I didn't find achievements for this game.	Não encontrei conquistas para este jogo.	没有找到这款游戏的成就。	このゲームの実績が見つかりません。
+585	I didn't find options. For many more (heroes, logos and covers), add your free SteamGridDB key in Menu › Covers.	Não encontrei opções. Para muitas mais (heroes, logos e capas), adicione sua chave grátis do SteamGridDB em Menu › Capas.	没有找到选项。要获取更多（hero 图、标志和封面），请在 菜单 › 封面 中添加免费的 SteamGridDB 密钥。	候補が見つかりません。もっと多く（ヒーロー、ロゴ、カバー）見つけるには、メニュー › カバー で無料の SteamGridDB キーを追加してください。
+586	I didn't find a file manager	Não encontrei um gerenciador de arquivos	没有找到文件管理器	ファイルマネージャーが見つかりません
+587	I didn't find a browser to open the link	Não encontrei um navegador para abrir o link	没有找到可以打开链接的浏览器	リンクを開くブラウザが見つかりません
+588	No {0} emulators are installed. I suggest {1}.	Não há emuladores de {0} instalados. Sugiro {1}.	没有安装 {0} 模拟器。推荐 {1}。	{0} のエミュレーターがありません。{1} がおすすめです。
+589	No games in "{0}"	Não há jogos em "{0}"	“{0}”中没有游戏	「{0}」にゲームがありません
+590	I couldn't open Bluetooth	Não consegui abrir o Bluetooth	无法打开蓝牙	Bluetooth を開けませんでした
+591	I couldn't open Wi-Fi	Não consegui abrir o Wi-Fi	无法打开 Wi-Fi	Wi-Fi を開けませんでした
+592	I couldn't open the file picker	Não consegui abrir o seletor de arquivos	无法打开文件选择器	ファイル選択を開けませんでした
+593	I couldn't open the folder picker	Não consegui abrir o seletor de pastas	无法打开文件夹选择器	フォルダ選択を開けませんでした
+594	I couldn't open the volume	Não consegui abrir o volume	无法打开音量设置	音量を開けませんでした
+595	I couldn't open the app	Não consegui abrir o app	无法打开该应用	アプリを開けませんでした
+596	I couldn't open the battery	Não consegui abrir a bateria	无法打开电池设置	バッテリーを開けませんでした
+597	I couldn't open the display	Não consegui abrir a tela	无法打开显示设置	ディスプレイを開けませんでした
+598	I couldn't open the bottom screen	Não consegui abrir a tela de baixo	无法打开下屏	下の画面を開けませんでした
+599	I couldn't open settings	Não consegui abrir os ajustes	无法打开设置	設定を開けませんでした
+600	I couldn't open home settings	Não consegui abrir os ajustes de início	无法打开主屏幕设置	ホームの設定を開けませんでした
+601	I couldn't download that image. Try another.	Não consegui baixar essa imagem. Tente outra.	无法下载这张图片。换一张试试。	その画像をダウンロードできませんでした。別のものを試してください。
+602	I couldn't download the icons. Check your connection.	Não consegui baixar os ícones. Confira sua conexão.	无法下载图标。请检查网络连接。	アイコンをダウンロードできませんでした。接続を確認してください。
+603	I couldn't connect to RetroAchievements	Não consegui conectar ao RetroAchievements	无法连接 RetroAchievements	RetroAchievements に接続できませんでした
+604	I couldn't create the theme. Check your connection.	Não consegui criar o tema. Confira sua conexão.	无法创建主题。请检查网络连接。	テーマを作成できませんでした。接続を確認してください。
+605	I couldn't talk to the AI.	Não consegui falar com a IA.	无法连接 AI。	AI と通信できませんでした。
+606	I couldn't read your game folders. Choose them again.	Não consegui ler suas pastas de jogos. Escolha-as de novo.	无法读取你的游戏文件夹。请重新选择。	ゲームフォルダを読み込めませんでした。もう一度選んでください。
+607	I couldn't read {0} of your folders	Não consegui ler {0} das suas pastas	有 {0} 个文件夹无法读取	フォルダのうち {0} 個を読み込めませんでした
+608	I didn't recognize that folder's console. Choose it yourself.	Não reconheci o console dessa pasta. Escolha você.	无法识别该文件夹对应的主机。请手动选择。	そのフォルダの機種が分かりません。選んでください。
+609	No internet. Connect to a Wi-Fi network and try again.	Sem internet. Conecte-se a uma rede Wi-Fi e tente de novo.	没有网络。请连接 Wi-Fi 后重试。	インターネットに接続されていません。Wi-Fi に接続してもう一度お試しください。
+610	You have no notifications.	Você não tem notificações.	没有通知。	通知はありません。
+611	Game name	Nome do jogo	游戏名称	ゲーム名
+612	Normal	Normal	正常	標準
+613	Northern Chile	Norte do Chile	智利北部	チリ北部
+614	Notes and tips	Notas e dicas	笔记与技巧	メモとコツ
+615	Notifications	Notificações	通知	通知
+616	Notifications in Díptico	Notificações no Díptico	在 Díptico 中显示通知	Díptico での通知
+617	Notifications and shortcuts	Notificações e acessos	通知与快捷方式	通知とショートカット
+618	Notifications, Díptico as the main launcher and Android quick settings.	Notificações, Díptico como launcher principal e acessos rápidos do Android.	通知、将 Díptico 设为默认启动器以及 Android 快捷设置。	通知、Díptico をメインランチャーに、Android のクイック設定。
+619	Never	Nunca	从不	しない
+620	Hidden	Oculto	已隐藏	非表示
+621	Ocean	Oceano	海洋	海
+623	Waves and calm	Ondas e calma	海浪与宁静	波とやすらぎ
+624	Optional	Opcional	可选	任意
+625	Optional · logos and big art	Opcional · logos e arte grande	可选 · 标志和大图	任意 · ロゴと大きなアート
+626	Options	Opções	选项	オプション
+627	Game options	Opções do jogo	游戏选项	ゲームのオプション
+628	Option {0} of {1}	Opção {0} de {1}	第 {0} 个，共 {1} 个	候補 {0} / {1}
+629	Order	Ordem	排序	並び順
+630	Sort	Ordenar	排序	並べ替え
+631	Dark	Escuro	深色	ダーク
+632	Another app	Outro app	其他应用	他のアプリ
+635	Panoramic	Panorâmico	全景	パノラマ
+636	Display	Tela	显示	ディスプレイ
+637	Screens	Telas	屏幕	画面
+638	Screens back in place	Telas no lugar	屏幕已复位	画面を元に戻しました
+639	Screens swapped	Telas trocadas	屏幕已交换	画面を入れ替えました
+640	Paper	Papel	纸	紙
+641	To create themes with AI. Get it at console.anthropic.com › API Keys. Each theme costs very little.	Para criar temas com IA. Pegue em console.anthropic.com › API Keys. Cada tema custa muito pouco.	用于以 AI 创建主题。在 console.anthropic.com › API Keys 获取。每个主题花费很少。	AI でテーマを作るためのキーです。console.anthropic.com › API Keys で取得できます。1 テーマあたりわずかな費用です。
+642	For reading from afar	Para ler de longe	适合远距离阅读	離れて読む用
+643	For the missing ones	Para os que faltam	为缺少的部分	足りないものに
+644	To show and control what's playing in Spotify, YouTube Music or another app, Android asks you to enable Díptico's "notification access".	Para mostrar e controlar o que toca no Spotify, YouTube Music ou outro app, o Android pede para ativar o "acesso a notificações" do Díptico.	要显示并控制 Spotify、YouTube Music 或其他应用正在播放的内容，Android 需要你开启 Díptico 的“通知使用权”。	Spotify や YouTube Music などの再生内容を表示・操作するには、Android で Díptico の「通知へのアクセス」をオンにする必要があります。
+645	To show it to someone.	Para mostrar a alguém.	展示给别人看。	誰かに見せるために。
+646	To recognize names with AI I need your Claude key	Para reconhecer nomes com IA preciso da sua chave do Claude	用 AI 识别名称需要你的 Claude 密钥	AI で名前を認識するには Claude のキーが必要です
+647	To use another app below	Para usar outro app embaixo	在下屏使用其他应用	下で別のアプリを使うために
+648	To use me you need an AI key (Claude). Choose "Ask a question" and I'll ask you for the key.	Para me usar você precisa de uma chave de IA (Claude). Escolha "Escrever uma pergunta" e eu peço a chave.	使用我需要 AI 密钥（Claude）。选择“提个问题”，我会请你输入密钥。	使うには AI キー（Claude）が必要です。「質問を書く」を選ぶとキーを入力できます。
+649	To see your apps' notifications inside Díptico, Android asks you to enable "notification access".	Para ver as notificações dos seus apps dentro do Díptico, o Android pede para ativar o "acesso a notificações".	要在 Díptico 中查看应用通知，Android 需要你开启“通知使用权”。	アプリの通知を Díptico 内で見るには、Android で「通知へのアクセス」をオンにする必要があります。
+650	To see your notifications here, enable the permission in Menu › Console.	Para ver suas notificações aqui, ative a permissão em Menu › Console.	要在这里查看通知，请在 菜单 › 主机 中开启权限。	ここで通知を見るには、メニュー › 本体 で許可をオンにしてください。
+651	Easter	Páscoa	复活节	イースター
+653	Muslim countries	Países muçulmanos	穆斯林国家	イスラム諸国
+654	Paste or type your key	Cole ou escreva sua chave	粘贴或输入你的密钥	キーを貼り付けるか入力
+655	Paste your Web API Key	Cole sua Web API Key	粘贴你的 Web API Key	Web API Key を貼り付け
+656	Paste your key	Cole sua chave	粘贴你的密钥	キーを貼り付け
+657	Paste	Colar	粘贴	貼り付け
+658	Thinking…	Pensando…	思考中…	考え中…
+659	Permission for the music widget	Permissão para o widget de música	音乐小组件权限	音楽ウィジェットの許可

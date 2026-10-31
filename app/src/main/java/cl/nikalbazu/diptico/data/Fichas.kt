@@ -54,12 +54,23 @@ object Fichas {
     private fun hash(s: String): String =
         MessageDigest.getInstance("SHA-1").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }.take(16)
 
-    fun buscar(ctx: Context, titulo: String, consola: String): FichaInfo? {
-        val cache = File(File(ctx.filesDir, "fichas").apply { mkdirs() }, hash("v2|$titulo|$consola") + ".json")
+    /** Palabra que se suma a la búsqueda para encontrar el artículo del juego, por idioma. */
+    private fun palabra(idioma: String) = when (idioma) {
+        "en" -> "video game"; "pt" -> "jogo eletrônico"; "zh" -> "电子游戏"; "ja" -> "ゲーム"; else -> "videojuego"
+    }
+
+    fun buscar(ctx: Context, titulo: String, consola: String, idioma: String = cl.nikalbazu.diptico.estado.Idioma.actual): FichaInfo? {
+        val cache = File(File(ctx.filesDir, "fichas").apply { mkdirs() }, hash("v2|$idioma|$titulo|$consola") + ".json")
         if (cache.exists()) {
             leer(cache.readText())?.let { return it }
         }
-        val info = buscarEn("es", titulo, consola, "videojuego") ?: buscarEn("en", titulo, consola, "video game")
+        // Primero en tu idioma; si no está, en inglés (y en español como último recurso).
+        val orden = listOf(idioma, "en", "es").distinct()
+        var info: FichaInfo? = null
+        for (l in orden) {
+            info = buscarEn(l, titulo, consola, palabra(l))
+            if (info != null) break
+        }
         if (info != null) cache.writeText(guardar(info))
         return info
     }
@@ -93,9 +104,18 @@ object Fichas {
             principal = principal,
             titulo = titReal,
             resumen = secciones[""]?.trim().orEmpty().take(1600),
-            historia = buscarSec("desarrollo", "development", "producción", "production", "historia", "history").take(3500),
-            juego = buscarSec("jugabilidad", "sistema de juego", "gameplay", "argumento", "trama", "plot", "sinopsis").take(3000),
-            recepcion = buscarSec("recepción", "reception", "legado", "legacy", "ventas", "sales").take(2000),
+            historia = buscarSec(
+                "desarrollo", "development", "producción", "production", "historia", "history",
+                "desenvolvimento", "produção", "história", "开发", "制作", "历史", "開発", "制作", "歴史",
+            ).take(3500),
+            juego = buscarSec(
+                "jugabilidad", "sistema de juego", "gameplay", "argumento", "trama", "plot", "sinopsis",
+                "jogabilidade", "enredo", "玩法", "剧情", "故事", "ゲームシステム", "システム", "ストーリー", "あらすじ",
+            ).take(3000),
+            recepcion = buscarSec(
+                "recepción", "reception", "legado", "legacy", "ventas", "sales",
+                "recepção", "vendas", "评价", "反响", "销量", "評価", "反響", "売上", "販売",
+            ).take(2000),
             enlace = "https://$idioma.wikipedia.org/wiki/${cod(pagina.replace(' ', '_'))}",
             idioma = idioma,
         )

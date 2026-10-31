@@ -202,10 +202,13 @@ fun Texto(
     espaciado: Float? = null,
     sombra: Boolean = false,
     alinear: TextAlign? = null,
+    traducir: Boolean = true,
 ) {
     val esc = LocalEscala.current
+    // Lee el idioma (estado de Compose) para que todo se redibuje al cambiarlo.
+    val idioma = cl.nikalbazu.diptico.estado.Idioma.actual
     Text(
-        text = texto,
+        text = if (traducir && idioma != "es") cl.nikalbazu.diptico.estado.Idioma.t(texto) else texto,
         modifier = modifier,
         color = color,
         fontSize = esc.s(tam),

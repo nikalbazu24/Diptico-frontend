@@ -271,6 +271,42 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             caja(3f, 4f, 9f, 12f, 2f)
             circulo(16.5f, 15.5f, 4.5f, a)
         }
+        Icono.TROFEO -> {
+            camino {
+                m(7f, 4f); l(17f, 4f); l(17f, 9f)
+                cubicTo(17f * k, 13f * k, 14.5f * k, 15f * k, 12f * k, 15f * k)
+                cubicTo(9.5f * k, 15f * k, 7f * k, 13f * k, 7f * k, 9f * k); close()
+            }
+            linea(7f, 6f, 4f, 6f); linea(4f, 6f, 4.5f, 9f); linea(4.5f, 9f, 7.2f, 10.5f)
+            linea(17f, 6f, 20f, 6f); linea(20f, 6f, 19.5f, 9f); linea(19.5f, 9f, 16.8f, 10.5f)
+            linea(12f, 15f, 12f, 18.5f)
+            linea(8f, 20f, 16f, 20f, a)
+        }
+        Icono.ASISTENTE -> {
+            camino {
+                m(5f, 5f); l(19f, 5f)
+                cubicTo(20.1f * k, 5f * k, 21f * k, 5.9f * k, 21f * k, 7f * k)
+                l(21f, 15f)
+                cubicTo(21f * k, 16.1f * k, 20.1f * k, 17f * k, 19f * k, 17f * k)
+                l(10f, 17f); l(6f, 20.5f); l(6f, 17f); l(5f, 17f)
+                cubicTo(3.9f * k, 17f * k, 3f * k, 16.1f * k, 3f * k, 15f * k)
+                l(3f, 7f)
+                cubicTo(3f * k, 5.9f * k, 3.9f * k, 5f * k, 5f * k, 5f * k); close()
+            }
+            camino(a, lleno = true) {
+                m(12f, 7.5f); l(13f, 10f); l(15.5f, 11f); l(13f, 12f); l(12f, 14.5f); l(11f, 12f); l(8.5f, 11f); l(11f, 10f); close()
+            }
+        }
+        Icono.IDIOMA -> {
+            circulo(12f, 12f, 9f)
+            linea(3f, 12f, 21f, 12f)
+            camino {
+                m(12f, 3f)
+                cubicTo(15f * k, 6f * k, 15f * k, 18f * k, 12f * k, 21f * k)
+                cubicTo(9f * k, 18f * k, 9f * k, 6f * k, 12f * k, 3f * k)
+            }
+            linea(5f, 7.5f, 19f, 7.5f, a); linea(5f, 16.5f, 19f, 16.5f, a)
+        }
         Icono.MANDO -> {
             caja(2.5f, 7f, 19f, 10.5f, 5f)
             linea(7f, 10.5f, 7f, 14f); linea(5.25f, 12.25f, 8.75f, 12.25f)

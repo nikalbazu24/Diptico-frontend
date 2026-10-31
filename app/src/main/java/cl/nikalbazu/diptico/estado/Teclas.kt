@@ -185,7 +185,7 @@ object Teclas {
 
         // Paneles con su propia forma de moverse.
         when (e.panel) {
-            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES ->
+            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE ->
                 return panelEnGrilla(ev, e)
             Panel.MENU -> return menu(ev, e)
             else -> Unit
@@ -337,12 +337,14 @@ object Teclas {
                 code == KeyEvent.KEYCODE_BUTTON_X -> when (e.panel) {
                     Panel.FICHA -> Diptico.cerrarPanel()
                     Panel.CENTRO -> Diptico.descartarAvisoSel()
+                    Panel.ASISTENTE -> Diptico.escribirAlAsistente()
                     Panel.BUSCAR -> Diptico.limpiarBusqueda()
                     else -> Unit
                 }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> when (e.panel) {
                     Panel.CARPETAS -> Diptico.quitarCarpeta()
                     Panel.CENTRO -> cl.nikalbazu.diptico.audio.Avisos.descartarTodas()
+                    Panel.ASISTENTE -> Diptico.borrarChat()
                     Panel.RAPIDO -> Diptico.cerrarPanel()
                     else -> Unit
                 }

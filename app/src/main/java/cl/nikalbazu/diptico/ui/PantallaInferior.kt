@@ -116,7 +116,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES)
+            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -140,6 +140,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.WIDGETS -> PanelWidgets(e)
             Panel.ESTADISTICAS -> PanelEstadisticas(e)
             Panel.IMAGENES -> PanelImagenes(e)
+            Panel.ASISTENTE -> PanelAsistente(e)
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
         }
     }
@@ -611,6 +612,9 @@ private fun PanelClave(e: Estado) {
         ) {
             val (icono, titulo, ayuda, ejemplo) = when (e.textoPara) {
                 "ia_clave" -> listOf(Icono.CLAVE, "Clave de IA (Claude)", "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
+                "ra_usuario" -> listOf(Icono.TROFEO, "Usuario de RetroAchievements", "Tu nombre de usuario en retroachievements.org (no tu correo).", "Ej: Nikalbazu")
+                "ra_clave" -> listOf(Icono.CLAVE, "Clave de RetroAchievements", "En retroachievements.org entra a Settings y copia tu \"Web API Key\". Solo se guarda en tu consola.", "Pega tu Web API Key")
+                "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
                 "ia_pedido" -> listOf(Icono.CHISPA, "Crear tema con IA", "Escribe tu idea, como \"Halloween japonés\" o \"Navidad en la playa\". Si lo dejas vacío, la IA elige la fiesta del mundo más cercana a hoy.", "Ej: Año Nuevo Lunar con faroles")
                 "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")
                 "notas" -> listOf(Icono.LAPIZ, "Mis trucos y notas", "Claves, trucos, coleccionables, lo que quieras recordar de este juego.", "Ej: el código del cofre es 4-2-1")
@@ -622,13 +626,13 @@ private fun PanelClave(e: Estado) {
                 Texto(titulo as String, 20f, lineas = 1)
             }
             Detalle(ayuda as String, 14f)
-            val esClave = e.textoPara == "sgdb" || e.textoPara == "ia_clave"
+            val esClave = e.textoPara == "sgdb" || e.textoPara == "ia_clave" || e.textoPara == "ra_clave"
             CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas") 130f else 60f)
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
-                val quitar = esClave && e.borrador.isBlank() && (if (e.textoPara == "sgdb") e.claveSgdb else e.claveIa).isNotBlank()
+                val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; else -> e.claveIa }).isNotBlank()
                 BotonGrande(
-                    when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; else -> "Guardar" },
+                    when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; e.textoPara == "asistente" -> "Preguntar"; else -> "Guardar" },
                     Uva, SobreUva, Modifier.weight(1.4f),
                 ) { Diptico.guardarClave() }
             }

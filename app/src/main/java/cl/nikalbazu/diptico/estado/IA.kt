@@ -13,11 +13,15 @@ object IA {
     /** Modelos a probar, en orden (si uno no está disponible para la clave, se usa el siguiente). */
     private val MODELOS = listOf(MODELO, "claude-sonnet-5-5", "claude-haiku-4-5", "claude-sonnet-4-5")
 
-    fun pedir(clave: String, prompt: String, maxTokens: Int = 800): String {
+    fun pedir(clave: String, prompt: String, maxTokens: Int = 800): String =
+        conversar(clave, null, listOf("user" to prompt), maxTokens)
+
+    /** Conversación con instrucciones de sistema e historial ("user"/"assistant", texto). */
+    fun conversar(clave: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int = 800): String {
         var ultimo: Exception? = null
         for (m in MODELOS) {
             try {
-                return pedirCon(m, clave, prompt, maxTokens)
+                return pedirCon(m, clave, sistema, mensajes, maxTokens)
             } catch (e: ModeloNoDisponible) {
                 ultimo = e
             }
@@ -40,11 +44,14 @@ object IA {
         }
     }
 
-    private fun pedirCon(modelo: String, clave: String, prompt: String, maxTokens: Int): String {
+    private fun pedirCon(modelo: String, clave: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int): String {
+        val lista = JSONArray()
+        for ((rol, texto) in mensajes) lista.put(JSONObject().put("role", rol).put("content", texto))
         val cuerpo = JSONObject()
             .put("model", modelo)
             .put("max_tokens", maxTokens)
-            .put("messages", JSONArray().put(JSONObject().put("role", "user").put("content", prompt)))
+            .put("messages", lista)
+        if (!sistema.isNullOrBlank()) cuerpo.put("system", sistema)
         val c = URL("https://api.anthropic.com/v1/messages").openConnection() as HttpURLConnection
         c.requestMethod = "POST"
         c.connectTimeout = 15_000
