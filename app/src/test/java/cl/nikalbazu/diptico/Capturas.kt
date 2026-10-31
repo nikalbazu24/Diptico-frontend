@@ -223,6 +223,47 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t40_editar_widgets() = foto("40_editar_widgets", base().copy(panel = Panel.WIDGETS, indice = 2), Rol.INFERIOR)
 
+    // ---------- v0.4 ----------
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t41_cuadricula() = foto("41_vista_cuadricula", base().copy(vista = "cuadricula"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t42_lista() = foto("42_vista_lista", base().copy(vista = "lista", juegoSel = "psx/3"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t43_buscar() = foto("43_buscar", base().copy(panel = Panel.BUSCAR, busqueda = "ro"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t44_centro() = foto("44_centro_de_control", base().copy(panel = Panel.CENTRO, indice = 1), Rol.INFERIOR)
+
+    @Test fun t45_editar_widgets() = foto("45_acomodar_widgets", base().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 1), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t46_formas() = foto(
+        "46_cajas_disco_y_poster",
+        base().copy(formas = mapOf("snes" to cl.nikalbazu.diptico.estado.FormaCfg("disco"), "gba" to cl.nikalbazu.diptico.estado.FormaCfg("poster"), "psx" to cl.nikalbazu.diptico.estado.FormaCfg("horizontal"))),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t47_carpetas() = foto(
+        "47_carpetas",
+        base().copy(
+            panel = Panel.CARPETAS,
+            carpetas = listOf(
+                cl.nikalbazu.diptico.data.CarpetaJuegos(Uri.parse("content://com.android.externalstorage.documents/tree/primary%3AROMs"), null),
+                cl.nikalbazu.diptico.data.CarpetaJuegos(Uri.parse("content://com.android.externalstorage.documents/tree/1234-ABCD%3AJuegos%20Switch"), "switch"),
+            ),
+        ),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t48_menu_estante() = foto("48_menu_estante", base().copy(panel = Panel.MENU, seccion = Seccion.ESTANTE, enOpciones = true, consolaSel = "snes"), Rol.INFERIOR)
+
+    @Test fun t49_una_pantalla_cuadricula() = foto("49_una_pantalla_cuadricula", base().copy(modoPantallas = "una_negra", vista = "cuadricula"), Rol.UNICA)
+
     @Config(qualifiers = ABAJO)
     @Test fun t24_letra_muy_grande() = foto("24_abajo_letra_muy_grande", base().copy(tamTexto = 1.3f), Rol.INFERIOR)
 }
