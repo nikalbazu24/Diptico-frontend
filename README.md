@@ -2,7 +2,20 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.2
+## Qué hace la v0.3
+
+- **Todas las consolas de ES-DE para Android:** 190 sistemas, entre ellos Switch (Eden, Kenji-NX, Skyline), Xbox y Xbox 360, Wii U (Cemu), 3DS (Azahar), PS Vita (Vita3K), PS3 y PS4, arcade, computadoras retro y mucho más, con los mismos comandos que ES-DE (y RetroArch con todos sus núcleos).
+- **Juegos de Android en su propio estante:** Díptico encuentra solo los juegos instalados (Genshin, Minecraft…) y puedes agregar o quitar cualquiera.
+- **Ficha de cada juego** (botón X): resumen e historia de su creación desde Wikipedia, guías y trucos (YouTube, GameFAQs, wikis), tus propias notas, y personalización de título, portada, imagen grande, logo y música propia del juego.
+- **Inicio personalizado con widgets:** juego elegido, reloj, música de Spotify o YouTube Music con controles, próximo paso, jugados hace poco, tiempo jugado, fiestas del mundo, batería y colección. Cada uno se puede mostrar en tamaño chico, mediano o grande, o esconder.
+- **Temas:** 11 temas incluidos, tu propio tema editable, más de 20 fiestas del mundo que cambian el tema solas (Año Nuevo Lunar, Holi, Diwali, Halloween, Día de Muertos, Fiestas Patrias, Navidad…) con decoraciones animadas, y temas creados con IA (con tu clave de Claude).
+- **Íconos de consola a tu gusto:** los dibujos de Díptico, siglas, seis paquetes de íconos de RetroArch o una imagen propia por consola.
+- **Transición al intercambiar pantallas:** lo de arriba baja cruzando la bisagra y lo de abajo sube. Los menús, paneles y estantes también entran y salen animados.
+- **Trabajos de fondo a la vista:** un aviso arriba muestra lo que se está haciendo (buscar juegos, bajar portadas o íconos, crear un tema).
+- **Reloj grande:** toca la hora para verla a pantalla completa.
+- **Los botones de volumen** ahora bajan también la música de Díptico.
+
+### Lo que trajo la v0.2
 
 - **Funciona con una o dos pantallas.** El tutorial parte siempre en una sola pantalla y ahí eliges el modo. Sirve igual en la AYN Thor, una Odin 2 Portal, una tele o un teléfono.
 - **Letra más grande y adaptable.** Todo se dibuja en proporción a la pantalla, también con las pantallas intercambiadas. Hay tres tamaños de letra: normal, grande y muy grande.
@@ -17,14 +30,14 @@ Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arr
 ## Cómo instalarla
 
 1. Desde la Thor, entra a la pestaña **Releases** de este repositorio.
-2. Descarga el archivo `Diptico-v0.2.X.apk` más reciente y ábrelo para instalar.
+2. Descarga el archivo `Diptico-v0.3.X.apk` más reciente y ábrelo para instalar.
 3. Al abrir Díptico, elige tu carpeta de juegos.
 
 Las versiones nuevas se instalan encima de la anterior, sin perder tus datos.
 
 ## Cómo ordenar tus juegos
 
-Dentro de tu carpeta de juegos debe haber una carpeta por consola, igual que en ES-DE:
+Dentro de tu carpeta de juegos debe haber una carpeta por consola, con los mismos nombres que usa ES-DE (`switch`, `xbox360`, `wiiu`, `n3ds`, `psvita`, `dreamcast`, `genesis`…). Algunos ejemplos:
 
 | Carpeta | Consola | Emuladores que Díptico sabe abrir |
 |---|---|---|
@@ -38,6 +51,10 @@ Dentro de tu carpeta de juegos debe haber una carpeta por consola, igual que en 
 | `ps3` | PlayStation 3 | ARMSX3, aPS3e |
 | `ps4` | PlayStation 4 | Bachata S4 |
 | `psp` | PSP | PPSSPP, RetroArch |
+| `switch` | Nintendo Switch | Eden, Kenji-NX, Skyline |
+| `xbox360` | Xbox 360 | aX360e, XenDroid, Xenra |
+| `wiiu` | Wii U | Cemu |
+| `n3ds` | Nintendo 3DS | Azahar, Citra |
 
 ### PS3 y PS4
 
@@ -66,9 +83,16 @@ En **Menú › Emuladores** aprieta A sobre una consola para pasar por los emula
 | A | Jugar (mantén presionado para el menú rápido) |
 | B | Volver o cerrar |
 | Y | Anotar tu próximo paso |
+| X | Ficha del juego |
 | Select | Intercambiar pantallas |
 | Start | Menú (en el menú: ← → cambian de columna, L1/R1 de sección) |
 
 ## Cómo se construye
 
 Cada cambio en `main` hace que GitHub Actions compile el APK, saque fotos de todas las pantallas con el tamaño de la Thor y publique ambas cosas en Releases. Las órdenes para abrir cada emulador vienen de las reglas de ES-DE para Android.
+
+## Créditos
+
+- Las reglas para abrir cada emulador y la lista de consolas vienen de [ES-DE](https://es-de.org) (licencia MIT).
+- Portadas de [libretro-thumbnails](https://github.com/libretro-thumbnails) e íconos de consola de [retroarch-assets](https://github.com/libretro/retroarch-assets).
+- Historia de los juegos desde Wikipedia.

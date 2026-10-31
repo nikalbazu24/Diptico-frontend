@@ -210,7 +210,7 @@ object Diptico {
     private var crudos: List<Juego> = emptyList()
     private var medios: Map<String, MediosJuego> = emptyMap()
 
-    const val VERSION = "0.2"
+    const val VERSION = "0.3"
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -1216,7 +1216,7 @@ object Diptico {
                 ) { pedirCarpeta?.invoke(Carpeta.MUSICA) }
             }
             Seccion.EMULADORES -> {
-                val consolas = e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.esPorts } }
+                val consolas = e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.sinEmulador }.take(20) }
                 for (c in consolas) {
                     lista += Opcion(
                         c.bonito,

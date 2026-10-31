@@ -352,6 +352,11 @@ fun RelojGrande(e: Estado) {
     }
 }
 
+private val SIGLAS = mapOf(
+    "switch" to "NSW", "xbox360" to "360", "xboxone" to "ONE", "psvita" to "Vita", "wiiu" to "WiiU", "n3ds" to "3DS",
+    "megadrive" to "MD", "genesis" to "GEN", "dreamcast" to "DC", "saturn" to "SAT", "androidgames" to "APK", "ports" to "PRT",
+)
+
 /** Ajustes de íconos de consola, para que cualquier ícono los lea sin pasar el estado. */
 data class IconosCfg(val estilo: String = "diptico", val propios: Map<String, String> = emptyMap(), val version: Int = 0)
 
@@ -387,7 +392,8 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
             modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(c.color),
             contentAlignment = Alignment.Center,
         ) {
-            Texto(c.nombre.replace(" ", "").take(4), tam * (if (c.nombre.length > 3) 0.3f else 0.38f), color = if (c.color.luminance() > 0.6f) Tinta else Color.White, lineas = 1)
+            val siglas = SIGLAS[c.id] ?: c.nombre.replace(" ", "").let { if (it.length <= 4) it else it.take(3).uppercase() }
+            Texto(siglas, tam * (if (siglas.length > 3) 0.3f else 0.38f), color = if (c.color.luminance() > 0.6f) Tinta else Color.White, lineas = 1)
         }
         else -> IconoMedio(c.medio, c.color, fondo, modifier, tam)
     }
