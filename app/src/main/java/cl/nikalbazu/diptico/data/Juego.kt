@@ -34,6 +34,16 @@ data class DatosJuego(
     val ultimo: Long = 0L,
     /** "arriba", "abajo" o null para usar el ajuste general. */
     val pantalla: String? = null,
+    /** Personalización propia de este juego (vacío = lo de siempre). */
+    val titulo: String? = null,
+    val portada: String? = null,
+    val arte: String? = null,
+    val logo: String? = null,
+    /** Canción que suena mientras eliges este juego. */
+    val musica: String? = null,
+    /** Trucos, claves y notas personales. */
+    val notas: String = "",
+    val favorito: Boolean = false,
 )
 
 /** Imágenes y título descargados de internet para un juego (rutas dentro de la app). */

@@ -107,9 +107,10 @@ object Biblioteca {
 
             for (f in hijos) {
                 if (f.esCarpeta) {
-                    // PS3 en formato carpeta: cada subcarpeta (que no sea de imágenes) es un juego.
+                    // Juegos en carpeta: PS3/Wii U/Xbox 360, o una carpeta con extensión ("Juego.ps3"), como en ES-DE.
                     val n = f.nombre.lowercase()
-                    if (consola.carpetasSonJuegos && n !in CARPETAS_PORTADAS && n != "media" && !n.startsWith(".")) {
+                    val conExtension = n.substringAfterLast('.', "").let { it.isNotEmpty() && it in consola.extensiones }
+                    if ((consola.carpetasSonJuegos || conExtension) && n !in CARPETAS_PORTADAS && n != "media" && !n.startsWith(".")) {
                         juegos += Juego(
                             clave = consola.id + "/" + f.nombre,
                             consolaId = consola.id,
@@ -127,7 +128,8 @@ object Biblioteca {
                 val ext = f.nombre.substringAfterLast('.', "").lowercase()
                 if (ext !in consola.extensiones) continue
                 // Los .bin de un juego con .cue son pistas: se muestra solo el .cue.
-                if (hayIndices && (ext == "bin" || ext == "img") && (consola.id == "psx" || consola.id == "ps2")) continue
+                if (hayIndices && (ext == "bin" || ext == "img") && "cue" in consola.extensiones) continue
+                if (f.nombre.startsWith(".")) continue
                 val base = f.nombre.substringBeforeLast('.')
                 juegos += Juego(
                     clave = consola.id + "/" + f.nombre,

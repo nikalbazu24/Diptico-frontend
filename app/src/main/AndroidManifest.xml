@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Para descargar portadas, imágenes y títulos -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Para encontrar los emuladores, ports y juegos de Android instalados (Díptico es un launcher) -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <!-- Emuladores que Díptico sabe abrir (Android 11+ necesita declararlos para verlos) -->
     <queries>
@@ -79,5 +85,16 @@
             android:launchMode="singleTask"
             android:taskAffinity="cl.nikalbazu.diptico.inferior"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- Para el widget de música: ver y controlar lo que suena en Spotify, YouTube Music, etc. -->
+        <service
+            android:name=".audio.OyenteMedios"
+            android:exported="false"
+            android:label="Díptico · widget de música"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

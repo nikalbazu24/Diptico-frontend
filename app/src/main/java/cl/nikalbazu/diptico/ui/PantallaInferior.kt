@@ -58,6 +58,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Medio
 import cl.nikalbazu.diptico.estado.Diptico
@@ -91,13 +103,31 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
 /** Menús, próximo paso, clave y avisos: se dibujan encima de todo. */
 @Composable
 fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
-    when (e.panel) {
-        Panel.MENU -> PanelMenu(e, conAyuda)
-        Panel.RAPIDO -> PanelRapido(e)
-        Panel.PASO -> PanelPaso(e)
-        Panel.CLAVE -> PanelClave(e)
-        Panel.PORTS -> PanelPorts(e)
-        Panel.NINGUNO -> Unit
+    // Cada panel entra y sale con su animación: los de pantalla completa suben, los flotantes crecen.
+    AnimatedContent(
+        targetState = e.panel,
+        transitionSpec = {
+            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS)
+            val entra = if (completo) {
+                fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
+            } else {
+                fadeIn(tween(200)) + scaleIn(tween(260, easing = FastOutSlowInEasing), initialScale = 0.92f)
+            }
+            (entra togetherWith fadeOut(tween(160)) + scaleOut(tween(200), targetScale = 0.97f)).using(SizeTransform(clip = false))
+        },
+        label = "panel",
+        modifier = Modifier.fillMaxSize(),
+    ) { panel ->
+        when (panel) {
+            Panel.MENU -> PanelMenu(e, conAyuda)
+            Panel.RAPIDO -> PanelRapido(e)
+            Panel.PASO -> PanelPaso(e)
+            Panel.CLAVE -> PanelClave(e)
+            Panel.PORTS -> PanelPorts(e)
+            Panel.FICHA -> PanelFicha(e)
+            Panel.WIDGETS -> PanelWidgets(e)
+            Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
+        }
     }
     Aviso(e.aviso, Modifier.align(Alignment.BottomCenter), abajo = if (e.panel == Panel.NINGUNO) 70f else 16f)
 }
@@ -125,11 +155,7 @@ fun Cinta(e: Estado) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(Modifier.height(esc.d(36)), contentAlignment = Alignment.Center) {
-                    IconoMedio(
-                        c?.medio ?: Medio.TODOS, c?.color ?: Uva, p.fondo2,
-                        modifier = Modifier.graphicsLayer { scaleX = escala; scaleY = escala },
-                        tam = 32f,
-                    )
+                    IconoConsola(c, 32f, p.fondo2, Modifier.graphicsLayer { scaleX = escala; scaleY = escala })
                 }
                 Texto(
                     c?.nombre ?: "Todo", 12f, color = if (activa) p.tinta else p.tenue,
@@ -146,12 +172,30 @@ fun Cinta(e: Estado) {
 /** El estante: cada juego con la forma real de su caja. */
 @Composable
 fun Estante(e: Estado, alto: Float = 184f, escala: Float = 1f) {
+    // Al cambiar de consola, el estante se desliza hacia el lado que corresponde.
+    AnimatedContent(
+        targetState = e.consolaSel,
+        transitionSpec = {
+            val ida = e.pestanas.indexOf(targetState) >= e.pestanas.indexOf(initialState)
+            val d = if (ida) 1 else -1
+            (slideInHorizontally(tween(380, easing = FastOutSlowInEasing)) { d * it / 3 } + fadeIn(tween(300)))
+                .togetherWith(slideOutHorizontally(tween(320)) { -d * it / 3 } + fadeOut(tween(200)))
+        },
+        label = "estante",
+    ) { consola ->
+        EstanteDe(e, consola, alto, escala)
+    }
+}
+
+@Composable
+private fun EstanteDe(e: Estado, consola: String, alto: Float, escala: Float) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val lista = e.visibles
+    val lista = if (consola == "todo") e.juegos else e.juegos.filter { it.consolaId == consola }
     val estado = rememberLazyListState()
-    LaunchedEffect(e.indiceSel, e.consolaSel, lista.size) {
-        if (lista.isNotEmpty()) estado.animateScrollToItem((e.indiceSel - 1).coerceAtLeast(0))
+    val sel = lista.indexOfFirst { it.clave == e.seleccionado?.clave }
+    LaunchedEffect(sel, lista.size) {
+        if (lista.isNotEmpty() && sel >= 0) estado.animateScrollToItem((sel - 1).coerceAtLeast(0))
     }
     Box(Modifier.fillMaxWidth().height(esc.d(alto))) {
         Box(
@@ -172,7 +216,7 @@ fun Estante(e: Estado, alto: Float = 184f, escala: Float = 1f) {
         ) {
             itemsIndexed(lista, key = { _, j -> j.clave }) { i, j ->
                 val c = Consolas.porId(j.consolaId) ?: return@itemsIndexed
-                val elegido = i == e.indiceSel
+                val elegido = i == sel
                 val alza by animateFloatAsState(if (elegido) -12f else 0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow), label = "alza")
                 val tam by animateFloatAsState(if (elegido) 1.06f else 1f, spring(dampingRatio = 0.5f), label = "tam")
                 val u = with(LocalDensity.current) { esc.d(1f).toPx() }
@@ -418,14 +462,19 @@ private fun PanelPorts(e: Estado) {
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(16), end = esc.d(16), top = esc.d(12), bottom = esc.d(10))) {
             Row(Modifier.fillMaxWidth().height(esc.d(40)), verticalAlignment = Alignment.CenterVertically) {
-                IconoMedio(Medio.APP, Color(0xFF2EC4A6), p.fondo2, tam = 28f)
+                val android = e.appsDestino == Consolas.ANDROID
+                IconoConsola(Consolas.porId(e.appsDestino), 28f, p.fondo2)
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Tus ports", 21f, lineas = 1)
+                    Texto(if (android) "Juegos de Android" else "Tus ports", 21f, lineas = 1)
                 }
-                Detalle("${e.ports.size} elegidos", 14f, lineas = 1)
+                Detalle("${(if (android) e.android else e.ports).size} elegidos", 14f, lineas = 1)
             }
-            Detalle("Marca los juegos hechos para Android. Puedes agregar cualquier app.", 13.5f, lineas = 2)
+            Detalle(
+                if (android) "Arriba están los que Android reconoce como juego. Marca los que quieras en tu estante."
+                else "Marca los juegos hechos para Android. Puedes agregar cualquier app.",
+                13.5f, lineas = 2,
+            )
             Spacer(Modifier.height(esc.d(8)))
             if (e.cargandoApps) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -437,7 +486,7 @@ private fun PanelPorts(e: Estado) {
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
                 itemsIndexed(e.apps, key = { _, a -> a.paquete }) { i, a ->
                     val activa = i == e.indice
-                    val marcada = a.paquete in e.ports
+                    val marcada = a.paquete in (if (e.appsDestino == Consolas.ANDROID) e.android else e.ports)
                     Row(
                         Modifier.fillMaxWidth().height(esc.d(54)).clip(RoundedCornerShape(esc.d(18)))
                             .background(if (activa) Uva else p.superficie.copy(alpha = 0.75f))
@@ -479,18 +528,28 @@ private fun PanelClave(e: Estado) {
                 .padding(esc.d(18)),
             verticalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconoDiptico(Icono.CLAVE, p.tinta, 24f, acento = Coral)
-                Spacer(Modifier.width(esc.d(10)))
-                Texto("Clave de SteamGridDB", 20f, lineas = 1)
+            val (icono, titulo, ayuda, ejemplo) = when (e.textoPara) {
+                "ia_clave" -> listOf(Icono.CLAVE, "Clave de IA (Claude)", "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
+                "ia_pedido" -> listOf(Icono.CHISPA, "Crear tema con IA", "Escribe tu idea, como \"Halloween japonés\" o \"Navidad en la playa\". Si lo dejas vacío, la IA elige la fiesta del mundo más cercana a hoy.", "Ej: Año Nuevo Lunar con faroles")
+                "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")
+                "notas" -> listOf(Icono.LAPIZ, "Mis trucos y notas", "Claves, trucos, coleccionables, lo que quieras recordar de este juego.", "Ej: el código del cofre es 4-2-1")
+                else -> listOf(Icono.CLAVE, "Clave de SteamGridDB", "Es gratis: entra a steamgriddb.com, inicia sesión, ve a Preferencias › API y copia tu clave aquí.", "Pega tu clave")
             }
-            Detalle("Es gratis: entra a steamgriddb.com, inicia sesión, ve a Preferencias › API y copia tu clave aquí.", 14f)
-            CampoTexto(e.borrador, "Pega tu clave", { Diptico.guardarClave() }, numerico = true)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconoDiptico(icono as Icono, p.tinta, 24f, acento = Coral)
+                Spacer(Modifier.width(esc.d(10)))
+                Texto(titulo as String, 20f, lineas = 1)
+            }
+            Detalle(ayuda as String, 14f)
+            val esClave = e.textoPara == "sgdb" || e.textoPara == "ia_clave"
+            CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas") 130f else 60f)
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
-                BotonGrande(if (e.borrador.isBlank() && e.claveSgdb.isNotBlank()) "Quitar clave" else "Guardar", Uva, Color.White, Modifier.weight(1.4f)) {
-                    Diptico.guardarClave()
-                }
+                val quitar = esClave && e.borrador.isBlank() && (if (e.textoPara == "sgdb") e.claveSgdb else e.claveIa).isNotBlank()
+                BotonGrande(
+                    when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; else -> "Guardar" },
+                    Uva, SobreUva, Modifier.weight(1.4f),
+                ) { Diptico.guardarClave() }
             }
         }
     }

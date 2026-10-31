@@ -1,326 +1,290 @@
 package cl.nikalbazu.diptico.data
 
+import android.content.Context
 import androidx.compose.ui.graphics.Color
+import org.json.JSONObject
 
-/** Formato físico de cada consola: define el ícono de la cinta de consolas. */
-enum class Medio { CARTUCHO_ANCHO, CARTUCHO_N64, CD, CARTUCHO_CHICO, MINIDISCO, TARJETA, DVD, BLURAY, UMD, APP, TODOS }
+/** Formato físico del juego: decide el ícono de la consola. */
+enum class Medio { CARTUCHO_ANCHO, CARTUCHO_N64, CD, CARTUCHO_CHICO, MINIDISCO, TARJETA, DVD, BLURAY, UMD, APP, MOVIL, ARCADE, DISQUETE, TODOS }
 
 /** Detalle de plástico que lleva la caja del juego (bisagra, ventana, franja...). */
-enum class Banda { NINGUNA, BISAGRA, LATERAL_CLARA, ARRIBA_CLARA, ARRIBA_OSCURA, ABAJO_CLARA }
+enum class Banda { NINGUNA, BISAGRA, LATERAL_CLARA, ARRIBA_CLARA, ARRIBA_OSCURA, ABAJO_CLARA, ARRIBA_ROJA }
 
-/** Tamaño de la caja en el estante, en unidades de diseño. */
+/** Proporciones de la caja del juego, en unidades de diseño. */
 data class FormaCaja(val ancho: Float, val alto: Float, val radio: Float, val banda: Banda)
 
 /**
- * Cómo se entrega el juego al emulador:
- * DATA = URI del archivo como dato del intent; EXTRA = URI en un extra;
- * RUTA = ruta de archivo real (/storage/...) en un extra;
- * INYECTAR = el contenido del archivo (por ejemplo un .ps4 con "CUSA00900") en un extra.
+ * Una forma de abrir los juegos de una consola, tal como la escribe ES-DE para Android.
+ * Ejemplo: "%EMULATOR_EDEN% %ACTION%=android.nfc.action.TECH_DISCOVERED %DATA%=%ROMPROVIDER%".
  */
-enum class ModoRom { DATA, EXTRA, RUTA, INYECTAR }
+data class Comando(val etiqueta: String, val linea: String) {
+    /** Nombre de la regla del emulador (RETROARCH, EDEN, DOLPHIN...), o null si abre una app de Android. */
+    val emulador: String? = Regex("%EMULATOR_([A-Z0-9_+\\-]+)%").find(linea)?.groupValues?.get(1)
 
-/**
- * Cómo abrir un juego con un emulador. Los datos vienen de las órdenes que usa ES-DE en Android.
- * [actividad] puede empezar con "." (relativa al paquete), contener "{pkg}" o ser completa.
- */
-data class Emulador(
-    val nombre: String,
-    val paquetes: List<String>,
-    val actividad: String,
-    val accion: String? = null,
-    val categoria: String? = null,
-    val modo: ModoRom = ModoRom.DATA,
-    val extraRom: String? = null,
-    val extrasBool: Map<String, Boolean> = emptyMap(),
-    val limpiarTarea: Boolean = false,
-    /** Si no es null, solo sirve para estos tipos de archivo ("carpeta" = juego en carpeta). */
-    val soloPara: Set<String>? = null,
-    /** Núcleo de RetroArch (por ejemplo "snes9x"). */
-    val nucleo: String? = null,
-    /** Extras de texto; {pkg} y {core} se reemplazan al abrir. */
-    val extrasTexto: Map<String, String> = emptyMap(),
-) {
-    fun sirvePara(tipo: String): Boolean = soloPara == null || tipo in soloPara
+    /** El archivo del juego trae adentro el nombre de una app (ports y juegos de Android). */
+    val abreApp: Boolean = linea.startsWith("%ANDROIDAPP%")
 
-    /** Identificador guardado en los ajustes: paquete y, si es RetroArch, su núcleo. */
-    fun id(paquete: String): String = if (nucleo != null) "$paquete#$nucleo" else paquete
+    /** Núcleo de RetroArch, si usa uno. */
+    val nucleo: String? = Regex("/cores/([A-Za-z0-9_]+)_libretro_android\\.so").find(linea)?.groupValues?.get(1)
 
-    fun componente(paquete: String): String = when {
-        actividad.startsWith(".") -> paquete + actividad
-        actividad.contains("{pkg}") -> actividad.replace("{pkg}", paquete)
-        else -> actividad
-    }
+    /** Nombre para mostrar: "RetroArch · Snes9x - Current" o "Eden". */
+    val nombre: String
+        get() = when {
+            emulador == "RETROARCH" -> "RetroArch · $etiqueta"
+            else -> etiqueta.removeSuffix(" (Standalone)").ifEmpty { emulador ?: "App" }
+        }
 }
 
 data class Consola(
     val id: String,
+    /** Nombre corto para la pestaña (SNES, PS2, Switch...). */
     val nombre: String,
     val nombreLargo: String,
+    /** Nombre completo para leer cómodo: "Nintendo Switch", "Sony PlayStation 2"... */
+    val bonito: String,
     val carpetas: List<String>,
     val extensiones: Set<String>,
     val medio: Medio,
     val color: Color,
     val caja: FormaCaja,
-    val emuladores: List<Emulador>,
-    /** El juego usa las dos pantallas (DS): no se atenúa la de abajo. */
+    val comandos: List<Comando>,
+    /** El juego usa las dos pantallas (DS, 3DS): no se atenúa la de abajo. */
     val dosPantallas: Boolean = false,
-    /** Las subcarpetas también son juegos (PS3 en formato carpeta). */
+    /** Las subcarpetas también son juegos (PS3, Wii U, Xbox 360 en formato carpeta). */
     val carpetasSonJuegos: Boolean = false,
-    /** Nombre del sistema en libretro-thumbnails, para descargar portadas. */
+    /** Nombre del sistema en libretro, para descargar portadas e íconos. */
     val libretro: String? = null,
+    /** Nombre del ícono en los paquetes de íconos de RetroArch. */
+    val icono: String? = null,
 ) {
-    /** Nombre para leer cómodo: "Super Nintendo", "Game Boy Advance"... */
-    val bonito: String get() = BONITOS[id] ?: nombre
-
     /** Los ports son apps de Android, no archivos. */
     val esPorts: Boolean get() = id == Consolas.PORTS
+
+    /** Juegos instalados en Android (Genshin, Minecraft...). */
+    val esAndroid: Boolean get() = id == Consolas.ANDROID
+
+    /** Abre apps en vez de usar emuladores. */
+    val sinEmulador: Boolean get() = esPorts || esAndroid
+
+    /** El emulador que recomendamos instalar si no hay ninguno. */
+    val sugerido: String get() = comandos.firstOrNull { !it.abreApp }?.nombre ?: "un emulador"
 }
 
-private val BONITOS = mapOf(
-    "snes" to "Super Nintendo", "n64" to "Nintendo 64", "psx" to "PlayStation", "gba" to "Game Boy Advance",
-    "gc" to "GameCube", "nds" to "Nintendo DS", "ps2" to "PlayStation 2", "ps3" to "PlayStation 3",
-    "ps4" to "PlayStation 4", "psp" to "PSP", "ports" to "Ports y apps",
+/** Lo que Díptico sabe dibujar de cada consola conocida. */
+private data class Visual(
+    val corto: String,
+    val medio: Medio,
+    val color: Long,
+    val caja: FormaCaja? = null,
+    val dos: Boolean = false,
+    val carpetasJuegos: Boolean = false,
+    val alias: List<String> = emptyList(),
+    val bonito: String? = null,
 )
 
+private val CAJA_SNES = FormaCaja(128f, 92f, 6f, Banda.NINGUNA)
+private val CAJA_CARTUCHO = FormaCaja(116f, 96f, 6f, Banda.ABAJO_CLARA)
+private val CAJA_CHICA = FormaCaja(92f, 98f, 6f, Banda.LATERAL_CLARA)
+private val CAJA_CD = FormaCaja(104f, 104f, 4f, Banda.BISAGRA)
+private val CAJA_DVD = FormaCaja(84f, 120f, 6f, Banda.ARRIBA_OSCURA)
+private val CAJA_DS = FormaCaja(96f, 108f, 9f, Banda.ARRIBA_CLARA)
+private val CAJA_SWITCH = FormaCaja(80f, 128f, 7f, Banda.ARRIBA_ROJA)
+private val CAJA_PC = FormaCaja(96f, 120f, 4f, Banda.LATERAL_CLARA)
+private val CAJA_APP = FormaCaja(104f, 104f, 26f, Banda.NINGUNA)
+
+private val VISUALES: Map<String, Visual> = mapOf(
+    "switch" to Visual("Switch", Medio.TARJETA, 0xFFE60012, CAJA_SWITCH),
+    "ps2" to Visual("PS2", Medio.DVD, 0xFF2A4BA0, CAJA_DVD),
+    "gc" to Visual("GC", Medio.MINIDISCO, 0xFF6A5ACD, FormaCaja(90f, 124f, 8f, Banda.ARRIBA_CLARA), alias = listOf("gamecube", "ngc")),
+    "wii" to Visual("Wii", Medio.DVD, 0xFF9AA4B5, FormaCaja(86f, 122f, 8f, Banda.ARRIBA_CLARA)),
+    "wiiu" to Visual("Wii U", Medio.BLURAY, 0xFF1C9FD8, FormaCaja(86f, 122f, 8f, Banda.ARRIBA_CLARA), carpetasJuegos = true),
+    "psp" to Visual("PSP", Medio.UMD, 0xFF4A4F60, FormaCaja(78f, 130f, 12f, Banda.ARRIBA_OSCURA)),
+    "nds" to Visual("NDS", Medio.TARJETA, 0xFF8D99AE, CAJA_DS, dos = true),
+    "n3ds" to Visual("3DS", Medio.TARJETA, 0xFFD12C3A, CAJA_DS, dos = true, alias = listOf("3ds")),
+    "gba" to Visual("GBA", Medio.CARTUCHO_CHICO, 0xFF5B3FD9, CAJA_CHICA),
+    "gbc" to Visual("GBC", Medio.CARTUCHO_CHICO, 0xFF2EC4A6, CAJA_CHICA),
+    "gb" to Visual("GB", Medio.CARTUCHO_CHICO, 0xFF8BAC0F, CAJA_CHICA),
+    "snes" to Visual("SNES", Medio.CARTUCHO_ANCHO, 0xFF7A5CE8, CAJA_SNES, alias = listOf("supernintendo")),
+    "sfc" to Visual("SFC", Medio.CARTUCHO_ANCHO, 0xFFD94F4F, CAJA_SNES, alias = listOf("superfamicom")),
+    "snesna" to Visual("SNES NA", Medio.CARTUCHO_ANCHO, 0xFF7A5CE8, CAJA_SNES),
+    "nes" to Visual("NES", Medio.CARTUCHO_ANCHO, 0xFFC7323B, CAJA_CARTUCHO),
+    "famicom" to Visual("FC", Medio.CARTUCHO_ANCHO, 0xFFB22234, CAJA_CARTUCHO),
+    "fds" to Visual("FDS", Medio.DISQUETE, 0xFFE8B31C, CAJA_CHICA),
+    "n64" to Visual("N64", Medio.CARTUCHO_N64, 0xFF2F80ED, FormaCaja(128f, 92f, 6f, Banda.ABAJO_CLARA)),
+    "virtualboy" to Visual("VB", Medio.CARTUCHO_CHICO, 0xFFC62828, CAJA_CHICA),
+    "psx" to Visual("PS1", Medio.CD, 0xFF9B9BA8, CAJA_CD, alias = listOf("ps1", "playstation")),
+    "ps3" to Visual("PS3", Medio.BLURAY, 0xFF1D1D24, FormaCaja(88f, 112f, 6f, Banda.ARRIBA_OSCURA), carpetasJuegos = true),
+    "ps4" to Visual("PS4", Medio.BLURAY, 0xFF003791, FormaCaja(88f, 112f, 6f, Banda.ARRIBA_OSCURA)),
+    "psvita" to Visual("Vita", Medio.TARJETA, 0xFF2D5BD7, FormaCaja(84f, 110f, 8f, Banda.ARRIBA_OSCURA)),
+    "xbox" to Visual("Xbox", Medio.DVD, 0xFF107C10, FormaCaja(88f, 124f, 6f, Banda.ARRIBA_OSCURA)),
+    "xbox360" to Visual("X360", Medio.DVD, 0xFF5DC21E, FormaCaja(88f, 124f, 6f, Banda.ARRIBA_CLARA), carpetasJuegos = true),
+    "xboxone" to Visual("XOne", Medio.BLURAY, 0xFF0E7A0D, FormaCaja(88f, 124f, 6f, Banda.ARRIBA_OSCURA)),
+    "dreamcast" to Visual("DC", Medio.CD, 0xFFF26D21, CAJA_CD),
+    "saturn" to Visual("Saturn", Medio.CD, 0xFF4A4A6A, FormaCaja(100f, 118f, 4f, Banda.LATERAL_CLARA)),
+    "saturnjp" to Visual("Saturn JP", Medio.CD, 0xFF4A4A6A, FormaCaja(100f, 118f, 4f, Banda.LATERAL_CLARA)),
+    "genesis" to Visual("Genesis", Medio.CARTUCHO_ANCHO, 0xFF1E1E1E, FormaCaja(92f, 128f, 6f, Banda.ARRIBA_OSCURA)),
+    "megadrive" to Visual("MD", Medio.CARTUCHO_ANCHO, 0xFF1E3A8A, FormaCaja(92f, 128f, 6f, Banda.ARRIBA_OSCURA)),
+    "megadrivejp" to Visual("MD JP", Medio.CARTUCHO_ANCHO, 0xFF1E3A8A, FormaCaja(92f, 128f, 6f, Banda.ARRIBA_OSCURA)),
+    "mastersystem" to Visual("SMS", Medio.CARTUCHO_ANCHO, 0xFF2B2B2B, CAJA_CARTUCHO),
+    "gamegear" to Visual("GG", Medio.CARTUCHO_CHICO, 0xFF333333, CAJA_CHICA),
+    "segacd" to Visual("Sega CD", Medio.CD, 0xFF222244, CAJA_CD),
+    "megacd" to Visual("Mega CD", Medio.CD, 0xFF222244, CAJA_CD),
+    "sega32x" to Visual("32X", Medio.CARTUCHO_ANCHO, 0xFFB71C1C, CAJA_CARTUCHO),
+    "pcengine" to Visual("PCE", Medio.TARJETA, 0xFFF5F5F5, CAJA_CHICA),
+    "tg16" to Visual("TG16", Medio.TARJETA, 0xFFFF6F00, CAJA_CHICA),
+    "pcenginecd" to Visual("PCE CD", Medio.CD, 0xFFF57C00, CAJA_CD),
+    "neogeo" to Visual("Neo Geo", Medio.ARCADE, 0xFFD4AF37, CAJA_DVD),
+    "ngp" to Visual("NGP", Medio.CARTUCHO_CHICO, 0xFF455A64, CAJA_CHICA),
+    "ngpc" to Visual("NGPC", Medio.CARTUCHO_CHICO, 0xFF00897B, CAJA_CHICA),
+    "wonderswan" to Visual("WS", Medio.CARTUCHO_CHICO, 0xFF607D8B, CAJA_CHICA),
+    "wonderswancolor" to Visual("WSC", Medio.CARTUCHO_CHICO, 0xFF3F51B5, CAJA_CHICA),
+    "atari2600" to Visual("2600", Medio.CARTUCHO_ANCHO, 0xFF8D6E63, CAJA_CARTUCHO),
+    "atari7800" to Visual("7800", Medio.CARTUCHO_ANCHO, 0xFF6D4C41, CAJA_CARTUCHO),
+    "atarilynx" to Visual("Lynx", Medio.CARTUCHO_CHICO, 0xFFF9A825, CAJA_CHICA),
+    "atarijaguar" to Visual("Jaguar", Medio.CARTUCHO_ANCHO, 0xFFC62828, CAJA_CARTUCHO),
+    "arcade" to Visual("Arcade", Medio.ARCADE, 0xFFFF5D8F, CAJA_DVD),
+    "mame" to Visual("MAME", Medio.ARCADE, 0xFF7B61FF, CAJA_DVD),
+    "fbneo" to Visual("FBNeo", Medio.ARCADE, 0xFFEF6C00, CAJA_DVD),
+    "cps1" to Visual("CPS1", Medio.ARCADE, 0xFF1565C0, CAJA_DVD),
+    "cps2" to Visual("CPS2", Medio.ARCADE, 0xFF0D47A1, CAJA_DVD),
+    "cps3" to Visual("CPS3", Medio.ARCADE, 0xFF283593, CAJA_DVD),
+    "naomi" to Visual("Naomi", Medio.ARCADE, 0xFF00ACC1, CAJA_DVD),
+    "atomiswave" to Visual("AW", Medio.ARCADE, 0xFF00897B, CAJA_DVD),
+    "dos" to Visual("DOS", Medio.DISQUETE, 0xFF546E7A, CAJA_PC),
+    "pc" to Visual("PC", Medio.DISQUETE, 0xFF37474F, CAJA_PC),
+    "windows" to Visual("Windows", Medio.DISQUETE, 0xFF0078D4, CAJA_PC),
+    "amiga" to Visual("Amiga", Medio.DISQUETE, 0xFFD32F2F, CAJA_PC),
+    "c64" to Visual("C64", Medio.DISQUETE, 0xFF6D4C41, CAJA_PC),
+    "msx" to Visual("MSX", Medio.CARTUCHO_ANCHO, 0xFF5E35B1, CAJA_CARTUCHO),
+    "zxspectrum" to Visual("ZX", Medio.DISQUETE, 0xFF212121, CAJA_PC),
+    "scummvm" to Visual("ScummVM", Medio.DISQUETE, 0xFF43A047, CAJA_PC),
+    "3do" to Visual("3DO", Medio.CD, 0xFF9E9E9E, CAJA_CD),
+    "steam" to Visual("Steam", Medio.APP, 0xFF1B2838, CAJA_APP),
+    "ports" to Visual("Ports", Medio.APP, 0xFF2EC4A6, CAJA_APP, bonito = "Ports"),
+    "androidgames" to Visual("Android", Medio.MOVIL, 0xFF3DDC84, CAJA_APP, bonito = "Juegos de Android"),
+)
+
+private val BONITOS = mapOf(
+    "snes" to "Super Nintendo", "sfc" to "Super Famicom", "snesna" to "Super Nintendo", "psx" to "PlayStation",
+    "ps2" to "PlayStation 2", "ps3" to "PlayStation 3", "ps4" to "PlayStation 4", "psp" to "PSP", "psvita" to "PS Vita",
+    "gba" to "Game Boy Advance", "gbc" to "Game Boy Color", "gb" to "Game Boy", "nes" to "NES", "mame" to "MAME",
+    "gc" to "GameCube", "n3ds" to "Nintendo 3DS", "xbox" to "Xbox", "xbox360" to "Xbox 360", "xboxone" to "Xbox One",
+)
+
+/** Orden de las pestañas: primero las más usadas en una consola portátil. */
+private val ORDEN = listOf(
+    "switch", "ps2", "gc", "wii", "wiiu", "psp", "psvita", "n3ds", "nds", "gba", "gbc", "gb", "snes", "sfc", "nes", "famicom",
+    "n64", "psx", "ps3", "ps4", "xbox", "xbox360", "dreamcast", "saturn", "genesis", "megadrive", "mastersystem", "gamegear",
+    "segacd", "sega32x", "pcengine", "tg16", "neogeo", "arcade", "mame", "fbneo", "cps1", "cps2", "cps3", "dos", "scummvm",
+)
+
+/** Todas las consolas que Díptico sabe abrir: las mismas que ES-DE para Android. */
 object Consolas {
     const val PORTS = "ports"
+    const val ANDROID = "androidgames"
 
-    private const val VIEW = "android.intent.action.VIEW"
-    private const val MAIN = "android.intent.action.MAIN"
+    /** Reglas de ES-DE: nombre del emulador -> "paquete/actividad" en orden de preferencia. */
+    var reglas: Map<String, List<String>> = emptyMap()
+        private set
 
-    private fun ext(vararg e: String) = e.toSet()
+    var todas: List<Consola> = basicas()
+        private set
 
-    /** RetroArch con un núcleo, igual que lo abre ES-DE en Android. */
-    private fun ra(nombre: String, core: String) = Emulador(
-        "RetroArch · $nombre",
-        listOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"),
-        "com.retroarch.browser.retroactivity.RetroActivityFuture",
-        modo = ModoRom.RUTA,
-        extraRom = "ROM",
-        nucleo = core,
-        extrasTexto = mapOf(
-            "CONFIGFILE" to "/storage/emulated/0/Android/data/{pkg}/files/retroarch.cfg",
-            "LIBRETRO" to "/data/data/{pkg}/cores/{core}_libretro_android.so",
-        ),
-    )
+    private var cargado = false
 
-    val todas: List<Consola> = listOf(
-        Consola(
-            id = "snes", nombre = "SNES", nombreLargo = "SUPER NINTENDO",
-            carpetas = listOf("snes", "sfc", "supernintendo", "superfamicom"),
-            extensiones = ext("bin", "bml", "bs", "bsx", "dx2", "fig", "gd3", "gd7", "mgd", "sfc", "smc", "st", "swc", "7z", "zip"),
-            medio = Medio.CARTUCHO_ANCHO, color = Color(0xFF7A5CE8),
-            caja = FormaCaja(128f, 92f, 6f, Banda.NINGUNA),
-            libretro = "Nintendo - Super Nintendo Entertainment System",
-            emuladores = listOf(
-                Emulador("Snes9x EX+", listOf("com.explusalpha.Snes9xPlus"), "com.imagine.BaseActivity", accion = VIEW),
-                ra("Snes9x", "snes9x"),
-                ra("Snes9x 2010", "snes9x2010"),
-                ra("Snes9x 2005 Plus", "snes9x2005_plus"),
-                ra("bsnes", "bsnes"),
-                ra("bsnes-hd", "bsnes_hd_beta"),
-                ra("bsnes-mercury", "bsnes_mercury_accuracy"),
-                ra("Beetle Supafaust", "mednafen_supafaust"),
-                ra("Mesen", "mesen2"),
-            ),
-        ),
-        Consola(
-            id = "n64", nombre = "N64", nombreLargo = "NINTENDO 64",
-            carpetas = listOf("n64", "nintendo64"),
-            extensiones = ext("app", "bin", "d64", "n64", "ndd", "u1", "v64", "z64", "7z", "zip"),
-            medio = Medio.CARTUCHO_N64, color = Color(0xFF3E6FD8),
-            caja = FormaCaja(128f, 92f, 6f, Banda.ABAJO_CLARA),
-            libretro = "Nintendo - Nintendo 64",
-            emuladores = listOf(
-                Emulador(
-                    "Mupen64Plus FZ",
-                    listOf("org.mupen64plusae.v3.fzurita.pro", "org.mupen64plusae.v3.fzurita", "org.mupen64plusae.v3.fzurita.amazon"),
-                    "paulscode.android.mupen64plusae.SplashActivity", accion = VIEW,
-                ),
-                Emulador("Mupen64Plus AE", listOf("org.mupen64plusae.v3.alpha"), "paulscode.android.mupen64plusae.SplashActivity", accion = VIEW),
-                ra("Mupen64Plus-Next", "mupen64plus_next_gles3"),
-                ra("ParaLLEl N64", "parallel_n64"),
-            ),
-        ),
-        Consola(
-            id = "psx", nombre = "PS1", nombreLargo = "PLAYSTATION",
-            carpetas = listOf("psx", "ps1", "playstation"),
-            extensiones = ext("bin", "cbn", "ccd", "chd", "cue", "ecm", "exe", "img", "iso", "m3u", "mdf", "mds", "pbp", "toc", "z", "znx", "7z", "zip"),
-            medio = Medio.CD, color = Color(0xFF8C93A8),
-            caja = FormaCaja(104f, 104f, 4f, Banda.BISAGRA),
-            libretro = "Sony - PlayStation",
-            emuladores = listOf(
-                Emulador(
-                    "DuckStation", listOf("com.github.stenzek.duckstation"), ".EmulationActivity",
-                    modo = ModoRom.EXTRA, extraRom = "bootPath", extrasBool = mapOf("resumeState" to false), limpiarTarea = true,
-                ),
-                ra("Beetle PSX HW", "mednafen_psx_hw"),
-                ra("Beetle PSX", "mednafen_psx"),
-                ra("PCSX ReARMed", "pcsx_rearmed"),
-                ra("SwanStation", "swanstation"),
-            ),
-        ),
-        Consola(
-            id = "gba", nombre = "GBA", nombreLargo = "GAME BOY ADVANCE",
-            carpetas = listOf("gba", "gameboyadvance"),
-            extensiones = ext("agb", "bin", "cgb", "dmg", "gb", "gba", "gbc", "gbx", "sgb", "7z", "zip"),
-            medio = Medio.CARTUCHO_CHICO, color = Color(0xFF5A4BD6),
-            caja = FormaCaja(92f, 98f, 6f, Banda.LATERAL_CLARA),
-            libretro = "Nintendo - Game Boy Advance",
-            emuladores = listOf(
-                Emulador(
-                    "Pizza Boy GBA", listOf("it.dbtecno.pizzaboygbapro", "it.dbtecno.pizzaboygba"), "{pkg}.MainActivity",
-                    modo = ModoRom.EXTRA, extraRom = "rom_uri", limpiarTarea = true,
-                ),
-                ra("mGBA", "mgba"),
-                ra("VBA-M", "vbam"),
-                ra("VBA Next", "vba_next"),
-                ra("gpSP", "gpsp"),
-                ra("SkyEmu", "skyemu"),
-                ra("Mesen", "mesen2"),
-            ),
-        ),
-        Consola(
-            id = "gc", nombre = "GC", nombreLargo = "GAMECUBE",
-            carpetas = listOf("gc", "gamecube", "ngc"),
-            extensiones = ext("ciso", "dol", "elf", "gcm", "gcz", "iso", "m3u", "rvz", "tgc", "wbfs", "wia", "7z", "zip"),
-            medio = Medio.MINIDISCO, color = Color(0xFF6E4BC9),
-            caja = FormaCaja(90f, 124f, 8f, Banda.ARRIBA_CLARA),
-            libretro = "Nintendo - GameCube",
-            emuladores = listOf(
-                Emulador(
-                    "Dolphin", listOf("org.dolphinemu.dolphinemu"), ".ui.main.TvMainActivity",
-                    accion = MAIN, categoria = "android.intent.category.LEANBACK_LAUNCHER",
-                    modo = ModoRom.EXTRA, extraRom = "AutoStartFile",
-                ),
-                Emulador(
-                    "Dolphin MMJR2", listOf("org.dolphinemu.mmjr"), "org.dolphinemu.dolphinemu.ui.main.MainActivity",
-                    accion = VIEW, modo = ModoRom.EXTRA, extraRom = "AutoStartFile",
-                ),
-                ra("Dolphin", "dolphin"),
-            ),
-        ),
-        Consola(
-            id = "nds", nombre = "NDS", nombreLargo = "NINTENDO DS",
-            carpetas = listOf("nds", "ds", "nintendods"),
-            extensiones = ext("app", "bin", "dsi", "ids", "nds", "7z", "zip"),
-            medio = Medio.TARJETA, color = Color(0xFF5E6576),
-            caja = FormaCaja(96f, 108f, 9f, Banda.ARRIBA_CLARA),
-            dosPantallas = true,
-            libretro = "Nintendo - Nintendo DS",
-            emuladores = listOf(
-                Emulador(
-                    "melonDS", listOf("me.magnum.melonds"), ".ui.emulator.EmulatorActivity",
-                    accion = "me.magnum.melonds.LAUNCH_ROM", modo = ModoRom.EXTRA, extraRom = "uri",
-                ),
-                Emulador(
-                    "melonDS (doble pantalla)", listOf("me.magnum.melondualds"), "me.magnum.melonds.ui.emulator.EmulatorActivity",
-                    accion = "me.magnum.melonds.LAUNCH_ROM", modo = ModoRom.EXTRA, extraRom = "uri",
-                ),
-                Emulador(
-                    "melonDS Nightly", listOf("me.magnum.melonds.nightly"), "me.magnum.melonds.ui.emulator.EmulatorActivity",
-                    accion = "me.magnum.melonds.nightly.LAUNCH_ROM", modo = ModoRom.EXTRA, extraRom = "uri",
-                ),
-                Emulador("DraStic", listOf("com.dsemu.drastic"), ".DraSticActivity", limpiarTarea = true),
-                ra("melonDS DS", "melondsds"),
-                ra("melonDS", "melonds"),
-                ra("DeSmuME", "desmume"),
-                ra("DeSmuME 2015", "desmume2015"),
-                ra("NooDS", "noods"),
-                ra("SkyEmu", "skyemu"),
-            ),
-        ),
-        Consola(
-            id = "ps2", nombre = "PS2", nombreLargo = "PLAYSTATION 2",
-            carpetas = listOf("ps2", "playstation2"),
-            extensiones = ext("bin", "chd", "ciso", "cso", "dump", "elf", "gz", "m3u", "mdf", "img", "iso", "isz", "nrg"),
-            medio = Medio.DVD, color = Color(0xFF2E4FB8),
-            caja = FormaCaja(84f, 120f, 6f, Banda.ARRIBA_OSCURA),
-            libretro = "Sony - PlayStation 2",
-            emuladores = listOf(
-                Emulador(
-                    "NetherSX2", listOf("xyz.aethersx2.android"), ".EmulationActivity",
-                    accion = MAIN, modo = ModoRom.EXTRA, extraRom = "bootPath", limpiarTarea = true,
-                ),
-                ra("LRPS2", "pcsx2"),
-                ra("PCEE2", "pcee2"),
-            ),
-        ),
-        Consola(
-            id = "ps3", nombre = "PS3", nombreLargo = "PLAYSTATION 3",
-            carpetas = listOf("ps3", "playstation3"),
-            extensiones = ext("iso", "ps3"),
-            medio = Medio.BLURAY, color = Color(0xFF3A3F55),
-            caja = FormaCaja(88f, 112f, 6f, Banda.ARRIBA_OSCURA),
-            carpetasSonJuegos = true,
-            libretro = "Sony - PlayStation 3",
-            emuladores = listOf(
-                // Archivo .ps3 con el código del juego adentro (por ejemplo BLUS30443).
-                Emulador(
-                    "ARMSX3", listOf("com.armsx3", "com.armsx3.play"), "com.armsx2.Main",
-                    accion = VIEW, modo = ModoRom.INYECTAR, extraRom = "title_id", soloPara = setOf("ps3"),
-                ),
-                // ISO o carpeta del juego.
-                Emulador(
-                    "ARMSX3", listOf("com.armsx3", "com.armsx3.play"), "com.armsx2.Main",
-                    modo = ModoRom.RUTA, extraRom = "path", soloPara = setOf("iso", "carpeta"),
-                ),
-                Emulador(
-                    "aPS3e", listOf("aenu.aps3e.premium", "aenu.aps3e"), "aenu.aps3e.EmulatorActivity",
-                    accion = "aenu.intent.action.APS3E", modo = ModoRom.EXTRA, extraRom = "iso_uri", soloPara = setOf("iso"),
-                ),
-                Emulador(
-                    "aPS3e", listOf("aenu.aps3e.premium", "aenu.aps3e"), "aenu.aps3e.EmulatorActivity",
-                    accion = "aenu.intent.action.APS3E", modo = ModoRom.RUTA, extraRom = "game_dir", soloPara = setOf("carpeta"),
-                ),
-            ),
-        ),
-        Consola(
-            id = "ps4", nombre = "PS4", nombreLargo = "PLAYSTATION 4",
-            carpetas = listOf("ps4", "playstation4"),
-            extensiones = ext("ps4"),
-            medio = Medio.BLURAY, color = Color(0xFF1F3A8C),
-            caja = FormaCaja(88f, 112f, 6f, Banda.ARRIBA_OSCURA),
-            emuladores = listOf(
-                // Archivo .ps4 con el código del juego ya importado en Bachata S4 (por ejemplo CUSA00900).
-                Emulador(
-                    "Bachata S4", listOf("com.bachatas4.android", "com.bachatas4.android.github"), "com.bachatas4.android.DirectLaunchActivity",
-                    modo = ModoRom.INYECTAR, extraRom = "game_id",
-                ),
-            ),
-        ),
-        Consola(
-            id = "psp", nombre = "PSP", nombreLargo = "PSP",
-            carpetas = listOf("psp"),
-            extensiones = ext("chd", "cso", "elf", "iso", "pbp", "prx", "7z", "zip"),
-            medio = Medio.UMD, color = Color(0xFF4A4F60),
-            caja = FormaCaja(78f, 130f, 12f, Banda.ARRIBA_OSCURA),
-            libretro = "Sony - PlayStation Portable",
-            emuladores = listOf(
-                Emulador(
-                    "PPSSPP", listOf("org.ppsspp.ppssppgold", "org.ppsspp.ppsspp"), "org.ppsspp.ppsspp.PpssppActivity",
-                    accion = VIEW, categoria = "android.intent.category.DEFAULT",
-                ),
-                ra("PPSSPP", "ppsspp"),
-            ),
-        ),
-        // Ports nativos (Ship of Harkinian, Doom, Mario 64…) y otras apps: se eligen desde el menú.
-        Consola(
-            id = PORTS, nombre = "Ports", nombreLargo = "PORTS",
-            carpetas = emptyList(), extensiones = emptySet(),
-            medio = Medio.APP, color = Color(0xFF2EC4A6),
-            caja = FormaCaja(104f, 104f, 26f, Banda.NINGUNA),
-            emuladores = emptyList(),
-        ),
-    )
-
-    private val porNombreCarpeta: Map<String, Consola> by lazy {
-        todas.flatMap { c -> c.carpetas.map { it to c } }.toMap()
+    /** Lee el catálogo (assets/sistemas.json, generado desde ES-DE). */
+    fun cargar(ctx: Context) {
+        if (cargado) return
+        try {
+            val texto = ctx.assets.open("sistemas.json").bufferedReader().use { it.readText() }
+            val o = JSONObject(texto)
+            val r = o.getJSONObject("reglas")
+            reglas = r.keys().asSequence().associateWith { k ->
+                val a = r.getJSONArray(k)
+                (0 until a.length()).map { a.getString(it) }
+            }
+            val s = o.getJSONArray("sistemas")
+            val lista = ArrayList<Consola>(s.length() + 1)
+            for (i in 0 until s.length()) {
+                val j = s.getJSONObject(i)
+                val id = j.getString("id")
+                // ES-DE separa "androidapps", "androidgames" y "android"; Díptico junta los juegos en uno solo.
+                if (id == "android" || id == "androidapps") continue
+                val ext = j.getJSONArray("ext").let { a -> (0 until a.length()).map { a.getString(it) }.filter { it.isNotEmpty() }.toSet() }
+                val cmds = j.getJSONArray("cmds").let { a ->
+                    (0 until a.length()).map { a.getJSONArray(it).let { c -> Comando(c.getString(0), c.getString(1)) } }
+                }
+                lista += crear(
+                    id, j.getString("nombre"), ext, cmds,
+                    j.optString("libretro", "").takeIf { it.isNotEmpty() && it != "null" },
+                    j.optString("icono", "").takeIf { it.isNotEmpty() && it != "null" },
+                )
+            }
+            todas = lista.sortedWith(compareBy({ ORDEN.indexOf(it.id).let { p -> if (p < 0) 999 else p } }, { it.esPorts || it.esAndroid }, { it.bonito }))
+                .let { l -> l.filter { !it.sinEmulador } + l.filter { it.sinEmulador } }
+            cargado = true
+            indice = null
+        } catch (e: Exception) {
+            // Si algo falla, quedan las consolas básicas para no romper nada.
+        }
     }
 
-    fun porCarpeta(nombre: String): Consola? = porNombreCarpeta[nombre.lowercase().replace(" ", "").trim()]
+    private fun crear(id: String, completo: String, ext: Set<String>, cmds: List<Comando>, libretro: String?, icono: String?): Consola {
+        val v = VISUALES[id]
+        val medio = v?.medio ?: adivinarMedio(ext)
+        val caja = v?.caja ?: when (medio) {
+            Medio.CD -> CAJA_CD
+            Medio.DVD, Medio.BLURAY, Medio.ARCADE -> CAJA_DVD
+            Medio.DISQUETE -> CAJA_PC
+            Medio.APP, Medio.MOVIL -> CAJA_APP
+            Medio.CARTUCHO_CHICO, Medio.TARJETA -> CAJA_CHICA
+            else -> CAJA_CARTUCHO
+        }
+        val bonito = v?.bonito ?: BONITOS[id] ?: completo
+        val corto = v?.corto ?: cortoDe(completo)
+        return Consola(
+            id = id, nombre = corto, nombreLargo = bonito.uppercase(), bonito = bonito,
+            carpetas = listOf(id) + (v?.alias ?: emptyList()),
+            extensiones = ext, medio = medio,
+            color = Color(v?.color ?: colorDe(id)),
+            caja = caja, comandos = cmds, dosPantallas = v?.dos ?: false,
+            carpetasSonJuegos = v?.carpetasJuegos ?: false,
+            libretro = libretro, icono = icono,
+        )
+    }
+
+    private fun adivinarMedio(ext: Set<String>): Medio = when {
+        ext.any { it in setOf("cue", "chd", "gdi", "cdi", "ccd", "m3u") } -> Medio.CD
+        ext.any { it in setOf("iso", "rvz", "wbfs", "wua") } -> Medio.DVD
+        ext.any { it in setOf("adf", "dsk", "d64", "exe", "bat", "com", "hdf", "tap", "tzx", "st", "msa") } -> Medio.DISQUETE
+        ext == setOf("app") -> Medio.APP
+        else -> Medio.CARTUCHO_CHICO
+    }
+
+    private fun cortoDe(completo: String): String {
+        val sinMarca = completo.split(' ').let { p -> if (p.size > 1) p.drop(1).joinToString(" ") else completo }
+        return if (sinMarca.length <= 10) sinMarca else sinMarca.split(' ').joinToString("") { it.take(1) }.take(6).uppercase()
+    }
+
+    private fun colorDe(id: String): Long {
+        val paleta = listOf(0xFF6B4EFF, 0xFFFF7A59, 0xFF3BA8FF, 0xFFFF5D8F, 0xFF2EC4A6, 0xFFFFB020, 0xFF8E6CF0, 0xFF00ACC1, 0xFFE57373)
+        return paleta[Math.floorMod(id.hashCode(), paleta.size)]
+    }
+
+    /** Consolas mínimas, por si el catálogo todavía no se cargó (por ejemplo en las capturas). */
+    private fun basicas(): List<Consola> = listOf("switch", "ps2", "gc", "psp", "nds", "gba", "snes", "n64", "psx", "ps3", "ps4", "xbox", PORTS, ANDROID).map { id ->
+        val v = VISUALES[id]!!
+        crear(id, v.bonito ?: v.corto, emptySet(), emptyList(), null, null)
+    }
+
+    private var indice: Map<String, Consola>? = null
+
+    private fun porNombreCarpeta(): Map<String, Consola> =
+        indice ?: todas.flatMap { c -> c.carpetas.map { it to c } }.toMap().also { indice = it }
+
+    fun porCarpeta(nombre: String): Consola? = porNombreCarpeta()[nombre.lowercase().replace(" ", "").trim()]
 
     fun porId(id: String): Consola? = todas.firstOrNull { it.id == id }
 
-    fun orden(id: String): Int = todas.indexOfFirst { it.id == id }.let { if (it < 0) 99 else it }
+    fun orden(id: String): Int = todas.indexOfFirst { it.id == id }.let { if (it < 0) 9999 else it }
 }

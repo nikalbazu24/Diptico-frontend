@@ -187,6 +187,47 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             caja(3.5f, 13f, 7.5f, 7.5f, 2.2f)
             caja(13f, 13f, 7.5f, 7.5f, 2.2f, a, lleno = true)
         }
+        Icono.RELOJ -> {
+            circulo(12f, 12f, 8.5f)
+            linea(12f, 12f, 12f, 7f, a); linea(12f, 12f, 15.5f, 14f, a)
+        }
+        Icono.PALETA -> {
+            camino { m(12f, 3.5f); quadraticBezierTo(3.5f * k, 3.5f * k, 3.5f * k, 12f * k); quadraticBezierTo(3.5f * k, 20.5f * k, 12f * k, 20.5f * k); quadraticBezierTo(14.5f * k, 20.5f * k, 13.5f * k, 17.5f * k); quadraticBezierTo(13f * k, 15f * k, 16f * k, 15f * k); l(18f, 15f); quadraticBezierTo(20.5f * k, 15f * k, 20.5f * k, 12f * k); quadraticBezierTo(20.5f * k, 3.5f * k, 12f * k, 3.5f * k) }
+            circulo(8f, 10f, 1.4f, a, lleno = true)
+            circulo(12f, 7.5f, 1.4f, c, lleno = true)
+            circulo(16f, 10f, 1.4f, a, lleno = true)
+        }
+        Icono.MOVIL -> {
+            caja(6.5f, 2.5f, 11f, 19f, 2.6f)
+            camino(a, lleno = true) { m(10.5f, 9f); l(14.5f, 11.5f); l(10.5f, 14f); close() }
+        }
+        Icono.CHISPA -> {
+            camino(lleno = true) { m(10f, 3f); l(11.8f, 8.2f); l(17f, 10f); l(11.8f, 11.8f); l(10f, 17f); l(8.2f, 11.8f); l(3f, 10f); l(8.2f, 8.2f); close() }
+            camino(a, lleno = true) { m(18f, 13f); l(18.9f, 15.6f); l(21.5f, 16.5f); l(18.9f, 17.4f); l(18f, 20f); l(17.1f, 17.4f); l(14.5f, 16.5f); l(17.1f, 15.6f); close() }
+        }
+        Icono.CORAZON -> {
+            camino(a, lleno = true) {
+                m(12f, 20f)
+                cubicTo(2f * k, 13f * k, 3f * k, 5f * k, 8f * k, 5f * k)
+                cubicTo(10f * k, 5f * k, 11.3f * k, 6.2f * k, 12f * k, 7.5f * k)
+                cubicTo(12.7f * k, 6.2f * k, 14f * k, 5f * k, 16f * k, 5f * k)
+                cubicTo(21f * k, 5f * k, 22f * k, 13f * k, 12f * k, 20f * k)
+                close()
+            }
+        }
+        Icono.MUNDO -> {
+            circulo(12f, 12f, 8.5f)
+            linea(3.5f, 12f, 20.5f, 12f, a)
+            camino(a) { m(12f, 3.5f); quadraticBezierTo(7f * k, 12f * k, 12f * k, 20.5f * k) }
+            camino(a) { m(12f, 3.5f); quadraticBezierTo(17f * k, 12f * k, 12f * k, 20.5f * k) }
+        }
+        Icono.WEB -> {
+            caja(3f, 5f, 18f, 14f, 2.6f)
+            linea(3f, 9f, 21f, 9f)
+            circulo(6f, 7f, 0.8f, a, lleno = true)
+            circulo(8.5f, 7f, 0.8f, a, lleno = true)
+            linea(7f, 13f, 13f, 13f, a); linea(7f, 16f, 17f, 16f, a)
+        }
         Icono.ESTRELLA -> {
             camino(lleno = true) {
                 m(12f, 3f); l(14.4f, 9f); l(21f, 9.4f); l(15.9f, 13.6f); l(17.6f, 20f)

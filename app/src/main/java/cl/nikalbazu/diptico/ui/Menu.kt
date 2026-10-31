@@ -48,6 +48,8 @@ private fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.PORTADAS -> Sol
     Seccion.BIBLIOTECA -> Color(0xFF2EC4A6)
     Seccion.SISTEMA -> Color(0xFF8E8AAE)
+    Seccion.INICIO -> Color(0xFF00ACC1)
+    Seccion.TEMAS -> Color(0xFFB388FF)
 }
 
 /**
@@ -166,7 +168,7 @@ fun AyudaMenu(e: Estado) {
             Modifier.align(Alignment.CenterEnd).size(esc.d(520))
                 .background(Brush.radialGradient(listOf(color.copy(alpha = 0.28f), Color.Transparent))),
         )
-        BarraSuperior(Modifier.align(Alignment.TopStart))
+        BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
         AnimatedContent(
             targetState = Triple(s, o?.titulo, o?.valor),
             transitionSpec = { (fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 14 }) togetherWith fadeOut(tween(140)) },

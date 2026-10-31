@@ -41,8 +41,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.ContentScale
+import cl.nikalbazu.diptico.data.Consola
+import cl.nikalbazu.diptico.data.Descargas
+import cl.nikalbazu.diptico.data.Medio
 import cl.nikalbazu.diptico.estado.Diptico
+import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Opcion
+import cl.nikalbazu.diptico.estado.Trabajo
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -159,17 +172,17 @@ fun TarjetaOpcion(o: Opcion, activa: Boolean, modifier: Modifier = Modifier, alt
             Spacer(Modifier.width(esc.d(8)))
         }
         Column(Modifier.weight(1f)) {
-            Texto(o.titulo, 16.5f, color = if (activa) Color.White else p.tinta, lineas = 1)
+            Texto(o.titulo, 16.5f, color = if (activa) SobreUva else p.tinta, lineas = 1)
             if (o.valor.isNotEmpty()) {
                 Texto(
-                    o.valor, 13f, color = if (activa) Color.White.copy(alpha = 0.86f) else p.tenue,
+                    o.valor, 13f, color = if (activa) SobreUva.copy(alpha = 0.86f) else p.tenue,
                     familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1,
                 )
             }
         }
         if (activa) {
             Spacer(Modifier.width(esc.d(8)))
-            Box(Modifier.size(esc.d(28)).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(esc.d(28)).clip(CircleShape).background(SobreUva), contentAlignment = Alignment.Center) {
                 Texto("A", 13f, color = Uva)
             }
         }
@@ -212,23 +225,170 @@ fun Aviso(texto: String?, modifier: Modifier, abajo: Float = 70f) {
     }
 }
 
-/** Logo, hora, batería y lo que está sonando. */
+/** Logo, trabajos de fondo, hora y batería. Tocar la hora agranda el reloj. */
 @Composable
-fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, extra: @Composable () -> Unit = {}) {
+fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabajo> = emptyList(), extra: @Composable () -> Unit = {}) {
     val esc = LocalEscala.current
     val hora = rememberHora()
     val bat = rememberBateria()
     Row(
         modifier.fillMaxWidth().padding(start = esc.d(inicio), end = esc.d(24), top = esc.d(16)),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
-        Logo(15f)
+        Box(Modifier.padding(top = esc.d(4))) { Logo(15f) }
+        Spacer(Modifier.width(esc.d(14)))
+        PildoraTrabajos(trabajos)
         Spacer(Modifier.weight(1f))
         extra()
-        Texto(hora, 15f, sombra = true)
-        if (bat >= 0) {
-            Spacer(Modifier.width(esc.d(14)))
-            Texto("$bat%", 15f, sombra = true)
+        Row(
+            Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.alternarReloj() }.padding(horizontal = esc.d(6), vertical = esc.d(2)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Texto(hora, 15f, sombra = true)
+            if (bat >= 0) {
+                Spacer(Modifier.width(esc.d(12)))
+                Texto("$bat%", 15f, sombra = true)
+            }
         }
+    }
+}
+
+/** Aviso de lo que se hace de fondo: buscar juegos, bajar portadas… Tocándolo se ve el detalle. */
+@Composable
+fun PildoraTrabajos(trabajos: List<Trabajo>) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    var abierta by remember { mutableStateOf(false) }
+    AnimatedVisibility(
+        visible = trabajos.isNotEmpty(),
+        enter = fadeIn() + androidx.compose.animation.expandHorizontally(),
+        exit = fadeOut() + androidx.compose.animation.shrinkHorizontally(),
+    ) {
+        val primero = trabajos.firstOrNull() ?: return@AnimatedVisibility
+        Column(
+            Modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie.copy(alpha = 0.92f))
+                .border(esc.d(1), p.linea, RoundedCornerShape(esc.d(16)))
+                .clickable { abierta = !abierta }
+                .padding(horizontal = esc.d(10), vertical = esc.d(6))
+                .animateContentSize(),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Girador(13f)
+                Spacer(Modifier.width(esc.d(8)))
+                Texto(
+                    primero.texto + if (trabajos.size > 1) "  +${trabajos.size - 1}" else "", 12.5f,
+                    familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1,
+                    modifier = Modifier.widthIn(max = esc.d(240)),
+                )
+            }
+            if (abierta) {
+                for (t in trabajos) {
+                    Spacer(Modifier.height(esc.d(6)))
+                    Texto(t.texto, 12.5f, color = p.tenue, familia = Nunito, peso = FontWeight.Bold, lineas = 1, modifier = Modifier.widthIn(max = esc.d(260)))
+                    if (t.avance != null) {
+                        Spacer(Modifier.height(esc.d(3)))
+                        Box(Modifier.width(esc.d(200)).height(esc.d(4)).clip(RoundedCornerShape(50)).background(p.linea)) {
+                            Box(Modifier.fillMaxWidth(t.avance.coerceIn(0f, 1f)).height(esc.d(4)).clip(RoundedCornerShape(50)).background(Uva))
+                        }
+                    }
+                }
+            } else if (primero.avance != null) {
+                Spacer(Modifier.height(esc.d(4)))
+                Box(Modifier.width(esc.d(120)).height(esc.d(3)).clip(RoundedCornerShape(50)).background(p.linea)) {
+                    Box(Modifier.fillMaxWidth(primero.avance.coerceIn(0f, 1f)).height(esc.d(3)).clip(RoundedCornerShape(50)).background(Uva))
+                }
+            }
+        }
+    }
+}
+
+/** Reloj a pantalla completa: se abre tocando la hora y se cierra con un toque o cualquier botón. */
+@Composable
+fun RelojGrande(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val hora = rememberHora()
+    val bat = rememberBateria()
+    var segundos by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            segundos = (System.currentTimeMillis() / 1000 % 60).toInt()
+            delay(1000)
+        }
+    }
+    Box(
+        Modifier.fillMaxSize().background(p.fondo).clickable(
+            interactionSource = remember { MutableInteractionSource() }, indication = null,
+        ) { Diptico.alternarReloj() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(Modifier.size(esc.d(520)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.25f), Color.Transparent))))
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Texto(hora, if (esc.angosta) 110f else 150f, interlineado = if (esc.angosta) 112f else 150f)
+                Spacer(Modifier.width(esc.d(8)))
+                Texto(segundos.toString().padStart(2, '0'), 34f, color = Coral, modifier = Modifier.padding(bottom = esc.d(22)))
+            }
+            Detalle(
+                SimpleDateFormat("EEEE d 'de' MMMM", Locale("es")).format(Date()).replaceFirstChar { it.uppercase() },
+                22f, color = p.tinta, lineas = 1,
+            )
+            Spacer(Modifier.height(esc.d(10)))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (bat >= 0) {
+                    Box(Modifier.width(esc.d(46)).height(esc.d(20)).clip(RoundedCornerShape(esc.d(6))).border(esc.d(2), p.tenue, RoundedCornerShape(esc.d(6))).padding(esc.d(3))) {
+                        Box(Modifier.fillMaxWidth(bat.coerceIn(0, 100) / 100f).fillMaxSize().clip(RoundedCornerShape(esc.d(3))).background(if (bat < 20) Coral else Uva))
+                    }
+                    Spacer(Modifier.width(esc.d(8)))
+                    Texto("$bat%", 18f, color = p.tenue)
+                }
+                e.fiesta?.let { f ->
+                    Spacer(Modifier.width(esc.d(18)))
+                    Texto(f.tema.mensaje.ifBlank { f.nombre }, 18f, color = Sol, lineas = 1)
+                }
+            }
+        }
+        Detalle("Toca o aprieta un botón para cerrar", 13f, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(18)))
+    }
+}
+
+/** Ajustes de íconos de consola, para que cualquier ícono los lea sin pasar el estado. */
+data class IconosCfg(val estilo: String = "diptico", val propios: Map<String, String> = emptyMap(), val version: Int = 0)
+
+val LocalIconos = staticCompositionLocalOf { IconosCfg() }
+
+/**
+ * Ícono de una consola según el estilo elegido: imagen propia, paquete de RetroArch, siglas o el dibujo de Díptico.
+ */
+@Composable
+fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Modifier) {
+    val cfg = LocalIconos.current
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    if (c == null) {
+        IconoMedio(Medio.TODOS, Uva, fondo, modifier, tam)
+        return
+    }
+    val ctx = LocalContext.current
+    val propio = cfg.propios[c.id]?.let { android.net.Uri.parse(it) }
+    val paquete = Descargas.PAQUETES.firstOrNull { it.id == cfg.estilo }
+    val archivo = remember(cfg.estilo, cfg.version, c.id) {
+        paquete?.let { Descargas.archivoIcono(ctx, it.id, c.id).takeIf { f -> f.exists() }?.let { f -> android.net.Uri.fromFile(f) } }
+    }
+    val uri = propio ?: archivo
+    val img = rememberImagen(uri, 192)
+    when {
+        img != null -> Image(
+            img, contentDescription = c.nombre, contentScale = ContentScale.Fit,
+            colorFilter = if (propio == null && paquete?.blanco == true) ColorFilter.tint(p.tinta) else null,
+            modifier = modifier.size(esc.d(tam)),
+        )
+        cfg.estilo == "siglas" -> Box(
+            modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(c.color),
+            contentAlignment = Alignment.Center,
+        ) {
+            Texto(c.nombre.replace(" ", "").take(4), tam * (if (c.nombre.length > 3) 0.3f else 0.38f), color = if (c.color.luminance() > 0.6f) Tinta else Color.White, lineas = 1)
+        }
+        else -> IconoMedio(c.medio, c.color, fondo, modifier, tam)
     }
 }

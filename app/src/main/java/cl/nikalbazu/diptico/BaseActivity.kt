@@ -8,6 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import android.media.AudioManager
+import cl.nikalbazu.diptico.audio.Medios
 import cl.nikalbazu.diptico.estado.Carpeta
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Teclas
@@ -27,6 +29,10 @@ abstract class BaseActivity : ComponentActivity() {
         if (uri != null) Diptico.carpetaElegida(uri, Carpeta.MUSICA)
     }
 
+    private val elegirArchivo = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) Diptico.archivoElegido(uri)
+    }
+
     override fun onStart() {
         super.onStart()
         Diptico.aLaVista(1)
@@ -40,6 +46,8 @@ abstract class BaseActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Diptico.iniciar(this)
+        // Los botones de volumen controlan la música (también la de Díptico).
+        volumeControlStream = AudioManager.STREAM_MUSIC
         pantallaCompleta()
     }
 
@@ -56,7 +64,16 @@ abstract class BaseActivity : ComponentActivity() {
                 Diptico.avisar("No pude abrir el selector de carpetas")
             }
         }
+        Diptico.pedirArchivo = { tipo ->
+            try {
+                elegirArchivo.launch(arrayOf(tipo))
+            } catch (e: Exception) {
+                Diptico.avisar("No pude abrir el selector de archivos")
+            }
+        }
         Diptico.revisarPantallas()
+        Diptico.aplicarTema()
+        Medios.revisar(this)
         Diptico.alVolver(miDisplay())
     }
 

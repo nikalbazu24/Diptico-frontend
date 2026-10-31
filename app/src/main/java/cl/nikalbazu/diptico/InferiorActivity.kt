@@ -18,6 +18,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.ui.LocalEscala
+import cl.nikalbazu.diptico.ui.Intercambio
 import cl.nikalbazu.diptico.ui.Lienzo
 import cl.nikalbazu.diptico.ui.Raiz
 import cl.nikalbazu.diptico.ui.Rol
@@ -49,8 +50,11 @@ class InferiorActivity : BaseActivity() {
                         )
                     }
                 }
-                e.intercambiar -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.SUPERIOR, mi, rolIntro = Rol.INFERIOR) }
-                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.INFERIOR, mi) }
+                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) {
+                    Intercambio(e.intercambiar, esArriba = false) { inter ->
+                        if (inter) Raiz(e, Rol.SUPERIOR, mi, rolIntro = Rol.INFERIOR) else Raiz(e, Rol.INFERIOR, mi)
+                    }
+                }
             }
         }
         lifecycleScope.launch {

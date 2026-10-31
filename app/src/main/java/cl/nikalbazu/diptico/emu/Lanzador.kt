@@ -6,17 +6,19 @@ import android.content.ClipData
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.hardware.display.DisplayManager
 import android.net.Uri
+import android.os.Bundle
 import android.provider.DocumentsContract
 import android.view.Display
+import cl.nikalbazu.diptico.data.Comando
 import cl.nikalbazu.diptico.data.Consola
-import cl.nikalbazu.diptico.data.Emulador
+import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Juego
-import cl.nikalbazu.diptico.data.ModoRom
 
-/** Encuentra las dos pantallas de la Thor. En la Thor, la de arriba es la principal. */
+/** Encuentra las dos pantallas. En la Thor, la de arriba es la principal. */
 object Pantallas {
     fun inferior(ctx: Context): Display? {
         val dm = ctx.getSystemService(DisplayManager::class.java) ?: return null
@@ -26,51 +28,19 @@ object Pantallas {
     }
 }
 
-/** Una app instalada que se puede abrir (para elegir ports). */
-data class App(val paquete: String, val nombre: String)
+/** Una app instalada que se puede abrir (para elegir ports y juegos de Android). */
+data class App(val paquete: String, val nombre: String, val esJuego: Boolean = false)
 
-/** Abre juegos con su emulador, en la pantalla elegida. */
+/**
+ * Abre juegos con su emulador, en la pantalla elegida.
+ * Entiende los mismos comandos que ES-DE para Android, así que sirve para todas sus consolas.
+ */
 object Lanzador {
-    /** Todas las apps que se pueden abrir, ordenadas por nombre (sin Díptico). */
-    fun apps(ctx: Context): List<App> {
-        val pm = ctx.packageManager
-        val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        return pm.queryIntentActivities(i, 0)
-            .map { App(it.activityInfo.packageName, it.loadLabel(pm).toString()) }
-            .filter { it.paquete != ctx.packageName }
-            .distinctBy { it.paquete }
-            .sortedBy { it.nombre.lowercase() }
-    }
-
-    fun nombreApp(ctx: Context, paquete: String): String? = try {
-        val pm = ctx.packageManager
-        pm.getApplicationLabel(pm.getApplicationInfo(paquete, 0)).toString()
-    } catch (e: Exception) {
-        null
-    }
-
-    /** Abre una app (un port) en la pantalla elegida. */
-    fun lanzarApp(ctx: Context, paquete: String, nombre: String, displayId: Int?): String? {
-        val i = ctx.packageManager.getLaunchIntentForPackage(paquete) ?: return "$nombre ya no está instalado."
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        val opciones = ActivityOptions.makeBasic()
-        if (displayId != null) opciones.launchDisplayId = displayId
-        return try {
-            ctx.startActivity(i, opciones.toBundle())
-            null
-        } catch (e: Exception) {
-            try {
-                ctx.startActivity(i)
-                null
-            } catch (e2: Exception) {
-                "No pude abrir $nombre: ${e2.message ?: "error desconocido"}"
-            }
-        }
-    }
-
-    data class Opcion(val emulador: Emulador, val paquete: String) {
-        /** Lo que se guarda en los ajustes: "paquete" o "paquete#núcleo". */
-        val id: String get() = emulador.id(paquete)
+    /** Un emulador instalado para una consola, con la orden que lo abre. */
+    data class Opcion(val comando: Comando, val paquete: String?, val actividad: String?) {
+        /** Lo que se guarda en los ajustes. */
+        val id: String get() = comando.etiqueta
+        val nombre: String get() = comando.nombre
     }
 
     fun instalado(ctx: Context, paquete: String): Boolean = try {
@@ -80,21 +50,63 @@ object Lanzador {
         false
     }
 
-    /** Emuladores instalados para la consola. Si se indica [tipo], solo los que sirven para ese tipo de archivo. */
-    fun opciones(ctx: Context, consola: Consola, tipo: String? = null): List<Opcion> =
-        consola.emuladores
-            .filter { tipo == null || it.sirvePara(tipo) }
-            .flatMap { e -> e.paquetes.filter { instalado(ctx, it) }.map { Opcion(e, it) } }
+    /** Primer "paquete/actividad" instalado de una regla de ES-DE. */
+    private fun resolver(ctx: Context, emulador: String): Pair<String, String>? {
+        for (e in Consolas.reglas[emulador] ?: return null) {
+            val pkg = e.substringBefore('/')
+            if (!instalado(ctx, pkg)) continue
+            val act = e.substringAfter('/', "")
+            return pkg to when {
+                act.isEmpty() -> ""
+                act.startsWith(".") -> pkg + act
+                else -> act
+            }
+        }
+        return null
+    }
 
+    /** Extensión que pide un comando que lee un archivo vecino (ej. "%INJECT%=%BASENAME%.ps3" -> "ps3"). */
+    private fun extensionInyectada(c: Comando): String? =
+        Regex("%INJECT%=%BASENAME%\\.([a-z0-9]+)").find(c.linea)?.groupValues?.get(1)
+
+    private fun sirve(c: Comando, tipo: String?): Boolean {
+        val ext = extensionInyectada(c) ?: return true
+        return tipo == null || tipo == ext
+    }
+
+    /** Emuladores instalados para la consola. Si se indica [tipo], primero los que sirven para ese archivo. */
+    fun opciones(ctx: Context, consola: Consola, tipo: String? = null): List<Opcion> {
+        val cache = HashMap<String, Pair<String, String>?>()
+        val todas = consola.comandos.mapNotNull { c ->
+            when {
+                c.abreApp -> Opcion(c, null, null)
+                c.emulador != null -> cache.getOrPut(c.emulador) { resolver(ctx, c.emulador) }?.let { (p, a) -> Opcion(c, p, a) }
+                else -> null
+            }
+        }
+        if (tipo == null) return todas
+        return todas.filter { sirve(it.comando, tipo) } + todas.filter { !sirve(it.comando, tipo) }
+    }
+
+    /**
+     * El emulador elegido para la consola. Entiende lo guardado por versiones anteriores
+     * ("paquete" o "paquete#núcleo") y, si ya no está instalado, usa el primero que sirva.
+     */
     fun elegida(ctx: Context, consola: Consola, preferido: String?, tipo: String? = null): Opcion? {
         val ops = opciones(ctx, consola, tipo)
-        return ops.firstOrNull { it.id == preferido }
-            ?: ops.firstOrNull { it.paquete == preferido && it.emulador.nucleo == null }
-            ?: ops.firstOrNull()
+        if (ops.isEmpty()) return null
+        val compatibles = ops.filter { sirve(it.comando, tipo) }
+        if (preferido != null) {
+            val p = ops.firstOrNull { it.id == preferido }
+                ?: preferido.substringAfter('#', "").takeIf { it.isNotEmpty() }?.let { core -> ops.firstOrNull { it.comando.nucleo == core } }
+                ?: ops.firstOrNull { it.paquete == preferido && it.comando.nucleo == null }
+            if (p != null && (tipo == null || sirve(p.comando, tipo))) return p
+        }
+        return compatibles.firstOrNull() ?: ops.first()
     }
 
     /** Convierte un documento de la memoria interna o SD en ruta real: primary:ROMs/x -> /storage/emulated/0/ROMs/x. */
-    private fun rutaReal(docId: String): String? {
+    fun rutaReal(docId: String): String? {
         if (docId.startsWith("raw:")) return docId.removePrefix("raw:")
         val dos = docId.indexOf(':')
         if (dos <= 0) return null
@@ -103,67 +115,161 @@ object Lanzador {
         return if (volumen.equals("primary", true)) "/storage/emulated/0/$resto" else "/storage/$volumen/$resto"
     }
 
-    /** Lee el código guardado dentro de un archivo .ps3 / .ps4 (por ejemplo "CUSA00900"). */
-    private fun leerCodigo(ctx: Context, uri: Uri): String? = try {
+    private fun leerTexto(ctx: Context, uri: Uri): String? = try {
         ctx.contentResolver.openInputStream(uri)?.use { it.bufferedReader().readText() }
             ?.lineSequence()?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
     } catch (e: Exception) {
         null
     }
 
-    private fun construir(ctx: Context, op: Opcion, juego: Juego, rom: Uri): Intent? {
-        val e = op.emulador
-        val i = Intent()
-        i.component = ComponentName(op.paquete, e.componente(op.paquete))
-        e.accion?.let { i.action = it }
-        e.categoria?.let { i.addCategory(it) }
-        when (e.modo) {
-            ModoRom.DATA -> i.data = rom
-            ModoRom.EXTRA -> i.putExtra(e.extraRom, rom.toString())
-            ModoRom.RUTA -> i.putExtra(e.extraRom, rutaReal(juego.docId) ?: return null)
-            ModoRom.INYECTAR -> i.putExtra(e.extraRom, leerCodigo(ctx, juego.uri) ?: return null)
+    /** Separa la orden en partes, respetando lo que va entre comillas. */
+    private fun partes(linea: String): List<String> {
+        val salida = mutableListOf<String>()
+        val sb = StringBuilder()
+        var comillas = false
+        for (ch in linea) {
+            when {
+                ch == '"' -> { comillas = !comillas; sb.append(ch) }
+                ch == ' ' && !comillas -> if (sb.isNotEmpty()) { salida += sb.toString(); sb.clear() }
+                else -> sb.append(ch)
+            }
         }
-        for ((k, v) in e.extrasBool) i.putExtra(k, v)
-        for ((k, v) in e.extrasTexto) i.putExtra(k, v.replace("{pkg}", op.paquete).replace("{core}", e.nucleo ?: ""))
-        if (e.limpiarTarea) i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        return i
+        if (sb.isNotEmpty()) salida += sb.toString()
+        return salida
+    }
+
+    private class Falla(val mensaje: String) : Exception(mensaje)
+
+    /** Arma el Intent de ES-DE para un juego. */
+    private fun construir(ctx: Context, op: Opcion, juego: Juego, consola: Consola, rom: Uri, raiz: Uri?): Intent {
+        val linea = op.comando.linea
+        val ruta = rutaReal(juego.docId)
+        val raizRuta = raiz?.let { r -> try { rutaReal(DocumentsContract.getTreeDocumentId(r)) } catch (e: Exception) { null } }
+        val base = if (juego.esCarpeta) juego.archivo else juego.archivo.substringBeforeLast('.')
+
+        fun necesitaRuta(): String = ruta ?: throw Falla("No pude encontrar la ruta de ${juego.titulo}. Usa una carpeta de la memoria interna o la SD.")
+
+        fun basico(v: String): String {
+            var x = v
+            if ("%ROMPATHRAW%" in x || "%ROMPATH%" in x) {
+                val rp = raizRuta ?: necesitaRuta().substringBeforeLast('/').substringBeforeLast('/')
+                x = x.replace("%ROMPATHRAW%", rp).replace("%ROMPATH%", rp)
+            }
+            if ("%GAMEDIRRAW%" in x) x = x.replace("%GAMEDIRRAW%", necesitaRuta().substringBeforeLast('/'))
+            if ("%ROMRAW%" in x) x = x.replace("%ROMRAW%", necesitaRuta())
+            if ("%ROM%" in x) x = x.replace("%ROM%", necesitaRuta())
+            x = x.replace("%ROMSAF%", rom.toString()).replace("%ROMPROVIDER%", rom.toString())
+                .replace("%BASENAME%", base)
+                .replace("%ANDROIDPACKAGE%", op.paquete ?: "")
+                .replace("%EXTERNALDATA%", "/storage/emulated/0")
+                .replace("%INTERNALDATA%", "/data/data")
+            return x
+        }
+
+        /** Lee el contenido de un archivo junto al juego (o del juego mismo). */
+        fun inyectar(nombre: String): String {
+            val n = nombre.substringAfterLast('/')
+            val uri = if (n.equals(juego.archivo, true) || raiz == null) juego.uri
+            else DocumentsContract.buildDocumentUriUsingTree(raiz, juego.docId.substringBeforeLast('/') + "/" + n)
+            return leerTexto(ctx, uri) ?: throw Falla("El archivo $n debe tener adentro el código del juego (por ejemplo CUSA00900).")
+        }
+
+        fun valor(v0: String): String {
+            val v = v0.removeSurrounding("\"")
+            if (v == "%FILEINJECT%") return inyectar(juego.archivo)
+            val i = v.indexOf("%INJECT%=")
+            if (i >= 0) return basico(v.substring(0, i)) + inyectar(basico(v.substring(i + "%INJECT%=".length)))
+            return basico(v)
+        }
+
+        val intent = Intent()
+        var data: Uri? = null
+        var mime: String? = null
+        for (p in partes(linea)) {
+            if (p.startsWith("%EMULATOR_")) {
+                if (op.paquete != null) {
+                    if (op.actividad.isNullOrEmpty()) {
+                        ctx.packageManager.getLaunchIntentForPackage(op.paquete)?.component?.let { intent.component = it }
+                            ?: intent.setPackage(op.paquete)
+                    } else {
+                        intent.component = ComponentName(op.paquete, op.actividad)
+                    }
+                }
+                continue
+            }
+            when (p) {
+                "%ACTIVITY_CLEAR_TASK%" -> { intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK); continue }
+                "%ACTIVITY_CLEAR_TOP%" -> { intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); continue }
+                "%ACTIVITY_NO_HISTORY%" -> { intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY); continue }
+            }
+            val corte = p.indexOf("%=", 1)
+            if (!p.startsWith("%") || corte < 0) continue
+            val clave = p.substring(0, corte + 1)
+            val v = valor(p.substring(corte + 2))
+            when {
+                clave == "%ACTION%" -> intent.action = v
+                clave == "%CATEGORY%" -> intent.addCategory(v)
+                clave == "%MIMETYPE%" -> mime = v
+                clave == "%DATA%" -> data = Uri.parse(v)
+                clave.startsWith("%EXTRABOOL_") -> intent.putExtra(clave.removePrefix("%EXTRABOOL_").removeSuffix("%"), v.equals("true", true))
+                clave.startsWith("%EXTRAINTEGER_") -> intent.putExtra(
+                    clave.removePrefix("%EXTRAINTEGER_").removeSuffix("%"),
+                    v.toIntOrNull() ?: throw Falla("El archivo de ${juego.titulo} debe tener adentro un número."),
+                )
+                clave.startsWith("%EXTRAARRAY_") -> intent.putExtra(clave.removePrefix("%EXTRAARRAY_").removeSuffix("%"), v.split(',').toTypedArray())
+                clave.startsWith("%EXTRA_") -> intent.putExtra(clave.removePrefix("%EXTRA_").removeSuffix("%"), v)
+            }
+        }
+        when {
+            data != null && mime != null -> intent.setDataAndType(data, mime)
+            data != null -> intent.data = data
+            mime != null -> intent.type = mime
+        }
+        return intent
     }
 
     /**
      * Abre el juego. Devuelve null si salió bien, o un mensaje para mostrar si falló.
-     * Si no hay un emulador conocido instalado, ofrece elegir una app.
+     * [raiz] es la carpeta de juegos elegida (para rutas y archivos vecinos).
      */
-    fun lanzar(ctx: Context, juego: Juego, consola: Consola, preferido: String?, displayId: Int?): String? {
+    fun lanzar(ctx: Context, juego: Juego, consola: Consola, preferido: String?, displayId: Int?, raiz: Uri?): String? {
         val rom = DocumentsContract.buildDocumentUri(juego.uri.authority, juego.docId)
         val op = elegida(ctx, consola, preferido, juego.tipo)
 
-        if (op == null && (juego.tipo == "ps3" || juego.tipo == "ps4" || juego.esCarpeta)) {
-            val sugerido = consola.emuladores.firstOrNull()?.nombre ?: "un emulador"
-            return "Para abrir ${juego.titulo} necesitas $sugerido instalado."
-        }
-
-        val base = if (op != null) {
-            construir(ctx, op, juego, rom) ?: return when (op.emulador.modo) {
-                ModoRom.INYECTAR -> "El archivo ${juego.archivo} debe tener adentro el código del juego (por ejemplo CUSA00900)."
-                else -> "No pude encontrar la ruta de ${juego.titulo}. Usa una carpeta de la memoria interna o la SD."
+        val base: Intent = try {
+            when {
+                op != null && op.comando.abreApp -> {
+                    // Ports y juegos de Android de ES-DE: el archivo trae adentro el nombre de la app.
+                    val texto = leerTexto(ctx, juego.uri) ?: return "El archivo ${juego.archivo} debe tener adentro el nombre de la app."
+                    val pkg = texto.substringBefore('/').trim()
+                    return lanzarApp(ctx, pkg, juego.titulo, displayId)
+                }
+                op != null -> construir(ctx, op, juego, consola, rom, raiz)
+                consola.comandos.isEmpty() || juego.esCarpeta || juego.tipo in setOf("ps3", "ps4", "psvita") ->
+                    return "Para abrir ${juego.titulo} necesitas instalar ${consola.sugerido}."
+                else -> {
+                    val ver = Intent(Intent.ACTION_VIEW).setDataAndType(rom, "*/*")
+                    ver.clipData = ClipData.newRawUri("rom", rom)
+                    ver.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    Intent.createChooser(ver, "Abrir ${juego.titulo} con… (te sugiero ${consola.sugerido})")
+                }
             }
-        } else {
-            val ver = Intent(Intent.ACTION_VIEW).setDataAndType(rom, "*/*")
-            ver.clipData = ClipData.newRawUri("rom", rom)
-            ver.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            Intent.createChooser(ver, "Abrir ${juego.titulo} con…")
+        } catch (f: Falla) {
+            return f.mensaje
+        } catch (e: Exception) {
+            return "No pude preparar ${juego.titulo}: ${e.message ?: "error desconocido"}"
         }
         base.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         val conPermiso = Intent(base).apply {
-            clipData = ClipData.newRawUri("rom", rom).apply { addItem(ClipData.Item(juego.uri)) }
+            clipData = ClipData.newRawUri("rom", rom).apply {
+                addItem(ClipData.Item(juego.uri))
+                raiz?.let { addItem(ClipData.Item(it)) }
+            }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
         }
 
-        val opciones = ActivityOptions.makeBasic()
-        if (displayId != null) opciones.launchDisplayId = displayId
-        val bundle = opciones.toBundle()
-
+        val bundle = opcionesPantalla(displayId)
         return try {
             ctx.startActivity(conPermiso, bundle)
             null
@@ -175,10 +281,67 @@ object Lanzador {
                 "No pude abrir ${juego.titulo}: ${e.message ?: "error desconocido"}"
             }
         } catch (nf: ActivityNotFoundException) {
-            val sugerido = consola.emuladores.firstOrNull()?.nombre ?: "un emulador"
-            "No encontré con qué abrir ${consola.nombre}. Instala $sugerido."
+            "No encontré con qué abrir ${consola.bonito}. Instala ${consola.sugerido}."
         } catch (e: Exception) {
             "No pude abrir ${juego.titulo}: ${e.message ?: "error desconocido"}"
+        }
+    }
+
+    private fun opcionesPantalla(displayId: Int?): Bundle {
+        val o = ActivityOptions.makeBasic()
+        if (displayId != null) o.launchDisplayId = displayId
+        return o.toBundle()
+    }
+
+    // ---------- Apps (ports y juegos de Android) ----------
+
+    /** Todas las apps que se pueden abrir, ordenadas por nombre (sin Díptico). */
+    fun apps(ctx: Context): List<App> {
+        val pm = ctx.packageManager
+        val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        return pm.queryIntentActivities(i, 0)
+            .map { r ->
+                val ai = r.activityInfo.applicationInfo
+                App(r.activityInfo.packageName, r.loadLabel(pm).toString(), esJuego(ai))
+            }
+            .filter { it.paquete != ctx.packageName }
+            .distinctBy { it.paquete }
+            .sortedBy { it.nombre.lowercase() }
+    }
+
+    /** Paquetes de emuladores conocidos (para no confundirlos con juegos de Android). */
+    private val emuladores: Set<String> by lazy {
+        Consolas.reglas.values.flatten().map { it.substringBefore('/') }.toSet()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun esJuego(ai: ApplicationInfo): Boolean =
+        ai.category == ApplicationInfo.CATEGORY_GAME || (ai.flags and ApplicationInfo.FLAG_IS_GAME) != 0
+
+    /** Juegos de Android instalados (los que el sistema marca como juego), sin contar emuladores. */
+    fun juegosAndroid(ctx: Context): List<App> = apps(ctx).filter { it.esJuego && it.paquete !in emuladores }
+
+    fun nombreApp(ctx: Context, paquete: String): String? = try {
+        val pm = ctx.packageManager
+        pm.getApplicationLabel(pm.getApplicationInfo(paquete, 0)).toString()
+    } catch (e: Exception) {
+        null
+    }
+
+    /** Abre una app (un port o un juego de Android) en la pantalla elegida. */
+    fun lanzarApp(ctx: Context, paquete: String, nombre: String, displayId: Int?): String? {
+        val i = ctx.packageManager.getLaunchIntentForPackage(paquete) ?: return "$nombre ya no está instalado."
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try {
+            ctx.startActivity(i, opcionesPantalla(displayId))
+            null
+        } catch (e: Exception) {
+            try {
+                ctx.startActivity(i)
+                null
+            } catch (e2: Exception) {
+                "No pude abrir $nombre: ${e2.message ?: "error desconocido"}"
+            }
         }
     }
 }

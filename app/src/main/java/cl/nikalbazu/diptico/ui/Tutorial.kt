@@ -129,8 +129,8 @@ private fun infoPaso(e: Estado, paso: PasoTuto): InfoPaso = when (paso) {
         }
     }
     PasoTuto.PORTS -> InfoPaso(
-        "Ports", if (e.ports.isEmpty()) "¿Tienes ports?" else "¡${e.ports.size} ports en tu estante!",
-        "Son juegos hechos para Android, como Ship of Harkinian, los de Doom o Mario 64. Márcalos y tendrán su propio estante.",
+        "Ports y Android", "Ports y juegos de Android",
+        "Los ports (Ship of Harkinian, Doom, Mario 64…) y tus juegos de Android (Genshin, Minecraft…) tienen su propio estante, ficha y guías.",
     )
     PasoTuto.PORTADAS -> InfoPaso(
         "Portadas", "Portadas, imágenes y títulos",
@@ -437,7 +437,7 @@ private fun ArbolCarpetas() {
                 IconoCarpeta(Uva, 30f)
                 Spacer(Modifier.width(esc.d(10)))
                 Texto(nombre, 20f, modifier = Modifier.width(esc.d(70)))
-                if (c != null) IconoMedio(c.medio, c.color, p.fondo, tam = 30f)
+                if (c != null) IconoConsola(c, 30f, p.fondo)
             }
         }
         Texto("…y así con cada consola", 15f, color = p.tenue, familia = Nunito, peso = FontWeight.Bold, modifier = Modifier.padding(start = esc.d(30)))
@@ -450,7 +450,7 @@ private fun RejillaConsolas(e: Estado, conEstado: Boolean) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val hay = e.consolasEmu.isNotEmpty()
-    val lista = if (hay) e.consolasEmu else Consolas.todas.filter { !it.esPorts }
+    val lista = (if (hay) e.consolasEmu else Consolas.todas.filter { !it.sinEmulador }).take(12)
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
         lista.chunked(4).forEach { fila ->
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {

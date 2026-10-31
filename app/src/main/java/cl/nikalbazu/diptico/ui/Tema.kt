@@ -12,6 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import cl.nikalbazu.diptico.estado.Tema
+import cl.nikalbazu.diptico.estado.Temas
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -57,12 +64,62 @@ val PaletaClara = Paleta(
     estante = Color(0x241C1A33),
 )
 
-val Uva = Color(0xFF6B4EFF)
-val UvaSombra = Color(0xFF4F35D6)
-val Coral = Color(0xFFFF7A59)
-val Sol = Color(0xFFFFC93C)
+/** Tema elegido y si se dibujan sus decoraciones. Al cambiarlos, toda la app se repinta sola. */
+object Estilo {
+    var tema by mutableStateOf(Temas.incluidos[0])
+    var decoraciones by mutableStateOf(true)
+}
+
+val Uva: Color get() = Color(Estilo.tema.acento)
+val UvaSombra: Color get() = lerp(Uva, Color.Black, 0.22f)
+val Coral: Color get() = Color(Estilo.tema.acento2)
+val Sol: Color get() = Color(Estilo.tema.acento3)
 val Tinta = Color(0xFF1C1A33)
 val Cielo = Color(0xFF3BA8FF)
+
+/** Color de letra que se lee bien sobre el color principal (blanco, o tinta si el color es muy claro). */
+val SobreUva: Color get() = if (Uva.luminance() > 0.55f) Tinta else Color.White
+
+/** Arma la paleta de fondo, superficies y letras a partir del tema y del modo claro/oscuro. */
+fun paletaDe(t: Tema, oscuroPersona: Boolean): Paleta {
+    if (t.base == "gb") {
+        return Paleta(
+            fondo = Color(0xFF0F380F), fondo2 = Color(0xFF16461A), superficie = Color(0xFF306230), tinta = Color(0xFFE3F5C8),
+            tenue = Color(0xFF9BBC0F), linea = Color(0xFF306230), acentoTexto = Color(0xFF9BBC0F), estante = Color(0x339BBC0F),
+        )
+    }
+    val oscuro = when (t.base) {
+        "oscuro", "oled" -> true
+        "claro" -> false
+        else -> oscuroPersona
+    }
+    if (t.id == "diptico") return if (oscuro) PaletaOscura else PaletaClara
+    val a = Color(t.acento)
+    return if (oscuro) {
+        val negro = t.base == "oled"
+        Paleta(
+            fondo = if (negro) Color.Black else lerp(Color(0xFF0B0A12), a, 0.07f),
+            fondo2 = if (negro) Color(0xFF050507) else lerp(Color(0xFF100F19), a, 0.09f),
+            superficie = lerp(Color(0xFF1E1C2C), a, 0.16f),
+            tinta = Color(0xFFF4F2FF),
+            tenue = lerp(Color(0xFFAEAAC6), a, 0.15f),
+            linea = lerp(Color(0xFF2A2840), a, 0.2f),
+            acentoTexto = lerp(a, Color.White, 0.38f),
+            estante = Color(0x1AFFFFFF),
+        )
+    } else {
+        Paleta(
+            fondo = lerp(Color(0xFFF7F6FB), a, 0.07f),
+            fondo2 = lerp(Color(0xFFFFFFFF), a, 0.035f),
+            superficie = Color.White,
+            tinta = lerp(Color(0xFF1C1A2E), a, 0.1f),
+            tenue = lerp(Color(0xFF5C5A72), a, 0.12f),
+            linea = lerp(Color(0xFFE2E0EE), a, 0.25f),
+            acentoTexto = lerp(a, Color.Black, 0.28f),
+            estante = Color(0x241C1A33),
+        )
+    }
+}
 
 val Fredoka = FontFamily(
     Font(R.font.fredoka_medium, FontWeight.Medium),
@@ -103,7 +160,7 @@ val LocalPaleta = staticCompositionLocalOf { PaletaOscura }
  */
 @Composable
 fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f, contenido: @Composable () -> Unit) {
-    val paleta = if (oscuro) PaletaOscura else PaletaClara
+    val paleta = paletaDe(Estilo.tema, oscuro)
     BoxWithConstraints(modifier.background(paleta.fondo)) {
         val alto = if (maxHeight.value > 0f) maxHeight.value else 1f
         // En pantallas verticales (un teléfono) manda el ancho, para que nada quede fuera.
@@ -111,7 +168,10 @@ fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f,
         val f = corto / ALTO_DISENO
         val ancho = maxWidth.value / f
         CompositionLocalProvider(LocalEscala provides Escala(f, ancho, tamTexto), LocalPaleta provides paleta) {
-            Box(Modifier.fillMaxSize()) { contenido() }
+            Box(Modifier.fillMaxSize()) {
+                contenido()
+                if (Estilo.decoraciones && Estilo.tema.decor != "nada") Decoracion(Estilo.tema)
+            }
         }
     }
 }

@@ -161,6 +161,7 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
             Banda.LATERAL_CLARA -> Box(Modifier.fillMaxHeight().width(esc.d(8)).background(Color.White.copy(alpha = 0.35f)))
             Banda.ARRIBA_CLARA -> Box(Modifier.fillMaxWidth().height(esc.d(11)).background(Color.White.copy(alpha = 0.45f)))
             Banda.ARRIBA_OSCURA -> Box(Modifier.fillMaxWidth().height(esc.d(15)).background(Color.Black.copy(alpha = 0.45f)))
+            Banda.ARRIBA_ROJA -> Box(Modifier.fillMaxWidth().height(esc.d(14 * escala)).background(Color(0xFFE60012)))
             Banda.ABAJO_CLARA -> Box(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(10)).background(Color.White.copy(alpha = 0.3f)),
             )
@@ -259,6 +260,29 @@ fun IconoMedio(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Mo
                 drawCircle(Color.White.copy(alpha = 0.9f), 4.2f * k, Offset(cx + 6.5f * k, cy - 6.5f * k))
                 drawCircle(Color.White.copy(alpha = 0.9f), 4.2f * k, Offset(cx - 6.5f * k, cy + 6.5f * k))
                 drawCircle(Sol, 4.2f * k, Offset(cx + 6.5f * k, cy + 6.5f * k))
+            }
+            Medio.MOVIL -> {
+                rr(11f, 3f, 22f, 38f, 5f, color)
+                rr(13.5f, 7f, 17f, 26f, 2f, Color.White.copy(alpha = 0.85f))
+                val tri = Path().apply {
+                    moveTo(cx - 3.5f * k, cy - 5f * k); lineTo(cx + 5f * k, cy - 1f * k); lineTo(cx - 3.5f * k, cy + 3f * k); close()
+                }
+                drawPath(tri, color)
+                drawCircle(Color.White.copy(alpha = 0.85f), 1.6f * k, Offset(cx, cy + 16.5f * k))
+            }
+            Medio.ARCADE -> {
+                rr(10f, 3f, 24f, 38f, 3f, color)
+                rr(13f, 7f, 18f, 13f, 2f, Color.White.copy(alpha = 0.85f))
+                rr(8f, 23f, 28f, 6f, 2f, color)
+                drawCircle(Sol, 2.6f * k, Offset(cx - 5f * k, cy + 1.5f * k))
+                drawCircle(Coral, 2f * k, Offset(cx + 3f * k, cy + 1.5f * k))
+                drawCircle(Coral, 2f * k, Offset(cx + 8f * k, cy + 1.5f * k))
+            }
+            Medio.DISQUETE -> {
+                rr(6f, 6f, 32f, 32f, 4f, color)
+                rr(13f, 6f, 18f, 11f, 1.5f, Color.White.copy(alpha = 0.75f))
+                rr(25f, 8f, 4f, 7f, 1f, color)
+                rr(11f, 23f, 22f, 13f, 2f, Color.White.copy(alpha = 0.85f))
             }
             Medio.TODOS -> {
                 rr(18f, 4f, 22f, 28f, 5f, Sol)

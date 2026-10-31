@@ -48,6 +48,14 @@ fun PantallaSuperior(e: Estado) {
         AyudaMenu(e)
         return
     }
+    if (e.panel == Panel.FICHA) {
+        LecturaFicha(e)
+        return
+    }
+    if (e.inicio == "widgets") {
+        PantallaInicio(e)
+        return
+    }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val angosta = esc.angosta
@@ -78,7 +86,7 @@ fun PantallaSuperior(e: Estado) {
                 .background(Brush.verticalGradient(listOf(Color.Transparent, p.fondo))),
         )
 
-        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen)
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos)
 
         AnimatedContent(
             targetState = juego,
@@ -126,7 +134,7 @@ fun InfoJuego(e: Estado, j: Juego, tamTitulo: Float, conPaso: Boolean = true) {
     Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
         if (c != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconoMedio(c.medio, c.color, p.fondo, tam = 22f)
+                IconoConsola(c, 22f, p.fondo)
                 Spacer(Modifier.width(esc.d(8)))
                 Etiqueta(c.nombreLargo, p.tenue, 12.5f)
             }
@@ -175,10 +183,10 @@ fun BotonJugar() {
             .padding(start = esc.d(6), end = esc.d(20), top = esc.d(6), bottom = esc.d(6)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(esc.d(34)).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(esc.d(34)).clip(CircleShape).background(SobreUva), contentAlignment = Alignment.Center) {
             Texto("A", 15f, color = Uva)
         }
         Spacer(Modifier.width(esc.d(10)))
-        Texto("¡Jugar!", 18f, color = Color.White)
+        Texto("¡Jugar!", 18f, color = SobreUva)
     }
 }

@@ -75,7 +75,7 @@ object Musica {
         val am = app.getSystemService(AudioManager::class.java) ?: return true
         val req = focoPedido ?: AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
             .setAudioAttributes(
-                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build(),
+                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build(),
             )
             .setOnAudioFocusChangeListener(escuchaFoco)
             .setWillPauseWhenDucked(false)
@@ -150,7 +150,11 @@ object Musica {
                     mezcla = 0
                     crearDeRecurso(pistas[0], enBucle = false)
                 }
-                else -> crearDeRecurso(pistas.firstOrNull { it.id == pista } ?: pistas[0], enBucle = true)
+                else -> if (pista.startsWith("archivo:")) {
+                    crearDeArchivo(Uri.parse(pista.removePrefix("archivo:"))) ?: crearDeRecurso(pistas[0], enBucle = true)
+                } else {
+                    crearDeRecurso(pistas.firstOrNull { it.id == pista } ?: pistas[0], enBucle = true)
+                }
             }
             if (nuevo == null) return@launch
             mp = nuevo
@@ -166,7 +170,7 @@ object Musica {
     }
 
     private fun atributos() = AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_GAME)
+        .setUsage(AudioAttributes.USAGE_MEDIA)
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
         .build()
 
@@ -180,6 +184,18 @@ object Musica {
             prepare()
             if (!enBucle) setOnCompletionListener { siguienteMezcla() }
         }.also { titulo = p.nombre }
+    } catch (e: Exception) {
+        null
+    }
+
+    /** La canción propia de un juego, en bucle. */
+    private fun crearDeArchivo(uri: Uri): MediaPlayer? = try {
+        MediaPlayer().apply {
+            setAudioAttributes(atributos())
+            setDataSource(app, uri)
+            isLooping = true
+            prepare()
+        }.also { titulo = uri.lastPathSegment?.substringAfterLast('/')?.substringBeforeLast('.') ?: "Música del juego" }
     } catch (e: Exception) {
         null
     }

@@ -47,7 +47,7 @@ fun PantallaUnica(e: Estado) {
                 .background(Brush.verticalGradient(0f to Color.Transparent, 0.4f to p.fondo.copy(alpha = 0.92f), 1f to p.fondo)),
         )
 
-        BarraSuperior(Modifier.align(Alignment.TopStart)) {
+        BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos) {
             Box(
                 Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f)).clickable { Diptico.abrirMenu() },
                 contentAlignment = Alignment.Center,
@@ -94,7 +94,7 @@ private fun InfoUnica(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {
     Column {
         if (c != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconoMedio(c.medio, c.color, p.fondo, tam = 20f)
+                IconoConsola(c, 20f, p.fondo)
                 Spacer(Modifier.width(esc.d(8)))
                 Etiqueta(c.nombreLargo, p.tenue, 12f)
             }

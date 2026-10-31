@@ -23,10 +23,18 @@ object Teclas {
     )
 
     fun manejar(ev: KeyEvent): Boolean {
-        val e = Diptico.estado.value
         val code = ev.keyCode
+        // El volumen siempre lo maneja Android (así baja también la música de Díptico).
+        if (code == KeyEvent.KEYCODE_VOLUME_UP || code == KeyEvent.KEYCODE_VOLUME_DOWN || code == KeyEvent.KEYCODE_VOLUME_MUTE) return false
+        val e = Diptico.estado.value
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
+
+        // Reloj grande: cualquier botón lo cierra.
+        if (e.relojGrande && (esA(code) || esB(code) || code in botonesControl)) {
+            if (arriba) Diptico.alternarReloj()
+            return true
+        }
 
         // Animación de entrada: cualquier botón la salta.
         if (e.intro) {
@@ -83,6 +91,34 @@ object Teclas {
         if (e.sesion != null && !e.despierta && e.panel == Panel.NINGUNO) {
             if (arriba) Diptico.despertar()
             return true
+        }
+
+        // Ficha del juego: pestañas con L1/R1 o ← →, opciones con ↑ ↓.
+        if (e.panel == Panel.FICHA || e.panel == Panel.WIDGETS || e.panel == Panel.TRABAJOS) {
+            if (abajo) {
+                when (code) {
+                    KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(-1)
+                    KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(1)
+                    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) {
+                        if (e.panel == Panel.FICHA) Diptico.cambiarPestanaFicha(-1) else if (e.panel == Panel.WIDGETS) Diptico.moverWidget(-1)
+                    }
+                    KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) {
+                        if (e.panel == Panel.FICHA) Diptico.cambiarPestanaFicha(1) else if (e.panel == Panel.WIDGETS) Diptico.moverWidget(1)
+                    }
+                    else -> return esA(code) || esB(code) || code in botonesControl
+                }
+                return true
+            }
+            if (arriba) {
+                when {
+                    esA(code) -> Diptico.aceptar()
+                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_X || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.cerrarPanel()
+                    code in botonesControl || code in cruceta -> Unit
+                    else -> return false
+                }
+                return true
+            }
+            return false
         }
 
         // Menú principal: dos columnas (secciones y opciones).
@@ -160,7 +196,7 @@ object Teclas {
             }
             when (code) {
                 KeyEvent.KEYCODE_BUTTON_Y -> { if (!hayPanel) Diptico.abrirPaso(); return true }
-                KeyEvent.KEYCODE_BUTTON_X -> { if (!hayPanel) Diptico.avisar("La ficha del juego llega en la próxima versión"); return true }
+                KeyEvent.KEYCODE_BUTTON_X -> { if (!hayPanel) Diptico.abrirFicha(); return true }
                 KeyEvent.KEYCODE_BUTTON_START -> {
                     if (hayPanel) Diptico.cerrarPanel() else Diptico.abrirMenu()
                     return true

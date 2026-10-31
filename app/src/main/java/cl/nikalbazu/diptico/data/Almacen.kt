@@ -83,6 +83,17 @@ class Almacen(ctx: Context) {
         get() = (p.getString("ports", "") ?: "").split('\n').filter { it.isNotBlank() }
         set(v) = p.edit().putString("ports", v.joinToString("\n")).apply()
 
+    /** Juegos de Android elegidos. null = todavía no se eligió (se detectan solos). */
+    var android: List<String>?
+        get() = p.getString("android", null)?.split('\n')?.filter { it.isNotBlank() }
+        set(v) = p.edit().putString("android", v?.joinToString("\n")).apply()
+
+    /** Texto guardado con un nombre (temas propios, widgets, íconos...), en JSON. */
+    fun texto(clave: String, defecto: String = ""): String = p.getString(clave, defecto) ?: defecto
+    fun guardarTexto(clave: String, valor: String) = p.edit().putString(clave, valor).apply()
+    fun bool(clave: String, defecto: Boolean): Boolean = p.getBoolean(clave, defecto)
+    fun guardarBool(clave: String, valor: Boolean) = p.edit().putBoolean(clave, valor).apply()
+
     fun medios(): Map<String, MediosJuego> {
         val o = try { JSONObject(p.getString("medios", "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
         val salida = HashMap<String, MediosJuego>()
@@ -126,6 +137,13 @@ class Almacen(ctx: Context) {
                 paso = d.optString("paso", ""),
                 ultimo = d.optLong("ultimo", 0L),
                 pantalla = if (d.has("pantalla")) d.optString("pantalla") else null,
+                titulo = d.optString("titulo", "").ifEmpty { null },
+                portada = d.optString("portada", "").ifEmpty { null },
+                arte = d.optString("arte", "").ifEmpty { null },
+                logo = d.optString("logo", "").ifEmpty { null },
+                musica = d.optString("musica", "").ifEmpty { null },
+                notas = d.optString("notas", ""),
+                favorito = d.optBoolean("favorito", false),
             )
         }
         return salida
@@ -139,6 +157,13 @@ class Almacen(ctx: Context) {
             j.put("paso", d.paso)
             j.put("ultimo", d.ultimo)
             d.pantalla?.let { j.put("pantalla", it) }
+            d.titulo?.let { j.put("titulo", it) }
+            d.portada?.let { j.put("portada", it) }
+            d.arte?.let { j.put("arte", it) }
+            d.logo?.let { j.put("logo", it) }
+            d.musica?.let { j.put("musica", it) }
+            if (d.notas.isNotEmpty()) j.put("notas", d.notas)
+            if (d.favorito) j.put("favorito", true)
             o.put(k, j)
         }
         p.edit().putString("datos", o.toString()).apply()

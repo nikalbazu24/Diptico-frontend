@@ -321,6 +321,40 @@ object Descargas {
         )
     }
 
+    // ---------- Íconos de consola (paquetes de RetroArch) ----------
+
+    /** Paquetes de íconos: id en retroarch-assets, nombre para mostrar y si son blancos (se tiñen con el tema). */
+    data class PaqueteIconos(val id: String, val nombre: String, val blanco: Boolean)
+
+    val PAQUETES = listOf(
+        PaqueteIconos("systematic", "Consolas a color", false),
+        PaqueteIconos("dot-art", "Pixel art", false),
+        PaqueteIconos("flatux", "Controles", false),
+        PaqueteIconos("retrosystem", "Controles retro", false),
+        PaqueteIconos("automatic", "Contornos", true),
+        PaqueteIconos("monochrome", "Siluetas", true),
+    )
+
+    fun archivoIcono(ctx: Context, paquete: String, consola: String): File = File(File(ctx.filesDir, "iconos/$paquete"), "$consola.png")
+
+    /**
+     * Baja los íconos de un paquete para las consolas indicadas. Devuelve cuántos consiguió.
+     * [avance] se llama con (hechos, total).
+     */
+    fun bajarIconos(ctx: Context, paquete: String, consolas: List<Consola>, avance: (Int, Int) -> Unit): Int {
+        val con = consolas.filter { it.icono != null }
+        var ok = 0
+        con.forEachIndexed { i, c ->
+            avance(i, con.size)
+            val destino = archivoIcono(ctx, paquete, c.id)
+            if (destino.exists()) { ok++; return@forEachIndexed }
+            destino.parentFile?.mkdirs()
+            val nombre = codificar(c.icono!!)
+            if (bajar("https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/$paquete/png/$nombre.png", destino)) ok++
+        }
+        return ok
+    }
+
     /** Borra todo lo descargado. */
     fun borrar(ctx: Context) {
         File(ctx.filesDir, "medios").deleteRecursively()

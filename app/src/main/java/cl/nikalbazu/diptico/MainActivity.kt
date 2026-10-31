@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import cl.nikalbazu.diptico.emu.Pantallas
 import cl.nikalbazu.diptico.estado.Diptico
+import cl.nikalbazu.diptico.ui.Intercambio
 import cl.nikalbazu.diptico.ui.Lienzo
 import cl.nikalbazu.diptico.ui.Raiz
 import cl.nikalbazu.diptico.ui.Rol
@@ -47,8 +48,11 @@ class MainActivity : BaseActivity() {
                     Lienzo(e.oscuro, Modifier.fillMaxWidth().weight(1f), t) { Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) }
                 }
                 e.unaPantalla -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.UNICA, mi) }
-                e.intercambiar -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) }
-                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.SUPERIOR, mi) }
+                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) {
+                    Intercambio(e.intercambiar, esArriba = true) { inter ->
+                        if (inter) Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) else Raiz(e, Rol.SUPERIOR, mi)
+                    }
+                }
             }
         }
         // Si cambias a dos pantallas (o a "abajo en negro") se abre la de abajo.
