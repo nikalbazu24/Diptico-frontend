@@ -70,6 +70,7 @@ class Capturas {
         Estilo.tema = tema ?: Temas.incluidos[0]
         Estilo.decoraciones = true
         Estilo.efecto = e.efecto
+        cl.nikalbazu.diptico.estado.Idioma.fijar(ApplicationProvider.getApplicationContext(), e.idioma)
         regla.mainClock.autoAdvance = false
         regla.setContent {
             Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { Raiz(e, rol, 0) }
@@ -330,6 +331,74 @@ class Capturas {
     @Test fun t62_elegir_imagen() = foto("62_elegir_portada", base().copy(panel = Panel.IMAGENES, fichaDe = "snes/1", candidatoPara = "portada", buscandoCandidatos = true), Rol.INFERIOR)
 
     @Test fun t63_previa_musica() = foto("63_menu_vista_previa_musica", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true), Rol.SUPERIOR)
+
+    // ---------- v0.6 ----------
+
+    private val conversacion = listOf(
+        cl.nikalbazu.diptico.estado.MensajeChat("yo", "¿Qué juego me recomiendas hoy?"),
+        cl.nikalbazu.diptico.estado.MensajeChat(
+            "ia",
+            "Tienes Leyenda del Bosque a medio camino: te faltaba la llave del templo del agua, y llevas más de 3 horas. Si prefieres algo corto, Pixel Kart 64 es perfecto para un par de carreras.",
+            listOf(
+                cl.nikalbazu.diptico.estado.AccionChat("jugar", "snes/1", "Seguir Leyenda del Bosque"),
+                cl.nikalbazu.diptico.estado.AccionChat("ver", "n64/6", "Ver Pixel Kart 64"),
+            ),
+        ),
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t64_asistente() = foto("64_asistente", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 1, claveIa = "x"), Rol.INFERIOR)
+
+    @Test fun t65_asistente_arriba() = foto("65_asistente_lectura_arriba", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 1, claveIa = "x"), Rol.SUPERIOR)
+
+    private fun logro(id: Int, t: String, d: String, p: Int, g: String = "", duro: Boolean = false) =
+        cl.nikalbazu.diptico.data.Logro(id, t, d, p, "0000$id", g, duro)
+
+    private val logros = cl.nikalbazu.diptico.data.LogrosJuego(
+        1, "Leyenda del Bosque", "",
+        listOf(
+            logro(1, "Primeros pasos", "Sal de la aldea por primera vez.", 5, "2026-10-20"),
+            logro(2, "Guardián del agua", "Vence al jefe del templo del agua.", 25, "2026-10-28", true),
+            logro(3, "Coleccionista", "Encuentra las 50 semillas doradas.", 50),
+            logro(4, "Sin un rasguño", "Termina un templo sin recibir daño.", 25),
+            logro(5, "Leyenda", "Termina el juego.", 100),
+        ),
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t66_logros_ficha() = foto(
+        "66_logros_en_la_ficha",
+        base().copy(panel = Panel.FICHA, fichaDe = "snes/1", ficha = ficha, pestanaFicha = 4, usuarioRA = "nika", claveRA = "x", logrosFicha = logros, indice = 1),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t67_logro_grande() = foto(
+        "67_logro_grande_arriba",
+        base().copy(panel = Panel.FICHA, fichaDe = "snes/1", ficha = ficha, pestanaFicha = 4, usuarioRA = "nika", claveRA = "x", logrosFicha = logros, indice = 1),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t68_menu_idioma() = foto("68_menu_idioma", base().copy(panel = Panel.MENU, seccion = Seccion.IDIOMA, enOpciones = true, indice = 1), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t69_ingles_abajo() = foto("69_ingles_abajo", base().copy(idioma = "en"), Rol.INFERIOR)
+
+    @Test fun t70_ingles_menu() = foto("70_ingles_menu_arriba", base().copy(idioma = "en", panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 2), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t71_japones_menu() = foto("71_japones_menu", base().copy(idioma = "ja", panel = Panel.MENU, seccion = Seccion.PANTALLAS, enOpciones = true), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t72_chino_estadisticas() = foto("72_chino_estadisticas", conHoras().copy(idioma = "zh", panel = Panel.ESTADISTICAS), Rol.INFERIOR)
+
+    @Test fun t73_portugues_inicio() = foto("73_portugues_inicio_widgets", conHoras().copy(idioma = "pt", inicio = "widgets"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t74_menu_logros() = foto("74_menu_logros", base().copy(panel = Panel.MENU, seccion = Seccion.LOGROS, enOpciones = true), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t75_menu_secciones() = foto("75_menu_secciones", base().copy(panel = Panel.MENU, seccion = Seccion.ASISTENTE, enOpciones = false), Rol.INFERIOR)
 }
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"

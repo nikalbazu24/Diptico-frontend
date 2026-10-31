@@ -2,7 +2,13 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.5
+## Qué hace la v0.6
+
+- **Varios idiomas**: español, English, Português, 中文 y 日本語 (Menú › Idioma, o en la bienvenida). La historia de los juegos se busca en Wikipedia en tu idioma.
+- **Asistente con IA**: conoce tu biblioteca, recomienda qué jugar, da trucos y propone botones para jugar, ver la ficha o cambiar el tema y la vista. Corre en la nube con tu clave de Claude: no ocupa memoria ni hace más lenta la consola.
+- **RetroAchievements**: conecta tu cuenta (usuario + Web API Key) y ve en la ficha de cada juego qué logros tienes y cuáles faltan, tus puntos en las estadísticas y un widget de logros.
+
+### Lo que trajo la v0.5
 
 - **Centro de control desplegable**: baja como una cortina translúcida con el fondo difuminado (mantén Start o toca la campana). Wi-Fi, Bluetooth, volumen, pantalla, batería, archivos, estadísticas, las apps de la consola (AYN, Odin, Thor y herramientas como OdinTools) y Spotify / YouTube Music.
 - **Teclado en la otra pantalla**: al escribir, el teclado de Díptico aparece en la pantalla contraria. Se usa con la cruceta y A (B borra, X espacio, Y mayúsculas, Start listo) o tocando.
@@ -17,8 +23,6 @@ Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arr
 - **Sonidos al navegar**, **protector de pantalla** con tus juegos y las dos pantallas atenuadas, y **fluidez** según tu consola.
 - **Juegos repetidos**: si tienes el mismo juego en varios formatos o regiones, queda uno solo.
 - La IA ahora explica sus errores y prueba otros modelos si uno no responde.
-
-Próximamente (v0.6): varios idiomas, asistente con IA y RetroAchievements.
 
 ### Lo que trajo la v0.4
 
