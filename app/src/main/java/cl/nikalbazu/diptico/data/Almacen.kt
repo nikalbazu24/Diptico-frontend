@@ -34,6 +34,10 @@ class Almacen(ctx: Context) {
         get() = p.getString("modoPantallas", "dos") ?: "dos"
         set(v) = p.edit().putString("modoPantallas", v).apply()
 
+    var mostrarIntro: Boolean
+        get() = p.getBoolean("mostrarIntro", true)
+        set(v) = p.edit().putBoolean("mostrarIntro", v).apply()
+
     var modoElegido: Boolean
         get() = p.getBoolean("modoElegido", false)
         set(v) = p.edit().putBoolean("modoElegido", v).apply()

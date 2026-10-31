@@ -21,9 +21,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import cl.nikalbazu.diptico.emu.Pantallas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.ui.Lienzo
-import cl.nikalbazu.diptico.ui.PantallaInferior
-import cl.nikalbazu.diptico.ui.PantallaSuperior
-import cl.nikalbazu.diptico.ui.PantallaUnica
+import cl.nikalbazu.diptico.ui.Raiz
+import cl.nikalbazu.diptico.ui.Rol
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -40,18 +39,20 @@ class MainActivity : BaseActivity() {
             val e by Diptico.estado.collectAsState()
             val hayInferior = Pantallas.inferior(this) != null
             val vertical = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
-            val miPantalla = miDisplay()
+            val mi = miDisplay()
             when {
                 !hayInferior && vertical -> Column(Modifier.fillMaxSize().background(Color.Black)) {
-                    Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxWidth().aspectRatio(16f / 9f)) { PantallaSuperior(e) }
-                    Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxWidth().weight(1f)) { PantallaInferior(e, miPantalla) }
+                    Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxWidth().aspectRatio(16f / 9f)) { Raiz(e, Rol.SUPERIOR, mi) }
+                    Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxWidth().weight(1f)) { Raiz(e, Rol.INFERIOR, mi) }
                 }
-                !hayInferior || e.unaPantalla -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) { PantallaUnica(e) }
-                e.intercambiar -> Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxSize()) { PantallaInferior(e, miPantalla) }
-                else -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) { PantallaSuperior(e) }
+                !hayInferior || e.unaPantalla -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) { Raiz(e, Rol.UNICA, mi) }
+                e.intercambiar && e.configurado -> Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxSize()) {
+                    Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR)
+                }
+                else -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) { Raiz(e, Rol.SUPERIOR, mi) }
             }
         }
-        // Si cambias a dos pantallas (o a "abajo en negro") desde Ajustes, se abre la de abajo.
+        // Si cambias a dos pantallas (o a "abajo en negro") se abre la de abajo.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 Diptico.estado.map { it.modoPantallas }.distinctUntilChanged().collect { modo ->

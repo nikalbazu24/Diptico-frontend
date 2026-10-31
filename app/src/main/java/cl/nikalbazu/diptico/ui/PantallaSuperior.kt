@@ -91,7 +91,6 @@ fun PantallaSuperior(e: Estado) {
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         val juego = e.seleccionado
         when {
-            !e.configurado -> Bienvenida(e)
             juego == null -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                 Logo(30f)
                 Spacer(Modifier.height(esc.d(14)))
@@ -216,61 +215,5 @@ internal fun BarraSuperior(modifier: Modifier, extra: @Composable () -> Unit = {
             Texto("$bat%", 16f, sombra = true)
         }
         extra()
-    }
-}
-
-@Composable
-private fun Bienvenida(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Box(Modifier.fillMaxSize()) {
-        Box(
-            Modifier.align(Alignment.TopEnd).size(esc.d(520)).background(
-                Brush.radialGradient(listOf(Uva.copy(alpha = 0.45f), Color.Transparent)),
-            ),
-        )
-        Box(
-            Modifier.align(Alignment.BottomCenter).size(esc.d(420)).background(
-                Brush.radialGradient(listOf(Coral.copy(alpha = 0.3f), Color.Transparent)),
-            ),
-        )
-        Column(Modifier.padding(start = esc.d(56), top = esc.d(48), end = esc.d(56)).fillMaxSize()) {
-            Logo(48f)
-            Spacer(Modifier.height(esc.d(20)))
-            Texto("Tu colección de juegos, en dos pantallas.", 28f, peso = FontWeight.SemiBold, color = p.tenue, modifier = Modifier.width(esc.d(560)))
-            Spacer(Modifier.weight(1f))
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                val paso = when {
-                    !e.tieneCarpeta -> 0
-                    e.escaneando -> 1
-                    else -> 2
-                }
-                Paso("1", "Tu carpeta de juegos", "Una carpeta por consola: snes, psx, nds…", paso > 0, paso == 0)
-                Paso("2", "Buscar juegos", if (e.escaneando) "Buscando…" else "${e.juegos.size} encontrados", paso > 1, paso == 1)
-                Paso("3", "Emuladores", "Reviso cuáles tienes instalados", false, paso == 2)
-            }
-            Spacer(Modifier.height(esc.d(40)))
-        }
-    }
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.Paso(n: String, titulo: String, detalle: String, listo: Boolean, actual: Boolean) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Column(
-        Modifier.weight(1f)
-            .clip(RoundedCornerShape(esc.d(22)))
-            .background(if (actual) Uva.copy(alpha = 0.22f) else p.tinta.copy(alpha = 0.05f))
-            .border(esc.d(2), if (actual) Uva else p.tinta.copy(alpha = 0.08f), RoundedCornerShape(esc.d(22)))
-            .padding(esc.d(16)),
-        verticalArrangement = Arrangement.spacedBy(esc.d(8)),
-    ) {
-        Box(
-            Modifier.size(esc.d(32)).clip(CircleShape).background(if (listo) Sol else if (actual) Uva else p.tinta.copy(alpha = 0.08f)),
-            contentAlignment = Alignment.Center,
-        ) { Texto(if (listo) "✓" else n, 15f, color = if (listo) Tinta else Color.White) }
-        Texto(titulo, 17f)
-        Texto(detalle, 12f, color = p.tenue, familia = Nunito)
     }
 }

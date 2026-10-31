@@ -3,6 +3,7 @@ package cl.nikalbazu.diptico.estado
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
 import android.view.Display
 import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.data.Biblioteca
@@ -24,6 +25,9 @@ import kotlinx.coroutines.withContext
 
 enum class Panel { NINGUNO, MENU, PASO, AJUSTES }
 
+/** Pasos del tutorial guiado del primer arranque. */
+enum class PasoTuto { BIENVENIDA, PANTALLAS, DISPOSICION, JUEGOS, CARPETA, EMULADORES, PORTADAS, APARIENCIA, CONTROLES, LISTO }
+
 /** Un juego abierto ahora mismo. */
 data class Sesion(val clave: String, val inicio: Long, val displayId: Int, val dosPantallas: Boolean)
 
@@ -42,7 +46,7 @@ data class Estado(
     val intercambiar: Boolean = false,
     val pantallaJuegos: String = "arriba",
     val modoPantallas: String = "dos",
-    val modoElegido: Boolean = false,
+    val dosDisponibles: Boolean = true,
     val sesion: Sesion? = null,
     val despierta: Boolean = false,
     val panel: Panel = Panel.NINGUNO,
@@ -52,10 +56,14 @@ data class Estado(
     val aviso: String? = null,
     val datos: Map<String, DatosJuego> = emptyMap(),
     val emuladores: Map<String, String> = emptyMap(),
+    val intro: Boolean = true,
+    val mostrarIntro: Boolean = true,
+    val pasoTuto: PasoTuto = PasoTuto.BIENVENIDA,
+    val probados: Set<String> = emptySet(),
 ) {
     /** Todo Díptico vive en la pantalla de arriba. */
     val unaPantalla: Boolean
-        get() = modoPantallas != "dos"
+        get() = modoPantallas != "dos" || !dosDisponibles
 
     val consolasConJuegos: List<Consola>
         get() = Consolas.todas.filter { c -> juegos.any { it.consolaId == c.id } }
@@ -89,6 +97,7 @@ object Diptico {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var avisoJob: Job? = null
     private var despiertaJob: Job? = null
+    private var introInicio = 0L
 
     /** La pantalla activa registra aquí cómo pedir una carpeta (true = juegos, false = imágenes ES-DE). */
     var pedirCarpeta: ((Boolean) -> Unit)? = null
@@ -108,15 +117,29 @@ object Diptico {
             intercambiar = almacen.intercambiar,
             pantallaJuegos = almacen.pantallaJuegos,
             modoPantallas = almacen.modoPantallas,
-            modoElegido = almacen.modoElegido,
+            dosDisponibles = Pantallas.inferior(app) != null,
             datos = almacen.datos(),
             emuladores = almacen.emuladores(),
+            intro = almacen.mostrarIntro,
+            mostrarIntro = almacen.mostrarIntro,
         )
         if (carpeta != null) escanear()
     }
 
     private inline fun actualizar(f: (Estado) -> Estado) {
         _estado.value = f(_estado.value)
+    }
+
+    // ---------- Animación de entrada ----------
+
+    /** Momento en que empezó la animación; las dos pantallas lo comparten para ir sincronizadas. */
+    fun inicioIntro(): Long {
+        if (introInicio == 0L) introInicio = SystemClock.uptimeMillis()
+        return introInicio
+    }
+
+    fun terminarIntro() {
+        if (estado.value.intro) actualizar { it.copy(intro = false) }
     }
 
     // ---------- Carpeta y biblioteca ----------
@@ -128,7 +151,7 @@ object Diptico {
             val lista = try {
                 withContext(Dispatchers.IO) { Biblioteca.escanear(app, carpeta, almacen.media) }
             } catch (e: Exception) {
-                avisar("No pude leer la carpeta de juegos. Elígela otra vez en Ajustes.")
+                avisar("No pude leer la carpeta de juegos. Elígela otra vez.")
                 null
             }
             if (lista != null) {
@@ -141,6 +164,7 @@ object Diptico {
                         escaneando = false,
                         juegoSel = if (sigue) e.juegoSel else null,
                         consolaSel = if (consolaSigue) e.consolaSel else "todo",
+                        indice = if (e.configurado) e.indice else 0,
                     )
                 }
             } else {
@@ -161,7 +185,7 @@ object Diptico {
         }
         if (esDeJuegos) {
             almacen.carpeta = uri
-            actualizar { it.copy(tieneCarpeta = true) }
+            actualizar { it.copy(tieneCarpeta = true, indice = 0) }
         } else {
             almacen.media = uri
             actualizar { it.copy(tieneMedia = true) }
@@ -173,12 +197,7 @@ object Diptico {
     fun elegirModo(modo: String) {
         almacen.modoPantallas = modo
         almacen.modoElegido = true
-        actualizar { it.copy(modoPantallas = modo, modoElegido = true, indice = 0) }
-    }
-
-    /** En el primer arranque: ← elige dos pantallas, → elige una. */
-    fun moverOpcionInicial(delta: Int) {
-        actualizar { it.copy(indice = if (delta < 0) 0 else 1) }
+        actualizar { it.copy(modoPantallas = modo) }
     }
 
     private fun nombreModo(m: String) = when (m) {
@@ -187,20 +206,9 @@ object Diptico {
         else -> "Dos pantallas"
     }
 
-    fun accionConfiguracion() {
-        val e = estado.value
-        when {
-            !e.modoElegido -> elegirModo(if (e.indice == 1) "una_negra" else "dos")
-            !e.tieneCarpeta -> pedirCarpeta?.invoke(true)
-            e.escaneando -> Unit
-            e.juegos.isEmpty() -> pedirCarpeta?.invoke(true)
-            else -> terminarConfiguracion()
-        }
-    }
-
     fun terminarConfiguracion() {
         almacen.configurado = true
-        actualizar { it.copy(configurado = true) }
+        actualizar { it.copy(configurado = true, panel = Panel.NINGUNO, indice = 0) }
     }
 
     fun avisar(texto: String) {
@@ -209,6 +217,127 @@ object Diptico {
         avisoJob = scope.launch {
             delay(3500)
             actualizar { it.copy(aviso = null) }
+        }
+    }
+
+    // ---------- Tutorial guiado ----------
+
+    fun pasosTuto(e: Estado = estado.value): List<PasoTuto> = buildList {
+        add(PasoTuto.BIENVENIDA)
+        if (e.dosDisponibles) {
+            add(PasoTuto.PANTALLAS)
+            if (e.modoPantallas == "dos") {
+                add(PasoTuto.DISPOSICION)
+                add(PasoTuto.JUEGOS)
+            }
+        }
+        add(PasoTuto.CARPETA)
+        add(PasoTuto.EMULADORES)
+        add(PasoTuto.PORTADAS)
+        add(PasoTuto.APARIENCIA)
+        add(PasoTuto.CONTROLES)
+        add(PasoTuto.LISTO)
+    }
+
+    private fun indiceInicial(p: PasoTuto, e: Estado): Int = when (p) {
+        PasoTuto.PANTALLAS -> listOf("dos", "una_negra", "una_libre").indexOf(e.modoPantallas).coerceAtLeast(0)
+        PasoTuto.DISPOSICION -> if (e.intercambiar) 1 else 0
+        PasoTuto.JUEGOS -> if (e.pantallaJuegos == "abajo") 1 else 0
+        PasoTuto.APARIENCIA -> if (e.oscuro) 0 else 1
+        else -> 0
+    }
+
+    private fun irAPaso(p: PasoTuto) {
+        actualizar { it.copy(pasoTuto = p, indice = indiceInicial(p, it)) }
+    }
+
+    fun siguientePaso() {
+        val pasos = pasosTuto()
+        val i = pasos.indexOf(estado.value.pasoTuto)
+        if (i < 0 || i >= pasos.size - 1) terminarConfiguracion() else irAPaso(pasos[i + 1])
+    }
+
+    fun pasoAnterior() {
+        val pasos = pasosTuto()
+        val i = pasos.indexOf(estado.value.pasoTuto)
+        if (i > 0) irAPaso(pasos[i - 1])
+    }
+
+    fun marcarProbado(boton: String) {
+        if (estado.value.pasoTuto == PasoTuto.CONTROLES) actualizar { it.copy(probados = it.probados + boton) }
+    }
+
+    fun reiniciarTutorial() {
+        almacen.configurado = false
+        actualizar { it.copy(configurado = false, pasoTuto = PasoTuto.BIENVENIDA, indice = 0, panel = Panel.NINGUNO, probados = emptySet()) }
+    }
+
+    private fun fijarTema(oscuro: Boolean) {
+        almacen.oscuro = oscuro
+        actualizar { it.copy(oscuro = oscuro) }
+    }
+
+    fun opcionesTuto(): List<Opcion> {
+        val e = estado.value
+        return when (e.pasoTuto) {
+            PasoTuto.BIENVENIDA -> listOf(Opcion("¡Comencemos!") { siguientePaso() })
+            PasoTuto.PANTALLAS -> listOf(
+                Opcion("Dos pantallas", "Recomendado") { elegirModo("dos"); siguientePaso() },
+                Opcion("Una pantalla", "Abajo en negro") { elegirModo("una_negra"); siguientePaso() },
+                Opcion("Una pantalla", "Abajo libre") { elegirModo("una_libre"); siguientePaso() },
+            )
+            PasoTuto.DISPOSICION -> listOf(
+                Opcion("Juego arriba, estante abajo", "Recomendado") {
+                    almacen.intercambiar = false
+                    actualizar { it.copy(intercambiar = false) }
+                    siguientePaso()
+                },
+                Opcion("Estante arriba, juego abajo") {
+                    almacen.intercambiar = true
+                    actualizar { it.copy(intercambiar = true) }
+                    siguientePaso()
+                },
+            )
+            PasoTuto.JUEGOS -> listOf(
+                Opcion("En la pantalla de arriba", "Recomendado") {
+                    almacen.pantallaJuegos = "arriba"
+                    actualizar { it.copy(pantallaJuegos = "arriba") }
+                    siguientePaso()
+                },
+                Opcion("En la pantalla de abajo") {
+                    almacen.pantallaJuegos = "abajo"
+                    actualizar { it.copy(pantallaJuegos = "abajo") }
+                    siguientePaso()
+                },
+            )
+            PasoTuto.CARPETA -> when {
+                !e.tieneCarpeta -> listOf(Opcion("Elegir carpeta de juegos") { pedirCarpeta?.invoke(true) })
+                e.escaneando -> emptyList()
+                e.juegos.isEmpty() -> listOf(
+                    Opcion("Elegir otra carpeta") { pedirCarpeta?.invoke(true) },
+                    Opcion("Continuar sin juegos") { siguientePaso() },
+                )
+                else -> listOf(
+                    Opcion("Continuar", "${e.juegos.size} juegos") { siguientePaso() },
+                    Opcion("Elegir otra carpeta") { pedirCarpeta?.invoke(true) },
+                )
+            }
+            PasoTuto.EMULADORES -> listOf(Opcion("Continuar") { siguientePaso() }) + e.consolasConJuegos.map { c ->
+                Opcion(
+                    "Emulador de ${c.nombre}",
+                    if (emuladorListo(c)) nombreEmulador(c) else "Falta ${c.emuladores.first().nombre}",
+                ) { ciclarEmulador(c) }
+            }
+            PasoTuto.PORTADAS -> listOf(
+                Opcion("Continuar") { siguientePaso() },
+                Opcion("Conectar imágenes de ES-DE", if (e.tieneMedia) "Conectadas ✓" else "Opcional") { pedirCarpeta?.invoke(false) },
+            )
+            PasoTuto.APARIENCIA -> listOf(
+                Opcion("Modo oscuro", "Ahorra batería") { fijarTema(true); siguientePaso() },
+                Opcion("Modo claro") { fijarTema(false); siguientePaso() },
+            )
+            PasoTuto.CONTROLES -> listOf(Opcion("Continuar") { siguientePaso() })
+            PasoTuto.LISTO -> listOf(Opcion("¡Empezar a jugar!") { terminarConfiguracion() })
         }
     }
 
@@ -262,9 +391,7 @@ object Diptico {
     }
 
     fun alternarTema() {
-        val v = !estado.value.oscuro
-        almacen.oscuro = v
-        actualizar { it.copy(oscuro = v) }
+        fijarTema(!estado.value.oscuro)
     }
 
     // ---------- Jugar ----------
@@ -372,7 +499,17 @@ object Diptico {
     }
 
     fun moverIndice(delta: Int) {
-        val total = when (estado.value.panel) {
+        val e = estado.value
+        if (!e.configurado) {
+            val total = opcionesTuto().size
+            if (total == 0) return
+            val n = (e.indice + delta).coerceIn(0, total - 1)
+            actualizar { it.copy(indice = n) }
+            // En "Apariencia" el tema cambia en vivo mientras eliges.
+            if (e.pasoTuto == PasoTuto.APARIENCIA) fijarTema(n == 0)
+            return
+        }
+        val total = when (e.panel) {
             Panel.MENU -> opcionesMenu().size
             Panel.AJUSTES -> opcionesAjustes().size
             else -> 0
@@ -388,6 +525,10 @@ object Diptico {
 
     fun aceptar() {
         val e = estado.value
+        if (!e.configurado) {
+            opcionesTuto().getOrNull(e.indice)?.accion?.invoke()
+            return
+        }
         val lista = when (e.panel) {
             Panel.MENU -> opcionesMenu()
             Panel.AJUSTES -> opcionesAjustes()
@@ -422,30 +563,38 @@ object Diptico {
 
     fun opcionesAjustes(): List<Opcion> {
         val e = estado.value
-        val lista = mutableListOf(
-            Opcion("Pantallas", nombreModo(e.modoPantallas)) {
+        val lista = mutableListOf<Opcion>()
+        if (e.dosDisponibles) {
+            lista += Opcion("Pantallas", nombreModo(e.modoPantallas)) {
                 val siguiente = when (estado.value.modoPantallas) { "dos" -> "una_negra"; "una_negra" -> "una_libre"; else -> "dos" }
                 elegirModo(siguiente)
-                actualizar { it.copy(panel = Panel.AJUSTES, indice = 0) }
-            },
-            Opcion("Tema", if (e.oscuro) "Oscuro" else "Claro") { alternarTema() },
-            Opcion("Abrir juegos en", if (e.pantallaJuegos == "abajo") "Pantalla de abajo" else "Pantalla de arriba") {
+            }
+        }
+        lista += Opcion("Tema", if (e.oscuro) "Oscuro" else "Claro") { alternarTema() }
+        if (e.dosDisponibles && !e.unaPantalla) {
+            lista += Opcion("Abrir juegos en", if (e.pantallaJuegos == "abajo") "Pantalla de abajo" else "Pantalla de arriba") {
                 val v = if (estado.value.pantallaJuegos == "abajo") "arriba" else "abajo"
                 almacen.pantallaJuegos = v
                 actualizar { it.copy(pantallaJuegos = v) }
-            },
-            Opcion("Intercambiar pantallas", if (e.intercambiar) "Sí" else "No") {
+            }
+            lista += Opcion("Intercambiar pantallas", if (e.intercambiar) "Sí" else "No") {
                 val v = !estado.value.intercambiar
                 almacen.intercambiar = v
                 actualizar { it.copy(intercambiar = v) }
-            },
-        )
+            }
+        }
         for (c in e.consolasConJuegos) {
             lista += Opcion("Emulador de ${c.nombre}", nombreEmulador(c)) { ciclarEmulador(c) }
         }
         lista += Opcion("Volver a buscar juegos", if (e.escaneando) "Buscando…" else "${e.juegos.size} juegos") { escanear() }
         lista += Opcion("Cambiar carpeta de juegos") { pedirCarpeta?.invoke(true) }
         lista += Opcion("Imágenes de ES-DE", if (e.tieneMedia) "Conectadas" else "Opcional") { pedirCarpeta?.invoke(false) }
+        lista += Opcion("Animación de entrada", if (e.mostrarIntro) "Sí" else "No") {
+            val v = !estado.value.mostrarIntro
+            almacen.mostrarIntro = v
+            actualizar { it.copy(mostrarIntro = v) }
+        }
+        lista += Opcion("Repetir el tutorial") { reiniciarTutorial() }
         lista += Opcion("Cerrar ajustes") { cerrarPanel() }
         return lista
     }

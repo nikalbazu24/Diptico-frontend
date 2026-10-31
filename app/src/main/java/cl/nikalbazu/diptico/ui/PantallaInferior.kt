@@ -77,7 +77,6 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
     Box(Modifier.fillMaxSize().background(p.fondo2)) {
         val s = e.sesion
         when {
-            !e.configurado -> Configuracion(e)
             s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
             else -> Column(Modifier.fillMaxSize()) {
                 Cinta(e)
@@ -318,114 +317,6 @@ fun BotonGrande(texto: String, fondo: Color, tinta: Color, modifier: Modifier = 
         modifier.height(esc.d(70)).clip(RoundedCornerShape(esc.d(22))).background(fondo).clickable { accion() },
         contentAlignment = Alignment.Center,
     ) { Texto(texto, 17f, color = tinta) }
-}
-
-/** Tarjeta para elegir entre una y dos pantallas en el primer arranque. */
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.TarjetaModo(titulo: String, detalle: String, dos: Boolean, activa: Boolean, accion: () -> Unit) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Column(
-        Modifier.weight(1f).fillMaxSize()
-            .clip(RoundedCornerShape(esc.d(24)))
-            .background(if (activa) Uva.copy(alpha = 0.22f) else p.superficie.copy(alpha = 0.6f))
-            .border(esc.d(3), if (activa) Uva else Color.Transparent, RoundedCornerShape(esc.d(24)))
-            .clickable { accion() }
-            .padding(esc.d(18)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(esc.d(10)),
-    ) {
-        // Dibujo de la consola: una o dos pantallas encendidas.
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-            Box(Modifier.size(esc.d(110), esc.d(62)).clip(RoundedCornerShape(esc.d(8))).background(Uva))
-            Box(
-                Modifier.size(esc.d(72), esc.d(62)).clip(RoundedCornerShape(esc.d(8)))
-                    .background(if (dos) Coral else p.tinta.copy(alpha = 0.12f)),
-            )
-        }
-        Spacer(Modifier.height(esc.d(4)))
-        Texto(titulo, 20f)
-        Texto(detalle, 13f, color = p.tenue, familia = Nunito, interlineado = 18f, alinear = androidx.compose.ui.text.style.TextAlign.Center)
-    }
-}
-
-/** Primer arranque: elegir una o dos pantallas, carpeta y revisar emuladores. */
-@Composable
-internal fun Configuracion(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Column(Modifier.fillMaxSize().padding(esc.d(22)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
-        when {
-            !e.modoElegido -> {
-                Texto("¿Cómo quieres usar Díptico?", 24f)
-                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                    TarjetaModo("Dos pantallas", "Arriba el juego, abajo las consolas y el estante.", dos = true, activa = e.indice == 0) {
-                        Diptico.elegirModo("dos")
-                    }
-                    TarjetaModo("Una pantalla", "Todo arriba, como en una tele. Podrás cambiarlo en Ajustes.", dos = false, activa = e.indice == 1) {
-                        Diptico.elegirModo("una_negra")
-                    }
-                }
-                Texto("← → para elegir · A para confirmar", 12f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold)
-            }
-            !e.tieneCarpeta -> {
-                Texto("¡Hola! Soy Díptico", 26f)
-                Texto(
-                    "Elige la carpeta donde tienes tus juegos. Adentro debe haber una carpeta por consola: " +
-                        "snes, n64, psx, gba, gc, nds, ps2, ps3, ps4 o psp (igual que en ES-DE).",
-                    14f, color = p.tenue, familia = Nunito, interlineado = 21f,
-                )
-                Spacer(Modifier.weight(1f))
-                BotonGrande("A · Elegir carpeta de juegos", Uva, Color.White, Modifier.fillMaxWidth()) { Diptico.accionConfiguracion() }
-            }
-            e.escaneando && e.juegos.isEmpty() -> {
-                Texto("Buscando tus juegos…", 26f)
-                Texto("Esto puede tardar un poco la primera vez.", 14f, color = p.tenue, familia = Nunito)
-            }
-            e.juegos.isEmpty() -> {
-                Texto("No encontré juegos", 26f)
-                Texto(
-                    "Revisa que adentro haya carpetas como snes, psx o nds con tus juegos, y elige la carpeta de nuevo.",
-                    14f, color = p.tenue, familia = Nunito, interlineado = 21f,
-                )
-                Spacer(Modifier.weight(1f))
-                BotonGrande("A · Elegir otra carpeta", Uva, Color.White, Modifier.fillMaxWidth()) { Diptico.accionConfiguracion() }
-            }
-            else -> {
-                Texto("Encontré ${e.juegos.size} juegos", 26f)
-                Texto("Así se abrirá cada consola:", 13f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold)
-                LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                    itemsIndexed(e.consolasConJuegos, key = { _, c -> c.id }) { _, c ->
-                        val listo = Diptico.emuladorListo(c)
-                        Row(
-                            Modifier.fillMaxWidth().height(esc.d(42)).clip(RoundedCornerShape(esc.d(14))).background(p.superficie.copy(alpha = 0.6f))
-                                .padding(horizontal = esc.d(12)),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            IconoMedio(c.medio, c.color, p.fondo2, tam = 26f)
-                            Spacer(Modifier.width(esc.d(10)))
-                            Texto(c.nombre, 13f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, modifier = Modifier.width(esc.d(48)))
-                            Texto(
-                                if (listo) Diptico.nombreEmulador(c) else "Instala ${c.emuladores.first().nombre}",
-                                15f, modifier = Modifier.weight(1f), lineas = 1,
-                            )
-                            Box(
-                                Modifier.clip(RoundedCornerShape(50)).background(if (listo) Sol.copy(alpha = 0.18f) else Coral)
-                                    .padding(horizontal = esc.d(10), vertical = esc.d(4)),
-                            ) { Texto(if (listo) "Listo" else "Falta", 12f, color = if (listo) Sol else Tinta, familia = Nunito, peso = FontWeight.ExtraBold) }
-                        }
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                    BotonGrande(
-                        if (e.tieneMedia) "Imágenes ES-DE ✓" else "Imágenes de ES-DE",
-                        p.superficie, p.tinta, Modifier.weight(1f),
-                    ) { Diptico.pedirCarpeta?.invoke(false) }
-                    BotonGrande("A · ¡Empezar!", Uva, Color.White, Modifier.weight(1.4f)) { Diptico.terminarConfiguracion() }
-                }
-            }
-        }
-    }
 }
 
 @Composable

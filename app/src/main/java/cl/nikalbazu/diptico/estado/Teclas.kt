@@ -4,7 +4,7 @@ import android.view.KeyEvent
 
 /**
  * Traduce los botones de la Thor a acciones de Díptico.
- * A juega (mantener = menú rápido), B vuelve, X detalles, Y próximo paso,
+ * A juega (mantener = menú rápido), B vuelve, Y próximo paso,
  * L1/R1 cambian de consola, L2/R2 saltan de a 5, Start abre ajustes.
  */
 object Teclas {
@@ -13,20 +13,50 @@ object Teclas {
     private fun esA(code: Int) = code == KeyEvent.KEYCODE_BUTTON_A || code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
     private fun esB(code: Int) = code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE
 
+    private val botonesControl = setOf(
+        KeyEvent.KEYCODE_BUTTON_X, KeyEvent.KEYCODE_BUTTON_Y, KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1,
+        KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2, KeyEvent.KEYCODE_BUTTON_START, KeyEvent.KEYCODE_BUTTON_SELECT,
+    )
+
     fun manejar(ev: KeyEvent): Boolean {
         val e = Diptico.estado.value
         val code = ev.keyCode
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
 
-        // Primer arranque: A hace la acción principal.
+        // Animación de entrada: cualquier botón la salta.
+        if (e.intro) {
+            if (arriba) Diptico.terminarIntro()
+            return true
+        }
+
+        // Tutorial guiado.
         if (!e.configurado) {
-            if (!e.modoElegido && (code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT)) {
-                if (abajo) Diptico.moverOpcionInicial(if (code == KeyEvent.KEYCODE_DPAD_LEFT) -1 else 1)
-                return true
+            if (abajo) {
+                when (code) {
+                    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        Diptico.moverIndice(-1)
+                        Diptico.marcarProbado("cruceta")
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        Diptico.moverIndice(1)
+                        Diptico.marcarProbado("cruceta")
+                        return true
+                    }
+                }
+                return esA(code) || esB(code) || code in botonesControl
             }
-            if (esA(code)) {
-                if (arriba) Diptico.accionConfiguracion()
+            if (arriba) {
+                when {
+                    esA(code) -> Diptico.aceptar()
+                    esB(code) -> Diptico.pasoAnterior()
+                    code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.marcarProbado("gatillos")
+                    code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.marcarProbado("Y")
+                    code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.marcarProbado("Start")
+                    code in botonesControl -> Unit
+                    else -> return false
+                }
                 return true
             }
             return false
@@ -73,9 +103,7 @@ object Teclas {
                 }
                 return true
             }
-            if (esB(code) || code == KeyEvent.KEYCODE_BUTTON_X || code == KeyEvent.KEYCODE_BUTTON_Y ||
-                code == KeyEvent.KEYCODE_BUTTON_START || code == KeyEvent.KEYCODE_BUTTON_SELECT
-            ) return true
+            if (esB(code) || code in botonesControl) return true
             return false
         }
 

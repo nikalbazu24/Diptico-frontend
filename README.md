@@ -4,6 +4,8 @@ Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arr
 
 ## Qué hace la v0.1
 
+- **Animación de entrada sincronizada en las dos pantallas.** El panel coral sube desde la pantalla de abajo, cruza la bisagra y encaja bajo el uva para formar el logo. Se salta con cualquier botón y se puede apagar en Ajustes.
+- **Tutorial guiado** que se adapta a una o dos pantallas: modo de pantallas, qué va en cada una, carpeta de juegos, emuladores, portadas, tema y una prueba del control. Se puede repetir desde Ajustes.
 - **Dos pantallas.** Arriba ves el arte del juego desvanecido, con su título y tu próximo paso. Abajo están las consolas, el estante de juegos y la barra de acciones.
 - **Abre tus juegos con su emulador**, en la pantalla de arriba o en la de abajo.
 - **Tu próximo paso.** Al volver de jugar, te pregunta dónde quedaste y te lo recuerda la próxima vez.

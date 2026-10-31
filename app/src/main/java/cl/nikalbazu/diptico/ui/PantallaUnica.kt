@@ -45,11 +45,6 @@ fun PantallaUnica(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo)) {
-        if (!e.configurado) {
-            Configuracion(e)
-            Paneles(e)
-            return@Box
-        }
         val juego = e.seleccionado
         if (juego != null) {
             Crossfade(targetState = juego, animationSpec = tween(700), label = "arte", modifier = Modifier.fillMaxSize()) { j ->

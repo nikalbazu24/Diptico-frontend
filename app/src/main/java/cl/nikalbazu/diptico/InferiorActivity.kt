@@ -19,8 +19,8 @@ import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.ui.LocalEscala
 import cl.nikalbazu.diptico.ui.Lienzo
-import cl.nikalbazu.diptico.ui.PantallaInferior
-import cl.nikalbazu.diptico.ui.PantallaSuperior
+import cl.nikalbazu.diptico.ui.Raiz
+import cl.nikalbazu.diptico.ui.Rol
 import cl.nikalbazu.diptico.ui.Texto
 import kotlinx.coroutines.launch
 
@@ -47,8 +47,10 @@ class InferiorActivity : BaseActivity() {
                         )
                     }
                 }
-                e.intercambiar -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) { PantallaSuperior(e) }
-                else -> Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxSize()) { PantallaInferior(e, miPantalla) }
+                e.intercambiar && e.configurado -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) {
+                    Raiz(e, Rol.SUPERIOR, miPantalla, rolIntro = Rol.INFERIOR)
+                }
+                else -> Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxSize()) { Raiz(e, Rol.INFERIOR, miPantalla) }
             }
         }
         lifecycleScope.launch {

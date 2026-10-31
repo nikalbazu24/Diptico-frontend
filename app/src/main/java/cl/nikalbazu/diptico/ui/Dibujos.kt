@@ -252,17 +252,28 @@ fun IconoMedio(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Mo
     }
 }
 
-/** Logo de Díptico: dos paneles apilados. */
+/** La marca de Díptico: dos paneles como la Thor, el de arriba más ancho que el de abajo. */
 @Composable
-fun Logo(tam: Float = 20f) {
+fun MarcaLogo(tam: Float, modifier: Modifier = Modifier) {
+    val esc = LocalEscala.current
+    androidx.compose.foundation.layout.Column(
+        modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(esc.d(tam * 0.14f)),
+    ) {
+        Box(Modifier.size(esc.d(tam * 1.25f), esc.d(tam * 0.5f)).clip(RoundedCornerShape(esc.d(tam * 0.2f))).background(Uva))
+        Box(Modifier.size(esc.d(tam * 0.95f), esc.d(tam * 0.5f)).clip(RoundedCornerShape(esc.d(tam * 0.2f))).background(Coral))
+    }
+}
+
+/** Logo de Díptico: la marca y el nombre. */
+@Composable
+fun Logo(tam: Float = 20f, color: Color = LocalPaleta.current.tinta) {
     val esc = LocalEscala.current
     androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
-        androidx.compose.foundation.layout.Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(esc.d(tam * 0.15f))) {
-            Box(Modifier.size(esc.d(tam * 1.2f), esc.d(tam * 0.55f)).clip(RoundedCornerShape(esc.d(tam * 0.25f))).background(Uva))
-            Box(Modifier.size(esc.d(tam * 1.2f), esc.d(tam * 0.55f)).clip(RoundedCornerShape(esc.d(tam * 0.25f))).background(Coral))
-        }
+        MarcaLogo(tam)
         Box(Modifier.width(esc.d(tam * 0.5f)))
-        Texto("Díptico", tam)
+        Texto("Díptico", tam, color = color)
     }
 }
 
