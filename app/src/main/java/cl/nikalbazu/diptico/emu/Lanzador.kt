@@ -43,11 +43,18 @@ object Lanzador {
         val nombre: String get() = comando.nombre
     }
 
-    fun instalado(ctx: Context, paquete: String): Boolean = try {
-        ctx.packageManager.getPackageInfo(paquete, 0)
-        true
-    } catch (e: PackageManager.NameNotFoundException) {
-        false
+    private val instalados = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+    /** Olvida lo que se sabía de apps instaladas (al volver a Díptico, por si instalaste algo). */
+    fun olvidar() = instalados.clear()
+
+    fun instalado(ctx: Context, paquete: String): Boolean = instalados.getOrPut(paquete) {
+        try {
+            ctx.packageManager.getPackageInfo(paquete, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
     }
 
     /** Primer "paquete/actividad" instalado de una regla de ES-DE. */

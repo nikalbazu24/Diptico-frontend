@@ -68,6 +68,10 @@ val PaletaClara = Paleta(
 object Estilo {
     var tema by mutableStateOf(Temas.incluidos[0])
     var decoraciones by mutableStateOf(true)
+    /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
+    var efecto by mutableStateOf("degradado")
+    /** Animaciones y difuminados completos (se apagan en modo ahorro). */
+    var efectosCompletos by mutableStateOf(true)
 }
 
 val Uva: Color get() = Color(Estilo.tema.acento)

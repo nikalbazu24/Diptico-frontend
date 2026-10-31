@@ -360,7 +360,8 @@ private fun Mosaico(o: cl.nikalbazu.diptico.estado.Opcion, activo: Boolean, modi
     val fondo by animateColorAsState(if (activo) Uva else p.fondo2.copy(alpha = 0.7f), label = "mosaico")
     val tam by animateFloatAsState(if (activo) 1.04f else 1f, spring(dampingRatio = 0.55f), label = "mosaicoTam")
     Column(
-        modifier.height(esc.d(84)).graphicsLayer { scaleX = tam; scaleY = tam }.clip(RoundedCornerShape(esc.d(18))).background(fondo)
+        modifier.height(esc.d(84)).graphicsLayer { scaleX = tam; scaleY = tam }.clip(RoundedCornerShape(esc.d(18)))
+            .then(if (activo) Modifier.fondoBoton(fondo) else Modifier.background(fondo))
             .clickable { alPulsar() }.padding(horizontal = esc.d(8), vertical = esc.d(8)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

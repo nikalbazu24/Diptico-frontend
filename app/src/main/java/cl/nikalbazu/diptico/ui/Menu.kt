@@ -134,9 +134,9 @@ private fun GrillaSecciones(e: Estado) {
                     Column(
                         Modifier.height(esc.d(92)).graphicsLayer { scaleX = tam; scaleY = tam }
                             .clip(RoundedCornerShape(esc.d(20)))
-                            .background(
-                                if (activa) Brush.linearGradient(listOf(color, androidx.compose.ui.graphics.lerp(color, Color.Black, 0.25f)))
-                                else Brush.linearGradient(listOf(p.superficie, p.superficie.copy(alpha = 0.7f))),
+                            .then(
+                                if (activa) Modifier.fondoBoton(color)
+                                else Modifier.background(Brush.linearGradient(listOf(p.superficie, p.superficie.copy(alpha = 0.7f)))),
                             )
                             .then(if (activa) Modifier.border(esc.d(2), Color.White.copy(alpha = 0.5f), RoundedCornerShape(esc.d(20))) else Modifier)
                             .clickable { Diptico.elegirSeccion(s) }

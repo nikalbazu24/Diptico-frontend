@@ -9,6 +9,7 @@ import cl.nikalbazu.diptico.audio.Aviso
 import cl.nikalbazu.diptico.audio.Avisos
 import cl.nikalbazu.diptico.audio.Medios
 import cl.nikalbazu.diptico.audio.Musica
+import cl.nikalbazu.diptico.audio.Sonidos
 import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.data.Biblioteca
 import cl.nikalbazu.diptico.data.Consola
@@ -35,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS }
+enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -86,14 +87,21 @@ data class Trabajo(val id: String, val texto: String, val avance: Float? = null)
  * Un widget del inicio, en una grilla de [Widgets.COLUMNAS] x [Widgets.FILAS].
  * [x], [y]: celda de arriba a la izquierda; [an], [al]: cuántas celdas ocupa.
  */
-data class Widget(val tipo: String, val x: Int, val y: Int, val an: Int, val al: Int, val visible: Boolean = true)
+data class Widget(
+    val tipo: String, val x: Int, val y: Int, val an: Int, val al: Int, val visible: Boolean = true,
+    /** Página del inicio donde está. */
+    val pagina: Int = 0,
+    /** Imagen o GIF propio (widgets de tipo "imagen-…"). */
+    val uri: String? = null,
+)
 
 /** Forma de las cajas de una consola en el estante. */
 data class FormaCfg(val forma: String = "original", val tam: Float = 1f, val imagen: String = "portada")
 
 object Widgets {
-    const val COLUMNAS = 6
-    const val FILAS = 4
+    /** Tamaño de la grilla (se puede cambiar en Menú › Inicio). */
+    var COLUMNAS = 6
+    var FILAS = 4
 
     /** Tamaños y formas posibles (ancho x alto en celdas). */
     val TAMANOS = listOf(
@@ -111,13 +119,17 @@ object Widgets {
         Widget("recientes", 3, 2, 3, 2), Widget("paso", 0, 0, 2, 2, false), Widget("fiesta", 0, 0, 2, 2, false),
         Widget("tiempo", 0, 0, 2, 1, false), Widget("bateria", 0, 0, 2, 1, false), Widget("consolas", 0, 0, 3, 2, false),
         Widget("favoritos", 0, 0, 3, 2, false), Widget("frase", 0, 0, 6, 1, false),
+        Widget("estadisticas", 0, 0, 3, 2, false), Widget("sugerencia", 0, 0, 2, 2, false),
+        Widget("accesos", 0, 0, 3, 1, false), Widget("notificaciones", 0, 0, 3, 2, false),
     )
 
     fun nombre(tipo: String) = when (tipo) {
         "juego" -> "Juego elegido"; "reloj" -> "Reloj y fecha"; "musica" -> "Música (Spotify, YouTube Music…)"
         "paso" -> "Tu próximo paso"; "recientes" -> "Jugados hace poco"; "fiesta" -> "Fiestas del mundo"
         "tiempo" -> "Tiempo jugado"; "bateria" -> "Batería"; "consolas" -> "Tu colección"
-        "favoritos" -> "Favoritos"; "frase" -> "Saludo del día"; else -> tipo
+        "favoritos" -> "Favoritos"; "frase" -> "Saludo del día"; "estadisticas" -> "Estadísticas"
+        "sugerencia" -> "¿Qué juego hoy?"; "accesos" -> "Accesos rápidos"; "notificaciones" -> "Notificaciones"
+        else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
 
@@ -210,6 +222,23 @@ data class Estado(
     val consolaPara: Int = -1,
     /** Pista que corresponde al tema en uso. */
     val pistaTema: String = "bisagra",
+    /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
+    val efecto: String = "degradado",
+    /** "auto", "alta", "equilibrada" o "ahorro". */
+    val fluidez: String = "auto",
+    /** Lo que eligió "auto" según la consola. */
+    val fluidezDetectada: String = "alta",
+    val sonidos: Boolean = true,
+    /** Minutos sin usar la consola antes del protector de pantalla (0 = nunca). */
+    val protectorMin: Int = 5,
+    val protector: Boolean = false,
+    /** Grilla del inicio: columnas, filas y páginas. */
+    val gridCols: Int = 6,
+    val gridFilas: Int = 4,
+    val paginas: Int = 1,
+    val paginaInicio: Int = 0,
+    /** Imagen o GIF de fondo del inicio. */
+    val fondoInicio: String? = null,
 ) {
     /** Todo Díptico vive en una sola pantalla (siempre durante el tutorial). */
     val unaPantalla: Boolean
@@ -282,7 +311,7 @@ object Diptico {
     private var crudos: List<Juego> = emptyList()
     private var medios: Map<String, MediosJuego> = emptyMap()
 
-    const val VERSION = "0.4"
+    const val VERSION = "0.5"
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -339,7 +368,22 @@ object Diptico {
             musicaTema = almacen.bool("musicaTema", true),
             avisosEmergentes = almacen.bool("avisosEmergentes", true),
             carpetas = almacen.carpetas(),
+            efecto = almacen.texto("efecto", "degradado"),
+            fluidez = almacen.texto("fluidez", "auto"),
+            fluidezDetectada = detectarFluidez(),
+            sonidos = almacen.bool("sonidos", true),
+            protectorMin = almacen.texto("protectorMin", "5").toIntOrNull() ?: 5,
+            gridCols = almacen.texto("gridCols", "6").toIntOrNull() ?: 6,
+            gridFilas = almacen.texto("gridFilas", "4").toIntOrNull() ?: 4,
+            paginas = almacen.texto("paginas", "1").toIntOrNull() ?: 1,
+            fondoInicio = almacen.texto("fondoInicio").ifEmpty { null },
         )
+        Widgets.COLUMNAS = estado.value.gridCols
+        Widgets.FILAS = estado.value.gridFilas
+        Sonidos.iniciar(app)
+        Sonidos.activo = estado.value.sonidos
+        aplicarFluidez()
+        vigilarProtector()
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
             Avisos.nuevos.collect { a ->
@@ -923,6 +967,7 @@ object Diptico {
         datos[s.clave] = d.copy(
             tiempo = d.tiempo + if (duracion >= 15) duracion else 0,
             ultimo = System.currentTimeMillis(),
+            sesiones = d.sesiones + if (duracion >= 15) 1 else 0,
         )
         almacen.guardarDatos(datos)
         val hacerPregunta = preguntar && duracion >= 60
@@ -1340,6 +1385,36 @@ object Diptico {
             Seccion.APARIENCIA -> {
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
+                    "Efecto de los botones", nombreEfecto(e.efecto), Icono.ESTRELLA,
+                    "Liso, degradado, con un brillo que pasa, o de vidrio. Se ve en el botón Jugar, el menú y las opciones elegidas.",
+                ) {
+                    val l = listOf("liso", "degradado", "brillo", "vidrio")
+                    val v = l[(l.indexOf(estado.value.efecto) + 1).mod(l.size)]
+                    almacen.guardarTexto("efecto", v)
+                    actualizar { it.copy(efecto = v) }
+                    cl.nikalbazu.diptico.ui.Estilo.efecto = v
+                }
+                lista += Opcion(
+                    "Fluidez", nombreFluidez(e.fluidez) + if (e.fluidez == "auto") " (${nombreFluidez(e.fluidezDetectada).lowercase()})" else "", Icono.CHISPA,
+                    "Automática elige según tu consola. Alta usa la máxima tasa de refresco y todos los efectos; ahorro apaga difuminados y decoraciones para ir más liviano.",
+                ) {
+                    val l = listOf("auto", "alta", "equilibrada", "ahorro")
+                    val v = l[(l.indexOf(estado.value.fluidez) + 1).mod(l.size)]
+                    almacen.guardarTexto("fluidez", v)
+                    actualizar { it.copy(fluidez = v) }
+                    aplicarFluidez()
+                }
+                lista += Opcion(
+                    "Protector de pantalla", if (e.protectorMin == 0) "Nunca" else "A los ${e.protectorMin} min", Icono.RELOJ,
+                    "Si no usas la consola, muestra tus juegos con las dos pantallas atenuadas. Cualquier botón lo cierra.",
+                ) {
+                    val l = listOf(2, 5, 10, 20, 0)
+                    val v = l[(l.indexOf(estado.value.protectorMin) + 1).mod(l.size)]
+                    almacen.guardarTexto("protectorMin", v.toString())
+                    actualizar { it.copy(protectorMin = v) }
+                }
+                lista += Opcion("Ver el protector ahora", icono = Icono.RELOJ) { cerrarPanel(); actualizar { it.copy(protector = true) } }
+                lista += Opcion(
                     "Decoraciones", if (e.decoraciones) "Sí" else "No", Icono.ESTRELLA,
                     "Nieve en Navidad, murciélagos en Halloween, pétalos en primavera… según el tema.",
                 ) {
@@ -1372,15 +1447,26 @@ object Diptico {
                     almacen.guardarBool("musicaTema", v)
                     actualizar { it.copy(musicaTema = v) }
                 }
-                lista += Opcion(
-                    "Pista", nombrePista(e.pista), Icono.ESTRELLA,
-                    Musica.pistas.joinToString(" · ") { "${it.nombre}: ${it.estilo.lowercase()}" } + ". Se usa cuando \"Música según el tema\" está apagado.",
-                ) {
-                    val orden = Musica.pistas.map { it.id } + "mezcla" + if (estado.value.carpetaMusica != null) listOf("mia") else emptyList()
-                    val i = orden.indexOf(estado.value.pista)
-                    fijarPista(orden[(i + 1) % orden.size])
+                // Todas las pistas a la vista: elegir una la pone a sonar.
+                val sonando = if (e.musicaTema && e.pista != "mia") e.pistaTema else e.pista
+                for (p in Musica.pistas) {
+                    lista += Opcion(
+                        "♪ ${p.nombre}", if (e.musica && sonando == p.id) "Sonando ✓" else p.estilo, Icono.MUSICA,
+                        "${p.estilo}. Elegirla apaga \"Música según el tema\".",
+                    ) { fijarPista(p.id) }
                 }
-                lista += Opcion("Volumen", nombreVolumen(e.volumen), Icono.VOLUMEN, "Qué tan fuerte suena la música de Díptico.") {
+                lista += Opcion("♪ Mezcla", if (e.musica && sonando == "mezcla") "Sonando ✓" else "Todas, una tras otra", Icono.ESTRELLA) { fijarPista("mezcla") }
+                lista += Opcion(
+                    "Sonidos al moverte", if (e.sonidos) "Sí" else "No", Icono.VOLUMEN,
+                    "Un sonido suave al moverte, elegir, volver y abrir un juego.",
+                ) {
+                    val v = !estado.value.sonidos
+                    almacen.guardarBool("sonidos", v)
+                    Sonidos.activo = v
+                    actualizar { it.copy(sonidos = v) }
+                    if (v) Sonidos.aceptar()
+                }
+                lista += Opcion("Volumen", nombreVolumen(e.volumen), Icono.VOLUMEN, "Qué tan fuerte suena la música de Díptico. Es independiente del volumen de tus juegos.") {
                     val i = volumenes.indexOfFirst { kotlin.math.abs(it - estado.value.volumen) < 0.01f }
                     val v = volumenes[(i + 1) % volumenes.size]
                     almacen.volumen = v
@@ -1628,7 +1714,12 @@ object Diptico {
         val a = org.json.JSONArray(s)
         if (a.length() > 0 && a.getJSONObject(0).has("tam")) throw IllegalStateException("formato antiguo")
         val leidos = (0 until a.length()).map {
-            a.getJSONObject(it).let { o -> Widget(o.getString("tipo"), o.getInt("x"), o.getInt("y"), o.getInt("an"), o.getInt("al"), o.optBoolean("visible", true)) }
+            a.getJSONObject(it).let { o ->
+                Widget(
+                    o.getString("tipo"), o.getInt("x"), o.getInt("y"), o.getInt("an"), o.getInt("al"), o.optBoolean("visible", true),
+                    o.optInt("pagina", 0), o.optString("uri", "").ifEmpty { null },
+                )
+            }
         }
         // Si una versión nueva trae widgets nuevos, se agregan ocultos.
         leidos + Widgets.porDefecto.filter { d -> leidos.none { it.tipo == d.tipo } }.map { it.copy(visible = false) }
@@ -1637,7 +1728,12 @@ object Diptico {
     }
 
     private fun escribirWidgets(l: List<Widget>): String = org.json.JSONArray().apply {
-        l.forEach { put(org.json.JSONObject().put("tipo", it.tipo).put("x", it.x).put("y", it.y).put("an", it.an).put("al", it.al).put("visible", it.visible)) }
+        l.forEach {
+            val o = org.json.JSONObject().put("tipo", it.tipo).put("x", it.x).put("y", it.y).put("an", it.an).put("al", it.al)
+                .put("visible", it.visible).put("pagina", it.pagina)
+            it.uri?.let { u -> o.put("uri", u) }
+            put(o)
+        }
     }.toString()
 
     private fun leerMapa(s: String): Map<String, String> = try {
@@ -1862,6 +1958,7 @@ object Diptico {
             guardarWidgets(Widgets.porDefecto)
             avisar("Widgets como al principio")
         },
+    ) + opcionesGrilla(e) + listOf(
         Opcion(
             "Permiso para el widget de música", if (Medios.tienePermiso(app)) "Listo ✓" else "Dar permiso", Icono.MUSICA,
             "Para mostrar y controlar lo que suena en Spotify, YouTube Music u otra app, Android pide activar el \"acceso a notificaciones\" de Díptico.",
@@ -1907,7 +2004,19 @@ object Diptico {
         return w.copy(an = an, al = al, x = w.x.coerceIn(0, Widgets.COLUMNAS - an), y = w.y.coerceIn(0, Widgets.FILAS - al))
     }
 
-    fun moverWidgetSel(dx: Int, dy: Int) = cambiarWidget(estado.value.widgetSel) { encajar(it.copy(x = it.x + dx, y = it.y + dy)) }
+    fun moverWidgetSel(dx: Int, dy: Int) {
+        val e = estado.value
+        cambiarWidget(e.widgetSel) { w ->
+            val nx = w.x + dx
+            when {
+                // Al salir por un costado pasa a la página de al lado.
+                nx < 0 && w.pagina > 0 -> encajar(w.copy(pagina = w.pagina - 1, x = Widgets.COLUMNAS - w.an))
+                nx + w.an > Widgets.COLUMNAS && w.pagina < e.paginas - 1 -> encajar(w.copy(pagina = w.pagina + 1, x = 0))
+                else -> encajar(w.copy(x = nx, y = w.y + dy))
+            }
+        }
+        estado.value.widgets.getOrNull(e.widgetSel)?.let { w -> if (w.pagina != e.paginaInicio) actualizar { it.copy(paginaInicio = w.pagina) } }
+    }
 
     /** Para arrastrar con el dedo: deja el widget en la celda indicada. */
     fun ponerWidget(i: Int, x: Int, y: Int) = cambiarWidget(i) { encajar(it.copy(x = x, y = y)) }
@@ -1937,13 +2046,13 @@ object Diptico {
             cambiarWidget(i) { it.copy(visible = false) }
         } else {
             val ocupadas = HashSet<Pair<Int, Int>>()
-            l.filter { it.visible }.forEach { o -> for (x in o.x until o.x + o.an) for (y in o.y until o.y + o.al) ocupadas += x to y }
+            l.filter { it.visible && it.pagina == estado.value.paginaInicio }.forEach { o -> for (x in o.x until o.x + o.an) for (y in o.y until o.y + o.al) ocupadas += x to y }
             var lugar = 0 to 0
             buscar@ for (y in 0..Widgets.FILAS - w.al) for (x in 0..Widgets.COLUMNAS - w.an) {
                 val libre = (x until x + w.an).all { cx -> (y until y + w.al).all { cy -> (cx to cy) !in ocupadas } }
                 if (libre) { lugar = x to y; break@buscar }
             }
-            cambiarWidget(i) { it.copy(visible = true, x = lugar.first, y = lugar.second) }
+            cambiarWidget(i) { it.copy(visible = true, x = lugar.first, y = lugar.second, pagina = estado.value.paginaInicio) }
         }
         almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
     }
@@ -2081,6 +2190,17 @@ object Diptico {
         }
         val u = uri.toString()
         when {
+            archivoPara == "fondoInicio" -> {
+                almacen.guardarTexto("fondoInicio", u)
+                actualizar { it.copy(fondoInicio = u) }
+                avisar("Fondo del inicio cambiado")
+            }
+            archivoPara == "widgetImagen" -> {
+                val w = Widget("imagen-${System.currentTimeMillis()}", 0, 0, 2, 2, false, estado.value.paginaInicio, u)
+                guardarWidgets(estado.value.widgets + w)
+                alternarWidget(estado.value.widgets.size - 1)
+                avisar("Imagen agregada a tu inicio")
+            }
             archivoPara.startsWith("icono:") -> {
                 val id = archivoPara.removePrefix("icono:")
                 val m = estado.value.iconosPropios + (id to u)
@@ -2417,6 +2537,14 @@ object Diptico {
 
     /** Qué pista va con cada tema y cada fiesta. */
     fun musicaDeTema(t: Tema): String = when (t.id.removePrefix("fiesta_")) {
+        "fiestaspatrias", "chile" -> "cueca"
+        "glorias", "sanpedro", "patagonia" -> "oceano"
+        "patrimonio", "dosmundos", "menta" -> "bosque"
+        "tirana", "nino", "trabajador", "musica" -> "fiesta"
+        "cyber", "retro80", "fuego" -> "neon"
+        "lavanda", "cereza" -> "sakura"
+        "dorado", "desierto", "monocromo" -> "medianoche"
+        "hielo" -> "nieve"
         "medianoche", "oled", "papel" -> "medianoche"
         "sakura", "hanami", "pascua", "lunar", "eid", "mujer" -> "sakura"
         "arcade", "lava", "gamer" -> "neon"
@@ -2425,7 +2553,7 @@ object Diptico {
         "portatil" -> "portatil"
         "halloween", "muertos" -> "fantasma"
         "navidad", "anionuevo", "reyes", "janucá", "diwali" -> "nieve"
-        "carnaval", "holi", "orgullo", "fiestaspatrias", "independencia", "oktoberfest", "sanvalentin" -> "fiesta"
+        "carnaval", "holi", "orgullo", "independencia", "oktoberfest", "sanvalentin" -> "fiesta"
         "atardecer" -> "cartucho"
         else -> if (t.propio) when (t.decor) {
             "nieve" -> "nieve"; "murcielagos" -> "fantasma"; "petalos", "faroles" -> "sakura"; "confeti", "fuegos" -> "fiesta"
@@ -2502,4 +2630,110 @@ object Diptico {
     }
 
     fun nombreCarpeta(c: CarpetaJuegos): String = Biblioteca.nombreCarpeta(c.uri)
+
+    // ---------- Efecto, fluidez y protector de pantalla ----------
+
+    fun nombreEfecto(v: String) = when (v) { "liso" -> "Liso"; "brillo" -> "Brillo"; "vidrio" -> "Vidrio"; else -> "Degradado" }
+    fun nombreFluidez(v: String) = when (v) { "alta" -> "Alta"; "equilibrada" -> "Equilibrada"; "ahorro" -> "Ahorro"; else -> "Automática" }
+
+    /** Mira la memoria y los núcleos de la consola para elegir cuántos efectos usar. */
+    private fun detectarFluidez(): String {
+        val am = app.getSystemService(android.app.ActivityManager::class.java) ?: return "equilibrada"
+        val mi = android.app.ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
+        val gb = mi.totalMem / (1024.0 * 1024 * 1024)
+        val nucleos = Runtime.getRuntime().availableProcessors()
+        return when {
+            am.isLowRamDevice || gb < 3.5 -> "ahorro"
+            gb >= 7 && nucleos >= 8 -> "alta"
+            else -> "equilibrada"
+        }
+    }
+
+    /** Fluidez en uso (resuelve "auto"). */
+    fun fluidezEfectiva(e: Estado = estado.value) = if (e.fluidez == "auto") e.fluidezDetectada else e.fluidez
+
+    private fun aplicarFluidez() {
+        val f = fluidezEfectiva()
+        cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = f != "ahorro"
+        cl.nikalbazu.diptico.ui.Estilo.efecto = estado.value.efecto
+        cl.nikalbazu.diptico.ui.Estilo.decoraciones = estado.value.decoraciones && f != "ahorro"
+    }
+
+    private var ultimaActividad = SystemClock.uptimeMillis()
+
+    /** Se llama con cada botón o toque. Devuelve true si cerró el protector (y el toque no debe hacer nada más). */
+    fun actividad(): Boolean {
+        ultimaActividad = SystemClock.uptimeMillis()
+        if (estado.value.protector) {
+            actualizar { it.copy(protector = false) }
+            return true
+        }
+        return false
+    }
+
+    private fun vigilarProtector() {
+        scope.launch {
+            while (true) {
+                delay(10_000)
+                val e = estado.value
+                if (e.protector || e.protectorMin <= 0 || !e.configurado || e.sesion != null || e.aLaVista == 0 || e.juegos.isEmpty()) continue
+                if (SystemClock.uptimeMillis() - ultimaActividad > e.protectorMin * 60_000L) {
+                    actualizar { it.copy(protector = true, panel = Panel.NINGUNO, relojGrande = false) }
+                }
+            }
+        }
+    }
+
+    // ---------- Estadísticas ----------
+
+    fun abrirEstadisticas() = actualizar { it.copy(panel = Panel.ESTADISTICAS, indice = 0) }
+
+    // ---------- Grilla y páginas del inicio ----------
+
+    private fun guardarGrilla(cols: Int, filas: Int, paginas: Int) {
+        almacen.guardarTexto("gridCols", cols.toString())
+        almacen.guardarTexto("gridFilas", filas.toString())
+        almacen.guardarTexto("paginas", paginas.toString())
+        Widgets.COLUMNAS = cols
+        Widgets.FILAS = filas
+        // Los widgets que quedaron fuera se acomodan dentro.
+        val l = estado.value.widgets.map { encajar(it.copy(pagina = it.pagina.coerceIn(0, paginas - 1))) }
+        almacen.guardarTexto("widgets", escribirWidgets(l))
+        actualizar { it.copy(gridCols = cols, gridFilas = filas, paginas = paginas, widgets = l, paginaInicio = it.paginaInicio.coerceIn(0, paginas - 1)) }
+    }
+
+    /** L2/R2 o deslizar: otra página del inicio. */
+    fun cambiarPagina(delta: Int) {
+        val e = estado.value
+        val p = (e.paginaInicio + delta).coerceIn(0, e.paginas - 1)
+        if (p != e.paginaInicio) actualizar { it.copy(paginaInicio = p) }
+    }
+
+    fun irAPagina(p: Int) = actualizar { it.copy(paginaInicio = p.coerceIn(0, it.paginas - 1)) }
+
+    private fun opcionesGrilla(e: Estado): List<Opcion> = listOf(
+        Opcion("Columnas de la grilla", "${e.gridCols}", Icono.APPS, "Cuántas columnas tiene tu inicio (de 4 a 8).") {
+            val v = if (e.gridCols >= 8) 4 else e.gridCols + 1
+            guardarGrilla(v, e.gridFilas, e.paginas)
+        },
+        Opcion("Filas de la grilla", "${e.gridFilas}", Icono.APPS, "Con más de 4 filas, el inicio se desplaza hacia abajo.") {
+            val v = if (e.gridFilas >= 8) 3 else e.gridFilas + 1
+            guardarGrilla(e.gridCols, v, e.paginas)
+        },
+        Opcion("Páginas", "${e.paginas}", Icono.VISTA, "Desliza a los lados con el dedo o con L2 y R2 para cambiar de página.") {
+            val v = if (e.paginas >= 5) 1 else e.paginas + 1
+            guardarGrilla(e.gridCols, e.gridFilas, v)
+        },
+        Opcion("Agregar imagen o GIF", icono = Icono.PORTADA, ayuda = "Elige una imagen o un GIF animado de tu consola; aparece como widget en la página actual.") {
+            pedirArchivoPara("widgetImagen", "image/*")
+        },
+        Opcion(
+            "Fondo del inicio", if (e.fondoInicio != null) "Propio ✓" else "Arte del juego", Icono.PORTADA,
+            "Usa una imagen o un GIF animado como fondo de tu inicio con widgets.",
+        ) { pedirArchivoPara("fondoInicio", "image/*") },
+        Opcion("Quitar fondo propio", icono = Icono.BORRAR) {
+            almacen.guardarTexto("fondoInicio", "")
+            actualizar { it.copy(fondoInicio = null) }
+        },
+    )
 }

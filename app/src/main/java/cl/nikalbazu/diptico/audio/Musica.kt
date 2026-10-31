@@ -36,6 +36,7 @@ object Musica {
         Pista("bosque", "Bosque", "Folk con flauta", R.raw.diptico_bosque),
         Pista("portatil", "Portátil", "Chiptune clásico", R.raw.diptico_portatil),
         Pista("fiesta", "Fiesta", "Carnaval y celebración", R.raw.diptico_fiesta),
+        Pista("cueca", "Cueca", "Guitarra, acordeón y palmas", R.raw.diptico_cueca),
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

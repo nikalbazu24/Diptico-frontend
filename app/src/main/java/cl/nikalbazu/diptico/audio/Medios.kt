@@ -71,8 +71,18 @@ object Medios {
         }
     }
 
-    fun tienePermiso(ctx: Context): Boolean =
-        NotificationManagerCompat.getEnabledListenerPackages(ctx).contains(ctx.packageName)
+    private var permisoCache: Boolean? = null
+    private var permisoHora = 0L
+
+    /** ¿Díptico tiene acceso a notificaciones? (se recuerda unos segundos para no frenar el menú). */
+    fun tienePermiso(ctx: Context): Boolean {
+        val ahora = android.os.SystemClock.uptimeMillis()
+        permisoCache?.let { if (ahora - permisoHora < 5000) return it }
+        val v = NotificationManagerCompat.getEnabledListenerPackages(ctx).contains(ctx.packageName)
+        permisoCache = v
+        permisoHora = ahora
+        return v
+    }
 
     /** Abre los ajustes de Android para dar el permiso de "acceso a notificaciones". */
     fun pedirPermiso(ctx: Context) {

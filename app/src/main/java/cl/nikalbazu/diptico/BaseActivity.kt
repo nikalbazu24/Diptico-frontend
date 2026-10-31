@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import android.media.AudioManager
 import cl.nikalbazu.diptico.audio.Medios
+import cl.nikalbazu.diptico.emu.Lanzador
 import cl.nikalbazu.diptico.estado.Carpeta
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Teclas
@@ -71,8 +72,10 @@ abstract class BaseActivity : ComponentActivity() {
                 Diptico.avisar("No pude abrir el selector de archivos")
             }
         }
+        Lanzador.olvidar()
         Diptico.revisarPantallas()
         Diptico.aplicarTema()
+        aplicarRefresco()
         Medios.revisar(this)
         Diptico.alVolver(miDisplay())
     }
@@ -98,8 +101,39 @@ abstract class BaseActivity : ComponentActivity() {
         }
     }
 
+    /** Con fluidez alta usa la tasa de refresco más alta de la pantalla; en ahorro, 60 Hz. */
+    private fun aplicarRefresco() {
+        try {
+            val d = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) display else null
+            val modos = d?.supportedModes ?: return
+            val actual = d.mode
+            val mismos = modos.filter { it.physicalWidth == actual.physicalWidth && it.physicalHeight == actual.physicalHeight }
+            val elegido = when (Diptico.fluidezEfectiva()) {
+                "ahorro" -> mismos.minByOrNull { kotlin.math.abs(it.refreshRate - 60f) }
+                "alta" -> mismos.maxByOrNull { it.refreshRate }
+                else -> null
+            } ?: return
+            val lp = window.attributes
+            if (lp.preferredDisplayModeId != elegido.modeId) {
+                lp.preferredDisplayModeId = elegido.modeId
+                window.attributes = lp
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        // Un toque cierra el protector de pantalla sin hacer nada más.
+        if (ev.action == android.view.MotionEvent.ACTION_DOWN && Diptico.actividad()) return true
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun dispatchGenericMotionEvent(ev: android.view.MotionEvent): Boolean {
-        if (Teclas.movimiento(ev)) return true
+        if (Diptico.estado.value.protector) {
+            if (ev.action == android.view.MotionEvent.ACTION_MOVE) Diptico.actividad()
+            return true
+        }
+        if (Teclas.movimiento(ev)) { Diptico.actividad(); return true }
         return super.dispatchGenericMotionEvent(ev)
     }
 
@@ -109,6 +143,9 @@ abstract class BaseActivity : ComponentActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val volumen = event.keyCode == KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+        if (!volumen && event.action == KeyEvent.ACTION_DOWN && Diptico.actividad()) return true
+        if (!volumen && event.action == KeyEvent.ACTION_UP && Diptico.estado.value.protector) return true
         if (Teclas.manejar(event)) return true
         return super.dispatchKeyEvent(event)
     }

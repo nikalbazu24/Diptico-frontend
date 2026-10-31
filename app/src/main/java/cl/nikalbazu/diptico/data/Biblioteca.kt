@@ -159,7 +159,7 @@ object Biblioteca {
                 )
             }
         }
-        return juegos.sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
+        return sinDuplicados(juegos).sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
     }
 
     /** "Leyenda del Bosque (USA) [!]" -> "Leyenda del Bosque". */
@@ -175,5 +175,26 @@ object Biblioteca {
         if (!t.contains(' ') && t.count { it == '.' } >= 2) t = t.replace('.', ' ')
         t = t.replace(Regex("\\s*-\\s*$"), "").replace(Regex("\\s{2,}"), " ").trim()
         return t.ifEmpty { base }
+    }
+
+    /** Formatos preferidos cuando hay varios archivos del mismo juego (menos es mejor). */
+    private val PREFERENCIA = listOf("m3u", "chd", "rvz", "cue", "iso", "xci", "nsp", "nsz", "cso", "pbp", "zip", "7z")
+
+    /**
+     * Si el mismo juego está dos veces (por ejemplo .cue y .chd, o versión USA y Europa), deja uno solo:
+     * el de mejor formato y, si empatan, el de región USA o mundial.
+     */
+    fun sinDuplicados(juegos: List<Juego>): List<Juego> {
+        fun region(a: String): Int = when {
+            a.contains("(USA", true) || a.contains("(World", true) -> 0
+            a.contains("(Europe", true) || a.contains("(Spain", true) -> 1
+            a.contains("(Japan", true) -> 3
+            else -> 2
+        }
+        fun formato(j: Juego): Int = if (j.esCarpeta) 0 else PREFERENCIA.indexOf(j.tipo).let { if (it < 0) PREFERENCIA.size else it }
+        // Los discos de un mismo juego (Disc 1, Disc 2) no son duplicados.
+        fun disco(a: String) = Regex("[\\(\\[ ](Disc|Disk|CD|Disco) ?(\\d+)", RegexOption.IGNORE_CASE).find(a)?.groupValues?.get(2) ?: ""
+        return juegos.groupBy { j -> j.consolaId + "|" + Descargas.normalizar(j.titulo).ifEmpty { j.archivo } + "|" + disco(j.archivo) }
+            .values.map { grupo -> grupo.minWith(compareBy<Juego>({ formato(it) }, { region(it.archivo) }, { it.archivo.length })) }
     }
 }

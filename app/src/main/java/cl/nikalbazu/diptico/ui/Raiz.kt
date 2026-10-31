@@ -36,6 +36,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 enter = fadeIn(tween(250)) + scaleIn(tween(320), initialScale = 0.9f),
                 exit = fadeOut(tween(200)) + scaleOut(tween(200), targetScale = 1.05f),
             ) { RelojGrande(e) }
+            if (e.protector && !(rol == Rol.INFERIOR && e.unaPantalla)) Protector(e, rol)
             // En modo una pantalla, la de abajo no muestra la animación.
             val sinIntro = rol == Rol.INFERIOR && rolIntro == Rol.INFERIOR && e.unaPantalla
             if (e.intro && !sinIntro) Intro(rolIntro)

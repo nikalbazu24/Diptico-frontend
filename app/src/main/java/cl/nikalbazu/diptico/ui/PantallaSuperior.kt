@@ -178,7 +178,7 @@ fun BotonJugar() {
         Modifier
             .shadow(esc.d(6), RoundedCornerShape(50), spotColor = Uva)
             .clip(RoundedCornerShape(50))
-            .background(Uva)
+            .fondoBoton(Uva)
             .clickable { Diptico.jugar() }
             .padding(start = esc.d(6), end = esc.d(20), top = esc.d(6), bottom = esc.d(6)),
         verticalAlignment = Alignment.CenterVertically,

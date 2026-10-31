@@ -169,6 +169,7 @@ class Almacen(ctx: Context) {
                 notas = d.optString("notas", ""),
                 favorito = d.optBoolean("favorito", false),
                 emulador = d.optString("emulador", "").ifEmpty { null },
+                sesiones = d.optInt("sesiones", 0),
             )
         }
         return salida
@@ -190,6 +191,7 @@ class Almacen(ctx: Context) {
             if (d.notas.isNotEmpty()) j.put("notas", d.notas)
             if (d.favorito) j.put("favorito", true)
             d.emulador?.let { j.put("emulador", it) }
+            if (d.sesiones > 0) j.put("sesiones", d.sesiones)
             o.put(k, j)
         }
         p.edit().putString("datos", o.toString()).apply()

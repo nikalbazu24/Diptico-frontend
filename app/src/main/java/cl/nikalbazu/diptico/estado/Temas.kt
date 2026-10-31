@@ -67,6 +67,18 @@ object Temas {
         Tema("portatil", "Portátil clásica", 0xFF8BAC0F, 0xFF306230, 0xFF9BBC0F, "gb"),
         Tema("papel", "Papel", 0xFF3D5A80, 0xFFE07A5F, 0xFFF2CC8F, "claro"),
         Tema("oled", "Negro puro", 0xFF6B4EFF, 0xFFFF7A59, 0xFFFFC93C, "oled"),
+        Tema("chile", "Chile", 0xFFD52B1E, 0xFF0039A6, 0xFFFFFFFF, "oscuro", "estrellas"),
+        Tema("cyber", "Cyberpunk", 0xFFF000FF, 0xFF00F0FF, 0xFFFFF200, "oled"),
+        Tema("menta", "Menta", 0xFF10B981, 0xFF34D399, 0xFFA7F3D0),
+        Tema("lavanda", "Lavanda", 0xFFA78BFA, 0xFFF0ABFC, 0xFFC4B5FD, decor = "petalos"),
+        Tema("dorado", "Dorado", 0xFFD4AF37, 0xFFF59E0B, 0xFFFDE68A, "oscuro", "estrellas"),
+        Tema("hielo", "Hielo", 0xFF7DD3FC, 0xFFBAE6FD, 0xFFE0F2FE, decor = "nieve"),
+        Tema("fuego", "Fuego", 0xFFFF4500, 0xFFFF8C00, 0xFFFFD700, "oscuro"),
+        Tema("monocromo", "Monocromo", 0xFFE5E5E5, 0xFF9CA3AF, 0xFFFFFFFF, "oled"),
+        Tema("cereza", "Cereza", 0xFFBE123C, 0xFFF43F5E, 0xFFFDA4AF),
+        Tema("desierto", "Desierto de Atacama", 0xFFD97706, 0xFFB45309, 0xFF7DD3FC, "oscuro", "estrellas"),
+        Tema("patagonia", "Patagonia", 0xFF0EA5E9, 0xFF64748B, 0xFFE0F2FE, decor = "nieve"),
+        Tema("retro80", "Retro 80", 0xFFFF6EC7, 0xFF7B61FF, 0xFF00E5FF, "oscuro"),
     )
 
     // ---------- Celebraciones del mundo ----------
@@ -100,6 +112,15 @@ object Temas {
         f("gracias", "Acción de Gracias", "Estados Unidos y Canadá", 0xFFD97706, 0xFF92400E, 0xFFFFC93C, "hojas", "¡Feliz Día de Acción de Gracias!"),
         f("janucá", "Janucá", "Comunidades judías", 0xFF3B82F6, 0xFF94A3B8, 0xFFFFC93C, "estrellas", "¡Jag Janucá Sameaj!", "oscuro"),
         f("navidad", "Navidad", "Todo el mundo", 0xFFE63946, 0xFF2A9D8F, 0xFFFFC93C, "nieve", "¡Feliz Navidad!", "oscuro"),
+        // Calendario de Chile
+        f("trabajador", "Día del Trabajador", "Chile y el mundo", 0xFFE63946, 0xFFFFC93C, 0xFF3BA8FF, "confeti", "¡Feliz Día del Trabajador!"),
+        f("glorias", "Glorias Navales", "Chile", 0xFF0B3D91, 0xFFFFFFFF, 0xFFD52B1E, "burbujas", "21 de mayo · Glorias Navales", "oscuro", setOf("CL")),
+        f("patrimonio", "Día del Patrimonio", "Chile", 0xFFB45309, 0xFF92400E, 0xFFFDE68A, "hojas", "¡Feliz Día del Patrimonio!", paises = setOf("CL")),
+        f("sanpedro", "San Pedro y San Pablo", "Chile y Latinoamérica", 0xFF0EA5E9, 0xFF1E3A8A, 0xFFFFC93C, "burbujas", "¡Feliz San Pedro y San Pablo!"),
+        f("tirana", "La Tirana", "Norte de Chile", 0xFFE11D48, 0xFFFFC93C, 0xFF7C3AED, "confeti", "¡Viva La Tirana!", "oscuro", setOf("CL")),
+        f("nino", "Día del Niño", "Chile", 0xFF3BA8FF, 0xFFFFC93C, 0xFFFF5D8F, "burbujas", "¡Feliz Día del Niño!", paises = setOf("CL")),
+        f("dosmundos", "Encuentro de Dos Mundos", "Chile y América", 0xFFB45309, 0xFF2EC4A6, 0xFFFFC93C, "hojas", "12 de octubre", paises = setOf("CL")),
+        f("musica", "Día de la Música", "Chile y el mundo", 0xFF8E6CF0, 0xFFFF5D8F, 0xFFFFC93C, "estrellas", "¡Feliz Día de la Música!"),
     )
 
     /** Domingo de Pascua (algoritmo de Gauss/Meeus). */
@@ -147,7 +168,18 @@ object Temas {
             "muertos" to (d(anio, 11, 1)..d(anio, 11, 2)),
             "gracias" to (gracias.minusDays(1)..gracias.plusDays(1)),
             "navidad" to (d(anio, 12, 15)..d(anio, 12, 26)),
+            "trabajador" to (d(anio, 5, 1)..d(anio, 5, 1)),
+            "glorias" to (d(anio, 5, 21)..d(anio, 5, 21)),
+            "sanpedro" to (d(anio, 6, 29)..d(anio, 6, 29)),
+            "tirana" to (d(anio, 7, 14)..d(anio, 7, 16)),
+            "dosmundos" to (d(anio, 10, 12)..d(anio, 10, 12)),
+            "musica" to (d(anio, 11, 22)..d(anio, 11, 22)),
         )
+        // Día del Patrimonio: último fin de semana de mayo. Día del Niño: segundo domingo de agosto.
+        val finMayo = d(anio, 5, 31).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+        lista += "patrimonio" to (finMayo.minusDays(1)..finMayo)
+        val nino = d(anio, 8, 1).with(TemporalAdjusters.dayOfWeekInMonth(2, DayOfWeek.SUNDAY))
+        lista += "nino" to (nino.minusDays(1)..nino)
         tabla(LUNAR, anio)?.let { lista += "lunar" to (it.minusDays(2)..it.plusDays(6)) }
         tabla(HOLI, anio)?.let { lista += "holi" to (it.minusDays(1)..it.plusDays(1)) }
         tabla(EID, anio)?.let { lista += "eid" to (it.minusDays(1)..it.plusDays(2)) }

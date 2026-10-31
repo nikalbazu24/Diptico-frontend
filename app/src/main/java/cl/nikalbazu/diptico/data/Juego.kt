@@ -46,6 +46,8 @@ data class DatosJuego(
     val favorito: Boolean = false,
     /** Emulador solo para este juego (null = el de la consola). */
     val emulador: String? = null,
+    /** Veces que se jugó (sesiones de más de 15 segundos). */
+    val sesiones: Int = 0,
 )
 
 /** Una carpeta de juegos elegida por la persona. [consola]: consola fija, o null para reconocerla sola. */

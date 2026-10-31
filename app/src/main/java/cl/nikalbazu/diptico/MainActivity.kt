@@ -59,6 +59,14 @@ class MainActivity : BaseActivity() {
         // Si cambias a dos pantallas (o a "abajo en negro") se abre la de abajo.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    // Protector de pantalla: la pantalla principal también se atenúa.
+                    Diptico.estado.map { it.protector }.distinctUntilChanged().collect { p ->
+                        val lp = window.attributes
+                        lp.screenBrightness = if (p) 0.08f else android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                        window.attributes = lp
+                    }
+                }
                 Diptico.estado.map { it.modoPantallas }.distinctUntilChanged().collect { modo ->
                     if (modo != "una_libre") abrirPantallaInferior()
                 }

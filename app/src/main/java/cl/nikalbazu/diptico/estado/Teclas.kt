@@ -61,6 +61,17 @@ object Teclas {
             return true
         }
 
+        // Sonidos de navegación.
+        if (e.sesion == null && e.panel != Panel.PASO && e.panel != Panel.CLAVE) {
+            if (abajo && code in cruceta) cl.nikalbazu.diptico.audio.Sonidos.mover()
+            if (abajo && ev.repeatCount == 0 && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) cl.nikalbazu.diptico.audio.Sonidos.consola()
+            if (arriba) when {
+                esA(code) -> cl.nikalbazu.diptico.audio.Sonidos.aceptar()
+                esB(code) -> cl.nikalbazu.diptico.audio.Sonidos.atras()
+                code == KeyEvent.KEYCODE_BUTTON_X || code == KeyEvent.KEYCODE_BUTTON_Y || code == KeyEvent.KEYCODE_BUTTON_START -> cl.nikalbazu.diptico.audio.Sonidos.abrir()
+            }
+        }
+
         // Escribiendo (próximo paso o un texto): el teclado manda, salvo B (cerrar) y Start (guardar).
         if (e.panel == Panel.PASO || e.panel == Panel.CLAVE) {
             if (code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK) {
@@ -100,6 +111,25 @@ object Teclas {
             return false
         }
 
+        // Select: en el inicio cambia entre carátulas y widgets; en menús y ventanas intercambia las pantallas.
+        // Mantenerlo siempre intercambia las pantallas.
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && e.sesion == null) {
+            if (abajo) {
+                if (ev.repeatCount == 0) selectLargo = false
+                else if (!selectLargo && ev.eventTime - ev.downTime > 550) {
+                    selectLargo = true
+                    Diptico.intercambiar()
+                }
+            }
+            if (arriba) {
+                if (!selectLargo) {
+                    if (e.panel == Panel.NINGUNO && !e.editandoWidgets) Diptico.alternarInicio() else Diptico.intercambiar()
+                }
+                selectLargo = false
+            }
+            return true
+        }
+
         // Juego en curso y pantalla atenuada: cualquier botón la despierta.
         if (e.sesion != null && !e.despierta && e.panel == Panel.NINGUNO) {
             if (arriba) Diptico.despertar()
@@ -133,7 +163,7 @@ object Teclas {
 
         // Paneles con su propia forma de moverse.
         when (e.panel) {
-            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS ->
+            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS ->
                 return panelEnGrilla(ev, e)
             Panel.MENU -> return menu(ev, e)
             else -> Unit
@@ -155,8 +185,12 @@ object Teclas {
                 }
                 KeyEvent.KEYCODE_BUTTON_L1 -> { if (!hayPanel && ev.repeatCount == 0) Diptico.cambiarConsola(-1); return true }
                 KeyEvent.KEYCODE_BUTTON_R1 -> { if (!hayPanel && ev.repeatCount == 0) Diptico.cambiarConsola(1); return true }
-                KeyEvent.KEYCODE_BUTTON_L2 -> { if (!hayPanel && ev.repeatCount == 0) Diptico.saltarLetra(-1); return true }
-                KeyEvent.KEYCODE_BUTTON_R2 -> { if (!hayPanel && ev.repeatCount == 0) Diptico.saltarLetra(1); return true }
+                KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> {
+                    val d = if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1
+                    // En el inicio con varias páginas, L2/R2 cambian de página; si no, saltan de letra.
+                    if (!hayPanel && ev.repeatCount == 0) { if (e.inicio == "widgets" && e.paginas > 1) Diptico.cambiarPagina(d) else Diptico.saltarLetra(d) }
+                    return true
+                }
             }
             if (esA(code)) {
                 if (ev.repeatCount == 0) {

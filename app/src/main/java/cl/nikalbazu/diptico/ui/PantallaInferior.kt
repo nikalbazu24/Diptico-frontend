@@ -110,7 +110,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS)
+            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -132,6 +132,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.PORTS -> PanelPorts(e)
             Panel.FICHA -> PanelFicha(e)
             Panel.WIDGETS -> PanelWidgets(e)
+            Panel.ESTADISTICAS -> PanelEstadisticas(e)
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
         }
     }
@@ -140,7 +141,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
 
 /** Con una ventana encima (opciones del juego, textos), lo de atrás se difumina. */
 fun Modifier.difuminar(e: Estado): Modifier =
-    if (e.panel in setOf(Panel.RAPIDO, Panel.PASO, Panel.CLAVE, Panel.CENTRO)) this.blur(16.dp) else this
+    if (Estilo.efectosCompletos && e.panel in setOf(Panel.RAPIDO, Panel.PASO, Panel.CLAVE, Panel.CENTRO)) this.blur(16.dp) else this
 
 /** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
 @Composable

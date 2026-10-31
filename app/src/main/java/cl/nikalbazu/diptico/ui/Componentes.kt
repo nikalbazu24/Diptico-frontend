@@ -47,6 +47,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
@@ -144,6 +146,39 @@ fun BotonGrande(texto: String, fondo: Color, tinta: Color, modifier: Modifier = 
 }
 
 /**
+ * Fondo de un botón elegido según el efecto del tema: liso, degradado, con un brillo que pasa, o de vidrio.
+ * Va después de clip(forma).
+ */
+@Composable
+fun Modifier.fondoBoton(color: Color): Modifier = when (Estilo.efecto) {
+    "degradado" -> this.background(
+        Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(color, Color.White, 0.2f), color, androidx.compose.ui.graphics.lerp(color, Color.Black, 0.28f))),
+    )
+    "brillo" -> {
+        val inf = androidx.compose.animation.core.rememberInfiniteTransition(label = "brillo")
+        val x by inf.animateFloat(
+            -0.6f, 1.6f,
+            androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(2400, delayMillis = 600)),
+            label = "x",
+        )
+        this.background(color).drawWithContent {
+            drawContent()
+            val w = size.width
+            drawRect(
+                Brush.linearGradient(
+                    listOf(Color.Transparent, Color.White.copy(alpha = 0.3f), Color.Transparent),
+                    start = androidx.compose.ui.geometry.Offset(w * x - w * 0.25f, 0f),
+                    end = androidx.compose.ui.geometry.Offset(w * x + w * 0.05f, size.height),
+                ),
+            )
+        }
+    }
+    "vidrio" -> this.background(color.copy(alpha = 0.55f))
+        .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.28f), Color.Transparent, Color.Black.copy(alpha = 0.12f))))
+    else -> this.background(color)
+}
+
+/**
  * Una opción grande: ícono en un círculo, título y detalle. Se usa en el tutorial y en los menús.
  * La elegida se pinta uva y muestra la "A".
  */
@@ -156,7 +191,8 @@ fun TarjetaOpcion(o: Opcion, activa: Boolean, modifier: Modifier = Modifier, alt
     Row(
         modifier.fillMaxWidth().height(esc.d(alto))
             .graphicsLayer { scaleX = alza; scaleY = alza; alpha = if (o.apagada) 0.5f else 1f }
-            .clip(RoundedCornerShape(esc.d(alto * 0.32f))).background(fondo)
+            .clip(RoundedCornerShape(esc.d(alto * 0.32f)))
+            .then(if (activa) Modifier.fondoBoton(fondo) else Modifier.background(fondo))
             .clickable { alPulsar() }
             .padding(start = esc.d(10), end = esc.d(12)),
         verticalAlignment = Alignment.CenterVertically,
