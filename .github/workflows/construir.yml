@@ -24,7 +24,14 @@ jobs:
           gradle-version: "8.9"
 
       - name: Compilar Díptico
-        run: gradle :app:assembleDebug --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          gradle :app:assembleDebug --no-daemon 2>&1 | tee compilar.log
+
+      - name: Mostrar errores de compilación
+        if: failure()
+        run: |
+          grep -E "^e: |What went wrong" -A1 compilar.log | head -60 | while IFS= read -r l; do echo "::error::${l}"; done
 
       - name: Nombrar el APK
         run: cp app/build/outputs/apk/debug/app-debug.apk "Diptico-v0.2.${{ github.run_number }}.apk"

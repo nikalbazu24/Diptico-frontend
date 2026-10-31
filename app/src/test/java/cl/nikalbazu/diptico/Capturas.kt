@@ -16,7 +16,12 @@ import cl.nikalbazu.diptico.estado.Panel
 import cl.nikalbazu.diptico.estado.PasoTuto
 import cl.nikalbazu.diptico.estado.Seccion
 import cl.nikalbazu.diptico.estado.Sesion
+import cl.nikalbazu.diptico.ui.Estilo
 import cl.nikalbazu.diptico.ui.Lienzo
+import cl.nikalbazu.diptico.estado.Tema
+import cl.nikalbazu.diptico.estado.Temas
+import cl.nikalbazu.diptico.estado.Trabajo
+import cl.nikalbazu.diptico.data.FichaInfo
 import cl.nikalbazu.diptico.ui.Raiz
 import cl.nikalbazu.diptico.ui.Rol
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -57,9 +62,11 @@ class Capturas {
         datos = mapOf("snes/1" to DatosJuego(tiempo = 3 * 3600 + 25 * 60, paso = "Buscar la llave del templo del agua", ultimo = 1L)),
     )
 
-    private fun foto(nombre: String, e: Estado, rol: Rol) {
+    private fun foto(nombre: String, e: Estado, rol: Rol, tema: Tema? = null) {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(e)
+        Estilo.tema = tema ?: Temas.incluidos[0]
+        Estilo.decoraciones = true
         regla.mainClock.autoAdvance = false
         regla.setContent {
             Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { Raiz(e, rol, 0) }
@@ -162,6 +169,59 @@ class Capturas {
     )
 
     @Test fun t28_tutorial_ports() = foto("28_tutorial_ports", tuto(PasoTuto.PORTS), Rol.UNICA)
+
+    // ---------- v0.3 ----------
+
+    private val ficha = FichaInfo(
+        "Leyenda del Bosque",
+        "Leyenda del Bosque es un videojuego de acción y aventura de 1994. El jugador recorre un bosque encantado buscando las cinco llaves del templo para despertar al guardián.",
+        "El juego nació como un proyecto de dos amigos que querían mezclar exploración libre con acertijos. El equipo dibujó más de 300 escenarios a mano antes de pasarlos a la consola.",
+        "Cada zona del bosque cambia según la hora del día. Los acertijos usan la música: algunas puertas solo se abren tocando la melodía correcta.",
+        "Fue muy bien recibido por su música y su mundo. Vendió más de un millón de copias.",
+        "https://es.wikipedia.org/wiki/Ejemplo", "es",
+    )
+
+    @Test fun t29_inicio_widgets() = foto("29_inicio_widgets", base().copy(inicio = "widgets"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t30_ficha_abajo() = foto("30_ficha_abajo", base().copy(panel = Panel.FICHA, fichaDe = "snes/1", ficha = ficha, pestanaFicha = 0), Rol.INFERIOR)
+
+    @Test fun t31_ficha_arriba() = foto("31_ficha_lectura_arriba", base().copy(panel = Panel.FICHA, fichaDe = "snes/1", ficha = ficha, pestanaFicha = 1), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t32_ficha_personalizar() = foto("32_ficha_personalizar", base().copy(panel = Panel.FICHA, fichaDe = "snes/1", ficha = ficha, pestanaFicha = 3, indice = 1), Rol.INFERIOR)
+
+    @Test fun t33_tema_halloween() = foto("33_tema_halloween_arriba", base(), Rol.SUPERIOR, Temas.fiestas.first { it.id == "halloween" }.tema)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t34_tema_halloween_abajo() = foto("34_tema_halloween_abajo", base(), Rol.INFERIOR, Temas.fiestas.first { it.id == "halloween" }.tema)
+
+    @Test fun t35_reloj_grande() = foto("35_reloj_grande", base().copy(relojGrande = true), Rol.SUPERIOR)
+
+    @Test fun t36_trabajos() = foto(
+        "36_trabajos_de_fondo",
+        base().copy(trabajos = listOf(Trabajo("portadas", "Portadas · Bahía Neón", 0.4f), Trabajo("iconos", "Bajando íconos"))),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t37_menu_temas() = foto("37_menu_temas", base().copy(panel = Panel.MENU, seccion = Seccion.TEMAS, enOpciones = true, indice = 2), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t38_consolas_nuevas() = foto(
+        "38_consolas_nuevas_siglas",
+        base().copy(
+            juegos = juegos + listOf(juego("9", "switch", "Aventura en la Isla"), juego("10", "xbox360", "Motor Rugiente"), juego("11", "psvita", "Pequeño Planeta"), juego("12", "n3ds", "Granja Feliz 3D")),
+            estiloIconos = "siglas",
+        ),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t39_tema_sakura_claro() = foto("39_tema_sakura_claro", base().copy(oscuro = false), Rol.INFERIOR, Temas.incluidos.first { it.id == "sakura" })
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t40_editar_widgets() = foto("40_editar_widgets", base().copy(panel = Panel.WIDGETS, indice = 2), Rol.INFERIOR)
 
     @Config(qualifiers = ABAJO)
     @Test fun t24_letra_muy_grande() = foto("24_abajo_letra_muy_grande", base().copy(tamTexto = 1.3f), Rol.INFERIOR)
