@@ -48,6 +48,8 @@ data class DatosJuego(
     val emulador: String? = null,
     /** Veces que se jugó (sesiones de más de 15 segundos). */
     val sesiones: Int = 0,
+    /** Oculto del estante (se ve con el filtro "Ocultos"). */
+    val oculto: Boolean = false,
 )
 
 /** Una carpeta de juegos elegida por la persona. [consola]: consola fija, o null para reconocerla sola. */

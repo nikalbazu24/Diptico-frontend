@@ -271,6 +271,32 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             caja(3f, 4f, 9f, 12f, 2f)
             circulo(16.5f, 15.5f, 4.5f, a)
         }
+        Icono.OCULTAR -> {
+            camino {
+                m(2.5f, 12f)
+                cubicTo(5f * k, 7f * k, 8.5f * k, 5f * k, 12f * k, 5f * k)
+                cubicTo(15.5f * k, 5f * k, 19f * k, 7f * k, 21.5f * k, 12f * k)
+                cubicTo(19f * k, 17f * k, 15.5f * k, 19f * k, 12f * k, 19f * k)
+                cubicTo(8.5f * k, 19f * k, 5f * k, 17f * k, 2.5f * k, 12f * k); close()
+            }
+            circulo(12f, 12f, 3f)
+            linea(4f, 20f, 20f, 4f, a)
+        }
+        Icono.COPIAR -> {
+            caja(8f, 8f, 12f, 13f, 2.5f)
+            camino { m(16f, 5f); l(16f, 4.5f); cubicTo(16f * k, 3.7f * k, 15.3f * k, 3f * k, 14.5f * k, 3f * k); l(5.5f, 3f); cubicTo(4.7f * k, 3f * k, 4f * k, 3.7f * k, 4f * k, 4.5f * k); l(4f, 15.5f); cubicTo(4f * k, 16.3f * k, 4.7f * k, 17f * k, 5.5f * k, 17f * k); l(6f, 17f) }
+            linea(11f, 12.5f, 17f, 12.5f, a); linea(11f, 16.5f, 15f, 16.5f, a)
+        }
+        Icono.PEGAR -> {
+            caja(5f, 5f, 14f, 16f, 2.5f)
+            caja(9f, 3f, 6f, 4f, 1.5f, a, lleno = true)
+            linea(8.5f, 12f, 15.5f, 12f); linea(8.5f, 16f, 13.5f, 16f)
+        }
+        Icono.EDITAR -> {
+            camino { m(4f, 20f); l(4.5f, 16f); l(15.5f, 5f); l(19f, 8.5f); l(8f, 19.5f); close() }
+            linea(13.5f, 7f, 17f, 10.5f, a)
+        }
+        Icono.BISA -> dibujarBisa(k, c, a)
         Icono.TROFEO -> {
             camino {
                 m(7f, 4f); l(17f, 4f); l(17f, 9f)
@@ -325,4 +351,35 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             }
         }
     }
+}
+
+
+/**
+ * Bisa, la asistente de Díptico: dos paneles unidos por una bisagra que forman una carita.
+ * Es su ícono propio y único (no se parece a ningún otro de Díptico).
+ */
+fun DrawScope.dibujarBisa(k: Float, c: Color, a: Color, parpadeo: Float = 1f, mirar: Float = 0f) {
+    fun p(x: Float, y: Float) = Offset(x * k, y * k)
+    // Panel izquierdo (un poco inclinado) y panel derecho
+    val izq = Path().apply {
+        moveTo(3f * k, 6.5f * k); lineTo(11f * k, 4.5f * k); lineTo(11f * k, 19.5f * k); lineTo(3f * k, 17.5f * k); close()
+    }
+    val der = Path().apply {
+        moveTo(13f * k, 4.5f * k); lineTo(21f * k, 6.5f * k); lineTo(21f * k, 17.5f * k); lineTo(13f * k, 19.5f * k); close()
+    }
+    drawPath(izq, c)
+    drawPath(der, a)
+    // Bisagra
+    drawLine(c.copy(alpha = 0.6f), p(12f, 5f), p(12f, 19f), 1.2f * k, StrokeCap.Round)
+    // Ojos (parpadean)
+    val alto = 2.6f * k * parpadeo.coerceIn(0.12f, 1f)
+    val dx = mirar * 0.8f * k
+    drawRoundRect(Color.White, Offset(6f * k - 1.1f * k + dx, 10f * k - alto / 2), Size(2.2f * k, alto), CornerRadius(1.1f * k))
+    drawRoundRect(Color.White, Offset(16f * k - 1.1f * k + dx, 10f * k - alto / 2), Size(2.2f * k, alto), CornerRadius(1.1f * k))
+    // Sonrisa que cruza la bisagra
+    val boca = Path().apply {
+        moveTo(8.5f * k, 14f * k)
+        cubicTo(10f * k, 16.2f * k, 14f * k, 16.2f * k, 15.5f * k, 14f * k)
+    }
+    drawPath(boca, Color.White, style = Stroke(1.6f * k, cap = StrokeCap.Round))
 }

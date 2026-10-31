@@ -170,6 +170,7 @@ class Almacen(ctx: Context) {
                 favorito = d.optBoolean("favorito", false),
                 emulador = d.optString("emulador", "").ifEmpty { null },
                 sesiones = d.optInt("sesiones", 0),
+                oculto = d.optBoolean("oculto", false),
             )
         }
         return salida
@@ -192,6 +193,7 @@ class Almacen(ctx: Context) {
             if (d.favorito) j.put("favorito", true)
             d.emulador?.let { j.put("emulador", it) }
             if (d.sesiones > 0) j.put("sesiones", d.sesiones)
+            if (d.oculto) j.put("oculto", true)
             o.put(k, j)
         }
         p.edit().putString("datos", o.toString()).apply()

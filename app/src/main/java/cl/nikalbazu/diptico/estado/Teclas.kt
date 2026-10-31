@@ -74,13 +74,14 @@ object Teclas {
 
         // Escribiendo (próximo paso o un texto): el teclado manda, salvo B (cerrar) y Start (guardar).
         if (e.conTeclado) {
-            // Teclado de Díptico: cruceta elige, A escribe, B borra (o cierra si no hay nada), X espacio, Y mayúsculas, Start listo.
+            // Teclado de Díptico: cruceta elige, A escribe, B borra (o cierra si no hay nada), X espacio, Y mayúsculas,
+            // L1/R1 mueven el cursor, L2 selecciona, R2 pega, Start listo.
             if (abajo) {
                 val d = dir(code)
                 when {
                     d != null -> { Diptico.moverTecla(d.first, d.second); cl.nikalbazu.diptico.audio.Sonidos.mover() }
-                    code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount % 2 == 0 -> Diptico.borrarLetra()
-                    code == KeyEvent.KEYCODE_BUTTON_R1 && ev.repeatCount == 0 -> Diptico.escribir(" ")
+                    code == KeyEvent.KEYCODE_BUTTON_L1 -> Diptico.moverCursor(-1)
+                    code == KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.moverCursor(1)
                 }
                 return true
             }
@@ -89,9 +90,11 @@ object Teclas {
                 code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK ->
                     if (e.borrador.isEmpty()) Diptico.cerrarPanel() else Diptico.borrarLetra()
                 code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.escribir(" ")
-                code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.pulsarTecla(4, 0)
+                code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.pulsarValor("⇧")
+                code == KeyEvent.KEYCODE_BUTTON_L2 -> Diptico.alternarSeleccion()
+                code == KeyEvent.KEYCODE_BUTTON_R2 -> Diptico.pegar()
                 code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarTexto()
-                code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.pulsarTecla(4, 1)
+                code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.pulsarValor("#")
             }
             return true
         }
@@ -163,16 +166,18 @@ object Teclas {
             if (abajo) {
                 dir(code)?.let { (dx, dy) -> Diptico.moverWidgetSel(dx, dy); return true }
                 when (code) {
-                    KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.tamanoWidgetSel(-1)
-                    KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.tamanoWidgetSel(1)
-                    KeyEvent.KEYCODE_BUTTON_L2 -> if (ev.repeatCount == 0) Diptico.siguienteWidget(-1)
-                    KeyEvent.KEYCODE_BUTTON_R2 -> if (ev.repeatCount == 0) Diptico.siguienteWidget(1)
+                    KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.cambiarTamWidget(-1, 0)
+                    KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.cambiarTamWidget(1, 0)
+                    KeyEvent.KEYCODE_BUTTON_L2 -> if (ev.repeatCount == 0) Diptico.cambiarTamWidget(0, -1)
+                    KeyEvent.KEYCODE_BUTTON_R2 -> if (ev.repeatCount == 0) Diptico.cambiarTamWidget(0, 1)
                 }
                 return esA(code) || esB(code) || code in botonesControl
             }
             if (arriba) {
                 when {
                     esA(code) -> Diptico.siguienteWidget(1)
+                    code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.cambiarEstiloWidget()
+                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.INICIO)
                     code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.actualizar { it.copy(panel = Panel.WIDGETS, indice = 0) }
                     esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
                     code in botonesControl || code in cruceta -> Unit
@@ -320,6 +325,7 @@ object Teclas {
                     when (e.panel) {
                         Panel.FICHA -> Diptico.cambiarPestanaFicha(d)
                         Panel.BUSCAR -> Diptico.cambiarFiltro(d)
+                        Panel.IMAGENES -> Diptico.cambiarFuenteImagen(d)
                         else -> Unit
                     }
                 }
@@ -333,6 +339,8 @@ object Teclas {
         if (arriba) {
             when {
                 esA(code) -> Diptico.aceptar()
+                // Si el centro se abrió manteniendo Start, al soltarlo se queda abierto.
+                code == KeyEvent.KEYCODE_BUTTON_START && startLargo -> startLargo = false
                 esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.cerrarPanel()
                 code == KeyEvent.KEYCODE_BUTTON_X -> when (e.panel) {
                     Panel.FICHA -> Diptico.cerrarPanel()
@@ -345,6 +353,7 @@ object Teclas {
                     Panel.CARPETAS -> Diptico.quitarCarpeta()
                     Panel.CENTRO -> cl.nikalbazu.diptico.audio.Avisos.descartarTodas()
                     Panel.ASISTENTE -> Diptico.borrarChat()
+                    Panel.IMAGENES -> Diptico.abrirTexto("buscar_imagen", e.nombreImagen)
                     Panel.RAPIDO -> Diptico.cerrarPanel()
                     else -> Unit
                 }

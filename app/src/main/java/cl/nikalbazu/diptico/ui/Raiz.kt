@@ -1,5 +1,10 @@
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.Panel
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.blur
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -24,13 +29,21 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         LocalFormas provides e.formas,
         LocalTamJuegos provides e.tamJuegos,
     ) {
+        // El centro de control vive siempre en la pantalla de arriba (la principal), aunque se intercambien.
+        val arribaFisica = miPantalla == android.view.Display.DEFAULT_DISPLAY &&
+            (rol == Rol.UNICA || rol == (if (e.intercambiar) Rol.INFERIOR else Rol.SUPERIOR))
+        val centroAqui = e.panel == Panel.CENTRO && arribaFisica
+        val desenfoque by animateDpAsState(if (centroAqui && Estilo.efectosCompletos) 18.dp else 0.dp, tween(260), label = "desenfoque")
         Box(Modifier.fillMaxSize()) {
-            when {
-                !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
-                rol == Rol.UNICA -> PantallaUnica(e)
-                rol == Rol.SUPERIOR -> PantallaSuperior(e)
-                else -> PantallaInferior(e, miPantalla)
+            Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
+                when {
+                    !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
+                    rol == Rol.UNICA -> PantallaUnica(e)
+                    rol == Rol.SUPERIOR -> PantallaSuperior(e)
+                    else -> PantallaInferior(e, miPantalla)
+                }
             }
+            AnimatedVisibility(visible = centroAqui, enter = fadeIn(tween(160)), exit = fadeOut(tween(200))) { PanelCentro(e) }
             AnimatedVisibility(
                 visible = e.relojGrande && rol != Rol.INFERIOR,
                 enter = fadeIn(tween(250)) + scaleIn(tween(320), initialScale = 0.9f),

@@ -49,7 +49,8 @@ enum class Icono {
     PANTALLAS, UNA, NEGRO, LIBRE, INTERCAMBIAR, TEXTO, TEMA, INTRO, MUSICA, VOLUMEN, SILENCIO, CARPETA, EMULADOR,
     PORTADA, DESCARGA, CLAVE, TITULO, BORRAR, BIBLIOTECA, BUSCAR, TUTORIAL, INFO, CERRAR, JUGAR, DADO, LAPIZ,
     CONTINUAR, MENU, CHECK, ARRIBA, ABAJO, ESTRELLA, APPS, RELOJ, PALETA, MOVIL, CHISPA, CORAZON, MUNDO, WEB,
-    CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA, MANDO, BATERIA, TROFEO, ASISTENTE, IDIOMA,
+    CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA, MANDO, BATERIA, TROFEO, ASISTENTE, IDIOMA, OCULTAR,
+    COPIAR, PEGAR, BISA, EDITAR,
 }
 
 /** Secciones del menú principal. */
@@ -98,6 +99,8 @@ data class Widget(
     val pagina: Int = 0,
     /** Imagen o GIF propio (widgets de tipo "imagen-…"). */
     val uri: String? = null,
+    /** Estilo: tarjeta, vidrio, solido, contorno o sinfondo. */
+    val estilo: String = "tarjeta",
 )
 
 /** Forma de las cajas de una consola en el estante. */
@@ -108,15 +111,17 @@ object Widgets {
     var COLUMNAS = 6
     var FILAS = 4
 
-    /** Tamaños y formas posibles (ancho x alto en celdas). */
-    val TAMANOS = listOf(
-        2 to 1, 2 to 2, 3 to 2, 4 to 2, 6 to 1, 2 to 3, 3 to 3, 4 to 3, 6 to 2, 3 to 1,
-    )
+    /** Tamaños y formas posibles (ancho x alto en celdas): todos los que caben en la grilla. */
+    val TAMANOS: List<Pair<Int, Int>>
+        get() = (1..COLUMNAS).flatMap { an -> (1..FILAS).map { al -> an to al } }.sortedWith(compareBy({ it.first * it.second }, { it.first }))
 
-    fun nombreTamano(an: Int, al: Int) = when (an to al) {
+    val ESTILOS = listOf("tarjeta", "vidrio", "solido", "contorno", "sinfondo")
+    fun nombreEstilo(e: String) = when (e) { "vidrio" -> "Vidrio"; "solido" -> "Color"; "contorno" -> "Contorno"; "sinfondo" -> "Sin fondo"; else -> "Tarjeta" }
+
+    fun nombreTamano(an: Int, al: Int) = "$an × $al · " + when (an to al) {
         2 to 1 -> "Chico"; 2 to 2 -> "Cuadrado"; 3 to 2 -> "Mediano"; 4 to 2 -> "Ancho"; 6 to 1 -> "Franja"
         2 to 3 -> "Alto"; 3 to 3 -> "Grande"; 4 to 3 -> "Muy grande"; 6 to 2 -> "Panorámico"; 3 to 1 -> "Barra"
-        else -> "${an}x$al"
+        else -> when { an == al -> "Cuadrado"; an > al -> "Ancho"; else -> "Alto" }
     }
 
     val porDefecto = listOf(
@@ -219,6 +224,9 @@ data class Estado(
     val candidatos: List<cl.nikalbazu.diptico.data.ImagenWeb> = emptyList(),
     val candidatoPara: String = "portada",
     val buscandoCandidatos: Boolean = false,
+    /** Pestaña de la tienda de imágenes y el nombre con que se buscó. */
+    val fuenteImagen: String = "todas",
+    val nombreImagen: String = "",
     val inicio: String = "heroe",
     val widgets: List<Widget> = Widgets.porDefecto,
     val estiloIconos: String = "diptico",
@@ -256,7 +264,10 @@ data class Estado(
     val sonidos: Boolean = true,
     /** Escribir con el teclado de Díptico, que aparece en la otra pantalla. */
     val tecladoPropio: Boolean = true,
-    val teclaFila: Int = 1,
+    val teclaFila: Int = 2,
+    /** Posición del cursor en el texto (-1 = al final) y el otro extremo de la selección (null = sin selección). */
+    val cursor: Int = -1,
+    val ancla: Int? = null,
     val teclaCol: Int = 0,
     val mayus: Boolean = true,
     val simbolos: Boolean = false,
@@ -293,6 +304,10 @@ data class Estado(
     val visibles: List<Juego> by lazy {
         var l = if (consolaSel == "todo") juegos else juegos.filter { it.consolaId == consolaSel }
         fun d(j: Juego) = datos[j.clave]
+        l = when (filtro) {
+            "ocultos" -> l.filter { d(it)?.oculto == true }
+            else -> l.filter { d(it)?.oculto != true }
+        }
         l = when (filtro) {
             "favoritos" -> l.filter { d(it)?.favorito == true }
             "recientes" -> l.filter { (d(it)?.ultimo ?: 0L) > 0 }
@@ -1027,7 +1042,9 @@ object Diptico {
                 panel = if (hacerPregunta) Panel.PASO else it.panel,
                 borrador = if (hacerPregunta) d.paso else it.borrador,
                 pregunta = hacerPregunta,
-                teclaFila = if (hacerPregunta) 1 else it.teclaFila,
+                teclaFila = if (hacerPregunta) 2 else it.teclaFila,
+                cursor = if (hacerPregunta) -1 else it.cursor,
+                ancla = if (hacerPregunta) null else it.ancla,
                 teclaCol = if (hacerPregunta) 0 else it.teclaCol,
                 mayus = if (hacerPregunta) d.paso.isEmpty() else it.mayus,
             )
@@ -1057,7 +1074,7 @@ object Diptico {
 
     fun abrirPaso() {
         val clave = estado.value.seleccionado?.clave ?: return
-        actualizar { it.copy(panel = Panel.PASO, borrador = it.datos[clave]?.paso ?: "", pregunta = false, teclaFila = 1, teclaCol = 0, simbolos = false, mayus = it.datos[clave]?.paso.isNullOrEmpty()) }
+        actualizar { it.copy(panel = Panel.PASO, borrador = it.datos[clave]?.paso ?: "", pregunta = false, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = it.datos[clave]?.paso.isNullOrEmpty()) }
     }
 
     fun abrirMenu(seccion: Seccion? = null) {
@@ -1119,7 +1136,7 @@ object Diptico {
 
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave", "ia_pedido", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 1, teclaCol = 0, simbolos = false, mayus = inicial.isEmpty() && para != "sgdb" && para != "ia_clave" && !para.startsWith("ra_")) }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && para != "ia_clave" && !para.startsWith("ra_")) }
     }
 
     fun cerrarPanel() {
@@ -1132,6 +1149,10 @@ object Diptico {
         if (e.panel == Panel.CLAVE && (e.textoPara == "asistente" || e.textoPara == "ia_clave" && claveParaAsistente)) {
             claveParaAsistente = false
             actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
+            return
+        }
+        if (e.panel == Panel.CLAVE && e.textoPara == "buscar_imagen") {
+            actualizar { it.copy(panel = Panel.IMAGENES, indice = 0) }
             return
         }
         if (e.panel == Panel.CLAVE && e.configurado) {
@@ -1177,13 +1198,16 @@ object Diptico {
             "1234567890", "qwertyuiop", "asdfghjklñ", "zxcvbnm,.?",
         )
         val letras = filas.map { f -> f.map { c -> if (e.mayus && !e.simbolos) c.uppercase() else c.toString() } }
-        return letras + listOf(listOf("⇧", if (e.simbolos) "abc" else "#", "␣", "⌫", "✓"))
+        return listOf(EDICION) + letras + listOf(listOf("⇧", if (e.simbolos) "abc" else "#", "␣", "⌫", "✓"))
     }
+
+    /** Fila de arriba del teclado: mover el cursor, seleccionar, copiar, cortar y pegar. */
+    val EDICION = listOf("◀", "▶", "Selec.", "Todo", "Copiar", "Cortar", "Pegar")
 
     fun moverTecla(dx: Int, dy: Int) {
         val e = estado.value
         val filas = filasTeclado(e)
-        var f = e.teclaFila
+        var f = e.teclaFila.coerceIn(0, filas.size - 1)
         var c = e.teclaCol
         if (dy != 0) {
             val nf = (f + dy).coerceIn(0, filas.size - 1)
@@ -1203,31 +1227,105 @@ object Diptico {
         val e = estado.value
         val t = filasTeclado(e).getOrNull(fila)?.getOrNull(col) ?: return
         if (fila != e.teclaFila || col != e.teclaCol) actualizar { it.copy(teclaFila = fila, teclaCol = col) }
+        pulsarValor(t)
+        Sonidos.mover()
+    }
+
+    /** Hace lo de una tecla según su etiqueta. */
+    fun pulsarValor(t: String) {
+        val e = estado.value
         when (t) {
             "⇧" -> actualizar { it.copy(mayus = !it.mayus) }
             "#", "abc" -> actualizar { it.copy(simbolos = !it.simbolos) }
             "␣" -> escribir(" ")
             "⌫" -> borrarLetra()
             "✓" -> terminarTexto()
+            "◀" -> moverCursor(-1)
+            "▶" -> moverCursor(1)
+            "Selec." -> alternarSeleccion()
+            "Todo" -> actualizar { it.copy(ancla = 0, cursor = it.borrador.length) }
+            "Copiar" -> copiar(false)
+            "Cortar" -> copiar(true)
+            "Pegar" -> pegar()
             else -> {
                 escribir(t)
                 if (e.mayus && !e.simbolos) actualizar { it.copy(mayus = false) }
             }
         }
-        Sonidos.mover()
+    }
+
+    private fun cursorDe(e: Estado) = if (e.cursor < 0 || e.cursor > e.borrador.length) e.borrador.length else e.cursor
+
+    /** Lo seleccionado, como rango (vacío si no hay selección). */
+    fun seleccion(e: Estado): IntRange {
+        val c = cursorDe(e)
+        val a = e.ancla?.coerceIn(0, e.borrador.length) ?: return IntRange.EMPTY
+        return minOf(a, c) until maxOf(a, c)
     }
 
     fun escribir(t: String) {
         val e = estado.value
-        cambiarBorrador(e.borrador + t)
+        val sel = seleccion(e)
+        val c = cursorDe(e)
+        val (antes, despues) = if (!sel.isEmpty()) e.borrador.substring(0, sel.first) to e.borrador.substring(sel.last + 1)
+        else e.borrador.substring(0, c) to e.borrador.substring(c)
+        cambiarBorrador(antes + t + despues)
+        val nuevo = (antes.length + t.length).coerceAtMost(estado.value.borrador.length)
+        actualizar { it.copy(cursor = if (despues.isEmpty()) -1 else nuevo, ancla = null) }
         // Después de un punto, la siguiente va con mayúscula.
         if (t == "." || t == "?" || t == "!") actualizar { it.copy(mayus = true) }
     }
 
     fun borrarLetra() {
-        val b = estado.value.borrador
-        if (b.isNotEmpty()) cambiarBorrador(b.dropLast(1))
-        if (b.length <= 1) actualizar { it.copy(mayus = true) }
+        val e = estado.value
+        val sel = seleccion(e)
+        if (!sel.isEmpty()) {
+            cambiarBorrador(e.borrador.removeRange(sel.first, sel.last + 1))
+            actualizar { it.copy(cursor = sel.first, ancla = null) }
+        } else {
+            val c = cursorDe(e)
+            if (c > 0) {
+                cambiarBorrador(e.borrador.removeRange(c - 1, c))
+                actualizar { it.copy(cursor = if (c >= e.borrador.length) -1 else c - 1) }
+            }
+        }
+        if (estado.value.borrador.isEmpty()) actualizar { it.copy(mayus = true, cursor = -1, ancla = null) }
+    }
+
+    fun moverCursor(d: Int) {
+        val e = estado.value
+        val c = (cursorDe(e) + d).coerceIn(0, e.borrador.length)
+        actualizar { it.copy(cursor = c) }
+    }
+
+    /** Empieza (o termina) a seleccionar desde donde está el cursor. */
+    fun alternarSeleccion() {
+        val e = estado.value
+        actualizar { it.copy(ancla = if (e.ancla == null) cursorDe(e) else null) }
+        if (e.ancla == null) avisar("Mueve el cursor para seleccionar")
+    }
+
+    private fun portapapeles() = app.getSystemService(android.content.ClipboardManager::class.java)
+
+    /** Copia lo seleccionado (o todo si no hay selección). Con [cortar], además lo borra. */
+    fun copiar(cortar: Boolean) {
+        val e = estado.value
+        val sel = seleccion(e)
+        val texto = if (sel.isEmpty()) e.borrador else e.borrador.substring(sel.first, sel.last + 1)
+        if (texto.isEmpty()) { avisar("No hay nada que copiar"); return }
+        try { portapapeles()?.setPrimaryClip(android.content.ClipData.newPlainText("Díptico", texto)) } catch (_: Exception) {}
+        if (cortar) {
+            if (sel.isEmpty()) { cambiarBorrador(""); actualizar { it.copy(cursor = -1, ancla = null) } } else borrarLetra()
+        } else {
+            actualizar { it.copy(ancla = null) }
+        }
+        avisar(if (cortar) "Cortado" else "Copiado")
+    }
+
+    fun pegar() {
+        val t = try { portapapeles()?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(app)?.toString() } catch (_: Exception) { null }
+        if (t.isNullOrEmpty()) { avisar("No hay nada para pegar"); return }
+        escribir(t.trim())
     }
 
     fun terminarTexto() {
@@ -1315,7 +1413,7 @@ object Diptico {
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
             Panel.IMAGENES -> {
-                val total = e.candidatos.size
+                val total = candidatosVisibles(e).size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
             Panel.BUSCAR -> {
@@ -1418,6 +1516,10 @@ object Diptico {
         lista += Opcion("Ficha", "Historia y guías", Icono.TUTORIAL) { abrirFicha() }
         lista += Opcion("Mi próximo paso", d?.paso?.take(30) ?: "", Icono.LAPIZ) { abrirPaso() }
         lista += Opcion(if (d?.favorito == true) "Favorito ✓" else "Favorito", icono = Icono.CORAZON) { alternarFavorito(juego.clave) }
+        lista += Opcion(
+            if (d?.oculto == true) "Mostrar este juego" else "Ocultar este juego",
+            if (d?.oculto == true) "Vuelve al estante" else "Se ve con el filtro Ocultos", Icono.OCULTAR,
+        ) { alternarOculto(juego.clave) }
         if (consola != null && !consola.sinEmulador) {
             lista += Opcion("Emulador", d?.emulador?.let { id -> Lanzador.opciones(app, consola).firstOrNull { it.id == id }?.nombre } ?: "El de la consola", Icono.EMULADOR) {
                 ciclarEmuladorJuego(juego.clave, consola)
@@ -1707,6 +1809,11 @@ object Diptico {
                     "Volver a buscar juegos", if (e.escaneando) "Buscando…" else "${e.juegos.size} juegos", Icono.BUSCAR,
                     "Úsalo cuando agregues juegos nuevos a tu carpeta.",
                 ) { escanear() }
+                val ocultos = e.datos.count { it.value.oculto }
+                lista += Opcion(
+                    "Juegos ocultos", if (ocultos == 0) "Ninguno" else "$ocultos", Icono.OCULTAR,
+                    "Los juegos que ocultaste desde sus opciones (Y). Desde aquí los ves y los vuelves a mostrar.",
+                ) { actualizar { it.copy(panel = Panel.BUSCAR, filtro = "ocultos", busqueda = "", indice = 0) } }
                 lista += Opcion(
                     "Carpetas de juegos", "${almacen.carpetas().size} carpetas", Icono.CARPETA,
                     "Agrega todas las que quieras (memoria interna, SD…). Si una carpeta no tiene el nombre de una consola, le eliges la consola.",
@@ -1882,7 +1989,7 @@ object Diptico {
             a.getJSONObject(it).let { o ->
                 Widget(
                     o.getString("tipo"), o.getInt("x"), o.getInt("y"), o.getInt("an"), o.getInt("al"), o.optBoolean("visible", true),
-                    o.optInt("pagina", 0), o.optString("uri", "").ifEmpty { null },
+                    o.optInt("pagina", 0), o.optString("uri", "").ifEmpty { null }, o.optString("estilo", "tarjeta"),
                 )
             }
         }
@@ -1895,7 +2002,7 @@ object Diptico {
     private fun escribirWidgets(l: List<Widget>): String = org.json.JSONArray().apply {
         l.forEach {
             val o = org.json.JSONObject().put("tipo", it.tipo).put("x", it.x).put("y", it.y).put("an", it.an).put("al", it.al)
-                .put("visible", it.visible).put("pagina", it.pagina)
+                .put("visible", it.visible).put("pagina", it.pagina).put("estilo", it.estilo)
             it.uri?.let { u -> o.put("uri", u) }
             put(o)
         }
@@ -2147,7 +2254,7 @@ object Diptico {
         almacen.guardarTexto("inicio", "widgets")
         val primero = estado.value.widgets.indexOfFirst { it.visible }.coerceAtLeast(0)
         actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.NINGUNO) }
-        avisar("Cruceta mueve · L1 R1 tamaño · L2 R2 otro widget · Y agregar · B listo")
+        avisar("Cruceta mueve · L1 R1 ancho · L2 R2 alto · X estilo · Y agregar · B listo")
     }
 
     fun terminarEdicion() {
@@ -2163,6 +2270,12 @@ object Diptico {
         actualizar { it.copy(widgets = l) }
     }
 
+    /** ¿El widget [w] (en la posición [i] de la lista) se monta sobre otro de su página? */
+    private fun choca(w: Widget, i: Int, l: List<Widget> = estado.value.widgets): Boolean = l.withIndex().any { (k, o) ->
+        k != i && o.visible && o.pagina == w.pagina &&
+            w.x < o.x + o.an && o.x < w.x + w.an && w.y < o.y + o.al && o.y < w.y + w.al
+    }
+
     private fun encajar(w: Widget): Widget {
         val an = w.an.coerceIn(1, Widgets.COLUMNAS)
         val al = w.al.coerceIn(1, Widgets.FILAS)
@@ -2171,26 +2284,67 @@ object Diptico {
 
     fun moverWidgetSel(dx: Int, dy: Int) {
         val e = estado.value
-        cambiarWidget(e.widgetSel) { w ->
+        val i = e.widgetSel
+        cambiarWidget(i) { w ->
             val nx = w.x + dx
             when {
-                // Al salir por un costado pasa a la página de al lado.
-                nx < 0 && w.pagina > 0 -> encajar(w.copy(pagina = w.pagina - 1, x = Widgets.COLUMNAS - w.an))
-                nx + w.an > Widgets.COLUMNAS && w.pagina < e.paginas - 1 -> encajar(w.copy(pagina = w.pagina + 1, x = 0))
-                else -> encajar(w.copy(x = nx, y = w.y + dy))
+                // Al salir por un costado pasa a la página de al lado (si allá hay espacio).
+                nx < 0 && w.pagina > 0 -> encajar(w.copy(pagina = w.pagina - 1, x = Widgets.COLUMNAS - w.an)).takeIf { !choca(it, i) } ?: w
+                nx + w.an > Widgets.COLUMNAS && w.pagina < e.paginas - 1 -> encajar(w.copy(pagina = w.pagina + 1, x = 0)).takeIf { !choca(it, i) } ?: w
+                else -> {
+                    // Salta por encima de los otros widgets hasta el primer lugar libre en esa dirección.
+                    var paso = 1
+                    var r: Widget? = null
+                    while (paso <= maxOf(Widgets.COLUMNAS, Widgets.FILAS)) {
+                        val c = encajar(w.copy(x = w.x + dx * paso, y = w.y + dy * paso))
+                        if (c.x == w.x && c.y == w.y) break
+                        if (!choca(c, i)) { r = c; break }
+                        paso++
+                    }
+                    r ?: w
+                }
             }
         }
         estado.value.widgets.getOrNull(e.widgetSel)?.let { w -> if (w.pagina != e.paginaInicio) actualizar { it.copy(paginaInicio = w.pagina) } }
     }
 
     /** Para arrastrar con el dedo: deja el widget en la celda indicada. */
-    fun ponerWidget(i: Int, x: Int, y: Int) = cambiarWidget(i) { encajar(it.copy(x = x, y = y)) }
+    fun ponerWidget(i: Int, x: Int, y: Int) = cambiarWidget(i) { w ->
+        val c = encajar(w.copy(x = x, y = y))
+        if (choca(c, i)) { avisar("Ahí hay otro widget"); w } else c
+    }
+
+    /** Cambia el ancho (L1/R1) o el alto (L2/R2) del widget elegido, sin montarse sobre otros. */
+    fun cambiarTamWidget(dAn: Int, dAl: Int) {
+        val i = estado.value.widgetSel
+        cambiarWidget(i) { w ->
+            val an = (w.an + dAn).coerceIn(1, Widgets.COLUMNAS)
+            val al = (w.al + dAl).coerceIn(1, Widgets.FILAS)
+            // Si no cabe a la derecha o abajo, se corre hacia la izquierda o arriba.
+            val c = w.copy(an = an, al = al, x = w.x.coerceAtMost(Widgets.COLUMNAS - an), y = w.y.coerceAtMost(Widgets.FILAS - al))
+            if (choca(c, i)) { avisar("No cabe: hay otro widget al lado"); w } else c
+        }
+    }
 
     fun tamanoWidgetSel(delta: Int) = cambiarWidget(estado.value.widgetSel) { w ->
         val t = Widgets.TAMANOS
-        val i = t.indexOfFirst { it.first == w.an && it.second == w.al }
-        val (an, al) = t[(i + delta).mod(t.size)]
-        encajar(w.copy(an = an, al = al))
+        val i = estado.value.widgetSel
+        val actual = t.indexOfFirst { it.first == w.an && it.second == w.al }
+        var k = actual
+        var r = w
+        repeat(t.size) {
+            k = (k + delta).mod(t.size)
+            val (an, al) = t[k]
+            val c = encajar(w.copy(an = an, al = al))
+            if (!choca(c, i)) { r = c; return@cambiarWidget r }
+        }
+        r
+    }
+
+    /** Cambia el estilo del widget elegido: tarjeta, vidrio, color, contorno o sin fondo. */
+    fun cambiarEstiloWidget(i: Int = estado.value.widgetSel) {
+        cambiarWidget(i) { w -> w.copy(estilo = Widgets.ESTILOS[(Widgets.ESTILOS.indexOf(w.estilo) + 1).mod(Widgets.ESTILOS.size)]) }
+        estado.value.widgets.getOrNull(i)?.let { avisar("Estilo: ${Widgets.nombreEstilo(it.estilo)}") }
     }
 
     fun siguienteWidget(delta: Int) {
@@ -2212,12 +2366,19 @@ object Diptico {
         } else {
             val ocupadas = HashSet<Pair<Int, Int>>()
             l.filter { it.visible && it.pagina == estado.value.paginaInicio }.forEach { o -> for (x in o.x until o.x + o.an) for (y in o.y until o.y + o.al) ocupadas += x to y }
-            var lugar = 0 to 0
-            buscar@ for (y in 0..Widgets.FILAS - w.al) for (x in 0..Widgets.COLUMNAS - w.an) {
-                val libre = (x until x + w.an).all { cx -> (y until y + w.al).all { cy -> (cx to cy) !in ocupadas } }
-                if (libre) { lugar = x to y; break@buscar }
+            // Busca un hueco en la página actual (achicándolo si hace falta) y si no, en las otras páginas.
+            val e = estado.value
+            var puesto: Widget? = null
+            val paginas = listOf(e.paginaInicio) + (0 until e.paginas).filter { it != e.paginaInicio }
+            busqueda@ for (pag in paginas) for ((an, al) in listOf(w.an to w.al, 2 to 2, 2 to 1, 1 to 1)) {
+                for (y in 0..Widgets.FILAS - al) for (x in 0..Widgets.COLUMNAS - an) {
+                    val c = w.copy(visible = true, x = x, y = y, an = an, al = al, pagina = pag)
+                    if (!choca(c, i, l)) { puesto = c; break@busqueda }
+                }
             }
-            cambiarWidget(i) { it.copy(visible = true, x = lugar.first, y = lugar.second, pagina = estado.value.paginaInicio) }
+            if (puesto == null) { avisar("No hay espacio. Agrega una página o achica otro widget."); return }
+            cambiarWidget(i) { puesto }
+            if (puesto.pagina != e.paginaInicio) actualizar { it.copy(paginaInicio = puesto.pagina) }
         }
         almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
     }
@@ -2442,14 +2603,11 @@ object Diptico {
             }
             3 -> listOf(
                 Opcion("Título", d.titulo ?: j.titulo, Icono.TITULO) { abrirTexto("titulo", d.titulo ?: j.titulo) },
-                Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir imagen", Icono.PORTADA) { pedirImagen("portada") },
-                Opcion("Imagen grande (arriba)", if (d.arte != null) "Propia ✓" else "Elegir imagen", Icono.PORTADA) { pedirImagen("arte") },
-                Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir imagen", Icono.ESTRELLA) { pedirImagen("logo") },
+                Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA) { buscarCandidatos("portada") },
+                Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA) { buscarCandidatos("arte") },
+                Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA) { buscarCandidatos("logo") },
                 Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA) { pedirArchivoPara("musica", "audio/*") },
                 Opcion(if (d.favorito) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON) { alternarFavorito(j.clave) },
-                Opcion("Elegir portada de internet", "Varias opciones", Icono.DESCARGA) { buscarCandidatos("portada") },
-                Opcion("Elegir imagen grande (hero)", "Varias opciones", Icono.DESCARGA) { buscarCandidatos("arte") },
-                Opcion("Elegir logo de internet", "Varias opciones", Icono.DESCARGA) { buscarCandidatos("logo") },
                 Opcion("Buscar todo automático", icono = Icono.DESCARGA) { descargarUno(j) },
                 Opcion("Volver a lo original", "Quita lo personalizado", Icono.BORRAR) {
                     cambiarDatos(j.clave) { it.copy(titulo = null, portada = null, arte = null, logo = null, musica = null) }
@@ -2465,17 +2623,42 @@ object Diptico {
     fun nombreCandidato(t: String) = when (t) { "arte" -> "imagen grande"; "logo" -> "logo"; else -> "portada" }
 
     /** Busca varias opciones (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
-    fun buscarCandidatos(tipo: String) {
+    /** Fuentes de la tienda de imágenes (pestañas). */
+    val FUENTES_IMAGEN = listOf("todas", "SteamGridDB", "libretro", "Wikipedia")
+    fun nombreFuente(f: String) = if (f == "todas") "Todas" else f
+
+    /** Lo que se ve en la tienda: atajos (mis archivos, quitar, conectar SteamGridDB) y las imágenes de la fuente elegida. */
+    fun candidatosVisibles(e: Estado = estado.value): List<cl.nikalbazu.diptico.data.ImagenWeb> {
+        val j = juegoFicha()
+        val d = j?.let { e.datos[it.clave] }
+        val propia = when (e.candidatoPara) { "arte" -> d?.arte; "logo" -> d?.logo; else -> d?.portada }
+        val atajos = buildList {
+            add(cl.nikalbazu.diptico.data.ImagenWeb("accion:archivos", "", "Mis archivos"))
+            if (propia != null) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:quitar", propia, "Quitar la propia"))
+            if (e.claveSgdb.isBlank()) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:sgdb", "", "Conectar SteamGridDB"))
+        }
+        val lista = if (e.fuenteImagen == "todas") e.candidatos else e.candidatos.filter { it.fuente == e.fuenteImagen }
+        return atajos + lista
+    }
+
+    fun cambiarFuenteImagen(d: Int) {
+        val l = FUENTES_IMAGEN
+        actualizar { it.copy(fuenteImagen = l[(l.indexOf(it.fuenteImagen) + d).mod(l.size)], indice = 0) }
+    }
+
+    /** Abre la tienda de imágenes (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
+    fun buscarCandidatos(tipo: String, nombre: String? = null) {
         val e = estado.value
         val j = juegoFicha() ?: return
         val crudo = todosCrudos().firstOrNull { it.clave == j.clave } ?: return
         val c = Consolas.porId(crudo.consolaId) ?: return
-        actualizar { it.copy(panel = Panel.IMAGENES, candidatos = emptyList(), candidatoPara = tipo, buscandoCandidatos = true, indice = 0) }
+        val titulo = nombre?.takeIf { it.isNotBlank() } ?: j.titulo
+        actualizar { it.copy(panel = Panel.IMAGENES, candidatos = emptyList(), candidatoPara = tipo, buscandoCandidatos = true, indice = 0, nombreImagen = titulo) }
         scope.launch {
             val lista = withContext(Dispatchers.IO) {
                 try {
-                    val wiki = e.ficha ?: Fichas.buscar(app, j.titulo, c.bonito)
-                    Descargas.candidatos(app, crudo, c, tipo, j.titulo, e.claveSgdb, wiki)
+                    val wiki = if (nombre == null) e.ficha ?: Fichas.buscar(app, titulo, c.bonito) else Fichas.buscar(app, titulo, c.bonito)
+                    Descargas.candidatos(app, crudo, c, tipo, titulo, e.claveSgdb, wiki)
                 } catch (ex: Exception) {
                     emptyList()
                 }
@@ -2484,12 +2667,22 @@ object Diptico {
         }
     }
 
-    /** Baja la opción elegida y la deja como imagen propia del juego. */
+    /** Usa la opción elegida de la tienda: la baja y la deja como imagen propia del juego (o hace el atajo). */
     fun usarCandidato(i: Int = estado.value.indice) {
         val e = estado.value
-        val img = e.candidatos.getOrNull(i) ?: return
+        val img = candidatosVisibles(e).getOrNull(i) ?: return
         val j = juegoFicha() ?: return
         val tipo = e.candidatoPara
+        when (img.url) {
+            "accion:archivos" -> { pedirImagen(tipo); return }
+            "accion:sgdb" -> { abrirTexto("sgdb", e.claveSgdb); return }
+            "accion:quitar" -> {
+                cambiarDatos(j.clave) { when (tipo) { "arte" -> it.copy(arte = null); "logo" -> it.copy(logo = null); else -> it.copy(portada = null) } }
+                avisar("Listo, volvió la ${nombreCandidato(tipo)} original")
+                actualizar { it.copy(indice = 0) }
+                return
+            }
+        }
         avisar("Bajando la ${nombreCandidato(tipo)}…")
         scope.launch {
             val f = withContext(Dispatchers.IO) {
@@ -2500,7 +2693,6 @@ object Diptico {
             cambiarDatos(j.clave) {
                 when (tipo) { "arte" -> it.copy(arte = u); "logo" -> it.copy(logo = u); else -> it.copy(portada = u) }
             }
-            actualizar { it.copy(panel = Panel.FICHA) }
             avisar("¡Listo! Nueva ${nombreCandidato(tipo)} para ${j.titulo}")
         }
     }
@@ -2511,6 +2703,19 @@ object Diptico {
         almacen.guardarDatos(datos)
         actualizar { it.copy(datos = datos) }
         publicarJuegos()
+    }
+
+    /** Oculta un juego del estante (o lo vuelve a mostrar). Los ocultos se ven en Buscar › filtro Ocultos. */
+    fun alternarOculto(clave: String) {
+        val oculto = estado.value.datos[clave]?.oculto != true
+        val e = estado.value
+        // Al ocultarlo, la selección pasa al juego vecino.
+        val v = e.visibles
+        val i = v.indexOfFirst { it.clave == clave }
+        val vecino = if (oculto && e.filtro != "ocultos") (v.getOrNull(i + 1) ?: v.getOrNull(i - 1))?.clave else e.juegoSel
+        cambiarDatos(clave) { it.copy(oculto = oculto) }
+        actualizar { it.copy(juegoSel = vecino, panel = Panel.NINGUNO) }
+        avisar(if (oculto) "Juego oculto. Lo ves en Buscar › Ocultos" else "El juego volvió al estante")
     }
 
     fun alternarFavorito(clave: String) {
@@ -2533,6 +2738,10 @@ object Diptico {
         when (e.textoPara) {
             "titulo" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(titulo = t.ifEmpty { null }) } }
             "notas" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(notas = e.borrador) } }
+            "buscar_imagen" -> {
+                buscarCandidatos(e.candidatoPara, t)
+                return
+            }
             "asistente" -> {
                 actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
                 if (t.isNotEmpty()) preguntar(t)
@@ -2675,9 +2884,9 @@ object Diptico {
         avisar("${nombreVista(v)} · ${nombreTamJuegos(t)}")
     }
 
-    val FILTROS = listOf("todos", "favoritos", "recientes", "mas", "sinjugar")
+    val FILTROS = listOf("todos", "favoritos", "recientes", "mas", "sinjugar", "ocultos")
     fun nombreFiltro(f: String) = when (f) {
-        "favoritos" -> "Favoritos"; "recientes" -> "Jugados hace poco"; "mas" -> "Más jugados"; "sinjugar" -> "Sin jugar"; else -> "Todos"
+        "favoritos" -> "Favoritos"; "recientes" -> "Jugados hace poco"; "mas" -> "Más jugados"; "sinjugar" -> "Sin jugar"; "ocultos" -> "Ocultos"; else -> "Todos"
     }
 
     val ORDENES = listOf("az", "recientes", "tiempo")
@@ -3200,10 +3409,47 @@ object Diptico {
         almacen.guardarTexto("paginas", paginas.toString())
         Widgets.COLUMNAS = cols
         Widgets.FILAS = filas
-        // Los widgets que quedaron fuera se acomodan dentro.
-        val l = estado.value.widgets.map { encajar(it.copy(pagina = it.pagina.coerceIn(0, paginas - 1))) }
+        // Los widgets que quedaron fuera se acomodan dentro, sin montarse unos sobre otros.
+        val l = reacomodar(estado.value.widgets.map { encajar(it.copy(pagina = it.pagina.coerceIn(0, paginas - 1))) }, paginas)
         almacen.guardarTexto("widgets", escribirWidgets(l))
         actualizar { it.copy(gridCols = cols, gridFilas = filas, paginas = paginas, widgets = l, paginaInicio = it.paginaInicio.coerceIn(0, paginas - 1)) }
+    }
+
+    /** Si dos widgets quedaron encima, el segundo se mueve al primer hueco libre (o se oculta si no hay). */
+    private fun reacomodar(lista: List<Widget>, paginas: Int): List<Widget> {
+        val l = lista.toMutableList()
+        for (i in l.indices) {
+            val w = l[i]
+            if (!w.visible || !choca(w, i, l)) continue
+            var puesto: Widget? = null
+            busqueda@ for (pag in (0 until paginas)) for ((an, al) in listOf(w.an to w.al, 2 to 2, 2 to 1, 1 to 1)) {
+                for (y in 0..Widgets.FILAS - al) for (x in 0..Widgets.COLUMNAS - an) {
+                    val c = w.copy(x = x, y = y, an = minOf(an, Widgets.COLUMNAS), al = minOf(al, Widgets.FILAS), pagina = pag)
+                    if (!choca(c, i, l)) { puesto = c; break@busqueda }
+                }
+            }
+            l[i] = puesto ?: w.copy(visible = false)
+        }
+        return l
+    }
+
+    fun ciclarGrilla(columnas: Boolean) {
+        val e = estado.value
+        if (columnas) guardarGrilla(if (e.gridCols >= 10) 3 else e.gridCols + 1, e.gridFilas, e.paginas)
+        else guardarGrilla(e.gridCols, if (e.gridFilas >= 8) 2 else e.gridFilas + 1, e.paginas)
+    }
+
+    fun ciclarPaginas() {
+        val e = estado.value
+        guardarGrilla(e.gridCols, e.gridFilas, if (e.paginas >= 6) 1 else e.paginas + 1)
+    }
+
+    fun elegirFondoInicio() = pedirArchivoPara("fondoInicio", "image/*")
+
+    fun quitarWidget(i: Int) {
+        cambiarWidget(i) { it.copy(visible = false) }
+        almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
+        siguienteWidget(1)
     }
 
     /** L2/R2 o deslizar: otra página del inicio. */
@@ -3216,18 +3462,10 @@ object Diptico {
     fun irAPagina(p: Int) = actualizar { it.copy(paginaInicio = p.coerceIn(0, it.paginas - 1)) }
 
     private fun opcionesGrilla(e: Estado): List<Opcion> = listOf(
-        Opcion("Columnas de la grilla", "${e.gridCols}", Icono.APPS, "Cuántas columnas tiene tu inicio (de 4 a 8).") {
-            val v = if (e.gridCols >= 8) 4 else e.gridCols + 1
-            guardarGrilla(v, e.gridFilas, e.paginas)
-        },
-        Opcion("Filas de la grilla", "${e.gridFilas}", Icono.APPS, "Con más de 4 filas, el inicio se desplaza hacia abajo.") {
-            val v = if (e.gridFilas >= 8) 3 else e.gridFilas + 1
-            guardarGrilla(e.gridCols, v, e.paginas)
-        },
-        Opcion("Páginas", "${e.paginas}", Icono.VISTA, "Desliza a los lados con el dedo o con L2 y R2 para cambiar de página.") {
-            val v = if (e.paginas >= 5) 1 else e.paginas + 1
-            guardarGrilla(e.gridCols, e.gridFilas, v)
-        },
+        Opcion("Acomodar widgets", icono = Icono.EDITAR, ayuda = "También manteniendo apretado cualquier parte del inicio.") { cerrarPanel(); editarWidgets() },
+        Opcion("Columnas de la grilla", "${e.gridCols}", Icono.APPS, "Cuántas columnas tiene tu inicio (de 3 a 10).") { ciclarGrilla(true) },
+        Opcion("Filas de la grilla", "${e.gridFilas}", Icono.APPS, "De 2 a 8 filas. Con más de 4, el inicio se desplaza hacia abajo.") { ciclarGrilla(false) },
+        Opcion("Páginas", "${e.paginas}", Icono.VISTA, "Desliza a los lados con el dedo o con L2 y R2 para cambiar de página.") { ciclarPaginas() },
         Opcion("Agregar imagen o GIF", icono = Icono.PORTADA, ayuda = "Elige una imagen o un GIF animado de tu consola; aparece como widget en la página actual.") {
             pedirArchivoPara("widgetImagen", "image/*")
         },

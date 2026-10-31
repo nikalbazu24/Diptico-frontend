@@ -1,5 +1,11 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
@@ -102,12 +108,13 @@ fun PantallaInicio(e: Estado) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f)) {
                     Texto(if (e.editandoWidgets) "Acomodando tu inicio" else saludo(), 24f, lineas = 1)
-                    Detalle(
-                        if (e.editandoWidgets) "Arrastra o usa la cruceta · L1 R1 tamaño · L2 R2 otro widget · Y agregar · B listo"
-                        else cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() } +
+                    if (!e.editandoWidgets) Detalle( cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() } +
                             (e.fiesta?.let { " · ${it.nombre}" } ?: ""),
                         13.5f, lineas = 1,
                     )
+                }
+                if (!e.editandoWidgets) {
+                    BotonBisa(Modifier.padding(end = esc.d(10)))
                 }
                 if (!e.editandoWidgets) {
                     Pista("Select", "Carátulas")
@@ -118,6 +125,10 @@ fun PantallaInicio(e: Estado) {
                         .clickable { if (e.editandoWidgets) Diptico.terminarEdicion() else Diptico.editarWidgets() }
                         .padding(horizontal = esc.d(12), vertical = esc.d(6)),
                 ) { Texto(if (e.editandoWidgets) "Listo" else "Editar", 13.5f, color = if (e.editandoWidgets) SobreUva else p.tinta) }
+            }
+            if (e.editandoWidgets) {
+                Spacer(Modifier.height(esc.d(6)))
+                BarraEdicion(e)
             }
             Spacer(Modifier.height(esc.d(10)))
             // Páginas: se deslizan a los lados (con el dedo, o L2/R2).
@@ -158,7 +169,11 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
         val altoU = maxHeight.value / esc.factor
         val celdaAn = (anchoU - hueco * (Widgets.COLUMNAS - 1)) / Widgets.COLUMNAS
         val celdaAl = (altoU - hueco * (visibles - 1)) / visibles
-        Box(Modifier.fillMaxSize().verticalScroll(desplazar, enabled = Widgets.FILAS > 4 && !e.editandoWidgets)) {
+        Box(
+            Modifier.fillMaxSize().verticalScroll(desplazar, enabled = Widgets.FILAS > 4 && !e.editandoWidgets)
+                // Mantener apretado en cualquier parte entra al modo de edición.
+                .pointerInput(e.editandoWidgets) { if (!e.editandoWidgets) detectTapGestures(onLongPress = { Diptico.editarWidgets() }) },
+        ) {
         // Alto total de la grilla (más alto que la pantalla si hay más de 4 filas).
         Box(Modifier.size(esc.d(anchoU), esc.d(Widgets.FILAS * celdaAl + (Widgets.FILAS - 1) * hueco)))
         val pasoX = with(densidad) { esc.d(celdaAn + hueco).toPx() }
@@ -190,7 +205,9 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                         .graphicsLayer { translationX = arrastre.x; translationY = arrastre.y; scaleX = tam; scaleY = tam }
                         .then(if (elegido) Modifier.border(esc.d(3), Uva, RoundedCornerShape(esc.d(22))) else Modifier),
                 ) {
-                    if (w.tipo.startsWith("imagen")) WidgetImagen(w) else WidgetVista(e, w.tipo, w.an, w.al)
+                    CompositionLocalProvider(LocalEstiloWidget provides w.estilo) {
+                        if (w.tipo.startsWith("imagen")) WidgetImagen(w) else WidgetVista(e, w.tipo, w.an, w.al)
+                    }
                     if (e.editandoWidgets) {
                         // Capa para arrastrar con el dedo (tapa los botones del widget mientras se edita).
                         Box(
@@ -217,6 +234,16 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                                     Modifier.align(Alignment.TopEnd).padding(esc.d(6)).clip(RoundedCornerShape(50)).background(Uva)
                                         .padding(horizontal = esc.d(8), vertical = esc.d(3)),
                                 ) { Texto(Widgets.nombreTamano(w.an, w.al), 11.5f, color = SobreUva, lineas = 1) }
+                                // Botones táctiles: achicar/agrandar, estilo y quitar.
+                                Row(
+                                    Modifier.align(Alignment.BottomCenter).padding(esc.d(6)),
+                                    horizontalArrangement = Arrangement.spacedBy(esc.d(5)),
+                                ) {
+                                    BotonMini("−") { Diptico.tamanoWidgetSel(-1) }
+                                    BotonMini("+") { Diptico.tamanoWidgetSel(1) }
+                                    BotonMini("◐") { Diptico.cambiarEstiloWidget(i) }
+                                    BotonMini("✕") { Diptico.quitarWidget(i) }
+                                }
                             }
                         }
                     }
@@ -227,15 +254,69 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
     }
 }
 
+/** Estilo del widget que se está dibujando. */
+private val LocalEstiloWidget = androidx.compose.runtime.compositionLocalOf { "tarjeta" }
+
+@Composable
+private fun BotonMini(texto: String, accion: () -> Unit) {
+    val esc = LocalEscala.current
+    Box(
+        Modifier.size(esc.d(30)).clip(CircleShape).background(Uva).clickable { accion() },
+        contentAlignment = Alignment.Center,
+    ) { Texto(texto, 14f, color = SobreUva, lineas = 1, traducir = false) }
+}
+
+/** Herramientas al acomodar el inicio: agregar, grilla, páginas, fondo, ajustes y listo. */
+@Composable
+private fun BarraEdicion(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    @Composable
+    fun Chip(texto: String, icono: Icono?, activo: Boolean = false, accion: () -> Unit) {
+        Row(
+            Modifier.clip(RoundedCornerShape(50)).then(if (activo) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie.copy(alpha = 0.9f)))
+                .clickable { accion() }.padding(horizontal = esc.d(11), vertical = esc.d(6)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icono != null) { IconoDiptico(icono, if (activo) SobreUva else p.tinta, 14f, acento = if (activo) SobreUva else Coral); Spacer(Modifier.width(esc.d(5))) }
+            Texto(texto, 12.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
+        }
+    }
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Chip("Agregar widget", Icono.APPS) { Diptico.actualizar { it.copy(panel = cl.nikalbazu.diptico.estado.Panel.WIDGETS, indice = 0) } }
+        Chip("Columnas ${Widgets.COLUMNAS}", null) { Diptico.ciclarGrilla(columnas = true) }
+        Chip("Filas ${Widgets.FILAS}", null) { Diptico.ciclarGrilla(columnas = false) }
+        Chip("Páginas ${e.paginas}", null) { Diptico.ciclarPaginas() }
+        Chip("Fondo", Icono.PORTADA) { Diptico.elegirFondoInicio() }
+        e.widgets.getOrNull(e.widgetSel)?.let { w -> Chip("Estilo: ${Widgets.nombreEstilo(w.estilo)}", Icono.PALETA) { Diptico.cambiarEstiloWidget() } }
+        Chip("Más ajustes", Icono.AJUSTES) { Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.INICIO) }
+        Chip("Listo", Icono.CHECK, activo = true) { Diptico.terminarEdicion() }
+    }
+    Spacer(Modifier.height(esc.d(4)))
+    Detalle("Cruceta mueve · L1 R1 ancho · L2 R2 alto · X estilo · Y agregar · Select ajustes · B listo", 11.5f, lineas = 1)
+}
+
 @Composable
 private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = null, contenido: @Composable () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    val forma = RoundedCornerShape(esc.d(22))
+    val estilo = LocalEstiloWidget.current
+    val fondo = when (estilo) {
+        "vidrio" -> Modifier.background(Brush.linearGradient(listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.05f))))
+            .border(esc.d(1.2f), Color.White.copy(alpha = 0.22f), forma)
+        "solido" -> Modifier.fondoBoton(Uva.copy(alpha = 0.85f))
+        "contorno" -> Modifier.border(esc.d(2), Uva.copy(alpha = 0.8f), forma)
+        "sinfondo" -> Modifier
+        else -> Modifier.background(Brush.verticalGradient(listOf(p.superficie.copy(alpha = 0.9f), p.superficie.copy(alpha = 0.7f))))
+            .border(esc.d(1), Color.White.copy(alpha = 0.06f), forma)
+    }
     Box(
-        modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(22)))
-            .background(Brush.verticalGradient(listOf(p.superficie.copy(alpha = 0.9f), p.superficie.copy(alpha = 0.7f))))
-            .border(esc.d(1), Color.White.copy(alpha = 0.06f), RoundedCornerShape(esc.d(22)))
-            .then(if (alPulsar != null) Modifier.clickable { alPulsar() } else Modifier)
+        modifier.fillMaxSize().clip(forma).then(fondo)
+            .combinedClickable(onClick = { alPulsar?.invoke() }, onLongClick = { Diptico.editarWidgets() })
             .padding(esc.d(12)),
     ) { contenido() }
 }

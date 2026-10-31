@@ -306,7 +306,7 @@ private fun Carrusel(e: Estado, titulo: String) {
 @Composable
 private fun VistaCandidato(e: Estado) {
     val esc = LocalEscala.current
-    val c = e.candidatos.getOrNull(e.indice)
+    val c = Diptico.candidatosVisibles(e).getOrNull(e.indice)?.takeIf { !it.url.startsWith("accion:") }
     Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
         if (c != null) {
             val img = rememberImagen(Uri.parse(c.url), 1400)
@@ -316,8 +316,8 @@ private fun VistaCandidato(e: Estado) {
                 Image(it, null, Modifier.fillMaxSize().padding(esc.d(20)), contentScale = ContentScale.Fit)
             } ?: Girador(26f)
             Column(Modifier.align(Alignment.BottomStart).padding(esc.d(18))) {
-                Texto("Opción ${e.indice + 1} de ${e.candidatos.size}", 16f, color = Color.White)
-                Detalle(c.fuente, 12.5f, color = Color.White.copy(alpha = 0.75f))
+                Texto(c.fuente, 16f, color = Color.White)
+                Detalle("A para usarla", 12.5f, color = Color.White.copy(alpha = 0.75f))
             }
         } else {
             Detalle(if (e.buscandoCandidatos) "Buscando opciones…" else "Sin opciones", 16f, color = Color.White)
@@ -325,63 +325,94 @@ private fun VistaCandidato(e: Estado) {
     }
 }
 
-/** Opciones de internet para la portada, el hero o el logo. */
+/** La tienda de imágenes: portadas, heroes y logos de libretro, SteamGridDB y Wikipedia, más tus archivos. */
 @Composable
 fun PanelImagenes(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val j = e.juegos.firstOrNull { it.clave == e.fichaDe }
+    val lista = remember(e.candidatos, e.fuenteImagen, e.candidatoPara, e.datos, e.claveSgdb) { Diptico.candidatosVisibles(e) }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconoDiptico(Icono.DESCARGA, p.tinta, 22f, acento = Coral)
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Elige la ${Diptico.nombreCandidato(e.candidatoPara)}", 20f, lineas = 1)
-                    Detalle(j?.titulo ?: "", 13f, lineas = 1)
+                    Texto("Tienda de imágenes · ${Diptico.nombreCandidato(e.candidatoPara)}", 18f, lineas = 1)
+                    Detalle(if (e.nombreImagen.isNotBlank() && e.nombreImagen != j?.titulo) "Buscando: ${e.nombreImagen}" else j?.titulo ?: "", 12.5f, lineas = 1)
                 }
-                if (e.candidatos.isNotEmpty()) Detalle("${e.candidatos.size} opciones", 13f)
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).background(p.superficie).clickable { Diptico.abrirTexto("buscar_imagen", e.nombreImagen) }
+                        .padding(horizontal = esc.d(10), vertical = esc.d(5)),
+                ) { Row(verticalAlignment = Alignment.CenterVertically) { IconoDiptico(Icono.BUSCAR, p.tinta, 14f, acento = Coral); Spacer(Modifier.width(esc.d(5))); Texto("Otro nombre", 12f, lineas = 1) } }
             }
-            Spacer(Modifier.height(esc.d(10)))
-            when {
-                e.buscandoCandidatos -> Row(verticalAlignment = Alignment.CenterVertically) {
-                    Girador(22f)
-                    Spacer(Modifier.width(esc.d(10)))
-                    Texto("Buscando en libretro, SteamGridDB y Wikipedia…", 15f)
+            Spacer(Modifier.height(esc.d(8)))
+            // Pestañas de fuentes (L1/R1), con cuántas opciones trae cada una.
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                Diptico.FUENTES_IMAGEN.forEach { f ->
+                    val n = if (f == "todas") e.candidatos.size else e.candidatos.count { it.fuente == f }
+                    val activa = f == e.fuenteImagen
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50)).then(if (activa) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie))
+                            .clickable { Diptico.actualizar { it.copy(fuenteImagen = f, indice = 0) } }
+                            .padding(horizontal = esc.d(12), vertical = esc.d(6)),
+                    ) { Texto("${Diptico.nombreFuente(f)} · $n", 12.5f, color = if (activa) SobreUva else p.tinta, lineas = 1) }
                 }
-                e.candidatos.isEmpty() -> Detalle(
-                    "No encontré opciones. Para muchas más (heroes, logos y portadas), agrega tu clave gratis de SteamGridDB en Menú › Portadas.", 15f,
-                )
+            }
+            Spacer(Modifier.height(esc.d(8)))
+            if (e.buscandoCandidatos) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Girador(18f)
+                    Spacer(Modifier.width(esc.d(8)))
+                    Detalle("Buscando en libretro, SteamGridDB y Wikipedia…", 13f, lineas = 1)
+                }
+                Spacer(Modifier.height(esc.d(6)))
+            } else if (e.candidatos.isEmpty()) {
+                Detalle("No encontré opciones con ese nombre. Prueba \"Otro nombre\" o elige una de tus imágenes.", 13f, lineas = 2)
+                Spacer(Modifier.height(esc.d(6)))
             }
             val cols = when (e.candidatoPara) { "portada" -> if (esc.angosta) 4 else 6; "logo" -> 3; else -> if (esc.angosta) 2 else 3 }
             SideEffect { cl.nikalbazu.diptico.estado.Teclas.columnasImagenes = cols }
             val grilla = rememberLazyGridState()
-            LaunchedEffect(e.indice) { if (e.candidatos.isNotEmpty()) grilla.animateScrollToItem(e.indice) }
+            LaunchedEffect(e.indice) { if (lista.isNotEmpty()) grilla.animateScrollToItem(e.indice.coerceIn(0, lista.size - 1)) }
+            val proporcion = when (e.candidatoPara) { "portada" -> 0.68f; "logo" -> 2f; else -> 2.6f }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(cols), state = grilla, modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(8)), verticalArrangement = Arrangement.spacedBy(esc.d(8)),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(esc.d(3)),
             ) {
-                itemsIndexed(e.candidatos) { i, c ->
+                itemsIndexed(lista, key = { _, c -> c.url }) { i, c ->
                     val activa = i == e.indice
-                    val img = rememberImagen(Uri.parse(c.miniatura), 420)
-                    val proporcion = when (e.candidatoPara) { "portada" -> 0.68f; "logo" -> 2f; else -> 2.6f }
+                    val atajo = c.url.startsWith("accion:")
                     Box(
                         Modifier.fillMaxWidth().aspectRatio(proporcion).clip(RoundedCornerShape(esc.d(14)))
-                            .background(if (e.candidatoPara == "logo") Color(0xFF2A2633) else p.superficie)
-                            .border(esc.d(if (activa) 3f else 0f), if (activa) Uva else Color.Transparent, RoundedCornerShape(esc.d(14)))
+                            .background(if (atajo) Uva.copy(alpha = 0.16f) else if (e.candidatoPara == "logo") Color(0xFF2A2633) else p.superficie)
+                            .border(esc.d(if (activa) 3f else if (atajo) 1.5f else 0f), if (activa) Uva else if (atajo) Uva.copy(alpha = 0.5f) else Color.Transparent, RoundedCornerShape(esc.d(14)))
                             .clickable { if (activa) Diptico.usarCandidato(i) else Diptico.elegirIndice(i) },
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (img != null) Image(img, null, Modifier.fillMaxSize().padding(esc.d(if (e.candidatoPara == "logo") 8f else 0f)), contentScale = if (e.candidatoPara == "logo") ContentScale.Fit else ContentScale.Crop)
-                        else Girador(18f)
-                        Box(Modifier.align(Alignment.BottomStart).padding(esc.d(5)).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = esc.d(6), vertical = esc.d(2))) {
-                            Texto(c.fuente, 9.5f, color = Color.White, lineas = 1)
+                        if (atajo) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(esc.d(6))) {
+                                IconoDiptico(
+                                    when (c.url) { "accion:archivos" -> Icono.CARPETA; "accion:quitar" -> Icono.BORRAR; else -> Icono.CLAVE },
+                                    p.tinta, 24f, acento = Coral,
+                                )
+                                Spacer(Modifier.height(esc.d(4)))
+                                Texto(c.fuente, 11.5f, lineas = 2, alinear = androidx.compose.ui.text.style.TextAlign.Center)
+                            }
+                        } else {
+                            val img = rememberImagen(Uri.parse(c.miniatura), 420)
+                            if (img != null) Image(img, null, Modifier.fillMaxSize().padding(esc.d(if (e.candidatoPara == "logo") 8f else 0f)), contentScale = if (e.candidatoPara == "logo") ContentScale.Fit else ContentScale.Crop)
+                            else Girador(18f)
+                            Box(Modifier.align(Alignment.BottomStart).padding(esc.d(5)).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = esc.d(6), vertical = esc.d(2))) {
+                                Texto(c.fuente, 9.5f, color = Color.White, lineas = 1, traducir = false)
+                            }
                         }
                     }
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            Pistas("A" to "Usar esta", "Cruceta" to "Elegir", "B" to "Volver")
+            Pistas("A" to "Usar", "L1 R1" to "Fuente", "Y" to "Otro nombre", "B" to "Volver")
         }
     }
 }

@@ -131,7 +131,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.MENU -> PanelMenu(e, conAyuda)
             Panel.RAPIDO -> VentanaJuego(e)
             Panel.BUSCAR -> PanelBuscar(e)
-            Panel.CENTRO -> PanelCentro(e)
+            Panel.CENTRO -> Box(Modifier.fillMaxSize())
             Panel.CARPETAS -> PanelCarpetas(e)
             Panel.PASO -> PanelPaso(e)
             Panel.CLAVE -> PanelClave(e)
@@ -149,7 +149,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
 
 /** Con una ventana encima (opciones del juego, textos), lo de atrás se difumina. */
 fun Modifier.difuminar(e: Estado): Modifier =
-    if (Estilo.efectosCompletos && e.panel in setOf(Panel.RAPIDO, Panel.PASO, Panel.CLAVE, Panel.CENTRO)) this.blur(16.dp) else this
+    if (Estilo.efectosCompletos && e.panel in setOf(Panel.RAPIDO, Panel.PASO, Panel.CLAVE)) this.blur(16.dp) else this
 
 /** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
 @Composable
@@ -467,13 +467,15 @@ private fun PanelRapido(e: Estado) {
 private fun CampoTexto(valor: String, ejemplo: String, alListo: () -> Unit, numerico: Boolean = false, alto: Float = 60f) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    if (Diptico.estado.collectAsState().value.conTeclado) {
+    val est = Diptico.estado.collectAsState().value
+    if (est.conTeclado) {
         // Se escribe con el teclado de Díptico, en la otra pantalla.
         Column(verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
             TextoEscrito(
-                if (numerico && valor.length > 6) valor.take(4) + "•".repeat(minOf(valor.length - 4, 24)) else valor, ejemplo, 17f, alto - 24f,
+                valor, ejemplo, 17f, alto - 24f,
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(p.fondo)
                     .border(esc.d(2), Uva.copy(alpha = 0.6f), RoundedCornerShape(esc.d(16))).padding(esc.d(12)),
+                cursor = est.cursor, seleccion = Diptico.seleccion(est), oculto = numerico,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconoDiptico(Icono.INTERCAMBIAR, Coral, 15f)
@@ -614,6 +616,7 @@ private fun PanelClave(e: Estado) {
                 "ia_clave" -> listOf(Icono.CLAVE, "Clave de IA (Claude)", "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
                 "ra_usuario" -> listOf(Icono.TROFEO, "Usuario de RetroAchievements", "Tu nombre de usuario en retroachievements.org (no tu correo).", "Ej: Nikalbazu")
                 "ra_clave" -> listOf(Icono.CLAVE, "Clave de RetroAchievements", "En retroachievements.org entra a Settings y copia tu \"Web API Key\". Solo se guarda en tu consola.", "Pega tu Web API Key")
+                "buscar_imagen" -> listOf(Icono.BUSCAR, "Buscar con otro nombre", "Escribe el nombre del juego como se conoce en inglés o su nombre completo.", "Ej: The Legend of Zelda")
                 "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
                 "ia_pedido" -> listOf(Icono.CHISPA, "Crear tema con IA", "Escribe tu idea, como \"Halloween japonés\" o \"Navidad en la playa\". Si lo dejas vacío, la IA elige la fiesta del mundo más cercana a hoy.", "Ej: Año Nuevo Lunar con faroles")
                 "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")

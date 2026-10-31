@@ -29,7 +29,7 @@ object Asistente {
 
     /** Instrucciones con lo que hay en la biblioteca, en pocas líneas. */
     fun sistema(e: Estado): String {
-        val juegos = e.juegos
+        val juegos = e.juegos.filter { e.datos[it.clave]?.oculto != true }
         val jugados = e.datos.entries.filter { it.value.tiempo > 0 }
         val recientes = e.datos.entries.filter { it.value.ultimo > 1 }.sortedByDescending { it.value.ultimo }.take(6).map { it.key }
         val masJugados = jugados.sortedByDescending { it.value.tiempo }.take(6).map { it.key }

@@ -322,7 +322,7 @@ object Descargas {
     // ---------- Elegir una imagen entre varias ----------
 
     /** Varias opciones de SteamGridDB para un tipo (grids, heroes, logos, icons). */
-    private fun urlsSgdb(ruta: String, clave: String, max: Int = 10): List<ImagenWeb> {
+    private fun urlsSgdb(ruta: String, clave: String, max: Int = 24): List<ImagenWeb> {
         val json = texto("$SGDB$ruta", clave) ?: return emptyList()
         return try {
             val d = JSONObject(json).optJSONArray("data") ?: return emptyList()
