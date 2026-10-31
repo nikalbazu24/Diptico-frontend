@@ -18,7 +18,25 @@ import kotlinx.coroutines.flow.StateFlow
 class OyenteMedios : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
+        Avisos.servicio = this
         Medios.revisar(this)
+        try {
+            Avisos.cargar(this, activeNotifications)
+        } catch (_: Exception) {
+        }
+    }
+
+    override fun onListenerDisconnected() {
+        Avisos.servicio = null
+        super.onListenerDisconnected()
+    }
+
+    override fun onNotificationPosted(sbn: android.service.notification.StatusBarNotification?) {
+        if (sbn != null) Avisos.llego(this, sbn)
+    }
+
+    override fun onNotificationRemoved(sbn: android.service.notification.StatusBarNotification?) {
+        if (sbn != null) Avisos.salio(sbn)
     }
 }
 

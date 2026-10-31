@@ -94,6 +94,30 @@ class Almacen(ctx: Context) {
     fun bool(clave: String, defecto: Boolean): Boolean = p.getBoolean(clave, defecto)
     fun guardarBool(clave: String, valor: Boolean) = p.edit().putBoolean(clave, valor).apply()
 
+    /**
+     * Todas las carpetas de juegos. Cada una puede tener una consola fija (si su nombre no es el de una consola).
+     * Si la persona venía de una versión con una sola carpeta, esa queda como la primera.
+     */
+    fun carpetas(): List<CarpetaJuegos> {
+        val s = p.getString("carpetas", null)
+        if (s == null) return carpeta?.let { listOf(CarpetaJuegos(it, null)) } ?: emptyList()
+        return try {
+            val a = JSONArray(s)
+            (0 until a.length()).map { i ->
+                a.getJSONObject(i).let { o -> CarpetaJuegos(Uri.parse(o.getString("uri")), o.optString("consola", "").ifEmpty { null }) }
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun guardarCarpetas(l: List<CarpetaJuegos>) {
+        val a = JSONArray()
+        l.forEach { a.put(JSONObject().put("uri", it.uri.toString()).put("consola", it.consola ?: "")) }
+        p.edit().putString("carpetas", a.toString()).apply()
+        carpeta = l.firstOrNull()?.uri
+    }
+
     fun medios(): Map<String, MediosJuego> {
         val o = try { JSONObject(p.getString("medios", "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
         val salida = HashMap<String, MediosJuego>()
@@ -144,6 +168,7 @@ class Almacen(ctx: Context) {
                 musica = d.optString("musica", "").ifEmpty { null },
                 notas = d.optString("notas", ""),
                 favorito = d.optBoolean("favorito", false),
+                emulador = d.optString("emulador", "").ifEmpty { null },
             )
         }
         return salida
@@ -164,6 +189,7 @@ class Almacen(ctx: Context) {
             d.musica?.let { j.put("musica", it) }
             if (d.notas.isNotEmpty()) j.put("notas", d.notas)
             if (d.favorito) j.put("favorito", true)
+            d.emulador?.let { j.put("emulador", it) }
             o.put(k, j)
         }
         p.edit().putString("datos", o.toString()).apply()

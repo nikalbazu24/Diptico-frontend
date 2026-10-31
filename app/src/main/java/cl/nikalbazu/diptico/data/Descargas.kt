@@ -232,6 +232,19 @@ object Descargas {
         }
     }
 
+    /** Reconoce el nombre oficial de un juego con la lista de libretro (sin bajar imágenes). */
+    fun identificar(ctx: Context, juego: Juego, consola: Consola): String? {
+        val sistema = consola.libretro ?: return null
+        val idx = try { indice(ctx, sistema) } catch (e: Exception) { return null }
+        val k1 = normalizar(juego.archivo)
+        val k2 = normalizar(juego.titulo)
+        for (d in listOf("Named_Boxarts", "Named_Titles", "Named_Snaps")) {
+            val m = idx[d] ?: continue
+            (m[k1] ?: m[k2])?.let { return tituloBonito(it) }
+        }
+        return null
+    }
+
     // ---------- Un juego ----------
 
     /**

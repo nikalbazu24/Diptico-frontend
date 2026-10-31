@@ -26,6 +26,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import kotlin.math.roundToInt
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.blur
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,62 +66,135 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/** Saludo según la hora del día. */
+private fun saludo(): String {
+    val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    return when (h) {
+        in 5..11 -> "Buenos días"
+        in 12..19 -> "Buenas tardes"
+        else -> "Buenas noches"
+    }
+}
+
 /**
- * Inicio personalizado: una grilla de widgets en la pantalla principal.
- * Cada widget mide 1, 2 o 3 columnas; se acomodan en filas solas.
+ * Inicio personalizado: widgets en una grilla de 6 x 4 que se mueven libremente y tienen 10 tamaños.
+ * En modo edición se arrastran con el dedo o se mueven con la cruceta.
  */
 @Composable
 fun PantallaInicio(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo)) {
-        // Fondo: el arte del juego elegido, muy suave.
+        // Fondo: el arte del juego elegido, difuminado, con un brillo del color del tema.
         e.seleccionado?.let { j ->
-            ArteJuego(j, preferirArte = true, maxLado = 1200, modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.22f })
+            ArteJuego(j, preferirArte = true, maxLado = 900, modifier = Modifier.fillMaxSize().blur(28.dp).graphicsLayer { alpha = 0.32f })
         }
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.6f), p.fondo))))
-        BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.45f), p.fondo.copy(alpha = 0.92f)))))
+        Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 20f, trabajos = e.trabajos)
 
-        val columnas = if (esc.angosta) 2 else 3
-        val filas = remember(e.widgets, columnas) { acomodar(e.widgets.filter { it.tam > 0 }, columnas) }
-        val scroll = rememberScrollState()
-        Column(
-            Modifier.fillMaxSize().padding(start = esc.d(20), end = esc.d(20), top = esc.d(52), bottom = esc.d(14)).verticalScroll(scroll),
-            verticalArrangement = Arrangement.spacedBy(esc.d(12)),
-        ) {
-            if (filas.isEmpty()) {
-                Detalle("No hay widgets a la vista. Abre el menú › Inicio › Editar widgets.", 16f)
-            }
-            for (fila in filas) {
-                Row(Modifier.fillMaxWidth().height(esc.d(150)), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                    for (w in fila) {
-                        Box(Modifier.weight(minOf(w.tam, columnas).toFloat()).fillMaxHeight()) { WidgetVista(e, w.tipo, minOf(w.tam, columnas)) }
-                    }
-                    val usado = fila.sumOf { minOf(it.tam, columnas) }
-                    if (usado < columnas) Spacer(Modifier.weight((columnas - usado).toFloat()))
+        Column(Modifier.fillMaxSize().padding(start = esc.d(20), end = esc.d(20), top = esc.d(48), bottom = esc.d(12))) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Column(Modifier.weight(1f)) {
+                    Texto(if (e.editandoWidgets) "Acomodando tu inicio" else saludo(), 24f, lineas = 1)
+                    Detalle(
+                        if (e.editandoWidgets) "Arrastra o usa la cruceta · L1 R1 tamaño · L2 R2 otro widget · Y agregar · B listo"
+                        else SimpleDateFormat("EEEE d 'de' MMMM", Locale("es")).format(Date()).replaceFirstChar { it.uppercase() } +
+                            (e.fiesta?.let { " · ${it.nombre}" } ?: ""),
+                        13.5f, lineas = 1,
+                    )
                 }
+                if (!e.editandoWidgets) {
+                    Pista("Select", "Carátulas")
+                    Spacer(Modifier.width(esc.d(10)))
+                }
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).background(if (e.editandoWidgets) Uva else p.superficie.copy(alpha = 0.85f))
+                        .clickable { if (e.editandoWidgets) Diptico.terminarEdicion() else Diptico.editarWidgets() }
+                        .padding(horizontal = esc.d(12), vertical = esc.d(6)),
+                ) { Texto(if (e.editandoWidgets) "Listo" else "Editar", 13.5f, color = if (e.editandoWidgets) SobreUva else p.tinta) }
             }
+            Spacer(Modifier.height(esc.d(10)))
+            Grilla(e, Modifier.fillMaxWidth().weight(1f))
         }
     }
 }
 
-/** Reparte los widgets en filas de [columnas] columnas. */
-private fun acomodar(ws: List<Widget>, columnas: Int): List<List<Widget>> {
-    val filas = mutableListOf<MutableList<Widget>>()
-    var actual = mutableListOf<Widget>()
-    var usado = 0
-    for (w in ws) {
-        val t = minOf(w.tam, columnas)
-        if (usado + t > columnas) {
-            filas += actual
-            actual = mutableListOf()
-            usado = 0
+/** La grilla de widgets, con su modo de edición. */
+@Composable
+private fun Grilla(e: Estado, modifier: Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val densidad = LocalDensity.current
+    BoxWithConstraints(modifier) {
+        val hueco = 10f
+        val anchoU = maxWidth.value / esc.factor
+        val altoU = maxHeight.value / esc.factor
+        val celdaAn = (anchoU - hueco * (Widgets.COLUMNAS - 1)) / Widgets.COLUMNAS
+        val celdaAl = (altoU - hueco * (Widgets.FILAS - 1)) / Widgets.FILAS
+        val pasoX = with(densidad) { esc.d(celdaAn + hueco).toPx() }
+        val pasoY = with(densidad) { esc.d(celdaAl + hueco).toPx() }
+
+        if (e.editandoWidgets) {
+            // Celdas de fondo para ver dónde cae cada widget.
+            for (x in 0 until Widgets.COLUMNAS) for (y in 0 until Widgets.FILAS) {
+                Box(
+                    Modifier.offset(x = esc.d(x * (celdaAn + hueco)), y = esc.d(y * (celdaAl + hueco)))
+                        .size(esc.d(celdaAn), esc.d(celdaAl)).clip(RoundedCornerShape(esc.d(14)))
+                        .border(esc.d(1.5f), p.linea, RoundedCornerShape(esc.d(14))),
+                )
+            }
         }
-        actual += w
-        usado += t
+        e.widgets.forEachIndexed { i, w ->
+            if (!w.visible) return@forEachIndexed
+            key(w.tipo) {
+                val elegido = e.editandoWidgets && i == e.widgetSel
+                var arrastre by remember { mutableStateOf(Offset.Zero) }
+                val x by animateDpAsState(esc.d(w.x * (celdaAn + hueco)), spring(dampingRatio = 0.75f, stiffness = 500f), label = "x")
+                val y by animateDpAsState(esc.d(w.y * (celdaAl + hueco)), spring(dampingRatio = 0.75f, stiffness = 500f), label = "y")
+                val an by animateDpAsState(esc.d(w.an * celdaAn + (w.an - 1) * hueco), spring(dampingRatio = 0.8f), label = "an")
+                val al by animateDpAsState(esc.d(w.al * celdaAl + (w.al - 1) * hueco), spring(dampingRatio = 0.8f), label = "al")
+                val tam by animateFloatAsState(if (elegido) 1.02f else 1f, spring(dampingRatio = 0.5f), label = "tam")
+                Box(
+                    Modifier.offset(x = x, y = y).size(an, al)
+                        .zIndex(if (elegido) 2f else 1f)
+                        .graphicsLayer { translationX = arrastre.x; translationY = arrastre.y; scaleX = tam; scaleY = tam }
+                        .then(if (elegido) Modifier.border(esc.d(3), Uva, RoundedCornerShape(esc.d(22))) else Modifier),
+                ) {
+                    WidgetVista(e, w.tipo, w.an, w.al)
+                    if (e.editandoWidgets) {
+                        // Capa para arrastrar con el dedo (tapa los botones del widget mientras se edita).
+                        Box(
+                            Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(22)))
+                                .background(if (elegido) Uva.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.18f))
+                                .pointerInput(w.tipo, pasoX, pasoY) {
+                                    detectDragGestures(
+                                        onDragStart = { Diptico.elegirWidget(i) },
+                                        onDragEnd = {
+                                            val w0 = Diptico.estado.value.widgets[i]
+                                            Diptico.ponerWidget(i, w0.x + (arrastre.x / pasoX).roundToInt(), w0.y + (arrastre.y / pasoY).roundToInt())
+                                            arrastre = Offset.Zero
+                                        },
+                                        onDragCancel = { arrastre = Offset.Zero },
+                                    ) { cambio, d ->
+                                        cambio.consume()
+                                        arrastre += d
+                                    }
+                                }
+                                .clickable { Diptico.elegirWidget(i) },
+                        ) {
+                            if (elegido) {
+                                Box(
+                                    Modifier.align(Alignment.TopEnd).padding(esc.d(6)).clip(RoundedCornerShape(50)).background(Uva)
+                                        .padding(horizontal = esc.d(8), vertical = esc.d(3)),
+                                ) { Texto(Widgets.nombreTamano(w.an, w.al), 11.5f, color = SobreUva, lineas = 1) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-    if (actual.isNotEmpty()) filas += actual
-    return filas
 }
 
 @Composable
@@ -115,17 +202,25 @@ private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nul
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(
-        modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(22))).background(p.superficie.copy(alpha = 0.82f))
-            .border(esc.d(1), p.linea, RoundedCornerShape(esc.d(22)))
+        modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(22)))
+            .background(Brush.verticalGradient(listOf(p.superficie.copy(alpha = 0.9f), p.superficie.copy(alpha = 0.7f))))
+            .border(esc.d(1), Color.White.copy(alpha = 0.06f), RoundedCornerShape(esc.d(22)))
             .then(if (alPulsar != null) Modifier.clickable { alPulsar() } else Modifier)
-            .padding(esc.d(14)),
+            .padding(esc.d(12)),
     ) { contenido() }
 }
 
 @Composable
-private fun WidgetVista(e: Estado, tipo: String, tam: Int) {
+private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    // tam: 1 angosto, 2 mediano, 3 ancho. compacto: una sola fila de alto.
+    val tam = when { an >= 4 -> 3; an >= 3 -> 2; else -> 1 }
+    val compacto = al == 1
+    if (compacto && tipo !in setOf("reloj", "musica", "bateria", "frase")) {
+        WidgetCompacto(e, tipo)
+        return
+    }
     when (tipo) {
         "juego" -> {
             val j = e.seleccionado
@@ -135,7 +230,10 @@ private fun WidgetVista(e: Estado, tipo: String, tam: Int) {
                 } else {
                     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
                         val c = Consolas.porId(j.consolaId)
-                        if (c != null) CajaJuego(j, c, escala = 0.95f)
+                        if (c != null) {
+                            val base = cajaDe(c)
+                            CajaJuego(j, c, escala = minOf((al * 64f) / base.alto, 1.1f))
+                        }
                         Spacer(Modifier.width(esc.d(14)))
                         Column(Modifier.weight(1f)) {
                             Etiqueta(c?.nombre ?: "", Coral, 11f)
@@ -150,15 +248,23 @@ private fun WidgetVista(e: Estado, tipo: String, tam: Int) {
             }
         }
         "reloj" -> Tarjeta(alPulsar = { Diptico.alternarReloj() }) {
+            if (compacto) {
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                    Texto(rememberHora(), 30f)
+                    Spacer(Modifier.width(esc.d(10)))
+                    Detalle(SimpleDateFormat("EEE d MMM", Locale("es")).format(Date()), 13f, lineas = 1)
+                }
+                return@Tarjeta
+            }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-                Texto(rememberHora(), if (tam >= 2) 58f else 44f, interlineado = if (tam >= 2) 60f else 46f)
+                Texto(rememberHora(), if (al >= 3) 72f else if (tam >= 2) 58f else 44f, interlineado = if (al >= 3) 74f else if (tam >= 2) 60f else 46f)
                 Detalle(SimpleDateFormat("EEEE d 'de' MMMM", Locale("es")).format(Date()).replaceFirstChar { it.uppercase() }, 14f, lineas = 1)
             }
         }
         "bateria" -> Tarjeta {
             val b = rememberBateria()
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-                Texto(if (b >= 0) "$b%" else "—", 40f)
+                Texto(if (b >= 0) "$b%" else "—", if (compacto) 22f else 40f)
                 Spacer(Modifier.height(esc.d(8)))
                 Box(Modifier.fillMaxWidth().height(esc.d(10)).clip(RoundedCornerShape(50)).background(p.linea)) {
                     Box(Modifier.fillMaxWidth((b.coerceIn(0, 100)) / 100f).fillMaxHeight().clip(RoundedCornerShape(50)).background(if (b in 0..19) Coral else Uva))
@@ -167,7 +273,31 @@ private fun WidgetVista(e: Estado, tipo: String, tam: Int) {
                 Detalle("Batería", 13f)
             }
         }
-        "musica" -> WidgetMusica(tam)
+        "musica" -> WidgetMusica(tam, compacto)
+        "favoritos" -> Tarjeta {
+            val favs = e.juegos.filter { e.datos[it.clave]?.favorito == true }.take(if (tam >= 3) 6 else if (tam == 2) 4 else 2)
+            Column {
+                Etiqueta("Favoritos", Coral, 11f)
+                Spacer(Modifier.height(esc.d(8)))
+                if (favs.isEmpty()) Detalle("Marca favoritos con Y sobre un juego", 14f)
+                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                    for (j in favs) {
+                        val c = Consolas.porId(j.consolaId) ?: continue
+                        val base = cajaDe(c)
+                        Box(Modifier.clickable { Diptico.elegirConsola("todo"); Diptico.elegirJuego(j.clave) }) {
+                            CajaJuego(j, c, escala = minOf((al * 52f) / base.alto, 0.8f))
+                        }
+                    }
+                }
+            }
+        }
+        "frase" -> Tarjeta {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                IconoDiptico(Icono.CHISPA, Sol, 22f, acento = Coral)
+                Spacer(Modifier.width(esc.d(10)))
+                Texto(fraseDelDia(e), 16f, lineas = if (compacto) 1 else 3)
+            }
+        }
         "paso" -> Tarjeta(alPulsar = { Diptico.abrirPaso() }) {
             val paso = e.seleccionado?.let { e.datos[it.clave]?.paso }.orEmpty()
             Column {
@@ -202,8 +332,9 @@ private fun WidgetVista(e: Estado, tipo: String, tam: Int) {
                 Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                     for (j in recientes) {
                         val c = Consolas.porId(j.consolaId) ?: continue
+                        val base = cajaDe(c)
                         Box(Modifier.clickable { Diptico.elegirConsola("todo"); Diptico.elegirJuego(j.clave) }) {
-                            CajaJuego(j, c, escala = 0.72f)
+                            CajaJuego(j, c, escala = minOf((al * 52f) / base.alto, 0.8f))
                         }
                     }
                 }
@@ -241,7 +372,7 @@ private fun WidgetVista(e: Estado, tipo: String, tam: Int) {
 
 /** Lo que suena en Spotify, YouTube Music u otra app, con botones para controlarlo. */
 @Composable
-private fun WidgetMusica(tam: Int) {
+private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val ctx = LocalContext.current
@@ -260,6 +391,17 @@ private fun WidgetMusica(tam: Int) {
     }
     Tarjeta {
         val musica = s
+        if (compacto) {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                IconoDiptico(Icono.MUSICA, Coral, 20f, acento = Uva)
+                Spacer(Modifier.width(esc.d(8)))
+                Texto(musica?.titulo ?: "Nada sonando", 14.5f, lineas = 1, modifier = Modifier.weight(1f))
+                BotonCirculo(if (musica?.reproduciendo == true) Icono.MENU else Icono.JUGAR, grande = true, pausa = musica?.reproduciendo == true) { Medios.alternar() }
+                Spacer(Modifier.width(esc.d(6)))
+                BotonCirculo(Icono.CONTINUAR) { Medios.siguiente() }
+            }
+            return@Tarjeta
+        }
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(esc.d(if (tam >= 2) 96f else 56f)).clip(RoundedCornerShape(esc.d(14))).background(Uva.copy(alpha = 0.25f)), contentAlignment = Alignment.Center) {
                 val img = musica?.portada
@@ -305,7 +447,52 @@ private fun BotonCirculo(icono: Icono, grande: Boolean = false, invertido: Boole
     }
 }
 
-/** Editor de widgets: A cambia el tamaño, L1/R1 los mueve. */
+/** Una fila corta para widgets de una sola fila de alto. */
+@Composable
+private fun WidgetCompacto(e: Estado, tipo: String) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val j = e.seleccionado
+    val (icono, titulo, valor) = when (tipo) {
+        "juego" -> Triple(Icono.JUGAR, j?.titulo ?: "Elige un juego", "A · ¡Jugar!")
+        "paso" -> Triple(Icono.LAPIZ, "Tu próximo paso", j?.let { e.datos[it.clave]?.paso }.orEmpty().ifEmpty { "Sin anotar" })
+        "tiempo" -> Triple(Icono.RELOJ, "Tiempo jugado", formatoTiempo(e.datos.values.sumOf { it.tiempo }))
+        "recientes" -> Triple(Icono.CONTINUAR, "Último jugado", e.datos.entries.filter { it.value.ultimo > 0 }.maxByOrNull { it.value.ultimo }?.let { (k, _) -> e.juegos.firstOrNull { it.clave == k }?.titulo } ?: "Nada aún")
+        "fiesta" -> Triple(Icono.MUNDO, e.fiesta?.nombre ?: (Temas.proxima()?.first?.nombre ?: "Fiestas"), e.fiesta?.donde ?: "Próxima fiesta")
+        "consolas" -> Triple(Icono.BIBLIOTECA, "${e.juegos.size} juegos", "${e.consolasConJuegos.size} consolas")
+        "favoritos" -> Triple(Icono.CORAZON, "Favoritos", "${e.datos.values.count { it.favorito }} juegos")
+        else -> Triple(Icono.ESTRELLA, Widgets.nombre(tipo), "")
+    }
+    Tarjeta(alPulsar = { if (tipo == "juego") Diptico.jugar() else if (tipo == "paso") Diptico.abrirPaso() }) {
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(esc.d(34)).clip(CircleShape).background(Uva.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                IconoDiptico(icono, p.tinta, 18f, acento = Coral)
+            }
+            Spacer(Modifier.width(esc.d(10)))
+            Column(Modifier.weight(1f)) {
+                Texto(titulo, 15f, lineas = 1)
+                if (valor.isNotEmpty()) Texto(valor, 12.5f, color = p.tenue, familia = Nunito, peso = FontWeight.Bold, lineas = 1)
+            }
+        }
+    }
+}
+
+/** Una frase distinta cada día para el widget de saludo. */
+private fun fraseDelDia(e: Estado): String {
+    val frases = listOf(
+        "Hoy es un buen día para terminar ese juego pendiente.",
+        "Un nivel más y paras. (Seguro que no.)",
+        "Los clásicos nunca pasan de moda.",
+        "Guarda la partida antes del jefe final.",
+        "¿Y si hoy pruebas un juego que nunca has jugado?",
+        "La mejor consola es la que tienes a mano.",
+        "Recuerda tomar agua entre partidas.",
+    )
+    e.fiesta?.tema?.mensaje?.takeIf { it.isNotBlank() }?.let { return it }
+    return frases[(java.time.LocalDate.now().dayOfYear) % frases.size]
+}
+
+/** Agregar o quitar widgets del inicio (A los muestra u oculta). */
 @Composable
 fun PanelWidgets(e: Estado) {
     val p = LocalPaleta.current
@@ -317,41 +504,34 @@ fun PanelWidgets(e: Estado) {
             Row(Modifier.fillMaxWidth().height(esc.d(40)), verticalAlignment = Alignment.CenterVertically) {
                 IconoDiptico(Icono.APPS, p.tinta, 24f, acento = Coral)
                 Spacer(Modifier.width(esc.d(10)))
-                Texto("Tus widgets", 21f, modifier = Modifier.weight(1f))
-                Detalle("${e.widgets.count { it.tam > 0 }} a la vista", 14f)
+                Texto("Agregar o quitar widgets", 20f, modifier = Modifier.weight(1f), lineas = 1)
+                Detalle("${e.widgets.count { it.visible }} a la vista", 14f)
             }
-            Detalle("A cambia el tamaño · L1 R1 lo mueven arriba o abajo", 13.5f, lineas = 1)
             Spacer(Modifier.height(esc.d(8)))
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
                 itemsIndexed(e.widgets, key = { _, w -> w.tipo }) { i, w ->
                     val activa = i == e.indice
-                    val alza by animateFloatAsState(if (activa) 1.02f else 1f, spring(dampingRatio = 0.6f), label = "w")
                     Row(
-                        Modifier.fillMaxWidth().height(esc.d(52)).graphicsLayer { scaleX = alza; scaleY = alza }
-                            .clip(RoundedCornerShape(esc.d(16)))
+                        Modifier.fillMaxWidth().height(esc.d(52)).clip(RoundedCornerShape(esc.d(16)))
                             .background(if (activa) Uva else p.superficie.copy(alpha = 0.75f))
                             .clickable { Diptico.elegirIndice(i) }
                             .padding(horizontal = esc.d(14)),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Texto("${i + 1}", 14f, color = if (activa) SobreUva else p.tenue, modifier = Modifier.width(esc.d(24)))
                         Texto(Widgets.nombre(w.tipo), 15.5f, color = if (activa) SobreUva else p.tinta, lineas = 1, modifier = Modifier.weight(1f))
-                        // Puntitos del tamaño.
-                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(3))) {
-                            for (k in 1..3) {
-                                Box(
-                                    Modifier.size(esc.d(14), esc.d(10)).clip(RoundedCornerShape(esc.d(3)))
-                                        .background(if (k <= w.tam) (if (activa) SobreUva else Coral) else (if (activa) SobreUva.copy(alpha = 0.3f) else p.linea)),
-                                )
-                            }
+                        Texto(if (w.visible) Widgets.nombreTamano(w.an, w.al) else "Oculto", 12.5f, color = if (activa) SobreUva else p.tenue, modifier = Modifier.padding(end = esc.d(10)))
+                        Box(
+                            Modifier.size(esc.d(46), esc.d(26)).clip(RoundedCornerShape(50))
+                                .background(if (w.visible) (if (activa) SobreUva else Uva) else p.linea),
+                            contentAlignment = if (w.visible) Alignment.CenterEnd else Alignment.CenterStart,
+                        ) {
+                            Box(Modifier.padding(esc.d(3)).size(esc.d(20)).clip(CircleShape).background(if (w.visible && activa) Uva else Color.White))
                         }
-                        Spacer(Modifier.width(esc.d(8)))
-                        Texto(Widgets.nombreTam(w.tam), 12.5f, color = if (activa) SobreUva else p.tenue, modifier = Modifier.width(esc.d(62)))
                     }
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            Pistas("A" to "Tamaño", "L1 R1" to "Mover", "B" to "Listo")
+            Pistas("A" to "Mostrar u ocultar", "B" to "Listo")
         }
     }
 }

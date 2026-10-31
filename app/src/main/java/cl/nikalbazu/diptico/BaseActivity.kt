@@ -98,6 +98,16 @@ abstract class BaseActivity : ComponentActivity() {
         }
     }
 
+    override fun dispatchGenericMotionEvent(ev: android.view.MotionEvent): Boolean {
+        if (Teclas.movimiento(ev)) return true
+        return super.dispatchGenericMotionEvent(ev)
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        if (intent.hasCategory(android.content.Intent.CATEGORY_HOME)) Diptico.alInicio()
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (Teclas.manejar(event)) return true
         return super.dispatchKeyEvent(event)

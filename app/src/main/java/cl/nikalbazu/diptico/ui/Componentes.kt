@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -240,6 +241,7 @@ fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabaj
         PildoraTrabajos(trabajos)
         Spacer(Modifier.weight(1f))
         extra()
+        Campana()
         Row(
             Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.alternarReloj() }.padding(horizontal = esc.d(6), vertical = esc.d(2)),
             verticalAlignment = Alignment.CenterVertically,
@@ -249,6 +251,25 @@ fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabaj
                 Spacer(Modifier.width(esc.d(12)))
                 Texto("$bat%", 15f, sombra = true)
             }
+        }
+    }
+}
+
+/** Campana de notificaciones con cuántas hay. Abre el centro de control. */
+@Composable
+private fun Campana() {
+    val esc = LocalEscala.current
+    val avisos by cl.nikalbazu.diptico.audio.Avisos.lista.collectAsState()
+    Box(
+        Modifier.padding(end = esc.d(8)).size(esc.d(30)).clip(CircleShape).clickable { Diptico.abrirCentro() },
+        contentAlignment = Alignment.Center,
+    ) {
+        IconoDiptico(cl.nikalbazu.diptico.estado.Icono.CAMPANA, LocalPaleta.current.tinta, 18f, acento = Coral)
+        if (avisos.isNotEmpty()) {
+            Box(
+                Modifier.align(Alignment.TopEnd).size(esc.d(15)).clip(CircleShape).background(Coral),
+                contentAlignment = Alignment.Center,
+            ) { Texto(if (avisos.size > 9) "9+" else "${avisos.size}", 9f, color = Color.White, lineas = 1) }
         }
     }
 }

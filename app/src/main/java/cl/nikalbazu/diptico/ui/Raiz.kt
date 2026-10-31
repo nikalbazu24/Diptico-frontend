@@ -19,7 +19,11 @@ import cl.nikalbazu.diptico.estado.Estado
  */
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
-    CompositionLocalProvider(LocalIconos provides IconosCfg(e.estiloIconos, e.iconosPropios, e.iconosVersion)) {
+    CompositionLocalProvider(
+        LocalIconos provides IconosCfg(e.estiloIconos, e.iconosPropios, e.iconosVersion),
+        LocalFormas provides e.formas,
+        LocalTamJuegos provides e.tamJuegos,
+    ) {
         Box(Modifier.fillMaxSize()) {
             when {
                 !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)

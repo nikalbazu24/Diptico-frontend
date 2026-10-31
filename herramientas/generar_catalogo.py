@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET, json, re, sys
-base='esde/resources/systems/android/'
+import os
+base=os.environ.get('ESDE','esde/resources/systems/android/')
 sis=ET.parse(base+'es_systems.xml').getroot()
 reg=ET.parse(base+'es_find_rules.xml').getroot()
 lib=[l.strip() for l in open('libretro_sistemas.txt') if l.strip()]
@@ -37,11 +38,22 @@ for e in reg.findall('emulator'):
         if r.get('type')=='androidpackage':
             ents+= [x.text.strip() for x in r.findall('entry') if x.text]
     if ents: reglas[n]=ents
+# Emuladores de Switch que ES-DE todavía no trae (misma forma de abrir que Eden).
+EXTRA = {
+    'CITRON': ['org.citron.citron_emu/org.citron.citron_emu.activities.EmulationActivity'],
+    'SUDACHI': ['org.sudachi.sudachi_emu/org.sudachi.sudachi_emu.activities.EmulationActivity'],
+    'YUZU': ['org.yuzu.yuzu_emu/org.yuzu.yuzu_emu.activities.EmulationActivity'],
+}
+for k, v in EXTRA.items():
+    reglas.setdefault(k, v)
 out=[]; sinlib=[]
 for s in sis.findall('system'):
     name=s.findtext('name'); full=s.findtext('fullname')
     ext=sorted(set(x.lower().lstrip('.') for x in (s.findtext('extension') or '').split() if x.strip()))
     cmds=[[c.get('label') or '', c.text.strip()] for c in s.findall('command')]
+    if name == 'switch':
+        for k in EXTRA:
+            cmds.append([k.capitalize() + ' (Standalone)', '%EMULATOR_' + k + '% %ACTION%=android.nfc.action.TECH_DISCOVERED %DATA%=%ROMPROVIDER%'])
     l=manual.get(name) or libn.get(norm(full))
     if l and l not in lib and l not in ('MAME','DOS','ScummVM'):
         l = l if l in lib else None

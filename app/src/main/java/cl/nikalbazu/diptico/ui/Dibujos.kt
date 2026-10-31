@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -116,20 +118,26 @@ fun DrawScope.portadaGenerada(d: Dibujo, color: Color, u: Float) {
 
 /** Arte de un juego: su imagen real o, si no hay, el dibujo de ejemplo. */
 @Composable
-fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modifier = Modifier) {
-    val uri = if (preferirArte) (juego.arte ?: juego.portada) else juego.portada
+fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modifier = Modifier, imagen: String = "portada") {
+    val uri = when {
+        preferirArte -> juego.arte ?: juego.portada
+        imagen == "arte" -> juego.arte ?: juego.portada
+        imagen == "logo" -> juego.logo ?: juego.portada
+        else -> juego.portada
+    }
     val esIcono = uri?.scheme == "app"
+    val esLogo = imagen == "logo" && juego.logo != null && !preferirArte
     val img = rememberImagen(uri, if (esIcono) 256 else maxLado)
     val u = with(LocalDensity.current) { LocalEscala.current.d(1f).toPx() }
     Box(modifier) {
-        if (img != null && esIcono) {
-            // El ícono de una app (un port): sobre un fondo de color, centrado y sin estirarse.
+        if (img != null && (esIcono || esLogo)) {
+            // Ícono de app o logo: sobre un fondo de color, centrado y sin estirarse.
             val color = colorDe(juego.clave)
             Canvas(Modifier.fillMaxSize()) { portadaGenerada(dibujoDe(juego.clave), color, u) }
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.25f)))
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = if (esLogo) 0.45f else 0.25f)))
             Image(
                 img, contentDescription = null, contentScale = ContentScale.Fit,
-                modifier = Modifier.align(Alignment.Center).fillMaxSize(if (preferirArte) 0.42f else 0.62f),
+                modifier = Modifier.align(Alignment.Center).fillMaxSize(if (preferirArte) 0.42f else if (esLogo) 0.8f else 0.62f),
             )
         } else if (img != null) {
             Image(img, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
@@ -141,36 +149,71 @@ fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modif
     }
 }
 
-/** La caja del juego con la forma real de su consola. */
+/** Forma de las cajas de cada consola, elegida en el menú (Estante). */
+val LocalFormas = staticCompositionLocalOf { emptyMap<String, cl.nikalbazu.diptico.estado.FormaCfg>() }
+
+/** Tamaño general de los juegos en el estante. */
+val LocalTamJuegos = staticCompositionLocalOf { 1f }
+
+/** La forma de caja que toca a una consola (la original o la elegida), ya multiplicada por [escala]. */
+@Composable
+fun cajaDe(consola: Consola, escala: Float = 1f): FormaCaja {
+    val cfg = LocalFormas.current[consola.id]
+    val f = when (cfg?.forma) {
+        "cuadrada" -> FormaCaja(110f, 110f, 12f, Banda.NINGUNA)
+        "poster" -> FormaCaja(92f, 138f, 8f, Banda.NINGUNA)
+        "horizontal" -> FormaCaja(156f, 92f, 10f, Banda.NINGUNA)
+        "disco" -> FormaCaja(116f, 116f, 58f, Banda.NINGUNA)
+        "cartucho" -> FormaCaja(120f, 100f, 8f, Banda.ABAJO_CLARA)
+        "tarjeta" -> FormaCaja(86f, 104f, 12f, Banda.ARRIBA_CLARA)
+        else -> consola.caja
+    }
+    val k = escala * (cfg?.tam ?: 1f)
+    return FormaCaja(f.ancho * k, f.alto * k, f.radio * k, f.banda)
+}
+
+/** La caja del juego con la forma de su consola (o la que elegiste para esa consola). */
 @Composable
 fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, escala: Float = 1f) {
     val esc = LocalEscala.current
-    val f = consola.caja
-    val tieneImagen = juego.portada != null && juego.portada.scheme != "app"
+    val f = cajaDe(consola, escala)
+    val cfg = LocalFormas.current[consola.id]
+    val k = f.ancho / 100f
+    val imagen = cfg?.imagen ?: "portada"
+    val tieneImagen = when (imagen) {
+        "arte" -> juego.arte != null || (juego.portada != null && juego.portada.scheme != "app")
+        "logo" -> juego.logo != null
+        else -> juego.portada != null && juego.portada.scheme != "app"
+    }
+    val disco = cfg?.forma == "disco"
     Box(
         modifier
-            .size(esc.d(f.ancho * escala), esc.d(f.alto * escala))
-            .clip(RoundedCornerShape(esc.d(f.radio * escala))),
+            .size(esc.d(f.ancho), esc.d(f.alto))
+            .clip(if (disco) CircleShape else RoundedCornerShape(esc.d(f.radio))),
     ) {
-        ArteJuego(juego, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize())
+        ArteJuego(juego, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize(), imagen = imagen)
         when (f.banda) {
             Banda.NINGUNA -> Unit
-            Banda.BISAGRA -> Box(
-                Modifier.fillMaxHeight().width(esc.d(11)).background(Color.Black.copy(alpha = 0.3f)),
-            )
-            Banda.LATERAL_CLARA -> Box(Modifier.fillMaxHeight().width(esc.d(8)).background(Color.White.copy(alpha = 0.35f)))
-            Banda.ARRIBA_CLARA -> Box(Modifier.fillMaxWidth().height(esc.d(11)).background(Color.White.copy(alpha = 0.45f)))
-            Banda.ARRIBA_OSCURA -> Box(Modifier.fillMaxWidth().height(esc.d(15)).background(Color.Black.copy(alpha = 0.45f)))
-            Banda.ARRIBA_ROJA -> Box(Modifier.fillMaxWidth().height(esc.d(14 * escala)).background(Color(0xFFE60012)))
+            Banda.BISAGRA -> Box(Modifier.fillMaxHeight().width(esc.d(11 * k)).background(Color.Black.copy(alpha = 0.3f)))
+            Banda.LATERAL_CLARA -> Box(Modifier.fillMaxHeight().width(esc.d(8 * k)).background(Color.White.copy(alpha = 0.35f)))
+            Banda.ARRIBA_CLARA -> Box(Modifier.fillMaxWidth().height(esc.d(11 * k)).background(Color.White.copy(alpha = 0.45f)))
+            Banda.ARRIBA_OSCURA -> Box(Modifier.fillMaxWidth().height(esc.d(15 * k)).background(Color.Black.copy(alpha = 0.45f)))
+            Banda.ARRIBA_ROJA -> Box(Modifier.fillMaxWidth().height(esc.d(14 * k)).background(Color(0xFFE60012)))
             Banda.ABAJO_CLARA -> Box(
-                Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(10)).background(Color.White.copy(alpha = 0.3f)),
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(10 * k)).background(Color.White.copy(alpha = 0.3f)),
             )
         }
-        if (!tieneImagen) {
+        if (disco) {
+            // Brillo y agujero del disco.
+            Box(Modifier.fillMaxSize().background(Brush.sweepGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.18f), Color.Transparent, Color.White.copy(alpha = 0.12f), Color.Transparent))))
+            Box(Modifier.align(Alignment.Center).size(esc.d(f.ancho * 0.22f)).clip(CircleShape).background(Color.White.copy(alpha = 0.7f)))
+            Box(Modifier.align(Alignment.Center).size(esc.d(f.ancho * 0.1f)).clip(CircleShape).background(LocalPaleta.current.fondo2))
+        }
+        if (!tieneImagen && !disco) {
             Texto(
-                juego.titulo, if (f.ancho * escala < 70) 9.5f else if (f.ancho * escala < 90) 10.5f else 11.5f,
+                juego.titulo, if (f.ancho < 70) 9.5f else if (f.ancho < 90) 10.5f else if (f.ancho < 130) 11.5f else 13f,
                 modifier = Modifier.align(Alignment.BottomStart).padding(start = esc.d(8), end = esc.d(8), bottom = esc.d(7)),
-                color = Color.White, lineas = 3, interlineado = 13f, sombra = true,
+                color = Color.White, lineas = 3, interlineado = if (f.ancho < 130) 13f else 15f, sombra = true,
             )
         }
     }

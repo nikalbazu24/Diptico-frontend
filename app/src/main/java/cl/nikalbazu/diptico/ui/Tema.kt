@@ -159,13 +159,22 @@ val LocalPaleta = staticCompositionLocalOf { PaletaOscura }
  * Así el diseño llena cualquier pantalla (arriba, abajo, intercambiadas o un teléfono) sin deformarse ni achicarse.
  */
 @Composable
-fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f, contenido: @Composable () -> Unit) {
+fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f, zoom: Float = 1f, contenido: @Composable () -> Unit) {
     val paleta = paletaDe(Estilo.tema, oscuro)
     BoxWithConstraints(modifier.background(paleta.fondo)) {
         val alto = if (maxHeight.value > 0f) maxHeight.value else 1f
         // En pantallas verticales (un teléfono) manda el ancho, para que nada quede fuera.
         val corto = if (maxWidth.value > 0f) minOf(alto, maxWidth.value) else alto
-        val f = corto / ALTO_DISENO
+        // Según la forma de la pantalla: en las casi cuadradas (como la de abajo de la Thor) todo se achica un poco
+        // para que quepa más; en las anchas (16:9) se ve como fue diseñado.
+        val forma = if (alto > 0f) maxWidth.value / alto else 1.78f
+        val base = when {
+            forma >= 1.6f -> ALTO_DISENO
+            forma >= 1.3f -> ALTO_DISENO * 1.06f
+            forma >= 0.9f -> ALTO_DISENO * 1.12f
+            else -> ALTO_DISENO
+        }
+        val f = corto / (base / zoom.coerceIn(0.6f, 1.6f))
         val ancho = maxWidth.value / f
         CompositionLocalProvider(LocalEscala provides Escala(f, ancho, tamTexto), LocalPaleta provides paleta) {
             Box(Modifier.fillMaxSize()) {

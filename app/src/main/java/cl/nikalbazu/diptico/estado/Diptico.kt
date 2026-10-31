@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
 import android.view.Display
+import cl.nikalbazu.diptico.audio.Aviso
+import cl.nikalbazu.diptico.audio.Avisos
 import cl.nikalbazu.diptico.audio.Medios
 import cl.nikalbazu.diptico.audio.Musica
 import cl.nikalbazu.diptico.data.Almacen
@@ -15,6 +17,7 @@ import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.data.Descargas
 import cl.nikalbazu.diptico.data.FichaInfo
 import cl.nikalbazu.diptico.data.Fichas
+import cl.nikalbazu.diptico.data.CarpetaJuegos
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.data.MediosJuego
 import cl.nikalbazu.diptico.emu.App
@@ -32,7 +35,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS }
+enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -45,18 +48,21 @@ enum class Icono {
     PANTALLAS, UNA, NEGRO, LIBRE, INTERCAMBIAR, TEXTO, TEMA, INTRO, MUSICA, VOLUMEN, SILENCIO, CARPETA, EMULADOR,
     PORTADA, DESCARGA, CLAVE, TITULO, BORRAR, BIBLIOTECA, BUSCAR, TUTORIAL, INFO, CERRAR, JUGAR, DADO, LAPIZ,
     CONTINUAR, MENU, CHECK, ARRIBA, ABAJO, ESTRELLA, APPS, RELOJ, PALETA, MOVIL, CHISPA, CORAZON, MUNDO, WEB,
+    CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA,
 }
 
 /** Secciones del menú principal. */
 enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String) {
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una y el tamaño de la letra."),
     INICIO("Inicio", Icono.APPS, "Cómo se ve la pantalla principal: el juego en grande o tu inicio con widgets."),
+    ESTANTE("Estante", Icono.VISTA, "Cómo se ven tus juegos: vista, tamaño, orden y la forma de las cajas de cada consola."),
     TEMAS("Temas", Icono.PALETA, "Colores, temas de fiestas del mundo y temas creados con IA."),
     APARIENCIA("Apariencia", Icono.TEMA, "Claro u oscuro, decoraciones, íconos de las consolas y la animación de entrada."),
     MUSICA("Música", Icono.MUSICA, "La música de fondo. Se calla sola al abrir un juego o si pones Spotify o YouTube Music."),
     EMULADORES("Emuladores", Icono.EMULADOR, "Con qué emulador, o con qué núcleo de RetroArch, se abre cada consola."),
     PORTADAS("Portadas", Icono.PORTADA, "Descarga portadas, imágenes, logos y títulos de internet."),
     BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Tu carpeta de juegos y las imágenes que ya tengas de ES-DE."),
+    CONSOLA("Consola", Icono.CAMPANA, "Notificaciones, Díptico como launcher principal y accesos rápidos de Android."),
     SISTEMA("Sistema", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
 }
 
@@ -76,21 +82,43 @@ data class Opcion(
 data class Trabajo(val id: String, val texto: String, val avance: Float? = null)
 
 /** Un widget del inicio personalizado. [tam]: 0 oculto, 1 chico, 2 mediano, 3 ancho completo. */
-data class Widget(val tipo: String, val tam: Int)
+/**
+ * Un widget del inicio, en una grilla de [Widgets.COLUMNAS] x [Widgets.FILAS].
+ * [x], [y]: celda de arriba a la izquierda; [an], [al]: cuántas celdas ocupa.
+ */
+data class Widget(val tipo: String, val x: Int, val y: Int, val an: Int, val al: Int, val visible: Boolean = true)
+
+/** Forma de las cajas de una consola en el estante. */
+data class FormaCfg(val forma: String = "original", val tam: Float = 1f, val imagen: String = "portada")
 
 object Widgets {
+    const val COLUMNAS = 6
+    const val FILAS = 4
+
+    /** Tamaños y formas posibles (ancho x alto en celdas). */
+    val TAMANOS = listOf(
+        2 to 1, 2 to 2, 3 to 2, 4 to 2, 6 to 1, 2 to 3, 3 to 3, 4 to 3, 6 to 2, 3 to 1,
+    )
+
+    fun nombreTamano(an: Int, al: Int) = when (an to al) {
+        2 to 1 -> "Chico"; 2 to 2 -> "Cuadrado"; 3 to 2 -> "Mediano"; 4 to 2 -> "Ancho"; 6 to 1 -> "Franja"
+        2 to 3 -> "Alto"; 3 to 3 -> "Grande"; 4 to 3 -> "Muy grande"; 6 to 2 -> "Panorámico"; 3 to 1 -> "Barra"
+        else -> "${an}x$al"
+    }
+
     val porDefecto = listOf(
-        Widget("juego", 2), Widget("reloj", 1), Widget("musica", 2), Widget("paso", 1),
-        Widget("recientes", 2), Widget("fiesta", 1), Widget("tiempo", 1), Widget("bateria", 0), Widget("consolas", 0),
+        Widget("juego", 0, 0, 4, 2), Widget("reloj", 4, 0, 2, 2), Widget("musica", 0, 2, 3, 2),
+        Widget("recientes", 3, 2, 3, 2), Widget("paso", 0, 0, 2, 2, false), Widget("fiesta", 0, 0, 2, 2, false),
+        Widget("tiempo", 0, 0, 2, 1, false), Widget("bateria", 0, 0, 2, 1, false), Widget("consolas", 0, 0, 3, 2, false),
+        Widget("favoritos", 0, 0, 3, 2, false), Widget("frase", 0, 0, 6, 1, false),
     )
 
     fun nombre(tipo: String) = when (tipo) {
         "juego" -> "Juego elegido"; "reloj" -> "Reloj y fecha"; "musica" -> "Música (Spotify, YouTube Music…)"
         "paso" -> "Tu próximo paso"; "recientes" -> "Jugados hace poco"; "fiesta" -> "Fiestas del mundo"
-        "tiempo" -> "Tiempo jugado"; "bateria" -> "Batería"; "consolas" -> "Tu colección"; else -> tipo
+        "tiempo" -> "Tiempo jugado"; "bateria" -> "Batería"; "consolas" -> "Tu colección"
+        "favoritos" -> "Favoritos"; "frase" -> "Saludo del día"; else -> tipo
     }
-
-    fun nombreTam(t: Int) = when (t) { 0 -> "Oculto"; 1 -> "Chico"; 2 -> "Mediano"; else -> "Grande" }
 }
 
 /** Descarga de portadas en curso. */
@@ -161,6 +189,27 @@ data class Estado(
     val iconosVersion: Int = 0,
     val trabajos: List<Trabajo> = emptyList(),
     val relojGrande: Boolean = false,
+    /** "estante", "cuadricula" o "lista". */
+    val vista: String = "estante",
+    val tamJuegos: Float = 1f,
+    /** "todos", "favoritos", "recientes", "mas" (más jugados) o "sinjugar". */
+    val filtro: String = "todos",
+    /** "az", "recientes" o "tiempo". */
+    val orden: String = "az",
+    val busqueda: String = "",
+    val formas: Map<String, FormaCfg> = emptyMap(),
+    val editandoWidgets: Boolean = false,
+    val widgetSel: Int = 0,
+    /** Zoom de cada pantalla (1 = automático según su forma). */
+    val zoomArriba: Float = 1f,
+    val zoomAbajo: Float = 1f,
+    val musicaTema: Boolean = true,
+    val avisosEmergentes: Boolean = true,
+    val carpetas: List<CarpetaJuegos> = emptyList(),
+    /** En el panel de carpetas: índice de la carpeta a la que se le elige consola (-1 = ninguna). */
+    val consolaPara: Int = -1,
+    /** Pista que corresponde al tema en uso. */
+    val pistaTema: String = "bisagra",
 ) {
     /** Todo Díptico vive en una sola pantalla (siempre durante el tutorial). */
     val unaPantalla: Boolean
@@ -176,23 +225,46 @@ data class Estado(
     val pestanas: List<String>
         get() = listOf("todo") + consolasConJuegos.map { it.id }
 
-    val visibles: List<Juego>
-        get() = if (consolaSel == "todo") juegos else juegos.filter { it.consolaId == consolaSel }
-
-    val seleccionado: Juego?
-        get() {
-            val v = visibles
-            return v.firstOrNull { it.clave == juegoSel } ?: v.firstOrNull()
+    /** Los juegos del estante: consola elegida, filtro, búsqueda y orden. Se calcula una vez por estado. */
+    val visibles: List<Juego> by lazy {
+        var l = if (consolaSel == "todo") juegos else juegos.filter { it.consolaId == consolaSel }
+        fun d(j: Juego) = datos[j.clave]
+        l = when (filtro) {
+            "favoritos" -> l.filter { d(it)?.favorito == true }
+            "recientes" -> l.filter { (d(it)?.ultimo ?: 0L) > 0 }
+            "mas" -> l.filter { (d(it)?.tiempo ?: 0L) > 0 }
+            "sinjugar" -> l.filter { (d(it)?.tiempo ?: 0L) == 0L }
+            else -> l
         }
-
-    val indiceSel: Int
-        get() {
-            val clave = seleccionado?.clave ?: return 0
-            return visibles.indexOfFirst { it.clave == clave }.coerceAtLeast(0)
+        if (busqueda.isNotBlank()) {
+            val q = Busqueda.normalizar(busqueda)
+            l = l.filter { Busqueda.normalizar(it.titulo).contains(q) }
         }
+        when (orden) {
+            "recientes" -> l.sortedByDescending { d(it)?.ultimo ?: 0L }
+            "tiempo" -> l.sortedByDescending { d(it)?.tiempo ?: 0L }
+            else -> if (consolaSel == "todo" && filtro == "todos" && busqueda.isBlank()) l else l.sortedBy { it.titulo.lowercase() }
+        }
+    }
+
+    val seleccionado: Juego? by lazy {
+        val v = visibles
+        v.firstOrNull { it.clave == juegoSel } ?: v.firstOrNull()
+    }
+
+    val indiceSel: Int by lazy {
+        val clave = seleccionado?.clave
+        if (clave == null) 0 else visibles.indexOfFirst { it.clave == clave }.coerceAtLeast(0)
+    }
 
     val sinPortada: Int
         get() = juegos.count { it.portada == null }
+}
+
+/** Para buscar sin importar tildes ni mayúsculas. */
+object Busqueda {
+    fun normalizar(s: String): String =
+        java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD).replace(Regex("\\p{M}"), "").lowercase()
 }
 
 /** Estado compartido por las dos pantallas y todas las acciones de Díptico. */
@@ -210,7 +282,7 @@ object Diptico {
     private var crudos: List<Juego> = emptyList()
     private var medios: Map<String, MediosJuego> = emptyMap()
 
-    const val VERSION = "0.3"
+    const val VERSION = "0.4"
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -258,7 +330,23 @@ object Diptico {
             widgets = leerWidgets(almacen.texto("widgets")),
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
+            vista = almacen.texto("vista", "estante"),
+            tamJuegos = almacen.texto("tamJuegos", "1").toFloatOrNull() ?: 1f,
+            orden = almacen.texto("orden", "az"),
+            formas = leerFormas(almacen.texto("formas", "{}")),
+            zoomArriba = almacen.texto("zoomArriba", "1").toFloatOrNull() ?: 1f,
+            zoomAbajo = almacen.texto("zoomAbajo", "1").toFloatOrNull() ?: 1f,
+            musicaTema = almacen.bool("musicaTema", true),
+            avisosEmergentes = almacen.bool("avisosEmergentes", true),
+            carpetas = almacen.carpetas(),
         )
+        // Avisos emergentes de las notificaciones (nunca mientras juegas).
+        scope.launch {
+            Avisos.nuevos.collect { a ->
+                val e = estado.value
+                if (e.avisosEmergentes && e.sesion == null && e.aLaVista > 0) avisar("${a.app}: ${a.titulo.ifBlank { a.texto }}".take(90))
+            }
+        }
         aplicarTema()
         publicarJuegos()
         Medios.revisar(app)
@@ -269,7 +357,11 @@ object Diptico {
             estado.map { e ->
                 // Si el juego elegido tiene su propia canción, suena esa.
                 val propia = if (e.configurado && e.panel != Panel.MENU) e.seleccionado?.let { e.datos[it.clave]?.musica } else null
-                val pista = if (propia != null) "archivo:$propia" else e.pista
+                val pista = when {
+                    propia != null -> "archivo:$propia"
+                    e.configurado && e.musicaTema && e.pista != "mia" -> e.pistaTema
+                    else -> e.pista
+                }
                 listOf(e.listo && e.musica && e.aLaVista > 0 && e.sesion == null, pista, e.volumen, e.carpetaMusica)
             }.distinctUntilChanged().collect { (sonar, pista, vol, carpetaM) ->
                 Musica.sincronizar(sonar as Boolean, pista as String, vol as Float, carpetaM as Uri?)
@@ -317,22 +409,30 @@ object Diptico {
     // ---------- Carpeta y biblioteca ----------
 
     fun escanear() {
-        val carpeta = almacen.carpeta ?: return
+        val carpetas = almacen.carpetas()
+        if (carpetas.isEmpty()) return
         actualizar { it.copy(escaneando = true) }
         trabajo("escaneo", "Buscando tus juegos")
         scope.launch {
-            val lista = try {
-                withContext(Dispatchers.IO) { Biblioteca.escanear(app, carpeta, almacen.media) }
-            } catch (e: Exception) {
-                avisar("No pude leer la carpeta de juegos. Elígela otra vez.")
-                null
-            }
+            var fallas = 0
+            val lista = withContext(Dispatchers.IO) {
+                carpetas.flatMap { c ->
+                    try {
+                        Biblioteca.escanear(app, c.uri, almacen.media, c.consola)
+                    } catch (e: Exception) {
+                        fallas++
+                        emptyList()
+                    }
+                }.distinctBy { it.clave }.sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
+            }.takeIf { fallas < carpetas.size }
+            if (fallas > 0) avisar(if (lista == null) "No pude leer tus carpetas de juegos. Elígelas otra vez." else "No pude leer $fallas de tus carpetas")
             if (lista != null) {
                 crudos = lista
                 withContext(Dispatchers.IO) { almacen.guardarBiblioteca(lista) }
                 publicarJuegos()
                 actualizar { it.copy(escaneando = false, indice = if (it.configurado) it.indice else it.indice.coerceAtMost(1)) }
                 bajarIconosFaltantes()
+                identificarNombres()
             } else {
                 actualizar { it.copy(escaneando = false) }
             }
@@ -386,9 +486,12 @@ object Diptico {
         }
         when (tipo) {
             Carpeta.JUEGOS -> {
-                almacen.carpeta = uri
-                actualizar { it.copy(tieneCarpeta = true, indice = 0) }
+                // Se suma a las demás carpetas (sirve para tener juegos en la memoria y en la SD).
+                val antes = almacen.carpetas()
+                if (antes.none { it.uri == uri }) almacen.guardarCarpetas(antes + CarpetaJuegos(uri, null))
+                actualizar { it.copy(tieneCarpeta = true, indice = if (it.panel == Panel.CARPETAS) almacen.carpetas().size - 1 else 0, carpetas = almacen.carpetas()) }
                 escanear()
+                revisarCarpetaNueva(uri)
             }
             Carpeta.MEDIA -> {
                 almacen.media = uri
@@ -480,7 +583,9 @@ object Diptico {
             return
         }
         almacen.pista = p
-        actualizar { it.copy(pista = p, musica = true) }
+        // Elegir una pista a mano apaga la música según el tema.
+        almacen.guardarBool("musicaTema", false)
+        actualizar { it.copy(pista = p, musica = true, musicaTema = false) }
         almacen.musica = true
     }
 
@@ -680,7 +785,7 @@ object Diptico {
                 },
                 Opcion("Después", "Lo encuentras en el menú, en Portadas", Icono.CONTINUAR) { siguientePaso() },
             )
-            PasoTuto.MUSICA -> Musica.pistas.map { p ->
+            PasoTuto.MUSICA -> Musica.pistas.take(3).map { p ->
                 Opcion(p.nombre, p.estilo, Icono.MUSICA) { fijarPista(p.id); siguientePaso() }
             } + listOf(
                 Opcion("Mezcla", "Las tres, una tras otra", Icono.ESTRELLA) { fijarPista("mezcla"); siguientePaso() },
@@ -787,7 +892,7 @@ object Diptico {
         val inferior = Pantallas.inferior(app)
         val displayId = if (destino == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
-        else Lanzador.lanzar(app, juego, consola, e.emuladores[consola.id], displayId, almacen.carpeta)
+        else Lanzador.lanzar(app, juego, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(juego))
         if (error != null) {
             avisar(error)
             return
@@ -936,7 +1041,15 @@ object Diptico {
         }
         if (e.panel == Panel.WIDGETS) {
             almacen.guardarTexto("widgets", escribirWidgets(e.widgets))
-            actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 0) }
+            actualizar { it.copy(panel = if (e.editandoWidgets) Panel.NINGUNO else Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 0) }
+            return
+        }
+        if (e.panel == Panel.CARPETAS && e.consolaPara >= 0) {
+            actualizar { it.copy(consolaPara = -1, indice = e.consolaPara) }
+            return
+        }
+        if (e.panel == Panel.CARPETAS && e.configurado) {
+            actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.BIBLIOTECA, enOpciones = true, indice = 0) }
             return
         }
         if (e.panel == Panel.PORTS && e.configurado) {
@@ -1012,7 +1125,7 @@ object Diptico {
         when (e.panel) {
             Panel.MENU -> if (!e.enOpciones) {
                 val s = Seccion.values()
-                val n = (e.seccion.ordinal + delta + s.size) % s.size
+                val n = (e.seccion.ordinal + delta).coerceIn(0, s.size - 1)
                 actualizar { it.copy(seccion = s[n], indice = 0) }
             } else {
                 val total = opcionesSeccion(e.seccion).size
@@ -1020,7 +1133,19 @@ object Diptico {
             }
             Panel.RAPIDO -> {
                 val total = opcionesRapido().size
-                if (total > 0) actualizar { it.copy(indice = (it.indice + delta + total) % total) }
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
+            Panel.BUSCAR -> {
+                val total = e.visibles.size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
+            Panel.CENTRO -> {
+                val total = opcionesCentro().size + Avisos.lista.value.size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
+            Panel.CARPETAS -> {
+                val total = if (e.consolaPara >= 0) consolasElegibles().size + 1 else filasCarpetas()
+                actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
             Panel.PORTS -> {
                 val total = e.apps.size
@@ -1066,7 +1191,15 @@ object Diptico {
             Panel.RAPIDO -> opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
             Panel.PORTS -> e.apps.getOrNull(e.indice)?.let { alternarPort(it.paquete) }
             Panel.FICHA -> if (e.pestanaFicha >= 2) opcionesFicha().getOrNull(e.indice)?.accion?.invoke()
-            Panel.WIDGETS -> ciclarWidget(e.indice)
+            Panel.WIDGETS -> alternarWidget(e.indice)
+            Panel.BUSCAR -> e.visibles.getOrNull(e.indice)?.let { j ->
+                actualizar { it.copy(juegoSel = j.clave, panel = Panel.NINGUNO) }
+            }
+            Panel.CARPETAS -> aceptarCarpetas()
+            Panel.CENTRO -> {
+                val acciones = opcionesCentro()
+                if (e.indice < acciones.size) acciones[e.indice].accion() else Avisos.lista.value.getOrNull(e.indice - acciones.size)?.let { abrirAviso(it) }
+            }
             Panel.TRABAJOS -> cerrarPanel()
             else -> Unit
         }
@@ -1084,31 +1217,56 @@ object Diptico {
 
     // ---------- Menú rápido de un juego (mantener A) ----------
 
+    /** La ventana de un juego (Y o mantener A): acciones en mosaico. */
     fun opcionesRapido(): List<Opcion> {
         val e = estado.value
         val juego = e.seleccionado ?: return emptyList()
-        val recordada = e.datos[juego.clave]?.pantalla
+        val d = e.datos[juego.clave]
+        val consola = Consolas.porId(juego.consolaId)
         val lista = mutableListOf<Opcion>()
+        lista += Opcion("Jugar", icono = Icono.JUGAR) { cerrarPanel(); jugar() }
+        lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA) { abrirFicha(); elegirPestanaFicha(3) }
+        lista += Opcion("Ficha", "Historia y guías", Icono.TUTORIAL) { abrirFicha() }
+        lista += Opcion("Mi próximo paso", d?.paso?.take(30) ?: "", Icono.LAPIZ) { abrirPaso() }
+        lista += Opcion(if (d?.favorito == true) "Favorito ✓" else "Favorito", icono = Icono.CORAZON) { alternarFavorito(juego.clave) }
+        if (consola != null && !consola.sinEmulador) {
+            lista += Opcion("Emulador", d?.emulador?.let { id -> Lanzador.opciones(app, consola).firstOrNull { it.id == id }?.nombre } ?: "El de la consola", Icono.EMULADOR) {
+                ciclarEmuladorJuego(juego.clave, consola)
+            }
+        }
         if (!e.unaPantalla) {
-            lista += Opcion("Abrir en la pantalla de arriba", icono = Icono.ARRIBA) { cerrarPanel(); jugar("arriba") }
-            lista += Opcion("Abrir en la pantalla de abajo", icono = Icono.ABAJO) { cerrarPanel(); jugar("abajo") }
             lista += Opcion(
-                "Este juego abre siempre",
-                when (recordada) { "arriba" -> "Arriba"; "abajo" -> "Abajo"; else -> "Según el menú" },
+                "Abre en",
+                when (d?.pantalla) { "arriba" -> "Arriba"; "abajo" -> "Abajo"; else -> "Según el menú" },
                 Icono.PANTALLAS,
             ) { ciclarPantallaJuego(juego.clave) }
-        } else {
-            lista += Opcion("Jugar", icono = Icono.JUGAR) { cerrarPanel(); jugar() }
         }
-        lista += Opcion("Ficha del juego", "Historia, guías y personalizar", Icono.TUTORIAL) { abrirFicha() }
-        lista += Opcion("Anotar mi próximo paso", icono = Icono.LAPIZ) { abrirPaso() }
-        lista += Opcion(
-            if (e.datos[juego.clave]?.favorito == true) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON,
-        ) { alternarFavorito(juego.clave) }
-        lista += Opcion("Buscar portada de este juego", if (juego.portada != null) "Ya tiene" else "En internet", Icono.DESCARGA) {
+        lista += Opcion("Imágenes", if (juego.portada != null) "Buscar de nuevo" else "Buscar en internet", Icono.DESCARGA) {
             cerrarPanel(); descargarUno(juego)
         }
+        if (consola != null) {
+            lista += Opcion("Cajas de ${consola.nombre}", nombreForma(e.formas[consola.id]?.forma ?: "original"), Icono.FORMA) {
+                ciclarForma(consola.id)
+            }
+        }
         return lista
+    }
+
+    /** Columnas de la ventana del juego (la interfaz avisa cuántas caben). */
+    var columnasVentana = 4
+
+    /** Emulador solo para este juego. */
+    private fun ciclarEmuladorJuego(clave: String, c: Consola) {
+        val juego = estado.value.juegos.firstOrNull { it.clave == clave }
+        val ops = Lanzador.opciones(app, c, juego?.tipo).distinctBy { it.id }
+        if (ops.isEmpty()) {
+            avisar("No hay emuladores de ${c.nombre} instalados. Te sugiero ${c.sugerido}.")
+            return
+        }
+        val actual = estado.value.datos[clave]?.emulador
+        val i = ops.indexOfFirst { it.id == actual }
+        val siguiente = if (i == ops.size - 1) null else ops[i + 1].id
+        cambiarDatos(clave) { it.copy(emulador = siguiente) }
     }
 
     private fun ciclarPantallaJuego(clave: String) {
@@ -1128,7 +1286,17 @@ object Diptico {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
+            Seccion.ESTANTE -> lista += opcionesEstante(e)
+            Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.PANTALLAS -> {
+                lista += Opcion(
+                    "Tamaño en la pantalla de arriba", nombreZoom(e.zoomArriba), Icono.ARRIBA,
+                    "Automático ajusta todo según la forma de la pantalla. Compacto muestra más cosas; grande, todo más grande.",
+                ) { ciclarZoom(true) }
+                if (e.dosDisponibles) lista += Opcion(
+                    "Tamaño en la pantalla de abajo", nombreZoom(e.zoomAbajo), Icono.ABAJO,
+                    "La pantalla de abajo de la Thor es casi cuadrada: en automático todo se acomoda a esa forma.",
+                ) { ciclarZoom(false) }
                 lista += Opcion(
                     "Modo de pantallas", if (e.dosDisponibles) nombreModo(e.modoPantallas) else "Una (no hay otra)", Icono.PANTALLAS,
                     "Dos pantallas: arriba el juego y abajo el estante. Una: todo en la pantalla principal, como en una tele o una Odin.",
@@ -1197,10 +1365,18 @@ object Diptico {
                     "Suena mientras eliges. Se calla al abrir un juego o si otra app pone música.",
                 ) { fijarMusica(!estado.value.musica) }
                 lista += Opcion(
-                    "Pista", nombrePista(e.pista), Icono.ESTRELLA,
-                    "Bisagra es lofi tranquilo, Cartucho es arcade alegre y Medianoche es ambiente suave.",
+                    "Música según el tema", if (e.musicaTema) "Sí" else "No", Icono.PALETA,
+                    "Cada tema trae su música: Halloween suena a fantasmas, Navidad a cascabeles, Sakura a flauta japonesa… Ahora: ${nombrePista(e.pistaTema)}.",
                 ) {
-                    val orden = ordenPistas + if (estado.value.carpetaMusica != null) listOf("mia") else emptyList()
+                    val v = !estado.value.musicaTema
+                    almacen.guardarBool("musicaTema", v)
+                    actualizar { it.copy(musicaTema = v) }
+                }
+                lista += Opcion(
+                    "Pista", nombrePista(e.pista), Icono.ESTRELLA,
+                    Musica.pistas.joinToString(" · ") { "${it.nombre}: ${it.estilo.lowercase()}" } + ". Se usa cuando \"Música según el tema\" está apagado.",
+                ) {
+                    val orden = Musica.pistas.map { it.id } + "mezcla" + if (estado.value.carpetaMusica != null) listOf("mia") else emptyList()
                     val i = orden.indexOf(estado.value.pista)
                     fijarPista(orden[(i + 1) % orden.size])
                 }
@@ -1228,6 +1404,14 @@ object Diptico {
                 }
             }
             Seccion.PORTADAS -> {
+                lista += Opcion(
+                    "Reconocer nombres de juegos", icono = Icono.TITULO,
+                    ayuda = "Busca el nombre oficial de cada juego en libretro (gratis). Se hace solo al buscar juegos nuevos.",
+                ) { identificarNombres(avisarAlFinal = true) }
+                lista += Opcion(
+                    "Reconocer nombres con IA", if (e.claveIa.isBlank()) "Necesita clave" else "Para los que faltan", Icono.CHISPA,
+                    "La IA reconoce los juegos que libretro no conoce (Switch, PS3, archivos con nombres raros) y les pone su nombre real.",
+                ) { identificarConIA() }
                 val d = e.descarga
                 lista += Opcion(
                     if (d != null) "Descargando…" else "Descargar lo que falta",
@@ -1273,9 +1457,9 @@ object Diptico {
                     "Úsalo cuando agregues juegos nuevos a tu carpeta.",
                 ) { escanear() }
                 lista += Opcion(
-                    "Cambiar carpeta de juegos", icono = Icono.CARPETA,
-                    ayuda = "La carpeta que tiene una carpeta por consola: snes, psx, nds, ps2…",
-                ) { pedirCarpeta?.invoke(Carpeta.JUEGOS) }
+                    "Carpetas de juegos", "${almacen.carpetas().size} carpetas", Icono.CARPETA,
+                    "Agrega todas las que quieras (memoria interna, SD…). Si una carpeta no tiene el nombre de una consola, le eliges la consola.",
+                ) { abrirCarpetas() }
                 lista += Opcion(
                     "Ports y apps", if (e.ports.isEmpty()) "Elegir" else "${e.ports.size} elegidos", Icono.APPS,
                     "Los ports son juegos hechos para Android (Ship of Harkinian, los de Doom, Mario 64…). " +
@@ -1426,6 +1610,9 @@ object Diptico {
 
     fun alternarReloj() = actualizar { it.copy(relojGrande = !it.relojGrande) }
 
+    /** El botón Inicio de Android con Díptico como launcher: cierra todo y vuelve al inicio. */
+    fun alInicio() = actualizar { it.copy(panel = Panel.NINGUNO, relojGrande = false, editandoWidgets = false, pregunta = false) }
+
     // ---------- Guardar listas en JSON ----------
 
     private fun leerTemas(s: String): List<Tema> = try {
@@ -1439,15 +1626,19 @@ object Diptico {
 
     private fun leerWidgets(s: String): List<Widget> = try {
         val a = org.json.JSONArray(s)
-        val leidos = (0 until a.length()).map { a.getJSONObject(it).let { o -> Widget(o.getString("tipo"), o.getInt("tam")) } }
-        // Si una versión nueva trae widgets nuevos, se agregan ocultos al final.
-        leidos + Widgets.porDefecto.filter { d -> leidos.none { it.tipo == d.tipo } }.map { it.copy(tam = 0) }
+        if (a.length() > 0 && a.getJSONObject(0).has("tam")) throw IllegalStateException("formato antiguo")
+        val leidos = (0 until a.length()).map {
+            a.getJSONObject(it).let { o -> Widget(o.getString("tipo"), o.getInt("x"), o.getInt("y"), o.getInt("an"), o.getInt("al"), o.optBoolean("visible", true)) }
+        }
+        // Si una versión nueva trae widgets nuevos, se agregan ocultos.
+        leidos + Widgets.porDefecto.filter { d -> leidos.none { it.tipo == d.tipo } }.map { it.copy(visible = false) }
     } catch (e: Exception) {
         Widgets.porDefecto
     }
 
-    private fun escribirWidgets(l: List<Widget>): String =
-        org.json.JSONArray().apply { l.forEach { put(org.json.JSONObject().put("tipo", it.tipo).put("tam", it.tam)) } }.toString()
+    private fun escribirWidgets(l: List<Widget>): String = org.json.JSONArray().apply {
+        l.forEach { put(org.json.JSONObject().put("tipo", it.tipo).put("x", it.x).put("y", it.y).put("an", it.an).put("al", it.al).put("visible", it.visible)) }
+    }.toString()
 
     private fun leerMapa(s: String): Map<String, String> = try {
         val o = org.json.JSONObject(s)
@@ -1469,9 +1660,11 @@ object Diptico {
         val elegido = todosLosTemas(e).firstOrNull { it.id == e.tema }
             ?: Temas.fiestas.firstOrNull { it.tema.id == e.tema }?.tema
             ?: Temas.incluidos[0]
-        cl.nikalbazu.diptico.ui.Estilo.tema = fiesta?.tema ?: elegido
+        val activo = fiesta?.tema ?: elegido
+        cl.nikalbazu.diptico.ui.Estilo.tema = activo
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = e.decoraciones
-        if (fiesta?.id != e.fiesta?.id) actualizar { it.copy(fiesta = fiesta) }
+        val pista = musicaDeTema(activo)
+        if (fiesta?.id != e.fiesta?.id || pista != e.pistaTema) actualizar { it.copy(fiesta = fiesta, pistaTema = pista) }
     }
 
     fun elegirTema(id: String) {
@@ -1654,40 +1847,105 @@ object Diptico {
 
     private fun opcionesInicio(e: Estado): List<Opcion> = listOf(
         Opcion(
-            "Estilo del inicio", if (e.inicio == "widgets") "Con widgets" else "Juego en grande", Icono.APPS,
-            "Juego en grande: el arte del juego ocupa la pantalla. Con widgets: armas tu inicio con reloj, música, recientes y más.",
-        ) {
-            val v = if (estado.value.inicio == "widgets") "heroe" else "widgets"
-            almacen.guardarTexto("inicio", v)
-            actualizar { it.copy(inicio = v) }
-        },
+            "Estilo del inicio", if (e.inicio == "widgets") "Con widgets" else "Carátulas", Icono.APPS,
+            "Carátulas: el arte del juego ocupa la pantalla. Con widgets: tu inicio con reloj, música, recientes y más. " +
+                "Se cambia rápido con Select.",
+        ) { alternarInicio() },
         Opcion(
-            "Editar widgets", "${e.widgets.count { it.tam > 0 }} a la vista", Icono.LAPIZ,
-            "Elige qué widgets se ven, su tamaño y su orden.",
-        ) { actualizar { it.copy(panel = Panel.WIDGETS, indice = 0, inicio = "widgets") }; almacen.guardarTexto("inicio", "widgets") },
+            "Acomodar widgets", "${e.widgets.count { it.visible }} a la vista", Icono.LAPIZ,
+            "Mueve los widgets con la cruceta o el dedo, cambia su tamaño con L1 y R1 (10 tamaños y formas).",
+        ) { editarWidgets() },
+        Opcion("Agregar o quitar widgets", icono = Icono.APPS, ayuda = "Elige qué widgets se ven en tu inicio.") {
+            actualizar { it.copy(panel = Panel.WIDGETS, indice = 0) }
+        },
+        Opcion("Volver al orden original", icono = Icono.BORRAR, ayuda = "Deja los widgets como vienen de fábrica.") {
+            guardarWidgets(Widgets.porDefecto)
+            avisar("Widgets como al principio")
+        },
         Opcion(
             "Permiso para el widget de música", if (Medios.tienePermiso(app)) "Listo ✓" else "Dar permiso", Icono.MUSICA,
             "Para mostrar y controlar lo que suena en Spotify, YouTube Music u otra app, Android pide activar el \"acceso a notificaciones\" de Díptico.",
         ) { if (!Medios.tienePermiso(app)) Medios.pedirPermiso(app) else avisar("El widget de música ya tiene permiso") },
     )
 
-    private fun ciclarWidget(i: Int) {
-        val l = estado.value.widgets.toMutableList()
-        val w = l.getOrNull(i) ?: return
-        l[i] = w.copy(tam = (w.tam + 1) % 4)
+    /** Select: cambia entre el inicio con widgets y el de carátulas. */
+    fun alternarInicio() {
+        val v = if (estado.value.inicio == "widgets") "heroe" else "widgets"
+        almacen.guardarTexto("inicio", v)
+        actualizar { it.copy(inicio = v, editandoWidgets = false) }
+    }
+
+    private fun guardarWidgets(l: List<Widget>) {
+        almacen.guardarTexto("widgets", escribirWidgets(l))
         actualizar { it.copy(widgets = l) }
     }
 
-    /** L1/R1 en el editor: mueve el widget elegido arriba o abajo. */
-    fun moverWidget(delta: Int) {
-        val e = estado.value
-        val i = e.indice
-        val j = i + delta
-        if (j !in e.widgets.indices) return
-        val l = e.widgets.toMutableList()
-        val w = l.removeAt(i)
-        l.add(j, w)
-        actualizar { it.copy(widgets = l, indice = j) }
+    /** Entra al modo de acomodar widgets (en la pantalla del inicio). */
+    fun editarWidgets() {
+        almacen.guardarTexto("inicio", "widgets")
+        val primero = estado.value.widgets.indexOfFirst { it.visible }.coerceAtLeast(0)
+        actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.NINGUNO) }
+        avisar("Cruceta mueve · L1 R1 tamaño · L2 R2 otro widget · Y agregar · B listo")
+    }
+
+    fun terminarEdicion() {
+        almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
+        actualizar { it.copy(editandoWidgets = false) }
+        avisar("Inicio guardado")
+    }
+
+    private fun cambiarWidget(i: Int, f: (Widget) -> Widget) {
+        val l = estado.value.widgets.toMutableList()
+        val w = l.getOrNull(i) ?: return
+        l[i] = f(w)
+        actualizar { it.copy(widgets = l) }
+    }
+
+    private fun encajar(w: Widget): Widget {
+        val an = w.an.coerceIn(1, Widgets.COLUMNAS)
+        val al = w.al.coerceIn(1, Widgets.FILAS)
+        return w.copy(an = an, al = al, x = w.x.coerceIn(0, Widgets.COLUMNAS - an), y = w.y.coerceIn(0, Widgets.FILAS - al))
+    }
+
+    fun moverWidgetSel(dx: Int, dy: Int) = cambiarWidget(estado.value.widgetSel) { encajar(it.copy(x = it.x + dx, y = it.y + dy)) }
+
+    /** Para arrastrar con el dedo: deja el widget en la celda indicada. */
+    fun ponerWidget(i: Int, x: Int, y: Int) = cambiarWidget(i) { encajar(it.copy(x = x, y = y)) }
+
+    fun tamanoWidgetSel(delta: Int) = cambiarWidget(estado.value.widgetSel) { w ->
+        val t = Widgets.TAMANOS
+        val i = t.indexOfFirst { it.first == w.an && it.second == w.al }
+        val (an, al) = t[(i + delta).mod(t.size)]
+        encajar(w.copy(an = an, al = al))
+    }
+
+    fun siguienteWidget(delta: Int) {
+        val l = estado.value.widgets
+        val visibles = l.indices.filter { l[it].visible }
+        if (visibles.isEmpty()) return
+        val pos = visibles.indexOf(estado.value.widgetSel)
+        actualizar { it.copy(widgetSel = visibles[(pos + delta).mod(visibles.size)]) }
+    }
+
+    fun elegirWidget(i: Int) = actualizar { it.copy(widgetSel = i) }
+
+    /** Muestra u oculta un widget. Al mostrarlo, lo pone en el primer hueco libre. */
+    private fun alternarWidget(i: Int) {
+        val l = estado.value.widgets
+        val w = l.getOrNull(i) ?: return
+        if (w.visible) {
+            cambiarWidget(i) { it.copy(visible = false) }
+        } else {
+            val ocupadas = HashSet<Pair<Int, Int>>()
+            l.filter { it.visible }.forEach { o -> for (x in o.x until o.x + o.an) for (y in o.y until o.y + o.al) ocupadas += x to y }
+            var lugar = 0 to 0
+            buscar@ for (y in 0..Widgets.FILAS - w.al) for (x in 0..Widgets.COLUMNAS - w.an) {
+                val libre = (x until x + w.an).all { cx -> (y until y + w.al).all { cy -> (cx to cy) !in ocupadas } }
+                if (libre) { lugar = x to y; break@buscar }
+            }
+            cambiarWidget(i) { it.copy(visible = true, x = lugar.first, y = lugar.second) }
+        }
+        almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
     }
 
     // ---------- Ficha del juego ----------
@@ -1845,4 +2103,403 @@ object Diptico {
             }
         }
     }
+    // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
+
+    private val VISTAS = listOf("estante", "cuadricula", "lista")
+    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Cuadrícula"; "lista" -> "Lista"; else -> "Estante" }
+
+    /** R3 o el botón Vista: estante, cuadrícula o lista. */
+    fun cambiarVista() {
+        val v = VISTAS[(VISTAS.indexOf(estado.value.vista) + 1).mod(VISTAS.size)]
+        almacen.guardarTexto("vista", v)
+        actualizar { it.copy(vista = v) }
+        avisar("Vista: ${nombreVista(v)}")
+    }
+
+    private val TAMANOS_JUEGO = listOf(0.8f, 1f, 1.2f, 1.4f)
+    fun nombreTamJuegos(t: Float) = when { t < 0.9f -> "Chico"; t < 1.1f -> "Mediano"; t < 1.3f -> "Grande"; else -> "Enorme" }
+
+    fun cambiarTamJuegos(delta: Int = 1) {
+        val i = TAMANOS_JUEGO.indexOfFirst { kotlin.math.abs(it - estado.value.tamJuegos) < 0.01f }
+        val t = TAMANOS_JUEGO[(i + delta).coerceIn(0, TAMANOS_JUEGO.size - 1)]
+        almacen.guardarTexto("tamJuegos", t.toString())
+        actualizar { it.copy(tamJuegos = t) }
+    }
+
+    val FILTROS = listOf("todos", "favoritos", "recientes", "mas", "sinjugar")
+    fun nombreFiltro(f: String) = when (f) {
+        "favoritos" -> "Favoritos"; "recientes" -> "Jugados hace poco"; "mas" -> "Más jugados"; "sinjugar" -> "Sin jugar"; else -> "Todos"
+    }
+
+    val ORDENES = listOf("az", "recientes", "tiempo")
+    fun nombreOrden(o: String) = when (o) { "recientes" -> "Últimos jugados"; "tiempo" -> "Más tiempo"; else -> "A → Z" }
+
+    fun cambiarFiltro(delta: Int = 1) {
+        val f = FILTROS[(FILTROS.indexOf(estado.value.filtro) + delta).mod(FILTROS.size)]
+        actualizar { it.copy(filtro = f, indice = 0) }
+    }
+
+    fun elegirFiltro(f: String) = actualizar { it.copy(filtro = f, indice = 0) }
+
+    fun cambiarOrden(delta: Int = 1) {
+        val o = ORDENES[(ORDENES.indexOf(estado.value.orden) + delta).mod(ORDENES.size)]
+        almacen.guardarTexto("orden", o)
+        actualizar { it.copy(orden = o, indice = 0) }
+    }
+
+    fun elegirOrden(o: String) {
+        almacen.guardarTexto("orden", o)
+        actualizar { it.copy(orden = o, indice = 0) }
+    }
+
+    /** L3 o el botón Buscar. */
+    fun abrirBuscar() = actualizar { it.copy(panel = Panel.BUSCAR, indice = 0) }
+
+    fun cambiarBusqueda(t: String) = actualizar { it.copy(busqueda = t.take(40), indice = 0) }
+
+    fun limpiarBusqueda() = actualizar { it.copy(busqueda = "", filtro = "todos", indice = 0) }
+
+    /** L2/R2: salta a la letra anterior o siguiente. */
+    fun saltarLetra(delta: Int) {
+        val e = estado.value
+        val v = e.visibles
+        if (v.isEmpty()) return
+        fun letra(i: Int) = v[i].titulo.firstOrNull()?.uppercaseChar() ?: ' '
+        val actual = letra(e.indiceSel)
+        var i = e.indiceSel
+        if (delta > 0) {
+            while (i < v.size - 1 && letra(i) == actual) i++
+        } else {
+            while (i > 0 && letra(i) == actual) i--
+            val l = letra(i)
+            while (i > 0 && letra(i - 1) == l) i--
+        }
+        actualizar { it.copy(juegoSel = v[i].clave) }
+        avisar("${letra(i)}")
+    }
+
+    // ---------- Forma de las cajas por consola ----------
+
+    val FORMAS = listOf("original", "cuadrada", "poster", "horizontal", "disco", "cartucho", "tarjeta")
+    fun nombreForma(f: String) = when (f) {
+        "cuadrada" -> "Cuadrada"; "poster" -> "Póster"; "horizontal" -> "Horizontal"; "disco" -> "Disco"
+        "cartucho" -> "Cartucho"; "tarjeta" -> "Tarjeta"; else -> "Caja original"
+    }
+
+    private val IMAGENES_CAJA = listOf("portada", "arte", "logo")
+    fun nombreImagenCaja(i: String) = when (i) { "arte" -> "Captura del juego"; "logo" -> "Logo"; else -> "Portada" }
+
+    private fun guardarFormas(m: Map<String, FormaCfg>) {
+        val o = org.json.JSONObject()
+        m.forEach { (k, f) -> o.put(k, org.json.JSONObject().put("forma", f.forma).put("tam", f.tam.toDouble()).put("imagen", f.imagen)) }
+        almacen.guardarTexto("formas", o.toString())
+        actualizar { it.copy(formas = m) }
+    }
+
+    private fun leerFormas(s: String): Map<String, FormaCfg> = try {
+        val o = org.json.JSONObject(s)
+        o.keys().asSequence().associateWith { k ->
+            o.getJSONObject(k).let { f -> FormaCfg(f.optString("forma", "original"), f.optDouble("tam", 1.0).toFloat(), f.optString("imagen", "portada")) }
+        }
+    } catch (e: Exception) {
+        emptyMap()
+    }
+
+    private fun cambiarForma(consola: String, f: (FormaCfg) -> FormaCfg) {
+        val m = estado.value.formas
+        guardarFormas(m + (consola to f(m[consola] ?: FormaCfg())))
+    }
+
+    fun ciclarForma(consola: String) = cambiarForma(consola) { it.copy(forma = FORMAS[(FORMAS.indexOf(it.forma) + 1).mod(FORMAS.size)]) }
+
+    private fun ciclarTamForma(consola: String) = cambiarForma(consola) {
+        val l = listOf(0.8f, 1f, 1.2f)
+        it.copy(tam = l[(l.indexOfFirst { t -> kotlin.math.abs(t - it.tam) < 0.01f } + 1).mod(l.size)])
+    }
+
+    private fun ciclarImagenCaja(consola: String) = cambiarForma(consola) {
+        it.copy(imagen = IMAGENES_CAJA[(IMAGENES_CAJA.indexOf(it.imagen) + 1).mod(IMAGENES_CAJA.size)])
+    }
+
+    private fun opcionesEstante(e: Estado): List<Opcion> {
+        val c = Consolas.porId(e.consolaSel)
+        val lista = mutableListOf(
+            Opcion("Vista", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { cambiarVista() },
+            Opcion("Tamaño de los juegos", nombreTamJuegos(e.tamJuegos), Icono.FORMA, "Más chico para ver más juegos, o más grande para verlos mejor.") { cambiarTamJuegos(if (e.tamJuegos >= 1.39f) -3 else 1) },
+            Opcion("Mostrar", nombreFiltro(e.filtro), Icono.CORAZON, "Todos, solo favoritos, jugados hace poco, los más jugados o los que no has jugado.") { cambiarFiltro() },
+            Opcion("Ordenar", nombreOrden(e.orden), Icono.MENU, "A → Z, últimos jugados o más tiempo jugado.") { cambiarOrden() },
+            Opcion("Buscar un juego", icono = Icono.BUSCAR, ayuda = "También con L3 (apretar el stick izquierdo).") { abrirBuscar() },
+        )
+        if (c != null) {
+            val f = e.formas[c.id] ?: FormaCfg()
+            lista += Opcion("Cajas de ${c.nombre}: forma", nombreForma(f.forma), Icono.FORMA, "Elige la forma de las cajas de esta consola. Para otra consola, elígela en el estante antes de abrir el menú.") { ciclarForma(c.id) }
+            lista += Opcion("Cajas de ${c.nombre}: tamaño", nombreTamJuegos(f.tam), Icono.FORMA) { ciclarTamForma(c.id) }
+            lista += Opcion("Cajas de ${c.nombre}: imagen", nombreImagenCaja(f.imagen), Icono.PORTADA, "Muestra la portada, una captura del juego o su logo.") { ciclarImagenCaja(c.id) }
+        } else {
+            lista += Opcion("Forma de las cajas", "Elige una consola", Icono.FORMA, "En el estante, elige una consola (L1 R1) y vuelve aquí para cambiar la forma de sus cajas.") {
+                avisar("Primero elige una consola en el estante con L1 o R1")
+            }
+        }
+        return lista
+    }
+
+    // ---------- Tamaño de cada pantalla ----------
+
+    private val ZOOMS = listOf(1f, 0.85f, 0.92f, 1.08f, 1.16f)
+    fun nombreZoom(z: Float) = when {
+        kotlin.math.abs(z - 1f) < 0.01f -> "Automático"
+        z < 0.9f -> "Muy compacto"; z < 1f -> "Compacto"; z < 1.12f -> "Grande"; else -> "Muy grande"
+    }
+
+    private fun ciclarZoom(arriba: Boolean) {
+        val actual = if (arriba) estado.value.zoomArriba else estado.value.zoomAbajo
+        val z = ZOOMS[(ZOOMS.indexOfFirst { kotlin.math.abs(it - actual) < 0.01f } + 1).mod(ZOOMS.size)]
+        almacen.guardarTexto(if (arriba) "zoomArriba" else "zoomAbajo", z.toString())
+        actualizar { if (arriba) it.copy(zoomArriba = z) else it.copy(zoomAbajo = z) }
+    }
+
+    // ---------- Centro de control y notificaciones ----------
+
+    fun abrirCentro() {
+        Medios.revisar(app)
+        actualizar { it.copy(panel = if (it.panel == Panel.CENTRO) Panel.NINGUNO else Panel.CENTRO, indice = 0) }
+    }
+
+    private fun abrirIntent(i: Intent, error: String) {
+        try {
+            app.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (e: Exception) {
+            avisar(error)
+        }
+    }
+
+    /** Abre el administrador de archivos de Android. */
+    fun abrirArchivos() {
+        val intentos = listOf(
+            Intent(Intent.ACTION_VIEW).setDataAndType(
+                android.provider.DocumentsContract.buildRootUri("com.android.externalstorage.documents", "primary"),
+                "vnd.android.document/root",
+            ),
+            Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_FILES),
+            app.packageManager.getLaunchIntentForPackage("com.google.android.documentsui"),
+            app.packageManager.getLaunchIntentForPackage("com.android.documentsui"),
+        ).filterNotNull()
+        for (i in intentos) {
+            try {
+                app.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                return
+            } catch (_: Exception) {
+            }
+        }
+        avisar("No encontré un administrador de archivos")
+    }
+
+    fun opcionesCentro(): List<Opcion> = listOf(
+        Opcion("Wi-Fi", icono = Icono.WIFI) {
+            abrirIntent(Intent(android.provider.Settings.Panel.ACTION_INTERNET_CONNECTIVITY), "No pude abrir el Wi-Fi")
+        },
+        Opcion("Bluetooth", icono = Icono.BLUETOOTH) { abrirIntent(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS), "No pude abrir el Bluetooth") },
+        Opcion("Volumen", icono = Icono.VOLUMEN) { abrirIntent(Intent(android.provider.Settings.Panel.ACTION_VOLUME), "No pude abrir el volumen") },
+        Opcion("Pantalla", icono = Icono.BRILLO) { abrirIntent(Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS), "No pude abrir la pantalla") },
+        Opcion("Archivos", icono = Icono.CARPETA) { abrirArchivos() },
+        Opcion("Ajustes", icono = Icono.AJUSTES) { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },
+    )
+
+    fun abrirAviso(a: Aviso) {
+        cerrarPanel()
+        Avisos.abrir(a)
+    }
+
+    fun descartarAvisoSel() {
+        val e = estado.value
+        val n = opcionesCentro().size
+        Avisos.lista.value.getOrNull(e.indice - n)?.let { Avisos.descartar(it) }
+    }
+
+    private fun opcionesConsola(e: Estado): List<Opcion> = listOf(
+        Opcion("Centro de control", "Notificaciones y accesos", Icono.CAMPANA, "Wi-Fi, Bluetooth, volumen, archivos y tus notificaciones. También manteniendo Start o tocando la campana.") { abrirCentro() },
+        Opcion(
+            "Notificaciones en Díptico", if (Medios.tienePermiso(app)) "Activadas ✓" else "Dar permiso", Icono.CAMPANA,
+            "Para ver las notificaciones de tus apps dentro de Díptico, Android pide activar el \"acceso a notificaciones\".",
+        ) { if (!Medios.tienePermiso(app)) Medios.pedirPermiso(app) else avisar("Las notificaciones ya están activadas") },
+        Opcion(
+            "Avisos emergentes", if (e.avisosEmergentes) "Sí" else "No", Icono.CAMPANA,
+            "Muestra un aviso chico cuando llega una notificación (nunca mientras juegas).",
+        ) {
+            val v = !estado.value.avisosEmergentes
+            almacen.guardarBool("avisosEmergentes", v)
+            actualizar { it.copy(avisosEmergentes = v) }
+        },
+        Opcion(
+            "Díptico como launcher principal", icono = Icono.ESTRELLA,
+            ayuda = "Abre los ajustes de Android para elegir Díptico como pantalla de inicio. Así el botón Inicio te trae aquí.",
+        ) { abrirIntent(Intent(android.provider.Settings.ACTION_HOME_SETTINGS), "No pude abrir los ajustes de inicio") },
+        Opcion("Archivos", icono = Icono.CARPETA, ayuda = "Abre el administrador de archivos de Android.") { abrirArchivos() },
+        Opcion("Ajustes de Android", icono = Icono.AJUSTES) { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },
+    )
+
+    // ---------- Reconocer los nombres de los juegos ----------
+
+    /** Busca el nombre oficial de los juegos en la lista de libretro (sin bajar imágenes). */
+    fun identificarNombres(avisarAlFinal: Boolean = false) {
+        if (!estado.value.titulosBonitos) return
+        val pendientes = crudos.filter { medios[it.clave]?.titulo == null }
+        if (pendientes.isEmpty()) {
+            if (avisarAlFinal) avisar("Todos tus juegos ya tienen nombre")
+            return
+        }
+        trabajo("nombres", "Reconociendo nombres")
+        scope.launch {
+            val hay = withContext(Dispatchers.IO) { Descargas.hayInternet() }
+            if (!hay) {
+                terminarTrabajo("nombres")
+                if (avisarAlFinal) avisar("Necesito internet para reconocer los nombres")
+                return@launch
+            }
+            var n = 0
+            pendientes.forEachIndexed { i, j ->
+                val c = Consolas.porId(j.consolaId) ?: return@forEachIndexed
+                if (i % 10 == 0) trabajo("nombres", "Reconociendo nombres", i / pendientes.size.toFloat())
+                val t = withContext(Dispatchers.IO) { try { Descargas.identificar(app, j, c) } catch (ex: Exception) { null } }
+                if (t != null) {
+                    medios = medios + (j.clave to (medios[j.clave] ?: MediosJuego()).copy(titulo = t))
+                    n++
+                }
+            }
+            withContext(Dispatchers.IO) { almacen.guardarMedios(medios) }
+            publicarJuegos()
+            terminarTrabajo("nombres")
+            if (avisarAlFinal || n > 0) avisar("Reconocí el nombre de $n juegos")
+        }
+    }
+
+    /** Pide a la IA el nombre de los juegos que no se reconocieron (Switch, PS3, archivos con nombres raros…). */
+    fun identificarConIA() {
+        val clave = estado.value.claveIa
+        if (clave.isBlank()) {
+            abrirTexto("ia_clave")
+            avisar("Para reconocer nombres con IA necesito tu clave de Claude")
+            return
+        }
+        val pendientes = crudos.filter { medios[it.clave]?.titulo == null }
+        if (pendientes.isEmpty()) {
+            avisar("Todos tus juegos ya tienen nombre")
+            return
+        }
+        trabajo("ia_nombres", "La IA está reconociendo tus juegos")
+        scope.launch {
+            var n = 0
+            var error: String? = null
+            pendientes.chunked(40).forEachIndexed { i, grupo ->
+                trabajo("ia_nombres", "La IA está reconociendo tus juegos", i * 40f / pendientes.size)
+                val r = withContext(Dispatchers.IO) {
+                    try {
+                        IA.nombres(clave, grupo.map { (Consolas.porId(it.consolaId)?.bonito ?: it.consolaId) to it.archivo })
+                    } catch (ex: Exception) {
+                        error = ex.message
+                        emptyMap()
+                    }
+                }
+                for (j in grupo) {
+                    val t = r[j.archivo] ?: continue
+                    medios = medios + (j.clave to (medios[j.clave] ?: MediosJuego()).copy(titulo = t))
+                    n++
+                }
+            }
+            withContext(Dispatchers.IO) { almacen.guardarMedios(medios) }
+            publicarJuegos()
+            terminarTrabajo("ia_nombres")
+            avisar(error?.let { "IA: $it" } ?: "La IA reconoció $n juegos")
+        }
+    }
+
+    // ---------- Música según el tema ----------
+
+    /** Qué pista va con cada tema y cada fiesta. */
+    fun musicaDeTema(t: Tema): String = when (t.id.removePrefix("fiesta_")) {
+        "medianoche", "oled", "papel" -> "medianoche"
+        "sakura", "hanami", "pascua", "lunar", "eid", "mujer" -> "sakura"
+        "arcade", "lava", "gamer" -> "neon"
+        "oceano", "songkran" -> "oceano"
+        "bosque", "tierra", "sanpatricio", "gracias", "andino" -> "bosque"
+        "portatil" -> "portatil"
+        "halloween", "muertos" -> "fantasma"
+        "navidad", "anionuevo", "reyes", "janucá", "diwali" -> "nieve"
+        "carnaval", "holi", "orgullo", "fiestaspatrias", "independencia", "oktoberfest", "sanvalentin" -> "fiesta"
+        "atardecer" -> "cartucho"
+        else -> if (t.propio) when (t.decor) {
+            "nieve" -> "nieve"; "murcielagos" -> "fantasma"; "petalos", "faroles" -> "sakura"; "confeti", "fuegos" -> "fiesta"
+            "hojas" -> "bosque"; "burbujas" -> "oceano"; "estrellas" -> "medianoche"; else -> "bisagra"
+        } else "bisagra"
+    }
+
+    // ---------- Varias carpetas de juegos ----------
+
+    /** Carpeta elegida (árbol) que contiene a un juego, para rutas y archivos vecinos. */
+    private fun raizDe(j: Juego): Uri? = try {
+        android.provider.DocumentsContract.buildTreeDocumentUri(j.uri.authority, android.provider.DocumentsContract.getTreeDocumentId(j.uri))
+    } catch (e: Exception) {
+        almacen.carpeta
+    }
+
+    /** Lista de consolas para elegir a mano: las más usadas primero. */
+    fun consolasElegibles(): List<Consola> = Consolas.todas
+
+    fun abrirCarpetas() = actualizar { it.copy(panel = Panel.CARPETAS, indice = 0, consolaPara = -1, carpetas = almacen.carpetas()) }
+
+    /** Si una carpeta nueva no tiene juegos reconocibles, pregunta de qué consola es. */
+    private fun revisarCarpetaNueva(uri: Uri) {
+        scope.launch {
+            val juegos = withContext(Dispatchers.IO) { try { Biblioteca.escanear(app, uri, null) } catch (e: Exception) { emptyList() } }
+            if (juegos.isEmpty()) {
+                val l = almacen.carpetas()
+                val i = l.indexOfFirst { it.uri == uri }
+                if (i >= 0) {
+                    actualizar { it.copy(panel = Panel.CARPETAS, carpetas = l, consolaPara = i, indice = 0) }
+                    avisar("No reconocí la consola de esa carpeta. Elígela tú.")
+                }
+            }
+        }
+    }
+
+    /** Filas del panel de carpetas: cada carpeta y "Agregar carpeta". */
+    fun filasCarpetas(): Int = estado.value.carpetas.size + 1
+
+    private fun aceptarCarpetas() {
+        val e = estado.value
+        if (e.consolaPara >= 0) {
+            // Elegir consola: fila 0 = automático, luego todas las consolas.
+            val consola = if (e.indice == 0) null else consolasElegibles().getOrNull(e.indice - 1)?.id
+            val l = e.carpetas.toMutableList()
+            l[e.consolaPara] = l[e.consolaPara].copy(consola = consola)
+            almacen.guardarCarpetas(l)
+            actualizar { it.copy(carpetas = l, consolaPara = -1, indice = e.consolaPara) }
+            escanear()
+            return
+        }
+        if (e.indice >= e.carpetas.size) pedirCarpeta?.invoke(Carpeta.JUEGOS)
+        else actualizar { it.copy(consolaPara = e.indice, indice = 0) }
+    }
+
+    /** Y en el panel de carpetas: quita la carpeta elegida. */
+    fun quitarCarpeta() {
+        val e = estado.value
+        if (e.consolaPara >= 0 || e.indice >= e.carpetas.size) return
+        val l = e.carpetas.toMutableList()
+        val quitada = l.removeAt(e.indice)
+        try {
+            app.contentResolver.releasePersistableUriPermission(quitada.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (_: Exception) {
+        }
+        almacen.guardarCarpetas(l)
+        actualizar { it.copy(carpetas = l, indice = it.indice.coerceAtMost(l.size), tieneCarpeta = l.isNotEmpty()) }
+        avisar("Carpeta quitada")
+        escanear()
+        if (l.isEmpty()) {
+            crudos = emptyList()
+            publicarJuegos()
+        }
+    }
+
+    fun nombreCarpeta(c: CarpetaJuegos): String = Biblioteca.nombreCarpeta(c.uri)
 }

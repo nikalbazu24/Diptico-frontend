@@ -28,6 +28,14 @@ object Musica {
         Pista("bisagra", "Bisagra", "Lofi tranquilo", R.raw.diptico_bisagra),
         Pista("cartucho", "Cartucho", "Arcade alegre", R.raw.diptico_cartucho),
         Pista("medianoche", "Medianoche", "Ambiente suave", R.raw.diptico_medianoche),
+        Pista("fantasma", "Fantasma", "Misterio de Halloween", R.raw.diptico_fantasma),
+        Pista("nieve", "Nieve", "Cascabeles de Navidad", R.raw.diptico_nieve),
+        Pista("sakura", "Sakura", "Flauta y koto japonés", R.raw.diptico_sakura),
+        Pista("neon", "Neón", "Synthwave arcade", R.raw.diptico_neon),
+        Pista("oceano", "Océano", "Olas y calma", R.raw.diptico_oceano),
+        Pista("bosque", "Bosque", "Folk con flauta", R.raw.diptico_bosque),
+        Pista("portatil", "Portátil", "Chiptune clásico", R.raw.diptico_portatil),
+        Pista("fiesta", "Fiesta", "Carnaval y celebración", R.raw.diptico_fiesta),
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

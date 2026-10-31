@@ -55,8 +55,20 @@ object Biblioteca {
         }
     }
 
-    fun escanear(ctx: Context, arbol: Uri, media: Uri?): List<Juego> {
+    /** Nombre corto de una carpeta para mostrar: "ROMs/switch" o "SD · Juegos". */
+    fun nombreCarpeta(uri: Uri): String = try {
+        val id = DocumentsContract.getTreeDocumentId(uri)
+        val vol = id.substringBefore(':')
+        val ruta = id.substringAfter(':', "").ifEmpty { "(raíz)" }
+        if (vol.equals("primary", true)) ruta else "SD · $ruta"
+    } catch (e: Exception) {
+        uri.lastPathSegment ?: "Carpeta"
+    }
+
+    fun escanear(ctx: Context, arbol: Uri, media: Uri?, consolaFija: String? = null): List<Juego> {
         val raizId = DocumentsContract.getTreeDocumentId(arbol)
+        val fija = consolaFija?.let { Consolas.porId(it) }
+        if (fija != null) return escanearConsolas(ctx, arbol, media, listOf(Doc(raizId, nombreDe(ctx, arbol, raizId) ?: fija.id, true) to fija))
         val raiz = listar(ctx, arbol, raizId)
 
         // Carpetas de consola dentro de la carpeta elegida...
@@ -68,6 +80,10 @@ object Biblioteca {
             if (consola != null) carpetasConsola += Doc(raizId, nombreRaiz, true) to consola
         }
 
+        return escanearConsolas(ctx, arbol, media, carpetasConsola)
+    }
+
+    private fun escanearConsolas(ctx: Context, arbol: Uri, media: Uri?, carpetasConsola: List<Pair<Doc, Consola>>): List<Juego> {
         val mediaRaiz = media?.let { m -> listar(ctx, m, DocumentsContract.getTreeDocumentId(m)) }
         val juegos = mutableListOf<Juego>()
 
@@ -148,10 +164,16 @@ object Biblioteca {
 
     /** "Leyenda del Bosque (USA) [!]" -> "Leyenda del Bosque". */
     fun limpiarTitulo(base: String): String {
-        val limpio = base
-            .replace(Regex("\\s*[\\(\\[][^\\)\\]]*[\\)\\]]"), "")
+        var t = base
+            .replace(Regex("\\s*[\\(\\[\\{][^\\)\\]\\}]*[\\)\\]\\}]"), " ") // (USA) [!] {v1.2}
             .replace('_', ' ')
-            .trim()
-        return limpio.ifEmpty { base }
+            .replace(Regex("(?<=[a-z])(?=[A-Z][a-z])"), " ") // SuperMarioOdyssey -> Super Mario Odyssey
+            .replace(Regex("\\b[0-9A-F]{16}\\b"), " ") // códigos de juego de Switch
+            .replace(Regex("\\b[A-Z]{4}[0-9]{5}\\b"), " ") // códigos de PlayStation (BLUS30443)
+            .replace(Regex("(?i)\\bv?\\d+(\\.\\d+){1,3}\\b"), " ") // versiones 1.0.2
+            .replace(Regex("(?i)\\b(nsp|xci|nsz|usa|eur|jpn|pal|ntsc|multi\\d*|update|dlc|rev ?\\d)\\b"), " ")
+        if (!t.contains(' ') && t.count { it == '.' } >= 2) t = t.replace('.', ' ')
+        t = t.replace(Regex("\\s*-\\s*$"), "").replace(Regex("\\s{2,}"), " ").trim()
+        return t.ifEmpty { base }
     }
 }

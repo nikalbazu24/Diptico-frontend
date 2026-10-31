@@ -597,7 +597,7 @@ private fun ChecklistControles(e: Estado) {
     val items = listOf(
         Triple("cruceta", "← →", "Moverte por el estante"),
         Triple("gatillos", "L1 R1", "Cambiar de consola"),
-        Triple("Y", "Y", "Anotar tu próximo paso"),
+        Triple("Y", "Y", "Opciones del juego"),
         Triple("Start", "Start", "Abrir el menú"),
     )
     Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {

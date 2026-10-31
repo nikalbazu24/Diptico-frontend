@@ -44,7 +44,12 @@ data class DatosJuego(
     /** Trucos, claves y notas personales. */
     val notas: String = "",
     val favorito: Boolean = false,
+    /** Emulador solo para este juego (null = el de la consola). */
+    val emulador: String? = null,
 )
+
+/** Una carpeta de juegos elegida por la persona. [consola]: consola fija, o null para reconocerla sola. */
+data class CarpetaJuegos(val uri: Uri, val consola: String?)
 
 /** Imágenes y título descargados de internet para un juego (rutas dentro de la app). */
 data class MediosJuego(

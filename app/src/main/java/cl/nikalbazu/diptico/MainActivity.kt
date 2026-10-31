@@ -42,13 +42,14 @@ class MainActivity : BaseActivity() {
             val vertical = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
             val mi = miDisplay()
             val t = e.tamTexto
+            val z = e.zoomArriba
             when {
                 !hayInferior && vertical && e.configurado -> Column(Modifier.fillMaxSize().background(Color.Black)) {
                     Lienzo(e.oscuro, Modifier.fillMaxWidth().aspectRatio(16f / 9f), t) { Raiz(e, Rol.SUPERIOR, mi) }
                     Lienzo(e.oscuro, Modifier.fillMaxWidth().weight(1f), t) { Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) }
                 }
-                e.unaPantalla -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.UNICA, mi) }
-                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) {
+                e.unaPantalla -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t, z) { Raiz(e, Rol.UNICA, mi) }
+                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t, z) {
                     Intercambio(e.intercambiar, esArriba = true) { inter ->
                         if (inter) Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) else Raiz(e, Rol.SUPERIOR, mi)
                     }

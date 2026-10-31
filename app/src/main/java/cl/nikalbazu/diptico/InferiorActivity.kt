@@ -40,6 +40,7 @@ class InferiorActivity : BaseActivity() {
             val e by Diptico.estado.collectAsState()
             val mi = miDisplay()
             val t = e.tamTexto
+            val z = e.zoomAbajo
             when {
                 !e.configurado -> Lienzo(true, Modifier.fillMaxSize(), t) { Raiz(e, Rol.INFERIOR, mi) }
                 e.unaPantalla -> Lienzo(true, Modifier.fillMaxSize(), t) {
@@ -50,7 +51,7 @@ class InferiorActivity : BaseActivity() {
                         )
                     }
                 }
-                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) {
+                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t, z) {
                     Intercambio(e.intercambiar, esArriba = false) { inter ->
                         if (inter) Raiz(e, Rol.SUPERIOR, mi, rolIntro = Rol.INFERIOR) else Raiz(e, Rol.INFERIOR, mi)
                     }

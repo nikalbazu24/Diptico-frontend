@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +59,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.unit.dp
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -85,15 +88,15 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo2)) {
         val s = e.sesion
-        when {
-            s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
-            else -> Column(Modifier.fillMaxSize()) {
-                Cinta(e)
-                Box(Modifier.padding(horizontal = esc.d(16)).fillMaxWidth().height(esc.d(1)).background(p.linea))
-                if (esc.angosta) Estante(e, alto = 192f, escala = 1.08f) else Estante(e, alto = 214f, escala = 1.18f)
-                Info(e)
-                Spacer(Modifier.weight(1f))
-                Dock(e)
+        Box(Modifier.fillMaxSize().difuminar(e)) {
+            when {
+                s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
+                else -> Column(Modifier.fillMaxSize()) {
+                    Cinta(e)
+                    Box(Modifier.padding(horizontal = esc.d(16)).fillMaxWidth().height(esc.d(1)).background(p.linea))
+                    VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), if (esc.angosta) 1.08f else 1.18f)
+                    Dock(e)
+                }
             }
         }
         Paneles(e, conAyuda = false)
@@ -107,7 +110,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS)
+            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -120,7 +123,10 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     ) { panel ->
         when (panel) {
             Panel.MENU -> PanelMenu(e, conAyuda)
-            Panel.RAPIDO -> PanelRapido(e)
+            Panel.RAPIDO -> VentanaJuego(e)
+            Panel.BUSCAR -> PanelBuscar(e)
+            Panel.CENTRO -> PanelCentro(e)
+            Panel.CARPETAS -> PanelCarpetas(e)
             Panel.PASO -> PanelPaso(e)
             Panel.CLAVE -> PanelClave(e)
             Panel.PORTS -> PanelPorts(e)
@@ -130,6 +136,32 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
         }
     }
     Aviso(e.aviso, Modifier.align(Alignment.BottomCenter), abajo = if (e.panel == Panel.NINGUNO) 70f else 16f)
+}
+
+/** Con una ventana encima (opciones del juego, textos), lo de atrás se difumina. */
+fun Modifier.difuminar(e: Estado): Modifier =
+    if (e.panel in setOf(Panel.RAPIDO, Panel.PASO, Panel.CLAVE, Panel.CENTRO)) this.blur(16.dp) else this
+
+/** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
+@Composable
+fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
+    val esc = LocalEscala.current
+    val t = LocalTamJuegos.current
+    AnimatedContent(
+        targetState = e.vista,
+        transitionSpec = { (fadeIn(tween(260)) + scaleIn(tween(300), initialScale = 0.96f)) togetherWith fadeOut(tween(160)) },
+        label = "vista",
+        modifier = modifier,
+    ) { vista ->
+        when (vista) {
+            "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
+            "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
+            else -> Column(Modifier.fillMaxSize()) {
+                Estante(e, alto = (if (esc.angosta) 192f else 214f) * t.coerceAtMost(1.25f), escala = escalaEstante * t)
+                Info(e)
+            }
+        }
+    }
 }
 
 /** Las consolas, como pestañas con el ícono de su formato. */
@@ -191,7 +223,7 @@ fun Estante(e: Estado, alto: Float = 184f, escala: Float = 1f) {
 private fun EstanteDe(e: Estado, consola: String, alto: Float, escala: Float) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val lista = if (consola == "todo") e.juegos else e.juegos.filter { it.consolaId == consola }
+    val lista = if (consola == e.consolaSel) e.visibles else if (consola == "todo") e.juegos else e.juegos.filter { it.consolaId == consola }
     val estado = rememberLazyListState()
     val sel = lista.indexOfFirst { it.clave == e.seleccionado?.clave }
     LaunchedEffect(sel, lista.size) {
@@ -221,12 +253,16 @@ private fun EstanteDe(e: Estado, consola: String, alto: Float, escala: Float) {
                 val tam by animateFloatAsState(if (elegido) 1.06f else 1f, spring(dampingRatio = 0.5f), label = "tam")
                 val u = with(LocalDensity.current) { esc.d(1f).toPx() }
                 val color = colorDe(j.clave)
-                val forma = RoundedCornerShape(esc.d(c.caja.radio * escala))
+                val caja = cajaDe(c, escala)
+                val disco = LocalFormas.current[c.id]?.forma == "disco"
+                val forma = if (disco) CircleShape else RoundedCornerShape(esc.d(caja.radio))
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable(
+                    modifier = Modifier.combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
+                        // Mantener presionado abre la ventana del juego (personalizar, ficha, favoritos…).
+                        onLongClick = { Diptico.elegirJuego(j.clave); Diptico.abrirRapido() },
                     ) { if (elegido) Diptico.jugar() else Diptico.elegirJuego(j.clave) },
                 ) {
                     Box(
@@ -240,7 +276,7 @@ private fun EstanteDe(e: Estado, consola: String, alto: Float, escala: Float) {
                             ),
                     ) { CajaJuego(j, c, escala = escala) }
                     Box(
-                        Modifier.padding(top = esc.d(7)).width(esc.d(c.caja.ancho * escala)).height(esc.d(22)).clip(forma)
+                        Modifier.padding(top = esc.d(7)).width(esc.d(caja.ancho)).height(esc.d(22)).clip(RoundedCornerShape(esc.d(caja.radio.coerceAtMost(12f))))
                             .background(Brush.verticalGradient(listOf(color.copy(alpha = if (elegido) 0.33f else 0.16f), Color.Transparent))),
                     )
                 }
@@ -272,8 +308,9 @@ private fun Dock(e: Estado) {
         Box(Modifier.fillMaxWidth().height(esc.d(1)).background(p.linea))
         Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(8)).height(esc.d(62))) {
             ItemDock(Icono.CONTINUAR, "Continuar", p.acentoTexto) { Diptico.continuar() }
-            ItemDock(Icono.DADO, "Sorpréndeme") { Diptico.sorprendeme() }
-            ItemDock(Icono.LAPIZ, "Mi paso") { Diptico.abrirPaso() }
+            ItemDock(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
+            ItemDock(Icono.VISTA, Diptico.nombreVista(e.vista)) { Diptico.cambiarVista() }
+            ItemDock(Icono.APPS, if (e.inicio == "widgets") "Carátulas" else "Widgets") { Diptico.alternarInicio() }
             if (!e.unaPantalla) ItemDock(Icono.INTERCAMBIAR, "Intercambiar") { Diptico.intercambiar() }
             ItemDock(Icono.MENU, "Menú") { Diptico.abrirMenu() }
         }

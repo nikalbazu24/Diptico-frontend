@@ -102,7 +102,7 @@ fun PantallaSuperior(e: Estado) {
             horizontalArrangement = Arrangement.spacedBy(esc.d(16)),
         ) {
             BotonJugar()
-            if (!angosta) Pista("Y", "Próximo paso")
+            if (!angosta) Pista("Y", "Opciones")
             Pista("Start", "Menú")
         }
         if (e.sesion != null) {

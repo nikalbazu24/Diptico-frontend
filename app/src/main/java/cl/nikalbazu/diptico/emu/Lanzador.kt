@@ -233,7 +233,9 @@ object Lanzador {
      * [raiz] es la carpeta de juegos elegida (para rutas y archivos vecinos).
      */
     fun lanzar(ctx: Context, juego: Juego, consola: Consola, preferido: String?, displayId: Int?, raiz: Uri?): String? {
-        val rom = DocumentsContract.buildDocumentUri(juego.uri.authority, juego.docId)
+        // URI del juego dentro de la carpeta elegida: es la que Díptico puede compartir con el emulador.
+        // (La versión sin "tree" no se puede compartir y por eso Eden decía que no había juego.)
+        val rom = juego.uri
         val op = elegida(ctx, consola, preferido, juego.tipo)
 
         val base: Intent = try {

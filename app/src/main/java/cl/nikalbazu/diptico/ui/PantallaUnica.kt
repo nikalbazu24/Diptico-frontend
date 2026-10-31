@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -38,7 +39,15 @@ import cl.nikalbazu.diptico.estado.Icono
 fun PantallaUnica(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    if (e.inicio == "widgets") {
+        Box(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize().difuminar(e)) { PantallaInicio(e) }
+            Paneles(e, conAyuda = true)
+        }
+        return
+    }
     Box(Modifier.fillMaxSize().background(p.fondo)) {
+      Box(Modifier.fillMaxSize().difuminar(e)) {
         val juego = e.seleccionado
         if (juego != null) Heroe(juego, 0.78f)
         Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to p.fondo, 0.22f to p.fondo, 0.7f to Color.Transparent)))
@@ -69,17 +78,28 @@ fun PantallaUnica(e: Estado) {
             ) { j -> InfoUnica(e, j) }
         }
 
-        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
-            Cinta(e)
-            Estante(e, alto = 140f, escala = 0.74f)
-            Row(
-                Modifier.fillMaxWidth().padding(start = esc.d(22), end = esc.d(22), bottom = esc.d(8)),
-                verticalAlignment = Alignment.CenterVertically,
+        if (e.vista == "estante") {
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
+                Cinta(e)
+                Estante(e, alto = 140f * LocalTamJuegos.current.coerceAtMost(1.2f), escala = 0.74f * LocalTamJuegos.current)
+                Row(
+                    Modifier.fillMaxWidth().padding(start = esc.d(22), end = esc.d(22), bottom = esc.d(8)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Spacer(Modifier.weight(1f))
+                    Pistas("A" to "Jugar", "Y" to "Opciones", "L1 R1" to "Consola", "Select" to "Widgets", "Start" to "Menú")
+                }
+            }
+        } else {
+            Column(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.6f)
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, p.fondo.copy(alpha = 0.95f), p.fondo))),
             ) {
-                Spacer(Modifier.weight(1f))
-                Pistas("A" to "Jugar", "Y" to "Mi paso", "L1 R1" to "Consola", "Start" to "Menú")
+                Cinta(e)
+                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), 0.74f)
             }
         }
+      }
 
         Paneles(e, conAyuda = true)
     }
