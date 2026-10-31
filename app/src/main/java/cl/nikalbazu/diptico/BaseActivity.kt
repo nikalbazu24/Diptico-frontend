@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import cl.nikalbazu.diptico.estado.Carpeta
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Teclas
 
@@ -15,11 +16,25 @@ import cl.nikalbazu.diptico.estado.Teclas
 abstract class BaseActivity : ComponentActivity() {
 
     private val elegirJuegos = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        if (uri != null) Diptico.carpetaElegida(uri, esDeJuegos = true)
+        if (uri != null) Diptico.carpetaElegida(uri, Carpeta.JUEGOS)
     }
 
     private val elegirImagenes = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        if (uri != null) Diptico.carpetaElegida(uri, esDeJuegos = false)
+        if (uri != null) Diptico.carpetaElegida(uri, Carpeta.MEDIA)
+    }
+
+    private val elegirMusica = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) Diptico.carpetaElegida(uri, Carpeta.MUSICA)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Diptico.aLaVista(1)
+    }
+
+    override fun onStop() {
+        Diptico.aLaVista(-1)
+        super.onStop()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,13 +45,18 @@ abstract class BaseActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        Diptico.pedirCarpeta = { deJuegos ->
+        Diptico.pedirCarpeta = { tipo ->
             try {
-                if (deJuegos) elegirJuegos.launch(null) else elegirImagenes.launch(null)
+                when (tipo) {
+                    Carpeta.JUEGOS -> elegirJuegos.launch(null)
+                    Carpeta.MEDIA -> elegirImagenes.launch(null)
+                    Carpeta.MUSICA -> elegirMusica.launch(null)
+                }
             } catch (e: Exception) {
                 Diptico.avisar("No pude abrir el selector de carpetas")
             }
         }
+        Diptico.revisarPantallas()
         Diptico.alVolver(miDisplay())
     }
 

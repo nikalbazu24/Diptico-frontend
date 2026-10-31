@@ -1,7 +1,5 @@
 package cl.nikalbazu.diptico.ui
 
-import android.content.Context
-import android.os.BatteryManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -9,8 +7,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,163 +19,143 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import cl.nikalbazu.diptico.data.Consolas
+import cl.nikalbazu.diptico.data.Juego
+import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
-import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import cl.nikalbazu.diptico.estado.Panel
 
-fun formatoTiempo(segundos: Long): String {
-    if (segundos < 60) return "menos de 1 min"
-    val h = segundos / 3600
-    val m = (segundos % 3600) / 60
-    return if (h > 0) "$h h ${m.toString().padStart(2, '0')} min" else "$m min"
-}
-
-@Composable
-fun rememberHora(): String {
-    fun ahora() = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-    var hora by remember { mutableStateOf(ahora()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            hora = ahora()
-            delay(10_000)
-        }
-    }
-    return hora
-}
-
-private fun bateria(ctx: Context): Int =
-    ctx.getSystemService(BatteryManager::class.java)?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1
-
-@Composable
-fun rememberBateria(): Int {
-    val ctx = LocalContext.current
-    var nivel by remember { mutableIntStateOf(bateria(ctx)) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            nivel = bateria(ctx)
-            delay(60_000)
-        }
-    }
-    return nivel
-}
-
-/** Pantalla de arriba: el juego elegido ocupa todo, con la información encima. */
+/** Pantalla del juego: el juego elegido ocupa todo, con su información encima. Se adapta a pantalla ancha o angosta. */
 @Composable
 fun PantallaSuperior(e: Estado) {
+    if (e.panel == Panel.MENU) {
+        AyudaMenu(e)
+        return
+    }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    val angosta = esc.angosta
+    val margen = if (angosta) 22f else 32f
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         val juego = e.seleccionado
-        when {
-            juego == null -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                Logo(30f)
+        if (juego == null) {
+            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                Logo(26f)
                 Spacer(Modifier.height(esc.d(14)))
-                Texto(if (e.escaneando) "Buscando tus juegos…" else "No encontré juegos en tu carpeta", 20f, color = p.tenue)
+                Texto(if (e.escaneando) "Buscando tus juegos…" else "No encontré juegos en tu carpeta", 19f, color = p.tenue)
+                if (!e.escaneando) {
+                    Spacer(Modifier.height(esc.d(6)))
+                    Detalle("Abre el menú con Start › Biblioteca para elegirla.", 15f)
+                }
             }
-            else -> {
-                Crossfade(targetState = juego, animationSpec = tween(700), label = "arte", modifier = Modifier.fillMaxSize()) { j ->
-                    Box(Modifier.fillMaxSize()) {
-                        ArteJuego(
-                            j, preferirArte = true, maxLado = 1600,
-                            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.8f),
-                        )
-                    }
-                }
-                Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to p.fondo, 0.24f to p.fondo, 0.72f to Color.Transparent)))
-                Box(
-                    Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(260))
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, p.fondo))),
-                )
+            return@Box
+        }
+        Heroe(juego, if (angosta) 1f else 0.8f)
+        Box(
+            Modifier.fillMaxSize().background(
+                if (angosta) Brush.verticalGradient(0f to p.fondo.copy(alpha = 0.35f), 0.45f to p.fondo.copy(alpha = 0.7f), 1f to p.fondo)
+                else Brush.horizontalGradient(0f to p.fondo, 0.26f to p.fondo, 0.74f to Color.Transparent),
+            ),
+        )
+        Box(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(180))
+                .background(Brush.verticalGradient(listOf(Color.Transparent, p.fondo))),
+        )
 
-                BarraSuperior(Modifier.align(Alignment.TopStart))
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen)
 
-                AnimatedContent(
-                    targetState = juego,
-                    transitionSpec = { (fadeIn(tween(450)) + slideInVertically(tween(450)) { it / 10 }) togetherWith fadeOut(tween(200)) },
-                    label = "info",
-                    modifier = Modifier.padding(start = esc.d(44), top = esc.d(108)).width(esc.d(500)),
-                ) { j ->
-                    val c = Consolas.porId(j.consolaId)
-                    val datos = e.datos[j.clave]
-                    Column(verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                        if (c != null) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconoMedio(c.medio, c.color, p.fondo, tam = 24f)
-                                Spacer(Modifier.width(esc.d(10)))
-                                Texto(c.nombreLargo, 12f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, espaciado = 1.6f)
-                            }
-                        }
-                        Texto(j.titulo, 54f, lineas = 3, interlineado = 56f)
-                        Texto(
-                            if ((datos?.tiempo ?: 0L) > 0) "${formatoTiempo(datos!!.tiempo)} jugadas" else "Aún sin jugar con Díptico",
-                            14f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold,
-                        )
-                        Spacer(Modifier.height(esc.d(6)))
-                        Row {
-                            Box(Modifier.padding(top = esc.d(6)).size(esc.d(10)).clip(CircleShape).background(Coral))
-                            Spacer(Modifier.width(esc.d(10)))
-                            val paso = datos?.paso.orEmpty()
-                            Column {
-                                Texto("Tu próximo paso", 14f, color = p.acentoTexto)
-                                Texto(
-                                    paso.ifEmpty { "Aún no anotas dónde quedaste. Aprieta Y para hacerlo." },
-                                    20f, peso = FontWeight.SemiBold, lineas = 3, interlineado = 26f,
-                                    color = if (paso.isEmpty()) p.tenue else p.tinta,
-                                )
-                            }
-                        }
-                    }
-                }
+        AnimatedContent(
+            targetState = juego,
+            transitionSpec = { (fadeIn(tween(420)) + slideInVertically(tween(420)) { it / 10 }) togetherWith fadeOut(tween(180)) },
+            label = "info",
+            modifier = Modifier.padding(start = esc.d(margen), end = esc.d(margen), top = esc.d(58))
+                .widthIn(max = esc.d(if (angosta) 460f else 400f)),
+        ) { j -> InfoJuego(e, j, if (angosta) 32f else 38f) }
 
-                Row(
-                    Modifier.align(Alignment.BottomStart).padding(start = esc.d(44), bottom = esc.d(32)),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(esc.d(22)),
-                ) {
-                    Row(
-                        Modifier
-                            .shadow(esc.d(6), RoundedCornerShape(50), spotColor = Uva)
-                            .clip(RoundedCornerShape(50))
-                            .background(Uva)
-                            .padding(start = esc.d(7), end = esc.d(24), top = esc.d(7), bottom = esc.d(7)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(Modifier.size(esc.d(40)).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
-                            Texto("A", 18f, color = Uva)
-                        }
-                        Spacer(Modifier.width(esc.d(12)))
-                        Texto("¡Jugar!", 20f, color = Color.White)
-                    }
-                    PistaBoton("Y", "Próximo paso")
-                    PistaBoton("Start", "Ajustes")
-                }
-                if (e.sesion != null) {
+        Row(
+            Modifier.align(Alignment.BottomStart).padding(start = esc.d(margen), bottom = esc.d(22)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(esc.d(16)),
+        ) {
+            BotonJugar()
+            if (!angosta) Pista("Y", "Próximo paso")
+            Pista("Start", "Menú")
+        }
+        if (e.sesion != null) {
+            Etiqueta(
+                "Jugando ahora", Coral, 13f,
+                Modifier.align(Alignment.BottomEnd).padding(end = esc.d(margen), bottom = esc.d(34)),
+            )
+        }
+    }
+}
+
+/** El arte del juego, a la derecha (o de fondo en pantallas angostas), con un cruce suave al cambiar. */
+@Composable
+fun Heroe(juego: Juego, ancho: Float) {
+    Crossfade(targetState = juego, animationSpec = tween(650), label = "arte", modifier = Modifier.fillMaxSize()) { j ->
+        Box(Modifier.fillMaxSize()) {
+            ArteJuego(j, preferirArte = true, maxLado = 1600, modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho))
+        }
+    }
+}
+
+/** Consola, título (o logo), tiempo jugado y el próximo paso. */
+@Composable
+fun InfoJuego(e: Estado, j: Juego, tamTitulo: Float, conPaso: Boolean = true) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val c = Consolas.porId(j.consolaId)
+    val datos = e.datos[j.clave]
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        if (c != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconoMedio(c.medio, c.color, p.fondo, tam = 22f)
+                Spacer(Modifier.width(esc.d(8)))
+                Etiqueta(c.nombreLargo, p.tenue, 12.5f)
+            }
+        }
+        val logo = rememberImagen(j.logo, 700)
+        if (logo != null) {
+            Image(
+                logo, contentDescription = j.titulo, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart,
+                modifier = Modifier.heightIn(max = esc.d(tamTitulo * 2.4f)).widthIn(max = esc.d(320)),
+            )
+        } else {
+            Texto(j.titulo, tamTitulo, lineas = 3, interlineado = tamTitulo * 1.06f, sombra = true)
+        }
+        Detalle(
+            if ((datos?.tiempo ?: 0L) > 0) "${formatoTiempo(datos!!.tiempo)} jugadas" else "Aún sin jugar con Díptico",
+            14f,
+        )
+        if (conPaso) {
+            Spacer(Modifier.height(esc.d(2)))
+            Row {
+                Box(Modifier.padding(top = esc.d(6)).size(esc.d(9)).clip(CircleShape).background(Coral))
+                Spacer(Modifier.width(esc.d(9)))
+                val paso = datos?.paso.orEmpty()
+                Column(Modifier.clickable { Diptico.abrirPaso() }) {
+                    Texto("Tu próximo paso", 14f, color = p.acentoTexto)
                     Texto(
-                        "Jugando ahora", 13f, color = Coral, familia = Nunito, peso = FontWeight.ExtraBold,
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(end = esc.d(40), bottom = esc.d(44)),
+                        paso.ifEmpty { "Aún no anotas dónde quedaste. Aprieta Y para hacerlo." },
+                        17f, peso = FontWeight.SemiBold, lineas = 3, interlineado = 22f,
+                        color = if (paso.isEmpty()) p.tenue else p.tinta,
                     )
                 }
             }
@@ -185,35 +164,21 @@ fun PantallaSuperior(e: Estado) {
 }
 
 @Composable
-private fun PistaBoton(tecla: String, texto: String) {
-    val p = LocalPaleta.current
+fun BotonJugar() {
     val esc = LocalEscala.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.height(esc.d(26)).border(esc.d(2), p.tenue, RoundedCornerShape(50)).padding(horizontal = esc.d(8)),
-            contentAlignment = Alignment.Center,
-        ) { Texto(tecla, 12f) }
-        Spacer(Modifier.width(esc.d(8)))
-        Texto(texto, 16f)
-    }
-}
-
-@Composable
-internal fun BarraSuperior(modifier: Modifier, extra: @Composable () -> Unit = {}) {
-    val esc = LocalEscala.current
-    val hora = rememberHora()
-    val bat = rememberBateria()
     Row(
-        modifier.fillMaxWidth().padding(start = esc.d(44), end = esc.d(40), top = esc.d(24)),
+        Modifier
+            .shadow(esc.d(6), RoundedCornerShape(50), spotColor = Uva)
+            .clip(RoundedCornerShape(50))
+            .background(Uva)
+            .clickable { Diptico.jugar() }
+            .padding(start = esc.d(6), end = esc.d(20), top = esc.d(6), bottom = esc.d(6)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Logo(20f)
-        Spacer(Modifier.weight(1f))
-        Texto(hora, 16f, sombra = true)
-        if (bat >= 0) {
-            Spacer(Modifier.width(esc.d(18)))
-            Texto("$bat%", 16f, sombra = true)
+        Box(Modifier.size(esc.d(34)).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
+            Texto("A", 15f, color = Uva)
         }
-        extra()
+        Spacer(Modifier.width(esc.d(10)))
+        Texto("¡Jugar!", 18f, color = Color.White)
     }
 }

@@ -133,14 +133,14 @@ fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modif
 
 /** La caja del juego con la forma real de su consola. */
 @Composable
-fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier) {
+fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, escala: Float = 1f) {
     val esc = LocalEscala.current
     val f = consola.caja
     val tieneImagen = juego.portada != null
     Box(
         modifier
-            .size(esc.d(f.ancho), esc.d(f.alto))
-            .clip(RoundedCornerShape(esc.d(f.radio))),
+            .size(esc.d(f.ancho * escala), esc.d(f.alto * escala))
+            .clip(RoundedCornerShape(esc.d(f.radio * escala))),
     ) {
         ArteJuego(juego, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize())
         when (f.banda) {
@@ -157,9 +157,9 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier) {
         }
         if (!tieneImagen) {
             Texto(
-                juego.titulo, if (f.ancho < 90) 10f else 11f,
+                juego.titulo, if (f.ancho * escala < 90) 10.5f else 11.5f,
                 modifier = Modifier.align(Alignment.BottomStart).padding(start = esc.d(8), end = esc.d(8), bottom = esc.d(7)),
-                color = Color.White, lineas = 2, interlineado = 12f, sombra = true,
+                color = Color.White, lineas = 3, interlineado = 13f, sombra = true,
             )
         }
     }

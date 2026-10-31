@@ -13,10 +13,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -50,10 +50,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import cl.nikalbazu.diptico.audio.Musica
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
-import cl.nikalbazu.diptico.estado.Opcion
+import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.PasoTuto
 
 /** Qué parte de Díptico muestra cada pantalla. */
@@ -61,7 +63,6 @@ enum class Rol { SUPERIOR, INFERIOR, UNICA }
 
 private val Cuerpo = Color(0xFF2A2838)
 private val Apagado = Color(0xFF3A3850)
-private val Cielo = Color(0xFF3BA8FF)
 private val Noche = Color(0xFF14121F)
 
 private data class InfoPaso(val etiqueta: String, val titulo: String, val texto: String)
@@ -75,33 +76,38 @@ private fun nombreModoLargo(e: Estado) = when {
 
 private fun infoPaso(e: Estado, paso: PasoTuto): InfoPaso = when (paso) {
     PasoTuto.BIENVENIDA -> InfoPaso(
-        "BIENVENIDA", "¡Hola! Soy Díptico",
-        "Te ayudo a dejar todo listo en unos minutos. Puedes usar el control o tocar la pantalla.",
+        "Bienvenida", "¡Hola! Soy Díptico",
+        "Te ayudo a dejar todo listo. Usa la cruceta y la A, o toca la pantalla.",
     )
     PasoTuto.PANTALLAS -> InfoPaso(
-        "PANTALLAS", "¿Cómo quieres usar tu Thor?",
-        "Con dos pantallas, arriba ves el juego y abajo eliges. Con una, todo pasa arriba, como en una tele.",
+        "Pantallas", "¿Una pantalla o dos?",
+        if (e.dosDisponibles) "Con dos, arriba ves el juego y abajo eliges. Con una, todo pasa aquí, como en una tele."
+        else "Tu equipo tiene una pantalla, así que todo pasará aquí. Si conectas otra, podrás cambiarlo en el menú.",
+    )
+    PasoTuto.TEXTO -> InfoPaso(
+        "Letra", "¿Cómo se lee mejor?",
+        "Muévete entre las opciones y mira cómo cambia todo al tiro.",
     )
     PasoTuto.DISPOSICION -> InfoPaso(
-        "DISPOSICIÓN", "¿Qué va en cada pantalla?",
-        "Te recomiendo el juego arriba, que es la pantalla grande, y el estante abajo para elegir con el dedo.",
+        "Disposición", "¿Qué va en cada pantalla?",
+        "Te recomiendo el juego arriba, en la pantalla grande, y el estante abajo para elegir con el dedo.",
     )
     PasoTuto.JUEGOS -> InfoPaso(
-        "AL JUGAR", "¿Dónde se abren los juegos?",
-        "Es lo que pasa al apretar A. Para un juego en especial, puedes cambiarlo manteniendo A sobre él.",
+        "Al jugar", "¿Dónde se abren los juegos?",
+        "Es lo que pasa al apretar A. Para un juego en especial lo puedes cambiar manteniendo A.",
     )
     PasoTuto.CARPETA -> when {
         !e.tieneCarpeta -> InfoPaso(
-            "TUS JUEGOS", "¿Dónde están tus juegos?",
-            "Elige la carpeta que tiene adentro una carpeta por consola: snes, psx, nds, ps2… igual que en ES-DE.",
+            "Tus juegos", "¿Dónde están tus juegos?",
+            "Elige la carpeta que tiene una carpeta por consola: snes, gba, psx, nds, ps2… igual que en ES-DE.",
         )
-        e.escaneando -> InfoPaso("TUS JUEGOS", "Buscando tus juegos…", "Esto puede tardar un poco la primera vez.")
+        e.escaneando -> InfoPaso("Tus juegos", "Buscando tus juegos…", "La primera vez puede tardar un poco.")
         e.juegos.isEmpty() -> InfoPaso(
-            "TUS JUEGOS", "No encontré juegos",
-            "Revisa que adentro haya carpetas como snes, psx o nds con tus juegos, y elige la carpeta de nuevo.",
+            "Tus juegos", "No encontré juegos",
+            "Revisa que adentro haya carpetas como snes, gba o psx con tus juegos, y elige la carpeta de nuevo.",
         )
         else -> InfoPaso(
-            "TUS JUEGOS", "¡Encontré ${e.juegos.size} juegos!",
+            "Tus juegos", "¡Encontré ${e.juegos.size} juegos!",
             "Están en ${e.consolasConJuegos.size} consolas. Si falta alguna, revisa el nombre de su carpeta.",
         )
     }
@@ -109,132 +115,115 @@ private fun infoPaso(e: Estado, paso: PasoTuto): InfoPaso = when (paso) {
         val faltan = e.consolasConJuegos.count { !Diptico.emuladorListo(it) }
         when {
             e.consolasConJuegos.isEmpty() -> InfoPaso(
-                "EMULADORES", "Emuladores",
-                "Cuando agregues juegos, aquí verás con qué emulador se abre cada consola.",
+                "Emuladores", "Emuladores",
+                "Cuando agregues juegos, aquí eliges con qué emulador o núcleo de RetroArch se abre cada consola.",
             )
             faltan == 0 -> InfoPaso(
-                "EMULADORES", "Tus emuladores están listos",
-                "Si tienes más de un emulador para una consola, elígela para cambiarlo.",
+                "Emuladores", "Tus emuladores están listos",
+                "Toca una consola para cambiar su emulador. Con RetroArch eliges el núcleo (snes9x, mgba…).",
             )
             else -> InfoPaso(
-                "EMULADORES", if (faltan == 1) "Falta 1 emulador" else "Faltan $faltan emuladores",
-                "Puedes instalarlos después. Si tienes más de un emulador para una consola, elígela para cambiarlo.",
+                "Emuladores", if (faltan == 1) "Falta 1 emulador" else "Faltan $faltan emuladores",
+                "Puedes instalarlos después. RetroArch sirve para SNES, GBA, N64, PSX y más.",
             )
         }
     }
     PasoTuto.PORTADAS -> InfoPaso(
-        "PORTADAS", "Tus portadas",
-        "Uso una imagen con el mismo nombre del juego, a su lado o en una carpeta covers. También puedo usar las que ya descargó ES-DE.",
+        "Portadas", "Portadas, imágenes y títulos",
+        "Las bajo gratis de libretro. Con una clave de SteamGridDB también traigo logos y arte grande.",
+    )
+    PasoTuto.MUSICA -> InfoPaso(
+        "Música", "Elige la música de fondo",
+        "Escúchala mientras te mueves. Se calla sola al jugar o si pones Spotify o YouTube Music.",
     )
     PasoTuto.APARIENCIA -> InfoPaso(
-        "APARIENCIA", "¿Claro u oscuro?",
-        "Mira cómo cambia mientras eliges. El oscuro ahorra batería en las pantallas OLED de la Thor.",
+        "Apariencia", "¿Claro u oscuro?",
+        "Mira cómo cambia mientras eliges. El oscuro ahorra batería en pantallas OLED.",
     )
     PasoTuto.CONTROLES -> InfoPaso(
-        "CONTROLES", "Probemos el control",
-        "Aprieta cada botón para ver qué hace. Cuando quieras, aprieta A para seguir.",
+        "Controles", "Probemos el control",
+        "Aprieta cada botón para ver qué hace. Cuando quieras, elige Continuar.",
     )
     PasoTuto.LISTO -> InfoPaso(
-        "¡LISTO!", "¡Todo listo!",
-        "Usarás ${nombreModoLargo(e)}, con ${e.juegos.size} juegos y el tema ${if (e.oscuro) "oscuro" else "claro"}. " +
-            "Puedes cambiar todo después en Ajustes, con Start.",
+        "¡Listo!", "¡Todo listo!",
+        "Usarás ${nombreModoLargo(e)}, con ${e.juegos.size} juegos. Todo se cambia después en el menú, con Start.",
     )
 }
 
+/** El tutorial siempre va en una sola pantalla: así sirve igual en la Thor, una Odin o un teléfono. */
 @Composable
-fun Tutorial(e: Estado, rol: Rol) {
-    when (rol) {
-        Rol.SUPERIOR -> TutorialSuperior(e)
-        Rol.INFERIOR -> TutorialInferior(e)
-        Rol.UNICA -> TutorialUnico(e)
-    }
-}
-
-/** Pantalla de arriba en modo dos pantallas: título grande e ilustración. Las opciones van abajo. */
-@Composable
-private fun TutorialSuperior(e: Estado) {
+fun Tutorial(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo)) {
-        Box(Modifier.align(Alignment.TopEnd).size(esc.d(560)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.22f), Color.Transparent))))
+        Box(
+            Modifier.align(Alignment.TopEnd).size(esc.d(460))
+                .background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.2f), Color.Transparent))),
+        )
+        Box(
+            Modifier.align(Alignment.BottomStart).size(esc.d(380))
+                .background(Brush.radialGradient(listOf(Coral.copy(alpha = 0.12f), Color.Transparent))),
+        )
         Row(
-            Modifier.fillMaxWidth().padding(start = esc.d(44), end = esc.d(40), top = esc.d(24)),
+            Modifier.fillMaxWidth().padding(start = esc.d(28), end = esc.d(24), top = esc.d(16)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Logo(20f)
+            Logo(15f)
             Spacer(Modifier.weight(1f))
             Progreso(e)
         }
-        Entrada(e.pasoTuto, Modifier.fillMaxSize().padding(start = esc.d(56), end = esc.d(36), top = esc.d(80), bottom = esc.d(28))) {
-            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.width(esc.d(410)).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
-                    Encabezado(infoPaso(e, e.pasoTuto), 40f, 17f)
-                    Spacer(Modifier.height(esc.d(28)))
-                    HaciaAbajo()
-                }
-                Spacer(Modifier.weight(1f))
-                Box(Modifier.size(esc.d(440), esc.d(410)), contentAlignment = Alignment.Center) {
-                    Ilustracion(e, e.pasoTuto, compacta = false)
-                }
-            }
-        }
-    }
-}
-
-/** Pantalla de abajo en modo dos pantallas: las opciones, grandes y fáciles de tocar. */
-@Composable
-private fun TutorialInferior(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Box(Modifier.fillMaxSize().background(p.fondo2)) {
-        Column(Modifier.fillMaxSize().padding(start = esc.d(22), end = esc.d(22), top = esc.d(20), bottom = esc.d(14))) {
-            Entrada(e.pasoTuto, Modifier.weight(1f)) {
-                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                    Texto(infoPaso(e, e.pasoTuto).titulo, 22f, lineas = 2)
+        val info = infoPaso(e, e.pasoTuto)
+        Entrada(e.pasoTuto, Modifier.fillMaxSize().padding(start = esc.d(28), end = esc.d(24), top = esc.d(52), bottom = esc.d(14))) {
+            if (esc.angosta) {
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                    Encabezado(info, 26f, 15f)
                     if (e.pasoTuto == PasoTuto.CONTROLES) ChecklistControles(e)
                     ListaOpciones(e, Diptico.opcionesTuto(), Modifier.weight(1f))
+                    Pistas("A" to "Elegir", "B" to "Atrás")
                 }
-            }
-            Spacer(Modifier.height(esc.d(8)))
-            Pistas()
-        }
-        Aviso(e.aviso, Modifier.align(Alignment.BottomCenter))
-    }
-}
-
-/** Modo una pantalla: todo junto, el texto y la ilustración a la izquierda, las opciones a la derecha. */
-@Composable
-private fun TutorialUnico(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Box(Modifier.fillMaxSize().background(p.fondo)) {
-        Box(Modifier.align(Alignment.TopEnd).size(esc.d(520)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.2f), Color.Transparent))))
-        Row(
-            Modifier.fillMaxWidth().padding(start = esc.d(44), end = esc.d(40), top = esc.d(22)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Logo(18f)
-            Spacer(Modifier.weight(1f))
-            Progreso(e)
-        }
-        Entrada(e.pasoTuto, Modifier.fillMaxSize().padding(start = esc.d(44), end = esc.d(36), top = esc.d(74), bottom = esc.d(18))) {
-            Row(Modifier.fillMaxSize()) {
-                Column(Modifier.width(esc.d(430)).fillMaxHeight()) {
-                    Encabezado(infoPaso(e, e.pasoTuto), 32f, 15f)
-                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                        Ilustracion(e, e.pasoTuto, compacta = true)
+            } else {
+                Row(Modifier.fillMaxSize()) {
+                    Column(Modifier.width(esc.d(minOf(320f, esc.ancho * 0.45f))).fillMaxHeight()) {
+                        Encabezado(info, 29f, 15.5f)
+                        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                            val s = minOf(maxWidth.value / esc.d(420).value, maxHeight.value / esc.d(390).value)
+                            if (s > 0.28f) Ilustracion(e, e.pasoTuto, s * 0.96f)
+                        }
+                    }
+                    Spacer(Modifier.width(esc.d(24)))
+                    Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                        if (e.pasoTuto == PasoTuto.CONTROLES) ChecklistControles(e)
+                        ListaOpciones(e, Diptico.opcionesTuto(), Modifier.weight(1f))
+                        Pistas("↑ ↓" to "Moverte", "A" to "Elegir", "B" to "Atrás")
                     }
                 }
-                Spacer(Modifier.width(esc.d(34)))
-                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                    Spacer(Modifier.height(esc.d(6)))
-                    if (e.pasoTuto == PasoTuto.CONTROLES) ChecklistControles(e)
-                    ListaOpciones(e, Diptico.opcionesTuto(), Modifier.weight(1f))
-                    Pistas()
-                }
             }
         }
-        Aviso(e.aviso, Modifier.align(Alignment.BottomCenter))
+        Paneles(e, conAyuda = true)
+    }
+}
+
+/**
+ * La otra pantalla durante el tutorial: casi apagada mientras eliges,
+ * y un saludo cuando eliges usar las dos.
+ */
+@Composable
+fun TutorialAbajo(e: Estado) {
+    val esc = LocalEscala.current
+    val dos = e.modoElegido && e.modoPantallas == "dos"
+    Box(Modifier.fillMaxSize().background(if (dos) LocalPaleta.current.fondo2 else Color.Black), contentAlignment = Alignment.Center) {
+        if (dos) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
+                MiniEstante()
+                Texto("¡Hola desde abajo!", 26f)
+                Detalle("Aquí vivirá tu estante de juegos.\nSigue el tutorial en la pantalla de arriba.", 15f)
+            }
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Texto("↑", 30f, color = Color(0xFF3A3850))
+                Texto("El tutorial está en la otra pantalla", 15f, color = Color(0xFF3A3850))
+            }
+        }
     }
 }
 
@@ -244,17 +233,16 @@ private fun Entrada(clave: Any, modifier: Modifier = Modifier, contenido: @Compo
     val a = remember(clave) { Animatable(0f) }
     LaunchedEffect(clave) { a.animateTo(1f, tween(420, easing = FastOutSlowInEasing)) }
     val px = with(LocalDensity.current) { LocalEscala.current.d(1f).toPx() }
-    Box(modifier.graphicsLayer { alpha = a.value; translationX = (1f - a.value) * 46f * px }) { contenido() }
+    Box(modifier.graphicsLayer { alpha = a.value; translationX = (1f - a.value) * 40f * px }) { contenido() }
 }
 
 @Composable
 private fun Encabezado(info: InfoPaso, tamTitulo: Float, tamTexto: Float) {
-    val p = LocalPaleta.current
     val esc = LocalEscala.current
-    Column(verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
-        Texto(info.etiqueta, 12f, color = Coral, familia = Nunito, peso = FontWeight.ExtraBold, espaciado = 2f)
-        Texto(info.titulo, tamTitulo, interlineado = tamTitulo * 1.08f, lineas = 3)
-        Texto(info.texto, tamTexto, color = p.tenue, familia = Nunito, peso = FontWeight.Bold, interlineado = tamTexto * 1.45f)
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        Etiqueta(info.etiqueta, Coral, 12.5f)
+        Texto(info.titulo, tamTitulo, interlineado = tamTitulo * 1.1f, lineas = 3)
+        Detalle(info.texto, tamTexto, lineas = 4)
     }
 }
 
@@ -264,11 +252,11 @@ private fun Progreso(e: Estado) {
     val esc = LocalEscala.current
     val pasos = Diptico.pasosTuto(e)
     val actual = pasos.indexOf(e.pasoTuto).coerceAtLeast(0)
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
         pasos.forEachIndexed { i, paso ->
             key(paso) {
-                val ancho by animateDpAsState(if (i == actual) esc.d(26) else esc.d(8), label = "punto")
-                Box(Modifier.width(ancho).height(esc.d(8)).clip(RoundedCornerShape(50)).background(if (i <= actual) Uva else p.linea))
+                val ancho by animateDpAsState(if (i == actual) esc.d(22) else esc.d(7), label = "punto")
+                Box(Modifier.width(ancho).height(esc.d(7)).clip(RoundedCornerShape(50)).background(if (i <= actual) Uva else p.linea))
             }
         }
         Spacer(Modifier.width(esc.d(8)))
@@ -277,13 +265,13 @@ private fun Progreso(e: Estado) {
 }
 
 @Composable
-private fun ListaOpciones(e: Estado, opciones: List<Opcion>, modifier: Modifier = Modifier) {
+private fun ListaOpciones(e: Estado, opciones: List<cl.nikalbazu.diptico.estado.Opcion>, modifier: Modifier = Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     if (opciones.isEmpty()) {
         Column(modifier) {
             Row(
-                Modifier.fillMaxWidth().height(esc.d(62)).clip(RoundedCornerShape(esc.d(20)))
+                Modifier.fillMaxWidth().height(esc.d(60)).clip(RoundedCornerShape(esc.d(20)))
                     .background(p.superficie.copy(alpha = 0.6f)).padding(horizontal = esc.d(18)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -298,49 +286,8 @@ private fun ListaOpciones(e: Estado, opciones: List<Opcion>, modifier: Modifier 
     LaunchedEffect(e.indice, e.pasoTuto) { lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
     LazyColumn(state = lista, modifier = modifier, verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
         itemsIndexed(opciones) { i, o ->
-            val activa = i == e.indice
-            val fondo by animateColorAsState(if (activa) Uva else p.superficie.copy(alpha = 0.6f), label = "fila")
-            Row(
-                Modifier.fillMaxWidth().height(esc.d(62)).clip(RoundedCornerShape(esc.d(20))).background(fondo)
-                    .clickable { Diptico.elegirIndice(i) }
-                    .padding(start = esc.d(18), end = esc.d(12)),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Texto(o.titulo, 17f, color = if (activa) Color.White else p.tinta, lineas = 1, modifier = Modifier.weight(1f))
-                if (o.valor.isNotEmpty()) {
-                    Texto(
-                        o.valor, 13f, color = if (activa) Color.White.copy(alpha = 0.85f) else p.tenue,
-                        familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1,
-                    )
-                }
-                if (activa) {
-                    Spacer(Modifier.width(esc.d(10)))
-                    Box(Modifier.size(esc.d(32)).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
-                        Texto("A", 14f, color = Uva)
-                    }
-                }
-            }
+            TarjetaOpcion(o, activa = i == e.indice, alto = 60f) { Diptico.elegirIndice(i) }
         }
-    }
-}
-
-@Composable
-private fun Pistas() {
-    val p = LocalPaleta.current
-    Texto("↑ ↓ elegir · A confirmar · B volver", 12f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold)
-}
-
-@Composable
-private fun HaciaAbajo() {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val px = with(LocalDensity.current) { esc.d(1f).toPx() }
-    val inf = rememberInfiniteTransition(label = "abajo")
-    val y by inf.animateFloat(0f, 8f, infiniteRepeatable(tween(650, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "y")
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Texto("Elige en la pantalla de abajo", 15f, color = p.acentoTexto)
-        Spacer(Modifier.width(esc.d(10)))
-        Texto("↓", 20f, color = p.acentoTexto, modifier = Modifier.graphicsLayer { translationY = y * px })
     }
 }
 
@@ -356,42 +303,44 @@ fun Girador(tam: Float, color: Color = Uva) {
 
 // ---------- Ilustraciones ----------
 
+/** Dibujo de cada paso, pensado en 420 x 390 y achicado con [s] para que quepa. */
 @Composable
-private fun Ilustracion(e: Estado, paso: PasoTuto, compacta: Boolean) {
+private fun Ilustracion(e: Estado, paso: PasoTuto, s: Float) {
     val esc = LocalEscala.current
     val px = with(LocalDensity.current) { esc.d(1f).toPx() }
     val inf = rememberInfiniteTransition(label = "flota")
     val y by inf.animateFloat(-6f, 6f, infiniteRepeatable(tween(1800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "y")
-    val s = if (compacta) 0.58f else 1f
     Box(
         Modifier.requiredSize(esc.d(420), esc.d(390)).graphicsLayer { scaleX = s; scaleY = s; translationY = y * px },
         contentAlignment = Alignment.Center,
     ) {
         when (paso) {
+            PasoTuto.TEXTO -> MuestraTexto(e.tamTexto)
+            PasoTuto.MUSICA -> Ecualizador(e)
             PasoTuto.BIENVENIDA -> MiniThor(Noche, Noche, arriba = { Logo(24f, Color.White) }, abajo = { MiniEstante() })
             PasoTuto.PANTALLAS -> {
                 val i = e.indice
                 MiniThor(
                     Uva,
                     when (i) { 0 -> Coral; 1 -> Color.Black; else -> Apagado },
-                    arriba = { Etiqueta(if (i == 0) "Juego" else "Juego y estante") },
-                    abajo = { Etiqueta(when (i) { 0 -> "Estante"; 1 -> "Apagada"; else -> "Otra app" }) },
+                    arriba = { EtiquetaThor(if (i == 0) "Juego" else "Juego y estante") },
+                    abajo = { EtiquetaThor(when (i) { 0 -> "Estante"; 1 -> "Apagada"; else -> "Otra app" }) },
                 )
             }
             PasoTuto.DISPOSICION -> {
                 val inv = e.indice == 1
                 MiniThor(
                     if (inv) Coral else Uva, if (inv) Uva else Coral,
-                    arriba = { Etiqueta(if (inv) "Estante" else "Juego") },
-                    abajo = { Etiqueta(if (inv) "Juego" else "Estante") },
+                    arriba = { EtiquetaThor(if (inv) "Estante" else "Juego") },
+                    abajo = { EtiquetaThor(if (inv) "Juego" else "Estante") },
                 )
             }
             PasoTuto.JUEGOS -> {
                 val abajoJ = e.indice == 1
                 MiniThor(
                     if (abajoJ) Noche else Cielo, if (abajoJ) Cielo else Noche,
-                    arriba = { Etiqueta(if (abajoJ) "Díptico" else "▶  Juego") },
-                    abajo = { Etiqueta(if (abajoJ) "▶  Juego" else "Díptico") },
+                    arriba = { EtiquetaThor(if (abajoJ) "Díptico" else "▶  Juego") },
+                    abajo = { EtiquetaThor(if (abajoJ) "▶  Juego" else "Díptico") },
                 )
             }
             PasoTuto.CARPETA -> if (e.juegos.isNotEmpty()) RejillaConsolas(e, conEstado = false) else ArbolCarpetas()
@@ -399,13 +348,13 @@ private fun Ilustracion(e: Estado, paso: PasoTuto, compacta: Boolean) {
             PasoTuto.PORTADAS -> EstanteEjemplo(e)
             PasoTuto.APARIENCIA -> MiniInicio()
             PasoTuto.CONTROLES -> ControlIlustrado(e.probados)
-            PasoTuto.LISTO -> MiniThor(Uva, Coral, arriba = { Etiqueta("¡A jugar!") }, abajo = { Etiqueta("✓") })
+            PasoTuto.LISTO -> MiniThor(Uva, Coral, arriba = { EtiquetaThor("¡A jugar!") }, abajo = { EtiquetaThor("✓") })
         }
     }
 }
 
 @Composable
-private fun Etiqueta(texto: String) {
+private fun EtiquetaThor(texto: String) {
     Texto(texto, 22f, color = Color.White)
 }
 
@@ -644,7 +593,7 @@ private fun ChecklistControles(e: Estado) {
         Triple("cruceta", "← →", "Moverte por el estante"),
         Triple("gatillos", "L1 R1", "Cambiar de consola"),
         Triple("Y", "Y", "Anotar tu próximo paso"),
-        Triple("Start", "Start", "Abrir los ajustes"),
+        Triple("Start", "Start", "Abrir el menú"),
     )
     Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
         items.forEach { (clave, tecla, texto) ->
@@ -662,6 +611,58 @@ private fun ChecklistControles(e: Estado) {
                 Texto(texto, 15f, modifier = Modifier.weight(1f), lineas = 1)
                 Texto(if (ok) "✓" else "Pruébalo", 13f, color = if (ok) Sol else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold)
             }
+        }
+    }
+}
+
+/** Muestra cómo se ve la letra con cada tamaño. */
+@Composable
+private fun MuestraTexto(tam: Float) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(
+        Modifier.size(esc.d(380), esc.d(300)).clip(RoundedCornerShape(esc.d(26))).background(p.superficie).padding(esc.d(26)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(12)),
+    ) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Texto("Aa", 72f, color = Uva)
+            Spacer(Modifier.width(esc.d(14)))
+            Texto("Aa", 46f, color = Coral, modifier = Modifier.padding(bottom = esc.d(8)))
+        }
+        Texto("Leyenda del Bosque", 26f, lineas = 1)
+        Texto("Tu próximo paso: buscar la llave del templo", 17f, color = p.tenue, lineas = 2)
+    }
+}
+
+/** Barras que bailan con la pista elegida. */
+@Composable
+private fun Ecualizador(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val inf = rememberInfiniteTransition(label = "eq")
+    val colores = listOf(Uva, Coral, Sol, Cielo, Color(0xFFFF5D8F), Uva, Coral)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(Modifier.height(esc.d(200)), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+            colores.forEachIndexed { i, c ->
+                val dur = 380 + (i * 97) % 300
+                val h by inf.animateFloat(
+                    if (e.musica) 40f else 14f, if (e.musica) 190f - (i % 3) * 30f else 16f,
+                    infiniteRepeatable(tween(dur, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "b$i",
+                )
+                Box(Modifier.width(esc.d(30)).height(esc.d(h)).clip(RoundedCornerShape(esc.d(10))).background(if (e.musica) c else Apagado))
+            }
+        }
+        Spacer(Modifier.height(esc.d(22)))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconoDiptico(if (e.musica) Icono.MUSICA else Icono.SILENCIO, p.tinta, 34f, acento = Coral)
+            Spacer(Modifier.width(esc.d(12)))
+            Texto(
+                if (!e.musica) "Sin música" else when (e.pista) {
+                    "mezcla" -> "Mezcla"; "mia" -> "Tu música"
+                    else -> Musica.pistas.firstOrNull { it.id == e.pista }?.nombre ?: ""
+                },
+                30f,
+            )
         }
     }
 }

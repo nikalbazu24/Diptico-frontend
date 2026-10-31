@@ -35,8 +35,15 @@ data class Emulador(
     val limpiarTarea: Boolean = false,
     /** Si no es null, solo sirve para estos tipos de archivo ("carpeta" = juego en carpeta). */
     val soloPara: Set<String>? = null,
+    /** Núcleo de RetroArch (por ejemplo "snes9x"). */
+    val nucleo: String? = null,
+    /** Extras de texto; {pkg} y {core} se reemplazan al abrir. */
+    val extrasTexto: Map<String, String> = emptyMap(),
 ) {
     fun sirvePara(tipo: String): Boolean = soloPara == null || tipo in soloPara
+
+    /** Identificador guardado en los ajustes: paquete y, si es RetroArch, su núcleo. */
+    fun id(paquete: String): String = if (nucleo != null) "$paquete#$nucleo" else paquete
 
     fun componente(paquete: String): String = when {
         actividad.startsWith(".") -> paquete + actividad
@@ -59,6 +66,8 @@ data class Consola(
     val dosPantallas: Boolean = false,
     /** Las subcarpetas también son juegos (PS3 en formato carpeta). */
     val carpetasSonJuegos: Boolean = false,
+    /** Nombre del sistema en libretro-thumbnails, para descargar portadas. */
+    val libretro: String? = null,
 )
 
 object Consolas {
@@ -67,6 +76,20 @@ object Consolas {
 
     private fun ext(vararg e: String) = e.toSet()
 
+    /** RetroArch con un núcleo, igual que lo abre ES-DE en Android. */
+    private fun ra(nombre: String, core: String) = Emulador(
+        "RetroArch · $nombre",
+        listOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"),
+        "com.retroarch.browser.retroactivity.RetroActivityFuture",
+        modo = ModoRom.RUTA,
+        extraRom = "ROM",
+        nucleo = core,
+        extrasTexto = mapOf(
+            "CONFIGFILE" to "/storage/emulated/0/Android/data/{pkg}/files/retroarch.cfg",
+            "LIBRETRO" to "/data/data/{pkg}/cores/{core}_libretro_android.so",
+        ),
+    )
+
     val todas: List<Consola> = listOf(
         Consola(
             id = "snes", nombre = "SNES", nombreLargo = "SUPER NINTENDO",
@@ -74,8 +97,17 @@ object Consolas {
             extensiones = ext("bin", "bml", "bs", "bsx", "dx2", "fig", "gd3", "gd7", "mgd", "sfc", "smc", "st", "swc", "7z", "zip"),
             medio = Medio.CARTUCHO_ANCHO, color = Color(0xFF7A5CE8),
             caja = FormaCaja(128f, 92f, 6f, Banda.NINGUNA),
+            libretro = "Nintendo - Super Nintendo Entertainment System",
             emuladores = listOf(
                 Emulador("Snes9x EX+", listOf("com.explusalpha.Snes9xPlus"), "com.imagine.BaseActivity", accion = VIEW),
+                ra("Snes9x", "snes9x"),
+                ra("Snes9x 2010", "snes9x2010"),
+                ra("Snes9x 2005 Plus", "snes9x2005_plus"),
+                ra("bsnes", "bsnes"),
+                ra("bsnes-hd", "bsnes_hd_beta"),
+                ra("bsnes-mercury", "bsnes_mercury_accuracy"),
+                ra("Beetle Supafaust", "mednafen_supafaust"),
+                ra("Mesen", "mesen2"),
             ),
         ),
         Consola(
@@ -84,6 +116,7 @@ object Consolas {
             extensiones = ext("app", "bin", "d64", "n64", "ndd", "u1", "v64", "z64", "7z", "zip"),
             medio = Medio.CARTUCHO_N64, color = Color(0xFF3E6FD8),
             caja = FormaCaja(128f, 92f, 6f, Banda.ABAJO_CLARA),
+            libretro = "Nintendo - Nintendo 64",
             emuladores = listOf(
                 Emulador(
                     "Mupen64Plus FZ",
@@ -91,6 +124,8 @@ object Consolas {
                     "paulscode.android.mupen64plusae.SplashActivity", accion = VIEW,
                 ),
                 Emulador("Mupen64Plus AE", listOf("org.mupen64plusae.v3.alpha"), "paulscode.android.mupen64plusae.SplashActivity", accion = VIEW),
+                ra("Mupen64Plus-Next", "mupen64plus_next_gles3"),
+                ra("ParaLLEl N64", "parallel_n64"),
             ),
         ),
         Consola(
@@ -99,11 +134,16 @@ object Consolas {
             extensiones = ext("bin", "cbn", "ccd", "chd", "cue", "ecm", "exe", "img", "iso", "m3u", "mdf", "mds", "pbp", "toc", "z", "znx", "7z", "zip"),
             medio = Medio.CD, color = Color(0xFF8C93A8),
             caja = FormaCaja(104f, 104f, 4f, Banda.BISAGRA),
+            libretro = "Sony - PlayStation",
             emuladores = listOf(
                 Emulador(
                     "DuckStation", listOf("com.github.stenzek.duckstation"), ".EmulationActivity",
                     modo = ModoRom.EXTRA, extraRom = "bootPath", extrasBool = mapOf("resumeState" to false), limpiarTarea = true,
                 ),
+                ra("Beetle PSX HW", "mednafen_psx_hw"),
+                ra("Beetle PSX", "mednafen_psx"),
+                ra("PCSX ReARMed", "pcsx_rearmed"),
+                ra("SwanStation", "swanstation"),
             ),
         ),
         Consola(
@@ -112,11 +152,18 @@ object Consolas {
             extensiones = ext("agb", "bin", "cgb", "dmg", "gb", "gba", "gbc", "gbx", "sgb", "7z", "zip"),
             medio = Medio.CARTUCHO_CHICO, color = Color(0xFF5A4BD6),
             caja = FormaCaja(92f, 98f, 6f, Banda.LATERAL_CLARA),
+            libretro = "Nintendo - Game Boy Advance",
             emuladores = listOf(
                 Emulador(
                     "Pizza Boy GBA", listOf("it.dbtecno.pizzaboygbapro", "it.dbtecno.pizzaboygba"), "{pkg}.MainActivity",
                     modo = ModoRom.EXTRA, extraRom = "rom_uri", limpiarTarea = true,
                 ),
+                ra("mGBA", "mgba"),
+                ra("VBA-M", "vbam"),
+                ra("VBA Next", "vba_next"),
+                ra("gpSP", "gpsp"),
+                ra("SkyEmu", "skyemu"),
+                ra("Mesen", "mesen2"),
             ),
         ),
         Consola(
@@ -125,6 +172,7 @@ object Consolas {
             extensiones = ext("ciso", "dol", "elf", "gcm", "gcz", "iso", "m3u", "rvz", "tgc", "wbfs", "wia", "7z", "zip"),
             medio = Medio.MINIDISCO, color = Color(0xFF6E4BC9),
             caja = FormaCaja(90f, 124f, 8f, Banda.ARRIBA_CLARA),
+            libretro = "Nintendo - GameCube",
             emuladores = listOf(
                 Emulador(
                     "Dolphin", listOf("org.dolphinemu.dolphinemu"), ".ui.main.TvMainActivity",
@@ -135,6 +183,7 @@ object Consolas {
                     "Dolphin MMJR2", listOf("org.dolphinemu.mmjr"), "org.dolphinemu.dolphinemu.ui.main.MainActivity",
                     accion = VIEW, modo = ModoRom.EXTRA, extraRom = "AutoStartFile",
                 ),
+                ra("Dolphin", "dolphin"),
             ),
         ),
         Consola(
@@ -144,6 +193,7 @@ object Consolas {
             medio = Medio.TARJETA, color = Color(0xFF5E6576),
             caja = FormaCaja(96f, 108f, 9f, Banda.ARRIBA_CLARA),
             dosPantallas = true,
+            libretro = "Nintendo - Nintendo DS",
             emuladores = listOf(
                 Emulador(
                     "melonDS", listOf("me.magnum.melonds"), ".ui.emulator.EmulatorActivity",
@@ -158,6 +208,12 @@ object Consolas {
                     accion = "me.magnum.melonds.nightly.LAUNCH_ROM", modo = ModoRom.EXTRA, extraRom = "uri",
                 ),
                 Emulador("DraStic", listOf("com.dsemu.drastic"), ".DraSticActivity", limpiarTarea = true),
+                ra("melonDS DS", "melondsds"),
+                ra("melonDS", "melonds"),
+                ra("DeSmuME", "desmume"),
+                ra("DeSmuME 2015", "desmume2015"),
+                ra("NooDS", "noods"),
+                ra("SkyEmu", "skyemu"),
             ),
         ),
         Consola(
@@ -166,11 +222,14 @@ object Consolas {
             extensiones = ext("bin", "chd", "ciso", "cso", "dump", "elf", "gz", "m3u", "mdf", "img", "iso", "isz", "nrg"),
             medio = Medio.DVD, color = Color(0xFF2E4FB8),
             caja = FormaCaja(84f, 120f, 6f, Banda.ARRIBA_OSCURA),
+            libretro = "Sony - PlayStation 2",
             emuladores = listOf(
                 Emulador(
                     "NetherSX2", listOf("xyz.aethersx2.android"), ".EmulationActivity",
                     accion = MAIN, modo = ModoRom.EXTRA, extraRom = "bootPath", limpiarTarea = true,
                 ),
+                ra("LRPS2", "pcsx2"),
+                ra("PCEE2", "pcee2"),
             ),
         ),
         Consola(
@@ -180,6 +239,7 @@ object Consolas {
             medio = Medio.BLURAY, color = Color(0xFF3A3F55),
             caja = FormaCaja(88f, 112f, 6f, Banda.ARRIBA_OSCURA),
             carpetasSonJuegos = true,
+            libretro = "Sony - PlayStation 3",
             emuladores = listOf(
                 // Archivo .ps3 con el código del juego adentro (por ejemplo BLUS30443).
                 Emulador(
@@ -221,11 +281,13 @@ object Consolas {
             extensiones = ext("chd", "cso", "elf", "iso", "pbp", "prx", "7z", "zip"),
             medio = Medio.UMD, color = Color(0xFF4A4F60),
             caja = FormaCaja(78f, 130f, 12f, Banda.ARRIBA_OSCURA),
+            libretro = "Sony - PlayStation Portable",
             emuladores = listOf(
                 Emulador(
                     "PPSSPP", listOf("org.ppsspp.ppssppgold", "org.ppsspp.ppsspp"), "org.ppsspp.ppsspp.PpssppActivity",
                     accion = VIEW, categoria = "android.intent.category.DEFAULT",
                 ),
+                ra("PPSSPP", "ppsspp"),
             ),
         ),
     )

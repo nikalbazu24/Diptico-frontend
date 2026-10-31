@@ -28,8 +28,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
- * Pantalla de arriba de la Thor (la principal del sistema).
- * En modo una pantalla muestra todo aquí. En un teléfono vertical, las dos partes una sobre otra.
+ * La pantalla principal del equipo (la de arriba en la Thor).
+ * El tutorial y el modo una pantalla viven aquí. En un teléfono vertical, las dos partes van una sobre otra.
  */
 class MainActivity : BaseActivity() {
 
@@ -40,16 +40,15 @@ class MainActivity : BaseActivity() {
             val hayInferior = Pantallas.inferior(this) != null
             val vertical = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
             val mi = miDisplay()
+            val t = e.tamTexto
             when {
-                !hayInferior && vertical -> Column(Modifier.fillMaxSize().background(Color.Black)) {
-                    Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxWidth().aspectRatio(16f / 9f)) { Raiz(e, Rol.SUPERIOR, mi) }
-                    Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxWidth().weight(1f)) { Raiz(e, Rol.INFERIOR, mi) }
+                !hayInferior && vertical && e.configurado -> Column(Modifier.fillMaxSize().background(Color.Black)) {
+                    Lienzo(e.oscuro, Modifier.fillMaxWidth().aspectRatio(16f / 9f), t) { Raiz(e, Rol.SUPERIOR, mi) }
+                    Lienzo(e.oscuro, Modifier.fillMaxWidth().weight(1f), t) { Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) }
                 }
-                !hayInferior || e.unaPantalla -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) { Raiz(e, Rol.UNICA, mi) }
-                e.intercambiar && e.configurado -> Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxSize()) {
-                    Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR)
-                }
-                else -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) { Raiz(e, Rol.SUPERIOR, mi) }
+                e.unaPantalla -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.UNICA, mi) }
+                e.intercambiar -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) }
+                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.SUPERIOR, mi) }
             }
         }
         // Si cambias a dos pantallas (o a "abajo en negro") se abre la de abajo.

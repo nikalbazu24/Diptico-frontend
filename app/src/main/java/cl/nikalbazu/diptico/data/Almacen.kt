@@ -46,6 +46,62 @@ class Almacen(ctx: Context) {
         get() = p.getString("pantallaJuegos", "arriba") ?: "arriba"
         set(v) = p.edit().putString("pantallaJuegos", v).apply()
 
+    /** Tamaño de letra: 1.0 normal, 1.15 grande, 1.3 muy grande. */
+    var tamTexto: Float
+        get() = p.getFloat("tamTexto", 1f)
+        set(v) = p.edit().putFloat("tamTexto", v).apply()
+
+    var musica: Boolean
+        get() = p.getBoolean("musica", true)
+        set(v) = p.edit().putBoolean("musica", v).apply()
+
+    /** "bisagra", "cartucho", "medianoche", "mezcla" o "mia" (carpeta propia). */
+    var pista: String
+        get() = p.getString("pista", "bisagra") ?: "bisagra"
+        set(v) = p.edit().putString("pista", v).apply()
+
+    var volumen: Float
+        get() = p.getFloat("volumen", 0.6f)
+        set(v) = p.edit().putFloat("volumen", v).apply()
+
+    var carpetaMusica: Uri?
+        get() = p.getString("carpetaMusica", null)?.let(Uri::parse)
+        set(v) = p.edit().putString("carpetaMusica", v?.toString()).apply()
+
+    /** Clave personal de SteamGridDB (opcional). */
+    var claveSgdb: String
+        get() = p.getString("claveSgdb", "") ?: ""
+        set(v) = p.edit().putString("claveSgdb", v).apply()
+
+    /** Usar los títulos de libretro en vez del nombre del archivo. */
+    var titulosBonitos: Boolean
+        get() = p.getBoolean("titulosBonitos", true)
+        set(v) = p.edit().putBoolean("titulosBonitos", v).apply()
+
+    fun medios(): Map<String, MediosJuego> {
+        val o = try { JSONObject(p.getString("medios", "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
+        val salida = HashMap<String, MediosJuego>()
+        for (k in o.keys()) {
+            val d = o.optJSONObject(k) ?: continue
+            fun t(n: String) = d.optString(n, "").takeIf { it.isNotEmpty() }
+            salida[k] = MediosJuego(t("portada"), t("arte"), t("logo"), t("titulo"))
+        }
+        return salida
+    }
+
+    fun guardarMedios(m: Map<String, MediosJuego>) {
+        val o = JSONObject()
+        for ((k, d) in m) {
+            val j = JSONObject()
+            d.portada?.let { j.put("portada", it) }
+            d.arte?.let { j.put("arte", it) }
+            d.logo?.let { j.put("logo", it) }
+            d.titulo?.let { j.put("titulo", it) }
+            o.put(k, j)
+        }
+        p.edit().putString("medios", o.toString()).apply()
+    }
+
     fun emuladores(): Map<String, String> {
         val o = JSONObject(p.getString("emuladores", "{}") ?: "{}")
         return o.keys().asSequence().associateWith { o.getString(it) }

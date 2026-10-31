@@ -24,7 +24,7 @@ import cl.nikalbazu.diptico.ui.Rol
 import cl.nikalbazu.diptico.ui.Texto
 import kotlinx.coroutines.launch
 
-/** Pantalla de abajo de la Thor: consolas, estante y compañero de partida. */
+/** La segunda pantalla (la de abajo en la Thor): consolas, estante y compañero de partida. */
 class InferiorActivity : BaseActivity() {
 
     companion object {
@@ -37,30 +37,26 @@ class InferiorActivity : BaseActivity() {
         viva = true
         setContent {
             val e by Diptico.estado.collectAsState()
-            val miPantalla = miDisplay()
+            val mi = miDisplay()
+            val t = e.tamTexto
             when {
-                e.modoPantallas == "una_negra" -> Lienzo(620f, 540f, true, Modifier.fillMaxSize()) {
+                !e.configurado -> Lienzo(true, Modifier.fillMaxSize(), t) { Raiz(e, Rol.INFERIOR, mi) }
+                e.unaPantalla -> Lienzo(true, Modifier.fillMaxSize(), t) {
                     Box(Modifier.fillMaxSize().background(Color.Black)) {
                         Texto(
-                            "Díptico está en modo una pantalla · cámbialo en Ajustes", 11f, color = Color(0xFF2A2838),
+                            "Díptico está en modo una pantalla · cámbialo en el menú", 12f, color = Color(0xFF2A2838),
                             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = LocalEscala.current.d(16)),
                         )
                     }
                 }
-                e.intercambiar && e.configurado -> Lienzo(960f, 540f, e.oscuro, Modifier.fillMaxSize()) {
-                    Raiz(e, Rol.SUPERIOR, miPantalla, rolIntro = Rol.INFERIOR)
-                }
-                else -> Lienzo(620f, 540f, e.oscuro, Modifier.fillMaxSize()) { Raiz(e, Rol.INFERIOR, miPantalla) }
+                e.intercambiar -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.SUPERIOR, mi, rolIntro = Rol.INFERIOR) }
+                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t) { Raiz(e, Rol.INFERIOR, mi) }
             }
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 Diptico.estado.collect { e ->
-                    if (e.modoPantallas == "una_libre") {
-                        finish()
-                    } else {
-                        aplicarBrillo(e)
-                    }
+                    if (e.modoPantallas == "una_libre" && e.modoElegido) finish() else aplicarBrillo(e)
                 }
             }
         }
@@ -72,14 +68,15 @@ class InferiorActivity : BaseActivity() {
     }
 
     /**
-     * Mientras juegas en la pantalla de arriba, esta se atenúa (sin tocar el brillo general).
+     * Mientras juegas en la otra pantalla, esta se atenúa (sin tocar el brillo general).
      * En modo "abajo en negro" queda al mínimo.
      */
     private fun aplicarBrillo(e: Estado) {
         val s = e.sesion
         val atenuarJuego = s != null && s.displayId != miDisplay() && !s.dosPantallas && !e.despierta && !e.intercambiar
         val valor = when {
-            e.modoPantallas == "una_negra" -> 0.01f
+            !e.configurado -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+            e.unaPantalla -> 0.01f
             atenuarJuego -> 0.04f
             else -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
         }

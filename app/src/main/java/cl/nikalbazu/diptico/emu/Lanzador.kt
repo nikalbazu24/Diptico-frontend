@@ -28,7 +28,10 @@ object Pantallas {
 
 /** Abre juegos con su emulador, en la pantalla elegida. */
 object Lanzador {
-    data class Opcion(val emulador: Emulador, val paquete: String)
+    data class Opcion(val emulador: Emulador, val paquete: String) {
+        /** Lo que se guarda en los ajustes: "paquete" o "paquete#núcleo". */
+        val id: String get() = emulador.id(paquete)
+    }
 
     fun instalado(ctx: Context, paquete: String): Boolean = try {
         ctx.packageManager.getPackageInfo(paquete, 0)
@@ -45,7 +48,9 @@ object Lanzador {
 
     fun elegida(ctx: Context, consola: Consola, preferido: String?, tipo: String? = null): Opcion? {
         val ops = opciones(ctx, consola, tipo)
-        return ops.firstOrNull { it.paquete == preferido } ?: ops.firstOrNull()
+        return ops.firstOrNull { it.id == preferido }
+            ?: ops.firstOrNull { it.paquete == preferido && it.emulador.nucleo == null }
+            ?: ops.firstOrNull()
     }
 
     /** Convierte un documento de la memoria interna o SD en ruta real: primary:ROMs/x -> /storage/emulated/0/ROMs/x. */
@@ -79,6 +84,7 @@ object Lanzador {
             ModoRom.INYECTAR -> i.putExtra(e.extraRom, leerCodigo(ctx, juego.uri) ?: return null)
         }
         for ((k, v) in e.extrasBool) i.putExtra(k, v)
+        for ((k, v) in e.extrasTexto) i.putExtra(k, v.replace("{pkg}", op.paquete).replace("{core}", e.nucleo ?: ""))
         if (e.limpiarTarea) i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         return i
     }

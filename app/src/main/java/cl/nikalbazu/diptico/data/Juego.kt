@@ -14,6 +14,8 @@ data class Juego(
     val docId: String,
     val portada: Uri? = null,
     val arte: Uri? = null,
+    /** Logo del juego (descargado), para la pantalla atenuada y el inicio. */
+    val logo: Uri? = null,
     /** El juego es una carpeta (PS3), no un archivo. */
     val esCarpeta: Boolean = false,
 ) {
@@ -32,4 +34,12 @@ data class DatosJuego(
     val ultimo: Long = 0L,
     /** "arriba", "abajo" o null para usar el ajuste general. */
     val pantalla: String? = null,
+)
+
+/** Imágenes y título descargados de internet para un juego (rutas dentro de la app). */
+data class MediosJuego(
+    val portada: String? = null,
+    val arte: String? = null,
+    val logo: String? = null,
+    val titulo: String? = null,
 )

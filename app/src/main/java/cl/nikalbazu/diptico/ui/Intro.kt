@@ -108,12 +108,12 @@ private fun BoxScope.Brillos(t: Float, px: Float) {
     val k = suave(tramo(t, 0.05f, 0.6f))
     val d = sin(t * PI.toFloat()) * 40f
     Box(
-        Modifier.align(Alignment.TopEnd).size(esc.d(640))
+        Modifier.align(Alignment.TopEnd).size(esc.d(480))
             .graphicsLayer { alpha = k * 0.55f; translationX = -d * px; translationY = -120f * px }
             .background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.6f), Color.Transparent))),
     )
     Box(
-        Modifier.align(Alignment.BottomStart).size(esc.d(560))
+        Modifier.align(Alignment.BottomStart).size(esc.d(420))
             .graphicsLayer { alpha = k * 0.45f; translationX = d * px; translationY = 140f * px }
             .background(Brush.radialGradient(listOf(Coral.copy(alpha = 0.5f), Color.Transparent))),
     )
@@ -122,7 +122,7 @@ private fun BoxScope.Brillos(t: Float, px: Float) {
 @Composable
 private fun BoxScope.IntroSuperior(t: Float, px: Float, unica: Boolean) {
     val esc = LocalEscala.current
-    val tam = 92f
+    val tam = 70f
     val inicioCoral = if (unica) 0.16f else 0.37f
     val entraUva = rebote(tramo(t, 0.03f, 0.27f))
     val entraCoral = rebote(tramo(t, inicioCoral, inicioCoral + if (unica) 0.24f else 0.19f))
@@ -130,14 +130,14 @@ private fun BoxScope.IntroSuperior(t: Float, px: Float, unica: Boolean) {
     val onda = tramo(t, 0.56f, 0.95f)
 
     Column(
-        Modifier.align(Alignment.Center).graphicsLayer { translationY = (if (unica) -40f else -10f) * px },
+        Modifier.align(Alignment.Center).graphicsLayer { translationY = (if (unica) -30f else -8f) * px },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(contentAlignment = Alignment.Center) {
                 // Onda de luz cuando los dos paneles encajan.
                 Box(
-                    Modifier.size(esc.d(150))
+                    Modifier.size(esc.d(115))
                         .graphicsLayer {
                             val s = 0.4f + onda * 1.8f
                             scaleX = s
@@ -154,38 +154,38 @@ private fun BoxScope.IntroSuperior(t: Float, px: Float, unica: Boolean) {
                 ) {
                     Box(
                         Modifier
-                            .graphicsLayer { translationY = (1f - entraUva) * -440f * px; alpha = if (t > 0.03f) 1f else 0f }
+                            .graphicsLayer { translationY = (1f - entraUva) * -340f * px; alpha = if (t > 0.03f) 1f else 0f }
                             .size(esc.d(tam * 1.25f), esc.d(tam * 0.5f))
                             .clip(RoundedCornerShape(esc.d(tam * 0.2f)))
                             .background(Uva),
                     )
                     Box(
                         Modifier
-                            .graphicsLayer { translationY = (1f - entraCoral) * 440f * px; alpha = if (t > inicioCoral) 1f else 0f }
+                            .graphicsLayer { translationY = (1f - entraCoral) * 340f * px; alpha = if (t > inicioCoral) 1f else 0f }
                             .size(esc.d(tam * 0.95f), esc.d(tam * 0.5f))
                             .clip(RoundedCornerShape(esc.d(tam * 0.2f)))
                             .background(Coral),
                     )
                 }
             }
-            Spacer(Modifier.width(esc.d(32)))
+            Spacer(Modifier.width(esc.d(24)))
             Row {
                 "Díptico".forEachIndexed { i, letra ->
                     val k = suave(tramo(t, 0.58f + i * 0.035f, 0.72f + i * 0.035f))
                     Texto(
-                        letra.toString(), 100f, color = Color.White,
-                        modifier = Modifier.graphicsLayer { alpha = k; translationY = (1f - k) * 34f * px },
+                        letra.toString(), 76f, color = Color.White,
+                        modifier = Modifier.graphicsLayer { alpha = k; translationY = (1f - k) * 26f * px },
                     )
                 }
             }
         }
         if (unica) {
-            Spacer(Modifier.height(esc.d(26)))
+            Spacer(Modifier.height(esc.d(18)))
             Texto(
-                "Tu colección de juegos, en dos pantallas", 22f, color = TenueIntro, peso = FontWeight.SemiBold,
+                "Tu colección de juegos, en una o dos pantallas", 18f, color = TenueIntro, peso = FontWeight.SemiBold,
                 modifier = Modifier.graphicsLayer { alpha = suave(tramo(t, 0.7f, 0.82f)) },
             )
-            Spacer(Modifier.height(esc.d(30)))
+            Spacer(Modifier.height(esc.d(22)))
             FilaIconos(t, 0.72f)
         }
     }
@@ -195,14 +195,14 @@ private fun BoxScope.IntroSuperior(t: Float, px: Float, unica: Boolean) {
 @Composable
 private fun BoxScope.IntroInferior(t: Float, px: Float) {
     val esc = LocalEscala.current
-    val tam = 92f
+    val tam = 70f
     // El panel coral sube, cruza la pantalla y sale por la bisagra hacia la pantalla de arriba.
     val k = tramo(t, 0.08f, 0.38f)
-    val y = 380f + (-460f - 380f) * vaiven(k)
+    val y = 300f + (-360f - 300f) * vaiven(k)
     val visible = k > 0f && k < 1f
     Box(
         Modifier.align(Alignment.Center)
-            .graphicsLayer { translationY = (y + 64f) * px; alpha = if (visible) 0.35f else 0f; scaleY = 1.6f }
+            .graphicsLayer { translationY = (y + 50f) * px; alpha = if (visible) 0.35f else 0f; scaleY = 1.6f }
             .size(esc.d(tam * 0.6f), esc.d(tam * 0.5f))
             .clip(RoundedCornerShape(esc.d(tam * 0.2f)))
             .background(Brush.verticalGradient(listOf(Coral, Color.Transparent))),
@@ -216,7 +216,7 @@ private fun BoxScope.IntroInferior(t: Float, px: Float) {
     )
     Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
         Texto(
-            "Tu colección de juegos,", 28f, color = Color.White,
+            "Tu colección de juegos,", 24f, color = Color.White,
             modifier = Modifier.graphicsLayer {
                 val a = suave(tramo(t, 0.6f, 0.72f))
                 alpha = a
@@ -224,14 +224,14 @@ private fun BoxScope.IntroInferior(t: Float, px: Float) {
             },
         )
         Texto(
-            "en dos pantallas.", 28f, color = TenueIntro,
+            "en dos pantallas.", 24f, color = TenueIntro,
             modifier = Modifier.graphicsLayer {
                 val a = suave(tramo(t, 0.65f, 0.77f))
                 alpha = a
                 translationY = (1f - a) * 20f * px
             },
         )
-        Spacer(Modifier.height(esc.d(34)))
+        Spacer(Modifier.height(esc.d(26)))
         FilaIconos(t, 0.68f)
     }
     Bisagra(t, Modifier.align(Alignment.TopCenter).padding(top = esc.d(10)))
@@ -241,11 +241,11 @@ private fun BoxScope.IntroInferior(t: Float, px: Float) {
 @Composable
 private fun FilaIconos(t: Float, desde: Float) {
     val esc = LocalEscala.current
-    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
         Consolas.todas.forEachIndexed { i, c ->
             val k = rebote(tramo(t, desde + i * 0.016f, desde + 0.1f + i * 0.016f))
             IconoMedio(
-                c.medio, c.color, FondoIntro, tam = 40f,
+                c.medio, c.color, FondoIntro, tam = 30f,
                 modifier = Modifier.graphicsLayer { scaleX = k; scaleY = k; alpha = if (k > 0f) 1f else 0f },
             )
         }

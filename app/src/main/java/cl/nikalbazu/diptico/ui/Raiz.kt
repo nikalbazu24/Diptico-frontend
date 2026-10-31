@@ -14,11 +14,13 @@ import cl.nikalbazu.diptico.estado.Estado
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     Box(Modifier.fillMaxSize()) {
         when {
-            !e.configurado -> Tutorial(e, rol)
+            !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
             rol == Rol.UNICA -> PantallaUnica(e)
             rol == Rol.SUPERIOR -> PantallaSuperior(e)
             else -> PantallaInferior(e, miPantalla)
         }
-        if (e.intro) Intro(rolIntro)
+        // En modo una pantalla, la de abajo no muestra la animación.
+        val sinIntro = rol == Rol.INFERIOR && rolIntro == Rol.INFERIOR && e.unaPantalla
+        if (e.intro && !sinIntro) Intro(rolIntro)
     }
 }

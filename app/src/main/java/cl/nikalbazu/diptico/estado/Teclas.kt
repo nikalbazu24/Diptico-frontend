@@ -3,9 +3,9 @@ package cl.nikalbazu.diptico.estado
 import android.view.KeyEvent
 
 /**
- * Traduce los botones de la Thor a acciones de Díptico.
- * A juega (mantener = menú rápido), B vuelve, Y próximo paso,
- * L1/R1 cambian de consola, L2/R2 saltan de a 5, Start abre ajustes.
+ * Traduce los botones del control a acciones de Díptico.
+ * A juega (mantener = menú rápido), B vuelve, Y próximo paso, Select intercambia pantallas,
+ * L1/R1 cambian de consola, L2/R2 saltan de a 5, Start abre el menú.
  */
 object Teclas {
     private var aLargo = false
@@ -18,6 +18,10 @@ object Teclas {
         KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2, KeyEvent.KEYCODE_BUTTON_START, KeyEvent.KEYCODE_BUTTON_SELECT,
     )
 
+    private val cruceta = setOf(
+        KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+    )
+
     fun manejar(ev: KeyEvent): Boolean {
         val e = Diptico.estado.value
         val code = ev.keyCode
@@ -28,6 +32,19 @@ object Teclas {
         if (e.intro) {
             if (arriba) Diptico.terminarIntro()
             return true
+        }
+
+        // Escribiendo (próximo paso o clave): el teclado manda, salvo B (cerrar) y Start (guardar).
+        if (e.panel == Panel.PASO || e.panel == Panel.CLAVE) {
+            if (code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK) {
+                if (arriba) Diptico.cerrarPanel()
+                return true
+            }
+            if (code == KeyEvent.KEYCODE_BUTTON_START) {
+                if (arriba) { if (e.panel == Panel.PASO) Diptico.guardarPaso() else Diptico.guardarClave() }
+                return true
+            }
+            return false
         }
 
         // Tutorial guiado.
@@ -50,7 +67,7 @@ object Teclas {
             if (arriba) {
                 when {
                     esA(code) -> Diptico.aceptar()
-                    esB(code) -> Diptico.pasoAnterior()
+                    esB(code) -> Diptico.atras()
                     code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.marcarProbado("gatillos")
                     code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.marcarProbado("Y")
                     code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.marcarProbado("Start")
@@ -62,23 +79,43 @@ object Teclas {
             return false
         }
 
-        // Escribiendo el próximo paso: el teclado manda, salvo B (cerrar) y Start (guardar).
-        if (e.panel == Panel.PASO) {
-            if (code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK) {
-                if (arriba) Diptico.cerrarPanel()
-                return true
-            }
-            if (code == KeyEvent.KEYCODE_BUTTON_START) {
-                if (arriba) Diptico.guardarPaso()
-                return true
-            }
-            return false
-        }
-
         // Juego en curso y pantalla atenuada: cualquier botón la despierta.
         if (e.sesion != null && !e.despierta && e.panel == Panel.NINGUNO) {
             if (arriba) Diptico.despertar()
             return true
+        }
+
+        // Menú principal: dos columnas (secciones y opciones).
+        if (e.panel == Panel.MENU) {
+            if (abajo) {
+                when (code) {
+                    KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(-1)
+                    KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(1)
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> if (!e.enOpciones) Diptico.columnaMenu(true)
+                    KeyEvent.KEYCODE_DPAD_LEFT -> if (e.enOpciones) Diptico.columnaMenu(false)
+                    KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) {
+                        val s = Seccion.values()
+                        Diptico.elegirSeccion(s[(e.seccion.ordinal - 1 + s.size) % s.size])
+                    }
+                    KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) {
+                        val s = Seccion.values()
+                        Diptico.elegirSeccion(s[(e.seccion.ordinal + 1) % s.size])
+                    }
+                    else -> return esA(code) || esB(code) || code in botonesControl
+                }
+                return true
+            }
+            if (arriba) {
+                when {
+                    esA(code) -> Diptico.aceptar()
+                    esB(code) -> Diptico.atras()
+                    code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.cerrarPanel()
+                    code in botonesControl || code in cruceta -> Unit
+                    else -> return false
+                }
+                return true
+            }
+            return false
         }
 
         val hayPanel = e.panel != Panel.NINGUNO
@@ -99,7 +136,7 @@ object Teclas {
                     aLargo = false
                 } else if (!aLargo && !hayPanel && ev.eventTime - ev.downTime > 550) {
                     aLargo = true
-                    Diptico.abrirMenu()
+                    Diptico.abrirRapido()
                 }
                 return true
             }
@@ -118,17 +155,17 @@ object Teclas {
                 return true
             }
             if (esB(code)) {
-                if (hayPanel) Diptico.cerrarPanel()
+                if (hayPanel) Diptico.atras()
                 return true
             }
             when (code) {
                 KeyEvent.KEYCODE_BUTTON_Y -> { if (!hayPanel) Diptico.abrirPaso(); return true }
                 KeyEvent.KEYCODE_BUTTON_X -> { if (!hayPanel) Diptico.avisar("La ficha del juego llega en la próxima versión"); return true }
                 KeyEvent.KEYCODE_BUTTON_START -> {
-                    if (e.panel == Panel.AJUSTES) Diptico.cerrarPanel() else if (!hayPanel) Diptico.abrirAjustes()
+                    if (hayPanel) Diptico.cerrarPanel() else Diptico.abrirMenu()
                     return true
                 }
-                KeyEvent.KEYCODE_BUTTON_SELECT -> return true
+                KeyEvent.KEYCODE_BUTTON_SELECT -> { if (!hayPanel) Diptico.intercambiar(); return true }
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
                 KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> return true
             }

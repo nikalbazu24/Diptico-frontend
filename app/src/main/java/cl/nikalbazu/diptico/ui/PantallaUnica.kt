@@ -1,7 +1,6 @@
 package cl.nikalbazu.diptico.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -9,36 +8,31 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
+import cl.nikalbazu.diptico.estado.Icono
 
 /**
- * Modo una pantalla (como en una tele): el arte del juego de fondo, la información arriba
- * y las consolas con el estante abajo, todo en la pantalla de arriba.
+ * Modo una pantalla (como en una tele, una Odin o un teléfono): el arte del juego de fondo,
+ * la información arriba y las consolas con el estante abajo.
  */
 @Composable
 fun PantallaUnica(e: Estado) {
@@ -46,82 +40,76 @@ fun PantallaUnica(e: Estado) {
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         val juego = e.seleccionado
-        if (juego != null) {
-            Crossfade(targetState = juego, animationSpec = tween(700), label = "arte", modifier = Modifier.fillMaxSize()) { j ->
-                Box(Modifier.fillMaxSize()) {
-                    ArteJuego(
-                        j, preferirArte = true, maxLado = 1600,
-                        modifier = Modifier.align(Alignment.TopEnd).fillMaxHeight().fillMaxWidth(0.78f),
-                    )
-                }
-            }
-        }
+        if (juego != null) Heroe(juego, 0.78f)
         Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to p.fondo, 0.22f to p.fondo, 0.7f to Color.Transparent)))
         Box(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(340))
-                .background(Brush.verticalGradient(0f to Color.Transparent, 0.45f to p.fondo.copy(alpha = 0.92f), 1f to p.fondo)),
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(270))
+                .background(Brush.verticalGradient(0f to Color.Transparent, 0.4f to p.fondo.copy(alpha = 0.92f), 1f to p.fondo)),
         )
 
         BarraSuperior(Modifier.align(Alignment.TopStart)) {
-            Spacer(Modifier.width(esc.d(16)))
-            Icon(
-                Icons.Filled.Settings, contentDescription = "Ajustes", tint = p.tinta,
-                modifier = Modifier.size(esc.d(22)).clickable { Diptico.abrirAjustes() },
-            )
+            Box(
+                Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f)).clickable { Diptico.abrirMenu() },
+                contentAlignment = Alignment.Center,
+            ) { IconoDiptico(Icono.MENU, p.tinta, 18f, acento = Coral) }
+            Spacer(Modifier.width(esc.d(14)))
         }
 
         if (juego == null) {
-            Texto(
-                if (e.escaneando) "Buscando tus juegos…" else "No encontré juegos en tu carpeta", 20f, color = p.tenue,
-                modifier = Modifier.align(Alignment.Center),
-            )
+            Column(Modifier.align(Alignment.TopStart).padding(start = esc.d(28), top = esc.d(70))) {
+                Texto(if (e.escaneando) "Buscando tus juegos…" else "No encontré juegos en tu carpeta", 24f)
+                if (!e.escaneando) Detalle("Abre el menú con Start › Biblioteca para elegirla.", 15f)
+            }
         } else {
             AnimatedContent(
                 targetState = juego,
-                transitionSpec = { (fadeIn(tween(450)) + slideInVertically(tween(450)) { it / 10 }) togetherWith fadeOut(tween(200)) },
+                transitionSpec = { (fadeIn(tween(420)) + slideInVertically(tween(420)) { it / 10 }) togetherWith fadeOut(tween(180)) },
                 label = "info",
-                modifier = Modifier.padding(start = esc.d(44), top = esc.d(72)).width(esc.d(520)),
-            ) { j ->
-                val c = Consolas.porId(j.consolaId)
-                val datos = e.datos[j.clave]
-                Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                    if (c != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconoMedio(c.medio, c.color, p.fondo, tam = 22f)
-                            Spacer(Modifier.width(esc.d(8)))
-                            Texto(c.nombreLargo, 11f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, espaciado = 1.6f)
-                        }
-                    }
-                    Texto(j.titulo, 38f, lineas = 2, interlineado = 40f)
-                    Row(verticalAlignment = Alignment.Top) {
-                        Box(Modifier.padding(top = esc.d(5)).size(esc.d(9)).clip(CircleShape).background(Coral))
-                        Spacer(Modifier.width(esc.d(8)))
-                        val paso = datos?.paso.orEmpty()
-                        Texto(
-                            if (paso.isEmpty()) "Aprieta Y para anotar dónde quedaste" else "Tu próximo paso: $paso",
-                            16f, peso = FontWeight.SemiBold, lineas = 2, interlineado = 21f,
-                            color = if (paso.isEmpty()) p.tenue else p.tinta,
-                        )
-                    }
-                }
-            }
+                modifier = Modifier.padding(start = esc.d(28), top = esc.d(50)).widthIn(max = esc.d(430)),
+            ) { j -> InfoUnica(e, j) }
         }
 
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
             Cinta(e)
-            Estante(e, alto = 196f)
+            Estante(e, alto = 140f, escala = 0.74f)
             Row(
-                Modifier.fillMaxWidth().padding(start = esc.d(24), end = esc.d(24), bottom = esc.d(10)),
+                Modifier.fillMaxWidth().padding(start = esc.d(22), end = esc.d(22), bottom = esc.d(8)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Texto(juego?.titulo ?: "", 15f, lineas = 1, modifier = Modifier.weight(1f))
-                Texto(
-                    "A jugar · Y próximo paso · L1 R1 consola · Start ajustes", 11f,
-                    color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold,
-                )
+                Spacer(Modifier.weight(1f))
+                Pistas("A" to "Jugar", "Y" to "Mi paso", "L1 R1" to "Consola", "Start" to "Menú")
             }
         }
 
-        Paneles(e)
+        Paneles(e, conAyuda = true)
+    }
+}
+
+@Composable
+private fun InfoUnica(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val c = cl.nikalbazu.diptico.data.Consolas.porId(j.consolaId)
+    val paso = e.datos[j.clave]?.paso.orEmpty()
+    Column {
+        if (c != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconoMedio(c.medio, c.color, p.fondo, tam = 20f)
+                Spacer(Modifier.width(esc.d(8)))
+                Etiqueta(c.nombreLargo, p.tenue, 12f)
+            }
+            Spacer(Modifier.height(esc.d(6)))
+        }
+        Texto(j.titulo, 30f, lineas = 2, interlineado = 33f, sombra = true)
+        Spacer(Modifier.height(esc.d(6)))
+        Row {
+            Box(Modifier.padding(top = esc.d(6)).size(esc.d(8)).clip(CircleShape).background(Coral))
+            Spacer(Modifier.width(esc.d(8)))
+            Texto(
+                if (paso.isEmpty()) "Aprieta Y para anotar dónde quedaste" else paso,
+                16f, lineas = 1, color = if (paso.isEmpty()) p.tenue else p.tinta,
+                peso = androidx.compose.ui.text.font.FontWeight.SemiBold,
+            )
+        }
     }
 }
