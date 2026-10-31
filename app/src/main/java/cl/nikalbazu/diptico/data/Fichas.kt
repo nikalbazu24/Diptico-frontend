@@ -17,18 +17,25 @@ data class FichaInfo(
     val recepcion: String,
     val enlace: String,
     val idioma: String,
+    /** Imágenes del artículo (miniaturas grandes), para el carrusel. */
+    val imagenes: List<ImagenWeb> = emptyList(),
+    /** La imagen principal del artículo (casi siempre la portada). */
+    val principal: ImagenWeb? = null,
 ) {
     val vacia: Boolean get() = resumen.isBlank() && historia.isBlank()
 }
+
+/** Una imagen de internet: [url] completa, [miniatura] para mostrar y de dónde viene. */
+data class ImagenWeb(val url: String, val miniatura: String, val fuente: String, val nombre: String = "")
 
 /**
  * Busca la ficha de un juego en Wikipedia (primero en español, si no en inglés).
  * Guarda lo encontrado para no pedirlo otra vez.
  */
 object Fichas {
-    private const val AGENTE = "Diptico/0.3 (launcher para AYN Thor; contacto en GitHub Nikalbazu24)"
+    const val AGENTE = "Diptico/0.5 (launcher para AYN Thor; contacto en GitHub Nikalbazu24)"
 
-    private fun texto(url: String): String? {
+    fun texto(url: String): String? {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = 12_000
         c.readTimeout = 20_000
@@ -48,7 +55,7 @@ object Fichas {
         MessageDigest.getInstance("SHA-1").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }.take(16)
 
     fun buscar(ctx: Context, titulo: String, consola: String): FichaInfo? {
-        val cache = File(File(ctx.filesDir, "fichas").apply { mkdirs() }, hash("$titulo|$consola") + ".json")
+        val cache = File(File(ctx.filesDir, "fichas").apply { mkdirs() }, hash("v2|$titulo|$consola") + ".json")
         if (cache.exists()) {
             leer(cache.readText())?.let { return it }
         }
@@ -79,8 +86,12 @@ object Fichas {
             .filter { (k, _) -> nombres.any { k.contains(it, true) } }
             .joinToString("\n\n") { it.value.trim() }
             .trim()
+        val titReal = p.optString("title", pagina)
+        val (imagenes, principal) = try { imagenesDe(idioma, titReal) } catch (e: Exception) { emptyList<ImagenWeb>() to null }
         return FichaInfo(
-            titulo = p.optString("title", pagina),
+            imagenes = imagenes,
+            principal = principal,
+            titulo = titReal,
             resumen = secciones[""]?.trim().orEmpty().take(1600),
             historia = buscarSec("desarrollo", "development", "producción", "production", "historia", "history").take(3500),
             juego = buscarSec("jugabilidad", "sistema de juego", "gameplay", "argumento", "trama", "plot", "sinopsis").take(3000),
@@ -88,6 +99,44 @@ object Fichas {
             enlace = "https://$idioma.wikipedia.org/wiki/${cod(pagina.replace(' ', '_'))}",
             idioma = idioma,
         )
+    }
+
+    /** Imágenes del artículo: fotos y capturas (sin íconos ni banderas) y la imagen principal. */
+    fun imagenesDe(idioma: String, pagina: String): Pair<List<ImagenWeb>, ImagenWeb?> {
+        val base = "https://$idioma.wikipedia.org/w/api.php"
+        val json = texto(
+            "$base?action=query&format=json&redirects=1&titles=${cod(pagina)}&generator=images&gimlimit=40" +
+                "&prop=imageinfo&iiprop=url%7Cmime%7Csize&iiurlwidth=1280",
+        )
+        val lista = ArrayList<ImagenWeb>()
+        if (json != null) {
+            val paginas = JSONObject(json).optJSONObject("query")?.optJSONObject("pages")
+            if (paginas != null) for (k in paginas.keys()) {
+                val o = paginas.getJSONObject(k)
+                val nombre = o.optString("title").substringAfter(':')
+                val info = o.optJSONArray("imageinfo")?.optJSONObject(0) ?: continue
+                val mime = info.optString("mime")
+                if (mime !in setOf("image/jpeg", "image/png", "image/webp")) continue
+                if (info.optInt("width") < 240 || info.optInt("height") < 160) continue
+                val n = nombre.lowercase()
+                if (listOf("flag", "bandera", "commons-logo", "symbol", "icon", "question", "wiki", "edit-", "padlock", "portal", "stub").any { it in n }) continue
+                val url = info.optString("url").takeIf { it.isNotEmpty() } ?: continue
+                lista += ImagenWeb(url, info.optString("thumburl").ifEmpty { url }, "Wikipedia", nombre)
+            }
+        }
+        // La imagen principal (la del cuadro de la derecha).
+        val pj = texto("$base?action=query&format=json&redirects=1&titles=${cod(pagina)}&prop=pageimages&piprop=original%7Cthumbnail&pithumbsize=900")
+        val principal = try {
+            val ps = JSONObject(pj ?: "").getJSONObject("query").getJSONObject("pages")
+            val o = ps.getJSONObject(ps.keys().next())
+            val orig = o.optJSONObject("original")?.optString("source")
+            val mini = o.optJSONObject("thumbnail")?.optString("source")
+            if (orig.isNullOrEmpty() || orig.endsWith(".svg", true)) null else ImagenWeb(orig, mini ?: orig, "Wikipedia", "principal")
+        } catch (e: Exception) {
+            null
+        }
+        val ordenadas = lista.sortedBy { if (it.url == principal?.url) 0 else 1 }.take(16)
+        return ordenadas to principal
     }
 
     /** Separa el texto por secciones ("== Desarrollo =="). La introducción queda con clave vacía. */
@@ -109,15 +158,24 @@ object Fichas {
         return salida.mapValues { it.value.toString() }
     }
 
+    private fun imagenJson(i: ImagenWeb) = JSONObject().put("url", i.url).put("mini", i.miniatura).put("fuente", i.fuente).put("nombre", i.nombre)
+    private fun imagenDe(o: JSONObject) = ImagenWeb(o.getString("url"), o.optString("mini", o.getString("url")), o.optString("fuente", "Wikipedia"), o.optString("nombre"))
+
     private fun guardar(f: FichaInfo) = JSONObject()
         .put("titulo", f.titulo).put("resumen", f.resumen).put("historia", f.historia).put("juego", f.juego)
-        .put("recepcion", f.recepcion).put("enlace", f.enlace).put("idioma", f.idioma).toString()
+        .put("recepcion", f.recepcion).put("enlace", f.enlace).put("idioma", f.idioma)
+        .put("imagenes", org.json.JSONArray().apply { f.imagenes.forEach { put(imagenJson(it)) } })
+        .apply { f.principal?.let { put("principal", imagenJson(it)) } }
+        .toString()
 
     private fun leer(s: String): FichaInfo? = try {
         val o = JSONObject(s)
+        val imgs = o.optJSONArray("imagenes")
         FichaInfo(
             o.getString("titulo"), o.getString("resumen"), o.getString("historia"), o.getString("juego"),
             o.getString("recepcion"), o.getString("enlace"), o.getString("idioma"),
+            imagenes = if (imgs == null) emptyList() else (0 until imgs.length()).map { imagenDe(imgs.getJSONObject(it)) },
+            principal = o.optJSONObject("principal")?.let { imagenDe(it) },
         )
     } catch (e: Exception) {
         null

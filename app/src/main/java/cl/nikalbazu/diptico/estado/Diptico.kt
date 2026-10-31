@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS }
+enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -49,7 +49,7 @@ enum class Icono {
     PANTALLAS, UNA, NEGRO, LIBRE, INTERCAMBIAR, TEXTO, TEMA, INTRO, MUSICA, VOLUMEN, SILENCIO, CARPETA, EMULADOR,
     PORTADA, DESCARGA, CLAVE, TITULO, BORRAR, BIBLIOTECA, BUSCAR, TUTORIAL, INFO, CERRAR, JUGAR, DADO, LAPIZ,
     CONTINUAR, MENU, CHECK, ARRIBA, ABAJO, ESTRELLA, APPS, RELOJ, PALETA, MOVIL, CHISPA, CORAZON, MUNDO, WEB,
-    CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA,
+    CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA, MANDO, BATERIA,
 }
 
 /** Secciones del menú principal. */
@@ -76,6 +76,8 @@ data class Opcion(
     val icono: Icono? = null,
     val ayuda: String = "",
     val apagada: Boolean = false,
+    /** Si es una app, su paquete (para mostrar su ícono). */
+    val paquete: String? = null,
     val accion: () -> Unit,
 )
 
@@ -194,6 +196,12 @@ data class Estado(
     val fichaDe: String? = null,
     val pestanaFicha: Int = 0,
     val cargandoFicha: Boolean = false,
+    /** Fotos del juego para el carrusel de la ficha (arte propio, Wikipedia y libretro). */
+    val fichaImagenes: List<cl.nikalbazu.diptico.data.ImagenWeb> = emptyList(),
+    /** Opciones de internet para cambiar una imagen del juego. */
+    val candidatos: List<cl.nikalbazu.diptico.data.ImagenWeb> = emptyList(),
+    val candidatoPara: String = "portada",
+    val buscandoCandidatos: Boolean = false,
     val inicio: String = "heroe",
     val widgets: List<Widget> = Widgets.porDefecto,
     val estiloIconos: String = "diptico",
@@ -229,6 +237,12 @@ data class Estado(
     /** Lo que eligió "auto" según la consola. */
     val fluidezDetectada: String = "alta",
     val sonidos: Boolean = true,
+    /** Escribir con el teclado de Díptico, que aparece en la otra pantalla. */
+    val tecladoPropio: Boolean = true,
+    val teclaFila: Int = 1,
+    val teclaCol: Int = 0,
+    val mayus: Boolean = true,
+    val simbolos: Boolean = false,
     /** Minutos sin usar la consola antes del protector de pantalla (0 = nunca). */
     val protectorMin: Int = 5,
     val protector: Boolean = false,
@@ -243,6 +257,10 @@ data class Estado(
     /** Todo Díptico vive en una sola pantalla (siempre durante el tutorial). */
     val unaPantalla: Boolean
         get() = !configurado || modoPantallas != "dos" || !dosDisponibles
+
+    /** Se está escribiendo con el teclado de Díptico (en la pantalla contraria a la del texto). */
+    val conTeclado: Boolean
+        get() = tecladoPropio && !unaPantalla && (panel == Panel.PASO || panel == Panel.CLAVE)
 
     val consolasConJuegos: List<Consola>
         get() = Consolas.todas.filter { c -> juegos.any { it.consolaId == c.id } }
@@ -372,6 +390,7 @@ object Diptico {
             fluidez = almacen.texto("fluidez", "auto"),
             fluidezDetectada = detectarFluidez(),
             sonidos = almacen.bool("sonidos", true),
+            tecladoPropio = almacen.bool("tecladoPropio", true),
             protectorMin = almacen.texto("protectorMin", "5").toIntOrNull() ?: 5,
             gridCols = almacen.texto("gridCols", "6").toIntOrNull() ?: 6,
             gridFilas = almacen.texto("gridFilas", "4").toIntOrNull() ?: 4,
@@ -980,6 +999,9 @@ object Diptico {
                 panel = if (hacerPregunta) Panel.PASO else it.panel,
                 borrador = if (hacerPregunta) d.paso else it.borrador,
                 pregunta = hacerPregunta,
+                teclaFila = if (hacerPregunta) 1 else it.teclaFila,
+                teclaCol = if (hacerPregunta) 0 else it.teclaCol,
+                mayus = if (hacerPregunta) d.paso.isEmpty() else it.mayus,
             )
         }
     }
@@ -1007,7 +1029,7 @@ object Diptico {
 
     fun abrirPaso() {
         val clave = estado.value.seleccionado?.clave ?: return
-        actualizar { it.copy(panel = Panel.PASO, borrador = it.datos[clave]?.paso ?: "", pregunta = false) }
+        actualizar { it.copy(panel = Panel.PASO, borrador = it.datos[clave]?.paso ?: "", pregunta = false, teclaFila = 1, teclaCol = 0, simbolos = false, mayus = it.datos[clave]?.paso.isNullOrEmpty()) }
     }
 
     fun abrirMenu(seccion: Seccion? = null) {
@@ -1069,7 +1091,7 @@ object Diptico {
 
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave", "ia_pedido", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial) }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 1, teclaCol = 0, simbolos = false, mayus = inicial.isEmpty() && para != "sgdb" && para != "ia_clave") }
     }
 
     fun cerrarPanel() {
@@ -1082,6 +1104,10 @@ object Diptico {
         if (e.panel == Panel.CLAVE && e.configurado) {
             val s = if (e.textoPara.startsWith("ia")) Seccion.TEMAS else Seccion.PORTADAS
             actualizar { it.copy(panel = Panel.MENU, seccion = s, enOpciones = true, indice = 0) }
+            return
+        }
+        if (e.panel == Panel.IMAGENES) {
+            actualizar { it.copy(panel = Panel.FICHA, indice = 0) }
             return
         }
         if (e.panel == Panel.WIDGETS) {
@@ -1102,6 +1128,72 @@ object Diptico {
             return
         }
         actualizar { it.copy(panel = Panel.NINGUNO, pregunta = false) }
+    }
+
+    // ---------- Teclado de Díptico ----------
+
+    fun filasTeclado(e: Estado): List<List<String>> {
+        val filas = if (e.simbolos) listOf(
+            "1234567890", "áéíóúüñ@#&", "-_:;/()\"'!", "+=*%\$¿¡?,.",
+        ) else listOf(
+            "1234567890", "qwertyuiop", "asdfghjklñ", "zxcvbnm,.?",
+        )
+        val letras = filas.map { f -> f.map { c -> if (e.mayus && !e.simbolos) c.uppercase() else c.toString() } }
+        return letras + listOf(listOf("⇧", if (e.simbolos) "abc" else "#", "␣", "⌫", "✓"))
+    }
+
+    fun moverTecla(dx: Int, dy: Int) {
+        val e = estado.value
+        val filas = filasTeclado(e)
+        var f = e.teclaFila
+        var c = e.teclaCol
+        if (dy != 0) {
+            val nf = (f + dy).coerceIn(0, filas.size - 1)
+            if (nf != f) {
+                val a = filas[f].size - 1
+                val b = filas[nf].size - 1
+                c = if (a <= 0) 0 else Math.round(c * b / a.toFloat())
+                f = nf
+            }
+        }
+        if (dx != 0) c = (c + dx).mod(filas[f].size)
+        actualizar { it.copy(teclaFila = f, teclaCol = c.coerceIn(0, filas[f].size - 1)) }
+    }
+
+    /** Aprieta una tecla (con A sobre la elegida, o tocándola). */
+    fun pulsarTecla(fila: Int = estado.value.teclaFila, col: Int = estado.value.teclaCol) {
+        val e = estado.value
+        val t = filasTeclado(e).getOrNull(fila)?.getOrNull(col) ?: return
+        if (fila != e.teclaFila || col != e.teclaCol) actualizar { it.copy(teclaFila = fila, teclaCol = col) }
+        when (t) {
+            "⇧" -> actualizar { it.copy(mayus = !it.mayus) }
+            "#", "abc" -> actualizar { it.copy(simbolos = !it.simbolos) }
+            "␣" -> escribir(" ")
+            "⌫" -> borrarLetra()
+            "✓" -> terminarTexto()
+            else -> {
+                escribir(t)
+                if (e.mayus && !e.simbolos) actualizar { it.copy(mayus = false) }
+            }
+        }
+        Sonidos.mover()
+    }
+
+    fun escribir(t: String) {
+        val e = estado.value
+        cambiarBorrador(e.borrador + t)
+        // Después de un punto, la siguiente va con mayúscula.
+        if (t == "." || t == "?" || t == "!") actualizar { it.copy(mayus = true) }
+    }
+
+    fun borrarLetra() {
+        val b = estado.value.borrador
+        if (b.isNotEmpty()) cambiarBorrador(b.dropLast(1))
+        if (b.length <= 1) actualizar { it.copy(mayus = true) }
+    }
+
+    fun terminarTexto() {
+        if (estado.value.panel == Panel.PASO) guardarPaso() else guardarClave()
     }
 
     fun cambiarBorrador(texto: String) {
@@ -1180,6 +1272,10 @@ object Diptico {
                 val total = opcionesRapido().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
+            Panel.IMAGENES -> {
+                val total = e.candidatos.size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
             Panel.BUSCAR -> {
                 val total = e.visibles.size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
@@ -1241,6 +1337,7 @@ object Diptico {
                 actualizar { it.copy(juegoSel = j.clave, panel = Panel.NINGUNO) }
             }
             Panel.CARPETAS -> aceptarCarpetas()
+            Panel.IMAGENES -> usarCandidato()
             Panel.CENTRO -> {
                 val acciones = opcionesCentro()
                 if (e.indice < acciones.size) acciones[e.indice].accion() else Avisos.lista.value.getOrNull(e.indice - acciones.size)?.let { abrirAviso(it) }
@@ -1353,6 +1450,15 @@ object Diptico {
                         val siguiente = when (estado.value.modoPantallas) { "dos" -> "una_negra"; "una_negra" -> "una_libre"; else -> "dos" }
                         elegirModo(siguiente)
                     }
+                }
+                lista += Opcion(
+                    "Teclado", if (e.tecladoPropio) "Díptico, en la otra pantalla" else "El de Android", Icono.TEXTO,
+                    "Con dos pantallas, el teclado de Díptico aparece en la pantalla contraria para que veas lo que escribes. Se usa con la cruceta o tocando.",
+                    apagada = e.unaPantalla,
+                ) {
+                    val v = !estado.value.tecladoPropio
+                    almacen.guardarBool("tecladoPropio", v)
+                    actualizar { it.copy(tecladoPropio = v) }
                 }
                 lista += Opcion(
                     "Intercambiar pantallas", if (e.intercambiar) "Sí" else "No", Icono.INTERCAMBIAR,
@@ -2069,6 +2175,7 @@ object Diptico {
             it.copy(
                 panel = Panel.FICHA, pestanaFicha = if (misma) it.pestanaFicha else 0, indice = 0, fichaDe = j.clave,
                 ficha = if (misma) it.ficha else null,
+                fichaImagenes = if (misma) it.fichaImagenes else emptyList(),
             )
         }
         if (misma && e.ficha != null) return
@@ -2079,6 +2186,17 @@ object Diptico {
             val info = withContext(Dispatchers.IO) { try { Fichas.buscar(app, j.titulo, if (consola == "Juegos de Android") "" else consola) } catch (ex: Exception) { null } }
             terminarTrabajo("ficha")
             if (estado.value.fichaDe == j.clave) actualizar { it.copy(ficha = info, cargandoFicha = false) }
+            // Fotos para el carrusel: lo propio primero, después internet.
+            val fotos = withContext(Dispatchers.IO) {
+                val propias = listOfNotNull(j.arte, j.portada?.takeIf { it.scheme != "app" }).map { u ->
+                    cl.nikalbazu.diptico.data.ImagenWeb(u.toString(), u.toString(), "Tu biblioteca")
+                }
+                val crudo = todosCrudos().firstOrNull { it.clave == j.clave }
+                val c = Consolas.porId(j.consolaId)
+                val retro = if (crudo != null && c != null) try { Descargas.fotosLibretro(app, crudo, c) } catch (ex: Exception) { emptyList() } else emptyList()
+                (propias + retro + (info?.imagenes ?: emptyList())).distinctBy { it.url }
+            }
+            if (estado.value.fichaDe == j.clave) actualizar { it.copy(fichaImagenes = fotos) }
         }
     }
 
@@ -2114,13 +2232,61 @@ object Diptico {
                 Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir imagen", Icono.ESTRELLA) { pedirImagen("logo") },
                 Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA) { pedirArchivoPara("musica", "audio/*") },
                 Opcion(if (d.favorito) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON) { alternarFavorito(j.clave) },
-                Opcion("Buscar imágenes en internet", icono = Icono.DESCARGA) { descargarUno(j) },
+                Opcion("Elegir portada de internet", "Varias opciones", Icono.DESCARGA) { buscarCandidatos("portada") },
+                Opcion("Elegir imagen grande (hero)", "Varias opciones", Icono.DESCARGA) { buscarCandidatos("arte") },
+                Opcion("Elegir logo de internet", "Varias opciones", Icono.DESCARGA) { buscarCandidatos("logo") },
+                Opcion("Buscar todo automático", icono = Icono.DESCARGA) { descargarUno(j) },
                 Opcion("Volver a lo original", "Quita lo personalizado", Icono.BORRAR) {
                     cambiarDatos(j.clave) { it.copy(titulo = null, portada = null, arte = null, logo = null, musica = null) }
                     avisar("Listo, ${j.titulo} volvió a como era")
                 },
             )
             else -> emptyList()
+        }
+    }
+
+    // ---------- Elegir una imagen de internet ----------
+
+    fun nombreCandidato(t: String) = when (t) { "arte" -> "imagen grande"; "logo" -> "logo"; else -> "portada" }
+
+    /** Busca varias opciones (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
+    fun buscarCandidatos(tipo: String) {
+        val e = estado.value
+        val j = juegoFicha() ?: return
+        val crudo = todosCrudos().firstOrNull { it.clave == j.clave } ?: return
+        val c = Consolas.porId(crudo.consolaId) ?: return
+        actualizar { it.copy(panel = Panel.IMAGENES, candidatos = emptyList(), candidatoPara = tipo, buscandoCandidatos = true, indice = 0) }
+        scope.launch {
+            val lista = withContext(Dispatchers.IO) {
+                try {
+                    val wiki = e.ficha ?: Fichas.buscar(app, j.titulo, c.bonito)
+                    Descargas.candidatos(app, crudo, c, tipo, j.titulo, e.claveSgdb, wiki)
+                } catch (ex: Exception) {
+                    emptyList()
+                }
+            }
+            if (estado.value.panel == Panel.IMAGENES) actualizar { it.copy(candidatos = lista, buscandoCandidatos = false) }
+        }
+    }
+
+    /** Baja la opción elegida y la deja como imagen propia del juego. */
+    fun usarCandidato(i: Int = estado.value.indice) {
+        val e = estado.value
+        val img = e.candidatos.getOrNull(i) ?: return
+        val j = juegoFicha() ?: return
+        val tipo = e.candidatoPara
+        avisar("Bajando la ${nombreCandidato(tipo)}…")
+        scope.launch {
+            val f = withContext(Dispatchers.IO) {
+                if (img.url.startsWith("http")) try { Descargas.bajarElegida(app, j, tipo, img.url) } catch (ex: Exception) { null } else null
+            }
+            if (f == null) { avisar("No pude bajar esa imagen. Prueba otra."); return@launch }
+            val u = Uri.fromFile(f).toString()
+            cambiarDatos(j.clave) {
+                when (tipo) { "arte" -> it.copy(arte = u); "logo" -> it.copy(logo = u); else -> it.copy(portada = u) }
+            }
+            actualizar { it.copy(panel = Panel.FICHA) }
+            avisar("¡Listo! Nueva ${nombreCandidato(tipo)} para ${j.titulo}")
         }
     }
 
@@ -2244,6 +2410,28 @@ object Diptico {
         val t = TAMANOS_JUEGO[(i + delta).coerceIn(0, TAMANOS_JUEGO.size - 1)]
         almacen.guardarTexto("tamJuegos", t.toString())
         actualizar { it.copy(tamJuegos = t) }
+    }
+
+    /** Escalera del pellizco: de lo más chico (lista) a lo más grande (estante enorme). */
+    private val ESCALERA = listOf(
+        "lista" to 1f, "cuadricula" to 0.8f, "cuadricula" to 1f, "cuadricula" to 1.2f, "cuadricula" to 1.4f,
+        "estante" to 0.8f, "estante" to 1f, "estante" to 1.2f, "estante" to 1.4f,
+    )
+
+    /** Pellizco con dos dedos: abrir agranda los juegos, cerrar los achica (y cambia de vista en los extremos). */
+    fun pellizcar(agrandar: Boolean) {
+        val e = estado.value
+        val actual = ESCALERA.indices.minByOrNull { i ->
+            val (v, t) = ESCALERA[i]
+            (if (v == e.vista) 0f else 10f) + kotlin.math.abs(t - e.tamJuegos)
+        } ?: 0
+        val n = (actual + if (agrandar) 1 else -1).coerceIn(0, ESCALERA.size - 1)
+        if (n == actual) return
+        val (v, t) = ESCALERA[n]
+        almacen.guardarTexto("vista", v)
+        almacen.guardarTexto("tamJuegos", t.toString())
+        actualizar { it.copy(vista = v, tamJuegos = t) }
+        avisar("${nombreVista(v)} · ${nombreTamJuegos(t)}")
     }
 
     val FILTROS = listOf("todos", "favoritos", "recientes", "mas", "sinjugar")
@@ -2414,7 +2602,75 @@ object Diptico {
         avisar("No encontré un administrador de archivos")
     }
 
-    fun opcionesCentro(): List<Opcion> = listOf(
+    /** Columnas de los accesos del centro de control. */
+    const val COLUMNAS_CENTRO = 6
+
+    /** Apps de la consola (AYN, Odin, Thor) y herramientas de la comunidad, encontradas una vez. */
+    @Volatile private var appsConsola: List<App>? = null
+
+    private val PISTAS_CONSOLA = listOf("ayn", "odin", "thor", "mjolnir", "wayfinder", "handheld", "gamecontroller", "padsettings")
+    private val MUSICA_APPS = listOf(
+        "com.spotify.music" to "Spotify",
+        "com.google.android.apps.youtube.music" to "YT Music",
+    )
+
+    fun appsDeConsola(): List<App> = appsConsola ?: run {
+        val pm = app.packageManager
+        val lista = try {
+            pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
+                .mapNotNull { r ->
+                    val paquete = r.activityInfo?.packageName ?: return@mapNotNull null
+                    if (paquete == app.packageName) return@mapNotNull null
+                    val nombre = r.loadLabel(pm)?.toString() ?: paquete
+                    val texto = (paquete + " " + nombre).lowercase()
+                    if (PISTAS_CONSOLA.any { it in texto }) App(paquete, nombre) else null
+                }.distinctBy { it.paquete }.sortedBy { it.nombre.lowercase() }.take(6)
+        } catch (_: Exception) {
+            emptyList()
+        }
+        appsConsola = lista
+        lista
+    }
+
+    /** Spotify y YouTube Music, si están instalados. */
+    fun appsMusica(): List<App> = MUSICA_APPS.filter { (p, _) -> Lanzador.instalado(app, p) }.map { (p, n) -> App(p, n) }
+
+    fun abrirPaquete(paquete: String) {
+        val i = app.packageManager.getLaunchIntentForPackage(paquete)
+        if (i == null) avisar("Esa app no está instalada") else {
+            cerrarPanel()
+            abrirIntent(i, "No pude abrir la app")
+        }
+    }
+
+    /** Mueve la selección del centro: grilla de accesos arriba, lista de notificaciones abajo. */
+    fun moverCentro(dx: Int, dy: Int) {
+        val e = estado.value
+        val n = opcionesCentro().size
+        val total = n + Avisos.lista.value.size
+        if (total == 0) return
+        val i = e.indice
+        val nuevo = if (i < n) {
+            when {
+                dx != 0 -> (i + dx).coerceIn(0, n - 1)
+                dy < 0 -> if (i - COLUMNAS_CENTRO >= 0) i - COLUMNAS_CENTRO else i
+                else -> if (i + COLUMNAS_CENTRO < n) i + COLUMNAS_CENTRO else if (total > n) n else i
+            }
+        } else {
+            when {
+                dy < 0 -> if (i == n) ((n - 1) / COLUMNAS_CENTRO) * COLUMNAS_CENTRO else i - 1
+                dy > 0 -> (i + 1).coerceAtMost(total - 1)
+                else -> i
+            }
+        }
+        if (nuevo != i) actualizar { it.copy(indice = nuevo) }
+    }
+
+    fun opcionesCentro(): List<Opcion> = opcionesSistema() +
+        appsDeConsola().map { a -> Opcion(a.nombre, "Consola", Icono.MANDO, paquete = a.paquete) { abrirPaquete(a.paquete) } } +
+        appsMusica().map { a -> Opcion(a.nombre, "Música", Icono.MUSICA, paquete = a.paquete) { abrirPaquete(a.paquete) } }
+
+    private fun opcionesSistema(): List<Opcion> = listOf(
         Opcion("Wi-Fi", icono = Icono.WIFI) {
             abrirIntent(Intent(android.provider.Settings.Panel.ACTION_INTERNET_CONNECTIVITY), "No pude abrir el Wi-Fi")
         },
@@ -2422,6 +2678,9 @@ object Diptico {
         Opcion("Volumen", icono = Icono.VOLUMEN) { abrirIntent(Intent(android.provider.Settings.Panel.ACTION_VOLUME), "No pude abrir el volumen") },
         Opcion("Pantalla", icono = Icono.BRILLO) { abrirIntent(Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS), "No pude abrir la pantalla") },
         Opcion("Archivos", icono = Icono.CARPETA) { abrirArchivos() },
+        Opcion("Batería", icono = Icono.BATERIA) { abrirIntent(Intent(Intent.ACTION_POWER_USAGE_SUMMARY), "No pude abrir la batería") },
+        Opcion("Estadísticas", icono = Icono.RELOJ) { abrirEstadisticas() },
+        Opcion("Protector", icono = Icono.ESTRELLA) { cerrarPanel(); actualizar { it.copy(protector = true) } },
         Opcion("Ajustes", icono = Icono.AJUSTES) { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },
     )
 

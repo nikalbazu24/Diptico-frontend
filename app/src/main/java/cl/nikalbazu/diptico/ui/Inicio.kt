@@ -501,7 +501,11 @@ private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
             return@Tarjeta
         }
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(esc.d(if (tam >= 2) 96f else 56f)).clip(RoundedCornerShape(esc.d(14))).background(Uva.copy(alpha = 0.25f)), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.size(esc.d(if (tam >= 2) 96f else 56f)).clip(RoundedCornerShape(esc.d(14))).background(Uva.copy(alpha = 0.25f))
+                    .clickable { musica?.paquete?.let { Diptico.abrirPaquete(it) } },
+                contentAlignment = Alignment.Center,
+            ) {
                 val img = musica?.portada
                 if (img != null) Image(img.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 else IconoDiptico(Icono.MUSICA, p.tinta, 28f, acento = Coral)
@@ -512,6 +516,19 @@ private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
                 Texto(musica?.titulo ?: "Nada sonando", 16f, lineas = 2)
                 if (!musica?.artista.isNullOrBlank()) Detalle(musica!!.artista, 13f, lineas = 1)
                 Spacer(Modifier.height(esc.d(6)))
+                if (musica == null) {
+                    // Nada sonando: accesos a Spotify y YouTube Music.
+                    val apps = remember { Diptico.appsMusica().ifEmpty { listOf(cl.nikalbazu.diptico.emu.App("com.spotify.music", "Spotify"), cl.nikalbazu.diptico.emu.App("com.google.android.apps.youtube.music", "YT Music")) } }
+                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                        for (a in apps) {
+                            Box(
+                                Modifier.clip(RoundedCornerShape(50)).fondoBoton(if (a.paquete.contains("spotify")) Color(0xFF1DB954) else Color(0xFFFF0033))
+                                    .clickable { Diptico.abrirPaquete(a.paquete) }.padding(horizontal = esc.d(10), vertical = esc.d(5)),
+                            ) { Texto(a.nombre, 12.5f, color = Color.White, lineas = 1) }
+                        }
+                    }
+                    return@Column
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8)), verticalAlignment = Alignment.CenterVertically) {
                     BotonCirculo(Icono.CONTINUAR, invertido = true) { Medios.anterior() }
                     BotonCirculo(if (musica?.reproduciendo == true) Icono.MENU else Icono.JUGAR, grande = true, pausa = musica?.reproduciendo == true) { Medios.alternar() }

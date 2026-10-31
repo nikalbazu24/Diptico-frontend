@@ -39,6 +39,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.animation.core.Animatable
+import cl.nikalbazu.diptico.estado.Opcion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -375,81 +379,119 @@ private fun Mosaico(o: cl.nikalbazu.diptico.estado.Opcion, activo: Boolean, modi
 
 // ---------- Centro de control ----------
 
-/** Accesos rápidos de Android y las notificaciones de tus apps. */
+/**
+ * Centro de control: una cortina translúcida que baja desde arriba sobre lo de atrás difuminado.
+ * Accesos de Android, las apps de la consola (AYN/Odin/Thor), tu música y tus notificaciones.
+ */
 @Composable
 fun PanelCentro(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val avisos by Avisos.lista.collectAsState()
-    val acciones = Diptico.opcionesCentro()
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
-        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconoDiptico(Icono.CAMPANA, p.tinta, 22f, acento = Coral)
-                Spacer(Modifier.width(esc.d(10)))
-                Texto("Centro de control", 21f, modifier = Modifier.weight(1f))
-                Texto(rememberHora(), 18f, color = p.tenue)
-            }
-            Spacer(Modifier.height(esc.d(10)))
-            // Accesos rápidos
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                acciones.forEachIndexed { i, o ->
-                    val activo = i == e.indice
-                    Column(
-                        Modifier.weight(1f).height(esc.d(66)).clip(RoundedCornerShape(esc.d(16))).background(if (activo) Uva else p.superficie)
-                            .clickable { Diptico.elegirIndice(i) },
-                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-                    ) {
-                        o.icono?.let { IconoDiptico(it, if (activo) SobreUva else p.tinta, 22f, acento = if (activo) SobreUva else Coral) }
-                        Spacer(Modifier.height(esc.d(4)))
-                        Texto(o.titulo, 11.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
-                    }
+    val acciones = remember { Diptico.opcionesCentro() }
+    val bajar = remember { Animatable(-1f) }
+    LaunchedEffect(Unit) { bajar.animateTo(0f, spring(dampingRatio = 0.82f, stiffness = 420f)) }
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { Diptico.cerrarPanel() }) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val alto = maxHeight
+            Column(
+                Modifier.fillMaxWidth().fillMaxHeight(0.94f)
+                    .graphicsLayer { translationY = bajar.value * alto.toPx() }
+                    .clip(RoundedCornerShape(bottomStart = esc.d(28), bottomEnd = esc.d(28)))
+                    .background(Brush.verticalGradient(listOf(p.fondo2.copy(alpha = 0.93f), p.fondo2.copy(alpha = 0.80f))))
+                    .sinCerrar()
+                    .padding(start = esc.d(14), end = esc.d(14), top = esc.d(10), bottom = esc.d(8)),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Texto(rememberHora(), 24f)
+                    Spacer(Modifier.width(esc.d(10)))
+                    Detalle(SimpleDateFormat("EEEE d 'de' MMMM", Locale("es")).format(Date()), 13.5f, lineas = 1, modifier = Modifier.weight(1f))
+                    IconoDiptico(Icono.CAMPANA, p.tinta, 20f, acento = Coral)
+                    Spacer(Modifier.width(esc.d(6)))
+                    Texto(if (avisos.isEmpty()) "Sin avisos" else "${avisos.size}", 13f, color = p.tenue)
                 }
-            }
-            Spacer(Modifier.height(esc.d(12)))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Etiqueta("Notificaciones", p.tenue, 12f, Modifier.weight(1f))
-                if (avisos.isNotEmpty()) {
-                    Box(Modifier.clip(RoundedCornerShape(50)).clickable { Avisos.descartarTodas() }.padding(horizontal = esc.d(8), vertical = esc.d(3))) {
-                        Texto("Borrar todas", 12.5f, color = Coral)
-                    }
-                }
-            }
-            Spacer(Modifier.height(esc.d(6)))
-            if (!cl.nikalbazu.diptico.audio.Medios.tienePermiso(androidx.compose.ui.platform.LocalContext.current)) {
-                Detalle("Para ver tus notificaciones aquí, activa el permiso en Menú › Consola.", 14f)
-            } else if (avisos.isEmpty()) {
-                Detalle("No tienes notificaciones.", 14f)
-            }
-            val lista = rememberLazyListState()
-            LaunchedEffect(e.indice) { if (e.indice >= acciones.size) lista.animateScrollToItem((e.indice - acciones.size - 1).coerceAtLeast(0)) }
-            LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                itemsIndexed(avisos, key = { _, a -> a.clave }) { k, a ->
-                    val activo = e.indice == acciones.size + k
-                    Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(if (activo) Uva else p.superficie.copy(alpha = 0.8f))
-                            .clickable { Diptico.abrirAviso(a) }.padding(esc.d(10)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val icono = rememberImagen(android.net.Uri.parse("app://${a.paquete}"), 96)
-                        Box(Modifier.size(esc.d(34)).clip(RoundedCornerShape(esc.d(10))).background(p.fondo), contentAlignment = Alignment.Center) {
-                            if (icono != null) Image(icono, null, Modifier.fillMaxSize())
-                        }
-                        Spacer(Modifier.width(esc.d(10)))
-                        Column(Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Texto(a.app, 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.weight(1f))
-                                Texto(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(a.tiempo)), 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue)
+                Spacer(Modifier.height(esc.d(8)))
+                // Accesos en grilla
+                val filas = acciones.chunked(Diptico.COLUMNAS_CENTRO)
+                Column(verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    filas.forEachIndexed { f, fila ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                            for (c in 0 until Diptico.COLUMNAS_CENTRO) {
+                                val i = f * Diptico.COLUMNAS_CENTRO + c
+                                val o = fila.getOrNull(c)
+                                if (o == null) { Spacer(Modifier.weight(1f)); continue }
+                                AccesoCentro(o, i == e.indice, Modifier.weight(1f)) { Diptico.elegirIndice(i) }
                             }
-                            if (a.titulo.isNotBlank()) Texto(a.titulo, 14.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
-                            if (a.texto.isNotBlank()) Texto(a.texto, 13f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.Bold, lineas = 2)
                         }
                     }
                 }
+                Spacer(Modifier.height(esc.d(10)))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Etiqueta("Notificaciones", p.tenue, 12f, Modifier.weight(1f))
+                    if (avisos.isNotEmpty()) {
+                        Box(Modifier.clip(RoundedCornerShape(50)).clickable { Avisos.descartarTodas() }.padding(horizontal = esc.d(8), vertical = esc.d(3))) {
+                            Texto("Borrar todas", 12.5f, color = Coral)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(esc.d(4)))
+                if (!cl.nikalbazu.diptico.audio.Medios.tienePermiso(androidx.compose.ui.platform.LocalContext.current)) {
+                    Detalle("Para ver tus notificaciones aquí, activa el permiso en Menú › Consola.", 14f)
+                } else if (avisos.isEmpty()) {
+                    Detalle("No tienes notificaciones.", 14f)
+                }
+                val lista = rememberLazyListState()
+                LaunchedEffect(e.indice) { if (e.indice >= acciones.size) lista.animateScrollToItem((e.indice - acciones.size - 1).coerceAtLeast(0)) }
+                LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    itemsIndexed(avisos, key = { _, a -> a.clave }) { k, a ->
+                        val activo = e.indice == acciones.size + k
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(if (activo) Uva else p.superficie.copy(alpha = 0.7f))
+                                .clickable { Diptico.abrirAviso(a) }.padding(esc.d(10)),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            val icono = rememberImagen(android.net.Uri.parse("app://${a.paquete}"), 96)
+                            Box(Modifier.size(esc.d(34)).clip(RoundedCornerShape(esc.d(10))).background(p.fondo), contentAlignment = Alignment.Center) {
+                                if (icono != null) Image(icono, null, Modifier.fillMaxSize())
+                            }
+                            Spacer(Modifier.width(esc.d(10)))
+                            Column(Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Texto(a.app, 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.weight(1f))
+                                    Texto(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(a.tiempo)), 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue)
+                                }
+                                if (a.titulo.isNotBlank()) Texto(a.titulo, 14.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
+                                if (a.texto.isNotBlank()) Texto(a.texto, 13f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.Bold, lineas = 2)
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(esc.d(4)))
+                // La manija de la cortina
+                Box(Modifier.align(Alignment.CenterHorizontally).size(esc.d(46), esc.d(5)).clip(RoundedCornerShape(50)).background(p.tenue.copy(alpha = 0.5f)))
+                Spacer(Modifier.height(esc.d(4)))
+                Pistas("A" to "Abrir", "X" to "Descartar", "Y" to "Borrar todas", "B" to "Cerrar")
             }
-            Spacer(Modifier.height(esc.d(6)))
-            Pistas("A" to "Abrir", "X" to "Descartar", "Y" to "Borrar todas", "B" to "Cerrar")
         }
+    }
+}
+
+@Composable
+private fun AccesoCentro(o: Opcion, activo: Boolean, modifier: Modifier, alPulsar: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val escala by animateFloatAsState(if (activo) 1.06f else 1f, spring(stiffness = 700f), label = "acceso")
+    Column(
+        modifier.height(esc.d(62)).graphicsLayer { scaleX = escala; scaleY = escala }.clip(RoundedCornerShape(esc.d(18)))
+            .then(if (activo) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie.copy(alpha = 0.75f)))
+            .clickable { alPulsar() },
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        val icono = o.paquete?.let { rememberImagen(android.net.Uri.parse("app://$it"), 96) }
+        if (icono != null) Image(icono, null, Modifier.size(esc.d(24)).clip(RoundedCornerShape(esc.d(7))))
+        else o.icono?.let { IconoDiptico(it, if (activo) SobreUva else p.tinta, 21f, acento = if (activo) SobreUva else Coral) }
+        Spacer(Modifier.height(esc.d(4)))
+        Texto(o.titulo, 11f, color = if (activo) SobreUva else p.tinta, lineas = 1)
     }
 }
 

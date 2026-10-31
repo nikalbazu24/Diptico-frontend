@@ -73,6 +73,28 @@ object Teclas {
         }
 
         // Escribiendo (próximo paso o un texto): el teclado manda, salvo B (cerrar) y Start (guardar).
+        if (e.conTeclado) {
+            // Teclado de Díptico: cruceta elige, A escribe, B borra (o cierra si no hay nada), X espacio, Y mayúsculas, Start listo.
+            if (abajo) {
+                val d = dir(code)
+                when {
+                    d != null -> { Diptico.moverTecla(d.first, d.second); cl.nikalbazu.diptico.audio.Sonidos.mover() }
+                    code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount % 2 == 0 -> Diptico.borrarLetra()
+                    code == KeyEvent.KEYCODE_BUTTON_R1 && ev.repeatCount == 0 -> Diptico.escribir(" ")
+                }
+                return true
+            }
+            if (arriba) when {
+                esA(code) -> Diptico.pulsarTecla()
+                code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK ->
+                    if (e.borrador.isEmpty()) Diptico.cerrarPanel() else Diptico.borrarLetra()
+                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.escribir(" ")
+                code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.pulsarTecla(4, 0)
+                code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarTexto()
+                code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.pulsarTecla(4, 1)
+            }
+            return true
+        }
         if (e.panel == Panel.PASO || e.panel == Panel.CLAVE) {
             if (code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK) {
                 if (arriba) Diptico.cerrarPanel()
@@ -163,7 +185,7 @@ object Teclas {
 
         // Paneles con su propia forma de moverse.
         when (e.panel) {
-            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS ->
+            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES ->
                 return panelEnGrilla(ev, e)
             Panel.MENU -> return menu(ev, e)
             else -> Unit
@@ -264,6 +286,7 @@ object Teclas {
 
     @Volatile
     var columnasBuscar = 4
+    var columnasImagenes = 4
 
     @Volatile
     var columnasMenu = 3
@@ -276,17 +299,19 @@ object Teclas {
         val cols = when (e.panel) {
             Panel.RAPIDO -> Diptico.columnasVentana
             Panel.BUSCAR -> columnasBuscar
+            Panel.IMAGENES -> columnasImagenes
             else -> 1
         }
         if (abajo) {
             when (code) {
-                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(-cols)
-                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(cols)
+                KeyEvent.KEYCODE_DPAD_UP -> if (e.panel == Panel.CENTRO) Diptico.moverCentro(0, -1) else Diptico.moverIndice(-cols)
+                KeyEvent.KEYCODE_DPAD_DOWN -> if (e.panel == Panel.CENTRO) Diptico.moverCentro(0, 1) else Diptico.moverIndice(cols)
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
                     val d = if (code == KeyEvent.KEYCODE_DPAD_LEFT) -1 else 1
                     when (e.panel) {
+                        Panel.CENTRO -> Diptico.moverCentro(d, 0)
                         Panel.FICHA -> if (ev.repeatCount == 0) Diptico.cambiarPestanaFicha(d)
-                        Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO -> Diptico.moverIndice(d)
+                        Panel.RAPIDO, Panel.BUSCAR, Panel.IMAGENES -> Diptico.moverIndice(d)
                         else -> Unit
                     }
                 }

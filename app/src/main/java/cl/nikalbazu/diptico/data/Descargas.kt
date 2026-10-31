@@ -19,7 +19,7 @@ import java.text.Normalizer
  * - SteamGridDB: opcional, con una clave personal gratuita. Arte grande (heroes), logos y portadas.
  */
 object Descargas {
-    private const val AGENTE = "Diptico/0.2 (launcher para AYN Thor)"
+    private const val AGENTE = Fichas.AGENTE
     private const val LIBRETRO = "https://thumbnails.libretro.com"
     private const val SGDB = "https://www.steamgriddb.com/api/v2"
 
@@ -317,6 +317,80 @@ object Descargas {
             }
         }
         return Resultado(m, encontrado)
+    }
+
+    // ---------- Elegir una imagen entre varias ----------
+
+    /** Varias opciones de SteamGridDB para un tipo (grids, heroes, logos, icons). */
+    private fun urlsSgdb(ruta: String, clave: String, max: Int = 10): List<ImagenWeb> {
+        val json = texto("$SGDB$ruta", clave) ?: return emptyList()
+        return try {
+            val d = JSONObject(json).optJSONArray("data") ?: return emptyList()
+            (0 until minOf(d.length(), max)).mapNotNull {
+                val o = d.getJSONObject(it)
+                val u = o.optString("url").takeIf { u -> u.isNotEmpty() } ?: return@mapNotNull null
+                ImagenWeb(u, o.optString("thumb").ifEmpty { u }, "SteamGridDB")
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun urlLibretro(sistema: String, dir: String, nombre: String) =
+        "$LIBRETRO/${codificar(sistema)}/$dir/${codificar(nombreArchivo(nombre))}.png"
+
+    /** Capturas y pantallas de título de libretro (para el carrusel de la ficha). */
+    fun fotosLibretro(ctx: Context, juego: Juego, consola: Consola): List<ImagenWeb> {
+        val sistema = consola.libretro ?: return emptyList()
+        val idx = try { indice(ctx, sistema) } catch (e: Exception) { return emptyList() }
+        val k1 = normalizar(juego.archivo)
+        val k2 = normalizar(juego.titulo)
+        return listOf("Named_Titles", "Named_Snaps").mapNotNull { d ->
+            val n = idx[d]?.let { it[k1] ?: it[k2] } ?: return@mapNotNull null
+            val u = urlLibretro(sistema, d, n)
+            ImagenWeb(u, u, "libretro", if (d == "Named_Titles") "Pantalla de título" else "Captura")
+        }
+    }
+
+    /**
+     * Todas las opciones de internet para una imagen de un juego.
+     * [tipo]: "portada", "arte" (imagen grande / hero) o "logo".
+     */
+    fun candidatos(ctx: Context, juego: Juego, consola: Consola, tipo: String, titulo: String, claveSgdb: String, wiki: FichaInfo?): List<ImagenWeb> {
+        val lista = ArrayList<ImagenWeb>()
+        val sistema = consola.libretro
+        if (sistema != null && tipo != "logo") {
+            val idx = try { indice(ctx, sistema) } catch (e: Exception) { emptyMap() }
+            val k1 = normalizar(juego.archivo)
+            val k2 = normalizar(titulo)
+            val dirs = if (tipo == "portada") listOf("Named_Boxarts") else listOf("Named_Snaps", "Named_Titles")
+            for (d in dirs) idx[d]?.let { it[k1] ?: it[k2] }?.let { n ->
+                val u = urlLibretro(sistema, d, n)
+                lista += ImagenWeb(u, u, "libretro")
+            }
+        }
+        if (claveSgdb.isNotBlank()) {
+            val id = idSgdb(titulo, claveSgdb)
+            if (id != null) lista += when (tipo) {
+                "portada" -> urlsSgdb("/grids/game/$id?dimensions=600x900,342x482,660x930", claveSgdb)
+                "logo" -> urlsSgdb("/logos/game/$id", claveSgdb)
+                else -> urlsSgdb("/heroes/game/$id", claveSgdb)
+            }
+        }
+        if (wiki != null) {
+            when (tipo) {
+                "portada" -> wiki.principal?.let { lista += it }
+                "logo" -> lista += wiki.imagenes.filter { "logo" in it.nombre.lowercase() }
+                else -> lista += wiki.imagenes.filter { it.url != wiki.principal?.url && "logo" !in it.nombre.lowercase() }
+            }
+        }
+        return lista.distinctBy { it.url }
+    }
+
+    /** Baja una imagen elegida a la carpeta de Díptico. Devuelve el archivo o null. */
+    fun bajarElegida(ctx: Context, juego: Juego, tipo: String, url: String): File? {
+        val f = File(carpeta(ctx, "medios"), "${hash(juego.clave)}-propia-$tipo-${System.currentTimeMillis() % 100000}.${extension(url)}")
+        return if (bajar(url, f)) f else null
     }
 
     private fun extension(url: String): String =

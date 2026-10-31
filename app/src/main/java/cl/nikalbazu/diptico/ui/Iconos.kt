@@ -271,6 +271,17 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             caja(3f, 4f, 9f, 12f, 2f)
             circulo(16.5f, 15.5f, 4.5f, a)
         }
+        Icono.MANDO -> {
+            caja(2.5f, 7f, 19f, 10.5f, 5f)
+            linea(7f, 10.5f, 7f, 14f); linea(5.25f, 12.25f, 8.75f, 12.25f)
+            circulo(15.5f, 11f, 1.1f, a, lleno = true)
+            circulo(17.8f, 13.5f, 1.1f, a, lleno = true)
+        }
+        Icono.BATERIA -> {
+            caja(3f, 7f, 16f, 10f, 2.5f)
+            linea(21f, 10.5f, 21f, 13.5f)
+            caja(5.6f, 9.6f, 7f, 4.8f, 1f, a, lleno = true)
+        }
         Icono.ESTRELLA -> {
             camino(lleno = true) {
                 m(12f, 3f); l(14.4f, 9f); l(21f, 9.4f); l(15.9f, 13.6f); l(17.6f, 20f)

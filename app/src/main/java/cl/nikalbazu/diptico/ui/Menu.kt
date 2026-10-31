@@ -1,5 +1,8 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -166,7 +169,8 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean) {
     val esc = LocalEscala.current
     val s = e.seccion
     val color = colorSeccion(s)
-    val opciones = Diptico.opcionesSeccion(s)
+    // Las opciones se arman solo cuando cambia algo (no en cada cuadro de una animación).
+    val opciones = remember(s, e) { Diptico.opcionesSeccion(s) }
     Column(Modifier.fillMaxSize()) {
         // Encabezado con el color de la sección.
         Row(
@@ -247,7 +251,8 @@ fun AyudaMenu(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val s = e.seccion
-    val o = if (e.enOpciones) Diptico.opcionesSeccion(s).getOrNull(e.indice) else null
+    val opciones = remember(s, e) { Diptico.opcionesSeccion(s) }
+    val o = if (e.enOpciones) opciones.getOrNull(e.indice) else null
     val color = colorSeccion(s)
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         Box(
@@ -272,14 +277,16 @@ fun AyudaMenu(e: Estado) {
                         ) { Texto(valor, 15f, color = p.tinta, lineas = 1) }
                     }
                     Detalle(
-                        (if (titulo != null) Diptico.opcionesSeccion(sec).firstOrNull { it.titulo == titulo }?.ayuda else null)
-                            ?.ifEmpty { null } ?: sec.ayuda,
+                        (if (titulo != null && sec == s) o?.ayuda else null)?.ifEmpty { null } ?: sec.ayuda,
                         17f, lineas = 4,
                     )
+                    if (esc.angosta && tienePrevia(sec)) VistaPrevia(e, sec, titulo, Modifier.height(esc.d(130)).fillMaxWidth())
                 }
                 if (!esc.angosta) {
                     Spacer(Modifier.width(esc.d(28)))
-                    Box(
+                    if (tienePrevia(sec)) {
+                        VistaPrevia(e, sec, titulo, Modifier.width(esc.d(270)).height(esc.d(190)))
+                    } else Box(
                         Modifier.size(esc.d(170)).clip(CircleShape).background(color.copy(alpha = 0.16f)),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -294,5 +301,203 @@ fun AyudaMenu(e: Estado) {
             "A" to "Cambiar", "B" to "Volver", "Start" to "Cerrar",
             modifier = Modifier.align(Alignment.BottomStart).padding(start = esc.d(36), bottom = esc.d(20)),
         )
+    }
+}
+
+
+// ---------- Vistas previas del menú ----------
+
+private fun tienePrevia(s: Seccion) = s in setOf(Seccion.TEMAS, Seccion.ESTANTE, Seccion.APARIENCIA, Seccion.INICIO, Seccion.MUSICA)
+
+/** Cómo se vería lo que estás eligiendo: el tema, el estante, los botones, tu inicio o la música. */
+@Composable
+private fun VistaPrevia(e: Estado, sec: Seccion, titulo: String?, modifier: Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(modifier) {
+        Etiqueta("Vista previa", p.tenue, 11f)
+        Spacer(Modifier.height(esc.d(6)))
+        Box(
+            Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(esc.d(18))).border(esc.d(2), p.linea, RoundedCornerShape(esc.d(18))),
+        ) {
+            when (sec) {
+                Seccion.TEMAS -> {
+                    val t = Diptico.todosLosTemas(e).firstOrNull { it.nombre == titulo } ?: Estilo.tema
+                    PreviaTema(t, e.oscuro)
+                }
+                Seccion.ESTANTE -> PreviaEstante(e)
+                Seccion.APARIENCIA -> PreviaBotones(e)
+                Seccion.INICIO -> PreviaInicio(e)
+                else -> PreviaMusica(e)
+            }
+        }
+    }
+}
+
+/** Un inicio en miniatura pintado con los colores del tema. */
+@Composable
+private fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
+    val esc = LocalEscala.current
+    val pal = remember(t, oscuro) { paletaDe(t, oscuro) }
+    val a = Color(t.acento)
+    val a2 = Color(t.acento2)
+    val a3 = Color(t.acento3)
+    Box(Modifier.fillMaxSize().background(pal.fondo)) {
+        Box(Modifier.align(Alignment.TopEnd).size(esc.d(160)).background(Brush.radialGradient(listOf(a.copy(alpha = 0.35f), Color.Transparent))))
+        Column(Modifier.fillMaxSize().padding(esc.d(12)), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(esc.d(14)).clip(CircleShape).background(a))
+                Spacer(Modifier.width(esc.d(6)))
+                Texto(t.nombre, 13f, color = pal.tinta, lineas = 1, modifier = Modifier.weight(1f))
+                Texto("12:30", 11f, color = pal.tenue)
+            }
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.Bottom) {
+                listOf(a, a2, a3, a.copy(alpha = 0.6f)).forEachIndexed { i, c ->
+                    Box(
+                        Modifier.weight(1f).fillMaxHeight(if (i == 0) 1f else 0.82f).clip(RoundedCornerShape(esc.d(8)))
+                            .background(Brush.verticalGradient(listOf(c, lerpColor(c, pal.fondo, 0.45f)))),
+                    )
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).background(Brush.linearGradient(listOf(a, a2)))
+                        .padding(horizontal = esc.d(12), vertical = esc.d(5)),
+                ) { Texto("▶ Jugar", 11.5f, color = if (a.luminance() > 0.55f) Tinta else Color.White) }
+                Spacer(Modifier.width(esc.d(8)))
+                Box(Modifier.weight(1f).height(esc.d(8)).clip(RoundedCornerShape(50)).background(pal.superficie))
+            }
+        }
+    }
+}
+
+private fun lerpColor(a: Color, b: Color, f: Float) = androidx.compose.ui.graphics.lerp(a, b, f)
+
+/** Tus juegos como se verían: estante, cuadrícula o lista, con su tamaño. */
+@Composable
+private fun PreviaEstante(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val juegos = remember(e.visibles) { e.visibles.take(8) }
+    val t = e.tamJuegos
+    Box(Modifier.fillMaxSize().background(p.fondo2).padding(esc.d(10))) {
+        if (juegos.isEmpty()) { Detalle("Agrega juegos para ver tu estante", 13f); return@Box }
+        when (e.vista) {
+            "lista" -> Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                juegos.take(5).forEachIndexed { i, j ->
+                    Row(
+                        Modifier.fillMaxWidth().height(esc.d(24 * t)).clip(RoundedCornerShape(esc.d(8)))
+                            .background(if (i == 0) Uva else p.superficie).padding(horizontal = esc.d(8)),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) { Texto(j.titulo, 11f, color = if (i == 0) SobreUva else p.tinta, lineas = 1) }
+                }
+            }
+            "cuadricula" -> {
+                val cols = when { t < 0.9f -> 5; t < 1.1f -> 4; t < 1.3f -> 3; else -> 3 }
+                Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                    juegos.chunked(cols).take(2).forEach { fila ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                            fila.forEach { j -> MiniCaja(j, Modifier.weight(1f)) }
+                            repeat(cols - fila.size) { Spacer(Modifier.weight(1f)) }
+                        }
+                    }
+                }
+            }
+            else -> Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
+                juegos.take(if (t > 1.2f) 3 else 4).forEachIndexed { i, j ->
+                    MiniCaja(j, Modifier.weight(if (i == 0) 1.25f else 1f).graphicsLayer { if (i != 0) alpha = 0.8f })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiniCaja(j: cl.nikalbazu.diptico.data.Juego, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val img = rememberImagen(j.portada, 220)
+    Box(modifier.aspectRatio(0.72f).clip(RoundedCornerShape(esc.d(6))).background(colorDe(j.clave))) {
+        if (img != null) androidx.compose.foundation.Image(img, null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+    }
+}
+
+/** El botón Jugar con el efecto elegido, en claro u oscuro. */
+@Composable
+private fun PreviaBotones(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(
+        Modifier.fillMaxSize().background(p.fondo2).padding(esc.d(14)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(10), Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).padding(horizontal = esc.d(26), vertical = esc.d(10)),
+        ) { Texto("▶  Jugar", 16f, color = SobreUva) }
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            listOf(Uva, Coral, Sol).forEach { c ->
+                Box(Modifier.size(esc.d(44), esc.d(30)).clip(RoundedCornerShape(esc.d(10))).fondoBoton(c))
+            }
+        }
+        Detalle("Efecto: ${Diptico.nombreEfecto(e.efecto)} · ${if (e.oscuro) "Oscuro" else "Claro"}", 12f, lineas = 1)
+    }
+}
+
+/** Tu inicio en miniatura: la grilla y dónde está cada widget. */
+@Composable
+private fun PreviaInicio(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val cols = e.gridCols.coerceAtLeast(1)
+    val filas = e.gridFilas.coerceAtLeast(1)
+    BoxWithConstraints(Modifier.fillMaxSize().background(p.fondo2).padding(esc.d(8))) {
+        val an = maxWidth / cols
+        val al = maxHeight / filas
+        // Celdas
+        for (x in 0 until cols) for (y in 0 until filas) {
+            Box(
+                Modifier.padding(start = an * x, top = al * y).size(an, al).padding(esc.d(1.5f))
+                    .clip(RoundedCornerShape(esc.d(4))).background(p.superficie.copy(alpha = 0.35f)),
+            )
+        }
+        val colores = listOf(Uva, Coral, Sol, Cielo)
+        e.widgets.filter { it.visible && it.pagina == 0 }.forEachIndexed { i, w ->
+            Box(
+                Modifier.padding(start = an * w.x, top = al * w.y).size(an * w.an, al * w.al).padding(esc.d(2))
+                    .clip(RoundedCornerShape(esc.d(6))).background(colores[i % colores.size].copy(alpha = 0.75f)),
+            )
+        }
+        Box(Modifier.align(Alignment.BottomEnd).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = esc.d(6), vertical = esc.d(2))) {
+            Texto("$cols × $filas · ${e.paginas} pág.", 10f, color = Color.White, lineas = 1)
+        }
+    }
+}
+
+/** Barras que bailan con la canción elegida. */
+@Composable
+private fun PreviaMusica(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val pista = cl.nikalbazu.diptico.audio.Musica.pistas.firstOrNull { it.id == e.pista }
+    val tr = androidx.compose.animation.core.rememberInfiniteTransition(label = "eq")
+    val fases = (0 until 9).map { i ->
+        tr.animateFloat(
+            0.2f, 1f,
+            androidx.compose.animation.core.infiniteRepeatable(tween(380 + i * 70), androidx.compose.animation.core.RepeatMode.Reverse),
+            label = "eq$i",
+        )
+    }
+    Column(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Uva.copy(alpha = 0.25f), p.fondo2))).padding(esc.d(14))) {
+        Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(5)), verticalAlignment = Alignment.Bottom) {
+            fases.forEachIndexed { i, f ->
+                Box(
+                    Modifier.weight(1f).fillMaxHeight(if (e.musica) f.value else 0.12f).clip(RoundedCornerShape(esc.d(4)))
+                        .background(if (i % 3 == 0) Coral else Uva),
+                )
+            }
+        }
+        Spacer(Modifier.height(esc.d(8)))
+        Texto(if (e.pista == "mia") "Tu canción" else pista?.nombre ?: "Mezcla", 15f, lineas = 1)
+        Detalle(if (!e.musica) "Música apagada" else pista?.estilo ?: "", 12f, lineas = 1)
     }
 }

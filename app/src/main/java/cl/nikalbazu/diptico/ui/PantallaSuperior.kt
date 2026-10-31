@@ -48,7 +48,7 @@ fun PantallaSuperior(e: Estado) {
         AyudaMenu(e)
         return
     }
-    if (e.panel == Panel.FICHA) {
+    if (e.panel == Panel.FICHA || e.panel == Panel.IMAGENES) {
         LecturaFicha(e)
         return
     }

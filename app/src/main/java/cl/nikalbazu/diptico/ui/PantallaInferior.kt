@@ -1,5 +1,10 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -35,6 +40,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -110,7 +116,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS)
+            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -133,6 +139,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.FICHA -> PanelFicha(e)
             Panel.WIDGETS -> PanelWidgets(e)
             Panel.ESTADISTICAS -> PanelEstadisticas(e)
+            Panel.IMAGENES -> PanelImagenes(e)
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
         }
     }
@@ -152,7 +159,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
         targetState = e.vista,
         transitionSpec = { (fadeIn(tween(260)) + scaleIn(tween(300), initialScale = 0.96f)) togetherWith fadeOut(tween(160)) },
         label = "vista",
-        modifier = modifier,
+        modifier = modifier.pellizco(),
     ) { vista ->
         when (vista) {
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
@@ -160,6 +167,25 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
             else -> Column(Modifier.fillMaxSize()) {
                 Estante(e, alto = (if (esc.angosta) 192f else 214f) * t.coerceAtMost(1.25f), escala = escalaEstante * t)
                 Info(e)
+            }
+        }
+    }
+}
+
+/** Dos dedos sobre los juegos: abrir agranda, cerrar achica (como en Cocoon o iiSU). Un dedo sigue desplazando. */
+fun Modifier.pellizco(): Modifier = this.pointerInput(Unit) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        var acumulado = 1f
+        while (true) {
+            val ev = awaitPointerEvent(PointerEventPass.Initial)
+            val dedos = ev.changes.count { it.pressed }
+            if (dedos == 0) break
+            if (dedos >= 2) {
+                acumulado *= ev.calculateZoom()
+                ev.changes.forEach { it.consume() }
+                if (acumulado > 1.3f) { Diptico.pellizcar(true); acumulado = 1f }
+                else if (acumulado < 0.77f) { Diptico.pellizcar(false); acumulado = 1f }
             }
         }
     }
@@ -440,6 +466,22 @@ private fun PanelRapido(e: Estado) {
 private fun CampoTexto(valor: String, ejemplo: String, alListo: () -> Unit, numerico: Boolean = false, alto: Float = 60f) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    if (Diptico.estado.collectAsState().value.conTeclado) {
+        // Se escribe con el teclado de Díptico, en la otra pantalla.
+        Column(verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+            TextoEscrito(
+                if (numerico && valor.length > 6) valor.take(4) + "•".repeat(minOf(valor.length - 4, 24)) else valor, ejemplo, 17f, alto - 24f,
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(p.fondo)
+                    .border(esc.d(2), Uva.copy(alpha = 0.6f), RoundedCornerShape(esc.d(16))).padding(esc.d(12)),
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconoDiptico(Icono.INTERCAMBIAR, Coral, 15f)
+                Spacer(Modifier.width(esc.d(6)))
+                Detalle("El teclado está en la otra pantalla", 12.5f, lineas = 1)
+            }
+        }
+        return
+    }
     val foco = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(150)
