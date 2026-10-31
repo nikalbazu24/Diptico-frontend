@@ -29,6 +29,15 @@ class Almacen(ctx: Context) {
         get() = p.getBoolean("intercambiar", false)
         set(v) = p.edit().putBoolean("intercambiar", v).apply()
 
+    /** "dos", "una_negra" (abajo en negro) o "una_libre" (abajo sin Díptico). */
+    var modoPantallas: String
+        get() = p.getString("modoPantallas", "dos") ?: "dos"
+        set(v) = p.edit().putString("modoPantallas", v).apply()
+
+    var modoElegido: Boolean
+        get() = p.getBoolean("modoElegido", false)
+        set(v) = p.edit().putBoolean("modoElegido", v).apply()
+
     var pantallaJuegos: String
         get() = p.getString("pantallaJuegos", "arriba") ?: "arriba"
         set(v) = p.edit().putString("pantallaJuegos", v).apply()

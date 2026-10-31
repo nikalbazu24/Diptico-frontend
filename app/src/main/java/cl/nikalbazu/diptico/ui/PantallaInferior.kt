@@ -88,18 +88,24 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                 Dock(e)
             }
         }
-        when (e.panel) {
-            Panel.MENU -> PanelLista(titulo = e.seleccionado?.titulo ?: "", opciones = Diptico.opcionesMenu(), indice = e.indice)
-            Panel.AJUSTES -> PanelLista(titulo = "Ajustes", opciones = Diptico.opcionesAjustes(), indice = e.indice)
-            Panel.PASO -> PanelPaso(e)
-            Panel.NINGUNO -> Unit
-        }
-        Aviso(e.aviso, Modifier.align(Alignment.BottomCenter))
+        Paneles(e)
     }
 }
 
+/** Menú rápido, ajustes, próximo paso y avisos: se dibujan encima de todo. */
 @Composable
-private fun Cinta(e: Estado) {
+internal fun androidx.compose.foundation.layout.BoxScope.Paneles(e: Estado) {
+    when (e.panel) {
+        Panel.MENU -> PanelLista(titulo = e.seleccionado?.titulo ?: "", opciones = Diptico.opcionesMenu(), indice = e.indice)
+        Panel.AJUSTES -> PanelLista(titulo = "Ajustes", opciones = Diptico.opcionesAjustes(), indice = e.indice)
+        Panel.PASO -> PanelPaso(e)
+        Panel.NINGUNO -> Unit
+    }
+    Aviso(e.aviso, Modifier.align(Alignment.BottomCenter))
+}
+
+@Composable
+internal fun Cinta(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Row(
@@ -131,7 +137,7 @@ private fun Cinta(e: Estado) {
 }
 
 @Composable
-private fun Estante(e: Estado) {
+internal fun Estante(e: Estado, alto: Float = 236f) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val lista = e.visibles
@@ -139,7 +145,7 @@ private fun Estante(e: Estado) {
     LaunchedEffect(e.indiceSel, e.consolaSel, lista.size) {
         if (lista.isNotEmpty()) estado.animateScrollToItem((e.indiceSel - 1).coerceAtLeast(0))
     }
-    Box(Modifier.fillMaxWidth().height(esc.d(236))) {
+    Box(Modifier.fillMaxWidth().height(esc.d(alto))) {
         Box(
             Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(38)).fillMaxWidth().height(esc.d(3)).background(p.estante),
         )
@@ -314,13 +320,54 @@ fun BotonGrande(texto: String, fondo: Color, tinta: Color, modifier: Modifier = 
     ) { Texto(texto, 17f, color = tinta) }
 }
 
-/** Primer arranque: elegir carpeta y revisar emuladores. */
+/** Tarjeta para elegir entre una y dos pantallas en el primer arranque. */
 @Composable
-private fun Configuracion(e: Estado) {
+private fun androidx.compose.foundation.layout.RowScope.TarjetaModo(titulo: String, detalle: String, dos: Boolean, activa: Boolean, accion: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(
+        Modifier.weight(1f).fillMaxSize()
+            .clip(RoundedCornerShape(esc.d(24)))
+            .background(if (activa) Uva.copy(alpha = 0.22f) else p.superficie.copy(alpha = 0.6f))
+            .border(esc.d(3), if (activa) Uva else Color.Transparent, RoundedCornerShape(esc.d(24)))
+            .clickable { accion() }
+            .padding(esc.d(18)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(esc.d(10)),
+    ) {
+        // Dibujo de la consola: una o dos pantallas encendidas.
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+            Box(Modifier.size(esc.d(110), esc.d(62)).clip(RoundedCornerShape(esc.d(8))).background(Uva))
+            Box(
+                Modifier.size(esc.d(72), esc.d(62)).clip(RoundedCornerShape(esc.d(8)))
+                    .background(if (dos) Coral else p.tinta.copy(alpha = 0.12f)),
+            )
+        }
+        Spacer(Modifier.height(esc.d(4)))
+        Texto(titulo, 20f)
+        Texto(detalle, 13f, color = p.tenue, familia = Nunito, interlineado = 18f, alinear = androidx.compose.ui.text.style.TextAlign.Center)
+    }
+}
+
+/** Primer arranque: elegir una o dos pantallas, carpeta y revisar emuladores. */
+@Composable
+internal fun Configuracion(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Column(Modifier.fillMaxSize().padding(esc.d(22)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
         when {
+            !e.modoElegido -> {
+                Texto("¿Cómo quieres usar Díptico?", 24f)
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                    TarjetaModo("Dos pantallas", "Arriba el juego, abajo las consolas y el estante.", dos = true, activa = e.indice == 0) {
+                        Diptico.elegirModo("dos")
+                    }
+                    TarjetaModo("Una pantalla", "Todo arriba, como en una tele. Podrás cambiarlo en Ajustes.", dos = false, activa = e.indice == 1) {
+                        Diptico.elegirModo("una_negra")
+                    }
+                }
+                Texto("← → para elegir · A para confirmar", 12f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold)
+            }
             !e.tieneCarpeta -> {
                 Texto("¡Hola! Soy Díptico", 26f)
                 Texto(
@@ -475,7 +522,7 @@ private fun PanelPaso(e: Estado) {
 }
 
 @Composable
-private fun Aviso(texto: String?, modifier: Modifier) {
+internal fun Aviso(texto: String?, modifier: Modifier) {
     val esc = LocalEscala.current
     AnimatedVisibility(
         visible = texto != null,

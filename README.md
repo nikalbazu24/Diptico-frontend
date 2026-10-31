@@ -9,6 +9,7 @@ Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arr
 - **Tu próximo paso.** Al volver de jugar, te pregunta dónde quedaste y te lo recuerda la próxima vez.
 - **Tiempo jugado y "Continuar"** para volver a tu último juego.
 - **Pantalla de abajo atenuada** con el nombre del juego mientras juegas arriba. Se despierta al tocarla.
+- **Una o dos pantallas, como en iiSU.** En modo una pantalla todo pasa arriba, como en una tele. La de abajo puede quedar en negro (ahorra batería) o libre para otras apps. Se elige en el primer arranque y se cambia en Ajustes.
 - **Control completo con botones**, modo claro y oscuro, e intercambio de pantallas.
 
 ## Cómo instalarla

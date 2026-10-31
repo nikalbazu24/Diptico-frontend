@@ -21,6 +21,10 @@ object Teclas {
 
         // Primer arranque: A hace la acción principal.
         if (!e.configurado) {
+            if (!e.modoElegido && (code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT)) {
+                if (abajo) Diptico.moverOpcionInicial(if (code == KeyEvent.KEYCODE_DPAD_LEFT) -1 else 1)
+                return true
+            }
             if (esA(code)) {
                 if (arriba) Diptico.accionConfiguracion()
                 return true

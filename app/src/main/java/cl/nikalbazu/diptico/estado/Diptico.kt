@@ -41,6 +41,8 @@ data class Estado(
     val oscuro: Boolean = true,
     val intercambiar: Boolean = false,
     val pantallaJuegos: String = "arriba",
+    val modoPantallas: String = "dos",
+    val modoElegido: Boolean = false,
     val sesion: Sesion? = null,
     val despierta: Boolean = false,
     val panel: Panel = Panel.NINGUNO,
@@ -51,6 +53,10 @@ data class Estado(
     val datos: Map<String, DatosJuego> = emptyMap(),
     val emuladores: Map<String, String> = emptyMap(),
 ) {
+    /** Todo Díptico vive en la pantalla de arriba. */
+    val unaPantalla: Boolean
+        get() = modoPantallas != "dos"
+
     val consolasConJuegos: List<Consola>
         get() = Consolas.todas.filter { c -> juegos.any { it.consolaId == c.id } }
 
@@ -101,6 +107,8 @@ object Diptico {
             oscuro = almacen.oscuro,
             intercambiar = almacen.intercambiar,
             pantallaJuegos = almacen.pantallaJuegos,
+            modoPantallas = almacen.modoPantallas,
+            modoElegido = almacen.modoElegido,
             datos = almacen.datos(),
             emuladores = almacen.emuladores(),
         )
@@ -162,9 +170,27 @@ object Diptico {
         escanear()
     }
 
+    fun elegirModo(modo: String) {
+        almacen.modoPantallas = modo
+        almacen.modoElegido = true
+        actualizar { it.copy(modoPantallas = modo, modoElegido = true, indice = 0) }
+    }
+
+    /** En el primer arranque: ← elige dos pantallas, → elige una. */
+    fun moverOpcionInicial(delta: Int) {
+        actualizar { it.copy(indice = if (delta < 0) 0 else 1) }
+    }
+
+    private fun nombreModo(m: String) = when (m) {
+        "una_negra" -> "Una (abajo en negro)"
+        "una_libre" -> "Una (abajo libre)"
+        else -> "Dos pantallas"
+    }
+
     fun accionConfiguracion() {
         val e = estado.value
         when {
+            !e.modoElegido -> elegirModo(if (e.indice == 1) "una_negra" else "dos")
             !e.tieneCarpeta -> pedirCarpeta?.invoke(true)
             e.escaneando -> Unit
             e.juegos.isEmpty() -> pedirCarpeta?.invoke(true)
@@ -247,7 +273,7 @@ object Diptico {
         val e = estado.value
         val juego = e.seleccionado ?: return
         val consola = Consolas.porId(juego.consolaId) ?: return
-        val destino = pantalla ?: e.datos[juego.clave]?.pantalla ?: e.pantallaJuegos
+        val destino = pantalla ?: e.datos[juego.clave]?.pantalla ?: if (e.unaPantalla) "arriba" else e.pantallaJuegos
         val inferior = Pantallas.inferior(app)
         val displayId = if (destino == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
         val error = Lanzador.lanzar(app, juego, consola, e.emuladores[consola.id], displayId)
@@ -397,6 +423,11 @@ object Diptico {
     fun opcionesAjustes(): List<Opcion> {
         val e = estado.value
         val lista = mutableListOf(
+            Opcion("Pantallas", nombreModo(e.modoPantallas)) {
+                val siguiente = when (estado.value.modoPantallas) { "dos" -> "una_negra"; "una_negra" -> "una_libre"; else -> "dos" }
+                elegirModo(siguiente)
+                actualizar { it.copy(panel = Panel.AJUSTES, indice = 0) }
+            },
             Opcion("Tema", if (e.oscuro) "Oscuro" else "Claro") { alternarTema() },
             Opcion("Abrir juegos en", if (e.pantallaJuegos == "abajo") "Pantalla de abajo" else "Pantalla de arriba") {
                 val v = if (estado.value.pantallaJuegos == "abajo") "arriba" else "abajo"

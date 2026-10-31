@@ -200,7 +200,7 @@ private fun PistaBoton(tecla: String, texto: String) {
 }
 
 @Composable
-private fun BarraSuperior(modifier: Modifier) {
+internal fun BarraSuperior(modifier: Modifier, extra: @Composable () -> Unit = {}) {
     val esc = LocalEscala.current
     val hora = rememberHora()
     val bat = rememberBateria()
@@ -215,6 +215,7 @@ private fun BarraSuperior(modifier: Modifier) {
             Spacer(Modifier.width(esc.d(18)))
             Texto("$bat%", 16f, sombra = true)
         }
+        extra()
     }
 }
 
