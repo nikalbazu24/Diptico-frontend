@@ -16,12 +16,25 @@ object IA {
     fun pedir(clave: String, prompt: String, maxTokens: Int = 800): String =
         conversar(clave, null, listOf("user" to prompt), maxTokens)
 
-    /** Conversación con instrucciones de sistema e historial ("user"/"assistant", texto). */
-    fun conversar(clave: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int = 800): String {
+    /** Para el asistente: primero los modelos más capaces. */
+    val MODELOS_LISTOS = listOf("claude-sonnet-5-5", "claude-opus-5-5", MODELO, "claude-sonnet-4-5", "claude-haiku-4-5")
+
+    /**
+     * Conversación con instrucciones de sistema e historial ("user"/"assistant", texto).
+     * Con [buscarWeb], la IA puede buscar guías en internet (si la cuenta no lo permite, sigue sin buscar).
+     */
+    fun conversar(
+        clave: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int = 800,
+        modelos: List<String> = MODELOS, buscarWeb: Boolean = false,
+    ): String {
         var ultimo: Exception? = null
-        for (m in MODELOS) {
+        var web = buscarWeb
+        for (m in modelos) {
             try {
-                return pedirCon(m, clave, sistema, mensajes, maxTokens)
+                return pedirCon(m, clave, sistema, mensajes, maxTokens, web)
+            } catch (e: SinBusqueda) {
+                web = false
+                try { return pedirCon(m, clave, sistema, mensajes, maxTokens, false) } catch (e2: ModeloNoDisponible) { ultimo = e2 }
             } catch (e: ModeloNoDisponible) {
                 ultimo = e
             }
@@ -30,6 +43,7 @@ object IA {
     }
 
     private class ModeloNoDisponible(m: String) : Exception(m)
+    private class SinBusqueda : Exception()
 
     /** Explica en español el error que devolvió la API. */
     private fun explicar(codigo: Int, cuerpo: String): String {
@@ -44,7 +58,7 @@ object IA {
         }
     }
 
-    private fun pedirCon(modelo: String, clave: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int): String {
+    private fun pedirCon(modelo: String, clave: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean = false): String {
         val lista = JSONArray()
         for ((rol, texto) in mensajes) lista.put(JSONObject().put("role", rol).put("content", texto))
         val cuerpo = JSONObject()
@@ -52,6 +66,7 @@ object IA {
             .put("max_tokens", maxTokens)
             .put("messages", lista)
         if (!sistema.isNullOrBlank()) cuerpo.put("system", sistema)
+        if (web) cuerpo.put("tools", JSONArray().put(JSONObject().put("type", "web_search_20250305").put("name", "web_search").put("max_uses", 3)))
         val c = URL("https://api.anthropic.com/v1/messages").openConnection() as HttpURLConnection
         c.requestMethod = "POST"
         c.connectTimeout = 15_000
@@ -65,11 +80,19 @@ object IA {
             val codigo = c.responseCode
             if (codigo !in 200..299) {
                 val error = try { c.errorStream?.use { it.bufferedReader().readText() } ?: "" } catch (e: Exception) { "" }
+                if (web && codigo in 400..403 && (error.contains("web_search", true) || error.contains("tool", true))) throw SinBusqueda()
                 if (codigo == 404 || (codigo == 400 && error.contains("model", true))) throw ModeloNoDisponible(explicar(codigo, error))
                 throw IllegalStateException(explicar(codigo, error))
             }
             val respuesta = c.inputStream.use { it.bufferedReader().readText() }
-            return JSONObject(respuesta).getJSONArray("content").getJSONObject(0).getString("text")
+            // Con búsqueda web la respuesta trae varios bloques: se juntan los de texto.
+            val contenido = JSONObject(respuesta).getJSONArray("content")
+            val texto = StringBuilder()
+            for (i in 0 until contenido.length()) {
+                val b = contenido.getJSONObject(i)
+                if (b.optString("type") == "text") texto.append(b.optString("text"))
+            }
+            return texto.toString().trim()
         } finally {
             c.disconnect()
         }

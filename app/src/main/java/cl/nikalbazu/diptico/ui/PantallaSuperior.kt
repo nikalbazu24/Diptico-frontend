@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -106,8 +108,19 @@ fun PantallaSuperior(e: Estado) {
             horizontalArrangement = Arrangement.spacedBy(esc.d(16)),
         ) {
             BotonJugar()
-            if (!angosta) Pista("Y", "Opciones")
-            Pista("Start", "Menú")
+            AccionRapida("X", "Ficha") { Diptico.abrirFicha() }
+            if (!angosta) AccionRapida("Y", "Opciones") { Diptico.abrirRapido() }
+        }
+        // Bisa, abajo a la derecha, con un consejo según el juego.
+        if (e.sesion == null) {
+            Column(
+                Modifier.align(Alignment.BottomEnd).padding(end = esc.d(margen), bottom = esc.d(20)),
+                horizontalAlignment = Alignment.End,
+            ) {
+                ConsejoBisa(e, juego)
+                Spacer(Modifier.height(esc.d(8)))
+                BotonBisa()
+            }
         }
         if (e.sesion != null) {
             Etiqueta(
@@ -121,11 +134,54 @@ fun PantallaSuperior(e: Estado) {
 /** El arte del juego, a la derecha (o de fondo en pantallas angostas), con un cruce suave al cambiar. */
 @Composable
 fun Heroe(juego: Juego, ancho: Float) {
+    // Un acercamiento lento y suave sobre el arte (se apaga en modo ahorro).
+    val zoom = if (Estilo.efectosCompletos) {
+        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "heroe")
+        t.animateFloat(1f, 1.06f, androidx.compose.animation.core.infiniteRepeatable(tween(14000), androidx.compose.animation.core.RepeatMode.Reverse), label = "zoom").value
+    } else 1f
     Crossfade(targetState = juego, animationSpec = tween(650), label = "arte", modifier = Modifier.fillMaxSize()) { j ->
         Box(Modifier.fillMaxSize()) {
-            ArteJuego(j, preferirArte = true, maxLado = 1600, modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho))
+            ArteJuego(
+                j, preferirArte = true, maxLado = 1600,
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho).graphicsLayer { scaleX = zoom; scaleY = zoom },
+            )
         }
     }
+}
+
+/** Un botón con la tecla del control que lo hace: se toca o se aprieta. */
+@Composable
+private fun AccionRapida(tecla: String, texto: String, accion: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Row(
+        Modifier.clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = 0.85f)).clickable { accion() }
+            .padding(start = esc.d(5), end = esc.d(14), top = esc.d(5), bottom = esc.d(5)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(esc.d(26)).clip(CircleShape).background(p.fondo), contentAlignment = Alignment.Center) { Texto(tecla, 12.5f, traducir = false) }
+        Spacer(Modifier.width(esc.d(7)))
+        Texto(texto, 14f, lineas = 1)
+    }
+}
+
+/** Una burbuja de diálogo de Bisa con algo útil sobre el juego elegido. Al tocarla, Bisa responde. */
+@Composable
+private fun ConsejoBisa(e: Estado, j: Juego) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val d = e.datos[j.clave]
+    val (texto, pregunta) = when {
+        d == null || d.tiempo == 0L -> "¿Quieres saber de qué se trata ${j.titulo}?" to "Cuéntame de qué se trata ${j.titulo} y si me va a gustar, sin spoilers."
+        d.paso.isNotBlank() -> "¿Te ayudo con tu próximo paso?" to "En ${j.titulo} mi próximo paso es: \"${d.paso}\". Dame una pista suave."
+        d.tiempo > 10 * 3600 -> "Llevas harto en este juego. ¿Te digo qué te falta?" to "Llevo muchas horas en ${j.titulo}. ¿Qué cosas importantes o secretos me podría estar perdiendo?"
+        else -> "¿Un truco para ${j.titulo}?" to "Dame un buen truco o consejo para ${j.titulo}."
+    }
+    Box(
+        Modifier.widthIn(max = esc.d(250)).clip(RoundedCornerShape(topStart = esc.d(16), topEnd = esc.d(16), bottomStart = esc.d(16), bottomEnd = esc.d(4)))
+            .background(p.superficie.copy(alpha = 0.92f)).clickable { Diptico.abrirAsistente(); Diptico.preguntar(pregunta) }
+            .padding(horizontal = esc.d(12), vertical = esc.d(8)),
+    ) { Detalle(texto, 13f, color = p.tinta, lineas = 2) }
 }
 
 /** Consola, título (o logo), tiempo jugado y el próximo paso. */
@@ -156,6 +212,20 @@ fun InfoJuego(e: Estado, j: Juego, tamTitulo: Float, conPaso: Boolean = true) {
             if ((datos?.tiempo ?: 0L) > 0) "${formatoTiempo(datos!!.tiempo)} jugadas" else "Aún sin jugar con Díptico",
             14f,
         )
+        // Datos rápidos del juego.
+        val chips = buildList {
+            if ((datos?.sesiones ?: 0) > 0) add("${datos!!.sesiones} partidas")
+            if ((datos?.ultimo ?: 0L) > 1) add(haceCuanto(datos!!.ultimo))
+            if (datos?.favorito == true) add("♥ Favorito")
+            if ((datos?.notas ?: "").isNotBlank()) add("Tiene notas")
+        }
+        if (chips.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+            chips.forEach { c ->
+                Box(Modifier.clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = 0.75f)).padding(horizontal = esc.d(9), vertical = esc.d(3))) {
+                    Texto(c, 12f, color = p.tenue, familia = Nunito, lineas = 1)
+                }
+            }
+        }
         if (conPaso) {
             Spacer(Modifier.height(esc.d(2)))
             Row {
@@ -192,5 +262,17 @@ fun BotonJugar() {
         }
         Spacer(Modifier.width(esc.d(10)))
         Texto("¡Jugar!", 18f, color = SobreUva)
+    }
+}
+
+
+/** "Hoy", "Ayer", "Hace 3 días"… */
+fun haceCuanto(ms: Long): String {
+    val dias = ((System.currentTimeMillis() - ms) / 86_400_000L).toInt()
+    return when {
+        dias <= 0 -> "Jugado hoy"
+        dias == 1 -> "Jugado ayer"
+        dias < 30 -> "Hace $dias días"
+        else -> "Hace ${dias / 30} meses"
     }
 }

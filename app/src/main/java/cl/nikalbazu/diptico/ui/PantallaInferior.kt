@@ -140,7 +140,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.WIDGETS -> PanelWidgets(e)
             Panel.ESTADISTICAS -> PanelEstadisticas(e)
             Panel.IMAGENES -> PanelImagenes(e)
-            Panel.ASISTENTE -> PanelAsistente(e)
+            Panel.ASISTENTE -> if (e.sesion == null) PanelAsistente(e) else Box(Modifier.fillMaxSize())
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
         }
     }
@@ -339,6 +339,14 @@ private fun Dock(e: Estado) {
             ItemDock(Icono.CONTINUAR, "Continuar", p.acentoTexto) { Diptico.continuar() }
             ItemDock(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
             ItemDock(Icono.VISTA, Diptico.nombreVista(e.vista)) { Diptico.cambiarVista() }
+            // Bisa, al centro y con su propia cara.
+            Column(
+                Modifier.weight(1f).fillMaxSize().clickable { Diptico.abrirAsistente() },
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+            ) {
+                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(36).value)
+                Texto("Bisa", 12f, color = Coral, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
+            }
             ItemDock(Icono.APPS, if (e.inicio == "widgets") "Carátulas" else "Widgets") { Diptico.alternarInicio() }
             if (!e.unaPantalla) ItemDock(Icono.INTERCAMBIAR, "Intercambiar") { Diptico.intercambiar() }
             ItemDock(Icono.MENU, "Menú") { Diptico.abrirMenu() }

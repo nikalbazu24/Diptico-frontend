@@ -36,6 +36,16 @@ class MainActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Permiso para los avisos de Bisa mientras juegas (Android 13 o más nuevo). Se pide una sola vez.
+        if (android.os.Build.VERSION.SDK_INT >= 33 && Diptico.estado.value.configurado &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            val prefs = getSharedPreferences("diptico_permisos", MODE_PRIVATE)
+            if (!prefs.getBoolean("avisos_pedidos", false)) {
+                prefs.edit().putBoolean("avisos_pedidos", true).apply()
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 41)
+            }
+        }
         setContent {
             val e by Diptico.estado.collectAsState()
             val hayInferior = Pantallas.inferior(this) != null

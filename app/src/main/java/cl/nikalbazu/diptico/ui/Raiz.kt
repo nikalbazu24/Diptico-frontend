@@ -44,6 +44,9 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 }
             }
             AnimatedVisibility(visible = centroAqui, enter = fadeIn(tween(160)), exit = fadeOut(tween(200))) { PanelCentro(e) }
+            // Mientras juegas: Bisa se abre en la pantalla libre (la que no tiene el juego).
+            val s = e.sesion
+            if (s != null && e.panel == Panel.ASISTENTE && !s.dosPantallas && miPantalla != s.displayId) PanelAsistente(e)
             AnimatedVisibility(
                 visible = e.relojGrande && rol != Rol.INFERIOR,
                 enter = fadeIn(tween(250)) + scaleIn(tween(320), initialScale = 0.9f),

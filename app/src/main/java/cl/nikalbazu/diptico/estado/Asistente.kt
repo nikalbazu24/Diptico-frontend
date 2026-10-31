@@ -15,16 +15,39 @@ data class MensajeChat(val rol: String, val texto: String, val acciones: List<Ac
  * así que no gasta memoria ni batería de la consola: solo manda un texto corto y recibe la respuesta.
  */
 object Asistente {
+    /** Su nombre: Bisa, por la bisagra que une las dos pantallas. */
+    const val NOMBRE = "Bisa"
+
+    /** Intentos recientes: (juego, inicio, fin) de las últimas partidas (solo en memoria). */
+    val intentos = ArrayList<Triple<String, Long, Long>>()
+
+    /** Partidas cortas seguidas del mismo juego en los últimos 40 minutos (señal de que algo cuesta). */
+    fun reintentos(clave: String, ahora: Long = System.currentTimeMillis()): Int =
+        intentos.count { (c, ini, fin) -> c == clave && ahora - fin < 40 * 60_000 && fin - ini in 15_000..10 * 60_000 }
+
+    /** Qué tan difícil le está resultando el juego, en pocas palabras para la IA. */
+    fun dificultad(e: Estado, clave: String): String {
+        val d = e.datos[clave] ?: return "todavía no lo ha jugado"
+        val r = reintentos(clave)
+        val horas = d.tiempo / 3600f
+        val media = if (d.sesiones > 0) d.tiempo / d.sesiones / 60 else 0
+        return buildString {
+            append("${"%.1f".format(horas)} h en ${d.sesiones} partidas (unos $media min cada una)")
+            if (r >= 2) append(", y acaba de reintentar $r veces seguidas en poco rato (probablemente está atascada o muriendo en la misma parte)")
+            if (d.paso.isNotBlank()) append(". Su próximo paso anotado: \"${d.paso}\"")
+            if (d.notas.isNotBlank()) append(". Sus notas: \"${d.notas.take(200)}\"")
+        }
+    }
     /** Juegos que se mandan como contexto (por número, para que la IA proponga botones). */
     private var indice: List<String> = emptyList()
 
     val sugerencias = listOf(
+        "Estoy atascado en el juego elegido",
         "¿Qué juego me recomiendas hoy?",
-        "Quiero algo corto para 20 minutos",
-        "¿Cuál es mi juego más jugado?",
-        "Cámbiame a un tema de Halloween",
         "Dame un truco para el juego elegido",
-        "¿Qué juegos clásicos me faltan?",
+        "¿Por qué me está costando este juego?",
+        "Quiero algo corto para 20 minutos",
+        "Cámbiame a un tema de Halloween",
     )
 
     /** Instrucciones con lo que hay en la biblioteca, en pocas líneas. */
@@ -55,10 +78,19 @@ object Asistente {
         val temas = Diptico.todosLosTemas(e).take(40).joinToString(", ") { "${it.id}=${it.nombre}" }
         val idioma = Idioma.nombreParaIA(e.idioma)
         return """
-            Eres el asistente de Díptico, un launcher de juegos para la consola portátil de dos pantallas AYN Thor.
-            Responde SIEMPRE en $idioma, breve (2 a 6 oraciones), cálido y concreto. Nada de markdown pesado: texto simple, como mucho guiones.
+            Te llamas $NOMBRE y eres la asistente de Díptico, un launcher de juegos para la consola portátil de dos pantallas AYN Thor.
+            Tu nombre viene de la bisagra que une las dos pantallas. Eres cercana, paciente, alegre y muy buena para los videojuegos.
+            Responde SIEMPRE en $idioma, breve (2 a 7 oraciones), cálida y concreta. Nada de markdown pesado: texto simple, como mucho guiones.
             Hoy es ${SimpleDateFormat("EEEE d 'de' MMMM yyyy", java.util.Locale("es")).format(Date())}.
-            Sabes mucho de videojuegos: trucos, guías, historia, cuánto duran, a quién le gustan.
+
+            Eres experta en videojuegos: jefes, acertijos, rutas, coleccionables, builds, trucos, controles de cada emulador y cuánto dura cada juego.
+            Cuando alguien está atascado:
+            1) Piensa paso a paso qué parte del juego es (usa el próximo paso y las notas si las hay). Si no sabes en qué parte va, pregúntalo en una línea.
+            2) Da primero una PISTA SUAVE que no arruine la sorpresa, y ofrece los botones [[pista:directa|Más directa]] y [[pista:solucion|Dime la solución]].
+            3) Si pide la solución, dásela clara y en pasos cortos numerados.
+            4) Si notas que muere o reintenta muchas veces, anímala, explica el patrón del jefe o de la parte, y sugiere subir de nivel, cambiar de equipo o usar estados de guardado del emulador.
+            Si puedes buscar en internet, úsalo para datos precisos de guías y no inventes ubicaciones ni números.
+            Si te preguntan por qué un juego les cuesta, analiza los datos (horas, partidas, reintentos) y explica con cariño qué parte del diseño del juego lo hace difícil y cómo abordarlo.
 
             Puedes proponer acciones que la persona activa con un botón. Escríbelas al final, cada una en su propia línea, con este formato exacto:
             [[jugar:#N|texto del botón]]  abre el juego número N de la lista
@@ -68,11 +100,14 @@ object Asistente {
             [[vista:estante|texto]] o [[vista:cuadricula|texto]] o [[vista:lista|texto]]
             [[buscar:palabra|texto]]      busca en la biblioteca
             [[menu:SECCION|texto]]        abre el menú en PANTALLAS, INICIO, ESTANTE, TEMAS, APARIENCIA, MUSICA, EMULADORES, PORTADAS, BIBLIOTECA, LOGROS, IDIOMA o SISTEMA
+            [[pista:directa|texto]] o [[pista:solucion|texto]]   pide una pista más directa o la solución completa
             Propón como mucho 3 acciones y solo si ayudan. Nunca inventes números de juego: usa solo los de la lista.
             Si te preguntan por un juego que no está en la lista, puedes hablar de él pero di que no está en su biblioteca.
 
             Biblioteca: ${juegos.size} juegos. Por consola: $porConsola.
-            Juego elegido ahora: ${e.seleccionado?.let { s -> "#${indice.indexOf(s.clave)} ${s.titulo}" } ?: "ninguno"}.
+            Juego elegido ahora: ${e.seleccionado?.let { s -> "#${indice.indexOf(s.clave)} ${s.titulo} (${Consolas.porId(s.consolaId)?.nombre ?: s.consolaId}): ${dificultad(e, s.clave)}" } ?: "ninguno"}.
+            ${e.sesion?.let { ses -> juegos.firstOrNull { it.clave == ses.clave }?.let { j -> "AHORA MISMO está jugando ${j.titulo} hace ${(System.currentTimeMillis() - ses.inicio) / 60000} minutos: ${dificultad(e, j.clave)}. Ayúdale con ESE juego." } } ?: ""}
+            ${e.logrosFicha?.takeIf { it.total > 0 }?.let { "Logros de RetroAchievements en ${it.titulo}: ${it.ganados} de ${it.total}." } ?: ""}
             Tema actual: ${cl.nikalbazu.diptico.ui.Estilo.tema.nombre}. Vista: ${e.vista}.
             Temas disponibles: $temas.
 

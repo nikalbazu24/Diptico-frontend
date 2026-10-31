@@ -63,7 +63,7 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String) {
     MUSICA("Música", Icono.MUSICA, "La música de fondo. Se calla sola al abrir un juego o si pones Spotify o YouTube Music."),
     EMULADORES("Emuladores", Icono.EMULADOR, "Con qué emulador, o con qué núcleo de RetroArch, se abre cada consola."),
     PORTADAS("Portadas", Icono.PORTADA, "Descarga portadas, imágenes, logos y títulos de internet."),
-    ASISTENTE("Asistente", Icono.ASISTENTE, "Un asistente con IA que conoce tus juegos: recomienda, explica y cambia cosas de Díptico por ti."),
+    ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
     BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Tu carpeta de juegos y las imágenes que ya tengas de ES-DE."),
@@ -211,6 +211,13 @@ data class Estado(
     /** Conversación con el asistente. */
     val chat: List<MensajeChat> = emptyList(),
     val pensando: Boolean = false,
+    /** Bisa puede buscar guías en internet (cuesta un poco más de la clave). */
+    val bisaWeb: Boolean = true,
+    /** Bisa ofrece ayuda mientras juegas (aviso y burbuja). */
+    val bisaEnJuego: Boolean = true,
+    /** Burbuja flotante de Bisa: abierta (ventanita) y con aviso. */
+    val burbujaAbierta: Boolean = false,
+    val burbujaAlerta: Boolean = false,
     /** Idioma de Díptico: es, en, pt, zh, ja. */
     val idioma: String = "es",
     val fiesta: Fiesta? = null,
@@ -409,6 +416,8 @@ object Diptico {
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             claveIa = almacen.texto("claveIa"),
             usuarioRA = almacen.texto("usuarioRA"),
+            bisaWeb = almacen.bool("bisaWeb", true),
+            bisaEnJuego = almacen.bool("bisaEnJuego", true),
             claveRA = almacen.texto("claveRA"),
             inicio = almacen.texto("inicio", "heroe"),
             widgets = leerWidgets(almacen.texto("widgets")),
@@ -1008,8 +1017,42 @@ object Diptico {
                 sesion = Sesion(juego.clave, System.currentTimeMillis(), displayId, consola.dosPantallas),
                 panel = Panel.NINGUNO,
                 despierta = false,
+                burbujaAbierta = false,
+                burbujaAlerta = false,
             )
         }
+        // Bisa acompaña el juego. Si se nota que lo reintenta mucho, ofrece ayuda.
+        if (e.bisaEnJuego) {
+            val atascado = Asistente.reintentos(juego.clave) >= 2
+            val sinPantallaLibre = consola.dosPantallas || estado.value.unaPantalla || inferior == null
+            cl.nikalbazu.diptico.bisa.BurbujaBisa.acompanar(app, juego.titulo, atascado, sinPantallaLibre)
+            if (atascado && !sinPantallaLibre) prepararAyuda()
+        }
+    }
+
+    /** Deja a Bisa lista para ayudar con el juego en curso (en la pantalla libre o en la burbuja). */
+    fun prepararAyuda() {
+        val e = estado.value
+        val s = e.sesion
+        val juego = s?.let { ses -> e.juegos.firstOrNull { it.clave == ses.clave } } ?: e.seleccionado
+        val titulo = juego?.titulo ?: "tu juego"
+        val r = juego?.let { Asistente.reintentos(it.clave) } ?: 0
+        val saludo = MensajeChat(
+            "ia",
+            if (r >= 2) "Veo que llevas varios intentos seguidos en $titulo. ¡Tranqui, nos pasa a todos! ¿Te doy una pista suave o prefieres la solución?"
+            else "¡Hola! Estoy aquí mientras juegas $titulo. Si algo te cuesta, dime en qué parte vas.",
+            listOf(
+                AccionChat("preguntar", "Estoy atascado en $titulo. Dame una pista suave.", "Dame una pista suave"),
+                AccionChat("preguntar", "En $titulo me matan una y otra vez en la misma parte. ¿Qué hago?", "Me matan siempre en lo mismo"),
+                AccionChat("preguntar", "Dame un buen truco o consejo para $titulo.", "Un truco para este juego"),
+            ),
+        )
+        actualizar { it.copy(panel = Panel.ASISTENTE, chat = if (it.chat.lastOrNull()?.texto == saludo.texto) it.chat else it.chat + saludo, indice = 1, despierta = true) }
+    }
+
+    fun burbujaExpandida(abierta: Boolean, alerta: Boolean) {
+        if (abierta && estado.value.chat.isEmpty()) prepararAyuda()
+        actualizar { it.copy(burbujaAbierta = abierta, burbujaAlerta = alerta) }
     }
 
     /** Una pantalla de Díptico volvió al frente: si ahí corría un juego, la sesión terminó. */
@@ -1024,6 +1067,9 @@ object Diptico {
     fun cerrarSesion(preguntar: Boolean) {
         val s = estado.value.sesion ?: return
         val duracion = (System.currentTimeMillis() - s.inicio) / 1000
+        Asistente.intentos += Triple(s.clave, s.inicio, System.currentTimeMillis())
+        if (Asistente.intentos.size > 40) Asistente.intentos.removeAt(0)
+        cl.nikalbazu.diptico.bisa.BurbujaBisa.detener(app)
         val datos = estado.value.datos.toMutableMap()
         val d = datos[s.clave] ?: DatosJuego()
         datos[s.clave] = d.copy(
@@ -1639,7 +1685,27 @@ object Diptico {
             Seccion.TEMAS -> lista += opcionesTemas(e)
             Seccion.LOGROS -> lista += opcionesLogros(e)
             Seccion.ASISTENTE -> {
-                lista += Opcion("Abrir el asistente", icono = Icono.ASISTENTE, ayuda = "Chatea con la IA: te recomienda juegos de tu biblioteca, te da trucos y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
+                lista += Opcion("Hablar con Bisa", icono = Icono.BISA, ayuda = "Bisa es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
+                lista += Opcion(
+                    "Bisa mientras juegas", if (e.bisaEnJuego) "Sí" else "No", Icono.MANDO,
+                    "Mientras juegas deja un aviso para pedir ayuda, y si reintentas varias veces seguidas la misma partida te ofrece una pista. Se abre en la pantalla libre.",
+                ) {
+                    val v = !estado.value.bisaEnJuego
+                    almacen.guardarBool("bisaEnJuego", v)
+                    actualizar { it.copy(bisaEnJuego = v) }
+                }
+                lista += Opcion(
+                    "Burbuja flotante", if (cl.nikalbazu.diptico.bisa.BurbujaBisa.puedeFlotar(app)) "Activada ✓" else "Dar permiso", Icono.BISA,
+                    "Para juegos que usan las dos pantallas (DS, 3DS) o el modo una pantalla: Bisa aparece como una burbuja encima del juego, con su botón para volver.",
+                ) { if (cl.nikalbazu.diptico.bisa.BurbujaBisa.puedeFlotar(app)) avisar("La burbuja ya tiene permiso") else cl.nikalbazu.diptico.bisa.BurbujaBisa.pedirPermisoFlotante(app) }
+                lista += Opcion(
+                    "Buscar guías en internet", if (e.bisaWeb) "Sí" else "No", Icono.WEB,
+                    "Bisa busca en internet para darte datos exactos de cada juego. Si tu cuenta de Anthropic no lo permite, responde sin buscar.",
+                ) {
+                    val v = !estado.value.bisaWeb
+                    almacen.guardarBool("bisaWeb", v)
+                    actualizar { it.copy(bisaWeb = v) }
+                }
                 lista += Opcion(
                     "Clave de IA (Claude)", if (e.claveIa.isBlank()) "Pegar" else "Guardada ✓", Icono.CLAVE,
                     "El asistente y los temas con IA usan tu clave de console.anthropic.com. Corre en la nube: no ocupa memoria ni hace más lenta tu consola.",
@@ -2480,7 +2546,7 @@ object Diptico {
                 try {
                     val sistema = Asistente.sistema(estado.value)
                     val historia = chat.takeLast(12).map { (if (it.rol == "yo") "user" to it.texto else "assistant" to it.texto) }
-                    Result.success(IA.conversar(estado.value.claveIa, sistema, historia, 700))
+                    Result.success(IA.conversar(estado.value.claveIa, sistema, historia, 1200, IA.MODELOS_LISTOS, buscarWeb = estado.value.bisaWeb))
                 } catch (ex: Exception) {
                     Result.failure(ex)
                 }
@@ -2493,6 +2559,8 @@ object Diptico {
     /** Hace lo que propuso el asistente. */
     fun ejecutarAccion(a: AccionChat) {
         when (a.tipo) {
+            "preguntar" -> preguntar(a.valor)
+            "pista" -> preguntar(if (a.valor == "solucion") "Dime la solución completa, paso a paso." else "Dame una pista más directa.")
             "jugar", "ver", "ficha" -> {
                 if (estado.value.juegos.none { it.clave == a.valor }) { avisar("No encontré ese juego"); return }
                 actualizar { it.copy(consolaSel = "todo", juegoSel = a.valor, panel = Panel.NINGUNO) }
@@ -3129,7 +3197,7 @@ object Diptico {
         Opcion("Pantalla", icono = Icono.BRILLO) { abrirIntent(Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS), "No pude abrir la pantalla") },
         Opcion("Archivos", icono = Icono.CARPETA) { abrirArchivos() },
         Opcion("Batería", icono = Icono.BATERIA) { abrirIntent(Intent(Intent.ACTION_POWER_USAGE_SUMMARY), "No pude abrir la batería") },
-        Opcion("Asistente", icono = Icono.ASISTENTE) { abrirAsistente() },
+        Opcion("Bisa", icono = Icono.BISA) { abrirAsistente() },
         Opcion("Estadísticas", icono = Icono.RELOJ) { abrirEstadisticas() },
         Opcion("Protector", icono = Icono.ESTRELLA) { cerrarPanel(); actualizar { it.copy(protector = true) } },
         Opcion("Ajustes", icono = Icono.AJUSTES) { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },

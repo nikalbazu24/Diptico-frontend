@@ -4,6 +4,10 @@
 
     <!-- Para descargar portadas, imágenes y títulos -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Para encontrar los emuladores, ports y juegos de Android instalados (Díptico es un launcher) -->
@@ -85,6 +89,24 @@
             android:launchMode="singleTask"
             android:taskAffinity="cl.nikalbazu.diptico.inferior"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- Bisa mientras juegas: aviso fijo y burbuja flotante encima del juego. -->
+        <service
+            android:name=".bisa.BurbujaBisa"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Asistente de juegos que se muestra como burbuja flotante mientras la persona juega" />
+        </service>
+
+        <activity
+            android:name=".bisa.AyudaActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- Para el widget de música: ver y controlar lo que suena en Spotify, YouTube Music, etc. -->
         <service

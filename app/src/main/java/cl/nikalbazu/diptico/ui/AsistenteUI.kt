@@ -62,9 +62,7 @@ private fun Burbuja(m: MensajeChat) {
     val mia = m.rol == "yo"
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mia) Arrangement.End else Arrangement.Start) {
         if (!mia) {
-            Box(Modifier.size(esc.d(28)).clip(CircleShape).fondoBoton(Uva), contentAlignment = Alignment.Center) {
-                IconoDiptico(Icono.ASISTENTE, SobreUva, 15f, acento = SobreUva)
-            }
+            cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(28).value)
             Spacer(Modifier.width(esc.d(6)))
         }
         Box(
@@ -90,12 +88,10 @@ fun PanelAsistente(e: Estado) {
         Box(Modifier.align(Alignment.TopEnd).size(esc.d(320)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.22f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(esc.d(36)).clip(CircleShape).fondoBoton(Uva), contentAlignment = Alignment.Center) {
-                    IconoDiptico(Icono.ASISTENTE, SobreUva, 20f, acento = SobreUva)
-                }
+                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(40).value)
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Asistente", 20f, lineas = 1)
+                    Texto("Bisa", 20f, lineas = 1)
                     Detalle(if (e.pensando) "Pensando…" else "Con IA en la nube: no gasta memoria de tu consola", 12f, lineas = 1)
                 }
             }
@@ -105,7 +101,7 @@ fun PanelAsistente(e: Estado) {
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 if (e.chat.isEmpty()) item {
                     Column(Modifier.padding(vertical = esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                        Texto("¡Hola! ¿En qué te ayudo?", 18f)
+                        Texto("¡Hola! Soy Bisa. ¿En qué te ayudo?", 18f)
                         Detalle(
                             if (e.claveIa.isBlank()) "Para usarme necesitas una clave de IA (Claude). Elige \"Escribir una pregunta\" y te pido la clave."
                             else "Conozco tus juegos. Pídeme recomendaciones, trucos, o que cambie el tema o la vista.",
@@ -156,7 +152,11 @@ fun LecturaAsistente(e: Estado) {
             Modifier.fillMaxSize().padding(start = esc.d(36), end = esc.d(36), top = esc.d(62), bottom = esc.d(24)),
             verticalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
-            Etiqueta("Asistente", Coral, 13f)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(44).value)
+                Spacer(Modifier.width(esc.d(10)))
+                Etiqueta("Bisa · tu asistente", Coral, 13f)
+            }
             if (pregunta != null) Detalle("“${pregunta.texto}”", 15f, lineas = 2)
             when {
                 e.pensando -> Row(verticalAlignment = Alignment.CenterVertically) {
@@ -173,5 +173,23 @@ fun LecturaAsistente(e: Estado) {
                 }
             }
         }
+    }
+}
+
+
+/** Acceso a Bisa para el inicio: su cara animada y su nombre. */
+@Composable
+fun BotonBisa(modifier: Modifier = Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Row(
+        modifier.clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = 0.9f))
+            .border(esc.d(1.5f), Uva.copy(alpha = 0.5f), RoundedCornerShape(50))
+            .clickable { Diptico.abrirAsistente() }.padding(start = esc.d(4), end = esc.d(12), top = esc.d(4), bottom = esc.d(4)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(30).value)
+        Spacer(Modifier.width(esc.d(7)))
+        Texto("Bisa", 14f, lineas = 1)
     }
 }

@@ -78,7 +78,7 @@ class InferiorActivity : BaseActivity() {
      */
     private fun aplicarBrillo(e: Estado) {
         val s = e.sesion
-        val atenuarJuego = s != null && s.displayId != miDisplay() && !s.dosPantallas && !e.despierta && !e.intercambiar
+        val atenuarJuego = s != null && s.displayId != miDisplay() && !s.dosPantallas && !e.despierta && !e.intercambiar && e.panel != cl.nikalbazu.diptico.estado.Panel.ASISTENTE
         val valor = when {
             !e.configurado -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
             e.unaPantalla -> 0.01f
