@@ -33,7 +33,7 @@ data class ImagenWeb(val url: String, val miniatura: String, val fuente: String,
  * Guarda lo encontrado para no pedirlo otra vez.
  */
 object Fichas {
-    const val AGENTE = "Diptico/0.6 (launcher para AYN Thor; contacto en GitHub Nikalbazu24)"
+    const val AGENTE = "Diptico/0.7 (launcher para AYN Thor; contacto en GitHub Nikalbazu24)"
 
     fun texto(url: String): String? {
         val c = URL(url).openConnection() as HttpURLConnection
