@@ -2,7 +2,23 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.3
+## Qué hace la v0.4
+
+- **Switch arreglado:** Díptico ahora le pasa a Eden, Kenji-NX y compañía el juego de una forma que pueden abrir. También reconoce Citron, Sudachi y Yuzu.
+- **Varias carpetas de juegos** (memoria interna, SD…). Si una carpeta no tiene el nombre de una consola, eliges la consola a mano.
+- **Inicio con widgets rediseñado:** grilla de 6 x 4 donde mueves los widgets libremente (con el dedo o la cruceta) y eliges entre 10 tamaños y formas. Nuevos widgets: favoritos y saludo del día.
+- **Select** cambia entre el inicio con widgets y el de carátulas (mantener Select intercambia las pantallas).
+- **Vistas del estante:** estante, cuadrícula o lista (R3), con 4 tamaños, filtros (favoritos, recientes, más jugados, sin jugar), orden y **búsqueda** (L3). L2/R2 saltan de letra.
+- **Ventana del juego** con Y o manteniendo el juego: jugar, personalizar, ficha, próximo paso, favorito, emulador solo para ese juego, pantalla y forma de las cajas. El fondo se difumina.
+- **Forma de las cajas por consola:** original, cuadrada, póster, horizontal, disco, cartucho o tarjeta, con su tamaño y si muestra portada, captura o logo.
+- **Sticks:** el izquierdo mueve como la cruceta; el derecho cambia de consola y desplaza.
+- **Tamaño según la pantalla:** todo se ajusta a la forma de cada pantalla, y puedes agrandar o achicar cada una por separado.
+- **Menú rediseñado:** secciones en mosaicos de colores y opciones con interruptores.
+- **Centro de control** (mantener Start o la campana): Wi‑Fi, Bluetooth, volumen, pantalla, archivos, ajustes y tus notificaciones. Díptico puede ser tu launcher principal.
+- **8 músicas nuevas** que acompañan a cada tema: Fantasma (Halloween), Nieve (Navidad), Sakura, Neón, Océano, Bosque, Portátil y Fiesta.
+- **Nombres reales de los juegos:** se reconocen solos con libretro, y con IA los que falten (Switch, PS3…).
+
+### Lo que trajo la v0.3
 
 - **Todas las consolas de ES-DE para Android:** 190 sistemas, entre ellos Switch (Eden, Kenji-NX, Skyline), Xbox y Xbox 360, Wii U (Cemu), 3DS (Azahar), PS Vita (Vita3K), PS3 y PS4, arcade, computadoras retro y mucho más, con los mismos comandos que ES-DE (y RetroArch con todos sus núcleos).
 - **Juegos de Android en su propio estante:** Díptico encuentra solo los juegos instalados (Genshin, Minecraft…) y puedes agregar o quitar cualquiera.
@@ -30,7 +46,7 @@ Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arr
 ## Cómo instalarla
 
 1. Desde la Thor, entra a la pestaña **Releases** de este repositorio.
-2. Descarga el archivo `Diptico-v0.3.X.apk` más reciente y ábrelo para instalar.
+2. Descarga el archivo `Diptico-v0.4.X.apk` más reciente y ábrelo para instalar.
 3. Al abrir Díptico, elige tu carpeta de juegos.
 
 Las versiones nuevas se instalan encima de la anterior, sin perder tus datos.
@@ -79,13 +95,14 @@ En **Menú › Emuladores** aprieta A sobre una consola para pasar por los emula
 |---|---|
 | ← → | Moverte por el estante |
 | L1 / R1 | Cambiar de consola |
-| L2 / R2 | Saltar de a 5 juegos |
-| A | Jugar (mantén presionado para el menú rápido) |
+| L2 / R2 | Saltar a la letra anterior o siguiente |
+| A | Jugar (mantén presionado para la ventana del juego) |
 | B | Volver o cerrar |
-| Y | Anotar tu próximo paso |
+| Y | Ventana del juego (personalizar, ficha, favorito…) |
 | X | Ficha del juego |
-| Select | Intercambiar pantallas |
-| Start | Menú (en el menú: ← → cambian de columna, L1/R1 de sección) |
+| Select | Inicio con widgets / carátulas (mantener: intercambiar pantallas) |
+| L3 / R3 | Buscar / cambiar la vista |
+| Start | Menú (mantener: centro de control) |
 
 ## Cómo se construye
 

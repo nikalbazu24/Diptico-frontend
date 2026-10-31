@@ -381,7 +381,7 @@ fun PanelCentro(e: Estado) {
     val esc = LocalEscala.current
     val avisos by Avisos.lista.collectAsState()
     val acciones = Diptico.opcionesCentro()
-    Box(Modifier.fillMaxSize().background(p.fondo2.copy(alpha = 0.97f)).sinCerrar()) {
+    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconoDiptico(Icono.CAMPANA, p.tinta, 22f, acento = Coral)
