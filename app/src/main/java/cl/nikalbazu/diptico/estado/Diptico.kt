@@ -1805,7 +1805,7 @@ object Diptico {
 
     // ---------- Elegir archivos (imágenes y música) ----------
 
-    /** La pantalla activa registra aquí cómo pedir un archivo de un tipo ("image/*", "audio/*"). */
+    /** La pantalla activa registra aquí cómo pedir un archivo de un tipo (imagen o audio). */
     var pedirArchivo: ((String) -> Unit)? = null
     private var archivoPara = ""
 

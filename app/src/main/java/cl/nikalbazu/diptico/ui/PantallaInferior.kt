@@ -455,6 +455,7 @@ private fun PanelPaso(e: Estado) {
 /** Marcar qué apps instaladas son ports: aparecen en su propio estante. */
 @Composable
 private fun PanelPorts(e: Estado) {
+    val esAndroid = e.appsDestino == Consolas.ANDROID
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val lista = rememberLazyListState()
@@ -462,16 +463,15 @@ private fun PanelPorts(e: Estado) {
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(16), end = esc.d(16), top = esc.d(12), bottom = esc.d(10))) {
             Row(Modifier.fillMaxWidth().height(esc.d(40)), verticalAlignment = Alignment.CenterVertically) {
-                val android = e.appsDestino == Consolas.ANDROID
                 IconoConsola(Consolas.porId(e.appsDestino), 28f, p.fondo2)
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto(if (android) "Juegos de Android" else "Tus ports", 21f, lineas = 1)
+                    Texto(if (esAndroid) "Juegos de Android" else "Tus ports", 21f, lineas = 1)
                 }
-                Detalle("${(if (android) e.android else e.ports).size} elegidos", 14f, lineas = 1)
+                Detalle("${(if (esAndroid) e.android else e.ports).size} elegidos", 14f, lineas = 1)
             }
             Detalle(
-                if (android) "Arriba están los que Android reconoce como juego. Marca los que quieras en tu estante."
+                if (esAndroid) "Arriba están los que Android reconoce como juego. Marca los que quieras en tu estante."
                 else "Marca los juegos hechos para Android. Puedes agregar cualquier app.",
                 13.5f, lineas = 2,
             )

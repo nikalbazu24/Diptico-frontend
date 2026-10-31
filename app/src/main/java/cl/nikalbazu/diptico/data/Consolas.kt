@@ -220,7 +220,7 @@ object Consolas {
                     j.optString("icono", "").takeIf { it.isNotEmpty() && it != "null" },
                 )
             }
-            todas = lista.sortedWith(compareBy({ ORDEN.indexOf(it.id).let { p -> if (p < 0) 999 else p } }, { it.esPorts || it.esAndroid }, { it.bonito }))
+            todas = lista.sortedWith(compareBy<Consola>({ ORDEN.indexOf(it.id).let { p -> if (p < 0) 999 else p } }, { it.esPorts || it.esAndroid }, { it.bonito }))
                 .let { l -> l.filter { !it.sinEmulador } + l.filter { it.sinEmulador } }
             cargado = true
             indice = null
