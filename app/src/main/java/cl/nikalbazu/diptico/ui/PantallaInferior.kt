@@ -219,6 +219,7 @@ fun Estante(e: Estado, alto: Float = 184f, escala: Float = 1f) {
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun EstanteDe(e: Estado, consola: String, alto: Float, escala: Float) {
     val p = LocalPaleta.current

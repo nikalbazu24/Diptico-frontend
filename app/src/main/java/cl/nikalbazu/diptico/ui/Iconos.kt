@@ -228,6 +228,49 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             circulo(8.5f, 7f, 0.8f, a, lleno = true)
             linea(7f, 13f, 13f, 13f, a); linea(7f, 16f, 17f, 16f, a)
         }
+        Icono.CAMPANA -> {
+            camino { m(6f, 17f); l(6f, 11f); quadraticBezierTo(6f * k, 5f * k, 12f * k, 5f * k); quadraticBezierTo(18f * k, 5f * k, 18f * k, 11f * k); l(18f, 17f); close() }
+            linea(4f, 17f, 20f, 17f)
+            circulo(12f, 20f, 1.6f, a, lleno = true)
+        }
+        Icono.VISTA -> {
+            caja(3.5f, 3.5f, 7.5f, 7.5f, 2f)
+            caja(13f, 3.5f, 7.5f, 7.5f, 2f, a)
+            caja(3.5f, 13f, 7.5f, 7.5f, 2f, a)
+            caja(13f, 13f, 7.5f, 7.5f, 2f)
+        }
+        Icono.WIFI -> {
+            camino { m(3f, 10f); quadraticBezierTo(12f * k, 2f * k, 21f * k, 10f * k) }
+            camino { m(6f, 13.5f); quadraticBezierTo(12f * k, 8f * k, 18f * k, 13.5f * k) }
+            camino(a) { m(9f, 16.8f); quadraticBezierTo(12f * k, 14f * k, 15f * k, 16.8f * k) }
+            circulo(12f, 19.5f, 1.4f, a, lleno = true)
+        }
+        Icono.BLUETOOTH -> {
+            camino { m(7f, 7.5f); l(16.5f, 16f); l(12f, 20.5f); l(12f, 3.5f); l(16.5f, 8f); l(7f, 16.5f) }
+        }
+        Icono.BRILLO -> {
+            circulo(12f, 12f, 4f, a, lleno = true)
+            for (i in 0 until 8) {
+                val ang = i * Math.PI / 4
+                val x1 = 12f + 6.5f * kotlin.math.cos(ang).toFloat(); val y1 = 12f + 6.5f * kotlin.math.sin(ang).toFloat()
+                val x2 = 12f + 9f * kotlin.math.cos(ang).toFloat(); val y2 = 12f + 9f * kotlin.math.sin(ang).toFloat()
+                linea(x1, y1, x2, y2)
+            }
+        }
+        Icono.AJUSTES -> {
+            circulo(12f, 12f, 3f, a)
+            for (i in 0 until 6) {
+                val ang = i * Math.PI / 3
+                val x1 = 12f + 6f * kotlin.math.cos(ang).toFloat(); val y1 = 12f + 6f * kotlin.math.sin(ang).toFloat()
+                val x2 = 12f + 9f * kotlin.math.cos(ang).toFloat(); val y2 = 12f + 9f * kotlin.math.sin(ang).toFloat()
+                linea(x1, y1, x2, y2)
+            }
+            circulo(12f, 12f, 6.5f)
+        }
+        Icono.FORMA -> {
+            caja(3f, 4f, 9f, 12f, 2f)
+            circulo(16.5f, 15.5f, 4.5f, a)
+        }
         Icono.ESTRELLA -> {
             camino(lleno = true) {
                 m(12f, 3f); l(14.4f, 9f); l(21f, 9.4f); l(15.9f, 13.6f); l(17.6f, 20f)
