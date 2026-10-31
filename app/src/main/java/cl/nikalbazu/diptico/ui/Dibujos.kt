@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.data.Banda
+import cl.nikalbazu.diptico.data.FormaCaja
 import cl.nikalbazu.diptico.data.Consola
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.data.Medio
