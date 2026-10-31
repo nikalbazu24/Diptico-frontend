@@ -98,6 +98,16 @@ object Idioma {
             }
             return salida
         }
+        // "Automática (alta)": se traduce lo de afuera y lo de adentro del paréntesis.
+        Regex("""^(.+) \((.+)\)$""").matchEntire(texto)?.let { m ->
+            val afuera = t(m.groupValues[1])
+            val adentro = m.groupValues[2].let { x ->
+                val directo = t(x)
+                if (directo != x) directo
+                else t(x.replaceFirstChar { it.uppercase() }).let { y -> if (y == x.replaceFirstChar { it.uppercase() }) x else y.lowercase(locale) }
+            }
+            if (afuera != m.groupValues[1] || adentro != m.groupValues[2]) return "$afuera ($adentro)"
+        }
         // Un símbolo adelante ("⚠ ", "♪ ", "▶ "): se traduce el resto.
         Regex("""^([^\p{L}\p{N}"“¿¡(]+\s)(.+)$""", RegexOption.DOT_MATCHES_ALL).matchEntire(texto)?.let { m ->
             val resto = t(m.groupValues[2])
