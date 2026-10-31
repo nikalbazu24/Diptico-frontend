@@ -10,6 +10,7 @@ Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arr
 - **Música de fondo propia**, con tres pistas originales (Bisagra, Cartucho y Medianoche), una mezcla o tu propia carpeta de canciones. Se calla sola al jugar o si pones Spotify o YouTube Music.
 - **RetroArch con sus núcleos** para SNES, N64, PSX, GBA, GameCube, DS, PS2 y PSP, igual que en ES-DE.
 - **Descarga de portadas, imágenes y títulos** desde libretro (gratis) y, con tu clave, logos y arte grande desde SteamGridDB. Se configura en el tutorial.
+- **Estante de ports:** marca tus ports y juegos nativos de Android (Ship of Harkinian, Doom, Mario 64…) y aparecen en su propio estante, con tiempo jugado y próximo paso.
 - **Intercambiar pantallas** desde la barra de abajo o con Select.
 - Animación de entrada, próximo paso, tiempo jugado, "Continuar" y pantalla atenuada al jugar, como en la v0.1.
 
