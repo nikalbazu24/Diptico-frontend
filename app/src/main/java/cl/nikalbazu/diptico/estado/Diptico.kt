@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE }
+enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, AJUSTE_WIDGET }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -83,6 +83,8 @@ data class Opcion(
     val apagada: Boolean = false,
     /** Si es una app, su paquete (para mostrar su ícono). */
     val paquete: String? = null,
+    /** Para opciones con valor: qué hace ← (la acción normal es →). */
+    val menos: (() -> Unit)? = null,
     val accion: () -> Unit,
 )
 
@@ -102,6 +104,10 @@ data class Widget(
     val uri: String? = null,
     /** Estilo: tarjeta, vidrio, solido, contorno o sinfondo. */
     val estilo: String = "tarjeta",
+    /** Color propio del widget (0 = el del tema), qué tan opaco es su fondo y qué tan redondas sus esquinas. */
+    val color: Long = 0L,
+    val opacidad: Float = 1f,
+    val radio: Int = 22,
 )
 
 /** Forma de las cajas de una consola en el estante. */
@@ -232,6 +238,12 @@ data class Estado(
     val idioma: String = "es",
     /** Lo que se escribió para buscar un ajuste (en "Lo esencial"). */
     val buscarAjuste: String = "",
+    /** Galería abierta: temas, musica o colores; y su pestaña. */
+    val galeria: String = "temas",
+    val galeriaPestana: Int = 0,
+    /** Inicio con widgets: separación entre widgets y si se ve el saludo. */
+    val huecoInicio: Int = 10,
+    val saludoInicio: Boolean = true,
     val fiesta: Fiesta? = null,
     val ficha: FichaInfo? = null,
     val fichaDe: String? = null,
@@ -455,6 +467,8 @@ object Diptico {
             tecladoPropio = almacen.bool("tecladoPropio", true),
             protectorMin = almacen.texto("protectorMin", "5").toIntOrNull() ?: 5,
             gridCols = almacen.texto("gridCols", "6").toIntOrNull() ?: 6,
+            huecoInicio = almacen.texto("huecoInicio", "10").toIntOrNull() ?: 10,
+            saludoInicio = almacen.bool("saludoInicio", true),
             gridFilas = almacen.texto("gridFilas", "4").toIntOrNull() ?: 4,
             paginas = almacen.texto("paginas", "1").toIntOrNull() ?: 1,
             fondoInicio = almacen.texto("fondoInicio").ifEmpty { null },
@@ -1100,6 +1114,82 @@ object Diptico {
         }
     }
 
+    // ---------- Galerías: temas, música y colores ----------
+
+    /** Un elemento de una galería. [color] es la muestra (en colores) y [tema] la vista previa (en temas). */
+    data class ItemGaleria(val id: String, val nombre: String, val detalle: String, val enUso: Boolean, val tema: Tema? = null, val color: Long = 0L, val accion: () -> Unit)
+
+    fun abrirGaleria(tipo: String) {
+        actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = 0, indice = 0) }
+        val i = itemsGaleria().indexOfFirst { it.enUso }
+        if (i > 0) actualizar { it.copy(indice = i) }
+    }
+
+    fun pestanasGaleria(tipo: String = estado.value.galeria): List<String> = when (tipo) {
+        "temas" -> listOf("Colores", "Fiestas del mundo", "Tus temas")
+        "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
+        else -> listOf("Canciones")
+    }
+
+    fun cambiarPestanaGaleria(d: Int) {
+        val n = pestanasGaleria().size
+        actualizar { it.copy(galeriaPestana = (it.galeriaPestana + d).mod(n), indice = 0) }
+        val i = itemsGaleria().indexOfFirst { it.enUso }
+        if (i > 0) actualizar { it.copy(indice = i) }
+    }
+
+    /** Muestras para "Mis colores": 12 tonos en 5 luces, más grises. */
+    val MUESTRAS_COLOR: List<Long> = buildList {
+        val tonos = listOf(0f, 18f, 35f, 50f, 90f, 140f, 170f, 195f, 215f, 245f, 270f, 300f, 330f)
+        for (v in listOf(0.95f to 0.55f, 0.85f to 0.85f, 0.75f to 1f, 0.55f to 0.65f, 0.35f to 0.35f)) {
+            for (h in tonos) add(android.graphics.Color.HSVToColor(floatArrayOf(h, v.first, v.second)).toLong() and 0xFFFFFFFFL)
+        }
+        listOf(0xFFFFFFFF, 0xFFE5E5EA, 0xFFB0B0B8, 0xFF6E6E78, 0xFF3A3A44, 0xFF1C1C24, 0xFF0B0A12, 0xFF000000).forEach { add(it) }
+    }
+
+    fun itemsGaleria(e: Estado = estado.value): List<ItemGaleria> {
+        val actual = cl.nikalbazu.diptico.ui.Estilo.tema
+        return when (e.galeria) {
+            "temas" -> when (e.galeriaPestana) {
+                0 -> Temas.incluidos.map { t -> ItemGaleria(t.id, t.nombre, if (t.decor != "nada") Temas.nombreDecor(t.decor) else "", actual.id == t.id, t) { elegirTema(t.id) } }
+                1 -> Temas.fiestas.map { f -> ItemGaleria(f.tema.id, f.nombre, f.donde, actual.id == f.tema.id, f.tema) { elegirTema(f.tema.id) } }
+                else -> e.temasPropios.map { t -> ItemGaleria(t.id, t.nombre, "Creado por ti", actual.id == t.id, t) { elegirTema(t.id) } } +
+                    ItemGaleria("_ia", "Crear con IA", if (e.claveIa.isBlank()) "Necesita una clave" else "Escribe tu idea", false) {
+                        if (estado.value.claveIa.isBlank()) abrirTexto("ia_clave") else abrirTexto("ia_pedido")
+                    } +
+                    ItemGaleria("_colores", "Mis colores", "Toda la interfaz", false) { abrirGaleria("colores") }
+            }
+            "colores" -> {
+                val mio = e.temasPropios.firstOrNull { it.id == "mio" } ?: actual
+                val valor = when (e.galeriaPestana) { 0 -> mio.acento; 1 -> mio.acento2; 2 -> mio.acento3; 3 -> mio.fondo; else -> mio.tinta }
+                val auto = if (e.galeriaPestana >= 3) listOf(ItemGaleria("_auto", "Automático", "", valor == 0L, color = 0L) { ponerColor(0L) }) else emptyList()
+                auto + MUESTRAS_COLOR.map { c -> ItemGaleria(c.toString(), "", "", c == valor, color = c) { ponerColor(c) } }
+            }
+            else -> {
+                val sonando = if (e.musicaTema && e.pista != "mia") e.pistaTema else e.pista
+                Musica.pistas.map { p -> ItemGaleria(p.id, p.nombre, p.estilo, e.musica && sonando == p.id) { fijarPista(p.id) } } +
+                    ItemGaleria("mezcla", "Mezcla", "Todas, una tras otra", e.musica && sonando == "mezcla") { fijarPista("mezcla") } +
+                    ItemGaleria("_tema", "Según el tema", "Cada tema trae su música", e.musica && e.musicaTema) {
+                        almacen.guardarBool("musicaTema", true); actualizar { it.copy(musicaTema = true) }
+                        if (!estado.value.musica) fijarMusica(true)
+                    } +
+                    ItemGaleria("_mia", "Mi propia música", if (e.carpetaMusica != null) "Tu carpeta" else "Elegir carpeta", e.musica && e.pista == "mia") { pedirCarpeta?.invoke(Carpeta.MUSICA) } +
+                    ItemGaleria("_no", "Sin música", "Silencio total", !e.musica) { fijarMusica(false) }
+            }
+        }
+    }
+
+    /** Pone un color en el espacio elegido de "Mi tema" y lo aplica a toda la interfaz. */
+    private fun ponerColor(c: Long) {
+        val p = estado.value.galeriaPestana
+        editarMiTema {
+            when (p) {
+                0 -> it.copy(acento = c); 1 -> it.copy(acento2 = c); 2 -> it.copy(acento3 = c)
+                3 -> it.copy(fondo = c); else -> it.copy(tinta = c)
+            }
+        }
+    }
+
     /** Deja a Bisa lista para ayudar con el juego en curso (en la pantalla libre o en la burbuja). */
     fun prepararAyuda() {
         val e = estado.value
@@ -1306,6 +1396,15 @@ object Diptico {
         }
         if (e.panel == Panel.IMAGENES) {
             actualizar { it.copy(panel = Panel.FICHA, indice = 0) }
+            return
+        }
+        if (e.panel == Panel.AJUSTE_WIDGET) {
+            almacen.guardarTexto("widgets", escribirWidgets(e.widgets))
+            actualizar { it.copy(panel = Panel.NINGUNO, indice = 0) }
+            return
+        }
+        if (e.panel == Panel.GALERIA) {
+            actualizar { it.copy(panel = Panel.MENU, seccion = if (e.galeria == "musica") Seccion.MUSICA else Seccion.TEMAS, enOpciones = true, indice = 0) }
             return
         }
         if (e.panel == Panel.WIDGETS) {
@@ -1551,6 +1650,14 @@ object Diptico {
                 val total = elementosAsistente().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
+            Panel.AJUSTE_WIDGET -> {
+                val total = opcionesWidget().size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
+            Panel.GALERIA -> {
+                val total = itemsGaleria(e).size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
             Panel.IMAGENES -> {
                 val total = candidatosVisibles(e).size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
@@ -1621,6 +1728,8 @@ object Diptico {
             }
             Panel.CARPETAS -> aceptarCarpetas()
             Panel.IMAGENES -> usarCandidato()
+            Panel.GALERIA -> itemsGaleria(e).getOrNull(e.indice)?.accion?.invoke()
+            Panel.AJUSTE_WIDGET -> opcionesWidget().getOrNull(e.indice)?.accion?.invoke()
             Panel.ASISTENTE -> elementosAsistente().getOrNull(e.indice)?.accion?.invoke()
             Panel.CENTRO -> {
                 val acciones = opcionesCentro()
@@ -1966,15 +2075,14 @@ object Diptico {
                     almacen.guardarBool("musicaTema", v)
                     actualizar { it.copy(musicaTema = v) }
                 }
-                // Todas las pistas a la vista: elegir una la pone a sonar.
                 val sonando = if (e.musicaTema && e.pista != "mia") e.pistaTema else e.pista
-                for (p in Musica.pistas) {
-                    lista += Opcion(
-                        "♪ ${p.nombre}", if (e.musica && sonando == p.id) "Sonando ✓" else p.estilo, Icono.MUSICA,
-                        "${p.estilo}. Elegirla apaga \"Música según el tema\".",
-                    ) { fijarPista(p.id) }
-                }
-                lista += Opcion("♪ Mezcla", if (e.musica && sonando == "mezcla") "Sonando ✓" else "Todas, una tras otra", Icono.ESTRELLA) { fijarPista("mezcla") }
+                lista.add(
+                    0,
+                    Opcion(
+                        "Elegir canción", if (e.musica) nombrePista(sonando) else "Música apagada", Icono.MUSICA,
+                        "Todas las canciones de Díptico en una lista, para escucharlas y elegir.",
+                    ) { abrirGaleria("musica") },
+                )
                 lista += Opcion(
                     "Sonidos al moverte", if (e.sonidos) "Sí" else "No", Icono.VOLUMEN,
                     "Un sonido suave al moverte, elegir, volver y abrir un juego.",
@@ -2242,6 +2350,7 @@ object Diptico {
                 Widget(
                     o.getString("tipo"), o.getInt("x"), o.getInt("y"), o.getInt("an"), o.getInt("al"), o.optBoolean("visible", true),
                     o.optInt("pagina", 0), o.optString("uri", "").ifEmpty { null }, o.optString("estilo", "tarjeta"),
+                    o.optLong("color", 0L), o.optDouble("opacidad", 1.0).toFloat(), o.optInt("radio", 22),
                 )
             }
         }
@@ -2255,6 +2364,7 @@ object Diptico {
         l.forEach {
             val o = org.json.JSONObject().put("tipo", it.tipo).put("x", it.x).put("y", it.y).put("an", it.an).put("al", it.al)
                 .put("visible", it.visible).put("pagina", it.pagina).put("estilo", it.estilo)
+                .put("color", it.color).put("opacidad", it.opacidad.toDouble()).put("radio", it.radio)
             it.uri?.let { u -> o.put("uri", u) }
             put(o)
         }
@@ -2362,24 +2472,21 @@ object Diptico {
             "Crear tema con IA", if (e.claveIa.isBlank()) "Necesita una clave" else "Escribe tu idea", Icono.CHISPA,
             "Escribe algo como \"Halloween japonés\" o \"Navidad en la playa\", o déjalo vacío y la IA elige la fiesta del mundo más cercana a hoy.",
         ) { if (estado.value.claveIa.isBlank()) abrirTexto("ia_clave") else abrirTexto("ia_pedido") }
-        for (t in todosLosTemas(e)) {
-            val enUso = cl.nikalbazu.diptico.ui.Estilo.tema.id == t.id
-            lista += Opcion(
-                t.nombre, if (enUso) "En uso ✓" else if (t.propio) "Creado por ti" else "", Icono.PALETA,
-                if (t.decor != "nada") "Con ${Temas.nombreDecor(t.decor).lowercase()}." else "",
-            ) { elegirTema(t.id) }
-        }
-        val fiestaIdx = Temas.fiestas.indexOfFirst { it.tema.id == e.tema }
-        lista += Opcion(
-            "Probar temas de fiestas", if (fiestaIdx >= 0) Temas.fiestas[fiestaIdx].nombre else "Elegir", Icono.MUNDO,
-            "Recorre los temas de las fiestas del mundo cuando quieras.",
-        ) { elegirTema(Temas.fiestas[(fiestaIdx + 1).mod(Temas.fiestas.size)].tema.id) }
+        lista.add(
+            0,
+            Opcion(
+                "Elegir tema", cl.nikalbazu.diptico.ui.Estilo.tema.nombre, Icono.PALETA,
+                "Una galería con todos los temas, separados en pestañas: colores, fiestas del mundo y los tuyos. Se ve cómo queda antes de elegir.",
+            ) { abrirGaleria("temas") },
+        )
+        lista.add(
+            1,
+            Opcion(
+                "Mis colores", "Toda la interfaz", Icono.PALETA,
+                "Elige tú el color principal, el secundario, los detalles, el fondo y las letras de todo Díptico.",
+            ) { abrirGaleria("colores") },
+        )
         val mio = e.temasPropios.firstOrNull { it.id == "mio" }
-        lista += Opcion("Mi tema · color principal", "Cambiar", Icono.PALETA, "Crea tu propio tema eligiendo sus colores.") {
-            editarMiTema { it.copy(acento = siguienteColor(it.acento)) }
-        }
-        lista += Opcion("Mi tema · color 2", "Cambiar", Icono.PALETA) { editarMiTema { it.copy(acento2 = siguienteColor(it.acento2)) } }
-        lista += Opcion("Mi tema · color 3", "Cambiar", Icono.PALETA) { editarMiTema { it.copy(acento3 = siguienteColor(it.acento3)) } }
         lista += Opcion("Mi tema · fondo", when (mio?.base) { "oscuro" -> "Oscuro"; "claro" -> "Claro"; "oled" -> "Negro puro"; else -> "Según el modo" }, Icono.TEMA) {
             editarMiTema { it.copy(base = when (it.base) { "auto" -> "oscuro"; "oscuro" -> "oled"; "oled" -> "claro"; else -> "auto" }) }
         }
@@ -2506,7 +2613,7 @@ object Diptico {
         almacen.guardarTexto("inicio", "widgets")
         val primero = estado.value.widgets.indexOfFirst { it.visible }.coerceAtLeast(0)
         actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.NINGUNO) }
-        avisar("Cruceta mueve · L1 R1 ancho · L2 R2 alto · X estilo · Y agregar · B listo")
+        avisar("Cruceta mueve · A ajustes del widget · Select otro · Y agregar · B listo")
     }
 
     fun terminarEdicion() {
@@ -3750,6 +3857,78 @@ object Diptico {
             l[i] = puesto ?: w.copy(visible = false)
         }
         return l
+    }
+
+    // ---------- Ajustes de un widget ----------
+
+    fun abrirAjustesWidget(i: Int = estado.value.widgetSel) {
+        actualizar { it.copy(widgetSel = i, panel = Panel.AJUSTE_WIDGET, indice = 0) }
+    }
+
+    private val OPACIDADES = listOf(1f, 0.85f, 0.7f, 0.5f, 0.3f, 0f)
+    private val RADIOS = listOf(6, 14, 22, 34)
+    private fun nombreRadio(r: Int) = when { r <= 8 -> "Rectas"; r <= 16 -> "Suaves"; r <= 26 -> "Redondas"; else -> "Muy redondas" }
+    private fun <T> ciclar(l: List<T>, v: T, d: Int): T = l[(l.indexOf(v).coerceAtLeast(0) + d).mod(l.size)]
+
+    /** Todo lo que se puede cambiar del widget elegido (← y → cambian el valor). */
+    fun opcionesWidget(): List<Opcion> {
+        val e = estado.value
+        val i = e.widgetSel
+        val w = e.widgets.getOrNull(i) ?: return emptyList()
+        val colores = listOf(0L) + Temas.MUESTRAS
+        return listOf(
+            Opcion("Ancho", "${w.an} de ${Widgets.COLUMNAS}", Icono.FORMA, menos = { cambiarTamWidget(-1, 0) }) { cambiarTamWidget(1, 0) },
+            Opcion("Alto", "${w.al} de ${Widgets.FILAS}", Icono.FORMA, menos = { cambiarTamWidget(0, -1) }) { cambiarTamWidget(0, 1) },
+            Opcion("Estilo", Widgets.nombreEstilo(w.estilo), Icono.PALETA, menos = { cambiarWidget(i) { it.copy(estilo = ciclar(Widgets.ESTILOS, it.estilo, -1)) } }) {
+                cambiarWidget(i) { it.copy(estilo = ciclar(Widgets.ESTILOS, it.estilo, 1)) }
+            },
+            Opcion("Color", if (w.color == 0L) "Del tema" else "Propio", Icono.PALETA, menos = { cambiarWidget(i) { it.copy(color = ciclar(colores, it.color, -1)) } }) {
+                cambiarWidget(i) { it.copy(color = ciclar(colores, it.color, 1)) }
+            },
+            Opcion("Fondo", "${(w.opacidad * 100).toInt()}%", Icono.BRILLO, menos = { cambiarWidget(i) { it.copy(opacidad = ciclar(OPACIDADES, it.opacidad, -1)) } }) {
+                cambiarWidget(i) { it.copy(opacidad = ciclar(OPACIDADES, it.opacidad, 1)) }
+            },
+            Opcion("Esquinas", nombreRadio(w.radio), Icono.FORMA, menos = { cambiarWidget(i) { it.copy(radio = ciclar(RADIOS, it.radio, -1)) } }) {
+                cambiarWidget(i) { it.copy(radio = ciclar(RADIOS, it.radio, 1)) }
+            },
+            Opcion("Página", "${w.pagina + 1} de ${e.paginas}", Icono.VISTA, menos = { moverWidgetPagina(i, -1) }) { moverWidgetPagina(i, 1) },
+            Opcion("Separación entre widgets", when { e.huecoInicio <= 4 -> "Juntos"; e.huecoInicio <= 10 -> "Normal"; else -> "Amplia" }, Icono.APPS,
+                menos = { cambiarHueco(-1) }) { cambiarHueco(1) },
+            Opcion("Saludo arriba", if (e.saludoInicio) "Sí" else "No", Icono.TEXTO) {
+                val v = !estado.value.saludoInicio
+                almacen.guardarBool("saludoInicio", v)
+                actualizar { it.copy(saludoInicio = v) }
+            },
+            Opcion("Quitar este widget", icono = Icono.BORRAR) { quitarWidget(i); cerrarPanel() },
+        )
+    }
+
+    /** ← en un panel de valores (como los ajustes del widget). */
+    fun menosEnPanel() {
+        val e = estado.value
+        if (e.panel == Panel.AJUSTE_WIDGET) opcionesWidget().getOrNull(e.indice)?.let { o -> (o.menos ?: o.accion).invoke() }
+    }
+
+    private fun moverWidgetPagina(i: Int, d: Int) {
+        val e = estado.value
+        val w = e.widgets.getOrNull(i) ?: return
+        val p = (w.pagina + d).coerceIn(0, e.paginas - 1)
+        if (p == w.pagina) { avisar("Agrega páginas en la barra de arriba"); return }
+        val c = w.copy(pagina = p)
+        if (choca(c, i)) {
+            val l = reacomodar(e.widgets.toMutableList().also { it[i] = c.copy(x = 0, y = 0) }, e.paginas)
+            actualizar { it.copy(widgets = l, paginaInicio = p) }
+        } else {
+            cambiarWidget(i) { c }
+            actualizar { it.copy(paginaInicio = p) }
+        }
+    }
+
+    private fun cambiarHueco(d: Int) {
+        val l = listOf(4, 10, 16)
+        val v = ciclar(l, estado.value.huecoInicio, d)
+        almacen.guardarTexto("huecoInicio", v.toString())
+        actualizar { it.copy(huecoInicio = v) }
     }
 
     fun ciclarGrilla(columnas: Boolean) {

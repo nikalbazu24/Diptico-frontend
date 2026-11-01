@@ -24,15 +24,20 @@ data class Tema(
     val decor: String = "nada",
     val mensaje: String = "",
     val propio: Boolean = false,
+    /** Color del fondo y de las letras (0 = el automático, según el color principal). */
+    val fondo: Long = 0L,
+    val tinta: Long = 0L,
 ) {
     fun json(): JSONObject = JSONObject()
         .put("id", id).put("nombre", nombre).put("acento", acento).put("acento2", acento2).put("acento3", acento3)
         .put("base", base).put("decor", decor).put("mensaje", mensaje).put("propio", propio)
+        .put("fondo", fondo).put("tinta", tinta)
 
     companion object {
         fun deJson(o: JSONObject) = Tema(
             o.getString("id"), o.getString("nombre"), o.getLong("acento"), o.getLong("acento2"), o.getLong("acento3"),
             o.optString("base", "auto"), o.optString("decor", "nada"), o.optString("mensaje", ""), o.optBoolean("propio", true),
+            o.optLong("fondo", 0L), o.optLong("tinta", 0L),
         )
     }
 }

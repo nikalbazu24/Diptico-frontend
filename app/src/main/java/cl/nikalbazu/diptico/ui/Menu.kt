@@ -341,7 +341,7 @@ private fun VistaPrevia(e: Estado, sec: Seccion, titulo: String?, modifier: Modi
 
 /** Un inicio en miniatura pintado con los colores del tema. */
 @Composable
-private fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
+fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
     val esc = LocalEscala.current
     val pal = remember(t, oscuro) { paletaDe(t, oscuro) }
     val a = Color(t.acento)
@@ -481,7 +481,7 @@ private fun PreviaInicio(e: Estado) {
 
 /** Barras que bailan con la canción elegida. */
 @Composable
-private fun PreviaMusica(e: Estado) {
+fun PreviaMusica(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val pista = cl.nikalbazu.diptico.audio.Musica.pistas.firstOrNull { it.id == e.pista }

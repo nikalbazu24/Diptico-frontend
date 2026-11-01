@@ -175,9 +175,9 @@ object Teclas {
             }
             if (arriba) {
                 when {
-                    esA(code) -> Diptico.siguienteWidget(1)
+                    esA(code) -> Diptico.abrirAjustesWidget()
                     code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.cambiarEstiloWidget()
-                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.INICIO)
+                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.siguienteWidget(1)
                     code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.actualizar { it.copy(panel = Panel.WIDGETS, indice = 0) }
                     esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
                     code in botonesControl || code in cruceta -> Unit
@@ -190,7 +190,7 @@ object Teclas {
 
         // Paneles con su propia forma de moverse.
         when (e.panel) {
-            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE ->
+            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA, Panel.AJUSTE_WIDGET ->
                 return panelEnGrilla(ev, e)
             Panel.MENU -> return menu(ev, e)
             else -> Unit
@@ -292,6 +292,7 @@ object Teclas {
     @Volatile
     var columnasBuscar = 4
     var columnasImagenes = 4
+    var columnasGaleria = 3
 
     @Volatile
     var columnasMenu = 3
@@ -305,6 +306,7 @@ object Teclas {
             Panel.RAPIDO -> Diptico.columnasVentana
             Panel.BUSCAR -> columnasBuscar
             Panel.IMAGENES -> columnasImagenes
+            Panel.GALERIA -> columnasGaleria
             else -> 1
         }
         if (abajo) {
@@ -325,7 +327,8 @@ object Teclas {
                         Panel.CENTRO -> Diptico.moverCentro(d, 0)
                         Panel.FICHA -> if (ev.repeatCount == 0) Diptico.cambiarPestanaFicha(d)
                         Panel.RAPIDO -> Diptico.moverRapido(d, 0)
-                        Panel.BUSCAR, Panel.IMAGENES -> Diptico.moverIndice(d)
+                        Panel.AJUSTE_WIDGET -> if (d < 0) Diptico.menosEnPanel() else Diptico.aceptar()
+                        Panel.BUSCAR, Panel.IMAGENES, Panel.GALERIA -> Diptico.moverIndice(d)
                         else -> Unit
                     }
                 }
@@ -335,6 +338,7 @@ object Teclas {
                         Panel.FICHA -> Diptico.cambiarPestanaFicha(d)
                         Panel.BUSCAR -> Diptico.cambiarFiltro(d)
                         Panel.IMAGENES -> Diptico.cambiarFuenteImagen(d)
+                        Panel.GALERIA -> Diptico.cambiarPestanaGaleria(d)
                         else -> Unit
                     }
                 }

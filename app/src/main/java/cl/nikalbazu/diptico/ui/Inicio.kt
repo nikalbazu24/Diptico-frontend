@@ -2,6 +2,11 @@
 
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -107,8 +112,8 @@ fun PantallaInicio(e: Estado) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(20), end = esc.d(20), top = esc.d(48), bottom = esc.d(12))) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f)) {
-                    Texto(if (e.editandoWidgets) "Acomodando tu inicio" else saludo(), 24f, lineas = 1)
-                    if (!e.editandoWidgets) Detalle( cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() } +
+                    if (e.editandoWidgets || e.saludoInicio) Texto(if (e.editandoWidgets) "Acomodando tu inicio" else saludo(), 24f, lineas = 1)
+                    if (!e.editandoWidgets && e.saludoInicio) Detalle( cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() } +
                             (e.fiesta?.let { " · ${it.nombre}" } ?: ""),
                         13.5f, lineas = 1,
                     )
@@ -163,7 +168,7 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
     // Con más de 4 filas, la página se desplaza hacia abajo.
     val desplazar = rememberScrollState()
     BoxWithConstraints(modifier) {
-        val hueco = 10f
+        val hueco = e.huecoInicio.toFloat()
         val anchoU = maxWidth.value / esc.factor
         val visibles = minOf(Widgets.FILAS, 4)
         val altoU = maxHeight.value / esc.factor
@@ -198,14 +203,22 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                 val y by animateDpAsState(esc.d(w.y * (celdaAl + hueco)), spring(dampingRatio = 0.75f, stiffness = 500f), label = "y")
                 val an by animateDpAsState(esc.d(w.an * celdaAn + (w.an - 1) * hueco), spring(dampingRatio = 0.8f), label = "an")
                 val al by animateDpAsState(esc.d(w.al * celdaAl + (w.al - 1) * hueco), spring(dampingRatio = 0.8f), label = "al")
-                val tam by animateFloatAsState(if (elegido) 1.02f else 1f, spring(dampingRatio = 0.5f), label = "tam")
+                val tam by animateFloatAsState(if (elegido) 1.03f else 1f, spring(dampingRatio = 0.5f), label = "tam")
+                // En modo edición los widgets tiemblan un poquito (cada uno a su ritmo), como en los teléfonos.
+                val tiemble = if (e.editandoWidgets) {
+                    val t = rememberInfiniteTransition(label = "tiemble")
+                    t.animateFloat(-1f, 1f, infiniteRepeatable(tween(260 + (i % 4) * 35), RepeatMode.Reverse), label = "rot").value
+                } else 0f
                 Box(
                     Modifier.offset(x = x, y = y).size(an, al)
                         .zIndex(if (elegido) 2f else 1f)
-                        .graphicsLayer { translationX = arrastre.x; translationY = arrastre.y; scaleX = tam; scaleY = tam }
+                        .graphicsLayer {
+                            translationX = arrastre.x; translationY = arrastre.y; scaleX = tam; scaleY = tam
+                            rotationZ = if (elegido) tiemble * 0.4f else tiemble * 0.8f
+                        }
                         .then(if (elegido) Modifier.border(esc.d(3), Uva, RoundedCornerShape(esc.d(22))) else Modifier),
                 ) {
-                    CompositionLocalProvider(LocalEstiloWidget provides w.estilo) {
+                    CompositionLocalProvider(LocalWidget provides w) {
                         if (w.tipo.startsWith("imagen")) WidgetImagen(w) else WidgetVista(e, w.tipo, w.an, w.al)
                     }
                     if (e.editandoWidgets) {
@@ -241,7 +254,7 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                                 ) {
                                     BotonMini("−") { Diptico.tamanoWidgetSel(-1) }
                                     BotonMini("+") { Diptico.tamanoWidgetSel(1) }
-                                    BotonMini("◐") { Diptico.cambiarEstiloWidget(i) }
+                                    BotonMini("⚙") { Diptico.abrirAjustesWidget(i) }
                                     BotonMini("✕") { Diptico.quitarWidget(i) }
                                 }
                             }
@@ -254,8 +267,8 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
     }
 }
 
-/** Estilo del widget que se está dibujando. */
-private val LocalEstiloWidget = androidx.compose.runtime.compositionLocalOf { "tarjeta" }
+/** El widget que se está dibujando (su estilo, color, fondo y esquinas). */
+private val LocalWidget = androidx.compose.runtime.compositionLocalOf<cl.nikalbazu.diptico.estado.Widget?> { null }
 
 @Composable
 private fun BotonMini(texto: String, accion: () -> Unit) {
@@ -296,22 +309,27 @@ private fun BarraEdicion(e: Estado) {
         Chip("Listo", Icono.CHECK, activo = true) { Diptico.terminarEdicion() }
     }
     Spacer(Modifier.height(esc.d(4)))
-    Detalle("Cruceta mueve · L1 R1 ancho · L2 R2 alto · X estilo · Y agregar · Select ajustes · B listo", 11.5f, lineas = 1)
+    Detalle("Cruceta mueve · L1 R1 ancho · L2 R2 alto · A ajustes del widget · X estilo · Select otro · B listo", 11.5f, lineas = 1)
 }
 
 @Composable
 private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = null, contenido: @Composable () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val forma = RoundedCornerShape(esc.d(22))
-    val estilo = LocalEstiloWidget.current
+    val w = LocalWidget.current
+    val forma = RoundedCornerShape(esc.d((w?.radio ?: 22).toFloat()))
+    val estilo = w?.estilo ?: "tarjeta"
+    val op = w?.opacidad ?: 1f
+    val propio = w?.color?.takeIf { it != 0L }?.let { Color(it) }
+    val base = propio ?: p.superficie
+    val acento = propio ?: Uva
     val fondo = when (estilo) {
-        "vidrio" -> Modifier.background(Brush.linearGradient(listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.05f))))
+        "vidrio" -> Modifier.background(Brush.linearGradient(listOf((propio ?: Color.White).copy(alpha = 0.16f * op), (propio ?: Color.White).copy(alpha = 0.05f * op))))
             .border(esc.d(1.2f), Color.White.copy(alpha = 0.22f), forma)
-        "solido" -> Modifier.fondoBoton(Uva.copy(alpha = 0.85f))
-        "contorno" -> Modifier.border(esc.d(2), Uva.copy(alpha = 0.8f), forma)
+        "solido" -> Modifier.background(Brush.linearGradient(listOf(acento.copy(alpha = 0.9f * op), acento.copy(alpha = 0.65f * op))))
+        "contorno" -> Modifier.border(esc.d(2), acento.copy(alpha = 0.8f), forma)
         "sinfondo" -> Modifier
-        else -> Modifier.background(Brush.verticalGradient(listOf(p.superficie.copy(alpha = 0.9f), p.superficie.copy(alpha = 0.7f))))
+        else -> Modifier.background(Brush.verticalGradient(listOf(base.copy(alpha = 0.9f * op), base.copy(alpha = 0.7f * op))))
             .border(esc.d(1), Color.White.copy(alpha = 0.06f), forma)
     }
     Box(

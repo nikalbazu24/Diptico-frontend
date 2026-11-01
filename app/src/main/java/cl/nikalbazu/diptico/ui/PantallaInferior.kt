@@ -122,7 +122,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE)
+            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -146,6 +146,8 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.WIDGETS -> PanelWidgets(e)
             Panel.ESTADISTICAS -> PanelEstadisticas(e)
             Panel.IMAGENES -> PanelImagenes(e)
+            Panel.GALERIA -> PanelGaleria(e)
+            Panel.AJUSTE_WIDGET -> PanelAjusteWidget(e)
             Panel.ASISTENTE -> if (e.sesion == null) PanelAsistente(e) else Box(Modifier.fillMaxSize())
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
         }

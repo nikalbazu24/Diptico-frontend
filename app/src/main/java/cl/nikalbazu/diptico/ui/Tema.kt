@@ -97,8 +97,25 @@ fun paletaDe(t: Tema, oscuroPersona: Boolean): Paleta {
         "claro" -> false
         else -> oscuroPersona
     }
-    if (t.id == "diptico") return if (oscuro) PaletaOscura else PaletaClara
+    if (t.id == "diptico" && t.fondo == 0L && t.tinta == 0L) return if (oscuro) PaletaOscura else PaletaClara
     val a = Color(t.acento)
+    // Fondo y letras propios (Mi tema › Colores).
+    if (t.fondo != 0L || t.tinta != 0L) {
+        val f = if (t.fondo != 0L) Color(t.fondo) else if (oscuro) lerp(Color(0xFF0B0A12), a, 0.07f) else lerp(Color(0xFFF7F6FB), a, 0.07f)
+        val claro = f.luminance() > 0.45f
+        val tinta = if (t.tinta != 0L) Color(t.tinta) else if (claro) Color(0xFF1C1A2E) else Color(0xFFF4F2FF)
+        val hacia = if (claro) Color.Black else Color.White
+        return Paleta(
+            fondo = f,
+            fondo2 = lerp(f, hacia, 0.03f),
+            superficie = lerp(f, hacia, if (claro) 0.06f else 0.1f),
+            tinta = tinta,
+            tenue = lerp(tinta, f, 0.35f),
+            linea = lerp(f, hacia, 0.16f),
+            acentoTexto = lerp(a, if (claro) Color.Black else Color.White, if (claro) 0.28f else 0.38f),
+            estante = if (claro) Color(0x241C1A33) else Color(0x1AFFFFFF),
+        )
+    }
     return if (oscuro) {
         val negro = t.base == "oled"
         Paleta(

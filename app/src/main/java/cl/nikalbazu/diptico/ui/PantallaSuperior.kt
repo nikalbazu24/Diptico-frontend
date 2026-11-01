@@ -54,6 +54,10 @@ fun PantallaSuperior(e: Estado) {
         LecturaFicha(e)
         return
     }
+    if (e.panel == Panel.GALERIA) {
+        VistaGaleria(e)
+        return
+    }
     if (e.panel == Panel.ASISTENTE) {
         LecturaAsistente(e)
         return
