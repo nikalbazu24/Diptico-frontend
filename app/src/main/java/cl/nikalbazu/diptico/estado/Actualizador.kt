@@ -54,9 +54,9 @@ object Actualizador {
             val movil = esMovil(ctx)
             for (a in 0 until assets.length()) {
                 val o = assets.getJSONObject(a)
-                val n = o.optString("name")
+                val archivoApk = o.optString("name")
                 // Cada versión baja su mismo tipo: la de consolas o la de teléfonos ("-movil").
-                if (n.endsWith(".apk") && n.contains("-movil") == movil) {
+                if (archivoApk.endsWith(".apk") && archivoApk.contains("-movil") == movil) {
                     mejor = VersionNueva(
                         n, tag.removePrefix("v"), o.optString("browser_download_url"), o.optLong("size"),
                         r.optString("body").lineSequence().map { it.trim() }.filter { it.isNotBlank() }.take(4).joinToString("\n"),
