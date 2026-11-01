@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import cl.nikalbazu.diptico.estado.Diptico
@@ -78,7 +79,7 @@ fun PantallaUnica(e: Estado) {
         Box(Modifier.fillMaxSize().background(p.fondo)) {
             Box(Modifier.fillMaxSize().difuminar(e)) {
                 VistaSistema(e, completa = false)
-                SistemasCarrusel(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).fillMaxHeight(0.8f))
+                SistemasCarrusel(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).fillMaxHeight(0.8f).clipToBounds())
             }
             Paneles(e, conAyuda = true)
         }

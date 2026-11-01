@@ -278,7 +278,7 @@ fun VistaSistema(e: Estado, completa: Boolean = true) {
             IconoConsola(c, 300f, Color.Transparent)
         }
         BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 32f, trabajos = e.trabajos)
-        Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(36), end = esc.d(36)).fillMaxWidth(0.62f)) {
+        Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(36), end = esc.d(36)).fillMaxWidth(if (completa) 0.62f else 0.46f)) {
             Etiqueta(if (id == "todo") "Toda tu colección" else "Consola", Coral, 12f)
             Spacer(Modifier.height(esc.d(4)))
             Texto(c?.bonito ?: "Todos tus juegos", 38f, lineas = 2, interlineado = 42f, sombra = true)
