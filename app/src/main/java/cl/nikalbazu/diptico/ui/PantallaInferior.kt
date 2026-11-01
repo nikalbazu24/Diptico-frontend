@@ -67,6 +67,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -148,7 +149,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
+            val completo = targetState in setOf(Panel.MENU, Panel.ENCUADRE, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -171,6 +172,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.FICHA -> PanelFicha(e)
             Panel.ESTADISTICAS -> PanelEstadisticas(e)
             Panel.IMAGENES -> PanelImagenes(e)
+            Panel.ENCUADRE -> PanelEncuadre(e)
             Panel.GALERIA -> PanelGaleria(e)
             Panel.ESTUDIO -> PanelEstudio(e)
             Panel.EDITAR_CONSOLA -> PanelEditarConsola(e)
@@ -342,7 +344,7 @@ private fun EstanteDe(e: Estado, consola: String, alto: Float, escala: Float) {
                                     .border(esc.d(3), if (p == PaletaOscura) Color.White else Uva, forma)
                                 else Modifier,
                             ),
-                    ) { CajaJuego(j, c, escala = escala) }
+                    ) { CajaJuego(j, c, escala = escala, vivo = elegido) }
                     Box(
                         Modifier.padding(top = esc.d(7)).width(esc.d(caja.ancho)).height(esc.d(22)).clip(RoundedCornerShape(esc.d(caja.radio.coerceAtMost(12f))))
                             .background(Brush.verticalGradient(listOf(color.copy(alpha = if (elegido) 0.33f else 0.16f), Color.Transparent))),
@@ -522,6 +524,8 @@ private fun EnJuego(e: Estado) {
                     BotonRedondo("+") { Diptico.cambiarTamLogo(1.1f) }
                 }
             }
+            // Si suena música en otra app (Spotify, YouTube Music…), se controla desde aquí sin salir del juego.
+            MusicaEnJuego()
             // Paso anotado, si hay.
             val paso = e.datos[s.clave]?.paso.orEmpty()
             if (paso.isNotBlank()) {
@@ -546,6 +550,46 @@ private fun EnJuego(e: Estado) {
             }
         }
     }
+}
+
+/** Controles de la música que suena mientras juegas: portada, canción y anterior / pausa / siguiente. */
+@Composable
+private fun MusicaEnJuego() {
+    val esc = LocalEscala.current
+    val m by cl.nikalbazu.diptico.audio.Medios.sonando.collectAsState()
+    val musica = m ?: return
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f))
+            .border(esc.d(1), Color.White.copy(alpha = 0.08f), RoundedCornerShape(esc.d(16))).padding(esc.d(8)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(esc.d(40)).clip(RoundedCornerShape(esc.d(10))).background(Uva.copy(alpha = 0.3f)), contentAlignment = Alignment.Center) {
+            val img = musica.portada
+            if (img != null) Image(img.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            else IconoDiptico(Icono.MUSICA, Color.White, 20f, acento = Coral)
+        }
+        Spacer(Modifier.width(esc.d(10)))
+        Column(Modifier.weight(1f)) {
+            Texto(musica.titulo.ifBlank { musica.app }, 14f, color = Color.White, lineas = 1, traducir = false)
+            Detalle(listOf(musica.artista, musica.app).filter { it.isNotBlank() }.joinToString(" · "), 11.5f, color = Color(0xFFB9B5D6), lineas = 1)
+        }
+        val boton = Modifier.size(esc.d(36)).clip(CircleShape)
+        Box(boton.background(Color.White.copy(alpha = 0.1f)).clickable { cl.nikalbazu.diptico.audio.Medios.anterior() }, contentAlignment = Alignment.Center) {
+            IconoDiptico(Icono.CONTINUAR, Color.White, 16f, modifier = Modifier.graphicsLayer { scaleX = -1f })
+        }
+        Spacer(Modifier.width(esc.d(6)))
+        Box(boton.size(esc.d(42)).fondoBoton(Uva).clickable { cl.nikalbazu.diptico.audio.Medios.alternar() }, contentAlignment = Alignment.Center) {
+            if (musica.reproduciendo) Row(horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
+                Box(Modifier.size(esc.d(4), esc.d(14)).clip(RoundedCornerShape(50)).background(SobreUva))
+                Box(Modifier.size(esc.d(4), esc.d(14)).clip(RoundedCornerShape(50)).background(SobreUva))
+            } else IconoDiptico(Icono.JUGAR, SobreUva, 18f)
+        }
+        Spacer(Modifier.width(esc.d(6)))
+        Box(boton.background(Color.White.copy(alpha = 0.1f)).clickable { cl.nikalbazu.diptico.audio.Medios.siguiente() }, contentAlignment = Alignment.Center) {
+            IconoDiptico(Icono.CONTINUAR, Color.White, 16f)
+        }
+    }
+    Spacer(Modifier.height(esc.d(8)))
 }
 
 @Composable
@@ -581,7 +625,7 @@ private fun PanelRapido(e: Estado) {
     val esc = LocalEscala.current
     val opciones = Diptico.opcionesRapido()
     val lista = rememberLazyListState()
-    LaunchedEffect(e.indice) { if (opciones.isNotEmpty()) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+    LaunchedEffect(e.indice) { if (opciones.isNotEmpty()) lista.mostrar(e.indice) }
     Velo {
         Column(
             Modifier.width(esc.d(anchoPanel(440f))).clip(RoundedCornerShape(esc.d(24))).background(p.fondo2).sinCerrar()
@@ -678,7 +722,7 @@ private fun PanelPorts(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val lista = rememberLazyListState()
-    LaunchedEffect(e.indice) { if (e.apps.isNotEmpty()) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+    LaunchedEffect(e.indice) { if (e.apps.isNotEmpty()) lista.mostrar(e.indice) }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(16), end = esc.d(16), top = esc.d(12), bottom = esc.d(10))) {
             Row(Modifier.fillMaxWidth().height(esc.d(40)), verticalAlignment = Alignment.CenterVertically) {

@@ -3,6 +3,8 @@ package cl.nikalbazu.diptico.ui
 import android.content.Context
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -522,4 +524,43 @@ fun MedioPixel(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Mo
         bmp
     }
     Image(img, null, modifier.size(esc.d(tam)), contentScale = ContentScale.Fit, filterQuality = androidx.compose.ui.graphics.FilterQuality.None)
+}
+
+/**
+ * Desplaza la lista solo lo justo para que se vea el elegido: si ya se ve entero no se mueve nada,
+ * así todas las opciones quedan quietas y a la vista (nada de recentrar en cada paso).
+ */
+suspend fun androidx.compose.foundation.lazy.LazyListState.mostrar(i: Int, margen: Int = 0) {
+    val info = layoutInfo
+    val vis = info.visibleItemsInfo
+    if (vis.isEmpty() || i < 0) return
+    val ini = info.viewportStartOffset + margen
+    val fin = info.viewportEndOffset - margen
+    val it = vis.firstOrNull { it.index == i }
+    when {
+        i == 0 && it == null -> animateScrollToItem(0)
+        it != null && it.offset < ini -> animateScrollBy((it.offset - ini).toFloat())
+        it != null && it.offset + it.size > fin -> animateScrollBy((it.offset + it.size - fin).toFloat().coerceAtMost((it.offset - ini).toFloat().coerceAtLeast(0f)))
+        it != null -> {}
+        i < vis.first().index -> animateScrollToItem(i)
+        else -> { scrollToItem(i); scrollBy(-((fin - ini) - (vis.firstOrNull()?.size ?: 0)).toFloat().coerceAtLeast(0f)) }
+    }
+}
+
+/** Lo mismo para grillas (de arriba hacia abajo). */
+suspend fun androidx.compose.foundation.lazy.grid.LazyGridState.mostrar(i: Int, margen: Int = 0) {
+    val info = layoutInfo
+    val vis = info.visibleItemsInfo
+    if (vis.isEmpty() || i < 0) return
+    val ini = info.viewportStartOffset + margen
+    val fin = info.viewportEndOffset - margen
+    val it = vis.firstOrNull { it.index == i }
+    when {
+        i == 0 && it == null -> animateScrollToItem(0)
+        it != null && it.offset.y < ini -> animateScrollBy((it.offset.y - ini).toFloat())
+        it != null && it.offset.y + it.size.height > fin -> animateScrollBy((it.offset.y + it.size.height - fin).toFloat().coerceAtMost((it.offset.y - ini).toFloat().coerceAtLeast(0f)))
+        it != null -> {}
+        i < vis.first().index -> animateScrollToItem(i)
+        else -> { scrollToItem(i); scrollBy(-((fin - ini) - (vis.firstOrNull()?.size?.height ?: 0)).toFloat().coerceAtLeast(0f)) }
+    }
 }

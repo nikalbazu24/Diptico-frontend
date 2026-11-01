@@ -286,7 +286,7 @@ private fun ListaOpciones(e: Estado, opciones: List<cl.nikalbazu.diptico.estado.
         return
     }
     val lista = rememberLazyListState()
-    LaunchedEffect(e.indice, e.pasoTuto) { lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+    LaunchedEffect(e.indice, e.pasoTuto) { lista.mostrar(e.indice) }
     LazyColumn(state = lista, modifier = modifier, verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
         itemsIndexed(opciones) { i, o ->
             TarjetaOpcion(o, activa = i == e.indice, alto = 60f) { Diptico.elegirIndice(i) }

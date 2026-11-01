@@ -94,7 +94,7 @@ private fun Celda(j: Juego, elegido: Boolean, anchoCelda: Float, altoCelda: Floa
             Box(
                 Modifier.graphicsLayer { scaleX = tam; scaleY = tam }
                     .then(if (elegido) Modifier.shadow(esc.d(14), forma, ambientColor = color, spotColor = color).border(esc.d(3), if (p == PaletaOscura) Color.White else Uva, forma) else Modifier),
-            ) { CajaJuego(j, c, escala = k) }
+            ) { CajaJuego(j, c, escala = k, vivo = elegido) }
         }
         if (conTitulo) {
             Spacer(Modifier.height(esc.d(6)))
@@ -258,7 +258,7 @@ fun PanelBuscar(e: Estado) {
                 val cols = ((anchoU - 8f) / 92f).toInt().coerceAtLeast(3)
                 SideEffect { Teclas.columnasBuscar = cols }
                 val estado = rememberLazyGridState()
-                LaunchedEffect(e.indice) { if (lista.isNotEmpty()) estado.animateScrollToItem((e.indice - cols).coerceAtLeast(0)) }
+                LaunchedEffect(e.indice) { if (lista.isNotEmpty()) estado.mostrar(e.indice) }
                 if (lista.isEmpty()) VacioEstante(e)
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(cols), state = estado, modifier = Modifier.fillMaxSize(),
@@ -503,7 +503,7 @@ fun PanelCarpetas(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val lista = rememberLazyListState()
-    LaunchedEffect(e.indice, e.consolaPara) { lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+    LaunchedEffect(e.indice, e.consolaPara) { lista.mostrar(e.indice) }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {

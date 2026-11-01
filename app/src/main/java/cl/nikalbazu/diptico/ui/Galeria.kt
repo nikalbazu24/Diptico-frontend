@@ -91,7 +91,7 @@ fun PanelGaleria(e: Estado) {
             }
             SideEffect { Teclas.columnasGaleria = cols }
             val grilla = rememberLazyGridState()
-            LaunchedEffect(e.indice, e.galeriaPestana) { if (items.isNotEmpty()) grilla.animateScrollToItem((e.indice - cols).coerceAtLeast(0)) }
+            LaunchedEffect(e.indice, e.galeriaPestana) { if (items.isNotEmpty()) grilla.mostrar(e.indice) }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(cols), state = grilla, modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(if (e.galeria == "colores") 6f else 8f)),

@@ -174,7 +174,7 @@ fun PanelFicha(e: Estado) {
                 } else if (pestana >= 2) {
                     val opciones = Diptico.opcionesFicha()
                     val lista = rememberLazyListState()
-                    LaunchedEffect(e.indice) { if (opciones.isNotEmpty()) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+                    LaunchedEffect(e.indice) { if (opciones.isNotEmpty()) lista.mostrar(e.indice) }
                     LazyColumn(state = lista, modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
                         if (pestana == 2 && (e.datos[j.clave]?.notas ?: "").isNotBlank()) {
                             item {
@@ -373,7 +373,7 @@ fun PanelImagenes(e: Estado) {
             val cols = when (e.candidatoPara) { "portada", "c_icono" -> if (esc.angosta) 4 else 6; "logo", "c_logo" -> 3; else -> if (esc.angosta) 2 else 3 }
             SideEffect { cl.nikalbazu.diptico.estado.Teclas.columnasImagenes = cols }
             val grilla = rememberLazyGridState()
-            LaunchedEffect(e.indice) { if (lista.isNotEmpty()) grilla.animateScrollToItem(e.indice.coerceIn(0, lista.size - 1)) }
+            LaunchedEffect(e.indice) { if (lista.isNotEmpty()) grilla.mostrar(e.indice.coerceIn(0, lista.size - 1)) }
             val proporcion = when (e.candidatoPara) { "portada" -> 0.68f; "c_icono" -> 1f; "logo", "c_logo" -> 2f; else -> 2.6f }
             val ajustar = e.candidatoPara == "logo" || e.candidatoPara == "c_logo" || e.candidatoPara == "c_icono"
             LazyVerticalGrid(
@@ -443,7 +443,7 @@ private fun ListaLogros(e: Estado) {
         l.total == 0 -> Detalle("Este juego todavía no tiene logros en RetroAchievements.", 15f)
         else -> {
             val lista = rememberLazyListState()
-            LaunchedEffect(e.indice) { lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
+            LaunchedEffect(e.indice) { lista.mostrar(e.indice) }
             Column {
                 // Avance
                 Row(verticalAlignment = Alignment.CenterVertically) {

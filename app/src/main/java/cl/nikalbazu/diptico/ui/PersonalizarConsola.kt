@@ -61,8 +61,7 @@ fun PanelEditarConsola(e: Estado) {
                 Spacer(Modifier.height(esc.d(10)))
                 val lista = rememberLazyListState()
                 LaunchedEffect(e.indice) {
-                    val vis = lista.layoutInfo.visibleItemsInfo
-                    if (vis.isEmpty() || e.indice < vis.first().index + 1 || e.indice > vis.last().index - 1) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0))
+                    lista.mostrar(e.indice)
                 }
                 LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
                     itemsIndexed(opciones) { i, o ->

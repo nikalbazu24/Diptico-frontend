@@ -71,8 +71,13 @@ object Teclas {
         // Sonidos de navegación.
         if (e.sesion == null && e.panel != Panel.PASO && e.panel != Panel.CLAVE) {
             if (abajo && code in cruceta) cl.nikalbazu.diptico.audio.Sonidos.mover()
-            if (abajo && ev.repeatCount == 0 && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) cl.nikalbazu.diptico.audio.Sonidos.consola()
+            if (abajo && ev.repeatCount == 0 && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) {
+                if (e.panel == Panel.NINGUNO) cl.nikalbazu.diptico.audio.Sonidos.consola() else cl.nikalbazu.diptico.audio.Sonidos.pagina()
+            }
             if (arriba) when {
+                esA(code) && e.conTeclado -> cl.nikalbazu.diptico.audio.Sonidos.tecla()
+                esA(code) && e.panel == Panel.MENU && e.enOpciones && Diptico.esInterruptor(e) != null ->
+                    cl.nikalbazu.diptico.audio.Sonidos.interruptor(Diptico.esInterruptor(e) == false)
                 esA(code) -> cl.nikalbazu.diptico.audio.Sonidos.aceptar()
                 esB(code) -> cl.nikalbazu.diptico.audio.Sonidos.atras()
                 code == KeyEvent.KEYCODE_BUTTON_X || code == KeyEvent.KEYCODE_BUTTON_Y || code == KeyEvent.KEYCODE_BUTTON_START -> cl.nikalbazu.diptico.audio.Sonidos.abrir()
@@ -169,6 +174,23 @@ object Teclas {
         // Juego en curso y pantalla atenuada: cualquier botón la despierta.
         if (e.sesion != null && !e.despierta && e.panel == Panel.NINGUNO) {
             if (arriba) Diptico.despertar()
+            return true
+        }
+
+        // Encuadrar una imagen: la cruceta la corre (se puede mantener), L1/R1 acercan, X centra, A guarda.
+        if (e.panel == Panel.ENCUADRE) {
+            if (abajo) {
+                dir(code)?.let { (dx, dy) -> Diptico.moverEncuadre(-dx * 0.05f, -dy * 0.05f); return true }
+                when (code) {
+                    KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_L2 -> { Diptico.acercarEncuadre(-0.05f); return true }
+                    KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_BUTTON_R2 -> { Diptico.acercarEncuadre(0.05f); return true }
+                }
+            }
+            if (arriba) when {
+                esA(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.guardarEncuadre()
+                esB(code) -> Diptico.cerrarPanel()
+                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.centrarEncuadre()
+            }
             return true
         }
 

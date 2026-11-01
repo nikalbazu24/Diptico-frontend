@@ -16,6 +16,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -116,9 +119,27 @@ fun DrawScope.portadaGenerada(d: Dibujo, color: Color, u: Float) {
     }
 }
 
-/** Arte de un juego: su imagen real o, si no hay, el dibujo de ejemplo. */
+/** Encuadres propios de las imágenes ("clave|portada" o "clave|arte"). */
+val LocalEncuadres = staticCompositionLocalOf { emptyMap<String, cl.nikalbazu.diptico.estado.Encuadre>() }
+
+/** Si las portadas elegidas se acercan despacio (ajuste "Zoom lento"). */
+val LocalZoomLento = staticCompositionLocalOf { true }
+
+/** Acercamiento lento de ida y vuelta (1 → [hasta]), o 1 si está apagado o en modo ahorro. */
 @Composable
-fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modifier = Modifier, imagen: String = "portada") {
+fun zoomLento(activo: Boolean, hasta: Float = 1.08f, ms: Int = 12000): Float {
+    if (!activo || !LocalZoomLento.current || !Estilo.efectosCompletos) return 1f
+    val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "zoomLento")
+    return t.animateFloat(
+        1f, hasta,
+        androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(ms, easing = androidx.compose.animation.core.LinearEasing), androidx.compose.animation.core.RepeatMode.Reverse),
+        label = "z",
+    ).value
+}
+
+/** Arte de un juego: su imagen real o, si no hay, el dibujo de ejemplo. [vivo]: se acerca despacio (si está activado). */
+@Composable
+fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modifier = Modifier, imagen: String = "portada", vivo: Boolean = false) {
     val uri = when {
         preferirArte -> juego.arte ?: juego.portada
         imagen == "arte" -> juego.arte ?: juego.portada
@@ -140,7 +161,20 @@ fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modif
                 modifier = Modifier.align(Alignment.Center).fillMaxSize(if (preferirArte) 0.42f else if (esLogo) 0.8f else 0.62f),
             )
         } else if (img != null) {
-            Image(img, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            // El encuadre propio: hacia dónde se corre la foto y cuánto se acerca.
+            val tipo = if ((preferirArte || imagen == "arte") && juego.arte != null) "arte" else "portada"
+            val enc = LocalEncuadres.current["${juego.clave}|$tipo"]
+            val z = (enc?.zoom ?: 1f) * zoomLento(vivo)
+            val ex = enc?.x ?: 0f
+            val ey = enc?.y ?: 0f
+            Image(
+                img, contentDescription = null, contentScale = ContentScale.Crop,
+                alignment = androidx.compose.ui.BiasAlignment(ex, ey),
+                modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
+                    scaleX = z; scaleY = z
+                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin((ex + 1f) / 2f, (ey + 1f) / 2f)
+                },
+            )
         } else {
             val color = colorDe(juego.clave)
             val dibujo = dibujoDe(juego.clave)
@@ -174,7 +208,7 @@ fun cajaDe(consola: Consola, escala: Float = 1f): FormaCaja {
 
 /** La caja del juego con la forma de su consola (o la que elegiste para esa consola). */
 @Composable
-fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, escala: Float = 1f) {
+fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, escala: Float = 1f, vivo: Boolean = false) {
     val esc = LocalEscala.current
     val f = cajaDe(consola, escala)
     val cfg = LocalFormas.current[consola.id]
@@ -191,7 +225,7 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
             .size(esc.d(f.ancho), esc.d(f.alto))
             .clip(if (disco) CircleShape else RoundedCornerShape(esc.d(f.radio))),
     ) {
-        ArteJuego(juego, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize(), imagen = imagen)
+        ArteJuego(juego, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize(), imagen = imagen, vivo = vivo)
         when (f.banda) {
             Banda.NINGUNA -> Unit
             Banda.BISAGRA -> Box(Modifier.fillMaxHeight().width(esc.d(11 * k)).background(Color.Black.copy(alpha = 0.3f)))

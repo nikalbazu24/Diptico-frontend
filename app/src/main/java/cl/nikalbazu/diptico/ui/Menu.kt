@@ -114,9 +114,9 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
     val lista = rememberLazyListState()
     LaunchedEffect(e.seccion) {
         val i = filas.indexOf(e.seccion)
-        val vis = lista.layoutInfo.visibleItemsInfo
         // Solo se desplaza si la sección elegida quedó fuera de la vista (así no salta en cada paso).
-        if (vis.isEmpty() || i < vis.first().index + 1 || i > vis.last().index - 1) lista.animateScrollToItem((i - 2).coerceAtLeast(0))
+        if (i > 0 && filas[i - 1] is String) lista.mostrar(i - 1)
+        lista.mostrar(i)
     }
     Column(modifier.background(p.fondo.copy(alpha = 0.55f)).padding(top = esc.d(10), bottom = esc.d(8))) {
         Row(Modifier.padding(horizontal = esc.d(12)), verticalAlignment = Alignment.CenterVertically) {
@@ -204,8 +204,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
         val lista = rememberLazyListState()
         LaunchedEffect(e.indice, e.enOpciones) {
             if (!e.enOpciones || opciones.isEmpty()) { lista.scrollToItem(0); return@LaunchedEffect }
-            val vis = lista.layoutInfo.visibleItemsInfo
-            if (vis.isEmpty() || e.indice < vis.first().index + 1 || e.indice > vis.last().index - 1) lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0))
+            lista.mostrar(e.indice)
         }
         LazyColumn(
             state = lista, modifier = Modifier.weight(1f).fillMaxWidth(),

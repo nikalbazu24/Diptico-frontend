@@ -381,7 +381,7 @@ fun CarruselJuegos(e: Estado, modifier: Modifier = Modifier) {
                             alpha = if (abs(off) > 3.5f) 0f else 1f - (abs(off) - 1f).coerceAtLeast(0f) * 0.22f
                         }
                         .clickable { if (frente) Diptico.jugar() else Diptico.elegirJuego(j.clave) },
-                ) { CajaJuego(j, c, escala = escala) }
+                ) { CajaJuego(j, c, escala = escala, vivo = frente) }
             }
         }
         val j = e.seleccionado

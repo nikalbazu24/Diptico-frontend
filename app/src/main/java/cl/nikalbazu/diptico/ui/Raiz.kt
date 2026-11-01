@@ -27,6 +27,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     CompositionLocalProvider(
         LocalIconos provides IconosCfg(e.estiloIconos, e.iconosPropios, e.iconosVersion),
         LocalFormas provides e.formas,
+        LocalEncuadres provides cl.nikalbazu.diptico.estado.Diptico.encuadresVisibles(e),
+        LocalZoomLento provides e.zoomLento,
         LocalTamJuegos provides e.tamJuegos,
     ) {
         // El centro de control vive siempre en la pantalla de arriba (la principal), aunque se intercambien.

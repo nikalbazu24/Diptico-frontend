@@ -112,7 +112,7 @@ fun PanelApps(e: Estado) {
                 val cols = (anchoU / 86f).toInt().coerceIn(3, 8)
                 SideEffect { Teclas.columnasApps = cols }
                 val grilla = rememberLazyGridState()
-                LaunchedEffect(e.indice, e.appsPestana) { if (apps.isNotEmpty()) grilla.animateScrollToItem((e.indice - cols).coerceAtLeast(0)) }
+                LaunchedEffect(e.indice, e.appsPestana) { if (apps.isNotEmpty()) grilla.mostrar(e.indice) }
                 if (apps.isEmpty() && !e.cargandoTodas) {
                     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                         IconoDiptico(Icono.APPS, p.tenue, 36f)

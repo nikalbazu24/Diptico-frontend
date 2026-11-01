@@ -49,6 +49,10 @@ fun PantallaSuperior(e: Estado) {
         AyudaMenu(e)
         return
     }
+    if (e.panel == Panel.ENCUADRE) {
+        VistaEncuadre(e)
+        return
+    }
     if (e.panel == Panel.FICHA || e.panel == Panel.IMAGENES) {
         LecturaFicha(e)
         return
@@ -151,10 +155,7 @@ fun PantallaSuperior(e: Estado) {
 @Composable
 fun Heroe(juego: Juego, ancho: Float) {
     // Un acercamiento lento y suave sobre el arte (se apaga en modo ahorro).
-    val zoom = if (Estilo.efectosCompletos) {
-        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "heroe")
-        t.animateFloat(1f, 1.06f, androidx.compose.animation.core.infiniteRepeatable(tween(14000), androidx.compose.animation.core.RepeatMode.Reverse), label = "zoom").value
-    } else 1f
+    val zoom = zoomLento(true, 1.06f, 14000)
     Crossfade(targetState = juego, animationSpec = tween(650), label = "arte", modifier = Modifier.fillMaxSize()) { j ->
         Box(Modifier.fillMaxSize()) {
             ArteJuego(

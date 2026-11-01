@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { APPS, EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
+enum class Panel { ENCUADRE, APPS, EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -130,6 +130,9 @@ data class ConsolaPropia(
 
 /** Forma de las cajas de una consola en el estante. */
 data class FormaCfg(val forma: String = "original", val tam: Float = 1f, val imagen: String = "portada")
+
+/** Cómo se encuadra una imagen dentro de su caja: hacia dónde se corre (-1 a 1) y cuánto se acerca. */
+data class Encuadre(val x: Float = 0f, val y: Float = 0f, val zoom: Float = 1f)
 
 object Widgets {
     /** Tamaño de la grilla (se puede cambiar en Menú › Inicio). */
@@ -347,6 +350,14 @@ data class Estado(
     val orden: String = "az",
     val busqueda: String = "",
     val formas: Map<String, FormaCfg> = emptyMap(),
+    /** Encuadres propios de las imágenes ("clave|portada" o "clave|arte"). */
+    val encuadres: Map<String, Encuadre> = emptyMap(),
+    /** Encuadrando: qué imagen y cómo va quedando (se ve en vivo antes de guardar). */
+    val encuadreDe: String = "",
+    val encuadreBorrador: Encuadre = Encuadre(),
+    /** Acercamiento lento en las portadas elegidas y en la imagen grande. */
+    val zoomLento: Boolean = true,
+    val paqueteSonidos: String = "tema",
     val editandoWidgets: Boolean = false,
     val widgetSel: Int = 0,
     /** Estudio de widgets: pestaña (0 widget, 1 agregar, 2 página) y si la cruceta está moviendo el widget. */
@@ -550,6 +561,9 @@ object Diptico {
             tamJuegos = almacen.texto("tamJuegos", "1").toFloatOrNull() ?: 1f,
             orden = almacen.texto("orden", "az"),
             formas = leerFormas(almacen.texto("formas", "{}")),
+            encuadres = leerEncuadres(almacen.texto("encuadres", "{}")),
+            zoomLento = almacen.bool("zoomLento", true),
+            paqueteSonidos = almacen.texto("paqueteSonidos", "tema"),
             zoomArriba = almacen.texto("zoomArriba", "1").toFloatOrNull() ?: 1f,
             zoomAbajo = almacen.texto("zoomAbajo", "1").toFloatOrNull() ?: 1f,
             musicaTema = almacen.bool("musicaTema", true),
@@ -579,13 +593,14 @@ object Diptico {
         Widgets.FILAS = estado.value.gridFilas
         Sonidos.iniciar(app)
         Sonidos.activo = estado.value.sonidos
+        Sonidos.paquete = almacen.texto("paqueteSonidos", "tema")
         aplicarFluidez()
         vigilarProtector()
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
             Avisos.nuevos.collect { a ->
                 val e = estado.value
-                if (e.avisosEmergentes && e.sesion == null && e.aLaVista > 0) avisar("${a.app}: ${a.titulo.ifBlank { a.texto }}".take(90))
+                if (e.avisosEmergentes && e.sesion == null && e.aLaVista > 0) { avisar("${a.app}: ${a.titulo.ifBlank { a.texto }}".take(90)); Sonidos.aviso() }
             }
         }
         aplicarTema()
@@ -1601,7 +1616,7 @@ object Diptico {
         val e = estado.value
         if (e.panel != Panel.CLAVE || e.textoPara != para) { Enlace.detener(); return }
         actualizar { it.copy(borrador = clave, enlaceUrl = null) }
-        Sonidos.aceptar()
+        Sonidos.aviso()
         guardarClave()
         avisar("¡Clave recibida desde tu teléfono! Ya quedó activa")
     }
@@ -1649,6 +1664,11 @@ object Diptico {
                 else -> Seccion.PORTADAS
             }
             actualizar { it.copy(panel = Panel.MENU, seccion = s, enOpciones = true, indice = 0) }
+            return
+        }
+        if (e.panel == Panel.ENCUADRE) {
+            val i = opcionesFicha().indexOfFirst { it.titulo == if (e.encuadreDe.endsWith("|arte")) "Encuadrar la imagen grande" else "Encuadrar la portada" }
+            actualizar { it.copy(panel = Panel.FICHA, indice = i.coerceAtLeast(0), encuadreDe = "") }
             return
         }
         if (e.panel == Panel.IMAGENES) {
@@ -1880,6 +1900,14 @@ object Diptico {
 
     /** Arriba/abajo: en el menú se mueve dentro de la columna que tiene el foco. */
     fun moverIndice(delta: Int) {
+        val antes = estado.value
+        moverIndiceSolo(delta)
+        val ahora = estado.value
+        // Si no se movió nada, llegaste al borde: suena distinto.
+        if (delta != 0 && ahora.indice == antes.indice && ahora.seccion == antes.seccion && ahora.panel == antes.panel && ahora.widgetSel == antes.widgetSel) Sonidos.borde()
+    }
+
+    private fun moverIndiceSolo(delta: Int) {
         val e = estado.value
         if (!e.configurado && e.panel == Panel.NINGUNO) {
             val total = opcionesTuto().size
@@ -2342,6 +2370,14 @@ object Diptico {
                 }
                 lista += Opcion("Ver el protector ahora", icono = Icono.RELOJ) { cerrarPanel(); actualizar { it.copy(protector = true) } }
                 lista += Opcion(
+                    "Zoom lento en las portadas", if (e.zoomLento) "Sí" else "No", Icono.PORTADA,
+                    "La portada elegida y la imagen grande se acercan muy despacio, como en un documental. Apágalo si prefieres todo quieto.",
+                ) {
+                    val v = !estado.value.zoomLento
+                    almacen.guardarBool("zoomLento", v)
+                    actualizar { it.copy(zoomLento = v) }
+                }
+                lista += Opcion(
                     "Decoraciones", if (e.decoraciones) "Sí" else "No", Icono.ESTRELLA,
                     "Nieve en Navidad, murciélagos en Halloween, pétalos en primavera… según el tema.",
                 ) {
@@ -2392,6 +2428,11 @@ object Diptico {
                     actualizar { it.copy(sonidos = v) }
                     if (v) Sonidos.aceptar()
                 }
+                lista += Opcion(
+                    "Juego de sonidos", nombrePaqueteSonidos(e.paqueteSonidos), Icono.VOLUMEN,
+                    "Del tema: cada tema trae los suyos. Clásicos: campanitas suaves. Bloques: madera y pops. Retro: 8 bits. Burbuja: gotitas.",
+                    menos = { cambiarPaqueteSonidos(-1) },
+                ) { cambiarPaqueteSonidos(1) }
                 lista += Opcion("Volumen", nombreVolumen(e.volumen), Icono.VOLUMEN, "Qué tan fuerte suena la música de Díptico. Es independiente del volumen de tus juegos.") {
                     val i = volumenes.indexOfFirst { kotlin.math.abs(it - estado.value.volumen) < 0.01f }
                     val v = volumenes[(i + 1) % volumenes.size]
@@ -3373,17 +3414,89 @@ object Diptico {
                 Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA) { buscarCandidatos("portada") },
                 Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA) { buscarCandidatos("arte") },
                 Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA) { buscarCandidatos("logo") },
+                Opcion("Encuadrar la portada", if (e.encuadres.containsKey("${j.clave}|portada")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
+                    "Corre y acerca la foto para que quede centrada en la forma de la caja.") { abrirEncuadre("portada") },
+                Opcion("Encuadrar la imagen grande", if (e.encuadres.containsKey("${j.clave}|arte")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
+                    "Corre y acerca el hero para que se vea lo importante.") { abrirEncuadre("arte") },
                 Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA) { pedirArchivoPara("musica", "audio/*") },
                 Opcion(if (d.favorito) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON) { alternarFavorito(j.clave) },
                 Opcion("Buscar todo automático", icono = Icono.DESCARGA) { descargarUno(j) },
                 Opcion("Volver a lo original", "Quita lo personalizado", Icono.BORRAR) {
                     cambiarDatos(j.clave) { it.copy(titulo = null, portada = null, arte = null, logo = null, musica = null) }
+                    guardarEncuadres(estado.value.encuadres - "${j.clave}|portada" - "${j.clave}|arte")
                     avisar("Listo, ${j.titulo} volvió a como era")
                 },
             )
             else -> emptyList()
         }
     }
+
+    /** Si la opción elegida del menú es un interruptor: su estado actual (true = encendido), o null si no lo es. */
+    fun esInterruptor(e: Estado): Boolean? = when (opcionesSeccion(e.seccion).getOrNull(e.indice)?.valor) {
+        "Sí", "Activado", "Encendido" -> true
+        "No", "Desactivado", "Apagado" -> false
+        else -> null
+    }
+
+    fun nombrePaqueteSonidos(p: String) = when (p) {
+        "clasico" -> "Clásicos"; "bloques" -> "Bloques"; "retro" -> "Retro (8 bits)"; "burbuja" -> "Burbuja"; else -> "Los del tema"
+    }
+
+    private fun cambiarPaqueteSonidos(d: Int) {
+        val l = Sonidos.PAQUETES
+        val n = l[(l.indexOf(Sonidos.paquete) + d).mod(l.size)]
+        Sonidos.paquete = n
+        almacen.guardarTexto("paqueteSonidos", n)
+        actualizar { it.copy(paqueteSonidos = n) }
+        Sonidos.aceptar()
+    }
+
+    // ---------- Encuadrar portadas y heroes ----------
+
+    private fun leerEncuadres(t: String): Map<String, Encuadre> = try {
+        val o = org.json.JSONObject(t)
+        o.keys().asSequence().associateWith { k ->
+            val p = o.getString(k).split(",").map { it.toFloatOrNull() ?: 0f }
+            Encuadre(p.getOrElse(0) { 0f }, p.getOrElse(1) { 0f }, p.getOrElse(2) { 1f })
+        }
+    } catch (_: Exception) { emptyMap() }
+
+    private fun guardarEncuadres(m: Map<String, Encuadre>) {
+        val o = org.json.JSONObject()
+        m.forEach { (k, v) -> o.put(k, "${v.x},${v.y},${v.zoom}") }
+        almacen.guardarTexto("encuadres", o.toString())
+        actualizar { it.copy(encuadres = m) }
+    }
+
+    /** Abre el encuadre de la portada ("portada") o de la imagen grande ("arte") del juego de la ficha. */
+    fun abrirEncuadre(tipo: String) {
+        val j = juegoFicha() ?: return
+        val k = "${j.clave}|$tipo"
+        actualizar { it.copy(panel = Panel.ENCUADRE, encuadreDe = k, encuadreBorrador = it.encuadres[k] ?: Encuadre()) }
+    }
+
+    /** Corre la foto (la cruceta o el dedo): [dx] y [dy] en la escala de -1 a 1. */
+    fun moverEncuadre(dx: Float, dy: Float) {
+        actualizar { it.copy(encuadreBorrador = it.encuadreBorrador.let { b -> b.copy(x = (b.x + dx).coerceIn(-1f, 1f), y = (b.y + dy).coerceIn(-1f, 1f)) }) }
+    }
+
+    fun acercarEncuadre(d: Float) {
+        actualizar { it.copy(encuadreBorrador = it.encuadreBorrador.let { b -> b.copy(zoom = kotlin.math.round((b.zoom + d) * 20f) / 20f).let { n -> n.copy(zoom = n.zoom.coerceIn(1f, 3f)) } }) }
+    }
+
+    fun centrarEncuadre() = actualizar { it.copy(encuadreBorrador = Encuadre()) }
+
+    fun guardarEncuadre() {
+        val e = estado.value
+        val b = e.encuadreBorrador
+        guardarEncuadres(if (b == Encuadre()) e.encuadres - e.encuadreDe else e.encuadres + (e.encuadreDe to b))
+        avisar("Listo, quedó encuadrada")
+        cerrarPanel()
+    }
+
+    /** Lo que se ve: mientras se encuadra, el borrador ya se nota en todas partes. */
+    fun encuadresVisibles(e: Estado): Map<String, Encuadre> =
+        if (e.panel == Panel.ENCUADRE && e.encuadreDe.isNotEmpty()) e.encuadres + (e.encuadreDe to e.encuadreBorrador) else e.encuadres
 
     // ---------- Elegir una imagen de internet ----------
 
@@ -4351,6 +4464,7 @@ object Diptico {
     fun alternarMoverWidget() {
         val v = !estado.value.estudioMover
         actualizar { it.copy(estudioMover = v) }
+        if (v) Sonidos.levantar() else Sonidos.soltar()
         if (v) avisar("Cruceta mueve el widget · L1 R1 ancho · L2 R2 alto · A o B para terminar")
     }
 
