@@ -225,7 +225,7 @@ class Capturas {
     @Test fun t39_tema_sakura_claro() = foto("39_tema_sakura_claro", base().copy(oscuro = false), Rol.INFERIOR, Temas.incluidos.first { it.id == "sakura" })
 
     @Config(qualifiers = ABAJO)
-    @Test fun t40_editar_widgets() = foto("40_editar_widgets", base().copy(panel = Panel.WIDGETS, indice = 2), Rol.INFERIOR)
+    @Test fun t40_editar_widgets() = foto("40_editar_widgets", base().copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 1, indice = 2), Rol.INFERIOR)
 
     // ---------- v0.4 ----------
 
@@ -492,7 +492,7 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t92_ajustes_widget() = foto(
         "92_ajustes_del_widget",
-        base().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0, panel = Panel.AJUSTE_WIDGET, indice = 3),
+        base().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 2),
         Rol.INFERIOR,
     )
 
@@ -514,6 +514,116 @@ class Capturas {
 
     @Config(qualifiers = ABAJO)
     @Test fun t94_menu_bisa() = foto("94_menu_bisa_ia_local", base().copy(panel = Panel.MENU, seccion = Seccion.ASISTENTE, enOpciones = true, indice = 1), Rol.INFERIOR)
+
+    // ---------- v0.9 ----------
+
+    private val bloques get() = Temas.incluidos.first { it.id == "bloques" }
+    private fun conRecientes(e: Estado) = e.copy(
+        datos = e.datos + mapOf(
+            "gba/2" to DatosJuego(tiempo = 5400, ultimo = 5L, favorito = true), "psx/3" to DatosJuego(tiempo = 1800, ultimo = 4L),
+            "n64/6" to DatosJuego(tiempo = 900, ultimo = 3L, favorito = true),
+        ),
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t96_estudio_estilo() = foto(
+        "96_estudio_widget_estilo",
+        base().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 1, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 6),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t97_estudio_pagina() = foto(
+        "97_estudio_pagina",
+        base().copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 2, indice = 3),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t98_widgets_disenos() = foto(
+        "98_widgets_disenos_nuevos",
+        conRecientes(base()).copy(
+            inicio = "widgets", editandoWidgets = true, widgetSel = 1, panel = Panel.ESTUDIO,
+            widgets = listOf(
+                Widget("juego", 0, 0, 3, 2, variante = 1), Widget("reloj", 3, 0, 2, 2, variante = 1, estilo = "vidrio"),
+                Widget("bateria", 5, 0, 1, 2, variante = 1), Widget("recientes", 0, 2, 3, 2, variante = 1),
+                Widget("favoritos", 3, 2, 3, 2, escala = 1.15f, estilo = "solido", color = 0xFF2EC4A6),
+            ) + Widgets.porDefecto.filter { it.tipo !in setOf("juego", "reloj", "bateria", "recientes", "favoritos") }.map { it.copy(visible = false) },
+        ),
+        Rol.SUPERIOR,
+    )
+
+    @Test fun t98b_widgets_disenos_listos() = foto(
+        "98b_widgets_disenos_terminados",
+        conRecientes(base()).copy(
+            inicio = "widgets",
+            widgets = listOf(
+                Widget("juego", 0, 0, 3, 2, variante = 1), Widget("reloj", 3, 0, 2, 2, variante = 2, estilo = "sinfondo"),
+                Widget("bateria", 5, 0, 1, 2, variante = 1), Widget("recientes", 0, 2, 3, 2, variante = 1),
+                Widget("musica", 3, 2, 3, 2, estilo = "vidrio"),
+            ) + Widgets.porDefecto.filter { it.tipo !in setOf("juego", "reloj", "bateria", "recientes", "musica") }.map { it.copy(visible = false) },
+        ),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t99_galeria_ia() = foto("99_elegir_ia_de_bisa", base().copy(panel = Panel.GALERIA, galeria = "ia", indice = 2, claveIa = "x"), Rol.INFERIOR)
+
+    @Test fun t100_galeria_ia_arriba() = foto("100_ia_explicacion_arriba", base().copy(panel = Panel.GALERIA, galeria = "ia", indice = 2), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t101_bloques_abajo() = foto("101_tema_bloques_abajo", base(), Rol.INFERIOR, bloques)
+
+    @Test fun t102_bloques_arriba() = foto("102_tema_bloques_arriba", base(), Rol.SUPERIOR, bloques)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t103_bloques_menu() = foto("103_tema_bloques_menu", base().copy(panel = Panel.MENU, seccion = Seccion.TEMAS, enOpciones = true, indice = 0), Rol.INFERIOR, bloques)
+
+    @Test fun t103b_bloques_widgets() = foto("103b_tema_bloques_widgets", conRecientes(base()).copy(inicio = "widgets"), Rol.SUPERIOR, bloques)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t104_consolas_costado() = foto("104_consolas_al_costado", base().copy(vistaConsolas = "lado", consolaSel = "snes"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t105_consolas_rueda() = foto("105_consolas_rueda", base().copy(vistaConsolas = "rueda", consolaSel = "psx", vista = "cuadricula"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t106_sistemas() = foto("106_sistemas_carrusel", base().copy(vistaConsolas = "sistemas", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR)
+
+    @Test fun t107_sistemas_arriba() = foto("107_sistemas_arriba", conRecientes(base()).copy(vistaConsolas = "sistemas", enSistemas = true, consolaSel = "snes"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t108_carrusel_juegos() = foto("108_juegos_en_carrusel", base().copy(vista = "carrusel", juegoSel = "psx/3", vistaConsolas = "sistemas", enSistemas = false), Rol.INFERIOR)
+
+    @Test fun t109_bienvenida() = foto(
+        "109_bienvenida_arriba",
+        conRecientes(base()).copy(bienvenida = 1L, ausencia = 2 * 3_600_000L, nombre = "Nico"), Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t110_bienvenida_abajo() = foto("110_bienvenida_abajo", conRecientes(base()).copy(bienvenida = 1L, ausencia = 2 * 3_600_000L, nombre = "Nico"), Rol.INFERIOR, mi = 1)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t111_continuacion() = foto(
+        "111_continuacion_al_encender",
+        base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 2_520_000, 0, false), continuacion = 1L, despierta = true),
+        Rol.INFERIOR, mi = 1,
+    )
+
+    @Test fun t112_estudio_una_pantalla() = foto(
+        "112_estudio_una_pantalla",
+        base().copy(modoPantallas = "una_negra", inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 2),
+        Rol.UNICA,
+    )
+
+    @Test fun t113_bienvenida_breve() = foto("113_bienvenida_breve", base().copy(bienvenida = 1L, bienvenidaBreve = true, nombre = "Nico"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t114_menu_inicio() = foto("114_menu_inicio_bienvenida", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 0), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t115_menu_consola() = foto("115_menu_consola_inicio", base().copy(panel = Panel.MENU, seccion = Seccion.CONSOLA, enOpciones = true, indice = 3, esInicio = false), Rol.INFERIOR)
+
+    @Test fun t116_sistemas_una_pantalla() = foto("116_sistemas_una_pantalla", base().copy(modoPantallas = "una_negra", vistaConsolas = "sistemas", enSistemas = true, consolaSel = "gba"), Rol.UNICA)
 
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,

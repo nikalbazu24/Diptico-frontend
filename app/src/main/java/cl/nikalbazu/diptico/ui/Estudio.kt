@@ -211,7 +211,7 @@ private fun ControlEstudio(c: Diptico.Control, activo: Boolean, moviendo: Boolea
                                     .clickable { elegir(); c.elegir?.invoke(k) }.padding(vertical = esc.d(6)),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                val u = 36f / maxOf(an, al * 1.4f)
+                                val u = 36f / maxOf(an.toFloat(), al * 1.4f)
                                 Box(Modifier.height(esc.d(28)), contentAlignment = Alignment.Center) {
                                     Box(Modifier.size(esc.d(an * u), esc.d(al * u * 0.75f)).clip(RoundedCornerShape(esc.d(3))).background(if (sel) Uva else p.tenue.copy(alpha = 0.6f)))
                                 }

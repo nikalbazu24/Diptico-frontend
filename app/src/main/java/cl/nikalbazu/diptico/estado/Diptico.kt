@@ -4138,10 +4138,10 @@ object Diptico {
         val valor: String = "",
         val grupo: String = "",
         val icono: Icono? = null,
+        val ayuda: String = "",
         val elecciones: List<String> = emptyList(),
         val elegida: Int = -1,
         val colores: List<Long> = emptyList(),
-        val ayuda: String = "",
         /** Para el catálogo: el tipo de widget. Para formas: (ancho, alto) de cada elección. */
         val extra: String = "",
         val formas: List<Pair<Int, Int>> = emptyList(),
