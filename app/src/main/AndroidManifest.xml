@@ -70,6 +70,8 @@
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
             android:exported="true"
             android:launchMode="singleTask"
+            android:resumeWhilePausing="true"
+            android:stateNotNeeded="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -90,6 +92,22 @@
             android:launchMode="singleTask"
             android:taskAffinity="cl.nikalbazu.diptico.inferior"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- Inicio de la segunda pantalla: Android lo abre en la pantalla de abajo y trae a Díptico. -->
+        <activity
+            android:name=".InicioAbajo"
+            android:enabled="true"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.SECONDARY_HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- Bisa mientras juegas: aviso fijo y burbuja flotante encima del juego. -->
         <service

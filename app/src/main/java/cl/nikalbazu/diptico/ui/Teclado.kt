@@ -88,6 +88,7 @@ fun TecladoDiptico(e: Estado) {
         e.textoPara == "ia_pedido" -> "Pídele un tema a la IA"
         e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave" -> "Pega o escribe tu clave"
         e.textoPara == "ra_usuario" -> "Tu usuario de RetroAchievements"
+        e.textoPara == "nombre" -> "¿Cómo te llamas?"
         e.textoPara == "asistente" -> "Pregúntale a Bisa"
         e.textoPara == "buscar_ajuste" -> "Buscar un ajuste"
         e.textoPara == "buscar_imagen" -> "Buscar con otro nombre"

@@ -34,6 +34,12 @@ abstract class BaseActivity : ComponentActivity() {
         if (uri != null) Diptico.archivoElegido(uri)
     }
 
+    // Pedirle a Android que Díptico sea la app de inicio. Si la persona no lo elige ahí, se abren los ajustes de inicio.
+    private val serInicio = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        Diptico.revisarInicio()
+        if (Diptico.estado.value.esInicio) Diptico.avisar("¡Listo! Díptico es tu inicio: el botón Inicio siempre te trae aquí")
+    }
+
     override fun onStart() {
         super.onStart()
         Diptico.aLaVista(1)
@@ -72,6 +78,16 @@ abstract class BaseActivity : ComponentActivity() {
                 Diptico.avisar("No pude abrir el selector de archivos")
             }
         }
+        Diptico.pedirSerInicio = {
+            val pedido = cl.nikalbazu.diptico.estado.Inicio.pedido(this)
+            try {
+                if (pedido != null) serInicio.launch(pedido)
+                else serInicio.launch(android.content.Intent(android.provider.Settings.ACTION_HOME_SETTINGS))
+            } catch (e: Exception) {
+                Diptico.avisar("No pude abrir los ajustes de inicio")
+            }
+        }
+        Diptico.revisarInicio()
         Lanzador.olvidar()
         Diptico.revisarPantallas()
         Diptico.aplicarTema()

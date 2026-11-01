@@ -59,6 +59,16 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 exit = fadeOut(tween(160)),
             ) { TecladoDiptico(e) }
             if (e.protector && !(rol == Rol.INFERIOR && e.unaPantalla)) Protector(e, rol)
+            // Bienvenida al encender (y el recordatorio si estabas jugando), encima de todo menos la animación de entrada.
+            AnimatedVisibility(
+                visible = e.bienvenida > 0L && !e.intro && !(rol == Rol.INFERIOR && e.unaPantalla),
+                enter = fadeIn(tween(380)), exit = fadeOut(tween(420)),
+            ) { Bienvenida(e, rol) }
+            val sc = e.sesion
+            AnimatedVisibility(
+                visible = e.continuacion > 0L && sc != null && !sc.dosPantallas && miPantalla != sc.displayId && e.datos[sc.clave]?.lupa != true,
+                enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.94f), exit = fadeOut(tween(400)),
+            ) { Continuacion(e) }
             // En modo una pantalla, la de abajo no muestra la animación.
             val sinIntro = rol == Rol.INFERIOR && rolIntro == Rol.INFERIOR && e.unaPantalla
             if (e.intro && !sinIntro) Intro(rolIntro)

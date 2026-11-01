@@ -18,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -131,8 +132,12 @@ fun PantallaInicio(e: Estado) {
                 ) { Texto(if (e.editandoWidgets) "Listo" else "Editar", 13.5f, color = if (e.editandoWidgets) SobreUva else p.tinta) }
             }
             if (e.editandoWidgets) {
-                Spacer(Modifier.height(esc.d(6)))
-                BarraEdicion(e)
+                Spacer(Modifier.height(esc.d(2)))
+                Detalle(
+                    if (e.unaPantalla) "Arrastra los widgets con el dedo · todo lo demás en el estudio de la derecha"
+                    else "Arrastra los widgets con el dedo · todo lo demás en el estudio, en la otra pantalla",
+                    12f, lineas = 1,
+                )
             }
             Spacer(Modifier.height(esc.d(10)))
             // Páginas: se deslizan a los lados (con el dedo, o L2/R2).
@@ -215,9 +220,10 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                             translationX = arrastre.x; translationY = arrastre.y; scaleX = tam; scaleY = tam
                             rotationZ = if (elegido) tiemble * 0.4f else tiemble * 0.8f
                         }
-                        .then(if (elegido) Modifier.border(esc.d(3), Uva, RoundedCornerShape(esc.d(22))) else Modifier),
+                        .then(if (elegido) Modifier.border(esc.d(3), if (e.estudioMover) Coral else Uva, RoundedCornerShape(esc.d((w.radio + 2).toFloat()))) else Modifier),
                 ) {
-                    CompositionLocalProvider(LocalWidget provides w) {
+                    // Cada widget puede agrandar o achicar su contenido (Tamaño del contenido).
+                    CompositionLocalProvider(LocalWidget provides w, LocalEscala provides Escala(esc.factor * w.escala, esc.ancho, esc.texto)) {
                         if (w.tipo.startsWith("imagen")) WidgetImagen(w) else WidgetVista(e, w.tipo, w.an, w.al)
                     }
                     if (e.editandoWidgets) {
@@ -239,23 +245,14 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                                         arrastre += d
                                     }
                                 }
-                                .clickable { Diptico.elegirWidget(i) },
+                                .clickable { Diptico.elegirWidget(i); Diptico.abrirAjustesWidget(i) },
                         ) {
                             if (elegido) {
                                 Box(
-                                    Modifier.align(Alignment.TopEnd).padding(esc.d(6)).clip(RoundedCornerShape(50)).background(Uva)
+                                    Modifier.align(Alignment.TopEnd).padding(esc.d(6)).clip(RoundedCornerShape(50))
+                                        .background(if (e.estudioMover) Coral else Uva)
                                         .padding(horizontal = esc.d(8), vertical = esc.d(3)),
-                                ) { Texto(Widgets.nombreTamano(w.an, w.al), 11.5f, color = SobreUva, lineas = 1) }
-                                // Botones táctiles: achicar/agrandar, estilo y quitar.
-                                Row(
-                                    Modifier.align(Alignment.BottomCenter).padding(esc.d(6)),
-                                    horizontalArrangement = Arrangement.spacedBy(esc.d(5)),
-                                ) {
-                                    BotonMini("−") { Diptico.tamanoWidgetSel(-1) }
-                                    BotonMini("+") { Diptico.tamanoWidgetSel(1) }
-                                    BotonMini("⚙") { Diptico.abrirAjustesWidget(i) }
-                                    BotonMini("✕") { Diptico.quitarWidget(i) }
-                                }
+                                ) { Texto("${w.an} × ${w.al}", 11.5f, color = SobreUva, lineas = 1, traducir = false) }
                             }
                         }
                     }
@@ -268,48 +265,6 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
 
 /** El widget que se está dibujando (su estilo, color, fondo y esquinas). */
 private val LocalWidget = androidx.compose.runtime.compositionLocalOf<cl.nikalbazu.diptico.estado.Widget?> { null }
-
-@Composable
-private fun BotonMini(texto: String, accion: () -> Unit) {
-    val esc = LocalEscala.current
-    Box(
-        Modifier.size(esc.d(30)).clip(CircleShape).background(Uva).clickable { accion() },
-        contentAlignment = Alignment.Center,
-    ) { Texto(texto, 14f, color = SobreUva, lineas = 1, traducir = false) }
-}
-
-/** Herramientas al acomodar el inicio: agregar, grilla, páginas, fondo, ajustes y listo. */
-@Composable
-private fun BarraEdicion(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    @Composable
-    fun Chip(texto: String, icono: Icono?, activo: Boolean = false, accion: () -> Unit) {
-        Row(
-            Modifier.clip(RoundedCornerShape(50)).then(if (activo) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie.copy(alpha = 0.9f)))
-                .clickable { accion() }.padding(horizontal = esc.d(11), vertical = esc.d(6)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icono != null) { IconoDiptico(icono, if (activo) SobreUva else p.tinta, 14f, acento = if (activo) SobreUva else Coral); Spacer(Modifier.width(esc.d(5))) }
-            Texto(texto, 12.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
-        }
-    }
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Chip("Agregar widget", Icono.APPS) { Diptico.actualizar { it.copy(panel = cl.nikalbazu.diptico.estado.Panel.WIDGETS, indice = 0) } }
-        Chip("Columnas ${Widgets.COLUMNAS}", null) { Diptico.ciclarGrilla(columnas = true) }
-        Chip("Filas ${Widgets.FILAS}", null) { Diptico.ciclarGrilla(columnas = false) }
-        Chip("Páginas ${e.paginas}", null) { Diptico.ciclarPaginas() }
-        Chip("Fondo", Icono.PORTADA) { Diptico.elegirFondoInicio() }
-        e.widgets.getOrNull(e.widgetSel)?.let { w -> Chip("Estilo: ${Widgets.nombreEstilo(w.estilo)}", Icono.PALETA) { Diptico.cambiarEstiloWidget() } }
-        Chip("Más ajustes", Icono.AJUSTES) { Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.INICIO) }
-        Chip("Listo", Icono.CHECK, activo = true) { Diptico.terminarEdicion() }
-    }
-    Spacer(Modifier.height(esc.d(4)))
-    Detalle("Cruceta mueve · L1 R1 ancho · L2 R2 alto · A ajustes del widget · X estilo · Select otro · B listo", 11.5f, lineas = 1)
-}
 
 @Composable
 private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = null, contenido: @Composable () -> Unit) {
@@ -349,9 +304,30 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         WidgetCompacto(e, tipo)
         return
     }
+    val variante = LocalWidget.current?.variante ?: 0
     when (tipo) {
         "juego" -> {
             val j = e.seleccionado
+            if (variante == 1 && j != null) {
+                // Arte de fondo: la imagen del juego llena el widget y el título va encima.
+                val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
+                Box(
+                    Modifier.fillMaxSize().clip(forma).background(p.superficie)
+                        .combinedClickable(onClick = { Diptico.jugar() }, onLongClick = { Diptico.editarWidgets() }),
+                ) {
+                    ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize())
+                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
+                    Column(Modifier.align(Alignment.BottomStart).padding(esc.d(14))) {
+                        Etiqueta(Consolas.porId(j.consolaId)?.nombre ?: "", Sol, 11f)
+                        Texto(j.titulo, if (tam >= 2) 22f else 17f, color = Color.White, lineas = 2, sombra = true)
+                        Spacer(Modifier.height(esc.d(6)))
+                        Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
+                            Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                        }
+                    }
+                }
+                return
+            }
             Tarjeta(alPulsar = { Diptico.jugar() }) {
                 if (j == null) {
                     Detalle("Elige un juego en el estante", 15f)
@@ -376,6 +352,27 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             }
         }
         "reloj" -> Tarjeta(alPulsar = { Diptico.alternarReloj() }) {
+            if (variante == 1 && !compacto) {
+                // Analógico: esfera con manecillas y la fecha al lado (o abajo si es angosto).
+                val ahora = rememberHora()
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                    RelojAnalogico(ahora, Modifier.fillMaxHeight().aspectRatio(1f))
+                    if (an >= 3) {
+                        Spacer(Modifier.width(esc.d(14)))
+                        Column {
+                            Texto(ahora, 24f, lineas = 1)
+                            Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 13f, lineas = 2)
+                        }
+                    }
+                }
+                return@Tarjeta
+            }
+            if (variante == 2) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Texto(rememberHora(), if (compacto) 34f else if (al >= 3) 84f else 62f, peso = FontWeight.Medium, lineas = 1)
+                }
+                return@Tarjeta
+            }
             if (compacto) {
                 Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
                     Texto(rememberHora(), 30f)
@@ -391,6 +388,25 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         }
         "bateria" -> Tarjeta {
             val b = rememberBateria()
+            if (variante == 1 && !compacto) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    val color = if (b in 0..19) Coral else Uva
+                    val linea = p.linea
+                    androidx.compose.foundation.Canvas(Modifier.fillMaxHeight(0.92f).aspectRatio(1f)) {
+                        val g = size.minDimension * 0.1f
+                        val st = androidx.compose.ui.graphics.drawscope.Stroke(g, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                        val o = androidx.compose.ui.geometry.Offset(g / 2, g / 2)
+                        val t = androidx.compose.ui.geometry.Size(size.width - g, size.height - g)
+                        drawArc(linea, 0f, 360f, false, o, t, style = st)
+                        drawArc(color, -90f, 360f * b.coerceIn(0, 100) / 100f, false, o, t, style = st)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Texto(if (b >= 0) "$b%" else "—", 22f, lineas = 1)
+                        Detalle("Batería", 11f, lineas = 1)
+                    }
+                }
+                return@Tarjeta
+            }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Texto(if (b >= 0) "$b%" else "—", if (compacto) 22f else 40f)
                 Spacer(Modifier.height(esc.d(8)))
@@ -403,11 +419,12 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         }
         "musica" -> WidgetMusica(tam, compacto)
         "favoritos" -> Tarjeta {
-            val favs = e.juegos.filter { e.datos[it.clave]?.favorito == true }.take(if (tam >= 3) 6 else if (tam == 2) 4 else 2)
+            val favs = e.juegos.filter { e.datos[it.clave]?.favorito == true }.take(if (variante == 1) al * 2 else if (tam >= 3) 6 else if (tam == 2) 4 else 2)
             Column {
                 Etiqueta("Favoritos", Coral, 11f)
                 Spacer(Modifier.height(esc.d(8)))
                 if (favs.isEmpty()) Detalle("Marca favoritos con Y sobre un juego", 14f)
+                if (variante == 1) { ListaJuegosWidget(favs); return@Column }
                 Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                     for (j in favs) {
                         val c = Consolas.porId(j.consolaId) ?: continue
@@ -566,11 +583,12 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         }
         "recientes" -> Tarjeta {
             val recientes = e.datos.entries.filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }
-                .mapNotNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }.take(if (tam >= 3) 5 else if (tam == 2) 3 else 2)
+                .mapNotNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }.take(if (variante == 1) al * 2 else if (tam >= 3) 5 else if (tam == 2) 3 else 2)
             Column {
                 Etiqueta("Jugados hace poco", p.tenue, 11f)
                 Spacer(Modifier.height(esc.d(8)))
                 if (recientes.isEmpty()) Detalle("Todavía no juegas nada con Díptico", 14f)
+                if (variante == 1) { ListaJuegosWidget(recientes); return@Column }
                 Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                     for (j in recientes) {
                         val c = Consolas.porId(j.consolaId) ?: continue
@@ -609,6 +627,58 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
             }
         }
+    }
+}
+
+/** Juegos en filas (diseño "Lista" de recientes y favoritos). */
+@Composable
+private fun ListaJuegosWidget(juegos: List<cl.nikalbazu.diptico.data.Juego>) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+        for (j in juegos) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(10))).background(p.fondo.copy(alpha = 0.35f))
+                    .clickable { Diptico.elegirConsola("todo"); Diptico.elegirJuego(j.clave) }.padding(horizontal = esc.d(8), vertical = esc.d(5)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Consolas.porId(j.consolaId)?.let { IconoConsola(it, 18f, p.superficie) }
+                Spacer(Modifier.width(esc.d(8)))
+                Texto(j.titulo, 13f, lineas = 1, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+/** Reloj de manecillas para el widget de reloj (diseño "Analógico"). [hora] como "HH:mm". */
+@Composable
+private fun RelojAnalogico(hora: String, modifier: Modifier) {
+    val p = LocalPaleta.current
+    val h = hora.substringBefore(':').toIntOrNull() ?: 0
+    val m = hora.substringAfter(':').take(2).toIntOrNull() ?: 0
+    val tinta = p.tinta
+    val linea = p.linea
+    val acento = Coral
+    val uva = Uva
+    androidx.compose.foundation.Canvas(modifier) {
+        val r = size.minDimension / 2f
+        val c = center
+        drawCircle(uva.copy(alpha = 0.12f), r, c)
+        drawCircle(linea, r, c, style = androidx.compose.ui.graphics.drawscope.Stroke(r * 0.04f))
+        for (k in 0 until 12) {
+            val a = Math.toRadians(k * 30.0 - 90)
+            val largo = if (k % 3 == 0) 0.16f else 0.08f
+            val ini = androidx.compose.ui.geometry.Offset(c.x + (r * (0.9f - largo) * kotlin.math.cos(a)).toFloat(), c.y + (r * (0.9f - largo) * kotlin.math.sin(a)).toFloat())
+            val fin = androidx.compose.ui.geometry.Offset(c.x + (r * 0.9f * kotlin.math.cos(a)).toFloat(), c.y + (r * 0.9f * kotlin.math.sin(a)).toFloat())
+            drawLine(tinta.copy(alpha = if (k % 3 == 0) 0.9f else 0.4f), ini, fin, r * (if (k % 3 == 0) 0.045f else 0.03f), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        }
+        fun mano(angulo: Double, largo: Float, grosor: Float, color: Color) {
+            val a = Math.toRadians(angulo - 90)
+            drawLine(color, c, androidx.compose.ui.geometry.Offset(c.x + (r * largo * kotlin.math.cos(a)).toFloat(), c.y + (r * largo * kotlin.math.sin(a)).toFloat()), r * grosor, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        }
+        mano((h % 12) * 30.0 + m * 0.5, 0.5f, 0.08f, tinta)
+        mano(m * 6.0, 0.74f, 0.055f, acento)
+        drawCircle(acento, r * 0.07f, c)
     }
 }
 
@@ -749,50 +819,6 @@ private fun fraseDelDia(e: Estado): String {
     )
     e.fiesta?.tema?.mensaje?.takeIf { it.isNotBlank() }?.let { return it }
     return frases[(java.time.LocalDate.now().dayOfYear) % frases.size]
-}
-
-/** Agregar o quitar widgets del inicio (A los muestra u oculta). */
-@Composable
-fun PanelWidgets(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val lista = rememberLazyListState()
-    LaunchedEffect(e.indice) { lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
-        Column(Modifier.fillMaxSize().padding(start = esc.d(16), end = esc.d(16), top = esc.d(12), bottom = esc.d(10))) {
-            Row(Modifier.fillMaxWidth().height(esc.d(40)), verticalAlignment = Alignment.CenterVertically) {
-                IconoDiptico(Icono.APPS, p.tinta, 24f, acento = Coral)
-                Spacer(Modifier.width(esc.d(10)))
-                Texto("Agregar o quitar widgets", 20f, modifier = Modifier.weight(1f), lineas = 1)
-                Detalle("${e.widgets.count { it.visible }} a la vista", 14f)
-            }
-            Spacer(Modifier.height(esc.d(8)))
-            LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                itemsIndexed(e.widgets, key = { _, w -> w.tipo }) { i, w ->
-                    val activa = i == e.indice
-                    Row(
-                        Modifier.fillMaxWidth().height(esc.d(52)).clip(RoundedCornerShape(esc.d(16)))
-                            .background(if (activa) Uva else p.superficie.copy(alpha = 0.75f))
-                            .clickable { Diptico.elegirIndice(i) }
-                            .padding(horizontal = esc.d(14)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Texto(Widgets.nombre(w.tipo), 15.5f, color = if (activa) SobreUva else p.tinta, lineas = 1, modifier = Modifier.weight(1f))
-                        Texto(if (w.visible) Widgets.nombreTamano(w.an, w.al) else "Oculto", 12.5f, color = if (activa) SobreUva else p.tenue, modifier = Modifier.padding(end = esc.d(10)))
-                        Box(
-                            Modifier.size(esc.d(46), esc.d(26)).clip(RoundedCornerShape(50))
-                                .background(if (w.visible) (if (activa) SobreUva else Uva) else p.linea),
-                            contentAlignment = if (w.visible) Alignment.CenterEnd else Alignment.CenterStart,
-                        ) {
-                            Box(Modifier.padding(esc.d(3)).size(esc.d(20)).clip(CircleShape).background(if (w.visible && activa) Uva else Color.White))
-                        }
-                    }
-                }
-            }
-            Spacer(Modifier.height(esc.d(6)))
-            Pistas("A" to "Mostrar u ocultar", "B" to "Listo")
-        }
-    }
 }
 
 /** Un widget con tu propia imagen o GIF animado. */

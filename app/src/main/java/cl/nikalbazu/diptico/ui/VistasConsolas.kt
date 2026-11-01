@@ -1,0 +1,374 @@
+package cl.nikalbazu.diptico.ui
+
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.zIndex
+import cl.nikalbazu.diptico.data.Consola
+import cl.nikalbazu.diptico.data.Consolas
+import cl.nikalbazu.diptico.estado.Diptico
+import cl.nikalbazu.diptico.estado.Estado
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
+
+/*
+ * Otras formas de ver las consolas (Menú › Estante › Consolas):
+ *  - Al costado: una columna de consolas a la izquierda.
+ *  - Rueda: las consolas giran en un arco, como un dial.
+ *  - Sistemas: primero eliges la consola en un carrusel grande y luego entras a sus juegos (B vuelve).
+ * Y una vista de juegos más: el Carrusel, con las carátulas en 3D.
+ */
+
+private fun colorConsola(id: String): Color = Consolas.porId(id)?.color ?: Uva
+private fun nombreConsola(id: String): String = Consolas.porId(id)?.nombre ?: "Todo"
+private fun cuantos(e: Estado, id: String) = if (id == "todo") e.juegos.size else e.juegos.count { it.consolaId == id }
+
+/** Distancia más corta entre dos posiciones de una lista circular (para que la rueda gire por el lado corto). */
+private fun distancia(k: Int, pos: Float, n: Int): Float {
+    var d = k - pos
+    if (n > 1) {
+        while (d > n / 2f) d -= n
+        while (d < -n / 2f) d += n
+    }
+    return d
+}
+
+/** Consolas en una columna al costado. */
+@Composable
+fun RielConsolas(e: Estado, modifier: Modifier = Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val lista = rememberLazyListState()
+    val sel = e.pestanas.indexOf(e.consolaSel).coerceAtLeast(0)
+    LaunchedEffect(sel) { lista.animateScrollToItem((sel - 2).coerceAtLeast(0)) }
+    LazyColumn(
+        state = lista, modifier = modifier.width(esc.d(86)).fillMaxHeight(),
+        contentPadding = PaddingValues(vertical = esc.d(8)), verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+    ) {
+        itemsIndexed(e.pestanas, key = { _, id -> id }) { _, id ->
+            val activa = id == e.consolaSel
+            val escala by animateFloatAsState(if (activa) 1.12f else 1f, spring(dampingRatio = 0.5f), label = "riel")
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = esc.d(6)).clip(RoundedCornerShape(esc.d(14)))
+                    .background(if (activa) colorConsola(id).copy(alpha = 0.22f) else Color.Transparent)
+                    .clickable { Diptico.elegirConsola(id) }.padding(vertical = esc.d(6)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.width(esc.d(3)).height(esc.d(30)).clip(RoundedCornerShape(50)).background(if (activa) Coral else Color.Transparent))
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconoConsola(Consolas.porId(id), 28f, p.fondo2, Modifier.graphicsLayer { scaleX = escala; scaleY = escala })
+                    Spacer(Modifier.height(esc.d(3)))
+                    Texto(nombreConsola(id), 11f, color = if (activa) p.tinta else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
+                }
+            }
+        }
+    }
+}
+
+/** Las consolas en un arco que gira, como un dial. La elegida queda al centro, más grande. */
+@Composable
+fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val n = e.pestanas.size
+    val sel = e.pestanas.indexOf(e.consolaSel).coerceAtLeast(0)
+    // La rueda gira con suavidad hacia la consola elegida (por el lado más corto).
+    val objetivo = remember { floatArrayOf(sel.toFloat()) }
+    val salto = distancia(sel, objetivo[0], n)
+    objetivo[0] = objetivo[0] + salto
+    val pos by animateFloatAsState(objetivo[0], spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow), label = "rueda")
+    BoxWithConstraints(
+        modifier.width(esc.d(132)).fillMaxHeight()
+            .pointerInput(Unit) {
+                var acumulado = 0f
+                androidx.compose.foundation.gestures.detectVerticalDragGestures(onDragEnd = { acumulado = 0f }) { cambio, d ->
+                    cambio.consume()
+                    acumulado += d
+                    val u = 46f * density
+                    if (abs(acumulado) > u) { Diptico.cambiarConsola(if (acumulado > 0) -1 else 1); acumulado = 0f }
+                }
+            },
+    ) {
+        val alto = maxHeight.value / esc.factor
+        val radio = alto * 0.62f
+        // Arco de fondo.
+        Box(
+            Modifier.offset(x = esc.d(-radio + 52f), y = esc.d(alto / 2f - radio)).size(esc.d(radio * 2f))
+                .border(esc.d(1.5f), p.linea, CircleShape),
+        )
+        for (k in 0 until n) {
+            val off = distancia(k, pos.mod(n.toFloat()), n)
+            if (abs(off) > 3.6f) continue
+            val ang = off * 0.42f
+            val x = -radio + 52f + radio * cos(ang)
+            val y = alto / 2f + radio * sin(ang)
+            val cerca = (1f - abs(off) / 3.6f).coerceIn(0f, 1f)
+            val tam = 26f + 18f * (1f - abs(off).coerceAtMost(1f))
+            val id = e.pestanas[k]
+            Box(
+                Modifier.offset(x = esc.d(x - tam / 2f - 6f), y = esc.d(y - tam / 2f - 6f)).zIndex(cerca)
+                    .graphicsLayer { alpha = 0.25f + 0.75f * cerca }
+                    .size(esc.d(tam + 12f)).clip(CircleShape)
+                    .background(if (k == sel) colorConsola(id).copy(alpha = 0.28f) else p.superficie.copy(alpha = 0.5f))
+                    .then(if (k == sel) Modifier.border(esc.d(2), Coral, CircleShape) else Modifier)
+                    .clickable { Diptico.elegirConsola(id) },
+                contentAlignment = Alignment.Center,
+            ) { IconoConsola(Consolas.porId(id), tam * 0.78f, p.fondo2) }
+        }
+        // Nombre de la consola elegida, al lado de la rueda.
+        Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(76))) {
+            Texto(nombreConsola(e.consolaSel), 13f, lineas = 1)
+            Detalle("${cuantos(e, e.consolaSel)}", 11f, lineas = 1)
+        }
+    }
+}
+
+/** Sistemas: carrusel grande de consolas, con la elegida al frente y las otras giradas hacia atrás. */
+@Composable
+fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val n = e.pestanas.size
+    val sel = e.pestanas.indexOf(e.consolaSel).coerceAtLeast(0)
+    val objetivo = remember { floatArrayOf(sel.toFloat()) }
+    objetivo[0] = objetivo[0] + distancia(sel, objetivo[0], n)
+    val pos by animateFloatAsState(objetivo[0], tween(380, easing = FastOutSlowInEasing), label = "sistemas")
+    Column(modifier) {
+        BoxWithConstraints(
+            Modifier.fillMaxWidth().weight(1f).pointerInput(Unit) {
+                var acumulado = 0f
+                detectHorizontalDragGestures(onDragEnd = { acumulado = 0f }) { cambio, d ->
+                    cambio.consume()
+                    acumulado += d
+                    if (abs(acumulado) > 60f * density) { Diptico.cambiarConsola(if (acumulado > 0) -1 else 1); acumulado = 0f }
+                }
+            },
+            contentAlignment = Alignment.Center,
+        ) {
+            val ancho = maxWidth.value / esc.factor
+            val altoCaja = (maxHeight.value / esc.factor * 0.86f).coerceAtMost(250f)
+            val anchoCaja = altoCaja * 0.78f
+            for (k in 0 until n) {
+                val off = distancia(k, pos.mod(n.toFloat()), n)
+                if (abs(off) > 2.6f) continue
+                val id = e.pestanas[k]
+                val frente = k == sel
+                val cerca = 1f - (abs(off) / 2.6f).coerceIn(0f, 1f)
+                Box(
+                    Modifier.zIndex(10f - abs(off))
+                        .graphicsLayer {
+                            translationX = off * anchoCaja * 0.78f * esc.factor * density
+                            rotationY = (-off * 38f).coerceIn(-60f, 60f)
+                            cameraDistance = 14f * density
+                            val s = 1f - abs(off).coerceAtMost(2f) * 0.16f
+                            scaleX = s; scaleY = s
+                            alpha = 0.35f + 0.65f * cerca
+                        }
+                        .size(esc.d(anchoCaja), esc.d(altoCaja))
+                        .then(if (frente) Modifier.shadow(esc.d(18), RoundedCornerShape(esc.d(24)), ambientColor = colorConsola(id), spotColor = colorConsola(id)) else Modifier)
+                        .clip(RoundedCornerShape(esc.d(24)))
+                        .background(Brush.verticalGradient(listOf(lerp(colorConsola(id), Color.White, 0.08f), lerp(colorConsola(id), Color.Black, 0.55f))))
+                        .then(if (frente) Modifier.border(esc.d(2.5f), Color.White.copy(alpha = 0.85f), RoundedCornerShape(esc.d(24))) else Modifier)
+                        .clickable { if (frente) Diptico.entrarSistema() else Diptico.elegirConsola(id) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(esc.d(12))) {
+                        Box(Modifier.size(esc.d(anchoCaja * 0.5f)).clip(CircleShape).background(Color.Black.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
+                            IconoConsola(Consolas.porId(id), anchoCaja * 0.34f, Color.Transparent)
+                        }
+                        Spacer(Modifier.height(esc.d(10)))
+                        Texto(nombreConsola(id), 20f, color = Color.White, lineas = 1, sombra = true)
+                        Detalle("${cuantos(e, id)} juegos", 12.5f, color = Color.White.copy(alpha = 0.8f), lineas = 1)
+                    }
+                }
+            }
+            if (ancho > 0f && n == 0) Detalle("Aquí aparecerán tus consolas", 15f)
+        }
+        Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
+            Pistas("← →" to "Consola", "A" to "Entrar", "Y" to "Al azar")
+        }
+    }
+}
+
+/** Arriba de los juegos, en modo Sistemas: la consola en la que estás y cómo volver. */
+@Composable
+fun CabeceraSistema(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Row(Modifier.fillMaxWidth().padding(start = esc.d(12), end = esc.d(16), top = esc.d(8), bottom = esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.clip(RoundedCornerShape(50)).background(p.superficie).clickable { Diptico.volverASistemas() }
+                .padding(start = esc.d(6), end = esc.d(12), top = esc.d(5), bottom = esc.d(5)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.size(esc.d(22)).clip(CircleShape).background(p.fondo), contentAlignment = Alignment.Center) { Texto("B", 11f, traducir = false) }
+            Spacer(Modifier.width(esc.d(6)))
+            Texto("Consolas", 12.5f, lineas = 1)
+        }
+        Spacer(Modifier.width(esc.d(12)))
+        IconoConsola(Consolas.porId(e.consolaSel), 26f, p.fondo2)
+        Spacer(Modifier.width(esc.d(8)))
+        Column(Modifier.weight(1f)) {
+            Texto(Consolas.porId(e.consolaSel)?.nombreLargo ?: "Todos tus juegos", 15f, lineas = 1)
+            Detalle("${e.visibles.size} juegos", 11.5f, lineas = 1)
+        }
+    }
+}
+
+/** En la otra pantalla, en modo Sistemas: la consola elegida en grande, con lo último que jugaste en ella. */
+@Composable
+fun VistaSistema(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val id = e.consolaSel
+    val c: Consola? = Consolas.porId(id)
+    val color = colorConsola(id)
+    val juegos = if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id }
+    val tiempo = juegos.sumOf { e.datos[it.clave]?.tiempo ?: 0L }
+    val ultimo = juegos.maxByOrNull { e.datos[it.clave]?.ultimo ?: 0L }?.takeIf { (e.datos[it.clave]?.ultimo ?: 0L) > 0 }
+    Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(lerp(p.fondo, color, 0.35f), p.fondo, p.fondo)))) {
+        // Un ícono gigante de la consola, de fondo.
+        Box(Modifier.align(Alignment.CenterEnd).padding(end = esc.d(30)).graphicsLayer { alpha = 0.16f; rotationZ = -8f }) {
+            IconoConsola(c, 300f, Color.Transparent)
+        }
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 32f, trabajos = e.trabajos)
+        Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(36), end = esc.d(36)).fillMaxWidth(0.62f)) {
+            Etiqueta(if (id == "todo") "Toda tu colección" else "Consola", Coral, 12f)
+            Spacer(Modifier.height(esc.d(4)))
+            Texto(c?.bonito ?: "Todos tus juegos", 38f, lineas = 2, interlineado = 42f, sombra = true)
+            Spacer(Modifier.height(esc.d(10)))
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Dato("${juegos.size}", "juegos")
+                Dato(if (tiempo > 0) formatoTiempo(tiempo) else "0 min", "jugado")
+                Dato("${juegos.count { e.datos[it.clave]?.favorito == true }}", "favoritos")
+            }
+            if (ultimo != null) {
+                Spacer(Modifier.height(esc.d(16)))
+                Row(
+                    Modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie.copy(alpha = 0.8f)).padding(esc.d(10)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Consolas.porId(ultimo.consolaId)?.let { CajaJuego(ultimo, it, escala = 0.5f) }
+                    Spacer(Modifier.width(esc.d(12)))
+                    Column {
+                        Etiqueta("Lo último que jugaste aquí", p.tenue, 10.5f)
+                        Texto(ultimo.titulo, 16f, lineas = 2)
+                    }
+                }
+            }
+        }
+        Row(Modifier.align(Alignment.BottomStart).padding(start = esc.d(36), bottom = esc.d(22))) {
+            Pistas("A" to "Entrar", "← →" to "Otra consola")
+        }
+    }
+}
+
+@Composable
+private fun Dato(valor: String, texto: String) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(
+        Modifier.clip(RoundedCornerShape(esc.d(14))).background(p.superficie.copy(alpha = 0.75f)).padding(horizontal = esc.d(14), vertical = esc.d(8)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Texto(valor, 20f, lineas = 1)
+        Detalle(texto, 11.5f, lineas = 1)
+    }
+}
+
+/** Carrusel de juegos: la carátula elegida al frente y las vecinas giradas en 3D, como un tocadiscos de portadas. */
+@Composable
+fun CarruselJuegos(e: Estado, modifier: Modifier = Modifier) {
+    val esc = LocalEscala.current
+    val t = LocalTamJuegos.current
+    val lista = e.visibles
+    val sel = e.indiceSel
+    val pos by animateFloatAsState(sel.toFloat(), tween(320, easing = FastOutSlowInEasing), label = "carrusel")
+    Column(modifier) {
+        BoxWithConstraints(
+            Modifier.fillMaxWidth().weight(1f).pointerInput(lista.size) {
+                var acumulado = 0f
+                detectHorizontalDragGestures(onDragEnd = { acumulado = 0f }) { cambio, d ->
+                    cambio.consume()
+                    acumulado += d
+                    if (abs(acumulado) > 50f * density) { Diptico.moverJuego(if (acumulado > 0) -1 else 1); acumulado = 0f }
+                }
+            },
+            contentAlignment = Alignment.Center,
+        ) {
+            if (lista.isEmpty()) {
+                Detalle(if (e.escaneando) "Buscando tus juegos…" else "Aquí aparecerán tus juegos", 15f)
+                return@BoxWithConstraints
+            }
+            val alto = (maxHeight.value / esc.factor * 0.82f).coerceAtMost(220f * t)
+            val desde = (sel - 4).coerceAtLeast(0)
+            val hasta = (sel + 4).coerceAtMost(lista.size - 1)
+            for (k in desde..hasta) {
+                val j = lista[k]
+                val c = Consolas.porId(j.consolaId) ?: continue
+                val off = k - pos
+                val base = cajaDe(c)
+                val escala = alto / base.alto
+                val frente = k == sel
+                Box(
+                    Modifier.zIndex(10f - abs(off))
+                        .graphicsLayer {
+                            translationX = (off.coerceIn(-1f, 1f) * base.ancho * escala * 0.62f + (off - off.coerceIn(-1f, 1f)) * base.ancho * escala * 0.3f) * esc.factor * density
+                            rotationY = -off.coerceIn(-1f, 1f) * 50f
+                            cameraDistance = 12f * density
+                            val s = if (abs(off) < 1f) 1f - abs(off) * 0.18f else 0.82f
+                            scaleX = s; scaleY = s
+                            alpha = if (abs(off) > 3.5f) 0f else 1f - (abs(off) - 1f).coerceAtLeast(0f) * 0.22f
+                        }
+                        .clickable { if (frente) Diptico.jugar() else Diptico.elegirJuego(j.clave) },
+                ) { CajaJuego(j, c, escala = escala) }
+            }
+        }
+        val j = e.seleccionado
+        Column(Modifier.fillMaxWidth().padding(bottom = esc.d(4)), horizontalAlignment = Alignment.CenterHorizontally) {
+            Texto(j?.titulo ?: "", 17f, lineas = 1, alinear = TextAlign.Center)
+            if (j != null) Detalle("${Consolas.porId(j.consolaId)?.nombre ?: ""} · ${e.indiceSel + 1} de ${lista.size}", 11.5f, lineas = 1)
+        }
+    }
+}

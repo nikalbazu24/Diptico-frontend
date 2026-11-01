@@ -65,6 +65,11 @@ fun PantallaSuperior(e: Estado) {
         PantallaInicio(e)
         return
     }
+    // Modo Sistemas: mientras eliges consola, aquí se ve la consola en grande.
+    if (e.vistaConsolas == "sistemas" && e.enSistemas && e.sesion == null) {
+        VistaSistema(e)
+        return
+    }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val angosta = esc.angosta

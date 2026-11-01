@@ -41,7 +41,19 @@ fun PantallaUnica(e: Estado) {
     val esc = LocalEscala.current
     if (e.inicio == "widgets") {
         Box(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxSize().difuminar(e)) { PantallaInicio(e) }
+            // En el estudio de widgets, el inicio se ve en vivo a la izquierda y el panel a la derecha.
+            val estudio = e.panel == cl.nikalbazu.diptico.estado.Panel.ESTUDIO && !esc.angosta
+            Box(Modifier.fillMaxHeight().fillMaxWidth(if (estudio) 0.5f else 1f).difuminar(e)) { PantallaInicio(e) }
+            Paneles(e, conAyuda = true)
+        }
+        return
+    }
+    if (e.vistaConsolas == "sistemas" && e.enSistemas) {
+        Box(Modifier.fillMaxSize().background(p.fondo)) {
+            Box(Modifier.fillMaxSize().difuminar(e)) {
+                VistaSistema(e)
+                SistemasCarrusel(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).fillMaxHeight(0.8f))
+            }
             Paneles(e, conAyuda = true)
         }
         return

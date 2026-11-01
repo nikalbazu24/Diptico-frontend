@@ -61,6 +61,13 @@ object Teclas {
             return true
         }
 
+        // Bienvenida al encender: A sigue jugando, cualquier otro botón la cierra.
+        if (e.bienvenida > 0L && !e.bienvenidaBreve && e.sesion == null) {
+            if (arriba) { if (esA(code)) Diptico.seguirDesdeBienvenida() else Diptico.cerrarBienvenida() }
+            return true
+        }
+        if (e.bienvenida > 0L && e.bienvenidaBreve && arriba) Diptico.cerrarBienvenida()
+
         // Sonidos de navegación.
         if (e.sesion == null && e.panel != Panel.PASO && e.panel != Panel.CLAVE) {
             if (abajo && code in cruceta) cl.nikalbazu.diptico.audio.Sonidos.mover()
@@ -148,7 +155,11 @@ object Teclas {
             }
             if (arriba) {
                 if (!selectLargo) {
-                    if (e.panel == Panel.NINGUNO && !e.editandoWidgets) Diptico.alternarInicio() else Diptico.intercambiar()
+                    when {
+                        e.panel == Panel.ESTUDIO -> Diptico.siguienteWidget(1)
+                        e.panel == Panel.NINGUNO && !e.editandoWidgets -> Diptico.alternarInicio()
+                        else -> Diptico.intercambiar()
+                    }
                 }
                 selectLargo = false
             }
@@ -161,36 +172,12 @@ object Teclas {
             return true
         }
 
-        // Acomodando widgets.
-        if (e.editandoWidgets && e.panel == Panel.NINGUNO) {
-            if (abajo) {
-                dir(code)?.let { (dx, dy) -> Diptico.moverWidgetSel(dx, dy); return true }
-                when (code) {
-                    KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.cambiarTamWidget(-1, 0)
-                    KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.cambiarTamWidget(1, 0)
-                    KeyEvent.KEYCODE_BUTTON_L2 -> if (ev.repeatCount == 0) Diptico.cambiarTamWidget(0, -1)
-                    KeyEvent.KEYCODE_BUTTON_R2 -> if (ev.repeatCount == 0) Diptico.cambiarTamWidget(0, 1)
-                }
-                return esA(code) || esB(code) || code in botonesControl
-            }
-            if (arriba) {
-                when {
-                    esA(code) -> Diptico.abrirAjustesWidget()
-                    code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.cambiarEstiloWidget()
-                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.siguienteWidget(1)
-                    code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.actualizar { it.copy(panel = Panel.WIDGETS, indice = 0) }
-                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
-                    code in botonesControl || code in cruceta -> Unit
-                    else -> return false
-                }
-                return true
-            }
-            return false
-        }
+        // Estudio de widgets (o el inicio en modo edición sin el panel abierto).
+        if (e.panel == Panel.ESTUDIO || (e.editandoWidgets && e.panel == Panel.NINGUNO)) return estudio(ev, e)
 
         // Paneles con su propia forma de moverse.
         when (e.panel) {
-            Panel.FICHA, Panel.WIDGETS, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA, Panel.AJUSTE_WIDGET ->
+            Panel.FICHA, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA ->
                 return panelEnGrilla(ev, e)
             Panel.MENU -> return menu(ev, e)
             else -> Unit
@@ -198,15 +185,33 @@ object Teclas {
 
         val hayPanel = e.panel != Panel.NINGUNO
 
+        // Modo Sistemas, eligiendo consola: la cruceta y L1/R1 cambian de consola, A entra, Y elige un juego al azar.
+        if (!hayPanel && e.sesion == null && e.vistaConsolas == "sistemas" && e.enSistemas) {
+            if (abajo) {
+                dir(code)?.let { (dx, dy) -> Diptico.cambiarConsola(if (dx + dy < 0) -1 else 1); return true }
+                if ((code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) && ev.repeatCount == 0) {
+                    Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
+                }
+                if (esA(code) || esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y || code == KeyEvent.KEYCODE_BUTTON_X) return true
+            }
+            if (arriba) {
+                when {
+                    esA(code) -> { Diptico.entrarSistema(); return true }
+                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_X -> return true
+                    code == KeyEvent.KEYCODE_BUTTON_Y -> { Diptico.sorprendeme(); Diptico.entrarSistema(); return true }
+                }
+            }
+        }
+
         if (abajo) {
             when (code) {
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> {
-                    if (!hayPanel) Diptico.moverJuego(if (code == KeyEvent.KEYCODE_DPAD_UP && e.vista != "estante") -columnasEstante(e) else -1)
+                    if (!hayPanel) Diptico.moverJuego(if (code == KeyEvent.KEYCODE_DPAD_UP && (e.vista == "cuadricula" || e.vista == "lista")) -columnasEstante(e) else -1)
                     else Diptico.moverIndice(-1)
                     return true
                 }
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                    if (!hayPanel) Diptico.moverJuego(if (code == KeyEvent.KEYCODE_DPAD_DOWN && e.vista != "estante") columnasEstante(e) else 1)
+                    if (!hayPanel) Diptico.moverJuego(if (code == KeyEvent.KEYCODE_DPAD_DOWN && (e.vista == "cuadricula" || e.vista == "lista")) columnasEstante(e) else 1)
                     else Diptico.moverIndice(1)
                     return true
                 }
@@ -260,6 +265,7 @@ object Teclas {
             }
             if (esB(code)) {
                 if (hayPanel) Diptico.atras()
+                else if (e.vistaConsolas == "sistemas" && e.sesion == null) Diptico.volverASistemas()
                 return true
             }
             when (code) {
@@ -327,7 +333,6 @@ object Teclas {
                         Panel.CENTRO -> Diptico.moverCentro(d, 0)
                         Panel.FICHA -> if (ev.repeatCount == 0) Diptico.cambiarPestanaFicha(d)
                         Panel.RAPIDO -> Diptico.moverRapido(d, 0)
-                        Panel.AJUSTE_WIDGET -> if (d < 0) Diptico.menosEnPanel() else Diptico.aceptar()
                         Panel.BUSCAR, Panel.IMAGENES, Panel.GALERIA -> Diptico.moverIndice(d)
                         else -> Unit
                     }
@@ -376,6 +381,57 @@ object Teclas {
             return true
         }
         return false
+    }
+
+    /**
+     * Estudio de widgets: ↑↓ elige un ajuste, ←→ lo cambia, A lo usa, L1/R1 cambian de pestaña,
+     * Y mueve el widget con la cruceta (L1/R1 ancho, L2/R2 alto), X cambia su estilo, Select pasa al siguiente, B termina.
+     */
+    private fun estudio(ev: KeyEvent, e: Estado): Boolean {
+        val code = ev.keyCode
+        val abajo = ev.action == KeyEvent.ACTION_DOWN
+        val arriba = ev.action == KeyEvent.ACTION_UP
+        if (e.panel != Panel.ESTUDIO) {
+            if (arriba && (esA(code) || code == KeyEvent.KEYCODE_BUTTON_Y)) Diptico.abrirAjustesWidget()
+            else if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BUTTON_START)) Diptico.terminarEdicion()
+            return true
+        }
+        if (abajo) {
+            val d = dir(code)
+            if (e.estudioMover) {
+                if (d != null) { Diptico.moverWidgetSel(d.first, d.second); return true }
+                if (ev.repeatCount == 0) when (code) {
+                    KeyEvent.KEYCODE_BUTTON_L1 -> Diptico.cambiarTamWidget(-1, 0)
+                    KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.cambiarTamWidget(1, 0)
+                    KeyEvent.KEYCODE_BUTTON_L2 -> Diptico.cambiarTamWidget(0, -1)
+                    KeyEvent.KEYCODE_BUTTON_R2 -> Diptico.cambiarTamWidget(0, 1)
+                }
+                return true
+            }
+            when {
+                d != null && d.second != 0 -> Diptico.moverIndice(d.second)
+                d != null -> Diptico.cambiarControl(d.first)
+                code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount == 0 -> Diptico.cambiarPestanaEstudio(-1)
+                code == KeyEvent.KEYCODE_BUTTON_R1 && ev.repeatCount == 0 -> Diptico.cambiarPestanaEstudio(1)
+                code == KeyEvent.KEYCODE_BUTTON_L2 && ev.repeatCount == 0 -> Diptico.cambiarPagina(-1)
+                code == KeyEvent.KEYCODE_BUTTON_R2 && ev.repeatCount == 0 -> Diptico.cambiarPagina(1)
+            }
+            return true
+        }
+        if (arriba) {
+            if (e.estudioMover) {
+                if (esA(code) || esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y) Diptico.alternarMoverWidget()
+                return true
+            }
+            when {
+                esA(code) -> Diptico.aceptarControl()
+                esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
+                code == KeyEvent.KEYCODE_BUTTON_Y -> { if (e.estudioPestana != 0) Diptico.elegirPestanaEstudio(0); Diptico.alternarMoverWidget() }
+                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.cambiarEstiloWidget()
+            }
+            return true
+        }
+        return true
     }
 
     /** Menú principal: grilla de secciones y, adentro, la lista de opciones. */

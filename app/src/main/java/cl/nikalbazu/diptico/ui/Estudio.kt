@@ -1,0 +1,288 @@
+package cl.nikalbazu.diptico.ui
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import cl.nikalbazu.diptico.estado.Diptico
+import cl.nikalbazu.diptico.estado.Estado
+import cl.nikalbazu.diptico.estado.Icono
+import cl.nikalbazu.diptico.estado.Widgets
+
+/**
+ * Estudio de widgets: todo lo del inicio en un solo panel ordenado.
+ * Con dos pantallas ocupa la de abajo y el inicio se ve en vivo arriba; con una sola pantalla va a un costado.
+ * Pestañas: Widget (el elegido), Agregar (catálogo) y Página (grilla, fondo y encabezado).
+ */
+@Composable
+fun PanelEstudio(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val lateral = e.unaPantalla
+    val controles = remember(e) { Diptico.controlesEstudio(e) }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+        Column(
+            (if (lateral) Modifier.fillMaxHeight().fillMaxWidth(if (esc.angosta) 1f else 0.5f).padding(esc.d(10))
+                .clip(RoundedCornerShape(esc.d(22))).background(p.fondo2.copy(alpha = 0.97f))
+                .border(esc.d(1), p.linea, RoundedCornerShape(esc.d(22)))
+            else Modifier.fillMaxSize().background(p.fondo2))
+                .sinCerrar().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10)),
+        ) {
+            // Encabezado
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(esc.d(36)).clip(RoundedCornerShape(esc.d(11))).fondoBoton(Uva), contentAlignment = Alignment.Center) {
+                    IconoDiptico(Icono.EDITAR, SobreUva, 18f, acento = SobreUva)
+                }
+                Spacer(Modifier.width(esc.d(10)))
+                Column(Modifier.weight(1f)) {
+                    Texto("Estudio de widgets", 18f, lineas = 1)
+                    Detalle("Página ${e.paginaInicio + 1} de ${e.paginas} · ${e.widgets.count { it.visible }} widgets", 12f, lineas = 1)
+                }
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
+                        .padding(horizontal = esc.d(14), vertical = esc.d(7)),
+                ) { Texto("Listo", 13.5f, color = SobreUva, lineas = 1) }
+            }
+            Spacer(Modifier.height(esc.d(10)))
+            // Pestañas, como un selector segmentado.
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = 0.8f)).padding(esc.d(3)),
+                horizontalArrangement = Arrangement.spacedBy(esc.d(3)),
+            ) {
+                Diptico.PESTANAS_ESTUDIO.forEachIndexed { i, t ->
+                    val activa = i == e.estudioPestana
+                    Box(
+                        Modifier.weight(1f).clip(RoundedCornerShape(50)).then(if (activa) Modifier.fondoBoton(Uva) else Modifier)
+                            .clickable { Diptico.elegirPestanaEstudio(i) }.padding(vertical = esc.d(6)),
+                        contentAlignment = Alignment.Center,
+                    ) { Texto(t, 13f, color = if (activa) SobreUva else p.tinta, lineas = 1) }
+                }
+            }
+            Spacer(Modifier.height(esc.d(8)))
+            // Controles agrupados.
+            val filas = remember(controles) {
+                buildList {
+                    var grupo = ""
+                    controles.forEachIndexed { i, c ->
+                        if (c.grupo.isNotEmpty() && c.grupo != grupo) { add(-1 to c.grupo); grupo = c.grupo }
+                        add(i to "")
+                    }
+                }
+            }
+            val lista = rememberLazyListState()
+            LaunchedEffect(e.indice, e.estudioPestana) {
+                val pos = filas.indexOfFirst { it.first == e.indice }
+                if (pos >= 0) lista.animateScrollToItem((pos - 2).coerceAtLeast(0))
+            }
+            LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                items(filas.size) { k ->
+                    val (i, grupo) = filas[k]
+                    if (i < 0) {
+                        Etiqueta(grupo, p.tenue, 10.5f, Modifier.padding(start = esc.d(4), top = esc.d(if (k == 0) 0f else 6f), bottom = esc.d(1)))
+                    } else {
+                        ControlEstudio(controles[i], activo = i == e.indice && !e.estudioMover, moviendo = e.estudioMover && e.estudioPestana == 0 && i == 1) {
+                            Diptico.actualizar { it.copy(indice = i) }
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(esc.d(6)))
+            if (e.estudioMover) Pistas("Cruceta" to "Mover", "L1 R1" to "Ancho", "L2 R2" to "Alto", "A" to "Listo")
+            else Pistas("↑ ↓" to "Elegir", "← →" to "Cambiar", "L1 R1" to "Pestaña", "B" to "Terminar")
+        }
+    }
+}
+
+@Composable
+private fun ControlEstudio(c: Diptico.Control, activo: Boolean, moviendo: Boolean, elegir: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val fondo by animateColorAsState(if (activo || moviendo) p.superficie else p.superficie.copy(alpha = 0.5f), label = "fondo")
+    val forma = RoundedCornerShape(esc.d(14))
+    Column(
+        Modifier.fillMaxWidth().clip(forma).background(fondo)
+            .border(esc.d(if (activo || moviendo) 2f else 0f), if (moviendo) Coral else if (activo) Uva else Color.Transparent, forma)
+            .clickable { elegir() }.padding(horizontal = esc.d(12), vertical = esc.d(9)),
+    ) {
+        when (c.tipo) {
+            "pasos" -> Row(verticalAlignment = Alignment.CenterVertically) {
+                c.icono?.let { IconoDiptico(it, p.tinta, 16f, acento = Coral); Spacer(Modifier.width(esc.d(8))) }
+                Texto(c.titulo, 13.5f, lineas = 1, modifier = Modifier.weight(1f))
+                BotonPaso("‹") { elegir(); c.menos?.invoke() }
+                Box(Modifier.width(esc.d(80)), contentAlignment = Alignment.Center) { Texto(c.valor, 13f, color = p.acentoTexto, lineas = 1) }
+                BotonPaso("›") { elegir(); c.mas() }
+            }
+            "accion", "interruptor" -> Row(verticalAlignment = Alignment.CenterVertically) {
+                c.icono?.let {
+                    Box(Modifier.size(esc.d(30)).clip(CircleShape).background(p.fondo.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
+                        IconoDiptico(it, if (moviendo) Coral else p.tinta, 16f, acento = Coral)
+                    }
+                    Spacer(Modifier.width(esc.d(10)))
+                }
+                Column(Modifier.weight(1f)) {
+                    Texto(c.titulo, 13.5f, lineas = 1, color = if (moviendo) Coral else p.tinta)
+                    if (activo && c.ayuda.isNotEmpty()) Detalle(c.ayuda, 11.5f, lineas = 2)
+                }
+                Spacer(Modifier.width(esc.d(8)))
+                if (c.tipo == "interruptor") {
+                    val si = c.valor == "Sí"
+                    Box(
+                        Modifier.size(esc.d(44), esc.d(24)).clip(RoundedCornerShape(50)).background(if (si) Uva else p.linea)
+                            .clickable { elegir(); c.mas() },
+                        contentAlignment = if (si) Alignment.CenterEnd else Alignment.CenterStart,
+                    ) { Box(Modifier.padding(esc.d(3)).size(esc.d(18)).clip(CircleShape).background(Color.White)) }
+                } else if (c.valor.isNotEmpty() && c.valor != "—") {
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50)).then(if (activo || moviendo) Modifier.fondoBoton(if (moviendo) Coral else Uva) else Modifier.background(p.fondo))
+                            .clickable { elegir(); c.mas() }.padding(horizontal = esc.d(11), vertical = esc.d(5)),
+                    ) { Texto(c.valor, 12f, color = if (activo || moviendo) SobreUva else p.tinta, lineas = 1) }
+                }
+            }
+            "catalogo" -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(esc.d(40)).clip(RoundedCornerShape(esc.d(12))).background(Uva.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                    IconoDiptico(c.icono ?: Icono.APPS, p.tinta, 20f, acento = Coral)
+                }
+                Spacer(Modifier.width(esc.d(10)))
+                Column(Modifier.weight(1f)) {
+                    Texto(c.titulo, 14f, lineas = 1)
+                    Detalle(c.ayuda, 11.5f, lineas = if (activo) 2 else 1)
+                }
+                Spacer(Modifier.width(esc.d(8)))
+                val agregar = c.valor == "Agregar" || c.valor == "Elegir"
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).then(if (agregar) Modifier.fondoBoton(Uva) else Modifier.background(p.fondo))
+                        .clickable { elegir(); c.mas() }.padding(horizontal = esc.d(11), vertical = esc.d(5)),
+                ) { Texto(if (agregar) "+ ${c.valor}" else c.valor, 12f, color = if (agregar) SobreUva else p.tenue, lineas = 1) }
+            }
+            else -> {
+                // Elecciones a la vista: chips, estilos, colores, formas o widgets.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Texto(c.titulo, 13.5f, lineas = 1, modifier = Modifier.weight(1f))
+                    if (c.valor.isNotEmpty() && c.tipo != "widgets") Texto(c.valor, 12f, color = p.acentoTexto, lineas = 1)
+                }
+                Spacer(Modifier.height(esc.d(7)))
+                val desplazar = rememberScrollState()
+                val paso = with(LocalDensity.current) { esc.d(if (c.tipo == "colores") 32f else 76f).toPx() }
+                LaunchedEffect(c.elegida) { if (c.elegida > 1) desplazar.animateScrollTo(((c.elegida - 1) * paso).toInt()) }
+                Row(Modifier.fillMaxWidth().horizontalScroll(desplazar), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
+                    when (c.tipo) {
+                        "colores" -> c.colores.forEachIndexed { k, col ->
+                            val sel = k == c.elegida
+                            Box(
+                                Modifier.size(esc.d(26)).clip(CircleShape)
+                                    .background(if (col == 0L) Brush.linearGradient(listOf(Uva, Coral)) else Brush.linearGradient(listOf(Color(col), Color(col))))
+                                    .border(esc.d(if (sel) 3f else 1f), if (sel) p.tinta else p.linea, CircleShape)
+                                    .clickable { elegir(); c.elegir?.invoke(k) },
+                                contentAlignment = Alignment.Center,
+                            ) { if (col == 0L) Texto("A", 10f, color = Color.White, lineas = 1, traducir = false) }
+                        }
+                        "formas" -> c.formas.forEachIndexed { k, (an, al) ->
+                            val sel = k == c.elegida
+                            Column(
+                                Modifier.width(esc.d(70)).clip(RoundedCornerShape(esc.d(10))).background(if (sel) Uva.copy(alpha = 0.22f) else p.fondo.copy(alpha = 0.5f))
+                                    .border(esc.d(if (sel) 2f else 0f), if (sel) Uva else Color.Transparent, RoundedCornerShape(esc.d(10)))
+                                    .clickable { elegir(); c.elegir?.invoke(k) }.padding(vertical = esc.d(6)),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                val u = 36f / maxOf(an, al * 1.4f)
+                                Box(Modifier.height(esc.d(28)), contentAlignment = Alignment.Center) {
+                                    Box(Modifier.size(esc.d(an * u), esc.d(al * u * 0.75f)).clip(RoundedCornerShape(esc.d(3))).background(if (sel) Uva else p.tenue.copy(alpha = 0.6f)))
+                                }
+                                Texto(c.elecciones[k], 10.5f, color = if (sel) p.tinta else p.tenue, lineas = 1)
+                            }
+                        }
+                        "estilos" -> c.elecciones.forEachIndexed { k, nombre ->
+                            val sel = k == c.elegida
+                            Column(
+                                Modifier.width(esc.d(70)).clickable { elegir(); c.elegir?.invoke(k) },
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                MuestraEstilo(Widgets.ESTILOS[k], sel)
+                                Spacer(Modifier.height(esc.d(3)))
+                                Texto(nombre, 10.5f, color = if (sel) p.tinta else p.tenue, lineas = 1)
+                            }
+                        }
+                        "widgets" -> c.elecciones.forEachIndexed { k, nombre ->
+                            val sel = k == c.elegida
+                            Box(
+                                Modifier.clip(RoundedCornerShape(50)).then(if (sel) Modifier.fondoBoton(Uva) else Modifier.background(p.fondo.copy(alpha = 0.6f)))
+                                    .clickable { elegir(); c.elegir?.invoke(k) }.padding(horizontal = esc.d(11), vertical = esc.d(6)),
+                            ) { Texto(nombre, 12f, color = if (sel) SobreUva else p.tinta, lineas = 1) }
+                        }
+                        else -> c.elecciones.forEachIndexed { k, nombre ->
+                            val sel = k == c.elegida
+                            Box(
+                                Modifier.clip(RoundedCornerShape(50)).then(if (sel) Modifier.fondoBoton(Uva) else Modifier.background(p.fondo.copy(alpha = 0.6f)))
+                                    .clickable { elegir(); c.elegir?.invoke(k) }.padding(horizontal = esc.d(11), vertical = esc.d(5)),
+                            ) { Texto(nombre, 12f, color = if (sel) SobreUva else p.tinta, lineas = 1) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BotonPaso(t: String, accion: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Box(Modifier.size(esc.d(28)).clip(CircleShape).background(p.fondo).clickable { accion() }, contentAlignment = Alignment.Center) {
+        Texto(t, 16f, lineas = 1, traducir = false)
+    }
+}
+
+/** Una tarjetita que muestra cómo se ve cada estilo de widget. */
+@Composable
+private fun MuestraEstilo(estilo: String, sel: Boolean) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val forma = RoundedCornerShape(esc.d(9))
+    Box(
+        Modifier.size(esc.d(62), esc.d(38)).clip(RoundedCornerShape(esc.d(11)))
+            .background(Brush.linearGradient(listOf(Uva.copy(alpha = 0.35f), Coral.copy(alpha = 0.25f))))
+            .border(esc.d(if (sel) 2.5f else 0f), if (sel) p.tinta else Color.Transparent, RoundedCornerShape(esc.d(11)))
+            .padding(esc.d(6)),
+    ) {
+        val m = Modifier.fillMaxSize().clip(forma)
+        Box(
+            when (estilo) {
+                "vidrio" -> m.background(Color.White.copy(alpha = 0.22f)).border(esc.d(1), Color.White.copy(alpha = 0.4f), forma)
+                "solido" -> m.background(Uva)
+                "contorno" -> m.border(esc.d(1.5f), Uva, forma)
+                "sinfondo" -> m
+                else -> m.background(p.superficie)
+            },
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Box(Modifier.padding(start = esc.d(5)).size(esc.d(18), esc.d(4)).clip(RoundedCornerShape(50)).background(if (estilo == "solido") SobreUva else p.tinta))
+        }
+    }
+}

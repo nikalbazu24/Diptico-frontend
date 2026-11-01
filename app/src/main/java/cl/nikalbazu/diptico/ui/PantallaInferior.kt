@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -103,9 +104,32 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Column(Modifier.fillMaxSize()) {
-                    Cinta(e)
-                    Box(Modifier.padding(horizontal = esc.d(16)).fillMaxWidth().height(esc.d(1)).background(p.linea))
-                    VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), if (esc.angosta) 1.08f else 1.18f)
+                    val escalaEstante = if (esc.angosta) 1.08f else 1.18f
+                    when (e.vistaConsolas) {
+                        "lado", "rueda" -> Row(Modifier.fillMaxWidth().weight(1f)) {
+                            if (e.vistaConsolas == "lado") RielConsolas(e) else RuedaConsolas(e)
+                            Box(Modifier.padding(vertical = esc.d(14)).width(esc.d(1)).fillMaxHeight().background(p.linea))
+                            VistaJuegos(e, Modifier.weight(1f).fillMaxHeight(), escalaEstante * 0.9f)
+                        }
+                        "sistemas" -> AnimatedContent(
+                            targetState = e.enSistemas,
+                            transitionSpec = {
+                                (fadeIn(tween(260)) + scaleIn(tween(320), initialScale = if (targetState) 1.06f else 0.94f)) togetherWith fadeOut(tween(160))
+                            },
+                            label = "sistemas", modifier = Modifier.fillMaxWidth().weight(1f),
+                        ) { eligiendo ->
+                            if (eligiendo) SistemasCarrusel(e, Modifier.fillMaxSize())
+                            else Column(Modifier.fillMaxSize()) {
+                                CabeceraSistema(e)
+                                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+                            }
+                        }
+                        else -> {
+                            Cinta(e)
+                            Box(Modifier.padding(horizontal = esc.d(16)).fillMaxWidth().height(esc.d(1)).background(p.linea))
+                            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+                        }
+                    }
                     Dock(e)
                 }
             }
@@ -121,7 +145,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.WIDGETS, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
+            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -142,11 +166,10 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.CLAVE -> PanelClave(e)
             Panel.PORTS -> PanelPorts(e)
             Panel.FICHA -> PanelFicha(e)
-            Panel.WIDGETS -> PanelWidgets(e)
             Panel.ESTADISTICAS -> PanelEstadisticas(e)
             Panel.IMAGENES -> PanelImagenes(e)
             Panel.GALERIA -> PanelGaleria(e)
-            Panel.AJUSTE_WIDGET -> PanelAjusteWidget(e)
+            Panel.ESTUDIO -> PanelEstudio(e)
             Panel.ASISTENTE -> if (e.sesion == null) PanelAsistente(e) else Box(Modifier.fillMaxSize())
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
         }
@@ -172,6 +195,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
         when (vista) {
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
             "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
+            "carrusel" -> CarruselJuegos(e, Modifier.fillMaxSize())
             else -> Column(Modifier.fillMaxSize()) {
                 Estante(e, alto = (if (esc.angosta) 192f else 214f) * t.coerceAtMost(1.25f), escala = escalaEstante * t)
                 Info(e)
@@ -694,6 +718,7 @@ private fun PanelClave(e: Estado) {
         ) {
             val (icono, titulo, ayuda, ejemplo) = when (e.textoPara) {
                 "ia_clave" -> listOf(Icono.CLAVE, "Clave de Claude", "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
+                "nombre" -> listOf(Icono.TEXTO, "¿Cómo te llamas?", "Bisa te saluda por tu nombre cuando prendes la consola.", "Ej: Nico")
                 "ia_clave_gemini" -> listOf(Icono.CLAVE, "Clave de Gemini (gratis)", "Entra a aistudio.google.com/apikey con tu cuenta de Google, toca \"Create API key\" y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
                 "ia_clave_openai" -> listOf(Icono.CLAVE, "Clave de ChatGPT", "Entra a platform.openai.com/api-keys, crea una clave y pégala aquí. Usa el saldo de tu cuenta de OpenAI. Solo se guarda en tu consola.", "Pega tu clave")
                 "ra_usuario" -> listOf(Icono.TROFEO, "Usuario de RetroAchievements", "Tu nombre de usuario en retroachievements.org (no tu correo).", "Ej: Nikalbazu")

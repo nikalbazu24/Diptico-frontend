@@ -244,65 +244,6 @@ fun VistaGaleria(e: Estado) {
 }
 
 
-/**
- * Ajustes del widget elegido: tamaño, estilo, color, fondo, esquinas y página. ← y → cambian cada valor.
- * Va a un costado para ver el widget cambiar en vivo.
- */
-@Composable
-fun PanelAjusteWidget(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val opciones = remember(e) { Diptico.opcionesWidget() }
-    val w = e.widgets.getOrNull(e.widgetSel)
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
-        Column(
-            Modifier.fillMaxSize(if (esc.angosta) 1f else 0.5f).padding(esc.d(10)).clip(RoundedCornerShape(esc.d(22)))
-                .background(p.fondo2.copy(alpha = 0.97f)).border(esc.d(1), p.linea, RoundedCornerShape(esc.d(22)))
-                .sinCerrar().padding(esc.d(12)),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconoDiptico(Icono.EDITAR, p.tinta, 18f, acento = Coral)
-                Spacer(Modifier.width(esc.d(8)))
-                Column(Modifier.weight(1f)) {
-                    Texto("Ajustes del widget", 17f, lineas = 1)
-                    Detalle(w?.let { cl.nikalbazu.diptico.estado.Widgets.nombre(it.tipo) } ?: "", 12f, lineas = 1)
-                }
-            }
-            Spacer(Modifier.height(esc.d(8)))
-            val lista = androidx.compose.foundation.lazy.rememberLazyListState()
-            LaunchedEffect(e.indice) { lista.animateScrollToItem((e.indice - 2).coerceAtLeast(0)) }
-            androidx.compose.foundation.lazy.LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
-                items(opciones.size) { i ->
-                    val o = opciones[i]
-                    val activo = i == e.indice
-                    Row(
-                        Modifier.fillMaxWidth().height(esc.d(46)).clip(RoundedCornerShape(esc.d(14)))
-                            .then(if (activo) Modifier.border(esc.d(2), Uva, RoundedCornerShape(esc.d(14))) else Modifier)
-                            .background(p.superficie.copy(alpha = if (activo) 1f else 0.6f))
-                            .clickable { Diptico.actualizar { it.copy(indice = i) } }.padding(horizontal = esc.d(10)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Texto(o.titulo, 13.5f, lineas = 1, modifier = Modifier.weight(1f))
-                        if (o.menos != null) {
-                            Box(Modifier.size(esc.d(28)).clip(CircleShape).background(p.fondo).clickable { Diptico.actualizar { it.copy(indice = i) }; o.menos?.invoke() }, contentAlignment = Alignment.Center) { Texto("‹", 16f, traducir = false) }
-                            Box(Modifier.width(esc.d(96)), contentAlignment = Alignment.Center) { Texto(o.valor, 12.5f, color = p.acentoTexto, lineas = 1) }
-                            Box(Modifier.size(esc.d(28)).clip(CircleShape).background(p.fondo).clickable { Diptico.actualizar { it.copy(indice = i) }; o.accion() }, contentAlignment = Alignment.Center) { Texto("›", 16f, traducir = false) }
-                        } else {
-                            if (o.valor.isNotEmpty()) Texto(o.valor, 12.5f, color = p.acentoTexto, lineas = 1)
-                            Spacer(Modifier.width(esc.d(6)))
-                            Box(Modifier.clip(RoundedCornerShape(50)).background(p.fondo).clickable { Diptico.actualizar { it.copy(indice = i) }; o.accion() }.padding(horizontal = esc.d(10), vertical = esc.d(4))) {
-                                Texto("Cambiar", 11.5f, lineas = 1)
-                            }
-                        }
-                    }
-                }
-            }
-            Spacer(Modifier.height(esc.d(6)))
-            Pistas("← →" to "Cambiar", "↑ ↓" to "Moverte", "B" to "Listo")
-        }
-    }
-}
-
 /** En la otra pantalla: qué es cada IA, lo bueno, lo no tan bueno y cómo conseguirla. */
 @Composable
 private fun ExplicaIA(id: String) {
