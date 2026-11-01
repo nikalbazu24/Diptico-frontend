@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
+enum class Panel { APPS, EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -157,6 +157,7 @@ object Widgets {
         Widget("estadisticas", 0, 0, 3, 2, false), Widget("sugerencia", 0, 0, 2, 2, false),
         Widget("accesos", 0, 0, 3, 1, false), Widget("notificaciones", 0, 0, 3, 2, false),
         Widget("logros", 0, 0, 3, 2, false), Widget("asistente", 0, 0, 3, 1, false),
+        Widget("apps", 0, 0, 3, 1, false),
     )
 
     /** Para qué sirve cada widget (en el catálogo del estudio). */
@@ -169,6 +170,7 @@ object Widgets {
         "sugerencia" -> "Un juego al azar para descubrir"; "accesos" -> "Wi-Fi, Bluetooth, brillo y más"
         "notificaciones" -> "Lo último que llegó a tu consola"; "logros" -> "Tus logros de RetroAchievements"
         "asistente" -> "Un acceso directo para hablar con Bisa"
+        "apps" -> "Tus apps fijadas y el cajón con todas"
         else -> "Tu imagen o GIF animado"
     }
 
@@ -176,7 +178,7 @@ object Widgets {
         "juego" -> Icono.JUGAR; "reloj" -> Icono.RELOJ; "musica" -> Icono.MUSICA; "paso" -> Icono.LAPIZ; "recientes" -> Icono.CONTINUAR
         "fiesta" -> Icono.MUNDO; "tiempo" -> Icono.RELOJ; "bateria" -> Icono.BATERIA; "consolas" -> Icono.BIBLIOTECA
         "favoritos" -> Icono.CORAZON; "frase" -> Icono.CHISPA; "estadisticas" -> Icono.TROFEO; "sugerencia" -> Icono.DADO
-        "accesos" -> Icono.AJUSTES; "notificaciones" -> Icono.CAMPANA; "logros" -> Icono.TROFEO; "asistente" -> Icono.BISA
+        "accesos" -> Icono.AJUSTES; "notificaciones" -> Icono.CAMPANA; "logros" -> Icono.TROFEO; "asistente" -> Icono.BISA; "apps" -> Icono.APPS
         else -> Icono.PORTADA
     }
 
@@ -201,7 +203,7 @@ object Widgets {
         "tiempo" -> "Tiempo jugado"; "bateria" -> "Batería"; "consolas" -> "Tu colección"
         "favoritos" -> "Favoritos"; "frase" -> "Saludo del día"; "estadisticas" -> "Estadísticas"
         "sugerencia" -> "¿Qué juego hoy?"; "accesos" -> "Accesos rápidos"; "notificaciones" -> "Notificaciones"
-        "logros" -> "Logros (RetroAchievements)"; "asistente" -> "Asistente con IA"
+        "logros" -> "Logros (RetroAchievements)"; "asistente" -> "Asistente con IA"; "apps" -> "Apps"
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -324,6 +326,11 @@ data class Estado(
     val relojGrande: Boolean = false,
     /** "estante", "cuadricula", "lista" o "carrusel". */
     val vista: String = "estante",
+    /** Todas las apps de la consola (se cargan al abrir el cajón de apps), las fijadas y la pestaña elegida. */
+    val appsTodas: List<App> = emptyList(),
+    val appsFijadas: List<String> = emptyList(),
+    val appsPestana: Int = 0,
+    val cargandoTodas: Boolean = false,
     /** Personalización de cada consola (id -> lo que se cambió) y la consola que se está editando. */
     val consolasPropias: Map<String, ConsolaPropia> = emptyMap(),
     val consolaEditando: String = "",
@@ -536,6 +543,7 @@ object Diptico {
             vista = almacen.texto("vista", "estante"),
             vistaConsolas = almacen.texto("vistaConsolas", "arriba"),
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
+            appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
             enSistemas = almacen.texto("vistaConsolas", "arriba") == "sistemas",
             tamJuegos = almacen.texto("tamJuegos", "1").toFloatOrNull() ?: 1f,
             orden = almacen.texto("orden", "az"),
@@ -1869,6 +1877,10 @@ object Diptico {
                 val total = elementosAsistente().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
+            Panel.APPS -> {
+                val total = appsVisibles(e).size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
             Panel.EDITAR_CONSOLA -> {
                 val total = opcionesEditarConsola().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
@@ -1949,6 +1961,7 @@ object Diptico {
             Panel.GALERIA -> itemsGaleria(e).getOrNull(e.indice)?.accion?.invoke()
             Panel.ESTUDIO -> aceptarControl()
             Panel.EDITAR_CONSOLA -> opcionesEditarConsola().getOrNull(e.indice)?.accion?.invoke()
+            Panel.APPS -> appsVisibles(e).getOrNull(e.indice)?.let { abrirPaquete(it.paquete) }
             Panel.ASISTENTE -> elementosAsistente().getOrNull(e.indice)?.accion?.invoke()
             Panel.CENTRO -> {
                 val acciones = opcionesCentro()
@@ -3925,13 +3938,14 @@ object Diptico {
         Opcion("Bluetooth", icono = Icono.BLUETOOTH) { abrirIntent(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS), "No pude abrir el Bluetooth") },
         Opcion("Volumen", icono = Icono.VOLUMEN) { abrirIntent(Intent(android.provider.Settings.Panel.ACTION_VOLUME), "No pude abrir el volumen") },
         Opcion("Pantalla", icono = Icono.BRILLO) { abrirIntent(Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS), "No pude abrir la pantalla") },
+        Opcion("Todas las apps", icono = Icono.APPS) { abrirApps() },
         Opcion("Archivos", icono = Icono.CARPETA) { abrirArchivos() },
         Opcion("Batería", icono = Icono.BATERIA) { abrirIntent(Intent(Intent.ACTION_POWER_USAGE_SUMMARY), "No pude abrir la batería") },
         Opcion("Bisa", icono = Icono.BISA) { abrirAsistente() },
         Opcion("Estadísticas", icono = Icono.RELOJ) { abrirEstadisticas() },
         Opcion("Protector", icono = Icono.ESTRELLA) { cerrarPanel(); actualizar { it.copy(protector = true) } },
         Opcion("Ajustes", icono = Icono.AJUSTES) { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },
-    )
+    ) + (if (!estado.value.unaPantalla) listOf(Opcion("Intercambiar", icono = Icono.INTERCAMBIAR) { cerrarPanel(); intercambiar() }) else emptyList())
 
     fun abrirAviso(a: Aviso) {
         cerrarPanel()
@@ -4456,6 +4470,64 @@ object Diptico {
         val e = estado.value
         if (e.panel == Panel.ESTUDIO) cambiarControl(-1)
         if (e.panel == Panel.EDITAR_CONSOLA) opcionesEditarConsola().getOrNull(e.indice)?.let { o -> (o.menos ?: o.accion).invoke() }
+    }
+
+    // ---------- Cajón de apps: el resto de las apps de la consola ----------
+
+    val PESTANAS_APPS = listOf("Todas", "Fijadas", "Juegos")
+
+    /** Abre el cajón con todas las apps de la consola (las carga la primera vez, sin trabar nada). */
+    fun abrirApps() {
+        actualizar { it.copy(panel = Panel.APPS, indice = 0, appsPestana = if (it.appsFijadas.isNotEmpty()) 1 else 0) }
+        if (estado.value.appsTodas.isEmpty()) cargarApps()
+    }
+
+    fun cargarApps() {
+        if (estado.value.cargandoTodas) return
+        actualizar { it.copy(cargandoTodas = true) }
+        scope.launch {
+            val lista = withContext(Dispatchers.IO) {
+                try {
+                    val pm = app.packageManager
+                    pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0).mapNotNull { r ->
+                        val paquete = r.activityInfo?.packageName ?: return@mapNotNull null
+                        if (paquete == app.packageName) return@mapNotNull null
+                        val info = r.activityInfo.applicationInfo
+                        @Suppress("DEPRECATION")
+                        val juego = info.category == android.content.pm.ApplicationInfo.CATEGORY_GAME || (info.flags and android.content.pm.ApplicationInfo.FLAG_IS_GAME) != 0
+                        App(paquete, r.loadLabel(pm)?.toString() ?: paquete, juego)
+                    }.distinctBy { it.paquete }.sortedBy { Busqueda.normalizar(it.nombre) }
+                } catch (_: Exception) {
+                    emptyList()
+                }
+            }
+            actualizar { it.copy(appsTodas = lista, cargandoTodas = false) }
+        }
+    }
+
+    /** Las apps de la pestaña elegida. */
+    fun appsVisibles(e: Estado = estado.value): List<App> = when (e.appsPestana) {
+        1 -> e.appsFijadas.mapNotNull { p -> e.appsTodas.firstOrNull { it.paquete == p } }
+        2 -> e.appsTodas.filter { it.esJuego }
+        else -> e.appsTodas
+    }
+
+    fun cambiarPestanaApps(d: Int) = actualizar { it.copy(appsPestana = (it.appsPestana + d).mod(PESTANAS_APPS.size), indice = 0) }
+
+    fun elegirPestanaApps(i: Int) = actualizar { it.copy(appsPestana = i, indice = 0) }
+
+    /** Fija (o suelta) una app: las fijadas tienen su pestaña y su widget en el inicio. */
+    fun alternarFijada(paquete: String) {
+        val l = estado.value.appsFijadas
+        val n = if (paquete in l) l - paquete else l + paquete
+        almacen.guardarTexto("appsFijadas", n.joinToString(","))
+        actualizar { it.copy(appsFijadas = n) }
+        avisar(if (paquete in n) "App fijada" else "App soltada")
+    }
+
+    /** Abre la información de la app en los ajustes de Android (para desinstalar, permisos…). */
+    fun infoApp(paquete: String) {
+        abrirIntent(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$paquete")), "No pude abrir la información de la app")
     }
 
     // ---------- Personalizar consolas ----------

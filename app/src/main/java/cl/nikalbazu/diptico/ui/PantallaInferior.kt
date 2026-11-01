@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -147,7 +148,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
+            val completo = targetState in setOf(Panel.MENU, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -173,6 +174,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.GALERIA -> PanelGaleria(e)
             Panel.ESTUDIO -> PanelEstudio(e)
             Panel.EDITAR_CONSOLA -> PanelEditarConsola(e)
+            Panel.APPS -> PanelApps(e)
             Panel.ASISTENTE -> if (e.sesion == null) PanelAsistente(e) else Box(Modifier.fillMaxSize())
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
         }
@@ -366,42 +368,65 @@ private fun Info(e: Estado) {
     }
 }
 
+/**
+ * La barra de accesos: una cápsula flotante con Bisa al centro, en grande y un poco más arriba.
+ * A la izquierda lo de tus juegos (seguir, buscar, cambiar la vista); a la derecha las apps, el inicio y el menú.
+ * Cada acceso muestra el botón del control que hace lo mismo.
+ */
 @Composable
 private fun Dock(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    Column {
-        Box(Modifier.fillMaxWidth().height(esc.d(1)).background(p.linea))
-        Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(8)).height(esc.d(62))) {
-            ItemDock(Icono.CONTINUAR, "Continuar", p.acentoTexto) { Diptico.continuar() }
-            ItemDock(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
-            ItemDock(Icono.VISTA, Diptico.nombreVista(e.vista)) { Diptico.cambiarVista() }
-            // Bisa, al centro y con su propia cara.
-            Column(
-                Modifier.weight(1f).fillMaxSize().clickable { Diptico.abrirAsistente() },
-                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-            ) {
-                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(36).value)
-                Texto("Bisa", 12f, color = Coral, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
-            }
-            ItemDock(Icono.APPS, if (e.inicio == "widgets") "Carátulas" else "Widgets") { Diptico.alternarInicio() }
-            if (!e.unaPantalla) ItemDock(Icono.INTERCAMBIAR, "Intercambiar") { Diptico.intercambiar() }
-            ItemDock(Icono.MENU, "Menú") { Diptico.abrirMenu() }
+    Box(Modifier.fillMaxWidth().padding(start = esc.d(10), end = esc.d(10), top = esc.d(12), bottom = esc.d(8))) {
+        Row(
+            Modifier.fillMaxWidth().height(esc.d(58)).shadow(esc.d(10), RoundedCornerShape(esc.d(22)))
+                .clip(RoundedCornerShape(esc.d(22)))
+                .background(Brush.verticalGradient(listOf(p.superficie, androidx.compose.ui.graphics.lerp(p.superficie, p.fondo2, 0.5f))))
+                .border(esc.d(1), Color.White.copy(alpha = 0.07f), RoundedCornerShape(esc.d(22)))
+                .padding(horizontal = esc.d(4)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ItemDock(Icono.CONTINUAR, "Continuar", Coral) { Diptico.continuar() }
+            ItemDock(Icono.BUSCAR, "Buscar", tecla = "L3") { Diptico.abrirBuscar() }
+            ItemDock(Icono.VISTA, Diptico.nombreVista(e.vista), tecla = "R3") { Diptico.cambiarVista() }
+            Spacer(Modifier.weight(1.15f))
+            ItemDock(Icono.APPS, "Apps", Cielo) { Diptico.abrirApps() }
+            ItemDock(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets", tecla = "Sel") { Diptico.alternarInicio() }
+            ItemDock(Icono.MENU, "Menú", tecla = "Start") { Diptico.abrirMenu() }
+        }
+        // Bisa: un círculo que sobresale de la barra.
+        Column(Modifier.align(Alignment.TopCenter).offset(y = esc.d(-12)), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                Modifier.size(esc.d(52)).shadow(esc.d(8), CircleShape).clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(Uva, Coral)))
+                    .border(esc.d(3), p.fondo2, CircleShape)
+                    .clickable { Diptico.abrirAsistente() },
+                contentAlignment = Alignment.Center,
+            ) { cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(36).value) }
+            Texto("Bisa", 10.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
         }
     }
 }
 
 @Composable
-private fun RowScope.ItemDock(icono: Icono, texto: String, color: Color = LocalPaleta.current.tinta, accion: () -> Unit) {
+private fun RowScope.ItemDock(icono: Icono, texto: String, color: Color = LocalPaleta.current.tinta, tecla: String? = null, accion: () -> Unit) {
+    val p = LocalPaleta.current
     val esc = LocalEscala.current
     Column(
-        Modifier.weight(1f).fillMaxSize().clickable { accion() },
+        Modifier.weight(1f).fillMaxHeight().padding(vertical = esc.d(4)).clip(RoundedCornerShape(esc.d(14))).clickable { accion() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        IconoDiptico(icono, color, 24f, acento = Coral)
-        Spacer(Modifier.height(esc.d(4)))
-        Texto(texto, 12f, color = color, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
+        Box {
+            IconoDiptico(icono, color, 21f, acento = if (color == p.tinta) Coral else color)
+            // El botón del control que hace lo mismo, chiquito en la esquina.
+            if (tecla != null && !esc.angosta) Box(
+                Modifier.align(Alignment.TopEnd).offset(x = esc.d(14), y = esc.d(-4)).clip(RoundedCornerShape(50)).background(p.fondo2)
+                    .padding(horizontal = esc.d(3)),
+            ) { Texto(tecla, 7.5f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, traducir = false) }
+        }
+        Spacer(Modifier.height(esc.d(3)))
+        Texto(texto, 10.5f, color = if (color == p.tinta) p.tenue else color, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
     }
 }
 

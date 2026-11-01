@@ -177,7 +177,7 @@ object Teclas {
 
         // Paneles con su propia forma de moverse.
         when (e.panel) {
-            Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA ->
+            Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA ->
                 return panelEnGrilla(ev, e)
             Panel.MENU -> return menu(ev, e)
             else -> Unit
@@ -300,6 +300,7 @@ object Teclas {
     var columnasBuscar = 4
     var columnasImagenes = 4
     var columnasGaleria = 3
+    var columnasApps = 5
 
     @Volatile
     var columnasMenu = 3
@@ -314,6 +315,7 @@ object Teclas {
             Panel.BUSCAR -> columnasBuscar
             Panel.IMAGENES -> columnasImagenes
             Panel.GALERIA -> columnasGaleria
+            Panel.APPS -> columnasApps
             else -> 1
         }
         if (abajo) {
@@ -335,7 +337,7 @@ object Teclas {
                         Panel.FICHA -> if (ev.repeatCount == 0) Diptico.cambiarPestanaFicha(d)
                         Panel.RAPIDO -> Diptico.moverRapido(d, 0)
                         Panel.EDITAR_CONSOLA -> Diptico.ladoEditarConsola(d)
-                        Panel.BUSCAR, Panel.IMAGENES, Panel.GALERIA -> Diptico.moverIndice(d)
+                        Panel.BUSCAR, Panel.IMAGENES, Panel.GALERIA, Panel.APPS -> Diptico.moverIndice(d)
                         else -> Unit
                     }
                 }
@@ -346,6 +348,7 @@ object Teclas {
                         Panel.BUSCAR -> Diptico.cambiarFiltro(d)
                         Panel.IMAGENES -> Diptico.cambiarFuenteImagen(d)
                         Panel.GALERIA -> Diptico.cambiarPestanaGaleria(d)
+                        Panel.APPS -> Diptico.cambiarPestanaApps(d)
                         else -> Unit
                     }
                 }
@@ -367,6 +370,7 @@ object Teclas {
                     Panel.CENTRO -> Diptico.descartarAvisoSel()
                     Panel.ASISTENTE -> Diptico.escribirAlAsistente()
                     Panel.BUSCAR -> Diptico.limpiarBusqueda()
+                    Panel.APPS -> Diptico.appsVisibles(e).getOrNull(e.indice)?.let { Diptico.infoApp(it.paquete) }
                     else -> Unit
                 }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> when (e.panel) {
@@ -376,6 +380,7 @@ object Teclas {
                     Panel.IMAGENES -> Diptico.abrirTexto("buscar_imagen", e.nombreImagen)
                     Panel.GALERIA -> if (e.galeria == "ia") Diptico.itemsGaleria(e).getOrNull(e.indice)?.let { Diptico.abrirPaginaClave(it.id) }
                     Panel.RAPIDO -> Diptico.cerrarPanel()
+                    Panel.APPS -> Diptico.appsVisibles(e).getOrNull(e.indice)?.let { Diptico.alternarFijada(it.paquete) }
                     else -> Unit
                 }
                 code in botonesControl || code in cruceta -> Unit

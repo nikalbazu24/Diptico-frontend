@@ -662,6 +662,24 @@ class Capturas {
 
     @Test fun t128_galeria_ia_qr() = foto("128_ia_con_qr_arriba", base().copy(panel = Panel.GALERIA, galeria = "ia", indice = 3), Rol.SUPERIOR)
 
+    private val appsEjemplo = listOf(
+        App("com.android.chrome", "Chrome"), App("com.spotify.music", "Spotify"), App("com.retroarch", "RetroArch"),
+        App("org.ppsspp.ppsspp", "PPSSPP"), App("com.mihoyo.genshin", "Genshin Impact", true), App("com.android.settings", "Ajustes"),
+        App("com.google.android.youtube", "YouTube"), App("com.whatsapp", "WhatsApp"), App("com.mojang.minecraftpe", "Minecraft", true),
+        App("com.android.documentsui", "Archivos"), App("me.magnum.melonds", "melonDS"), App("com.android.camera", "Cámara"),
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t129_cajon_apps() = foto("129_cajon_de_apps", base().copy(panel = Panel.APPS, appsTodas = appsEjemplo, appsFijadas = listOf("com.spotify.music", "com.retroarch"), indice = 4), Rol.INFERIOR)
+
+    @Test fun t130_cajon_apps_arriba() = foto("130_app_elegida_arriba", base().copy(panel = Panel.APPS, appsTodas = appsEjemplo, indice = 4), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t131_barra_nueva() = foto("131_barra_de_accesos", base(), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t132_barra_bloques() = foto("132_barra_tema_bloques", base().copy(vista = "cuadricula"), Rol.INFERIOR, bloques)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),

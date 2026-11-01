@@ -300,7 +300,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
     // tam: 1 angosto, 2 mediano, 3 ancho. compacto: una sola fila de alto.
     val tam = when { an >= 4 -> 3; an >= 3 -> 2; else -> 1 }
     val compacto = al == 1
-    if (compacto && tipo !in setOf("reloj", "musica", "bateria", "frase", "accesos", "notificaciones", "estadisticas")) {
+    if (compacto && tipo !in setOf("reloj", "musica", "bateria", "frase", "accesos", "notificaciones", "estadisticas", "apps")) {
         WidgetCompacto(e, tipo)
         return
     }
@@ -538,6 +538,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
             }
         }
+        "apps" -> Tarjeta { WidgetApps(e, an) }
         "accesos" -> Tarjeta {
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                 Diptico.opcionesCentro().take(if (tam >= 2) 6 else 4).forEach { o ->
