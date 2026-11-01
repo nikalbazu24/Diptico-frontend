@@ -43,7 +43,9 @@ object IALocal {
             if (propio.exists() && propio.length() > 1_000_000) return propio
         }
         val f = File(dir, ARCHIVO)
-        return if (f.exists() && f.length() >= TAMANO - 1024) f else null
+        // Se acepta si está completo según el tamaño que dio el servidor (o, si no se sabe, casi el esperado).
+        val total = File(dir, "$ARCHIVO.total").takeIf { it.exists() }?.readText()?.trim()?.toLongOrNull() ?: TAMANO
+        return if (f.exists() && f.length() >= total - 1024) f else null
     }
 
     fun listo(ctx: Context) = archivo(ctx) != null
@@ -54,11 +56,13 @@ object IALocal {
     /**
      * Baja el modelo (se puede cortar y seguir después). [avance] va de 0 a 1.
      * Devuelve null si salió bien, o el motivo si no.
+     * Si el pedazo ya bajado no calza con el servidor (error 416), revisa si ya está completo o empieza de nuevo.
      */
-    fun descargar(ctx: Context, avance: (Float) -> Unit): String? {
+    fun descargar(ctx: Context, avance: (Float) -> Unit, reintento: Boolean = false): String? {
         val dir = carpeta(ctx)
         val destino = File(dir, ARCHIVO)
         val parte = File(dir, "$ARCHIVO.parte")
+        val marcaTotal = File(dir, "$ARCHIVO.total")
         val libre = dir.usableSpace
         if (libre < TAMANO - parte.length() + 200_000_000L) return "No hay espacio: se necesitan unos 1,8 GB libres."
         var desde = if (parte.exists()) parte.length() else 0L
@@ -69,22 +73,40 @@ object IALocal {
         if (desde > 0) c.setRequestProperty("Range", "bytes=$desde-")
         return try {
             val codigo = c.responseCode
+            if (codigo == 416) {
+                // "Rango imposible": lo bajado ya llega al final del archivo (o se pasó). Se revisa con el tamaño real.
+                val total = c.getHeaderField("Content-Range")?.substringAfter('/')?.trim()?.toLongOrNull()
+                c.disconnect()
+                if (total != null && desde >= total - 1024 && desde <= total + 1024) {
+                    marcaTotal.writeText(total.toString())
+                    parte.renameTo(destino)
+                    return null
+                }
+                parte.delete()
+                return if (reintento) "El servidor del modelo no acepta la descarga ahora. Prueba en un rato." else descargar(ctx, avance, true)
+            }
             if (codigo == 200) desde = 0L else if (codigo != 206) return "El servidor del modelo respondió con un error ($codigo)."
+            // Tamaño real del archivo según el servidor.
+            val total = when (codigo) {
+                206 -> c.getHeaderField("Content-Range")?.substringAfter('/')?.trim()?.toLongOrNull()
+                else -> c.contentLengthLong.takeIf { it > 0 }
+            } ?: TAMANO
+            marcaTotal.writeText(total.toString())
             c.inputStream.use { entrada ->
                 java.io.FileOutputStream(parte, desde > 0).use { salida ->
                     val buf = ByteArray(256 * 1024)
-                    var total = desde
+                    var llevado = desde
                     var ultimo = 0L
                     while (true) {
                         val n = entrada.read(buf)
                         if (n < 0) break
                         salida.write(buf, 0, n)
-                        total += n
-                        if (total - ultimo > 8_000_000) { ultimo = total; avance(total / TAMANO.toFloat()) }
+                        llevado += n
+                        if (llevado - ultimo > 8_000_000) { ultimo = llevado; avance(llevado / total.toFloat()) }
                     }
                 }
             }
-            if (parte.length() < TAMANO - 1024) return "La descarga quedó incompleta. Vuelve a intentarlo y sigue donde quedó."
+            if (parte.length() < total - 1024) return "La descarga quedó incompleta. Vuelve a intentarlo y sigue donde quedó."
             parte.renameTo(destino)
             null
         } catch (e: Exception) {

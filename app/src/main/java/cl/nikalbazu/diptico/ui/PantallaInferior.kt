@@ -776,11 +776,15 @@ private fun PanelClave(e: Estado) {
                                 .padding(horizontal = esc.d(14), vertical = esc.d(8)),
                         ) { Texto("Sacar mi clave (abre la página)", 13.5f, color = Color.White, lineas = 1) }
                         Spacer(Modifier.height(esc.d(6)))
-                        Detalle("O escanea el código con tu teléfono.", 12f, lineas = 1)
-                        Detalle(url.removePrefix("https://"), 11f, lineas = 1)
+                        if (e.enlaceUrl != null) {
+                            Detalle("O escanea el código con tu teléfono (misma Wi-Fi): ahí sacas la clave, la pegas, y llega sola aquí.", 12f, lineas = 3)
+                        } else {
+                            Detalle("O escanea el código con tu teléfono.", 12f, lineas = 1)
+                            Detalle(url.removePrefix("https://"), 11f, lineas = 1)
+                        }
                     }
                     Spacer(Modifier.width(esc.d(10)))
-                    CodigoQR(url, 64f)
+                    CodigoQR(e.enlaceUrl ?: url, 72f)
                 }
             }
             val esClave = e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave"

@@ -478,6 +478,34 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
             val siglas = SIGLAS[c.id] ?: c.nombre.replace(" ", "").let { if (it.length <= 4) it else it.take(3).uppercase() }
             Texto(siglas, tam * (if (siglas.length > 3) 0.3f else 0.38f), color = if (c.color.luminance() > 0.6f) Tinta else Color.White, lineas = 1)
         }
+        // Estilos dibujados por Díptico: todas las consolas con la misma línea.
+        cfg.estilo == "insignia" -> Box(
+            modifier.size(esc.d(tam)).clip(CircleShape)
+                .background(Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(c.color, Color.White, 0.18f), androidx.compose.ui.graphics.lerp(c.color, Color.Black, 0.3f)))),
+            contentAlignment = Alignment.Center,
+        ) { IconoMedio(c.medio, Color.White, c.color, tam = tam * 0.64f) }
+        cfg.estilo == "contorno" -> Box(
+            modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(c.color.copy(alpha = 0.14f))
+                .border(esc.d(tam * 0.06f), c.color, RoundedCornerShape(esc.d(tam * 0.28f))),
+            contentAlignment = Alignment.Center,
+        ) { IconoMedio(c.medio, c.color, fondo, tam = tam * 0.62f) }
+        cfg.estilo == "pixel" -> MedioPixel(c.medio, c.color, fondo, modifier, tam)
         else -> IconoMedio(c.medio, c.color, fondo, modifier, tam)
     }
+}
+
+/** El formato de la consola dibujado en píxeles grandes (estilo "Píxeles"). */
+@Composable
+fun MedioPixel(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Modifier, tam: Float = 44f) {
+    val esc = LocalEscala.current
+    val img = remember(medio, color, fondo) {
+        val n = 16
+        val bmp = androidx.compose.ui.graphics.ImageBitmap(n, n)
+        androidx.compose.ui.graphics.drawscope.CanvasDrawScope().draw(
+            androidx.compose.ui.unit.Density(1f), androidx.compose.ui.unit.LayoutDirection.Ltr,
+            androidx.compose.ui.graphics.Canvas(bmp), androidx.compose.ui.geometry.Size(n.toFloat(), n.toFloat()),
+        ) { dibujarMedio(medio, color, fondo) }
+        bmp
+    }
+    Image(img, null, modifier.size(esc.d(tam)), contentScale = ContentScale.Fit, filterQuality = androidx.compose.ui.graphics.FilterQuality.None)
 }

@@ -331,6 +331,8 @@ data class Estado(
     val appsFijadas: List<String> = emptyList(),
     val appsPestana: Int = 0,
     val cargandoTodas: Boolean = false,
+    /** Dirección de la página de la consola para mandar una clave desde el teléfono (null = no está abierta). */
+    val enlaceUrl: String? = null,
     /** Personalización de cada consola (id -> lo que se cambió) y la consola que se está editando. */
     val consolasPropias: Map<String, ConsolaPropia> = emptyMap(),
     val consolaEditando: String = "",
@@ -1580,10 +1582,33 @@ object Diptico {
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave", "ia_pedido", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
         actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_")) }
+        // Para las claves: el teléfono puede mandarla directo (QR con la página de la consola en tu Wi-Fi).
+        val oficial = urlClave(para)
+        if (oficial != null && para != "ra_usuario") {
+            val titulo = when (para) {
+                "ia_clave_gemini" -> "Clave de Gemini"; "ia_clave_openai" -> "Clave de ChatGPT"; "ia_clave" -> "Clave de Claude"
+                "sgdb" -> "Clave de SteamGridDB"; else -> "Clave de RetroAchievements"
+            }
+            val url = Enlace.iniciar(titulo, oficial) { clave -> recibirClaveRemota(para, clave) }
+            actualizar { it.copy(enlaceUrl = url) }
+        } else if (estado.value.enlaceUrl != null) {
+            Enlace.detener(); actualizar { it.copy(enlaceUrl = null) }
+        }
+    }
+
+    /** Llegó una clave desde el teléfono: se guarda como si se hubiera escrito aquí. */
+    private fun recibirClaveRemota(para: String, clave: String) {
+        val e = estado.value
+        if (e.panel != Panel.CLAVE || e.textoPara != para) { Enlace.detener(); return }
+        actualizar { it.copy(borrador = clave, enlaceUrl = null) }
+        Sonidos.aceptar()
+        guardarClave()
+        avisar("¡Clave recibida desde tu teléfono! Ya quedó activa")
     }
 
     fun cerrarPanel() {
         val e = estado.value
+        if (e.panel == Panel.CLAVE && e.enlaceUrl != null) { Enlace.detener(); actualizar { it.copy(enlaceUrl = null) } }
         // Desde la clave, se vuelve a donde estabas (menú o tutorial).
         if (e.panel == Panel.CLAVE && (e.textoPara == "titulo" || e.textoPara == "notas")) {
             actualizar { it.copy(panel = Panel.FICHA) }
@@ -1627,6 +1652,11 @@ object Diptico {
             return
         }
         if (e.panel == Panel.IMAGENES) {
+            if (e.candidatoPara.startsWith("c_")) {
+                val i = opcionesEditarConsola().indexOfFirst { it.titulo == when (e.candidatoPara) { "c_icono" -> "Ícono"; "c_logo" -> "Logo"; else -> "Imagen grande (hero)" } }
+                actualizar { it.copy(panel = Panel.EDITAR_CONSOLA, indice = i.coerceAtLeast(0), candidatoPara = "") }
+                return
+            }
             actualizar { it.copy(panel = Panel.FICHA, indice = 0) }
             return
         }
@@ -2144,6 +2174,7 @@ object Diptico {
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.CONSOLAS -> {
+                lista += opcionesIconos(e).first()
                 for (c in e.consolasConJuegos) {
                     val n = e.juegos.count { it.consolaId == c.id }
                     val propia = e.consolasPropias[c.id]?.vacia == false || e.iconosPropios.containsKey(c.id)
@@ -2775,11 +2806,14 @@ object Diptico {
 
     // ---------- Íconos de consola ----------
 
-    private fun estilosIconos(): List<String> = listOf("diptico", "siglas") + Descargas.PAQUETES.map { it.id }
+    private fun estilosIconos(): List<String> = listOf("diptico", "insignia", "contorno", "pixel", "siglas") + Descargas.PAQUETES.map { it.id }
 
     fun nombreEstiloIconos(s: String) = when (s) {
         "diptico" -> "Formatos de Díptico"
         "siglas" -> "Siglas"
+        "insignia" -> "Insignias"
+        "contorno" -> "Contornos"
+        "pixel" -> "Píxeles"
         else -> Descargas.PAQUETES.firstOrNull { it.id == s }?.nombre ?: s
     }
 
@@ -2789,7 +2823,7 @@ object Diptico {
 
             Opcion(
                 "Íconos de consola", nombreEstiloIconos(e.estiloIconos), Icono.EMULADOR,
-                "Los dibujos de Díptico, siglas, o paquetes de íconos de RetroArch (se descargan una vez).",
+                "Estilos de Díptico (formatos, insignias, contornos, píxeles o siglas: todas las consolas con la misma línea), o paquetes de RetroArch (se descargan una vez). Para una sola consola: Menú › Tus consolas.",
             ) {
                 val l = estilosIconos()
                 val s = l[(l.indexOf(estado.value.estiloIconos) + 1).mod(l.size)]
@@ -3351,7 +3385,10 @@ object Diptico {
 
     // ---------- Elegir una imagen de internet ----------
 
-    fun nombreCandidato(t: String) = when (t) { "arte" -> "imagen grande"; "logo" -> "logo"; else -> "portada" }
+    fun nombreCandidato(t: String) = when (t) { "arte", "c_hero" -> "imagen grande"; "logo", "c_logo" -> "logo"; "c_icono" -> "ícono"; else -> "portada" }
+
+    /** Pestañas de la tienda según qué se busca (las consolas usan RetroArch en vez de libretro). */
+    fun fuentesImagen(e: Estado = estado.value) = if (e.candidatoPara.startsWith("c_")) listOf("todas", "RetroArch", "SteamGridDB", "Wikipedia") else FUENTES_IMAGEN
 
     /** Busca varias opciones (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
     /** Fuentes de la tienda de imágenes (pestañas). */
@@ -3362,7 +3399,12 @@ object Diptico {
     fun candidatosVisibles(e: Estado = estado.value): List<cl.nikalbazu.diptico.data.ImagenWeb> {
         val j = juegoFicha()
         val d = j?.let { e.datos[it.clave] }
-        val propia = when (e.candidatoPara) { "arte" -> d?.arte; "logo" -> d?.logo; else -> d?.portada }
+        val cp = e.consolasPropias[e.consolaEditando]
+        val propia = when (e.candidatoPara) {
+            "arte" -> d?.arte; "logo" -> d?.logo
+            "c_hero" -> cp?.hero; "c_logo" -> cp?.logo; "c_icono" -> e.iconosPropios[e.consolaEditando]
+            else -> d?.portada
+        }
         val atajos = buildList {
             add(cl.nikalbazu.diptico.data.ImagenWeb("accion:archivos", "", "Mis archivos"))
             if (propia != null) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:quitar", propia, "Quitar la propia"))
@@ -3373,13 +3415,29 @@ object Diptico {
     }
 
     fun cambiarFuenteImagen(d: Int) {
-        val l = FUENTES_IMAGEN
+        val l = fuentesImagen()
         actualizar { it.copy(fuenteImagen = l[(l.indexOf(it.fuenteImagen) + d).mod(l.size)], indice = 0) }
     }
 
     /** Abre la tienda de imágenes (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
     fun buscarCandidatos(tipo: String, nombre: String? = null) {
         val e = estado.value
+        // Imágenes de una consola (desde su personalización).
+        if (tipo.startsWith("c_")) {
+            val c = Consolas.porId(e.consolaEditando) ?: return
+            val titulo = nombre?.takeIf { it.isNotBlank() } ?: c.bonito
+            actualizar { it.copy(panel = Panel.IMAGENES, candidatos = emptyList(), candidatoPara = tipo, buscandoCandidatos = true, indice = 0, nombreImagen = titulo, fuenteImagen = "todas") }
+            scope.launch {
+                val lista = withContext(Dispatchers.IO) {
+                    try {
+                        val wiki = if (tipo == "c_icono") null else Fichas.buscar(app, titulo, "")
+                        Descargas.candidatosConsola(c, tipo, titulo, e.claveSgdb, wiki)
+                    } catch (ex: Exception) { emptyList() }
+                }
+                if (estado.value.panel == Panel.IMAGENES) actualizar { it.copy(candidatos = lista, buscandoCandidatos = false) }
+            }
+            return
+        }
         val j = juegoFicha() ?: return
         val crudo = todosCrudos().firstOrNull { it.clave == j.clave } ?: return
         val c = Consolas.porId(crudo.consolaId) ?: return
@@ -3402,6 +3460,7 @@ object Diptico {
     fun usarCandidato(i: Int = estado.value.indice) {
         val e = estado.value
         val img = candidatosVisibles(e).getOrNull(i) ?: return
+        if (e.candidatoPara.startsWith("c_")) { usarCandidatoConsola(img); return }
         val j = juegoFicha() ?: return
         val tipo = e.candidatoPara
         when (img.url) {
@@ -4533,6 +4592,40 @@ object Diptico {
 
     // ---------- Personalizar consolas ----------
 
+    /** Usa una imagen de la tienda para la consola que se está editando. */
+    private fun usarCandidatoConsola(img: cl.nikalbazu.diptico.data.ImagenWeb) {
+        val e = estado.value
+        val id = e.consolaEditando
+        val que = e.candidatoPara.removePrefix("c_")
+        when (img.url) {
+            "accion:archivos" -> { if (que == "icono") pedirImagen("icono:$id") else pedirArchivoPara("consola_$que:$id", "image/*"); return }
+            "accion:sgdb" -> { abrirTexto("sgdb", e.claveSgdb); return }
+            "accion:quitar" -> {
+                if (que == "icono") {
+                    val m = e.iconosPropios - id
+                    almacen.guardarTexto("iconosPropios", escribirMapa(m)); actualizar { it.copy(iconosPropios = m) }
+                } else cambiarConsolaPropia(id) { if (que == "logo") it.copy(logo = null) else it.copy(hero = null) }
+                avisar("Listo, volvió la imagen original")
+                return
+            }
+        }
+        avisar("Bajando la imagen…")
+        scope.launch {
+            val f = withContext(Dispatchers.IO) { try { Descargas.bajarParaConsola(app, id, que, img.url) } catch (_: Exception) { null } }
+            if (f == null) { avisar("No pude bajar esa imagen. Prueba otra."); return@launch }
+            val u = Uri.fromFile(f).toString()
+            when (que) {
+                "icono" -> {
+                    val m = estado.value.iconosPropios + (id to u)
+                    almacen.guardarTexto("iconosPropios", escribirMapa(m)); actualizar { it.copy(iconosPropios = m, iconosVersion = it.iconosVersion + 1) }
+                }
+                "logo" -> cambiarConsolaPropia(id) { it.copy(logo = u) }
+                else -> cambiarConsolaPropia(id) { it.copy(hero = u) }
+            }
+            avisar("¡Listo! Imagen nueva para ${Consolas.porId(id)?.nombre ?: ""}")
+        }
+    }
+
     /** ← y → al personalizar una consola: cambian los valores que tienen ‹ › (como el color). */
     fun ladoEditarConsola(d: Int) {
         val o = opcionesEditarConsola().getOrNull(estado.value.indice) ?: return
@@ -4592,9 +4685,9 @@ object Diptico {
                 "Color", if (p.color == 0L) "Original" else "Propio", Icono.PALETA, "El color de sus tarjetas, del carrusel y del fondo de su vista.",
                 menos = { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) - 1).mod(COLORES_CONSOLA.size)]) } },
             ) { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) + 1).mod(COLORES_CONSOLA.size)]) } },
-            Opcion("Ícono", if (e.iconosPropios.containsKey(id)) "Propio ✓" else "Elegir imagen", Icono.EMULADOR, "Cualquier imagen de tu consola como ícono.") { pedirImagen("icono:$id") },
-            Opcion("Imagen grande (hero)", if (p.hero != null) "Propia ✓" else "Elegir imagen", Icono.PORTADA, "El fondo de esta consola en la vista grande y en su tarjeta del carrusel.") { archivo("hero") },
-            Opcion("Logo", if (p.logo != null) "Propio ✓" else "Elegir imagen", Icono.ESTRELLA, "Un logo (mejor con fondo transparente) que reemplaza al nombre en la vista grande.") { archivo("logo") },
+            Opcion("Ícono", if (e.iconosPropios.containsKey(id)) "Propio ✓" else "Buscar", Icono.EMULADOR, "Elige entre los paquetes de RetroArch, SteamGridDB o tus archivos.") { buscarCandidatos("c_icono") },
+            Opcion("Imagen grande (hero)", if (p.hero != null) "Propia ✓" else "Buscar", Icono.PORTADA, "El fondo de esta consola: de SteamGridDB, fotos de Wikipedia o tus archivos.") { buscarCandidatos("c_hero") },
+            Opcion("Logo", if (p.logo != null) "Propio ✓" else "Buscar", Icono.ESTRELLA, "Un logo que reemplaza al nombre en la vista grande: de SteamGridDB, Wikipedia o tus archivos.") { buscarCandidatos("c_logo") },
             Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") },
             Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA) { ciclarForma(id) },
             Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA) { ciclarTamForma(id) },

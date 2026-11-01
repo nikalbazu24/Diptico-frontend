@@ -387,6 +387,40 @@ object Descargas {
         return lista.distinctBy { it.url }
     }
 
+    /**
+     * Opciones de internet para las imágenes de una consola: SteamGridDB (por su nombre), Wikipedia (fotos de la consola)
+     * y, para el ícono, los paquetes de RetroArch. [tipo]: "c_hero", "c_logo" o "c_icono".
+     */
+    fun candidatosConsola(consola: Consola, tipo: String, nombre: String, claveSgdb: String, wiki: FichaInfo?): List<ImagenWeb> {
+        val lista = ArrayList<ImagenWeb>()
+        if (tipo == "c_icono") {
+            consola.icono?.let { ic ->
+                for (p in PAQUETES) {
+                    val u = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/${p.id}/png/${codificar(ic)}.png"
+                    lista += ImagenWeb(u, u, "RetroArch", p.nombre)
+                }
+            }
+        }
+        if (claveSgdb.isNotBlank()) {
+            val id = idSgdb(nombre, claveSgdb)
+            if (id != null) lista += when (tipo) {
+                "c_logo" -> urlsSgdb("/logos/game/$id", claveSgdb)
+                "c_icono" -> urlsSgdb("/icons/game/$id", claveSgdb)
+                else -> urlsSgdb("/heroes/game/$id", claveSgdb)
+            }
+        }
+        if (wiki != null && tipo != "c_icono") {
+            lista += if (tipo == "c_logo") wiki.imagenes.filter { "logo" in it.nombre.lowercase() } else listOfNotNull(wiki.principal) + wiki.imagenes.filter { "logo" !in it.nombre.lowercase() }
+        }
+        return lista.distinctBy { it.url }
+    }
+
+    /** Baja una imagen elegida para una consola. */
+    fun bajarParaConsola(ctx: Context, consola: String, tipo: String, url: String): File? {
+        val f = File(carpeta(ctx, "medios"), "consola-$consola-$tipo-${System.currentTimeMillis() % 100000}.${extension(url)}")
+        return if (bajar(url, f)) f else null
+    }
+
     /** Baja una imagen elegida a la carpeta de Díptico. Devuelve el archivo o null. */
     fun bajarElegida(ctx: Context, juego: Juego, tipo: String, url: String): File? {
         val f = File(carpeta(ctx, "medios"), "${hash(juego.clave)}-propia-$tipo-${System.currentTimeMillis() % 100000}.${extension(url)}")

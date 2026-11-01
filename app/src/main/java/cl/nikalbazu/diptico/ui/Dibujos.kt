@@ -223,7 +223,12 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
 @Composable
 fun IconoMedio(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Modifier, tam: Float = 44f) {
     val esc = LocalEscala.current
-    Canvas(modifier.size(esc.d(tam))) {
+    Canvas(modifier.size(esc.d(tam))) { dibujarMedio(medio, color, fondo) }
+}
+
+/** El dibujo del formato (cartucho, disco…), para usarlo en cualquier lienzo (también en el estilo de píxeles). */
+fun DrawScope.dibujarMedio(medio: Medio, color: Color, fondo: Color) {
+    run {
         val k = size.width / 44f
         val cx = size.width / 2
         val cy = size.height / 2

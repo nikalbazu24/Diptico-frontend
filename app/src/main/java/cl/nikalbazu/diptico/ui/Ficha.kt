@@ -207,8 +207,8 @@ fun PanelFicha(e: Estado) {
 fun LecturaFicha(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val j = e.juegos.firstOrNull { it.clave == e.fichaDe } ?: return
     if (e.panel == Panel.IMAGENES) { VistaCandidato(e); return }
+    val j = e.juegos.firstOrNull { it.clave == e.fichaDe } ?: return
     // Resumen e Historia: el texto queda en la otra pantalla y aquí pasan las fotos del juego.
     if (e.pestanaFicha <= 1 && e.fichaImagenes.isNotEmpty()) { Carrusel(e, j.titulo); return }
     if (e.pestanaFicha == 4) { LogroGrande(e, j.titulo); return }
@@ -338,7 +338,7 @@ fun PanelImagenes(e: Estado) {
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
                     Texto("Tienda de imágenes · ${Diptico.nombreCandidato(e.candidatoPara)}", 18f, lineas = 1)
-                    Detalle(if (e.nombreImagen.isNotBlank() && e.nombreImagen != j?.titulo) "Buscando: ${e.nombreImagen}" else j?.titulo ?: "", 12.5f, lineas = 1)
+                    Detalle(if (e.candidatoPara.startsWith("c_")) "Buscando: ${e.nombreImagen}" else if (e.nombreImagen.isNotBlank() && e.nombreImagen != j?.titulo) "Buscando: ${e.nombreImagen}" else j?.titulo ?: "", 12.5f, lineas = 1)
                 }
                 Box(
                     Modifier.clip(RoundedCornerShape(50)).background(p.superficie).clickable { Diptico.abrirTexto("buscar_imagen", e.nombreImagen) }
@@ -348,7 +348,7 @@ fun PanelImagenes(e: Estado) {
             Spacer(Modifier.height(esc.d(8)))
             // Pestañas de fuentes (L1/R1), con cuántas opciones trae cada una.
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                Diptico.FUENTES_IMAGEN.forEach { f ->
+                Diptico.fuentesImagen(e).forEach { f ->
                     val n = if (f == "todas") e.candidatos.size else e.candidatos.count { it.fuente == f }
                     val activa = f == e.fuenteImagen
                     Box(
@@ -363,18 +363,19 @@ fun PanelImagenes(e: Estado) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Girador(18f)
                     Spacer(Modifier.width(esc.d(8)))
-                    Detalle("Buscando en libretro, SteamGridDB y Wikipedia…", 13f, lineas = 1)
+                    Detalle(if (e.candidatoPara.startsWith("c_")) "Buscando en RetroArch, SteamGridDB y Wikipedia…" else "Buscando en libretro, SteamGridDB y Wikipedia…", 13f, lineas = 1)
                 }
                 Spacer(Modifier.height(esc.d(6)))
             } else if (e.candidatos.isEmpty()) {
                 Detalle("No encontré opciones con ese nombre. Prueba \"Otro nombre\" o elige una de tus imágenes.", 13f, lineas = 2)
                 Spacer(Modifier.height(esc.d(6)))
             }
-            val cols = when (e.candidatoPara) { "portada" -> if (esc.angosta) 4 else 6; "logo" -> 3; else -> if (esc.angosta) 2 else 3 }
+            val cols = when (e.candidatoPara) { "portada", "c_icono" -> if (esc.angosta) 4 else 6; "logo", "c_logo" -> 3; else -> if (esc.angosta) 2 else 3 }
             SideEffect { cl.nikalbazu.diptico.estado.Teclas.columnasImagenes = cols }
             val grilla = rememberLazyGridState()
             LaunchedEffect(e.indice) { if (lista.isNotEmpty()) grilla.animateScrollToItem(e.indice.coerceIn(0, lista.size - 1)) }
-            val proporcion = when (e.candidatoPara) { "portada" -> 0.68f; "logo" -> 2f; else -> 2.6f }
+            val proporcion = when (e.candidatoPara) { "portada" -> 0.68f; "c_icono" -> 1f; "logo", "c_logo" -> 2f; else -> 2.6f }
+            val ajustar = e.candidatoPara == "logo" || e.candidatoPara == "c_logo" || e.candidatoPara == "c_icono"
             LazyVerticalGrid(
                 columns = GridCells.Fixed(cols), state = grilla, modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(8)), verticalArrangement = Arrangement.spacedBy(esc.d(8)),
@@ -385,7 +386,7 @@ fun PanelImagenes(e: Estado) {
                     val atajo = c.url.startsWith("accion:")
                     Box(
                         Modifier.fillMaxWidth().aspectRatio(proporcion).clip(RoundedCornerShape(esc.d(14)))
-                            .background(if (atajo) Uva.copy(alpha = 0.16f) else if (e.candidatoPara == "logo") Color(0xFF2A2633) else p.superficie)
+                            .background(if (atajo) Uva.copy(alpha = 0.16f) else if (ajustar) Color(0xFF2A2633) else p.superficie)
                             .border(esc.d(if (activa) 3f else if (atajo) 1.5f else 0f), if (activa) Uva else if (atajo) Uva.copy(alpha = 0.5f) else Color.Transparent, RoundedCornerShape(esc.d(14)))
                             .clickable { if (activa) Diptico.usarCandidato(i) else Diptico.elegirIndice(i) },
                         contentAlignment = Alignment.Center,
@@ -401,7 +402,7 @@ fun PanelImagenes(e: Estado) {
                             }
                         } else {
                             val img = rememberImagen(Uri.parse(c.miniatura), 420)
-                            if (img != null) Image(img, null, Modifier.fillMaxSize().padding(esc.d(if (e.candidatoPara == "logo") 8f else 0f)), contentScale = if (e.candidatoPara == "logo") ContentScale.Fit else ContentScale.Crop)
+                            if (img != null) Image(img, null, Modifier.fillMaxSize().padding(esc.d(if (ajustar) 8f else 0f)), contentScale = if (ajustar) ContentScale.Fit else ContentScale.Crop)
                             else Girador(18f)
                             Box(Modifier.align(Alignment.BottomStart).padding(esc.d(5)).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = esc.d(6), vertical = esc.d(2))) {
                                 Texto(c.fuente, 9.5f, color = Color.White, lineas = 1, traducir = false)
