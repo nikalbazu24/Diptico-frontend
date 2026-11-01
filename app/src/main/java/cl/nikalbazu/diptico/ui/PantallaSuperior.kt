@@ -112,7 +112,7 @@ fun PantallaSuperior(e: Estado) {
 @Composable
 private fun Caratulas(e: Estado) {
     // Modo Sistemas: mientras eliges consola, aquí se ve la consola en grande.
-    if (e.vistaConsolas == "sistemas" && e.enSistemas && e.sesion == null) {
+    if (e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas && e.sesion == null) {
         VistaSistema(e)
         return
     }

@@ -153,7 +153,7 @@ fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
             val tam = 24f + 18f * (1f - abs(off).coerceAtMost(1f))
             val id = e.pestanas[k]
             val caja = tam + 12f
-            Box(
+            androidx.compose.runtime.key(id) { Box(
                 Modifier.offset(x = esc.d(x(off) - caja / 2f), y = esc.d(y(off) - caja / 2f)).zIndex(cerca)
                     .graphicsLayer { alpha = 0.3f + 0.7f * cerca }
                     .size(esc.d(caja)).clip(CircleShape)
@@ -161,7 +161,7 @@ fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
                     .then(if (k == sel) Modifier.border(esc.d(2), Coral, CircleShape) else Modifier)
                     .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { Diptico.elegirConsola(id) },
                 contentAlignment = Alignment.Center,
-            ) { IconoConsola(Consolas.porId(id), tam * 0.74f, p.fondo2) }
+            ) { IconoConsola(Consolas.porId(id), tam * 0.74f, p.fondo2) } }
         }
         // Nombre de la consola elegida, al lado de la rueda.
         Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(84), end = esc.d(4))) {
@@ -202,7 +202,7 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
                 val id = e.pestanas[k]
                 val frente = k == sel
                 val cerca = 1f - (abs(off) / 2.6f).coerceIn(0f, 1f)
-                Box(
+                androidx.compose.runtime.key(id) { Box(
                     Modifier.zIndex(10f - abs(off))
                         .offset(x = esc.d(off * anchoCaja * 0.72f))
                         .graphicsLayer {
@@ -231,7 +231,7 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
                         Texto(nombreConsola(id), 20f, color = Color.White, lineas = 1, sombra = true)
                         Detalle(juegosTexto(cuantos(e, id)), 12.5f, color = Color.White.copy(alpha = 0.8f), lineas = 1)
                     }
-                }
+                } }
             }
             if (ancho > 0f && n == 0) Detalle("Aquí aparecerán tus consolas", 15f)
         }
@@ -360,11 +360,14 @@ fun CarruselJuegos(e: Estado, modifier: Modifier = Modifier) {
                 return@BoxWithConstraints
             }
             val alto = (maxHeight.value / esc.factor * 0.82f).coerceAtMost(220f * t)
-            val desde = (sel - 4).coerceAtLeast(0)
-            val hasta = (sel + 4).coerceAtMost(lista.size - 1)
+            // La ventana de cajas sigue a la posición animada (no a la elegida): así ninguna aparece o desaparece de golpe.
+            val desde = (kotlin.math.floor(pos).toInt() - 5).coerceAtLeast(0)
+            val hasta = (kotlin.math.ceil(pos).toInt() + 5).coerceAtMost(lista.size - 1)
             for (k in desde..hasta) {
                 val j = lista[k]
                 val c = Consolas.porId(j.consolaId) ?: continue
+                // Con la clave del juego, cada caja conserva su imagen al moverse (antes se recargaban y parpadeaban).
+                androidx.compose.runtime.key(j.clave) {
                 val off = k - pos
                 val base = cajaDe(c)
                 val escala = alto / base.alto
@@ -376,16 +379,98 @@ fun CarruselJuegos(e: Estado, modifier: Modifier = Modifier) {
                             rotationY = -off.coerceIn(-1f, 1f) * 42f
                             val s = if (abs(off) < 1f) 1f - abs(off) * 0.18f else 0.82f
                             scaleX = s; scaleY = s
-                            alpha = if (abs(off) > 3.5f) 0f else 1f - (abs(off) - 1f).coerceAtLeast(0f) * 0.22f
+                            // Se desvanecen suave en los bordes.
+                            alpha = ((4.6f - abs(off)) / 1.2f).coerceIn(0f, 1f) * (1f - (abs(off) - 1f).coerceAtLeast(0f) * 0.18f).coerceIn(0f, 1f)
                         }
                         .clickable { if (frente) Diptico.jugar() else Diptico.elegirJuego(j.clave) },
                 ) { CajaJuego(j, c, escala = escala, vivo = frente) }
+                }
             }
         }
         val j = e.seleccionado
         Column(Modifier.fillMaxWidth().padding(bottom = esc.d(4)), horizontalAlignment = Alignment.CenterHorizontally) {
             Texto(j?.titulo ?: "", 17f, lineas = 1, alinear = TextAlign.Center)
             if (j != null) Detalle("${Consolas.porId(j.consolaId)?.nombre ?: ""} · ${e.indiceSel + 1} de ${lista.size}", 11.5f, lineas = 1)
+        }
+    }
+}
+
+/**
+ * Carpetas: cada consola es una carpeta de su color, con tres portadas asomándose por arriba
+ * (como fichas dentro de un archivador). La elegida se levanta y abre un poco sus portadas. A entra a sus juegos.
+ */
+@Composable
+fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier) {
+    val esc = LocalEscala.current
+    val ids = e.pestanas
+    val sel = ids.indexOf(e.consolaSel).coerceAtLeast(0)
+    BoxWithConstraints(modifier) {
+        val anchoU = maxWidth.value / esc.factor
+        val cols = when { anchoU > 620f -> 4; anchoU > 300f -> 3; else -> 2 }.also { cl.nikalbazu.diptico.estado.Teclas.columnasCarpetas = it }
+        val grilla = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
+        LaunchedEffect(sel) { grilla.mostrar(sel) }
+        Column(Modifier.fillMaxSize()) {
+            androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols), state = grilla,
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10)),
+                verticalArrangement = Arrangement.spacedBy(esc.d(14)), horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
+            ) {
+                items(ids.size, key = { ids[it] }) { k -> Carpeta(e, ids[k], k == sel) }
+            }
+            Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
+                Pistas("✥" to "Carpeta", "A" to "Abrir", "X" to "Personalizar", "Y" to "Al azar")
+            }
+        }
+    }
+}
+
+@Composable
+private fun Carpeta(e: Estado, id: String, elegida: Boolean) {
+    val esc = LocalEscala.current
+    val color = colorConsola(id)
+    val juegos = remember(e.juegos, id) { (if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id }).take(3) }
+    val sube by animateFloatAsState(if (elegida) 1f else 0f, spring(dampingRatio = 0.55f, stiffness = 420f), label = "carpeta")
+    Box(
+        Modifier.fillMaxWidth().height(esc.d(124)).graphicsLayer { translationY = -sube * 6f * density; scaleX = 1f + 0.04f * sube; scaleY = 1f + 0.04f * sube }
+            .zIndex(if (elegida) 2f else 1f)
+            .clickable { if (elegida) Diptico.entrarSistema() else Diptico.elegirConsola(id) },
+    ) {
+        // La pestaña de la carpeta (atrás, arriba a la izquierda).
+        Box(
+            Modifier.padding(start = esc.d(10)).size(esc.d(54), esc.d(18))
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(topStart = esc.d(8), topEnd = esc.d(8)))
+                .background(lerp(color, Color.Black, 0.25f)),
+        )
+        // Las portadas que se asoman: más abiertas en la elegida.
+        juegos.forEachIndexed { i, j ->
+            val giro = (i - 1) * (6f + 8f * sube)
+            Box(
+                Modifier.align(Alignment.TopCenter).offset(x = esc.d((i - 1) * (20f + 10f * sube)), y = esc.d(10f - 6f * sube))
+                    .graphicsLayer { rotationZ = giro }
+                    .size(esc.d(46), esc.d(64)).clip(androidx.compose.foundation.shape.RoundedCornerShape(esc.d(6)))
+                    .background(Color.Black.copy(alpha = 0.2f)),
+            ) { ArteJuego(j, preferirArte = false, maxLado = 160, modifier = Modifier.fillMaxSize()) }
+        }
+        // El frente de la carpeta.
+        Column(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(78))
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(topStart = esc.d(6), topEnd = esc.d(14), bottomStart = esc.d(14), bottomEnd = esc.d(14)))
+                .background(Brush.verticalGradient(listOf(lerp(color, Color.White, 0.12f), lerp(color, Color.Black, 0.3f))))
+                .then(if (elegida) Modifier.border(esc.d(2.5f), Color.White, androidx.compose.foundation.shape.RoundedCornerShape(topStart = esc.d(6), topEnd = esc.d(14), bottomStart = esc.d(14), bottomEnd = esc.d(14))) else Modifier)
+                .padding(horizontal = esc.d(10), vertical = esc.d(8)),
+            verticalArrangement = Arrangement.Bottom,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(esc.d(28)).clip(CircleShape).background(Color.Black.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
+                    IconoConsola(Consolas.porId(id), 20f, Color.Transparent)
+                }
+                Spacer(Modifier.width(esc.d(8)))
+                Column(Modifier.weight(1f)) {
+                    Texto(nombreConsola(id), 14.5f, color = Color.White, lineas = 1, sombra = true)
+                    Detalle(juegosTexto(cuantos(e, id)), 11f, color = Color.White.copy(alpha = 0.85f), lineas = 1)
+                }
+            }
         }
     }
 }

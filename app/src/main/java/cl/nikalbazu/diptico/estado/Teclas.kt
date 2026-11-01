@@ -305,7 +305,7 @@ object Teclas {
                     esB(code) -> { Diptico.salirWidgets(); return true }
                     code in cruceta -> return true
                 }
-            } else if (abajo && ((e.unaPantalla && code in cruceta) || (code == KeyEvent.KEYCODE_DPAD_UP && e.vistaConsolas !in setOf("lado", "rueda", "sistemas") &&
+            } else if (abajo && ((e.unaPantalla && code in cruceta) || (code == KeyEvent.KEYCODE_DPAD_UP && e.vistaConsolas !in setOf("lado", "rueda", "sistemas", "carpetas") &&
                     ((e.vista != "cuadricula" && e.vista != "lista") || e.indiceSel < columnasEstante(e))))
             ) {
                 if (Diptico.entrarWidgets()) return true
@@ -313,9 +313,10 @@ object Teclas {
         }
 
         // Modo Sistemas, eligiendo consola: la cruceta y L1/R1 cambian de consola, A entra, Y elige un juego al azar.
-        if (!hayPanel && e.sesion == null && e.vistaConsolas == "sistemas" && e.enSistemas) {
+        if (!hayPanel && e.sesion == null && e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas) {
             if (abajo) {
-                dir(code)?.let { (dx, dy) -> Diptico.cambiarConsola(if (dx + dy < 0) -1 else 1); return true }
+                // En Carpetas (una grilla) ↑ ↓ saltan de fila; en Sistemas todo avanza de a uno.
+                dir(code)?.let { (dx, dy) -> Diptico.cambiarConsola(if (dy != 0 && e.vistaConsolas == "carpetas") dy * columnasCarpetas else if (dx + dy < 0) -1 else 1); return true }
                 if ((code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) && ev.repeatCount == 0) {
                     Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
                 }
@@ -401,7 +402,7 @@ object Teclas {
             if (esB(code)) {
                 if (bLargo) { bLargo = false; return true }
                 if (hayPanel) Diptico.atras()
-                else if (e.vistaConsolas == "sistemas" && e.sesion == null) Diptico.volverASistemas()
+                else if (e.vistaConsolas in Diptico.MODOS_ELEGIR && e.sesion == null) Diptico.volverASistemas()
                 return true
             }
             when (code) {
@@ -436,6 +437,8 @@ object Teclas {
     var columnasImagenes = 4
     var columnasGaleria = 3
     var columnasApps = 5
+    @Volatile
+    var columnasCarpetas = 3
 
     @Volatile
     var columnasMenu = 3
@@ -727,7 +730,7 @@ object Teclas {
             if (e.panel == Panel.NINGUNO || e.estudioZona == "grilla") { pulsar(d, 0); return }
         }
         val enInicio = libre && e.inicio == "widgets" && e.panel == Panel.NINGUNO && !e.editandoWidgets && !e.ordenando &&
-            !(e.vistaConsolas == "sistemas" && e.enSistemas)
+            !(e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas)
         if (enInicio && deWidgets) {
             if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
             return

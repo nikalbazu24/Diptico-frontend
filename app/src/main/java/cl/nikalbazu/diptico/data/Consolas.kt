@@ -93,7 +93,10 @@ private val CAJA_PC = FormaCaja(96f, 120f, 4f, Banda.LATERAL_CLARA)
 private val CAJA_APP = FormaCaja(104f, 104f, 26f, Banda.NINGUNA)
 
 private val VISUALES: Map<String, Visual> = mapOf(
-    "switch" to Visual("Switch", Medio.TARJETA, 0xFFE60012, CAJA_SWITCH),
+    "switch" to Visual("Switch", Medio.TARJETA, 0xFFE60012, CAJA_SWITCH, alias = listOf("nsw", "nintendoswitch", "nintendo switch")),
+    // Switch 2: hoy en Android solo corren sus juegos compatibles con Switch 1 (con Eden, Citron, Kenji-NX…);
+    // cuando salga un emulador de Switch 2, Díptico ya tiene su consola lista.
+    "switch2" to Visual("Switch 2", Medio.TARJETA, 0xFF00C3E3, CAJA_SWITCH, alias = listOf("ns2", "nswitch2", "nintendoswitch2", "nintendo switch 2"), bonito = "Nintendo Switch 2"),
     "ps2" to Visual("PS2", Medio.DVD, 0xFF2A4BA0, CAJA_DVD),
     "gc" to Visual("GC", Medio.MINIDISCO, 0xFF6A5ACD, FormaCaja(90f, 124f, 8f, Banda.ARRIBA_CLARA), alias = listOf("gamecube", "ngc")),
     "wii" to Visual("Wii", Medio.DVD, 0xFF9AA4B5, FormaCaja(86f, 122f, 8f, Banda.ARRIBA_CLARA)),
@@ -171,9 +174,21 @@ private val BONITOS = mapOf(
     "gc" to "GameCube", "n3ds" to "Nintendo 3DS", "xbox" to "Xbox", "xbox360" to "Xbox 360", "xboxone" to "Xbox One",
 )
 
+/** Otros nombres de carpeta comunes (de otros frontends y de cómo la gente las nombra), para reconocer más consolas. */
+private val ALIAS = mapOf(
+    "psx" to listOf("ps1", "playstation", "playstation1"), "ps2" to listOf("playstation2"), "ps3" to listOf("playstation3"),
+    "ps4" to listOf("playstation4"), "psp" to listOf("playstationportable"), "psvita" to listOf("vita", "psv"),
+    "n3ds" to listOf("3ds", "nintendo3ds"), "nds" to listOf("ds", "nintendods"), "gba" to listOf("gameboyadvance"),
+    "gbc" to listOf("gameboycolor"), "gb" to listOf("gameboy"), "snes" to listOf("supernintendo"),
+    "n64" to listOf("nintendo64"), "gc" to listOf("gamecube"), "wiiu" to listOf("wii u"), "dreamcast" to listOf("dc"),
+    "genesis" to listOf("sega genesis"), "megadrive" to listOf("md", "sega megadrive"), "mastersystem" to listOf("sms"),
+    "gamegear" to listOf("gg"), "pcengine" to listOf("pce"), "neogeo" to listOf("neo geo"), "xbox360" to listOf("x360"),
+    "saturn" to listOf("segasaturn"), "atari2600" to listOf("2600"),
+)
+
 /** Orden de las pestañas: primero las más usadas en una consola portátil. */
 private val ORDEN = listOf(
-    "switch", "ps2", "gc", "wii", "wiiu", "psp", "psvita", "n3ds", "nds", "gba", "gbc", "gb", "snes", "sfc", "nes", "famicom",
+    "switch2", "switch", "ps2", "gc", "wii", "wiiu", "psp", "psvita", "n3ds", "nds", "gba", "gbc", "gb", "snes", "sfc", "nes", "famicom",
     "n64", "psx", "ps3", "ps4", "xbox", "xbox360", "dreamcast", "saturn", "genesis", "megadrive", "mastersystem", "gamegear",
     "segacd", "sega32x", "pcengine", "tg16", "neogeo", "arcade", "mame", "fbneo", "cps1", "cps2", "cps3", "dos", "scummvm",
 )
@@ -260,7 +275,7 @@ object Consolas {
         val corto = v?.corto ?: cortoDe(completo)
         return Consola(
             id = id, nombre = corto, nombreLargo = bonito.uppercase(), bonito = bonito,
-            carpetas = listOf(id) + (v?.alias ?: emptyList()),
+            carpetas = (listOf(id) + (v?.alias ?: emptyList()) + (ALIAS[id] ?: emptyList())).distinct(),
             extensiones = ext, medio = medio,
             color = Color(v?.color ?: colorDe(id)),
             caja = caja, comandos = cmds, dosPantallas = v?.dos ?: false,
@@ -296,7 +311,9 @@ object Consolas {
     private var indice: Map<String, Consola>? = null
 
     private fun porNombreCarpeta(): Map<String, Consola> =
-        indice ?: todas.flatMap { c -> c.carpetas.map { it to c } }.toMap().also { indice = it }
+        // Primero los otros nombres y después los nombres propios (así un nombre propio nunca queda tapado por un alias).
+        indice ?: (todas.flatMap { c -> c.carpetas.drop(1).map { it.lowercase().replace(" ", "") to c } } +
+            todas.map { c -> c.id.lowercase() to c }).toMap().also { indice = it }
 
     fun porCarpeta(nombre: String): Consola? = porNombreCarpeta()[nombre.lowercase().replace(" ", "").trim()]
 

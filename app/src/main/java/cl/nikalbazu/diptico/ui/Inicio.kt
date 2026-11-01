@@ -429,6 +429,8 @@ private fun BurbujaAgregar(e: Estado, celda: Pair<Int, Int>, celdaAn: Float, cel
 @Composable
 private fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an: Int, al: Int) {
     when {
+        w.tipo.startsWith("atajo-") -> WidgetAtajo(e, w.tipo.removePrefix("atajo-"), al)
+        w.tipo.startsWith("coleccion-") -> WidgetColeccion(e, w.tipo.removePrefix("coleccion-"), an, al)
         w.tipo.startsWith("imagen") -> WidgetImagen(w)
         w.tipo.startsWith("video") -> WidgetVideo(w, e.sesion == null)
         an == 1 && w.tipo != "asistente" -> WidgetMini(e, w.tipo, al)
@@ -1483,6 +1485,72 @@ private fun MuestrarioWidgets0(e: Estado, an: Int, al: Int, foco: Int) {
                                     ContenidoWidget(e, w, an, al)
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+/** Acceso directo a un juego: su portada llena el widget, con el título abajo. Un toque y a jugar. */
+@Composable
+private fun WidgetAtajo(e: Estado, clave: String, al: Int) {
+    val esc = LocalEscala.current
+    val j = e.juegos.firstOrNull { it.clave == clave }
+    val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
+    Box(
+        Modifier.fillMaxSize().clip(forma).background(LocalPaleta.current.superficie)
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("atajo-$clave") }, onLongClick = { Diptico.editarWidgets() }),
+    ) {
+        if (j == null) {
+            Detalle("Juego no encontrado", 11f, modifier = Modifier.align(Alignment.Center).padding(esc.d(6)))
+            return@Box
+        }
+        ArteJuego(j, preferirArte = false, maxLado = 400, modifier = Modifier.fillMaxSize())
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.55f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
+        Column(Modifier.align(Alignment.BottomStart).padding(esc.d(8))) {
+            Texto(j.titulo, if (al >= 2) 13f else 11f, color = Color.White, lineas = 2, sombra = true, interlineado = if (al >= 2) 15f else 12.5f)
+        }
+        Box(
+            Modifier.align(Alignment.TopEnd).padding(esc.d(6)).size(esc.d(24)).clip(CircleShape).background(Uva),
+            contentAlignment = Alignment.Center,
+        ) { IconoDiptico(Icono.JUGAR, SobreUva, 11f) }
+    }
+}
+
+/** Una colección: su nombre y las portadas de sus juegos en mosaico (como una carpeta abierta). */
+@Composable
+private fun WidgetColeccion(e: Estado, id: String, an: Int, al: Int) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val c = e.colecciones[id]
+    Tarjeta(alPulsar = { Diptico.abrirWidgetTipo("coleccion-$id") }) {
+        if (c == null) { Detalle("Colección borrada", 12f); return@Tarjeta }
+        val juegos = c.juegos.mapNotNull { k -> e.juegos.firstOrNull { it.clave == k } }
+        Column(Modifier.fillMaxSize()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconoDiptico(Icono.CARPETA, Coral, 16f)
+                Spacer(Modifier.width(esc.d(6)))
+                Texto(c.nombre, 14f, lineas = 1, traducir = false, modifier = Modifier.weight(1f))
+                Detalle("${juegos.size}", 12f, lineas = 1)
+            }
+            if (al >= 2 || an >= 3) {
+                Spacer(Modifier.height(esc.d(6)))
+                if (juegos.isEmpty()) Detalle("Vacía: agrega juegos desde la ventana de cada juego (Y).", 11.5f, lineas = 3)
+                else BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                    // Tantas portadas como quepan, del mismo alto.
+                    val altoU = maxHeight.value / esc.factor
+                    val anchoU = maxWidth.value / esc.factor
+                    val ancho = altoU * 0.72f
+                    val caben = ((anchoU + 6f) / (ancho + 6f)).toInt().coerceAtLeast(1)
+                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                        juegos.take(caben).forEach { j ->
+                            Box(
+                                Modifier.size(esc.d(ancho), esc.d(altoU)).clip(RoundedCornerShape(esc.d(8)))
+                                    .clickable { Diptico.elegirConsola("todo"); Diptico.elegirJuego(j.clave) },
+                            ) { ArteJuego(j, preferirArte = false, maxLado = 240, modifier = Modifier.fillMaxSize()) }
                         }
                     }
                 }

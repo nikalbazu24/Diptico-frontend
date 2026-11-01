@@ -96,6 +96,13 @@ private fun PantallaUnicaContenido(e: Estado) {
         }
         return
     }
+    if (e.vistaConsolas == "carpetas" && e.enSistemas) {
+        Box(Modifier.fillMaxSize().background(p.fondo)) {
+            Box(Modifier.fillMaxSize().difuminar(e)) { CarpetasConsolas(e, Modifier.fillMaxSize().padding(top = LocalEscala.current.d(12))) }
+            Paneles(e, conAyuda = true)
+        }
+        return
+    }
     if (e.vistaConsolas == "sistemas" && e.enSistemas) {
         Box(Modifier.fillMaxSize().background(p.fondo)) {
             Box(Modifier.fillMaxSize().difuminar(e)) {

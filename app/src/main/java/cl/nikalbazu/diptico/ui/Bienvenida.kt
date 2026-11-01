@@ -27,6 +27,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -132,13 +134,15 @@ private fun BienvenidaCompleta(e: Estado) {
                 ),
             ),
         )
+        // Luces de colores que flotan despacio, cada una a su ritmo.
+        LucesFlotantes(t)
         Row(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(30)), verticalAlignment = Alignment.CenterVertically) {
             // Izquierda: saludo, hora y datos.
             Column(Modifier.weight(1f)) {
                 Etiqueta(Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, Coral, 13f, Modifier.entra(t, 0f))
                 Spacer(Modifier.height(esc.d(6)))
-                Texto(saludoCon(e.nombre), 34f, lineas = 2, interlineado = 38f, modifier = Modifier.entra(t, 0.08f))
-                Texto(rememberHora(), 76f, lineas = 1, interlineado = 80f, color = p.tinta.copy(alpha = 0.92f), modifier = Modifier.entra(t, 0.16f), traducir = false)
+                TextoPorPalabras(saludoCon(e.nombre), 34f, t, 0.06f)
+                RelojQueCae(rememberHora(), 76f, p.tinta.copy(alpha = 0.92f))
                 Spacer(Modifier.height(esc.d(8)))
                 Row(Modifier.entra(t, 0.26f), horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
                     val b = rememberBateria()
@@ -153,8 +157,15 @@ private fun BienvenidaCompleta(e: Estado) {
             if (j != null) {
                 val c = Consolas.porId(j.consolaId)
                 val paso = e.datos[j.clave]?.paso.orEmpty()
+                val gira = remember(e.bienvenida) { Animatable(1f) }
+                LaunchedEffect(e.bienvenida) { kotlinx.coroutines.delay(380); gira.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.62f, stiffness = 140f)) }
                 Column(
-                    Modifier.widthIn(max = esc.d(300)).entra(t, 0.36f).clip(RoundedCornerShape(esc.d(26)))
+                    Modifier.widthIn(max = esc.d(300))
+                        .graphicsLayer {
+                            rotationY = 38f * gira.value; translationX = gira.value * 140f * density
+                            alpha = (1f - gira.value * 1.2f).coerceIn(0f, 1f); cameraDistance = 14f * density
+                        }
+                        .clip(RoundedCornerShape(esc.d(26)))
                         .background(p.superficie.copy(alpha = 0.85f)).border(esc.d(1), Color.White.copy(alpha = 0.08f), RoundedCornerShape(esc.d(26)))
                         .clickable { Diptico.seguirDesdeBienvenida() }.padding(esc.d(18)),
                 ) {
@@ -198,7 +209,7 @@ private fun BienvenidaCompleta(e: Estado) {
             cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(42).value)
             Spacer(Modifier.width(esc.d(10)))
             Box(Modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie.copy(alpha = 0.9f)).padding(horizontal = esc.d(14), vertical = esc.d(8))) {
-                Texto(remember(e.bienvenida) { fraseBisa(e, j != null) }, 14f, lineas = 2)
+                TextoQueSeEscribe(remember(e.bienvenida) { fraseBisa(e, j != null) }, 14f, demora = 900)
             }
         }
         Row(Modifier.align(Alignment.BottomEnd).padding(end = esc.d(36), bottom = esc.d(26)).entra(t, 0.6f)) {
@@ -336,5 +347,63 @@ fun Continuacion(e: Estado) {
                 Box(Modifier.entra(t, 0.36f)) { RecuerdosJuego(e, s.clave, 96f) }
             }
         }
+    }
+}
+
+
+/** Las palabras aparecen una tras otra, subiendo un poquito. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun TextoPorPalabras(texto: String, tam: Float, t: Float, desde: Float) {
+    val palabras = texto.split(' ')
+    androidx.compose.foundation.layout.FlowRow {
+        palabras.forEachIndexed { i, w ->
+            Texto(w + " ", tam, lineas = 1, interlineado = tam * 1.12f, traducir = false, modifier = Modifier.entra(t, desde + i * 0.06f))
+        }
+    }
+}
+
+/** El reloj: cada dígito cae con un rebote al aparecer, y cuando cambia el minuto el dígito nuevo baja. */
+@Composable
+private fun RelojQueCae(hora: String, tam: Float, color: Color) {
+    Row {
+        hora.forEachIndexed { i, ch ->
+            val cae = remember { Animatable(-1f) }
+            LaunchedEffect(Unit) { kotlinx.coroutines.delay(160L + i * 70L); cae.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.45f, stiffness = 260f)) }
+            androidx.compose.animation.AnimatedContent(
+                targetState = ch,
+                transitionSpec = {
+                    (androidx.compose.animation.slideInVertically(tween(380)) { -it } + androidx.compose.animation.fadeIn(tween(380))) togetherWith
+                        (androidx.compose.animation.slideOutVertically(tween(300)) { it } + androidx.compose.animation.fadeOut(tween(300)))
+                },
+                label = "digito",
+                modifier = Modifier.graphicsLayer { translationY = cae.value * tam * 1.4f * density; alpha = (1f + cae.value).coerceIn(0f, 1f) },
+            ) { c -> Texto(c.toString(), tam, color = color, lineas = 1, interlineado = tam * 1.05f, traducir = false) }
+        }
+    }
+}
+
+/** Texto que se va escribiendo letra por letra (como si Bisa lo tecleara). */
+@Composable
+private fun TextoQueSeEscribe(texto: String, tam: Float, demora: Long = 0) {
+    var n by androidx.compose.runtime.remember(texto) { androidx.compose.runtime.mutableIntStateOf(0) }
+    LaunchedEffect(texto) {
+        kotlinx.coroutines.delay(demora)
+        while (n < texto.length) { n++; kotlinx.coroutines.delay(28) }
+    }
+    Texto(texto.take(n) + if (n < texto.length) "▍" else "", tam, lineas = 2, traducir = false)
+}
+
+/** Tres luces suaves que flotan por el fondo. */
+@Composable
+private fun LucesFlotantes(t: Float) {
+    val inf = rememberInfiniteTransition(label = "luces")
+    val a by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(11000, easing = LinearEasing), RepeatMode.Reverse), label = "a")
+    val b by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(7000, easing = LinearEasing), RepeatMode.Reverse), label = "b")
+    androidx.compose.foundation.Canvas(Modifier.fillMaxSize().graphicsLayer { alpha = t }) {
+        val w = size.width; val h = size.height
+        drawCircle(Brush.radialGradient(listOf(Coral.copy(alpha = 0.22f), Color.Transparent), center = Offset(w * (0.75f - a * 0.2f), h * (0.25f + b * 0.2f)), radius = h * 0.5f), h * 0.5f, Offset(w * (0.75f - a * 0.2f), h * (0.25f + b * 0.2f)))
+        drawCircle(Brush.radialGradient(listOf(Sol.copy(alpha = 0.14f), Color.Transparent), center = Offset(w * (0.2f + b * 0.25f), h * (0.85f - a * 0.2f)), radius = h * 0.42f), h * 0.42f, Offset(w * (0.2f + b * 0.25f), h * (0.85f - a * 0.2f)))
+        drawCircle(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent), center = Offset(w * (0.5f + a * 0.15f), h * (0.55f - b * 0.15f)), radius = h * 0.35f), h * 0.35f, Offset(w * (0.5f + a * 0.15f), h * (0.55f - b * 0.15f)))
     }
 }

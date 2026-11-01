@@ -50,6 +50,7 @@ fun PanelGaleria(e: Estado) {
         "colores" -> "Mis colores" to Icono.PALETA
         "ia" -> "IA de Bisa" to Icono.CHISPA
         "cajas" -> "Forma de las cajas" to Icono.FORMA
+        "colecciones" -> "Colecciones" to Icono.CARPETA
         else -> "Música" to Icono.MUSICA
     }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
@@ -107,6 +108,7 @@ fun PanelGaleria(e: Estado) {
                         "temas" -> TarjetaTema(it, activo) { Diptico.elegirIndice(i) }
                         "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
                         "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
+                        "colecciones" -> FilaCancion(it, activo, Icono.CARPETA, "Aquí ✓") { Diptico.elegirIndice(i) }
                         else -> FilaCancion(it, activo) { Diptico.elegirIndice(i) }
                     }
                 }
@@ -209,7 +211,7 @@ fun selloIA(id: String): Pair<Color, String> = when (id) {
 }
 
 @Composable
-private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Unit) {
+private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, icono: Icono = Icono.MUSICA, marca: String = "Sonando", alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Row(
@@ -219,7 +221,7 @@ private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(esc.d(34)).clip(CircleShape).background(if (activo) SobreUva.copy(alpha = 0.2f) else Uva.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
-            IconoDiptico(Icono.MUSICA, if (activo) SobreUva else p.tinta, 18f, acento = if (activo) SobreUva else Coral)
+            IconoDiptico(icono, if (activo) SobreUva else p.tinta, 18f, acento = if (activo) SobreUva else Coral)
         }
         Spacer(Modifier.width(esc.d(10)))
         Column(Modifier.weight(1f)) {
@@ -227,7 +229,7 @@ private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -
             if (it.detalle.isNotBlank()) Detalle(it.detalle, 12f, color = if (activo) SobreUva.copy(alpha = 0.8f) else p.tenue, lineas = 1)
         }
         if (it.enUso) Box(Modifier.clip(RoundedCornerShape(50)).background(Sol.copy(alpha = 0.25f)).padding(horizontal = esc.d(8), vertical = esc.d(3))) {
-            Texto("Sonando", 11f, color = if (activo) SobreUva else p.tinta, lineas = 1)
+            Texto(marca, 11f, color = if (activo) SobreUva else p.tinta, lineas = 1)
         }
     }
 }
