@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, WIDGETS, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
+enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -122,7 +123,7 @@ fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
         modifier.width(esc.d(132)).fillMaxHeight()
             .pointerInput(Unit) {
                 var acumulado = 0f
-                androidx.compose.foundation.gestures.detectVerticalDragGestures(onDragEnd = { acumulado = 0f }) { cambio, d ->
+                detectVerticalDragGestures(onDragEnd = { acumulado = 0f }) { cambio, d ->
                     cambio.consume()
                     acumulado += d
                     val u = 46f * density
