@@ -43,16 +43,61 @@ import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.Teclas
 
-/** El ícono real de una app instalada. */
+/**
+ * El ícono de una app, ajustado a Díptico según Apariencia › Íconos de apps:
+ * "tema" (la forma del tema, como las demás tarjetas), "mono" (un solo color, el del tema) u "original" (tal cual).
+ */
 @Composable
 fun IconoApp(paquete: String, tam: Float, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
-    val img = rememberImagen(android.net.Uri.parse("app://$paquete"), 144)
-    Box(modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.26f))).background(if (img == null) p.superficie else Color.Transparent), contentAlignment = Alignment.Center) {
-        if (img != null) Image(img, null, Modifier.fillMaxSize())
-        else IconoDiptico(Icono.APPS, p.tenue, tam * 0.5f)
+    val estilo = Estilo.iconosApps
+    val forma = RoundedCornerShape(esc.d(tam * 0.28f))
+    val base = rememberImagen(android.net.Uri.parse("app://$paquete"), 144)
+    when (estilo) {
+        "original" -> Box(modifier.size(esc.d(tam)), contentAlignment = Alignment.Center) {
+            if (base != null) Image(base, null, Modifier.fillMaxSize()) else IconoDiptico(Icono.APPS, p.tenue, tam * 0.5f)
+        }
+        "mono" -> {
+            val mono = rememberImagen(android.net.Uri.parse("app://$paquete?capa=mono"), 144)
+            Box(
+                modifier.size(esc.d(tam)).clip(forma)
+                    .background(Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(p.superficie, Uva, 0.28f), p.superficie)))
+                    .border(esc.d(1), Uva.copy(alpha = 0.35f), forma),
+                contentAlignment = Alignment.Center,
+            ) {
+                when {
+                    mono != null -> Image(mono, null, Modifier.fillMaxSize(), colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(p.tinta))
+                    base != null -> Image(base, null, Modifier.fillMaxSize(0.7f), colorFilter = filtroDuotono(Uva, p.tinta))
+                    else -> IconoDiptico(Icono.APPS, p.tenue, tam * 0.5f)
+                }
+            }
+        }
+        else -> {
+            val lleno = rememberImagen(android.net.Uri.parse("app://$paquete?capa=lleno"), 144)
+            Box(
+                modifier.size(esc.d(tam)).clip(forma).background(p.superficie).border(esc.d(1), Color.White.copy(alpha = 0.08f), forma),
+                contentAlignment = Alignment.Center,
+            ) {
+                when {
+                    // Íconos modernos: ocupan toda la forma del tema.
+                    lleno != null -> Image(lleno, null, Modifier.fillMaxSize())
+                    // Íconos antiguos: centrados sobre una tarjeta del color del tema.
+                    base != null -> Image(base, null, Modifier.fillMaxSize(0.78f))
+                    else -> IconoDiptico(Icono.APPS, p.tenue, tam * 0.5f)
+                }
+            }
+        }
     }
+}
+
+/** Pasa una imagen a dos tonos: lo oscuro toma [oscuro] y lo claro toma [claro]. */
+private fun filtroDuotono(oscuro: Color, claro: Color): androidx.compose.ui.graphics.ColorFilter {
+    // Luminancia de cada punto (0..1) y de ahí una mezcla lineal entre los dos colores.
+    val l = floatArrayOf(0.299f, 0.587f, 0.114f)
+    fun fila(o: Float, c: Float) = floatArrayOf(l[0] * (c - o), l[1] * (c - o), l[2] * (c - o), 0f, o * 255f)
+    val m = fila(oscuro.red, claro.red) + fila(oscuro.green, claro.green) + fila(oscuro.blue, claro.blue) + floatArrayOf(0f, 0f, 0f, 1f, 0f)
+    return androidx.compose.ui.graphics.ColorFilter.colorMatrix(androidx.compose.ui.graphics.ColorMatrix(m))
 }
 
 /**

@@ -713,10 +713,7 @@ private fun PanelPorts(e: Estado) {
                             .padding(start = esc.d(10), end = esc.d(12)),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        val icono = rememberImagen(android.net.Uri.parse("app://${a.paquete}"), 96)
-                        Box(Modifier.size(esc.d(36)).clip(RoundedCornerShape(esc.d(10))).background(p.fondo), contentAlignment = Alignment.Center) {
-                            if (icono != null) Image(icono, contentDescription = null, modifier = Modifier.fillMaxSize())
-                        }
+                        IconoApp(a.paquete, 36f)
                         Spacer(Modifier.width(esc.d(12)))
                         Texto(a.nombre, 16f, color = if (activa) Color.White else p.tinta, lineas = 1, modifier = Modifier.weight(1f))
                         Box(

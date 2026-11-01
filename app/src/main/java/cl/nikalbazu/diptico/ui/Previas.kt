@@ -109,6 +109,10 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                 }
                 Seccion.APARIENCIA -> when {
                     t.startsWith("Efecto") || t == "Modo" -> Marco { PreviaBotonesGrande(e) }
+                    t == "Íconos de apps" -> {
+                        androidx.compose.runtime.LaunchedEffect(Unit) { if (e.appsTodas.isEmpty()) Diptico.cargarApps() }
+                        MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PanelApps(ev.copy(panel = Panel.APPS, appsPestana = 0, indice = 0)) }
+                    }
                     t.contains("cono") -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(vistaConsolas = "arriba"), 1) }
                     else -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
                 }

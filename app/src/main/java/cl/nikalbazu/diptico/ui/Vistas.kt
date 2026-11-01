@@ -454,10 +454,7 @@ fun PanelCentro(e: Estado) {
                                 .clickable { Diptico.abrirAviso(a) }.padding(esc.d(10)),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            val icono = rememberImagen(android.net.Uri.parse("app://${a.paquete}"), 96)
-                            Box(Modifier.size(esc.d(34)).clip(RoundedCornerShape(esc.d(10))).background(p.fondo), contentAlignment = Alignment.Center) {
-                                if (icono != null) Image(icono, null, Modifier.fillMaxSize())
-                            }
+                            IconoApp(a.paquete, 34f)
                             Spacer(Modifier.width(esc.d(10)))
                             Column(Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -491,8 +488,7 @@ private fun AccesoCentro(o: Opcion, activo: Boolean, modifier: Modifier, alPulsa
             .clickable { alPulsar() },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
-        val icono = o.paquete?.let { rememberImagen(android.net.Uri.parse("app://$it"), 96) }
-        if (icono != null) Image(icono, null, Modifier.size(esc.d(24)).clip(RoundedCornerShape(esc.d(7))))
+        if (o.paquete != null) IconoApp(o.paquete, 26f)
         else o.icono?.let { IconoDiptico(it, if (activo) SobreUva else p.tinta, 21f, acento = if (activo) SobreUva else Coral) }
         Spacer(Modifier.height(esc.d(4)))
         Texto(o.titulo, 11f, color = if (activo) SobreUva else p.tinta, lineas = 1)

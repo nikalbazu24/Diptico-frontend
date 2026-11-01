@@ -26,10 +26,27 @@ object Imagenes {
         val clave = "$uri@$maxLado"
         cache.get(clave)?.let { return it }
         if (uri.scheme == "app") {
-            // Ícono de una app instalada (ports).
+            // Ícono de una app instalada. "?capa=lleno": sin la máscara de Android (para darle la forma del tema);
+            // "?capa=mono": el dibujo de un solo color de Android 13 (íconos temáticos). Si no existe, devuelve null.
             val d = ctx.packageManager.getApplicationIcon(uri.host ?: return null)
             val lado = maxLado.coerceAtMost(512)
-            val img = d.toBitmap(lado, lado).asImageBitmap()
+            val capa = uri.getQueryParameter("capa")
+            val bmp = when (capa) {
+                "lleno", "mono" -> {
+                    val a = d as? android.graphics.drawable.AdaptiveIconDrawable ?: return null
+                    val capas = if (capa == "mono") {
+                        if (android.os.Build.VERSION.SDK_INT >= 33) listOfNotNull(a.monochrome).ifEmpty { return null } else return null
+                    } else listOfNotNull(a.background, a.foreground)
+                    val b = android.graphics.Bitmap.createBitmap(lado, lado, android.graphics.Bitmap.Config.ARGB_8888)
+                    val lienzo = android.graphics.Canvas(b)
+                    // Las capas miden 108 y lo visible son los 72 del centro: se agrandan un cuarto por lado.
+                    val extra = lado / 4
+                    for (c in capas) { c.setBounds(-extra, -extra, lado + extra, lado + extra); c.draw(lienzo) }
+                    b
+                }
+                else -> d.toBitmap(lado, lado)
+            }
+            val img = bmp.asImageBitmap()
             cache.put(clave, img)
             return img
         }

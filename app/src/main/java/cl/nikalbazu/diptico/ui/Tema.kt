@@ -70,6 +70,8 @@ object Estilo {
     var decoraciones by mutableStateOf(true)
     /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
     var efecto by mutableStateOf("degradado")
+    /** Cómo se ven los íconos de las apps: "tema", "mono" u "original". */
+    var iconosApps by mutableStateOf("tema")
     /** Animaciones y difuminados completos (se apagan en modo ahorro). */
     var efectosCompletos by mutableStateOf(true)
 }
