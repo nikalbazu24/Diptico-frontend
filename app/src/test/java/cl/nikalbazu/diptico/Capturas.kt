@@ -774,6 +774,83 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t154_menu_sonidos() = foto("154_menu_juego_de_sonidos", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true, indice = 4, paqueteSonidos = "retro"), Rol.INFERIOR)
 
+    // ---------- 1.0 beta.3 ----------
+
+    private fun conWidgetsVariados(e: Estado) = conWidgets(e).copy(
+        widgets = conWidgets(e).widgets.map {
+            when (it.tipo) {
+                "reloj" -> it.copy(x = 4, y = 0, an = 1, al = 1)
+                "bateria" -> it.copy(visible = true, x = 5, y = 0, an = 1, al = 1)
+                "tiempo" -> it.copy(visible = true, x = 4, y = 1, an = 1, al = 1)
+                "favoritos" -> it.copy(visible = true, x = 5, y = 1, an = 1, al = 1)
+                else -> it
+            }
+        },
+    )
+
+    @Test fun t155_widgets_1x1() = foto("155_widgets_de_1x1", conWidgetsVariados(conRecientes(base())), Rol.SUPERIOR)
+
+    @Test fun t156_editor_grilla() = foto(
+        "156_editor_eligiendo_con_cruceta",
+        conWidgetsVariados(conRecientes(base())).copy(editandoWidgets = true, panel = Panel.ESTUDIO, widgetSel = 3, estudioZona = "grilla"),
+        Rol.SUPERIOR,
+    )
+
+    @Test fun t157_burbuja() = foto(
+        "157_burbuja_para_agregar",
+        conWidgetsVariados(conRecientes(base())).copy(editandoWidgets = true, panel = Panel.ESTUDIO, widgetSel = 3, burbuja = 2 to 1, burbujaSel = 2),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t158_estudio_ordenado() = foto(
+        "158_estudio_reordenado",
+        conWidgetsVariados(conRecientes(base())).copy(editandoWidgets = true, panel = Panel.ESTUDIO, widgetSel = 1, estudioZona = "panel", indice = 2),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t159_estudio_zona_grilla() = foto(
+        "159_estudio_zona_grilla",
+        conWidgetsVariados(conRecientes(base())).copy(editandoWidgets = true, panel = Panel.ESTUDIO, widgetSel = 1, estudioZona = "grilla"),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t160_widget_arriba() = foto(
+        "160_widget_abierto_arriba",
+        conWidgets(base()).copy(panel = Panel.WIDGET, widgetAbierto = 1, temporizadorFin = System.currentTimeMillis() + 5 * 60_000L),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t161_cajas() = foto("161_galeria_de_cajas", base().copy(panel = Panel.GALERIA, galeria = "cajas", galeriaConsola = "snes", indice = 4), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t162_lomos() = foto("162_vista_lomos", conRecientes(base()).copy(vista = "lomos"), Rol.INFERIOR)
+
+    @Test fun t163_lomos_una() = foto("163_vista_lomos_una_pantalla", conRecientes(base()).copy(vista = "lomos", modoPantallas = "una_negra"), Rol.UNICA)
+
+    @Test fun t164_turbo() = foto("164_menu_rendimiento", base().copy(panel = Panel.MENU, seccion = Seccion.RENDIMIENTO, enOpciones = true, indice = 0, turboUltimo = "2140 MB libres (+380 MB)"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t165_turbo_abajo() = foto("165_rendimiento_ayuda", base().copy(panel = Panel.MENU, seccion = Seccion.RENDIMIENTO, enOpciones = true, indice = 0, turboUltimo = "2140 MB libres (+380 MB)"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t166_tienda_cuadradas() = foto(
+        "166_tienda_con_cuadradas",
+        base().copy(
+            panel = Panel.IMAGENES, fichaDe = "snes/1", candidatoPara = "portada",
+            candidatos = listOf(
+                cl.nikalbazu.diptico.data.ImagenWeb("https://x/1.png", "https://x/1.png", "SteamGridDB", ancho = 600, alto = 900),
+                cl.nikalbazu.diptico.data.ImagenWeb("https://x/2.png", "https://x/2.png", "SteamGridDB", ancho = 1024, alto = 1024),
+                cl.nikalbazu.diptico.data.ImagenWeb("https://x/3.png", "https://x/3.png", "SteamGridDB", ancho = 512, alto = 512),
+            ),
+        ),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t167_recordatorio() = foto("167_widgets_con_recordatorio", conWidgets(conRecientes(base())).copy(avisoInicio = 1L), Rol.SUPERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),

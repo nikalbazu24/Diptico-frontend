@@ -329,7 +329,7 @@ object Descargas {
             (0 until minOf(d.length(), max)).mapNotNull {
                 val o = d.getJSONObject(it)
                 val u = o.optString("url").takeIf { u -> u.isNotEmpty() } ?: return@mapNotNull null
-                ImagenWeb(u, o.optString("thumb").ifEmpty { u }, "SteamGridDB")
+                ImagenWeb(u, o.optString("thumb").ifEmpty { u }, "SteamGridDB", ancho = o.optInt("width"), alto = o.optInt("height"))
             }
         } catch (e: Exception) {
             emptyList()
@@ -372,7 +372,7 @@ object Descargas {
         if (claveSgdb.isNotBlank()) {
             val id = idSgdb(titulo, claveSgdb)
             if (id != null) lista += when (tipo) {
-                "portada" -> urlsSgdb("/grids/game/$id?dimensions=600x900,342x482,660x930", claveSgdb)
+                "portada" -> urlsSgdb("/grids/game/$id?dimensions=600x900,342x482,660x930,512x512,1024x1024", claveSgdb, 36)
                 "logo" -> urlsSgdb("/logos/game/$id", claveSgdb)
                 else -> urlsSgdb("/heroes/game/$id", claveSgdb)
             }

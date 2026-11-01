@@ -72,6 +72,7 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.", "Asistente"),
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.", "Consola"),
     SOBREMESA("Sobremesa", Icono.VISTA, "Cuando conectas la consola a la tele: una sola pantalla, todo más grande, margen para que nada se corte y más."),
+    RENDIMIENTO("Rendimiento", Icono.CHISPA, "Modo turbo al jugar: libera memoria cerrando apps de fondo, pone a Díptico en reposo y, si quieres, activa No molestar."),
     CONTROLES("Botones extra", Icono.MANDO, "Dale uso a los botones de atrás (L4 y R4 de la Odin 2 y otras): Bisa, apps, música, un juego al azar…"),
     CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
@@ -187,7 +188,7 @@ object Widgets {
     )
 
     /** Para qué sirve cada widget (en el catálogo del estudio). */
-    fun descripcion(tipo: String) = when (tipo) {
+    fun descripcion(tipo: String) = if (tipo.startsWith("video")) "Un video corto que se repite, sin sonido" else when (tipo) {
         "juego" -> "El juego elegido en grande, listo para jugar"; "reloj" -> "La hora y la fecha (digital, analógico o mínimo)"
         "musica" -> "Lo que suena en Spotify o YouTube Music, con botones"; "paso" -> "Lo que anotaste para seguir tu juego"
         "recientes" -> "Tus últimos juegos, a un toque"; "fiesta" -> "La fiesta del mundo de hoy o la próxima"
@@ -200,7 +201,7 @@ object Widgets {
         else -> "Tu imagen o GIF animado"
     }
 
-    fun icono(tipo: String): Icono = when (tipo) {
+    fun icono(tipo: String): Icono = if (tipo.startsWith("video")) Icono.JUGAR else when (tipo) {
         "juego" -> Icono.JUGAR; "reloj" -> Icono.RELOJ; "musica" -> Icono.MUSICA; "paso" -> Icono.LAPIZ; "recientes" -> Icono.CONTINUAR
         "fiesta" -> Icono.MUNDO; "tiempo" -> Icono.RELOJ; "bateria" -> Icono.BATERIA; "consolas" -> Icono.BIBLIOTECA
         "favoritos" -> Icono.CORAZON; "frase" -> Icono.CHISPA; "estadisticas" -> Icono.TROFEO; "sugerencia" -> Icono.DADO
@@ -209,7 +210,7 @@ object Widgets {
     }
 
     /** Diseños posibles del contenido de cada widget. */
-    fun variantes(tipo: String): List<String> = when (tipo) {
+    fun variantes(tipo: String): List<String> = if (tipo.startsWith("imagen")) listOf("Ajustada", "Llenar") else when (tipo) {
         "reloj" -> listOf("Digital", "Analógico", "Mínimo")
         "juego" -> listOf("Con caja", "Arte de fondo")
         "bateria" -> listOf("Barra", "Anillo")
@@ -223,7 +224,7 @@ object Widgets {
         "Alto" to (2 to 3), "Grande" to (3 to 3), "Franja" to (6 to 1), "Panorámico" to (6 to 2),
     )
 
-    fun nombre(tipo: String) = when (tipo) {
+    fun nombre(tipo: String) = if (tipo.startsWith("video")) "Video corto" else when (tipo) {
         "juego" -> "Juego elegido"; "reloj" -> "Reloj y fecha"; "musica" -> "Música (Spotify, YouTube Music…)"
         "paso" -> "Tu próximo paso"; "recientes" -> "Jugados hace poco"; "fiesta" -> "Fiestas del mundo"
         "tiempo" -> "Tiempo jugado"; "bateria" -> "Batería"; "consolas" -> "Tu colección"
@@ -402,6 +403,16 @@ data class Estado(
     val aprendiendoBoton: Int = -1,
     /** Navegar los widgets con la cruceta: cuál tiene el foco (-1 = ninguno, el control maneja el estante). */
     val widgetFoco: Int = -1,
+    /** Cuándo se llegó a los widgets (para el recordatorio discreto de botones). */
+    val avisoInicio: Long = 0L,
+    /** Galería de cajas: para qué consola se está eligiendo la forma. */
+    val galeriaConsola: String = "",
+    /** Rendimiento al jugar: modo turbo, cerrar apps de fondo, no molestar y Díptico en reposo. */
+    val turbo: Boolean = true,
+    val turboCerrarApps: Boolean = true,
+    val turboNoMolestar: Boolean = false,
+    val turboReposo: Boolean = true,
+    val turboUltimo: String = "",
     /** El widget abierto (su contenido) en Panel.WIDGET. */
     val widgetAbierto: Int = -1,
     /** Reloj: temporizador (cuándo termina y cuánto dura), cronómetro y cada cuánto recordar una pausa al jugar. */
@@ -418,6 +429,11 @@ data class Estado(
     /** Estudio de widgets: pestaña (0 widget, 1 agregar, 2 página) y si la cruceta está moviendo el widget. */
     val estudioPestana: Int = 0,
     val estudioMover: Boolean = false,
+    /** En el editor de widgets: la cruceta elige widgets en el inicio ("grilla") o recorre el panel ("panel"). */
+    val estudioZona: String = "grilla",
+    /** Burbuja para agregar un widget: en qué celda se abrió (x, y) y cuál se está eligiendo. */
+    val burbuja: Pair<Int, Int>? = null,
+    val burbujaSel: Int = 0,
     /** Zoom de cada pantalla (1 = automático según su forma). */
     val zoomArriba: Float = 1f,
     val zoomAbajo: Float = 1f,
@@ -635,6 +651,10 @@ object Diptico {
             zoomLento = almacen.bool("zoomLento", true),
             paqueteSonidos = almacen.texto("paqueteSonidos", "tema"),
             pausaCada = almacen.texto("pausaCada", "0").toIntOrNull() ?: 0,
+            turbo = almacen.bool("turbo", true),
+            turboCerrarApps = almacen.bool("turboCerrarApps", true),
+            turboNoMolestar = almacen.bool("turboNoMolestar", false),
+            turboReposo = almacen.bool("turboReposo", true),
             sobremesaModo = almacen.texto("sobremesaModo", "auto"),
             sobremesaTam = almacen.texto("sobremesaTam", "1.2").toFloatOrNull() ?: 1.2f,
             sobremesaMargen = almacen.texto("sobremesaMargen", "3").toIntOrNull() ?: 3,
@@ -678,6 +698,7 @@ object Diptico {
         vigilarProtector()
         vigilarPausas()
         vigilarTele()
+        vigilarReposo()
         vigilarBateria()
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
@@ -1371,6 +1392,7 @@ object Diptico {
             avisar(error)
             return
         }
+        if (e.turbo) turboAlJugar(juego, displayId)
         actualizar {
             it.copy(
                 sesion = Sesion(juego.clave, System.currentTimeMillis(), displayId, consola.dosPantallas),
@@ -1450,6 +1472,7 @@ object Diptico {
         "temas" -> listOf("Colores", "Fiestas del mundo", "Tus temas")
         "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
         "ia" -> listOf("El cerebro de Bisa")
+        "cajas" -> listOf("${Consolas.porId(estado.value.galeriaConsola)?.nombre ?: "Esta consola"}", "Todas las consolas")
         else -> listOf("Canciones")
     }
 
@@ -1486,6 +1509,20 @@ object Diptico {
                 val valor = when (e.galeriaPestana) { 0 -> mio.acento; 1 -> mio.acento2; 2 -> mio.acento3; 3 -> mio.fondo; else -> mio.tinta }
                 val auto = if (e.galeriaPestana >= 3) listOf(ItemGaleria("_auto", "Automático", "", valor == 0L, color = 0L) { ponerColor(0L) }) else emptyList()
                 auto + MUESTRAS_COLOR.map { c -> ItemGaleria(c.toString(), "", "", c == valor, color = c) { ponerColor(c) } }
+            }
+            "cajas" -> {
+                val actualF = e.formas[e.galeriaConsola]?.forma ?: "original"
+                FORMAS.map { f ->
+                    ItemGaleria(f, nombreForma(f), "", e.galeriaPestana == 0 && actualF == f) {
+                        if (estado.value.galeriaPestana == 0) cambiarForma(estado.value.galeriaConsola) { it.copy(forma = f) }
+                        else {
+                            val m = estado.value.formas.toMutableMap()
+                            for (c in estado.value.consolasConJuegos) m[c.id] = (m[c.id] ?: FormaCfg()).copy(forma = f)
+                            guardarFormas(m)
+                        }
+                        avisar("Cajas: ${nombreForma(f)}")
+                    }
+                }
             }
             "ia" -> {
                 fun estadoNube(p: String) = if (claveDe(p, e).isBlank()) "Falta tu clave" else "Clave guardada ✓"
@@ -2186,7 +2223,7 @@ object Diptico {
         }
         if (consola != null) {
             lista += Opcion("Cajas de ${consola.nombre}", nombreForma(e.formas[consola.id]?.forma ?: "original"), Icono.FORMA) {
-                ciclarForma(consola.id)
+                abrirCajas(consola.id)
             }
         }
         lista += Opcion(
@@ -2253,6 +2290,7 @@ object Diptico {
                 LANZADORES_PC.any { it.nombre == t } -> "Juegos de PC"
             else -> "Tus juegos"
         }
+        Seccion.RENDIMIENTO -> if (t == "Optimizar ahora" || t == "Memoria disponible") "Ahora" else "Al jugar"
         Seccion.CONTROLES -> if (t.startsWith("Botón") || t.startsWith("Aprender")) "Botones" else "Más"
         Seccion.SOBREMESA -> if (t == "Cuándo se activa" || t == "Tele conectada") "Cuándo" else "En la tele"
         Seccion.ASISTENTE -> when {
@@ -2317,6 +2355,7 @@ object Diptico {
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
             Seccion.CONTROLES -> lista += opcionesBotones(e)
+            Seccion.RENDIMIENTO -> lista += opcionesTurbo(e)
             Seccion.CONSOLAS -> {
                 lista += opcionesIconos(e).first()
                 for (c in e.consolasConJuegos) {
@@ -3081,7 +3120,8 @@ object Diptico {
         actualizar { it.copy(widgetFoco = -1) }
         val v = if (estado.value.inicio == "widgets") "heroe" else "widgets"
         almacen.guardarTexto("inicio", v)
-        actualizar { it.copy(inicio = v, editandoWidgets = false) }
+        actualizar { it.copy(inicio = v, editandoWidgets = false, avisoInicio = if (v == "widgets") System.currentTimeMillis() else 0L) }
+        Sonidos.deslizar()
     }
 
     private fun guardarWidgets(l: List<Widget>) {
@@ -3093,13 +3133,18 @@ object Diptico {
     fun editarWidgets() {
         almacen.guardarTexto("inicio", "widgets")
         val primero = estado.value.widgets.indexOfFirst { it.visible }.coerceAtLeast(0)
-        actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.ESTUDIO, estudioPestana = 0, estudioMover = false, indice = 0, widgetFoco = -1) }
+        actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.ESTUDIO, estudioPestana = 0, estudioMover = false, indice = 0, widgetFoco = -1, estudioZona = "grilla", burbuja = null) }
     }
 
     fun terminarEdicion() {
         almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
         actualizar { it.copy(editandoWidgets = false, estudioMover = false, panel = if (it.panel == Panel.ESTUDIO) Panel.NINGUNO else it.panel) }
         avisar("Inicio guardado")
+    }
+
+    private fun cambiarWidgetYEmpujar(i: Int, f: (Widget) -> Widget) {
+        cambiarWidget(i, f)
+        aplicarEmpuje()
     }
 
     private fun cambiarWidget(i: Int, f: (Widget) -> Widget) {
@@ -3213,15 +3258,16 @@ object Diptico {
 
     private fun solapan(a: Widget, b: Widget) = a.x < b.x + b.an && b.x < a.x + a.an && a.y < b.y + b.al && b.y < a.y + a.al
 
-    /** Cambia el ancho (L1/R1) o el alto (L2/R2) del widget elegido, sin montarse sobre otros. */
+    /** Cambia el ancho (L1/R1) o el alto (L2/R2) del widget elegido; si choca, corre a los otros. */
     fun cambiarTamWidget(dAn: Int, dAl: Int) {
         val i = estado.value.widgetSel
-        cambiarWidget(i) { w ->
+        cambiarWidgetYEmpujar(i) { w ->
             val an = (w.an + dAn).coerceIn(1, Widgets.COLUMNAS)
             val al = (w.al + dAl).coerceIn(1, Widgets.FILAS)
             // Si no cabe a la derecha o abajo, se corre hacia la izquierda o arriba.
             val c = w.copy(an = an, al = al, x = w.x.coerceAtMost(Widgets.COLUMNAS - an), y = w.y.coerceAtMost(Widgets.FILAS - al))
-            if (choca(c, i)) { avisar("No cabe: hay otro widget al lado"); w } else c
+            if (!choca(c, i)) c
+            else empujando(i, c)?.let { l -> pendienteEmpuje = l; c } ?: run { avisar("No cabe: no hay cómo correr los otros widgets"); w }
         }
     }
 
@@ -3771,6 +3817,86 @@ object Diptico {
         }
     }
 
+    // ---------- Rendimiento: modo turbo ----------
+
+    /** Paquetes que el turbo nunca cierra: emuladores, la música que suena y el juego mismo (si es una app). */
+    private fun protegidosTurbo(juego: Juego?): Set<String> = buildSet {
+        addAll(Consolas.reglas.values.flatten().map { it.substringBefore('/') })
+        cl.nikalbazu.diptico.audio.Medios.sonando.value?.paquete?.let { add(it) }
+        addAll(estado.value.ports); addAll(estado.value.android)
+        if (juego?.uri?.scheme == "app") add(juego.archivo)
+    }
+
+    private fun turboAlJugar(juego: Juego, displayId: Int) {
+        val e = estado.value
+        scope.launch {
+            val r = withContext(Dispatchers.IO) { try { Turbo.optimizar(app, protegidosTurbo(juego), e.turboCerrarApps) } catch (_: Exception) { null } } ?: return@launch
+            val resumen = "${r.libresMb} MB libres" + if (r.liberadosMb > 0) " (+${r.liberadosMb} MB)" else ""
+            actualizar { it.copy(turboUltimo = resumen) }
+            delay(1200)
+            if (estado.value.sesion != null) cl.nikalbazu.diptico.bisa.Cartel.mostrar(app, displayId, "Modo turbo", juego.titulo, resumen + if (r.apps > 0) " · ${r.apps} apps en reposo" else "")
+        }
+    }
+
+    /** Mientras juegas, Díptico se queda quieto (sin animaciones ni difuminados) y, si lo pediste, No molestar. */
+    private fun vigilarReposo() {
+        scope.launch {
+            estado.map { it.sesion != null }.distinctUntilChanged().collect { jugando ->
+                val e = estado.value
+                if (e.turbo && e.turboReposo) {
+                    if (jugando) {
+                        cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = false
+                        cl.nikalbazu.diptico.ui.Estilo.decoraciones = false
+                    } else aplicarFluidez()
+                }
+                if (e.turbo && e.turboNoMolestar) Turbo.noMolestar(app, jugando)
+            }
+        }
+    }
+
+    fun optimizarAhora() {
+        avisar("Optimizando…")
+        scope.launch {
+            val r = withContext(Dispatchers.IO) { try { Turbo.optimizar(app, protegidosTurbo(null), estado.value.turboCerrarApps) } catch (_: Exception) { null } }
+            if (r == null) { avisar("No pude optimizar ahora"); return@launch }
+            val resumen = "${r.libresMb} MB libres" + if (r.liberadosMb > 0) " (+${r.liberadosMb} MB)" else ""
+            actualizar { it.copy(turboUltimo = resumen) }
+            Sonidos.aviso()
+            avisar("Listo: $resumen" + if (r.apps > 0) " · ${r.apps} apps en reposo" else "")
+        }
+    }
+
+    private fun opcionesTurbo(e: Estado): List<Opcion> {
+        fun alternar(clave: String, f: (Estado) -> Boolean, g: (Estado, Boolean) -> Estado) {
+            val v = !f(estado.value)
+            almacen.guardarBool(clave, v)
+            actualizar { g(it, v) }
+            Sonidos.interruptor(v)
+        }
+        val libres = Turbo.memoriaLibreMb(app)
+        val total = Turbo.memoriaTotalMb(app)
+        return listOf(
+            Opcion("Modo turbo al jugar", if (e.turbo) "Sí" else "No", Icono.CHISPA,
+                "Antes de abrir cada juego, Díptico libera memoria y se pone en reposo para que el juego tenga toda la consola.") {
+                alternar("turbo", { it.turbo }) { s0, v -> s0.copy(turbo = v) }
+            },
+            Opcion("Cerrar apps en segundo plano", if (e.turboCerrarApps) "Sí" else "No", Icono.APPS,
+                "Duerme las apps que quedaron abiertas de fondo. Nunca toca emuladores, la música que suena, el teclado ni las apps del sistema.",
+                apagada = !e.turbo) { alternar("turboCerrarApps", { it.turboCerrarApps }) { s0, v -> s0.copy(turboCerrarApps = v) } },
+            Opcion("Díptico en reposo mientras juegas", if (e.turboReposo) "Sí" else "No", Icono.NEGRO,
+                "Sin animaciones, decoraciones ni difuminados mientras el juego está abierto: menos trabajo para la consola.",
+                apagada = !e.turbo) { alternar("turboReposo", { it.turboReposo }) { s0, v -> s0.copy(turboReposo = v) } },
+            Opcion("No molestar mientras juegas", if (!Turbo.puedeNoMolestar(app) && e.turboNoMolestar) "Falta permiso" else if (e.turboNoMolestar) "Sí" else "No", Icono.CAMPANA,
+                "Silencia las notificaciones (deja pasar alarmas y prioritarias) y las devuelve como estaban al terminar. Android pide un permiso.",
+                apagada = !e.turbo) {
+                if (!Turbo.puedeNoMolestar(app)) { Turbo.pedirNoMolestar(app); avisar("Activa Díptico en la lista y vuelve") }
+                alternar("turboNoMolestar", { it.turboNoMolestar }) { s0, v -> s0.copy(turboNoMolestar = v) }
+            },
+            Opcion("Optimizar ahora", e.turboUltimo.ifBlank { "Liberar memoria" }, Icono.DESCARGA, "Hace lo mismo que el turbo, ahora mismo.") { optimizarAhora() },
+            Opcion("Memoria disponible", "$libres de $total MB", Icono.INFO, "Cuánta memoria tiene libre la consola en este momento.") {},
+        )
+    }
+
     // ---------- Modo sobremesa (tele) ----------
 
     private val NOMBRE_TELE = Regex("hdmi|displayport|\\bdp\\b|external|externa|usb|\\btv\\b|wireless|cast|miracast", RegexOption.IGNORE_CASE)
@@ -4008,19 +4134,7 @@ object Diptico {
     fun moverFocoWidget(dx: Int, dy: Int) {
         val e = estado.value
         val w = e.widgets.getOrNull(e.widgetFoco) ?: return
-        val cx = w.x + w.an / 2f
-        val cy = w.y + w.al / 2f
-        val candidatos = widgetsDePagina(e).filter { it != e.widgetFoco }.mapNotNull { k ->
-            val o = e.widgets[k]
-            val ox = o.x + o.an / 2f
-            val oy = o.y + o.al / 2f
-            val principal = if (dx != 0) (ox - cx) * dx else (oy - cy) * dy
-            // Tiene que estar hacia ese lado (y no solo tocarlo).
-            val haciaAlla = if (dx != 0) (if (dx > 0) o.x >= w.x + w.an - 0.01f else o.x + o.an <= w.x + 0.01f) else (if (dy > 0) o.y >= w.y + w.al - 0.01f else o.y + o.al <= w.y + 0.01f)
-            if (principal <= 0f || !haciaAlla) null
-            else k to (principal + 2f * (if (dx != 0) kotlin.math.abs(oy - cy) else kotlin.math.abs(ox - cx)))
-        }
-        val siguiente = candidatos.minByOrNull { it.second }?.first
+        val siguiente = vecinoWidget(e, e.widgetFoco, dx, dy)
         when {
             siguiente != null -> actualizar { it.copy(widgetFoco = siguiente) }
             dy > 0 -> salirWidgets()
@@ -4600,11 +4714,15 @@ object Diptico {
                 actualizar { it.copy(fondoInicio = u) }
                 avisar("Fondo del inicio cambiado")
             }
-            archivoPara == "widgetImagen" -> {
-                val w = Widget("imagen-${System.currentTimeMillis()}", 0, 0, 2, 2, false, estado.value.paginaInicio, u)
+            archivoPara == "widgetImagen" || archivoPara == "widgetVideo" -> {
+                val video = archivoPara == "widgetVideo"
+                val w = Widget((if (video) "video-" else "imagen-") + System.currentTimeMillis(), 0, 0, 2, 2, false, estado.value.paginaInicio, u, estilo = "sinfondo")
                 guardarWidgets(estado.value.widgets + w)
-                alternarWidget(estado.value.widgets.size - 1)
-                avisar("Imagen agregada a tu inicio")
+                val k = estado.value.widgets.size - 1
+                val celda = celdaPendiente
+                celdaPendiente = null
+                if (celda != null) ponerEnCelda(k, celda.first, celda.second) else alternarWidget(k)
+                avisar(if (video) "Video agregado a tu inicio" else "Imagen agregada a tu inicio")
             }
             archivoPara.startsWith("widget:") -> {
                 val tipo = archivoPara.removePrefix("widget:")
@@ -4642,8 +4760,8 @@ object Diptico {
     }
     // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
 
-    private val VISTAS = listOf("estante", "carrusel", "cuadricula", "lista")
-    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Cuadrícula"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; else -> "Estante" }
+    private val VISTAS = listOf("estante", "carrusel", "lomos", "cuadricula", "lista")
+    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Cuadrícula"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "lomos" -> "Lomos"; else -> "Estante" }
 
     val VISTAS_CONSOLAS = listOf("arriba", "lado", "rueda", "sistemas")
     fun nombreVistaConsolas(v: String) = when (v) { "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; else -> "Arriba" }
@@ -4856,6 +4974,16 @@ object Diptico {
         guardarFormas(m + (consola to f(m[consola] ?: FormaCfg())))
     }
 
+    /** La consola a la que se le cambian las cajas: la elegida, o la del juego elegido si estás en "Todo". */
+    fun consolaParaCajas(e: Estado = estado.value): String =
+        e.consolaSel.takeIf { it != "todo" } ?: e.seleccionado?.consolaId ?: e.consolasConJuegos.firstOrNull()?.id ?: ""
+
+    /** Galería visual de las formas de caja: cada forma con tus portadas, para esta consola o todas. */
+    fun abrirCajas(consola: String? = null) {
+        actualizar { it.copy(galeriaConsola = consola ?: consolaParaCajas(it)) }
+        abrirGaleria("cajas")
+    }
+
     fun ciclarForma(consola: String) = cambiarForma(consola) { it.copy(forma = FORMAS[(FORMAS.indexOf(it.forma) + 1).mod(FORMAS.size)]) }
 
     private fun ciclarTamForma(consola: String) = cambiarForma(consola) {
@@ -4875,7 +5003,9 @@ object Diptico {
                 "Arriba como pestañas, en una columna al costado, en una rueda que gira, o Sistemas: primero eliges la consola en un carrusel grande y después entras a sus juegos.",
                 menos = { cambiarVistaConsolas(-1) },
             ) { cambiarVistaConsolas(1) },
-            Opcion("Juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { cambiarVista() },
+            Opcion("Juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, lomos (como una repisa de libros: el elegido se abre), cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { cambiarVista() },
+            Opcion("Forma de las cajas", nombreForma(e.formas[consolaParaCajas()]?.forma ?: "original"), Icono.FORMA,
+                "Elige cómo se ven las cajas (cuadrada, póster, horizontal, disco, cartucho o tarjeta) viendo tus portadas en cada forma. Para una consola o para todas.") { abrirCajas() },
             Opcion("Tamaño de los juegos", nombreTamJuegos(e.tamJuegos), Icono.FORMA, "Más chico para ver más juegos, o más grande para verlos mejor.") { cambiarTamJuegos(if (e.tamJuegos >= 1.39f) -3 else 1) },
             Opcion("Mostrar", nombreFiltro(e.filtro), Icono.CORAZON, "Todos, solo favoritos, jugados hace poco, los más jugados o los que no has jugado.") { cambiarFiltro() },
             Opcion("Ordenar", nombreOrden(e.orden), Icono.MENU, "A → Z, últimos jugados o más tiempo jugado.") { cambiarOrden() },
@@ -4883,7 +5013,7 @@ object Diptico {
         )
         if (c != null) {
             val f = e.formas[c.id] ?: FormaCfg()
-            lista += Opcion("Cajas de ${c.nombre}: forma", nombreForma(f.forma), Icono.FORMA, "Elige la forma de las cajas de esta consola. Para otra consola, elígela en el estante antes de abrir el menú.") { ciclarForma(c.id) }
+            lista += Opcion("Cajas de ${c.nombre}: forma", nombreForma(f.forma), Icono.FORMA, "Elige la forma de las cajas de esta consola, viendo tus portadas en cada una.") { abrirCajas(c.id) }
             lista += Opcion("Cajas de ${c.nombre}: tamaño", nombreTamJuegos(f.tam), Icono.FORMA) { ciclarTamForma(c.id) }
             lista += Opcion("Cajas de ${c.nombre}: imagen", nombreImagenCaja(f.imagen), Icono.PORTADA, "Muestra la portada, una captura del juego o su logo.") { ciclarImagenCaja(c.id) }
         } else {
@@ -5356,7 +5486,138 @@ object Diptico {
 
     fun abrirAjustesWidget(i: Int = estado.value.widgetSel) {
         if (!estado.value.editandoWidgets) editarWidgets()
-        actualizar { it.copy(widgetSel = i, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 0) }
+        actualizar { it.copy(widgetSel = i, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 0, estudioZona = "panel") }
+    }
+
+    /** En el editor: pasar de elegir widgets en el inicio a las opciones del panel (y de vuelta). */
+    fun zonaEstudio(z: String) {
+        if (estado.value.estudioZona == z) return
+        actualizar { it.copy(estudioZona = z, estudioMover = false, indice = if (z == "panel") 0 else it.indice) }
+        Sonidos.pagina()
+    }
+
+    /** En el editor: elegir con la cruceta el widget que está hacia ese lado (libre, sin un orden fijo). */
+    fun elegirWidgetDir(dx: Int, dy: Int) {
+        val e = estado.value
+        if (e.widgets.getOrNull(e.widgetSel)?.let { it.visible && it.pagina == e.paginaInicio } != true) {
+            widgetsDePagina(e).firstOrNull()?.let { elegirWidget(it) } ?: Sonidos.borde()
+            return
+        }
+        val k = vecinoWidget(e, e.widgetSel, dx, dy)
+        when {
+            k != null -> actualizar { it.copy(widgetSel = k) }
+            dx != 0 && e.paginaInicio + dx in 0 until e.paginas -> {
+                irAPagina(e.paginaInicio + dx)
+                val l = widgetsDePagina()
+                (if (dx > 0) l.minByOrNull { estado.value.widgets[it].x } else l.maxByOrNull { estado.value.widgets[it].x })?.let { elegirWidget(it) }
+                Sonidos.pagina()
+            }
+            else -> Sonidos.borde()
+        }
+    }
+
+    /** El widget más cercano hacia (dx, dy) desde el widget [desde], en la página actual. */
+    private fun vecinoWidget(e: Estado, desde: Int, dx: Int, dy: Int): Int? {
+        val w = e.widgets.getOrNull(desde) ?: return null
+        val cx = w.x + w.an / 2f
+        val cy = w.y + w.al / 2f
+        return widgetsDePagina(e).filter { it != desde }.mapNotNull { k ->
+            val o = e.widgets[k]
+            val ox = o.x + o.an / 2f
+            val oy = o.y + o.al / 2f
+            val principal = if (dx != 0) (ox - cx) * dx else (oy - cy) * dy
+            val haciaAlla = if (dx != 0) (if (dx > 0) o.x >= w.x + w.an - 0.01f else o.x + o.an <= w.x + 0.01f) else (if (dy > 0) o.y >= w.y + w.al - 0.01f else o.y + o.al <= w.y + 0.01f)
+            if (principal <= 0f || !haciaAlla) null
+            else k to (principal + 2f * (if (dx != 0) kotlin.math.abs(oy - cy) else kotlin.math.abs(ox - cx)))
+        }.minByOrNull { it.second }?.first
+    }
+
+    // ---------- Burbuja para agregar widgets ----------
+
+    data class OpcionBurbuja(val nombre: String, val icono: Icono, val indice: Int, val especial: String = "")
+
+    /** Lo que se puede agregar: los widgets que no están a la vista, más imagen/GIF y video. */
+    fun opcionesBurbuja(e: Estado = estado.value): List<OpcionBurbuja> =
+        e.widgets.withIndex().filter { !it.value.visible && !it.value.tipo.startsWith("imagen") && !it.value.tipo.startsWith("video") }
+            .map { (k, w) -> OpcionBurbuja(Widgets.nombre(w.tipo), Widgets.icono(w.tipo), k) } +
+            OpcionBurbuja("Imagen o GIF", Icono.PORTADA, -1, "imagen") + OpcionBurbuja("Video corto", Icono.JUGAR, -1, "video")
+
+    /** Abre la burbuja en la celda (x, y): con el dedo (manteniendo) o con el control. */
+    fun abrirBurbuja(x: Int, y: Int) {
+        val e = estado.value
+        if (!e.editandoWidgets) return
+        actualizar { it.copy(burbuja = x.coerceIn(0, Widgets.COLUMNAS - 1) to y.coerceIn(0, Widgets.FILAS - 1), burbujaSel = 0, estudioMover = false) }
+        Sonidos.abrir()
+    }
+
+    /** La burbuja junto al widget elegido (con el control). */
+    fun abrirBurbujaAqui() {
+        val e = estado.value
+        val w = e.widgets.getOrNull(e.widgetSel)?.takeIf { it.visible && it.pagina == e.paginaInicio }
+        abrirBurbuja(w?.x ?: 0, w?.y ?: 0)
+    }
+
+    fun cerrarBurbuja() {
+        if (estado.value.burbuja == null) return
+        actualizar { it.copy(burbuja = null) }
+        Sonidos.atras()
+    }
+
+    fun moverBurbuja(d: Int) {
+        val n = opcionesBurbuja().size
+        if (n == 0) return
+        actualizar { it.copy(burbujaSel = (it.burbujaSel + d).mod(n)) }
+    }
+
+    /** Agrega lo elegido de la burbuja en su celda; si ahí hay otro widget, se corre para dejarle espacio. */
+    fun elegirBurbuja(k: Int = estado.value.burbujaSel) {
+        val e = estado.value
+        val (cx, cy) = e.burbuja ?: return
+        val o = opcionesBurbuja(e).getOrNull(k) ?: return
+        actualizar { it.copy(burbuja = null) }
+        when (o.especial) {
+            "imagen" -> { celdaPendiente = cx to cy; pedirArchivoPara("widgetImagen", "image/*"); return }
+            "video" -> { celdaPendiente = cx to cy; pedirArchivoPara("widgetVideo", "video/*"); return }
+        }
+        ponerEnCelda(o.indice, cx, cy)
+    }
+
+    /** Dónde poner la próxima imagen o video que se elija (si se abrió desde la burbuja). */
+    private var celdaPendiente: Pair<Int, Int>? = null
+
+    private fun ponerEnCelda(i: Int, cx: Int, cy: Int) {
+        val e = estado.value
+        val w = e.widgets.getOrNull(i) ?: return
+        val destino = encajar(w.copy(visible = true, x = cx, y = cy, pagina = e.paginaInicio))
+        val l = e.widgets.toMutableList()
+        when {
+            !choca(destino, i) -> { l[i] = destino; guardarWidgets(l) }
+            else -> {
+                val antes = estado.value.widgetSel
+                actualizar { it.copy(widgetSel = i) }
+                val empujada = empujando(i, destino)
+                if (empujada != null) guardarWidgets(empujada.mapIndexed { k, x -> if (k == i) destino else x })
+                else { actualizar { it.copy(widgetSel = antes) }; alternarWidget(i) }
+            }
+        }
+        if (estado.value.widgets.getOrNull(i)?.visible == true) {
+            actualizar { it.copy(widgetSel = i) }
+            Sonidos.soltar()
+            avisar("${Widgets.nombre(w.tipo)} agregado")
+        }
+    }
+
+    /** Estirar con el dedo (la manija de la esquina): ancho y alto nuevos, corriendo a los que estorben. */
+    fun redimensionarWidget(i: Int, an: Int, al: Int) {
+        val e = estado.value
+        val w = e.widgets.getOrNull(i) ?: return
+        val c = w.copy(an = an.coerceIn(1, Widgets.COLUMNAS - w.x), al = al.coerceIn(1, Widgets.FILAS - w.y))
+        if (c.an == w.an && c.al == w.al) return
+        if (!choca(c, i)) { cambiarWidget(i) { c }; guardarWidgets(estado.value.widgets); return }
+        actualizar { it.copy(widgetSel = i) }
+        val l = empujando(i, c)
+        if (l != null) { guardarWidgets(l.mapIndexed { k, x -> if (k == i) c else x }); Sonidos.soltar() }
+        else avisar("No hay espacio para estirarlo tanto")
     }
 
     fun abrirCatalogoWidgets() {
@@ -5408,28 +5669,28 @@ object Diptico {
         val w = e.widgets.getOrNull(i)?.takeIf { it.visible } ?: return listOf(
             Control("No hay widgets a la vista", "accion", "Agregar", icono = Icono.APPS) { elegirPestanaEstudio(1) },
         )
-        val visibles = e.widgets.indices.filter { e.widgets[it].visible }
         val formas = Widgets.FORMAS.filter { (_, f) -> f.first <= Widgets.COLUMNAS && f.second <= Widgets.FILAS }
         val colores = listOf(0L) + Temas.MUESTRAS
         val l = mutableListOf<Control>()
         l += Control(
-            "Widget elegido", "widgets", Widgets.nombre(w.tipo), "Elegido",
-            elecciones = visibles.map { Widgets.nombre(e.widgets[it].tipo) }, elegida = visibles.indexOf(i), extra = w.tipo,
-            menos = { siguienteWidget(-1) }, elegir = { k -> visibles.getOrNull(k)?.let { elegirWidget(it) } },
+            "Widget elegido", "pasos", Widgets.nombre(w.tipo), "Elegido", Widgets.icono(w.tipo),
+            ayuda = "También lo eliges con la cruceta directo en tu inicio (B para volver allá).",
+            menos = { siguienteWidget(-1) },
         ) { siguienteWidget(1) }
         l += Control(
-            if (e.estudioMover) "Moviendo: usa la cruceta" else "Mover con la cruceta", "accion",
-            if (e.estudioMover) "Terminar" else "Y", "Elegido", Icono.MANDO,
-            ayuda = "También puedes arrastrarlo con el dedo en tu inicio.",
+            if (e.estudioMover) "Moviendo: usa la cruceta" else "Mover", "accion",
+            if (e.estudioMover) "Terminar" else "A", "Posición y tamaño", Icono.MANDO,
+            ayuda = "Si lo pones sobre otro, el otro se corre. Con el dedo: arrástralo, y estíralo desde su esquina.",
         ) { alternarMoverWidget() }
         l += Control(
-            "Forma", "formas", Widgets.nombreTamano(w.an, w.al), "Tamaño",
+            "Forma", "formas", Widgets.nombreTamano(w.an, w.al), "Posición y tamaño",
             elecciones = formas.map { it.first }, formas = formas.map { it.second },
             elegida = formas.indexOfFirst { it.second == (w.an to w.al) },
             menos = { tamanoWidgetSel(-1) }, elegir = { k -> formas.getOrNull(k)?.second?.let { (an, al) -> ponerForma(i, an, al) } },
         ) { tamanoWidgetSel(1) }
-        l += Control("Ancho", "pasos", "${w.an} de ${Widgets.COLUMNAS}", "Tamaño", Icono.FORMA, menos = { cambiarTamWidget(-1, 0) }) { cambiarTamWidget(1, 0) }
-        l += Control("Alto", "pasos", "${w.al} de ${Widgets.FILAS}", "Tamaño", Icono.FORMA, menos = { cambiarTamWidget(0, -1) }) { cambiarTamWidget(0, 1) }
+        l += Control("Ancho", "pasos", "${w.an} de ${Widgets.COLUMNAS}", "Posición y tamaño", Icono.FORMA, menos = { cambiarTamWidget(-1, 0) }) { cambiarTamWidget(1, 0) }
+        l += Control("Alto", "pasos", "${w.al} de ${Widgets.FILAS}", "Posición y tamaño", Icono.FORMA, menos = { cambiarTamWidget(0, -1) }) { cambiarTamWidget(0, 1) }
+        l += Control("Página", "pasos", "${w.pagina + 1} de ${e.paginas}", "Posición y tamaño", Icono.VISTA, menos = { moverWidgetPagina(i, -1) }) { moverWidgetPagina(i, 1) }
         val variantes = Widgets.variantes(w.tipo)
         if (variantes.size > 1) l += Control(
             "Diseño", "chips", variantes.getOrElse(w.variante) { variantes[0] }, "Aspecto", elecciones = variantes, elegida = w.variante.coerceIn(0, variantes.size - 1),
@@ -5457,18 +5718,17 @@ object Diptico {
             "Tamaño del contenido", "chips", "", "Aspecto", elecciones = listOf("Chico", "Normal", "Grande", "Enorme"), elegida = ESCALAS.indexOf(w.escala),
             elegir = { k -> cambiarWidget(i) { it.copy(escala = ESCALAS[k.coerceIn(0, ESCALAS.size - 1)]) } },
         ) { cambiarWidget(i) { it.copy(escala = ciclar(ESCALAS, it.escala, 1)) } }
-        l += Control("Página", "pasos", "${w.pagina + 1} de ${e.paginas}", "Lugar", Icono.VISTA, menos = { moverWidgetPagina(i, -1) }) { moverWidgetPagina(i, 1) }
-        l += Control("Copiar el estilo a todos", "accion", "Aplicar", "Lugar", Icono.PALETA, "Todos los widgets quedan con este estilo, color, fondo y esquinas.") {
+        l += Control("Copiar el estilo a todos", "accion", "Aplicar", "Más", Icono.PALETA, "Todos los widgets quedan con este estilo, color, fondo y esquinas.") {
             val base = estado.value.widgets[i]
             guardarWidgets(estado.value.widgets.map { it.copy(estilo = base.estilo, color = base.color, opacidad = base.opacidad, radio = base.radio) })
             avisar("Estilo copiado a todos los widgets")
         }
-        l += Control("Quitar este widget", "accion", "Quitar", "Lugar", Icono.BORRAR) { quitarWidget(i) }
+        l += Control("Quitar este widget", "accion", "Quitar", "Más", Icono.BORRAR) { quitarWidget(i) }
         return l
     }
 
     private fun controlesAgregar(e: Estado): List<Control> {
-        val tipos = e.widgets.withIndex().filter { !it.value.tipo.startsWith("imagen") || it.value.visible }
+        val tipos = e.widgets.withIndex().filter { (!it.value.tipo.startsWith("imagen") && !it.value.tipo.startsWith("video")) || it.value.visible }
         return tipos.map { (k, w) ->
             Control(
                 Widgets.nombre(w.tipo), "catalogo", if (w.visible) "En tu inicio ✓" else "Agregar", if (w.visible) "En tu inicio" else "Para agregar",
@@ -5487,7 +5747,10 @@ object Diptico {
         }.sortedBy { if (it.valor == "Agregar") 0 else 1 } + Control(
             "Imagen o GIF propio", "catalogo", "Elegir", "Para agregar", Icono.PORTADA,
             ayuda = "Una foto o un GIF animado de tu consola como widget.", extra = "imagen",
-        ) { pedirArchivoPara("widgetImagen", "image/*") }
+        ) { pedirArchivoPara("widgetImagen", "image/*") } + Control(
+            "Video corto", "catalogo", "Elegir", "Para agregar", Icono.JUGAR,
+            ayuda = "Un clip corto (mp4) que se repite en silencio. Se pausa solo mientras juegas.", extra = "video",
+        ) { pedirArchivoPara("widgetVideo", "video/*") }
     }
 
     private fun controlesPagina(e: Estado): List<Control> = listOf(
@@ -5719,7 +5982,7 @@ object Diptico {
             Opcion("Imagen grande (hero)", if (p.hero != null) "Propia ✓" else "Buscar", Icono.PORTADA, "El fondo de esta consola: de SteamGridDB, fotos de Wikipedia o tus archivos.") { buscarCandidatos("c_hero") },
             Opcion("Logo", if (p.logo != null) "Propio ✓" else "Buscar", Icono.ESTRELLA, "Un logo que reemplaza al nombre en la vista grande: de SteamGridDB, Wikipedia o tus archivos.") { buscarCandidatos("c_logo") },
             Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") },
-            Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA) { ciclarForma(id) },
+            Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) },
             Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA) { ciclarTamForma(id) },
             Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) },
             Opcion("Emulador", if (c.sinEmulador) "No necesita" else nombreEmulador(c), Icono.MANDO) { if (!c.sinEmulador) ciclarEmulador(c) },

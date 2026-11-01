@@ -28,9 +28,7 @@ import androidx.compose.ui.draw.clip
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 /** Resumen de tu tiempo de juego: totales, por consola, tus juegos más jugados y los últimos. */
 @Composable

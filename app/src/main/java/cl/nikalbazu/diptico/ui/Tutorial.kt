@@ -49,7 +49,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import cl.nikalbazu.diptico.audio.Musica
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico

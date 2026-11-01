@@ -53,8 +53,6 @@ import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
 
 /*
  * Otras formas de ver las consolas (Menú › Estante › Consolas):

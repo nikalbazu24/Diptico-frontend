@@ -4,7 +4,6 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.SystemClock
-import cl.nikalbazu.diptico.R
 
 /** Sonidos cortos al moverte, elegir, volver y abrir juegos. Se pueden apagar en Menú › Música. */
 object Sonidos {

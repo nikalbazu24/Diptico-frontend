@@ -41,6 +41,21 @@ import cl.nikalbazu.diptico.estado.Icono
  */
 @Composable
 fun PantallaUnica(e: Estado) {
+    // Carátulas ↔ widgets con transición suave, igual que con dos pantallas.
+    androidx.compose.animation.AnimatedContent(
+        targetState = e.inicio == "widgets",
+        transitionSpec = {
+            (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(420)) +
+                androidx.compose.animation.scaleIn(androidx.compose.animation.core.tween(480), initialScale = if (targetState) 0.94f else 1.04f)) togetherWith
+                (androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(260)) +
+                    androidx.compose.animation.scaleOut(androidx.compose.animation.core.tween(320), targetScale = if (targetState) 1.04f else 0.96f))
+        },
+        label = "inicioUnica",
+    ) { w -> PantallaUnicaContenido(e.copy(inicio = if (w) "widgets" else "heroe")) }
+}
+
+@Composable
+private fun PantallaUnicaContenido(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     if (e.inicio == "widgets") {
@@ -69,7 +84,10 @@ fun PantallaUnica(e: Estado) {
                     Detalle("Toca un widget para elegirlo, o arrástralo", 11.5f, lineas = 1)
                 }
             } else {
-                Box(Modifier.fillMaxSize().difuminar(e)) { PantallaInicio(e) }
+                Box(Modifier.fillMaxSize().difuminar(e)) {
+                    PantallaInicio(e)
+                    RecordatorioWidgets(e, Modifier.align(Alignment.BottomCenter))
+                }
             }
             Paneles(e, conAyuda = true)
         }

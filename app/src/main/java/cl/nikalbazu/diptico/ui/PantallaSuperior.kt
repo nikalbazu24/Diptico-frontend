@@ -1,6 +1,14 @@
 package cl.nikalbazu.diptico.ui
 
-import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
@@ -52,7 +60,8 @@ fun PantallaSuperior(e: Estado) {
         return
     }
     if (e.panel == Panel.WIDGET) {
-        LecturaWidget(e)
+        // Lo que abre el widget aparece aquí arriba, junto al widget en grande; abajo sigue tu estante.
+        if (!e.intercambiar) WidgetArriba(e) else LecturaWidget(e)
         return
     }
     if (e.panel == Panel.ENCUADRE) {
@@ -79,10 +88,26 @@ fun PantallaSuperior(e: Estado) {
         LecturaAsistente(e)
         return
     }
-    if (e.inicio == "widgets") {
-        PantallaInicio(e)
-        return
+    // Carátulas ↔ widgets con una transición suave (y un recordatorio discreto al llegar a los widgets).
+    AnimatedContent(
+        targetState = e.inicio == "widgets",
+        transitionSpec = {
+            val entra = fadeIn(tween(420)) + scaleIn(tween(480, easing = FastOutSlowInEasing), initialScale = if (targetState) 0.94f else 1.04f)
+            val sale = fadeOut(tween(260)) + scaleOut(tween(320), targetScale = if (targetState) 1.04f else 0.96f)
+            entra togetherWith sale
+        },
+        label = "inicio",
+    ) { widgets ->
+        if (widgets) Box(Modifier.fillMaxSize()) {
+            PantallaInicio(e)
+            RecordatorioWidgets(e, Modifier.align(Alignment.BottomCenter))
+        } else Caratulas(e)
     }
+}
+
+/** El inicio con el juego elegido en grande (carátulas). */
+@Composable
+private fun Caratulas(e: Estado) {
     // Modo Sistemas: mientras eliges consola, aquí se ve la consola en grande.
     if (e.vistaConsolas == "sistemas" && e.enSistemas && e.sesion == null) {
         VistaSistema(e)
@@ -153,6 +178,36 @@ fun PantallaSuperior(e: Estado) {
                 "Jugando ahora", Coral, 13f,
                 Modifier.align(Alignment.BottomEnd).padding(end = esc.d(margen), bottom = esc.d(34)),
             )
+        }
+    }
+}
+
+/** Un recordatorio pequeño y pasajero al entrar a los widgets: qué botones usar. No tapa nada ni bloquea. */
+@Composable
+fun RecordatorioWidgets(e: Estado, modifier: Modifier = Modifier) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(e.avisoInicio) {
+        if (e.avisoInicio == 0L) return@LaunchedEffect
+        visible = true
+        kotlinx.coroutines.delay(3200)
+        visible = false
+    }
+    androidx.compose.animation.AnimatedVisibility(
+        visible = visible && !e.editandoWidgets && e.panel == Panel.NINGUNO, modifier = modifier.padding(bottom = esc.d(16)),
+        enter = fadeIn(tween(300)) + androidx.compose.animation.slideInVertically(tween(360)) { it / 2 },
+        exit = fadeOut(tween(400)),
+    ) {
+        Row(
+            Modifier.clip(RoundedCornerShape(50)).background(p.fondo2.copy(alpha = 0.82f)).border(esc.d(1), p.linea, RoundedCornerShape(50))
+                .padding(horizontal = esc.d(14), vertical = esc.d(7)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
+        ) {
+            Pista(if (e.unaPantalla) "✥" else "↑", "Moverte por los widgets")
+            Pista("Select", "Carátulas")
+            Pista("Mantén", "Acomodar")
         }
     }
 }

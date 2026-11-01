@@ -2,7 +2,21 @@
 
 Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué trae la 1.0 beta.2
+## Qué trae la 1.0 beta.3
+
+- **Widgets más fáciles de acomodar**: en el editor, la cruceta o el stick eligen cualquier widget (sin un orden fijo); A lo levanta y lo mueve; si lo pones sobre otro, el otro se corre. Con el dedo se arrastra y se estira libremente desde su esquina.
+- **Burbuja para agregar**: mantén A (o el dedo) en un lugar del inicio y aparece un globo con todos los widgets para agregar justo ahí.
+- **Videos cortos e imágenes con transparencia**: los PNG y GIF ya no muestran fondo negro y se achican al tamaño del widget; los videos se repiten en silencio y se pausan al jugar.
+- **Cada widget se adapta a cualquier tamaño**, incluso 1×1, y su contenido crece cuando lo agrandas.
+- **El widget abierto aparece arriba**, junto al widget en grande; el estudio de widgets está ordenado en tarjetas.
+- **Transición suave** al pasar de carátulas a widgets, con un recordatorio discreto de los botones.
+- **Forma de las cajas** a la vista: Menú › Estante › Forma de las cajas muestra tus portadas en cada forma (cuadrada, póster, horizontal, disco tipo CD, cartucho o tarjeta).
+- **Portadas cuadradas** en la tienda de imágenes (SteamGridDB).
+- **Modo turbo**: antes de jugar, Díptico duerme las apps de fondo, se pone en reposo y, si quieres, activa No molestar. Muestra cuánta memoria quedó libre.
+- **Vista Lomos**: tus juegos como una repisa de libros; el elegido se asoma y se abre con su portada.
+- Más difuminado detrás de lo que se abre encima, y el centro de control baja con rebote.
+
+## Qué trajo la 1.0 beta.2
 
 - **Widgets con vida**: con ↑ desde el estante (o la cruceta, con una sola pantalla) te mueves por los widgets; A abre su contenido. El reloj trae temporizador, cronómetro y recordatorio de pausas al jugar; la música, sus controles; recientes, favoritos y "¿Qué juego hoy?", listas para jugar; batería, fiestas, notificaciones, frase y colección, sus detalles.
 - **Bisa con identidad propia**: su widget tiene su cara, una burbuja que cambia y accesos directos (truco, ¿qué juego?, hablar).

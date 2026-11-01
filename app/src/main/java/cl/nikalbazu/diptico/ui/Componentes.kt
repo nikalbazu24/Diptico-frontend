@@ -3,8 +3,6 @@ package cl.nikalbazu.diptico.ui
 import android.content.Context
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring

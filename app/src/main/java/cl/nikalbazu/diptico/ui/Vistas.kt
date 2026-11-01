@@ -3,7 +3,6 @@ package cl.nikalbazu.diptico.ui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -394,7 +392,8 @@ fun PanelCentro(e: Estado) {
     val avisos by Avisos.lista.collectAsState()
     val acciones = remember { Diptico.opcionesCentro() }
     val bajar = remember { Animatable(-1f) }
-    LaunchedEffect(Unit) { bajar.animateTo(0f, spring(dampingRatio = 0.82f, stiffness = 420f)) }
+    // Baja con un rebote suave, como una cortina elástica.
+    LaunchedEffect(Unit) { bajar.animateTo(0f, spring(dampingRatio = 0.55f, stiffness = 260f)) }
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { Diptico.cerrarPanel() }) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val alto = maxHeight
@@ -424,7 +423,21 @@ fun PanelCentro(e: Estado) {
                                 val i = f * Diptico.COLUMNAS_CENTRO + c
                                 val o = fila.getOrNull(c)
                                 if (o == null) { Spacer(Modifier.weight(1f)); continue }
-                                AccesoCentro(o, i == e.indice, Modifier.weight(1f)) { Diptico.elegirIndice(i) }
+                                // Cada acceso cae con su propio rebote, uno tras otro.
+                                val rebote = remember { Animatable(0f) }
+                                LaunchedEffect(Unit) {
+                                    kotlinx.coroutines.delay(90L + i * 35L)
+                                    rebote.animateTo(1f, spring(dampingRatio = 0.42f, stiffness = 380f))
+                                }
+                                AccesoCentro(
+                                    o, i == e.indice,
+                                    Modifier.weight(1f).graphicsLayer {
+                                        val r = rebote.value
+                                        alpha = r.coerceIn(0f, 1f)
+                                        translationY = (1f - r) * -60f * density
+                                        scaleX = 0.7f + 0.3f * r; scaleY = 0.7f + 0.3f * r
+                                    },
+                                ) { Diptico.elegirIndice(i) }
                             }
                         }
                     }

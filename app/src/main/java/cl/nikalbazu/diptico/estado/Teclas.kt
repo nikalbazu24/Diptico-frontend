@@ -479,10 +479,26 @@ object Teclas {
      * Estudio de widgets: ↑↓ elige un ajuste, ←→ lo cambia, A lo usa, L1/R1 cambian de pestaña,
      * Y mueve el widget con la cruceta (L1/R1 ancho, L2/R2 alto), X cambia su estilo, Select pasa al siguiente, B termina.
      */
+    private var aLargoEstudio = false
+
+    /**
+     * Editor de widgets. Zona "grilla": la cruceta (o el stick) elige cualquier widget del inicio; A lo levanta para moverlo,
+     * mantener A (o Y) abre la burbuja para agregar, X cambia el estilo y R1 pasa a las opciones del panel.
+     * Zona "panel": la cruceta recorre las opciones; B vuelve a la grilla. Start o B en la grilla: listo.
+     */
     private fun estudio(ev: KeyEvent, e: Estado): Boolean {
         val code = ev.keyCode
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
+        // Burbuja para agregar: la cruceta elige, A agrega, B cierra.
+        if (e.burbuja != null) {
+            if (abajo) dir(code)?.let { (dx, dy) -> Diptico.moverBurbuja(if (dy != 0) dy * 3 else dx); return true }
+            if (arriba) when {
+                esA(code) -> Diptico.elegirBurbuja()
+                esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.cerrarBurbuja()
+            }
+            return true
+        }
         if (e.panel != Panel.ESTUDIO) {
             if (arriba && (esA(code) || code == KeyEvent.KEYCODE_BUTTON_Y)) Diptico.abrirAjustesWidget()
             else if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BUTTON_START)) Diptico.terminarEdicion()
@@ -497,6 +513,19 @@ object Teclas {
                     KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.cambiarTamWidget(1, 0)
                     KeyEvent.KEYCODE_BUTTON_L2 -> Diptico.cambiarTamWidget(0, -1)
                     KeyEvent.KEYCODE_BUTTON_R2 -> Diptico.cambiarTamWidget(0, 1)
+                }
+                return true
+            }
+            if (e.estudioZona == "grilla") {
+                when {
+                    d != null -> Diptico.elegirWidgetDir(d.first, d.second)
+                    esA(code) -> {
+                        if (ev.repeatCount == 0) aLargoEstudio = false
+                        else if (!aLargoEstudio && ev.eventTime - ev.downTime > 550) { aLargoEstudio = true; Diptico.abrirBurbujaAqui() }
+                    }
+                    code == KeyEvent.KEYCODE_BUTTON_L2 && ev.repeatCount == 0 -> Diptico.cambiarPagina(-1)
+                    code == KeyEvent.KEYCODE_BUTTON_R2 && ev.repeatCount == 0 -> Diptico.cambiarPagina(1)
+                    (code == KeyEvent.KEYCODE_BUTTON_R1 || code == KeyEvent.KEYCODE_BUTTON_L1) && ev.repeatCount == 0 -> Diptico.zonaEstudio("panel")
                 }
                 return true
             }
@@ -515,9 +544,19 @@ object Teclas {
                 if (esA(code) || esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y) Diptico.alternarMoverWidget()
                 return true
             }
+            if (e.estudioZona == "grilla") {
+                when {
+                    esA(code) -> { if (!aLargoEstudio) Diptico.alternarMoverWidget(); aLargoEstudio = false }
+                    code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.abrirBurbujaAqui()
+                    code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.cambiarEstiloWidget()
+                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
+                }
+                return true
+            }
             when {
                 esA(code) -> Diptico.aceptarControl()
-                esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
+                esB(code) -> Diptico.zonaEstudio("grilla")
+                code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
                 code == KeyEvent.KEYCODE_BUTTON_Y -> { if (e.estudioPestana != 0) Diptico.elegirPestanaEstudio(0); Diptico.alternarMoverWidget() }
                 code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.cambiarEstiloWidget()
             }

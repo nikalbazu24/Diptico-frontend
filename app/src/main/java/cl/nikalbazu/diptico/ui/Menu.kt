@@ -1,18 +1,12 @@
 package cl.nikalbazu.diptico.ui
 
 import androidx.compose.runtime.remember
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,16 +27,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +47,6 @@ import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.Opcion
 import cl.nikalbazu.diptico.estado.Seccion
-import cl.nikalbazu.diptico.estado.Teclas
 
 fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.ESENCIAL -> Color(0xFFFF6E8A)
@@ -78,6 +67,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.CONSOLAS -> Color(0xFFFF5D5D)
     Seccion.SOBREMESA -> Color(0xFF26A69A)
     Seccion.CONTROLES -> Color(0xFFFFA726)
+    Seccion.RENDIMIENTO -> Color(0xFFFF5252)
 }
 
 private fun tintaSobre(c: Color) = if (c.luminance() > 0.55f) Tinta else Color.White

@@ -64,9 +64,7 @@ import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 /** Las ↑ ↓ desplazan el texto largo. */
 @Composable
@@ -402,10 +400,19 @@ fun PanelImagenes(e: Estado) {
                             }
                         } else {
                             val img = rememberImagen(Uri.parse(c.miniatura), 420)
-                            if (img != null) Image(img, null, Modifier.fillMaxSize().padding(esc.d(if (ajustar) 8f else 0f)), contentScale = if (ajustar) ContentScale.Fit else ContentScale.Crop)
+                            // Las cuadradas (o de otra forma) se ven enteras, sin recortarse, con su etiqueta.
+                            val otraForma = e.candidatoPara == "portada" && c.ancho > 0 && c.alto > 0 && kotlin.math.abs(c.ancho.toFloat() / c.alto - 0.68f) > 0.15f
+                            if (img != null) Image(img, null, Modifier.fillMaxSize().padding(esc.d(if (ajustar || otraForma) 6f else 0f)), contentScale = if (ajustar || otraForma) ContentScale.Fit else ContentScale.Crop)
                             else Girador(18f)
                             Box(Modifier.align(Alignment.BottomStart).padding(esc.d(5)).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = esc.d(6), vertical = esc.d(2))) {
                                 Texto(c.fuente, 9.5f, color = Color.White, lineas = 1, traducir = false)
+                            }
+                            if (c.ancho > 0 && c.alto > 0 && e.candidatoPara == "portada") {
+                                val r = c.ancho.toFloat() / c.alto
+                                val etiqueta = when { r > 1.2f -> "Horizontal"; r > 0.85f -> "Cuadrada"; else -> null }
+                                if (etiqueta != null) Box(Modifier.align(Alignment.TopEnd).padding(esc.d(5)).clip(RoundedCornerShape(50)).background(Uva).padding(horizontal = esc.d(6), vertical = esc.d(2))) {
+                                    Texto(etiqueta, 9.5f, color = SobreUva, lineas = 1)
+                                }
                             }
                         }
                     }

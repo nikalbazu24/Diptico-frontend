@@ -26,7 +26,7 @@ data class FichaInfo(
 }
 
 /** Una imagen de internet: [url] completa, [miniatura] para mostrar y de dónde viene. */
-data class ImagenWeb(val url: String, val miniatura: String, val fuente: String, val nombre: String = "")
+data class ImagenWeb(val url: String, val miniatura: String, val fuente: String, val nombre: String = "", val ancho: Int = 0, val alto: Int = 0)
 
 /**
  * Busca la ficha de un juego en Wikipedia (primero en español, si no en inglés).

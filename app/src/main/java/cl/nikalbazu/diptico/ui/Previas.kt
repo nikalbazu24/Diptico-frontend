@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -146,6 +147,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                 }
                 Seccion.SOBREMESA -> PreviaTele(ev)
                 Seccion.CONTROLES -> Marco { PreviaBotonesExtra(ev) }
+                Seccion.RENDIMIENTO -> Marco { PreviaTurbo(ev) }
                 Seccion.IDIOMA -> Marco { PreviaIdioma(t) }
                 Seccion.SISTEMA, Seccion.ESENCIAL -> Marco { PreviaAcerca() }
             }
@@ -337,6 +339,41 @@ private fun PreviaBotonesExtra(e: Estado) {
                     }
                 }
             }
+        }
+    }
+}
+
+
+/** Un medidor de memoria: cuánto está libre ahora y lo que liberó el último turbo. */
+@Composable
+private fun PreviaTurbo(e: Estado) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val libres = remember { cl.nikalbazu.diptico.estado.Turbo.memoriaLibreMb(ctx) }
+    val total = remember { cl.nikalbazu.diptico.estado.Turbo.memoriaTotalMb(ctx).coerceAtLeast(1) }
+    val f = (libres.toFloat() / total).coerceIn(0f, 1f)
+    Column(Modifier.fillMaxSize().padding(esc.d(16)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Box(Modifier.size(esc.d(140)), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                val g = size.minDimension * 0.1f
+                val st = androidx.compose.ui.graphics.drawscope.Stroke(g, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                val o = androidx.compose.ui.geometry.Offset(g / 2, g / 2)
+                val t = androidx.compose.ui.geometry.Size(size.width - g, size.height - g)
+                drawArc(p.linea, 135f, 270f, false, o, t, style = st)
+                drawArc(Brush.sweepGradient(listOf(Coral, Sol, Uva)), 135f, 270f * f, false, o, t, style = st)
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Texto("${(f * 100).toInt()}%", 26f, lineas = 1, traducir = false)
+                Detalle("libre", 11f, lineas = 1)
+            }
+        }
+        Spacer(Modifier.height(esc.d(8)))
+        Texto("$libres de $total MB", 14f, lineas = 1, traducir = false)
+        if (e.turboUltimo.isNotBlank()) Detalle("Último turbo: ${e.turboUltimo}", 11.5f, lineas = 2)
+        Spacer(Modifier.height(esc.d(6)))
+        Box(Modifier.clip(RoundedCornerShape(50)).background(if (e.turbo) Coral else p.linea).padding(horizontal = esc.d(12), vertical = esc.d(4))) {
+            Texto(if (e.turbo) "Turbo activado" else "Turbo apagado", 12f, color = Color.White, lineas = 1)
         }
     }
 }

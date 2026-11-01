@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -86,7 +87,24 @@ fun PanelEstudio(e: Estado) {
                 }
             }
             Spacer(Modifier.height(esc.d(8)))
-            // Controles agrupados.
+            // En la zona "grilla" la cruceta elige widgets directo en el inicio: aquí se avisa, sin tapar nada.
+            val enGrilla = e.estudioZona == "grilla" && !e.estudioMover
+            androidx.compose.animation.AnimatedVisibility(enGrilla) {
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = esc.d(8)).clip(RoundedCornerShape(esc.d(14))).background(Uva.copy(alpha = 0.16f))
+                        .border(esc.d(1), Uva.copy(alpha = 0.4f), RoundedCornerShape(esc.d(14)))
+                        .clickable { Diptico.zonaEstudio("panel") }.padding(horizontal = esc.d(12), vertical = esc.d(8)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconoDiptico(Icono.MANDO, p.tinta, 18f, acento = Coral)
+                    Spacer(Modifier.width(esc.d(10)))
+                    Column(Modifier.weight(1f)) {
+                        Texto("Elige un widget en tu inicio", 13.5f, lineas = 1)
+                        Detalle("A lo mueve · mantén A para agregar · R1 para sus opciones", 11.5f, lineas = 1)
+                    }
+                }
+            }
+            // Controles agrupados: cada grupo es una tarjeta, con aire entre grupos.
             val filas = remember(controles) {
                 buildList {
                     var grupo = ""
@@ -115,32 +133,44 @@ fun PanelEstudio(e: Estado) {
                     pos >= ultimo -> lista.animateScrollToItem((conTitulo - 1).coerceAtLeast(0))
                 }
             }
-            LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+            LazyColumn(
+                state = lista,
+                modifier = Modifier.weight(1f).graphicsLayer { alpha = if (enGrilla) 0.6f else 1f },
+            ) {
                 items(filas.size) { k ->
                     val (i, grupo) = filas[k]
                     if (i < 0) {
-                        Etiqueta(grupo, p.tenue, 10.5f, Modifier.padding(start = esc.d(4), top = esc.d(if (k == 0) 0f else 6f), bottom = esc.d(1)))
+                        Etiqueta(grupo.uppercase(), Coral, 10.5f, Modifier.padding(start = esc.d(6), top = esc.d(if (k == 0) 2f else 16f), bottom = esc.d(6)))
                     } else {
-                        ControlEstudio(controles[i], activo = i == e.indice && !e.estudioMover, moviendo = e.estudioMover && e.estudioPestana == 0 && i == 1) {
-                            Diptico.actualizar { it.copy(indice = i) }
+                        // Posición dentro de su grupo: la tarjeta se redondea arriba en el primero y abajo en el último.
+                        val primero = k == 0 || filas[k - 1].first < 0
+                        val ultimo = k == filas.size - 1 || filas[k + 1].first < 0
+                        ControlEstudio(
+                            controles[i], activo = i == e.indice && !e.estudioMover && !enGrilla, moviendo = e.estudioMover && e.estudioPestana == 0 && i == 1,
+                            primero = primero, ultimo = ultimo,
+                        ) {
+                            Diptico.actualizar { it.copy(indice = i, estudioZona = "panel") }
                         }
                     }
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            if (e.estudioMover) Pistas("Cruceta" to "Mover", "L1 R1" to "Ancho", "L2 R2" to "Alto", "A" to "Listo")
-            else if (lateral) Pistas("↑ ↓" to "Elegir", "← →" to "Cambiar", "B" to "Terminar")
-            else Pistas("↑ ↓" to "Elegir", "← →" to "Cambiar", "L1 R1" to "Pestaña", "B" to "Terminar")
+            if (e.estudioMover) Pistas("✥" to "Mover", "L1 R1" to "Ancho", "L2 R2" to "Alto", "A" to "Soltar")
+            else if (enGrilla) Pistas("✥" to "Elegir", "A" to "Mover", "Y" to "Agregar", "R1" to "Opciones", "B" to "Listo")
+            else Pistas("↑ ↓" to "Elegir", "← →" to "Cambiar", "L1 R1" to "Pestaña", "B" to "Inicio")
         }
     }
 }
 
 @Composable
-private fun ControlEstudio(c: Diptico.Control, activo: Boolean, moviendo: Boolean, elegir: () -> Unit) {
+private fun ControlEstudio(c: Diptico.Control, activo: Boolean, moviendo: Boolean, primero: Boolean = true, ultimo: Boolean = true, elegir: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val fondo by animateColorAsState(if (activo || moviendo) p.superficie else p.superficie.copy(alpha = 0.5f), label = "fondo")
-    val forma = RoundedCornerShape(esc.d(14))
+    val fondo by animateColorAsState(if (activo || moviendo) p.superficie else p.superficie.copy(alpha = 0.55f), label = "fondo")
+    val r = esc.d(16)
+    val forma = if (activo || moviendo) RoundedCornerShape(esc.d(14))
+    else RoundedCornerShape(topStart = if (primero) r else esc.d(0), topEnd = if (primero) r else esc.d(0), bottomStart = if (ultimo) r else esc.d(0), bottomEnd = if (ultimo) r else esc.d(0))
+    if (!primero) Box(Modifier.fillMaxWidth().height(esc.d(1)).background(p.fondo2))
     Column(
         Modifier.fillMaxWidth().clip(forma).background(fondo)
             .border(esc.d(if (activo || moviendo) 2f else 0f), if (moviendo) Coral else if (activo) Uva else Color.Transparent, forma)

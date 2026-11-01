@@ -38,7 +38,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
-import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.MensajeChat
 
 /** Tres puntitos mientras la IA piensa. */

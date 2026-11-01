@@ -49,6 +49,7 @@ fun PanelGaleria(e: Estado) {
         "temas" -> "Temas" to Icono.PALETA
         "colores" -> "Mis colores" to Icono.PALETA
         "ia" -> "IA de Bisa" to Icono.CHISPA
+        "cajas" -> "Forma de las cajas" to Icono.FORMA
         else -> "Música" to Icono.MUSICA
     }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
@@ -87,6 +88,7 @@ fun PanelGaleria(e: Estado) {
             val cols = when (e.galeria) {
                 "colores" -> if (esc.angosta) 8 else 12
                 "temas" -> if (esc.angosta) 2 else 3
+                "cajas" -> if (esc.angosta) 3 else 4
                 else -> 1
             }
             SideEffect { Teclas.columnasGaleria = cols }
@@ -104,6 +106,7 @@ fun PanelGaleria(e: Estado) {
                         "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
                         "temas" -> TarjetaTema(it, activo) { Diptico.elegirIndice(i) }
                         "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
+                        "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
                         else -> FilaCancion(it, activo) { Diptico.elegirIndice(i) }
                     }
                 }
@@ -326,6 +329,38 @@ fun ExplicaIA(id: String) {
                     Detalle("Escanéalo", 11f, lineas = 1)
                 }
             }
+        }
+    }
+}
+
+
+/** Una forma de caja dibujada con la portada de un juego de esa consola, centrada en la forma. */
+@Composable
+private fun TarjetaCaja(e: Estado, it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val cid = e.galeriaConsola
+    val c = cl.nikalbazu.diptico.data.Consolas.porId(cid)
+    val j = e.juegos.firstOrNull { j -> j.consolaId == cid && (e.seleccionado?.consolaId != cid || j.clave == e.seleccionado?.clave) } ?: e.seleccionado
+    Column(
+        Modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie)
+            .border(esc.d(if (activo) 3f else if (it.enUso) 2f else 0f), if (activo) Uva else if (it.enUso) Sol else Color.Transparent, RoundedCornerShape(esc.d(16)))
+            .clickable { alPulsar() }.padding(esc.d(8)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(Modifier.fillMaxWidth().height(esc.d(118)), contentAlignment = Alignment.Center) {
+            if (c != null && j != null) {
+                val formas = e.formas + (cid to ((e.formas[cid] ?: cl.nikalbazu.diptico.estado.FormaCfg()).copy(forma = it.id, tam = 1f)))
+                androidx.compose.runtime.CompositionLocalProvider(LocalFormas provides formas) {
+                    val base = cajaDe(c)
+                    CajaJuego(j, c, escala = minOf(110f / base.alto, 120f / base.ancho))
+                }
+            }
+        }
+        Spacer(Modifier.height(esc.d(6)))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Texto(it.nombre, 12.5f, lineas = 1)
+            if (it.enUso) { Spacer(Modifier.width(esc.d(4))); Texto("✓", 12.5f, color = Sol, traducir = false) }
         }
     }
 }

@@ -226,6 +226,17 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
             .clip(if (disco) CircleShape else RoundedCornerShape(esc.d(f.radio))),
     ) {
         ArteJuego(juego, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize(), imagen = imagen, vivo = vivo)
+        if (disco) {
+            // Como un CD: brillo de arcoíris suave, anillo central y el agujero.
+            Canvas(Modifier.fillMaxSize()) {
+                val r = size.minDimension / 2
+                val c = center
+                drawCircle(Brush.sweepGradient(listOf(Color.White.copy(alpha = 0f), Color.White.copy(alpha = 0.18f), Color(0x3300E5FF), Color.White.copy(alpha = 0f), Color(0x22FF7AF0), Color.White.copy(alpha = 0f)), c), r, c)
+                drawCircle(Color.Black.copy(alpha = 0.35f), r * 0.24f, c)
+                drawCircle(Color.White.copy(alpha = 0.55f), r * 0.24f, c, style = androidx.compose.ui.graphics.drawscope.Stroke(r * 0.03f))
+                drawCircle(Color(0xFF0E0C16), r * 0.09f, c)
+            }
+        }
         when (f.banda) {
             Banda.NINGUNA -> Unit
             Banda.BISAGRA -> Box(Modifier.fillMaxHeight().width(esc.d(11 * k)).background(Color.Black.copy(alpha = 0.3f)))

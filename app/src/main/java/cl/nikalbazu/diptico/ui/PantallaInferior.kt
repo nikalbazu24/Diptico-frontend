@@ -92,7 +92,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.ui.zIndex
 import androidx.compose.animation.togetherWith
 import cl.nikalbazu.diptico.data.Consolas
-import cl.nikalbazu.diptico.data.Medio
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
@@ -168,7 +167,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.WIDGET, Panel.ENCUADRE, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
+            val completo = targetState in setOf(Panel.MENU, Panel.ENCUADRE, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -193,7 +192,8 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.ESTADISTICAS -> PanelEstadisticas(e)
             Panel.IMAGENES -> PanelImagenes(e)
             Panel.ENCUADRE -> PanelEncuadre(e)
-            Panel.WIDGET -> PanelWidget(e)
+            // Con dos pantallas, el widget abierto se muestra arriba (donde están los widgets).
+            Panel.WIDGET -> if (!conAyuda && !e.intercambiar) Box(Modifier.fillMaxSize()) else PanelWidget(e)
             Panel.GALERIA -> PanelGaleria(e)
             Panel.ESTUDIO -> PanelEstudio(e)
             Panel.EDITAR_CONSOLA -> PanelEditarConsola(e)
@@ -207,7 +207,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
 
 /** Con una ventana encima (opciones del juego, textos), lo de atrás se difumina. */
 fun Modifier.difuminar(e: Estado): Modifier =
-    if (Estilo.efectosCompletos && e.panel in setOf(Panel.RAPIDO, Panel.PASO, Panel.CLAVE)) this.blur(16.dp) else this
+    if (Estilo.efectosCompletos && e.panel in setOf(Panel.RAPIDO, Panel.PASO, Panel.CLAVE, Panel.TRABAJOS, Panel.ENCUADRE)) this.blur(18.dp) else this
 
 /** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
 @Composable
@@ -224,6 +224,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
             "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
             "carrusel" -> CarruselJuegos(e, Modifier.fillMaxSize())
+            "lomos" -> VistaLomos(e, Modifier.fillMaxSize())
             // El estante y su información quedan centrados en el espacio disponible.
             else -> Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Estante(e, alto = (if (esc.angosta) 192f else 214f) * t.coerceAtMost(1.25f), escala = escalaEstante * t)

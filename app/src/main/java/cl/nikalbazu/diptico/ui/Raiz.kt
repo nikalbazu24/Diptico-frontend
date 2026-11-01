@@ -35,7 +35,9 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         val arribaFisica = miPantalla == android.view.Display.DEFAULT_DISPLAY &&
             (rol == Rol.UNICA || rol == (if (e.intercambiar) Rol.INFERIOR else Rol.SUPERIOR))
         val centroAqui = e.panel == Panel.CENTRO && arribaFisica
-        val desenfoque by animateDpAsState(if (centroAqui && Estilo.efectosCompletos) 18.dp else 0.dp, tween(260), label = "desenfoque")
+        // Desenfoque detrás de lo que se abre encima: el centro de control, la bienvenida, el reloj grande o la continuación.
+        val encima = centroAqui || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
+        val desenfoque by animateDpAsState(if (encima && Estilo.efectosCompletos) 18.dp else 0.dp, tween(300), label = "desenfoque")
         Box(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
                 when {

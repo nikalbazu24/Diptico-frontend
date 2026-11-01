@@ -7,7 +7,6 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.combinedClickable
@@ -31,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -79,9 +77,6 @@ import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.Temas
 import cl.nikalbazu.diptico.estado.Widget
 import cl.nikalbazu.diptico.estado.Widgets
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /** Saludo según la hora del día. */
 private fun saludo(): String {
@@ -115,7 +110,7 @@ fun PantallaInicio(e: Estado) {
         Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 20f, trabajos = e.trabajos)
 
-        Column(Modifier.fillMaxSize().padding(start = esc.d(20), end = esc.d(20), top = esc.d(48), bottom = esc.d(12))) {
+        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(48), bottom = esc.d(8))) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f)) {
                     if (e.editandoWidgets || e.saludoInicio) Texto(if (e.editandoWidgets) "Acomodando tu inicio" else saludo(), 24f, lineas = 1)
@@ -177,9 +172,11 @@ fun PantallaInicio(e: Estado) {
 
 /** La grilla de widgets, con su modo de edición. */
 @Composable
-private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
+private fun Grilla(e: Estado, pagina: Int, modifier0: Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    // Margen de seguridad: el marco y el agrandado del widget elegido siempre se ven completos.
+    val modifier = modifier0.padding(esc.d(8))
     val densidad = LocalDensity.current
     // Con más de 4 filas, la página se desplaza hacia abajo.
     val desplazar = rememberScrollState()
@@ -190,15 +187,21 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
         val altoU = maxHeight.value / esc.factor
         val celdaAn = (anchoU - hueco * (Widgets.COLUMNAS - 1)) / Widgets.COLUMNAS
         val celdaAl = (altoU - hueco * (visibles - 1)) / visibles
+        val pasoX = with(densidad) { esc.d(celdaAn + hueco).toPx() }
+        val pasoY = with(densidad) { esc.d(celdaAl + hueco).toPx() }
         Box(
             Modifier.fillMaxSize().verticalScroll(desplazar, enabled = Widgets.FILAS > 4 && !e.editandoWidgets)
-                // Mantener apretado en cualquier parte entra al modo de edición.
-                .pointerInput(e.editandoWidgets) { if (!e.editandoWidgets) detectTapGestures(onLongPress = { Diptico.editarWidgets() }) },
+                // Mantener apretado: fuera del editor entra a acomodar; dentro, abre la burbuja para agregar ahí.
+                .pointerInput(e.editandoWidgets, pasoX, pasoY) {
+                    if (!e.editandoWidgets) detectTapGestures(onLongPress = { Diptico.editarWidgets() })
+                    else detectTapGestures(
+                        onLongPress = { o -> Diptico.abrirBurbuja((o.x / pasoX).toInt(), (o.y / pasoY).toInt()) },
+                        onTap = { Diptico.cerrarBurbuja() },
+                    )
+                },
         ) {
         // Alto total de la grilla (más alto que la pantalla si hay más de 4 filas).
         Box(Modifier.size(esc.d(anchoU), esc.d(Widgets.FILAS * celdaAl + (Widgets.FILAS - 1) * hueco)))
-        val pasoX = with(densidad) { esc.d(celdaAn + hueco).toPx() }
-        val pasoY = with(densidad) { esc.d(celdaAl + hueco).toPx() }
 
         if (e.editandoWidgets) {
             // Celdas de fondo para ver dónde cae cada widget.
@@ -242,8 +245,10 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                         ),
                 ) {
                     // Cada widget puede agrandar o achicar su contenido (Tamaño del contenido).
-                    CompositionLocalProvider(LocalWidget provides w, LocalEscala provides Escala(esc.factor * w.escala, esc.ancho, esc.texto)) {
-                        if (w.tipo.startsWith("imagen")) WidgetImagen(w) else WidgetVista(e, w.tipo, w.an, w.al)
+                    // El contenido crece un poco cuando el widget es más grande que su tamaño de siempre.
+                    val auto = remember(w.tipo, w.an, w.al) { escalaAuto(w) }
+                    CompositionLocalProvider(LocalWidget provides w, LocalEscala provides Escala(esc.factor * w.escala * auto, esc.ancho, esc.texto)) {
+                        ContenidoWidget(e, w, w.an, w.al)
                     }
                     if (e.editandoWidgets) {
                         // Capa para arrastrar con el dedo (tapa los botones del widget mientras se edita).
@@ -267,11 +272,32 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                                 .clickable { Diptico.elegirWidget(i); Diptico.abrirAjustesWidget(i) },
                         ) {
                             if (elegido) {
+                                // Manija para estirarlo libremente con el dedo (ancho y alto a la vez).
+                                var estirar by remember { mutableStateOf(Offset.Zero) }
+                                val nAn = (w.an + (estirar.x / pasoX).roundToInt()).coerceIn(1, Widgets.COLUMNAS - w.x)
+                                val nAl = (w.al + (estirar.y / pasoY).roundToInt()).coerceIn(1, Widgets.FILAS - w.y)
                                 Box(
                                     Modifier.align(Alignment.TopEnd).padding(esc.d(6)).clip(RoundedCornerShape(50))
-                                        .background(if (e.estudioMover) Coral else Uva)
+                                        .background(if (e.estudioMover || estirar != Offset.Zero) Coral else Uva)
                                         .padding(horizontal = esc.d(8), vertical = esc.d(3)),
-                                ) { Texto("${w.an} × ${w.al}", 11.5f, color = SobreUva, lineas = 1, traducir = false) }
+                                ) { Texto("$nAn × $nAl", 11.5f, color = SobreUva, lineas = 1, traducir = false) }
+                                Box(
+                                    Modifier.align(Alignment.BottomEnd).padding(esc.d(4)).size(esc.d(30))
+                                        .graphicsLayer { translationX = estirar.x; translationY = estirar.y }
+                                        .clip(CircleShape).background(if (e.estudioMover) Coral else Uva)
+                                        .border(esc.d(2), Color.White, CircleShape)
+                                        .pointerInput(w.tipo, pasoX, pasoY) {
+                                            detectDragGestures(
+                                                onDragEnd = {
+                                                    val w0 = Diptico.estado.value.widgets[i]
+                                                    Diptico.redimensionarWidget(i, w0.an + (estirar.x / pasoX).roundToInt(), w0.al + (estirar.y / pasoY).roundToInt())
+                                                    estirar = Offset.Zero
+                                                },
+                                                onDragCancel = { estirar = Offset.Zero },
+                                            ) { cambio, d -> cambio.consume(); estirar += d }
+                                        },
+                                    contentAlignment = Alignment.Center,
+                                ) { IconoDiptico(Icono.FORMA, Color.White, 14f) }
                             }
                         }
                     }
@@ -279,7 +305,96 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
             }
         }
     }
+        // Burbuja para agregar un widget: sale desde la celda donde mantuviste el dedo (o el widget elegido).
+        val b = e.burbuja
+        if (e.editandoWidgets && b != null && pagina == e.paginaInicio) {
+            BurbujaAgregar(e, b, celdaAn, celdaAl, hueco, anchoU, altoU)
+        }
     }
+}
+
+/** La burbuja de "agregar": un globo que crece desde la celda tocada, con burbujas de cada widget disponible. */
+@Composable
+private fun BurbujaAgregar(e: Estado, celda: Pair<Int, Int>, celdaAn: Float, celdaAl: Float, hueco: Float, anchoU: Float, altoU: Float) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val opciones = remember(e.widgets) { Diptico.opcionesBurbuja(e) }
+    val crecer = remember(celda) { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(celda) { crecer.animateTo(1f, spring(dampingRatio = 0.62f, stiffness = 420f)) }
+    val cx = celda.first * (celdaAn + hueco) + celdaAn / 2
+    val cy = celda.second * (celdaAl + hueco) + celdaAl / 2
+    val cols = 4
+    val anchoB = minOf(anchoU - 16f, 4 * 92f + 24f)
+    val filas = (opciones.size + cols - 1) / cols
+    val altoB = minOf(altoU - 10f, filas * 86f + 54f)
+    // El globo se ubica para no salirse de la pantalla, y crece desde el punto tocado.
+    val x0 = (cx - anchoB / 2).coerceIn(4f, anchoU - anchoB - 4f)
+    val y0 = (if (cy > altoU / 2) cy - altoB - 20f else cy + 20f).coerceIn(2f, altoU - altoB - 2f)
+    val origen = androidx.compose.ui.graphics.TransformOrigin(((cx - x0) / anchoB).coerceIn(0f, 1f), ((cy - y0) / altoB).coerceIn(0f, 1f))
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.25f * crecer.value.coerceIn(0f, 1f))).clickable(interactionSource = null, indication = null) { Diptico.cerrarBurbuja() })
+    // El punto de origen.
+    Box(Modifier.offset(x = esc.d(cx - 9), y = esc.d(cy - 9)).size(esc.d(18)).graphicsLayer { scaleX = crecer.value; scaleY = crecer.value }.clip(CircleShape).background(Coral))
+    Column(
+        Modifier.offset(x = esc.d(x0), y = esc.d(y0)).size(esc.d(anchoB), esc.d(altoB))
+            .graphicsLayer { scaleX = crecer.value; scaleY = crecer.value; alpha = crecer.value.coerceIn(0f, 1f); transformOrigin = origen }
+            .shadow(esc.d(18), RoundedCornerShape(esc.d(30)))
+            .clip(RoundedCornerShape(esc.d(30))).background(p.fondo2.copy(alpha = 0.97f)).border(esc.d(1.5f), Uva.copy(alpha = 0.5f), RoundedCornerShape(esc.d(30)))
+            .sinCerrar().padding(esc.d(12)),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconoDiptico(Icono.APPS, Coral, 16f)
+            Spacer(Modifier.width(esc.d(6)))
+            Texto("Agregar aquí", 14f, lineas = 1, modifier = Modifier.weight(1f))
+            Pista("B", "Cerrar")
+        }
+        Spacer(Modifier.height(esc.d(8)))
+        val grilla = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
+        LaunchedEffect(e.burbujaSel) { grilla.mostrar(e.burbujaSel) }
+        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+            columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols), state = grilla,
+            verticalArrangement = Arrangement.spacedBy(esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(4)),
+        ) {
+            items(opciones.size) { k ->
+                val o = opciones[k]
+                val sel = k == e.burbujaSel
+                val aparece = remember { androidx.compose.animation.core.Animatable(0f) }
+                LaunchedEffect(Unit) { kotlinx.coroutines.delay(40L * k.coerceAtMost(12)); aparece.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 500f)) }
+                Column(
+                    Modifier.graphicsLayer { scaleX = aparece.value; scaleY = aparece.value }.clip(RoundedCornerShape(esc.d(16)))
+                        .clickable { Diptico.elegirBurbuja(k) }.padding(vertical = esc.d(4)),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(
+                        Modifier.size(esc.d(if (sel) 52f else 46f)).clip(CircleShape)
+                            .then(if (sel) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie))
+                            .border(esc.d(if (sel) 2.5f else 1f), if (sel) Color.White else p.linea, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) { IconoDiptico(o.icono, if (sel) SobreUva else p.tinta, 22f, acento = Coral) }
+                    Spacer(Modifier.height(esc.d(3)))
+                    Texto(o.nombre, 10.5f, lineas = 2, alinear = TextAlign.Center, color = if (sel) p.tinta else p.tenue, interlineado = 12f)
+                }
+            }
+        }
+    }
+}
+
+/** El contenido de cada widget según su tipo y su tamaño (1×1, angosto, una fila o grande). */
+@Composable
+private fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an: Int, al: Int) {
+    when {
+        w.tipo.startsWith("imagen") -> WidgetImagen(w)
+        w.tipo.startsWith("video") -> WidgetVideo(w, e.sesion == null)
+        an == 1 && w.tipo != "asistente" -> WidgetMini(e, w.tipo, al)
+        w.tipo == "asistente" && an == 1 -> WidgetMini(e, w.tipo, al)
+        else -> WidgetVista(e, w.tipo, an, al)
+    }
+}
+
+/** Qué tanto crece el contenido según cuánto más grande es el widget que su tamaño de siempre. */
+private fun escalaAuto(w: cl.nikalbazu.diptico.estado.Widget): Float {
+    val base = cl.nikalbazu.diptico.estado.Widgets.porDefecto.firstOrNull { it.tipo == w.tipo } ?: return 1f
+    val r = kotlin.math.sqrt((w.an * w.al).toFloat() / (base.an * base.al).toFloat())
+    return if (r > 1f) r.coerceAtMost(1.35f) else 1f
 }
 
 /** El widget que se está dibujando (su estilo, color, fondo y esquinas). */
@@ -851,8 +966,125 @@ private fun fraseDelDia(e: Estado): String {
 @Composable
 private fun WidgetImagen(w: cl.nikalbazu.diptico.estado.Widget) {
     val esc = LocalEscala.current
-    Box(Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(22))).background(Color.Black)) {
-        w.uri?.let { ImagenAnimada(android.net.Uri.parse(it), Modifier.fillMaxSize()) }
+    // Sin fondo: los PNG y GIF con transparencia se ven tal cual. La imagen se ajusta entera al tamaño del widget.
+    val forma = RoundedCornerShape(esc.d(w.radio.toFloat()))
+    Box(
+        Modifier.fillMaxSize().clip(forma)
+            .then(if (w.estilo == "sinfondo") Modifier else Modifier.background(LocalPaleta.current.superficie.copy(alpha = 0.6f * w.opacidad)))
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = { Diptico.editarWidgets() }),
+    ) {
+        w.uri?.let { ImagenAnimada(android.net.Uri.parse(it), Modifier.fillMaxSize(), recortar = w.variante == 1) }
+    }
+}
+
+/**
+ * Un video corto como widget: se repite en silencio, decodificado por hardware en una TextureView
+ * (no recarga la interfaz) y se pausa solo mientras juegas o cuando no se ve.
+ */
+@Composable
+private fun WidgetVideo(w: cl.nikalbazu.diptico.estado.Widget, activo: Boolean) {
+    val esc = LocalEscala.current
+    val uri = w.uri ?: return
+    val forma = RoundedCornerShape(esc.d(w.radio.toFloat()))
+    val reproductor = remember(uri) { android.media.MediaPlayer() }
+    var listo by remember(uri) { mutableStateOf(false) }
+    androidx.compose.runtime.DisposableEffect(uri) {
+        onDispose { try { reproductor.release() } catch (_: Exception) {} }
+    }
+    LaunchedEffect(activo, listo) {
+        if (!listo) return@LaunchedEffect
+        try { if (activo) reproductor.start() else reproductor.pause() } catch (_: Exception) {}
+    }
+    Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = { Diptico.editarWidgets() })) {
+        androidx.compose.ui.viewinterop.AndroidView(
+            factory = { c ->
+                android.view.TextureView(c).apply {
+                    isOpaque = false
+                    surfaceTextureListener = object : android.view.TextureView.SurfaceTextureListener {
+                        override fun onSurfaceTextureAvailable(st: android.graphics.SurfaceTexture, ancho: Int, alto: Int) {
+                            try {
+                                reproductor.reset()
+                                reproductor.setDataSource(c, android.net.Uri.parse(uri))
+                                reproductor.setSurface(android.view.Surface(st))
+                                reproductor.isLooping = true
+                                reproductor.setVolume(0f, 0f)
+                                reproductor.setOnPreparedListener { mp ->
+                                    // Recorta al centro para llenar el widget sin deformarse.
+                                    val vw = mp.videoWidth.toFloat(); val vh = mp.videoHeight.toFloat()
+                                    if (vw > 0 && vh > 0 && width > 0 && height > 0) {
+                                        val k = maxOf(width / vw, height / vh)
+                                        val m = android.graphics.Matrix()
+                                        m.setScale(vw * k / width, vh * k / height, width / 2f, height / 2f)
+                                        setTransform(m)
+                                    }
+                                    listo = true
+                                    if (activo) mp.start()
+                                }
+                                reproductor.prepareAsync()
+                            } catch (_: Exception) {}
+                        }
+                        override fun onSurfaceTextureSizeChanged(st: android.graphics.SurfaceTexture, ancho: Int, alto: Int) {}
+                        override fun onSurfaceTextureDestroyed(st: android.graphics.SurfaceTexture): Boolean { try { reproductor.pause() } catch (_: Exception) {}; return true }
+                        override fun onSurfaceTextureUpdated(st: android.graphics.SurfaceTexture) {}
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+/** Widgets de una columna de ancho (1×1, 1×2…): solo lo esencial, grande y al centro. */
+@Composable
+private fun WidgetMini(e: Estado, tipo: String, al: Int) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val j = e.seleccionado
+    val m by cl.nikalbazu.diptico.audio.Medios.sonando.collectAsState()
+    val avisos by cl.nikalbazu.diptico.audio.Avisos.lista.collectAsState()
+    val bateria = rememberBateria()
+    val (icono, valor) = when (tipo) {
+        "reloj" -> null to rememberHora()
+        "bateria" -> Icono.BATERIA to (if (bateria >= 0) "$bateria%" else "—")
+        "tiempo", "estadisticas" -> Icono.RELOJ to "${e.datos.values.sumOf { it.tiempo } / 3600} h"
+        "consolas" -> Icono.BIBLIOTECA to "${e.juegos.size}"
+        "favoritos" -> Icono.CORAZON to "${e.datos.values.count { it.favorito }}"
+        "notificaciones" -> Icono.CAMPANA to "${avisos.size}"
+        "logros" -> Icono.TROFEO to (e.perfilRA?.puntos?.let { "$it" } ?: "—")
+        "musica" -> Icono.MUSICA to (if (m?.reproduciendo == true) "▶" else "")
+        else -> Widgets.icono(tipo) to ""
+    }
+    // Juego, recientes y sugerencia: la portada llena el widget.
+    val portada = when (tipo) {
+        "juego" -> j
+        "recientes" -> e.datos.entries.filter { it.value.ultimo > 0 }.maxByOrNull { it.value.ultimo }?.let { (k, _) -> e.juegos.firstOrNull { it.clave == k } }
+        "favoritos" -> e.juegos.firstOrNull { e.datos[it.clave]?.favorito == true }
+        else -> null
+    }
+    if (portada != null) {
+        val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
+        Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { if (tipo == "juego") Diptico.jugar() else Diptico.abrirWidgetTipo(tipo) }, onLongClick = { Diptico.editarWidgets() })) {
+            ArteJuego(portada, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize())
+            if (tipo != "juego") Box(Modifier.align(Alignment.TopEnd).padding(esc.d(5)).size(esc.d(22)).clip(CircleShape).background(Color.Black.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
+                IconoDiptico(Widgets.icono(tipo), Color.White, 12f)
+            }
+        }
+        return
+    }
+    if (tipo == "asistente") {
+        Tarjeta {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(minOf(56f, 30f * al)).value) }
+        }
+        return
+    }
+    Tarjeta(alPulsar = { if (tipo == "musica") cl.nikalbazu.diptico.audio.Medios.alternar() else Diptico.abrirWidgetTipo(tipo) }) {
+        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            if (icono != null) IconoDiptico(icono, p.tinta, if (valor.isEmpty()) 26f else 18f, acento = Coral)
+            if (valor.isNotEmpty()) {
+                if (icono != null) Spacer(Modifier.height(esc.d(2)))
+                Texto(valor, if (tipo == "reloj") (if (al >= 2) 26f else 19f) else 18f, lineas = 1, traducir = false)
+            }
+        }
     }
 }
 
@@ -1019,6 +1251,27 @@ private fun CuadroCuenta(titulo: String, valor: String, color: Color, modifier: 
     Column(modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie).padding(esc.d(10))) {
         Etiqueta(titulo, color, 10.5f)
         Texto(valor, 30f, color = color, lineas = 1, traducir = false)
+    }
+}
+
+/** El widget abierto en la pantalla de arriba: a la izquierda el widget en grande, a la derecha lo que se puede hacer. */
+@Composable
+fun WidgetArriba(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val entra = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(e.widgetAbierto) { entra.snapTo(0f); entra.animateTo(1f, spring(dampingRatio = 0.75f, stiffness = 380f)) }
+    Box(Modifier.fillMaxSize().background(p.fondo)) {
+        Row(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f).fillMaxHeight().graphicsLayer { alpha = entra.value; scaleX = 0.94f + 0.06f * entra.value; scaleY = 0.94f + 0.06f * entra.value }) {
+                LecturaWidget(e)
+            }
+            Box(
+                Modifier.width(esc.d(330)).fillMaxHeight()
+                    .graphicsLayer { translationX = (1f - entra.value) * 120f * density; alpha = entra.value }
+                    .border(esc.d(1), p.linea),
+            ) { PanelWidget(e) }
+        }
     }
 }
 
