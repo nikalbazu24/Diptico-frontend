@@ -1203,7 +1203,7 @@ object Diptico {
         return when (e.pasoTuto) {
             PasoTuto.BIENVENIDA -> listOf(
                 Opcion("¡Comencemos!", "Toma unos 2 minutos", Icono.JUGAR) { siguientePaso() },
-                Opcion("Idioma", Idioma.IDIOMAS.first { it.first == e.idioma }.second, Icono.IDIOMA) {
+                Opcion("Idioma", (Idioma.IDIOMAS.firstOrNull { it.first == e.idioma }?.second ?: e.idioma), Icono.IDIOMA) {
                     val l = Idioma.IDIOMAS.map { it.first }
                     cambiarIdioma(l[(l.indexOf(estado.value.idioma) + 1).mod(l.size)])
                 },
@@ -2444,7 +2444,7 @@ object Diptico {
         )
         val lista = mutableListOf(
             Opcion("Buscar un ajuste", "Y", Icono.BUSCAR, "Escribe una palabra (música, tema, teclado…) y te muestro dónde está.") { abrirTexto("buscar_ajuste") },
-            Opcion("Idioma", Idioma.IDIOMAS.first { it.first == e.idioma }.second, Icono.IDIOMA) { abrirMenu(Seccion.IDIOMA) },
+            Opcion("Idioma", (Idioma.IDIOMAS.firstOrNull { it.first == e.idioma }?.second ?: e.idioma), Icono.IDIOMA) { abrirMenu(Seccion.IDIOMA) },
             Opcion("Acomodar el inicio", icono = Icono.EDITAR, ayuda = "Mueve, agranda y cambia el estilo de tus widgets. También manteniendo apretado el inicio.") { cerrarPanel(); editarWidgets() },
             Opcion("Hablar con Bisa", icono = Icono.BISA) { abrirAsistente() },
         )
@@ -3507,7 +3507,7 @@ object Diptico {
         almacen.guardarTexto("idioma", cod)
         Idioma.fijar(app, cod)
         actualizar { it.copy(idioma = cod, fichaDe = null, ficha = null) }
-        avisar(Idioma.IDIOMAS.first { it.first == cod }.second)
+        avisar(Idioma.IDIOMAS.firstOrNull { it.first == cod }?.second ?: cod)
     }
 
     fun abrirAsistente() {
@@ -4328,12 +4328,13 @@ object Diptico {
             "juego" -> { abrirFicha(); return }
             "paso" -> { abrirQuedaste(); return }
             "accesos" -> { abrirCentro(); return }
-            else -> if (w.tipo.startsWith("atajo-")) {
-                val clave = w.tipo.removePrefix("atajo-")
-                if (e.juegos.none { it.clave == clave }) { avisar("Ese juego ya no está en tu biblioteca"); return }
-                elegirConsola("todo"); elegirJuego(clave); jugar(); return
-            }
             "apps" -> { abrirApps(); return }
+        }
+        // Acceso directo: juega al tiro.
+        if (w.tipo.startsWith("atajo-")) {
+            val clave = w.tipo.removePrefix("atajo-")
+            if (e.juegos.none { it.clave == clave }) { avisar("Ese juego ya no está en tu biblioteca"); return }
+            elegirConsola("todo"); elegirJuego(clave); jugar(); return
         }
         if (w.tipo == "sugerencia" && e.sugeridas.isEmpty()) nuevasSugerencias()
         actualizar { it.copy(panel = Panel.WIDGET, widgetAbierto = i, widgetFoco = i, indice = 0) }

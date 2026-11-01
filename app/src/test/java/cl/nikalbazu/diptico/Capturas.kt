@@ -958,6 +958,54 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t210_ventana_juego() = foto("210_ventana_juego_imagen_inicio", conRecientes(base()).copy(panel = Panel.RAPIDO, indice = 8), Rol.INFERIOR)
 
+    // ---------- 1.0 beta.5 ----------
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t211_bisa_nueva() = foto("211_bisa_nueva", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 0, claveIa = "x"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t212_bisa_vacia() = foto("212_bisa_vacia", base().copy(panel = Panel.ASISTENTE, indice = 0, claveIa = "x"), Rol.INFERIOR)
+
+    @Test fun t213_teclado_grande() = foto("213_teclado_grande", base().copy(panel = Panel.CLAVE, textoPara = "asistente", borrador = "¿Cómo paso el templo del agua", teclaFila = 2, teclaCol = 3), Rol.SUPERIOR)
+
+    @Test fun t214_teclado_una() = foto("214_teclado_una_pantalla", base().copy(panel = Panel.CLAVE, textoPara = "buscar_juego", borrador = "zel", modoPantallas = "una_negra", teclaFila = 5, teclaCol = 2), Rol.UNICA)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t215_carpetas() = foto("215_vista_carpetas", conRecientes(base()).copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR)
+
+    @Test fun t216_carpetas_una() = foto("216_carpetas_una_pantalla", conRecientes(base()).copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "gba", modoPantallas = "una_negra"), Rol.UNICA)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t217_centro_activos() = foto("217_centro_accesos_activos", base().copy(panel = Panel.CENTRO, indice = 0, turbo = true), Rol.INFERIOR)
+
+    @Test fun t218_bienvenida_nueva() = foto("218_bienvenida_animada", conRecientes(base()).copy(bienvenida = 1L, ausencia = 2 * 3_600_000L, nombre = "Nico"), Rol.SUPERIOR)
+
+    @Test fun t219_colecciones() {
+        val e = conWidgets(conRecientes(base()))
+        val l = e.widgets.map { if (it.tipo == "asistente" || it.tipo == "recientes") it.copy(visible = false) else it } +
+            listOf(
+                Widget("coleccion-a", 0, 2, 3, 2), Widget("atajo-gba/2", 3, 2, 1, 2, estilo = "sinfondo"), Widget("atajo-psx/3", 4, 2, 1, 2, estilo = "sinfondo"),
+            )
+        foto(
+            "219_colecciones_y_accesos", e.copy(widgets = l, colecciones = mapOf("a" to cl.nikalbazu.diptico.estado.Coleccion("RPG pendientes", listOf("snes/1", "gba/2", "nds/4", "ps2/5")))),
+            Rol.SUPERIOR,
+        )
+    }
+
+    @Test fun t220_portada_botones() = foto("220_portada_botones_chicos", conRecientes(base()), Rol.SUPERIOR)
+
+    @Test fun t221_menu_equipo() = foto("221_menu_tu_equipo", base().copy(panel = Panel.MENU, seccion = Seccion.PANTALLAS, enOpciones = true, indice = 0), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t222_colecciones_galeria() = foto(
+        "222_galeria_colecciones",
+        base().copy(panel = Panel.GALERIA, galeria = "colecciones", colecciones = mapOf("a" to cl.nikalbazu.diptico.estado.Coleccion("RPG pendientes", listOf("snes/1")))),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t223_carrusel() = foto("223_carrusel", conRecientes(base()).copy(vista = "carrusel", juegoSel = "psx/3"), Rol.INFERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),
