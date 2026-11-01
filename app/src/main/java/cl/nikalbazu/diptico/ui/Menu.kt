@@ -238,7 +238,7 @@ private var conAyudaAngosta = false
 
 /** Una opción del menú: ícono, título, y a la derecha su valor o un interruptor. */
 @Composable
-private fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
+fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val fondo by animateColorAsState(if (activa) p.superficie else p.superficie.copy(alpha = 0.45f), label = "fila")

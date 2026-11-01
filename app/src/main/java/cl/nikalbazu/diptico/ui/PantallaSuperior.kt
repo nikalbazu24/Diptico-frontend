@@ -49,6 +49,10 @@ fun PantallaSuperior(e: Estado) {
         AyudaMenu(e)
         return
     }
+    if (e.panel == Panel.WIDGET) {
+        LecturaWidget(e)
+        return
+    }
     if (e.panel == Panel.ENCUADRE) {
         VistaEncuadre(e)
         return

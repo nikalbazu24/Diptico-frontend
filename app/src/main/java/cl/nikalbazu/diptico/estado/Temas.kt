@@ -219,6 +219,15 @@ object Temas {
             .minByOrNull { it.second.start }
             ?.let { (id, r) -> fiestas.firstOrNull { it.id == id }?.let { it to r.start } }
 
+    /** Las próximas [n] celebraciones (sin repetir) y cuándo empiezan. */
+    fun proximas(n: Int, hoy: LocalDate = LocalDate.now()): List<Pair<Fiesta, LocalDate>> =
+        (rangos(hoy.year) + rangos(hoy.year + 1))
+            .filter { it.second.start.isAfter(hoy) }
+            .sortedBy { it.second.start }
+            .distinctBy { it.first }
+            .mapNotNull { (id, r) -> fiestas.firstOrNull { it.id == id }?.let { it to r.start } }
+            .take(n)
+
     // ---------- Temas creados con IA ----------
 
     /**

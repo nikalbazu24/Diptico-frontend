@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { ENCUADRE, APPS, EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
+enum class Panel { WIDGET, ENCUADRE, APPS, EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -358,6 +358,19 @@ data class Estado(
     /** Acercamiento lento en las portadas elegidas y en la imagen grande. */
     val zoomLento: Boolean = true,
     val paqueteSonidos: String = "tema",
+    /** Navegar los widgets con la cruceta: cuál tiene el foco (-1 = ninguno, el control maneja el estante). */
+    val widgetFoco: Int = -1,
+    /** El widget abierto (su contenido) en Panel.WIDGET. */
+    val widgetAbierto: Int = -1,
+    /** Reloj: temporizador (cuándo termina y cuánto dura), cronómetro y cada cuánto recordar una pausa al jugar. */
+    val temporizadorFin: Long = 0L,
+    val temporizadorMin: Int = 10,
+    val cronoInicio: Long = 0L,
+    val cronoAcumulado: Long = 0L,
+    val pausaCada: Int = 0,
+    /** Sugerencias del widget "¿Qué juego hoy?" (cambian al pedir otras) y la frase extra elegida. */
+    val sugeridas: List<String> = emptyList(),
+    val fraseExtra: Int = 0,
     val editandoWidgets: Boolean = false,
     val widgetSel: Int = 0,
     /** Estudio de widgets: pestaña (0 widget, 1 agregar, 2 página) y si la cruceta está moviendo el widget. */
@@ -564,6 +577,8 @@ object Diptico {
             encuadres = leerEncuadres(almacen.texto("encuadres", "{}")),
             zoomLento = almacen.bool("zoomLento", true),
             paqueteSonidos = almacen.texto("paqueteSonidos", "tema"),
+            pausaCada = almacen.texto("pausaCada", "0").toIntOrNull() ?: 0,
+            temporizadorMin = almacen.texto("temporizadorMin", "10").toIntOrNull() ?: 10,
             zoomArriba = almacen.texto("zoomArriba", "1").toFloatOrNull() ?: 1f,
             zoomAbajo = almacen.texto("zoomAbajo", "1").toFloatOrNull() ?: 1f,
             musicaTema = almacen.bool("musicaTema", true),
@@ -596,6 +611,7 @@ object Diptico {
         Sonidos.paquete = almacen.texto("paqueteSonidos", "tema")
         aplicarFluidez()
         vigilarProtector()
+        vigilarPausas()
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
             Avisos.nuevos.collect { a ->
@@ -1666,6 +1682,10 @@ object Diptico {
             actualizar { it.copy(panel = Panel.MENU, seccion = s, enOpciones = true, indice = 0) }
             return
         }
+        if (e.panel == Panel.WIDGET) {
+            actualizar { it.copy(panel = Panel.NINGUNO, widgetAbierto = -1, indice = 0) }
+            return
+        }
         if (e.panel == Panel.ENCUADRE) {
             val i = opcionesFicha().indexOfFirst { it.titulo == if (e.encuadreDe.endsWith("|arte")) "Encuadrar la imagen grande" else "Encuadrar la portada" }
             actualizar { it.copy(panel = Panel.FICHA, indice = i.coerceAtLeast(0), encuadreDe = "") }
@@ -1927,6 +1947,10 @@ object Diptico {
                 val total = opcionesSeccion(e.seccion).size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta + total) % total) }
             }
+            Panel.WIDGET -> {
+                val total = opcionesWidget(e).size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
             Panel.RAPIDO -> {
                 val total = opcionesRapido().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
@@ -2009,6 +2033,7 @@ object Diptico {
         when (e.panel) {
             Panel.MENU -> if (!e.enOpciones) columnaMenu(true) else opcionesSeccion(e.seccion).getOrNull(e.indice)?.accion?.invoke()
             Panel.RAPIDO -> opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
+            Panel.WIDGET -> opcionesWidget(e).getOrNull(e.indice)?.takeIf { !it.apagada }?.accion?.invoke()
             Panel.PORTS -> e.apps.getOrNull(e.indice)?.let { alternarPort(it.paquete) }
             Panel.FICHA -> if (e.pestanaFicha >= 2) opcionesFicha().getOrNull(e.indice)?.accion?.invoke()
             Panel.BUSCAR -> e.visibles.getOrNull(e.indice)?.let { j ->
@@ -2945,7 +2970,14 @@ object Diptico {
     )
 
     /** Select: cambia entre el inicio con widgets y el de carátulas. */
+    /** Abre un widget por su tipo (al tocarlo). */
+    fun abrirWidgetTipo(tipo: String) {
+        val i = estado.value.widgets.indexOfFirst { it.tipo == tipo }
+        if (i >= 0) abrirWidget(i)
+    }
+
     fun alternarInicio() {
+        actualizar { it.copy(widgetFoco = -1) }
         val v = if (estado.value.inicio == "widgets") "heroe" else "widgets"
         almacen.guardarTexto("inicio", v)
         actualizar { it.copy(inicio = v, editandoWidgets = false) }
@@ -2960,7 +2992,7 @@ object Diptico {
     fun editarWidgets() {
         almacen.guardarTexto("inicio", "widgets")
         val primero = estado.value.widgets.indexOfFirst { it.visible }.coerceAtLeast(0)
-        actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.ESTUDIO, estudioPestana = 0, estudioMover = false, indice = 0) }
+        actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.ESTUDIO, estudioPestana = 0, estudioMover = false, indice = 0, widgetFoco = -1) }
     }
 
     fun terminarEdicion() {
@@ -2998,27 +3030,87 @@ object Diptico {
                 nx < 0 && w.pagina > 0 -> encajar(w.copy(pagina = w.pagina - 1, x = Widgets.COLUMNAS - w.an)).takeIf { !choca(it, i) } ?: w
                 nx + w.an > Widgets.COLUMNAS && w.pagina < e.paginas - 1 -> encajar(w.copy(pagina = w.pagina + 1, x = 0)).takeIf { !choca(it, i) } ?: w
                 else -> {
-                    // Salta por encima de los otros widgets hasta el primer lugar libre en esa dirección.
-                    var paso = 1
-                    var r: Widget? = null
-                    while (paso <= maxOf(Widgets.COLUMNAS, Widgets.FILAS)) {
-                        val c = encajar(w.copy(x = w.x + dx * paso, y = w.y + dy * paso))
-                        if (c.x == w.x && c.y == w.y) break
-                        if (!choca(c, i)) { r = c; break }
-                        paso++
+                    // Avanza una celda; si ahí hay otro widget, ese se corre para dejarle espacio.
+                    val c = encajar(w.copy(x = w.x + dx, y = w.y + dy))
+                    if (c.x == w.x && c.y == w.y) w
+                    else if (!choca(c, i)) c
+                    else {
+                        val l = empujando(i, c)
+                        if (l != null) { pendienteEmpuje = l; c } else {
+                            // Si no hay cómo correrlo, salta por encima hasta el primer lugar libre.
+                            var paso = 2
+                            var r: Widget? = null
+                            while (paso <= maxOf(Widgets.COLUMNAS, Widgets.FILAS)) {
+                                val c2 = encajar(w.copy(x = w.x + dx * paso, y = w.y + dy * paso))
+                                if (c2.x == w.x && c2.y == w.y) break
+                                if (!choca(c2, i)) { r = c2; break }
+                                paso++
+                            }
+                            r ?: w
+                        }
                     }
-                    r ?: w
                 }
             }
         }
+        aplicarEmpuje()
         estado.value.widgets.getOrNull(e.widgetSel)?.let { w -> if (w.pagina != e.paginaInicio) actualizar { it.copy(paginaInicio = w.pagina) } }
     }
 
     /** Para arrastrar con el dedo: deja el widget en la celda indicada. */
-    fun ponerWidget(i: Int, x: Int, y: Int) = cambiarWidget(i) { w ->
-        val c = encajar(w.copy(x = x, y = y))
-        if (choca(c, i)) { avisar("Ahí hay otro widget"); w } else c
+    fun ponerWidget(i: Int, x: Int, y: Int) {
+        cambiarWidget(i) { w ->
+            val c = encajar(w.copy(x = x, y = y))
+            if (!choca(c, i)) c
+            else {
+                val l = empujando(i, c)
+                if (l != null) { pendienteEmpuje = l; c } else { avisar("No hay espacio para correr los otros widgets"); w }
+            }
+        }
+        aplicarEmpuje()
     }
+
+    /** Los widgets corridos por el último movimiento (se aplican después de mover el elegido). */
+    private var pendienteEmpuje: List<Widget>? = null
+
+    private fun aplicarEmpuje() {
+        val l = pendienteEmpuje ?: return
+        pendienteEmpuje = null
+        val i = estado.value.widgetSel
+        val actual = estado.value.widgets
+        // El elegido queda como quedó; los demás toman su lugar nuevo.
+        actualizar { it.copy(widgets = l.mapIndexed { k, w -> if (k == i) actual.getOrElse(k) { w } else w }) }
+        Sonidos.soltar()
+    }
+
+    /**
+     * Pone el widget [i] en [destino] y corre a los que tapa: primero al lugar que dejó libre (así se intercambian),
+     * y si no cabe ahí, al hueco libre más cercano de la misma página. Devuelve la lista nueva o null si no hay espacio.
+     */
+    private fun empujando(i: Int, destino: Widget): List<Widget>? {
+        val l = estado.value.widgets.toMutableList()
+        val antes = l.getOrNull(i) ?: return null
+        l[i] = destino
+        val tapados = l.indices.filter { k -> k != i && l[k].visible && l[k].pagina == destino.pagina && solapan(l[k], destino) }
+        for (k in tapados) {
+            val o = l[k]
+            val candidatos = buildList {
+                if (antes.pagina == destino.pagina) {
+                    add(o.copy(x = antes.x, y = antes.y))
+                    add(o.copy(x = antes.x + antes.an - o.an, y = antes.y))
+                    add(o.copy(x = antes.x, y = antes.y + antes.al - o.al))
+                }
+                for (yy in 0..Widgets.FILAS - o.al) for (xx in 0..Widgets.COLUMNAS - o.an) add(o.copy(x = xx, y = yy))
+            }.map { encajar(it) }
+            val inicioCandidatos = if (antes.pagina == destino.pagina) 3 else 0
+            val elegido = candidatos.take(inicioCandidatos).firstOrNull { !choca(it, k, l) }
+                ?: candidatos.drop(inicioCandidatos).sortedBy { kotlin.math.abs(it.x - o.x) + kotlin.math.abs(it.y - o.y) }.firstOrNull { !choca(it, k, l) }
+                ?: return null
+            l[k] = elegido
+        }
+        return l
+    }
+
+    private fun solapan(a: Widget, b: Widget) = a.x < b.x + b.an && b.x < a.x + a.an && a.y < b.y + b.al && b.y < a.y + a.al
 
     /** Cambia el ancho (L1/R1) o el alto (L2/R2) del widget elegido, sin montarse sobre otros. */
     fun cambiarTamWidget(dAn: Int, dAl: Int) {
@@ -3451,6 +3543,302 @@ object Diptico {
         Sonidos.aceptar()
     }
 
+    // ---------- Widgets con vida: foco con la cruceta y contenido al abrirlos ----------
+
+    /** Widgets visibles de la página actual del inicio (índices de la lista). */
+    private fun widgetsDePagina(e: Estado = estado.value) = e.widgets.indices.filter { e.widgets[it].visible && e.widgets[it].pagina == e.paginaInicio }
+
+    /** Entra a los widgets con la cruceta (desde el estante, con ↑): el foco va al de más abajo a la izquierda. */
+    fun entrarWidgets(): Boolean {
+        val e = estado.value
+        if (e.inicio != "widgets" || e.editandoWidgets) return false
+        val l = widgetsDePagina(e)
+        if (l.isEmpty()) return false
+        val i = l.maxWithOrNull(compareBy<Int>({ e.widgets[it].y + e.widgets[it].al }, { -e.widgets[it].x })) ?: return false
+        actualizar { it.copy(widgetFoco = i) }
+        Sonidos.levantar()
+        return true
+    }
+
+    fun salirWidgets() {
+        if (estado.value.widgetFoco < 0) return
+        actualizar { it.copy(widgetFoco = -1) }
+        Sonidos.soltar()
+    }
+
+    /** Mueve el foco al widget más cercano en esa dirección. Abajo del todo vuelve al estante; a los lados cambia de página. */
+    fun moverFocoWidget(dx: Int, dy: Int) {
+        val e = estado.value
+        val w = e.widgets.getOrNull(e.widgetFoco) ?: return
+        val cx = w.x + w.an / 2f
+        val cy = w.y + w.al / 2f
+        val candidatos = widgetsDePagina(e).filter { it != e.widgetFoco }.mapNotNull { k ->
+            val o = e.widgets[k]
+            val ox = o.x + o.an / 2f
+            val oy = o.y + o.al / 2f
+            val principal = if (dx != 0) (ox - cx) * dx else (oy - cy) * dy
+            // Tiene que estar hacia ese lado (y no solo tocarlo).
+            val haciaAlla = if (dx != 0) (if (dx > 0) o.x >= w.x + w.an - 0.01f else o.x + o.an <= w.x + 0.01f) else (if (dy > 0) o.y >= w.y + w.al - 0.01f else o.y + o.al <= w.y + 0.01f)
+            if (principal <= 0f || !haciaAlla) null
+            else k to (principal + 2f * (if (dx != 0) kotlin.math.abs(oy - cy) else kotlin.math.abs(ox - cx)))
+        }
+        val siguiente = candidatos.minByOrNull { it.second }?.first
+        when {
+            siguiente != null -> actualizar { it.copy(widgetFoco = siguiente) }
+            dy > 0 -> salirWidgets()
+            dx != 0 && e.paginas > 1 && e.paginaInicio + dx in 0 until e.paginas -> {
+                irAPagina(e.paginaInicio + dx)
+                val l = widgetsDePagina()
+                val f = (if (dx > 0) l.minByOrNull { estado.value.widgets[it].x * 10 + kotlin.math.abs(estado.value.widgets[it].y - w.y) }
+                else l.maxByOrNull { estado.value.widgets[it].x * 10 - kotlin.math.abs(estado.value.widgets[it].y - w.y) })
+                actualizar { it.copy(widgetFoco = f ?: -1) }
+                Sonidos.pagina()
+            }
+            else -> Sonidos.borde()
+        }
+    }
+
+    /** Con el foco en los widgets, L2/R2 cambian de página y el foco pasa al primero de la nueva. */
+    fun paginaFocoWidget(d: Int) {
+        val e = estado.value
+        val n = e.paginaInicio + d
+        if (n !in 0 until e.paginas) { Sonidos.borde(); return }
+        irAPagina(n)
+        val l = widgetsDePagina()
+        actualizar { it.copy(widgetFoco = l.minByOrNull { k -> it.widgets[k].y * 100 + it.widgets[k].x } ?: -1) }
+        Sonidos.pagina()
+    }
+
+    /** Abre el widget: unos van directo a su lugar (ficha, estadísticas, Bisa…) y el resto muestra su propio contenido. */
+    fun abrirWidget(i: Int = estado.value.widgetFoco) {
+        val e = estado.value
+        val w = e.widgets.getOrNull(i) ?: return
+        when (w.tipo) {
+            "juego" -> { abrirFicha(); return }
+            "paso" -> { abrirPaso(); return }
+            "estadisticas", "tiempo" -> { abrirEstadisticas(); return }
+            "accesos" -> { abrirCentro(); return }
+            "apps" -> { abrirApps(); return }
+            "logros" -> { if (e.usuarioRA.isBlank()) abrirMenu(Seccion.LOGROS) else abrirEstadisticas(); return }
+        }
+        if (w.tipo == "sugerencia" && e.sugeridas.isEmpty()) nuevasSugerencias()
+        actualizar { it.copy(panel = Panel.WIDGET, widgetAbierto = i, widgetFoco = i, indice = 0) }
+    }
+
+    /** Tres juegos para descubrir (primero los que nunca has jugado). */
+    fun nuevasSugerencias() {
+        val e = estado.value
+        val sinJugar = e.juegos.filter { (e.datos[it.clave]?.tiempo ?: 0L) == 0L }
+        val l = (sinJugar.shuffled() + e.juegos.shuffled()).distinctBy { it.clave }.filter { it.clave !in e.sugeridas }.take(3)
+            .ifEmpty { e.juegos.shuffled().take(3) }
+        actualizar { it.copy(sugeridas = l.map { j -> j.clave }) }
+    }
+
+    fun jugarDesdeWidget(clave: String) {
+        cerrarPanel()
+        actualizar { it.copy(widgetFoco = -1) }
+        elegirConsola("todo")
+        elegirJuego(clave)
+        jugar()
+    }
+
+    private val MINUTOS_TEMPORIZADOR = listOf(1, 3, 5, 10, 15, 20, 25, 30, 45, 60, 90, 120)
+    private val PAUSAS = listOf(0, 30, 45, 60, 90, 120)
+
+    private fun cambiarTemporizador(d: Int) {
+        val l = MINUTOS_TEMPORIZADOR
+        val i = l.indexOfFirst { it >= estado.value.temporizadorMin }.coerceAtLeast(0)
+        val v = l[(i + d).coerceIn(0, l.size - 1)]
+        almacen.guardarTexto("temporizadorMin", v.toString())
+        actualizar { it.copy(temporizadorMin = v) }
+    }
+
+    fun alternarTemporizador() {
+        val e = estado.value
+        if (e.temporizadorFin > 0L) {
+            actualizar { it.copy(temporizadorFin = 0L) }
+            Sonidos.interruptor(false)
+            return
+        }
+        val fin = System.currentTimeMillis() + e.temporizadorMin * 60_000L
+        actualizar { it.copy(temporizadorFin = fin) }
+        Sonidos.interruptor(true)
+        avisar("Temporizador de ${e.temporizadorMin} min. Te aviso aunque estés jugando.")
+        scope.launch {
+            while (estado.value.temporizadorFin == fin && System.currentTimeMillis() < fin) delay(1000)
+            if (estado.value.temporizadorFin != fin) return@launch
+            actualizar { it.copy(temporizadorFin = 0L) }
+            Sonidos.aviso()
+            val s = estado.value.sesion
+            if (s != null) cl.nikalbazu.diptico.bisa.Cartel.mostrar(app, s.displayId, "Temporizador", "¡Se acabó el tiempo!", "${e.temporizadorMin} min")
+            else avisar("¡Se acabó el tiempo! (${e.temporizadorMin} min)")
+        }
+    }
+
+    fun alternarCrono() {
+        val e = estado.value
+        val ahora = System.currentTimeMillis()
+        if (e.cronoInicio > 0L) actualizar { it.copy(cronoInicio = 0L, cronoAcumulado = it.cronoAcumulado + (ahora - it.cronoInicio)) }
+        else actualizar { it.copy(cronoInicio = ahora) }
+        Sonidos.interruptor(e.cronoInicio == 0L)
+    }
+
+    fun reiniciarCrono() = actualizar { it.copy(cronoInicio = 0L, cronoAcumulado = 0L) }
+
+    private fun cambiarPausa(d: Int) {
+        val l = PAUSAS
+        val v = l[(l.indexOf(estado.value.pausaCada).coerceAtLeast(0) + d).mod(l.size)]
+        almacen.guardarTexto("pausaCada", v.toString())
+        actualizar { it.copy(pausaCada = v) }
+    }
+
+    /** Mientras juegas: cada [Estado.pausaCada] minutos un cartel amable para descansar la vista y estirarse. */
+    private fun vigilarPausas() {
+        scope.launch {
+            var avisadas = 0L
+            var sesion = 0L
+            while (true) {
+                delay(30_000)
+                val e = estado.value
+                val s = e.sesion
+                if (s == null || e.pausaCada <= 0) { avisadas = 0; continue }
+                if (s.inicio != sesion) { sesion = s.inicio; avisadas = 0 }
+                val minutos = (System.currentTimeMillis() - s.inicio) / 60_000
+                val toca = minutos / e.pausaCada
+                if (toca > avisadas) {
+                    avisadas = toca
+                    cl.nikalbazu.diptico.bisa.Cartel.mostrar(
+                        app, s.displayId, "Bisa", "Llevas $minutos min jugando",
+                        listOf("¿Una pausa? Mira a lo lejos unos segundos.", "Estira las manos y toma agua.", "Buen momento para guardar la partida.").random(),
+                    )
+                }
+            }
+        }
+    }
+
+    /** Lo que se puede hacer dentro de cada widget abierto (la lista del panel). */
+    fun opcionesWidget(e: Estado = estado.value): List<Opcion> {
+        val w = e.widgets.getOrNull(e.widgetAbierto) ?: return emptyList()
+        fun juegosComo(l: List<cl.nikalbazu.diptico.data.Juego>) = l.map { j ->
+            val d = e.datos[j.clave]
+            Opcion(j.titulo, (Consolas.porId(j.consolaId)?.nombre ?: "") + (d?.tiempo?.takeIf { it > 0 }?.let { " · ${formatoTiempoCorto(it)}" } ?: ""), Icono.JUGAR, d?.paso.orEmpty()) { jugarDesdeWidget(j.clave) }
+        }
+        return when (w.tipo) {
+            "reloj" -> listOf(
+                Opcion("Temporizador", "${e.temporizadorMin} min", Icono.RELOJ, "Elige los minutos con ← →. Te aviso con un cartel aunque estés jugando.", menos = { cambiarTemporizador(-1) }) { cambiarTemporizador(1) },
+                Opcion(if (e.temporizadorFin > 0L) "Detener el temporizador" else "Empezar el temporizador", icono = if (e.temporizadorFin > 0L) Icono.CERRAR else Icono.JUGAR) { alternarTemporizador() },
+                Opcion(if (e.cronoInicio > 0L) "Pausar el cronómetro" else if (e.cronoAcumulado > 0L) "Seguir el cronómetro" else "Empezar el cronómetro", icono = Icono.RELOJ, ayuda = "Para medir una partida, un speedrun o lo que quieras.") { alternarCrono() },
+                Opcion("Reiniciar el cronómetro", icono = Icono.BORRAR, apagada = e.cronoInicio == 0L && e.cronoAcumulado == 0L) { reiniciarCrono() },
+                Opcion("Recordarme una pausa al jugar", if (e.pausaCada == 0) "No" else "Cada ${e.pausaCada} min", Icono.CORAZON, "Un cartel amable mientras juegas para descansar la vista y estirarte.", menos = { cambiarPausa(-1) }) { cambiarPausa(1) },
+                Opcion("Reloj a pantalla completa", icono = Icono.RELOJ) { cerrarPanel(); alternarReloj() },
+            )
+            "musica" -> buildList {
+                val m = cl.nikalbazu.diptico.audio.Medios.sonando.value
+                if (!cl.nikalbazu.diptico.audio.Medios.tienePermiso(app)) add(Opcion("Dar permiso para ver la música", icono = Icono.CLAVE, ayuda = "Android pide permiso para que Díptico vea y controle lo que suena.") { cl.nikalbazu.diptico.audio.Medios.pedirPermiso(app) })
+                if (m != null) {
+                    add(Opcion(if (m.reproduciendo) "Pausar" else "Reproducir", m.titulo, Icono.JUGAR) { cl.nikalbazu.diptico.audio.Medios.alternar() })
+                    add(Opcion("Siguiente canción", icono = Icono.CONTINUAR) { cl.nikalbazu.diptico.audio.Medios.siguiente() })
+                    add(Opcion("Canción anterior", icono = Icono.CONTINUAR) { cl.nikalbazu.diptico.audio.Medios.anterior() })
+                    add(Opcion("Abrir ${m.app}", icono = Icono.APPS) { cerrarPanel(); abrirPaquete(m.paquete) })
+                }
+                appsMusica().filter { it.paquete != m?.paquete }.forEach { a -> add(Opcion("Abrir ${a.nombre}", icono = Icono.MUSICA, paquete = a.paquete) { cerrarPanel(); abrirPaquete(a.paquete) }) }
+                add(Opcion("Música de Díptico", if (e.musica) "Sí" else "No", Icono.MUSICA, "La música propia de cada tema.") { fijarMusica(!estado.value.musica) })
+                add(Opcion("Elegir canción de Díptico", icono = Icono.MUSICA) { abrirGaleria("musica") })
+            }
+            "recientes" -> juegosComo(e.datos.entries.filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }.mapNotNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }.take(12))
+                .ifEmpty { listOf(Opcion("Todavía no juegas nada con Díptico", icono = Icono.INFO, apagada = true) {}) }
+            "favoritos" -> juegosComo(e.juegos.filter { e.datos[it.clave]?.favorito == true })
+                .ifEmpty { listOf(Opcion("Marca favoritos con Y sobre un juego", icono = Icono.CORAZON, apagada = true) {}) }
+            "sugerencia" -> juegosComo(e.sugeridas.mapNotNull { k -> e.juegos.firstOrNull { it.clave == k } }) + listOf(
+                Opcion("Otras sugerencias", icono = Icono.DADO) { nuevasSugerencias() },
+                Opcion("Pídele una recomendación a Bisa", icono = Icono.BISA) { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") },
+            )
+            "fiesta" -> buildList {
+                e.fiesta?.let { f -> add(Opcion("Hoy: ${f.nombre}", f.donde, Icono.MUNDO, f.tema.mensaje) {}) }
+                Temas.proximas(6).forEach { (f, d) -> add(Opcion(f.nombre, "${d.dayOfMonth}/${d.monthValue}", Icono.MUNDO, f.donde) { avisar("${f.nombre}: ${f.donde}") }) }
+                add(Opcion("Temas de fiestas", if (e.temaFestivo) "Sí" else "No", Icono.TEMA, "Díptico se viste solo para cada celebración.") {
+                    val v = !estado.value.temaFestivo
+                    almacen.guardarBool("temaFestivo", v)
+                    actualizar { it.copy(temaFestivo = v) }
+                    aplicarTema()
+                })
+            }
+            "bateria" -> {
+                val b = infoBateria()
+                listOf(
+                    Opcion("Carga", if (b.nivel >= 0) "${b.nivel}%" else "—", Icono.BATERIA) {},
+                    Opcion("Estado", b.estado, Icono.BATERIA) {},
+                    Opcion("Temperatura", if (b.temperatura > 0f) "${"%.1f".format(b.temperatura)} °C" else "—", Icono.INFO, if (b.temperatura >= 42f) "Está tibia: una pausa le viene bien." else "") {},
+                    Opcion("Voltaje", if (b.voltaje > 0) "${"%.2f".format(b.voltaje / 1000f)} V" else "—", Icono.INFO) {},
+                    Opcion("Salud", b.salud, Icono.CORAZON) {},
+                    Opcion("Modo de efectos", nombreFluidez(e.fluidez), Icono.CHISPA, "En ahorro Díptico apaga difuminados y decoraciones para gastar menos.") {
+                        val l = listOf("auto", "alta", "equilibrada", "ahorro")
+                        val v = l[(l.indexOf(estado.value.fluidez) + 1).mod(l.size)]
+                        almacen.guardarTexto("fluidez", v)
+                        actualizar { it.copy(fluidez = v) }
+                        aplicarFluidez()
+                    },
+                    Opcion("Ajustes de batería de Android", icono = Icono.AJUSTES) { cerrarPanel(); abrirAjusteAndroid(android.content.Intent.ACTION_POWER_USAGE_SUMMARY) },
+                )
+            }
+            "consolas" -> e.consolasConJuegos.map { c ->
+                Opcion(c.bonito, "${e.juegos.count { it.consolaId == c.id }} juegos", Icono.BIBLIOTECA) { cerrarPanel(); actualizar { it.copy(widgetFoco = -1) }; elegirConsola(c.id) }
+            }
+            "frase" -> listOf(
+                Opcion("Otra frase", icono = Icono.CHISPA) { actualizar { it.copy(fraseExtra = it.fraseExtra + 1) } },
+                Opcion("Pídele una a Bisa", icono = Icono.BISA) { abrirAsistente(); preguntar("Dame una frase corta y simpática para empezar a jugar hoy.") },
+            )
+            "notificaciones" -> Avisos.lista.value.map { a -> Opcion(a.titulo.ifBlank { a.app }, a.app, Icono.CAMPANA, a.texto, paquete = a.paquete) { abrirAviso(a) } }
+                .ifEmpty { listOf(Opcion("Todo tranquilo: no hay notificaciones", icono = Icono.CHECK, apagada = true) {}) }
+            "asistente" -> buildList {
+                val j = e.seleccionado
+                add(Opcion("Conversar con Bisa", icono = Icono.BISA, ayuda = "Pregúntale lo que quieras: trucos, qué jugar, o cambiar Díptico.") { abrirAsistente() })
+                if (j != null) {
+                    add(Opcion("Un truco para ${j.titulo}", icono = Icono.CHISPA) { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${j.titulo}.") })
+                    add(Opcion("¿De qué trata ${j.titulo}?", icono = Icono.TUTORIAL) { abrirAsistente(); preguntar("Cuéntame en pocas líneas de qué trata ${j.titulo} y por qué vale la pena.") })
+                    e.datos[j.clave]?.paso?.takeIf { it.isNotBlank() }?.let { paso -> add(Opcion("Ayúdame a seguir donde quedé", paso.take(30), Icono.LAPIZ) { abrirAsistente(); preguntar("En ${j.titulo} anoté esto: \"$paso\". ¿Qué me conviene hacer ahora?") }) }
+                }
+                add(Opcion("¿Qué juego hoy?", icono = Icono.DADO) { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") })
+                add(Opcion("Cámbiame el tema", icono = Icono.TEMA) { abrirAsistente(); preguntar("Cámbiame el tema de Díptico por uno que me sorprenda.") })
+                add(Opcion("Ayuda mientras juego", icono = Icono.BISA, ayuda = "Bisa mira tu partida y te ayuda (con el botón de Bisa en el juego).") { prepararAyuda() })
+            }
+            else -> if (w.tipo.startsWith("imagen")) listOf(
+                Opcion("Cambiar la imagen o GIF", icono = Icono.PORTADA) { pedirArchivoPara("widget:${w.tipo}", "image/*") },
+                Opcion("Acomodar en el estudio", icono = Icono.APPS) { cerrarPanel(); editarWidgets(); elegirWidget(e.widgetAbierto) },
+            ) else emptyList()
+        }
+    }
+
+    data class InfoBateria(val nivel: Int, val estado: String, val temperatura: Float, val voltaje: Int, val salud: String)
+
+    fun infoBateria(): InfoBateria {
+        val i = app.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+        val nivel = i?.let { val l = it.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1); val s = it.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100); if (l >= 0) l * 100 / s.coerceAtLeast(1) else -1 } ?: -1
+        val est = when (i?.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1)) {
+            android.os.BatteryManager.BATTERY_STATUS_CHARGING -> "Cargando"
+            android.os.BatteryManager.BATTERY_STATUS_FULL -> "Llena"
+            android.os.BatteryManager.BATTERY_STATUS_DISCHARGING, android.os.BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "Usando la batería"
+            else -> "—"
+        }
+        val salud = when (i?.getIntExtra(android.os.BatteryManager.EXTRA_HEALTH, -1)) {
+            android.os.BatteryManager.BATTERY_HEALTH_GOOD -> "Buena"
+            android.os.BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Muy caliente"
+            android.os.BatteryManager.BATTERY_HEALTH_COLD -> "Muy fría"
+            android.os.BatteryManager.BATTERY_HEALTH_DEAD -> "Gastada"
+            else -> "—"
+        }
+        return InfoBateria(nivel, est, (i?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0) / 10f, i?.getIntExtra(android.os.BatteryManager.EXTRA_VOLTAGE, 0) ?: 0, salud)
+    }
+
+    private fun formatoTiempoCorto(ms: Long): String {
+        val min = ms / 60_000
+        return if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"
+    }
+
+    private fun abrirAjusteAndroid(accion: String) {
+        try { app.startActivity(android.content.Intent(accion).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { avisar("No pude abrir ese ajuste") }
+    }
+
     // ---------- Encuadrar portadas y heroes ----------
 
     private fun leerEncuadres(t: String): Map<String, Encuadre> = try {
@@ -3767,6 +4155,11 @@ object Diptico {
                 guardarWidgets(estado.value.widgets + w)
                 alternarWidget(estado.value.widgets.size - 1)
                 avisar("Imagen agregada a tu inicio")
+            }
+            archivoPara.startsWith("widget:") -> {
+                val tipo = archivoPara.removePrefix("widget:")
+                guardarWidgets(estado.value.widgets.map { if (it.tipo == tipo) it.copy(uri = u) else it })
+                avisar("Imagen cambiada")
             }
             archivoPara.startsWith("consola_") -> {
                 val (que, id) = archivoPara.removePrefix("consola_").split(":", limit = 2).let { it[0] to it.getOrElse(1) { "" } }

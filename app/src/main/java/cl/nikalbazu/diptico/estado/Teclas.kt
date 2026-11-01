@@ -199,13 +199,35 @@ object Teclas {
 
         // Paneles con su propia forma de moverse.
         when (e.panel) {
-            Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA ->
+            Panel.WIDGET, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA ->
                 return panelEnGrilla(ev, e)
             Panel.MENU -> return menu(ev, e)
             else -> Unit
         }
 
         val hayPanel = e.panel != Panel.NINGUNO
+
+        // Inicio con widgets: ↑ desde el estante entra a los widgets; ahí la cruceta salta entre ellos, A abre y B vuelve.
+        if (!hayPanel && e.sesion == null && e.inicio == "widgets" && !e.editandoWidgets) {
+            if (e.widgetFoco >= 0) {
+                if (abajo) {
+                    dir(code)?.let { (dx, dy) -> Diptico.moverFocoWidget(dx, dy); return true }
+                    if ((code == KeyEvent.KEYCODE_BUTTON_L2 || code == KeyEvent.KEYCODE_BUTTON_R2) && ev.repeatCount == 0) {
+                        Diptico.paginaFocoWidget(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1); return true
+                    }
+                    if (esA(code) || esB(code)) return true
+                }
+                if (arriba) when {
+                    esA(code) -> { Diptico.abrirWidget(); return true }
+                    esB(code) -> { Diptico.salirWidgets(); return true }
+                    code in cruceta -> return true
+                }
+            } else if (abajo && ((e.unaPantalla && code in cruceta) || (code == KeyEvent.KEYCODE_DPAD_UP && e.vistaConsolas !in setOf("lado", "rueda", "sistemas") &&
+                    ((e.vista != "cuadricula" && e.vista != "lista") || e.indiceSel < columnasEstante(e))))
+            ) {
+                if (Diptico.entrarWidgets()) return true
+            }
+        }
 
         // Modo Sistemas, eligiendo consola: la cruceta y L1/R1 cambian de consola, A entra, Y elige un juego al azar.
         if (!hayPanel && e.sesion == null && e.vistaConsolas == "sistemas" && e.enSistemas) {

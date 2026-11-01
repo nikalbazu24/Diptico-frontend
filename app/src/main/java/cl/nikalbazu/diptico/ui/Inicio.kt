@@ -49,6 +49,12 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.zIndex
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.blur
 import androidx.compose.runtime.LaunchedEffect
@@ -122,6 +128,12 @@ fun PantallaInicio(e: Estado) {
                     BotonBisa(Modifier.padding(end = esc.d(10)))
                 }
                 if (!e.editandoWidgets) {
+                    if (e.widgetFoco >= 0) {
+                        Pista("A", "Abrir")
+                        Spacer(Modifier.width(esc.d(8)))
+                        Pista("B", "Salir")
+                    } else Pista(if (e.unaPantalla) "✥" else "↑", "Widgets")
+                    Spacer(Modifier.width(esc.d(10)))
                     Pista("Select", "Carátulas")
                     Spacer(Modifier.width(esc.d(10)))
                 }
@@ -202,12 +214,14 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
             if (!w.visible || w.pagina != pagina) return@forEachIndexed
             key(w.tipo) {
                 val elegido = e.editandoWidgets && i == e.widgetSel
+                // Con la cruceta en los widgets: el que tiene el foco se levanta y brilla.
+                val enfocado = !e.editandoWidgets && i == e.widgetFoco && e.panel == cl.nikalbazu.diptico.estado.Panel.NINGUNO
                 var arrastre by remember { mutableStateOf(Offset.Zero) }
                 val x by animateDpAsState(esc.d(w.x * (celdaAn + hueco)), spring(dampingRatio = 0.75f, stiffness = 500f), label = "x")
                 val y by animateDpAsState(esc.d(w.y * (celdaAl + hueco)), spring(dampingRatio = 0.75f, stiffness = 500f), label = "y")
                 val an by animateDpAsState(esc.d(w.an * celdaAn + (w.an - 1) * hueco), spring(dampingRatio = 0.8f), label = "an")
                 val al by animateDpAsState(esc.d(w.al * celdaAl + (w.al - 1) * hueco), spring(dampingRatio = 0.8f), label = "al")
-                val tam by animateFloatAsState(if (elegido) 1.03f else 1f, spring(dampingRatio = 0.5f), label = "tam")
+                val tam by animateFloatAsState(if (elegido) 1.03f else if (enfocado) 1.045f else 1f, spring(dampingRatio = 0.5f), label = "tam")
                 // En modo edición los widgets tiemblan un poquito (cada uno a su ritmo), como en los teléfonos.
                 val tiemble = if (e.editandoWidgets) {
                     val t = rememberInfiniteTransition(label = "tiemble")
@@ -215,12 +229,17 @@ private fun Grilla(e: Estado, pagina: Int, modifier: Modifier) {
                 } else 0f
                 Box(
                     Modifier.offset(x = x, y = y).size(an, al)
-                        .zIndex(if (elegido) 2f else 1f)
+                        .zIndex(if (elegido || enfocado) 2f else 1f)
                         .graphicsLayer {
                             translationX = arrastre.x; translationY = arrastre.y; scaleX = tam; scaleY = tam
                             rotationZ = if (elegido) tiemble * 0.4f else tiemble * 0.8f
                         }
-                        .then(if (elegido) Modifier.border(esc.d(3), if (e.estudioMover) Coral else Uva, RoundedCornerShape(esc.d((w.radio + 2).toFloat()))) else Modifier),
+                        .then(if (elegido) Modifier.border(esc.d(3), if (e.estudioMover) Coral else Uva, RoundedCornerShape(esc.d((w.radio + 2).toFloat()))) else Modifier)
+                        .then(
+                            if (enfocado) Modifier.shadow(esc.d(18), RoundedCornerShape(esc.d(w.radio.toFloat())), ambientColor = Uva, spotColor = Uva)
+                                .border(esc.d(3), if (p == PaletaOscura) Color.White else Uva, RoundedCornerShape(esc.d((w.radio + 2).toFloat())))
+                            else Modifier,
+                        ),
                 ) {
                     // Cada widget puede agrandar o achicar su contenido (Tamaño del contenido).
                     CompositionLocalProvider(LocalWidget provides w, LocalEscala provides Escala(esc.factor * w.escala, esc.ancho, esc.texto)) {
@@ -288,7 +307,7 @@ private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nul
     }
     Box(
         modifier.fillMaxSize().clip(forma).then(fondo)
-            .combinedClickable(onClick = { alPulsar?.invoke() }, onLongClick = { Diptico.editarWidgets() })
+            .combinedClickable(onClick = { if (alPulsar != null) alPulsar() else w?.let { Diptico.abrirWidgetTipo(it.tipo) } }, onLongClick = { Diptico.editarWidgets() })
             .padding(esc.d(12)),
     ) { contenido() }
 }
@@ -351,7 +370,17 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
             }
         }
-        "reloj" -> Tarjeta(alPulsar = { Diptico.alternarReloj() }) {
+        "reloj" -> Tarjeta {
+            // Si hay temporizador o cronómetro andando, se ven en el reloj.
+            if (e.temporizadorFin > 0L || e.cronoInicio > 0L) {
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+                    Texto(rememberHora(), if (compacto) 22f else 34f, lineas = 1)
+                    Spacer(Modifier.height(esc.d(4)))
+                    if (e.temporizadorFin > 0L) FilaCuenta(Icono.RELOJ, "Temporizador", cuentaRegresiva(e.temporizadorFin), Coral)
+                    if (e.cronoInicio > 0L && !compacto) FilaCuenta(Icono.JUGAR, "Cronómetro", cronometro(e), Uva)
+                }
+                return@Tarjeta
+            }
             if (variante == 1 && !compacto) {
                 // Analógico: esfera con manecillas y la fecha al lado (o abajo si es angosto).
                 val ahora = rememberHora()
@@ -526,18 +555,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
             }
         }
-        "asistente" -> Tarjeta(alPulsar = { Diptico.abrirAsistente() }) {
-            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(esc.d(40)).clip(CircleShape).fondoBoton(Uva), contentAlignment = Alignment.Center) {
-                    IconoDiptico(Icono.ASISTENTE, SobreUva, 22f, acento = SobreUva)
-                }
-                Spacer(Modifier.width(esc.d(10)))
-                Column(Modifier.weight(1f)) {
-                    Texto("Pregúntale al asistente", 15f, lineas = 1)
-                    if (!compacto) Detalle("Qué jugar, trucos, o cambiar Díptico", 12.5f, lineas = 1)
-                }
-            }
-        }
+        "asistente" -> WidgetBisa(e, compacto, al)
         "apps" -> Tarjeta { WidgetApps(e, an) }
         "accesos" -> Tarjeta {
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
@@ -817,9 +835,16 @@ private fun fraseDelDia(e: Estado): String {
         "¿Y si hoy pruebas un juego que nunca has jugado?",
         "La mejor consola es la que tienes a mano.",
         "Recuerda tomar agua entre partidas.",
+        "Perder también es parte del juego: se aprende y se vuelve a intentar.",
+        "Jugar con alguien más duplica la diversión.",
+        "Pausa, respira, sigue. Así se gana.",
+        "Ese juego que dejaste a medias te está esperando.",
+        "Hoy cuenta cada pequeño avance.",
+        "Mira a lo lejos un momento: tus ojos te lo agradecen.",
+        "No hay apuro: el mejor ritmo es el tuyo.",
     )
-    e.fiesta?.tema?.mensaje?.takeIf { it.isNotBlank() }?.let { return it }
-    return frases[(java.time.LocalDate.now().dayOfYear) % frases.size]
+    if (e.fraseExtra == 0) e.fiesta?.tema?.mensaje?.takeIf { it.isNotBlank() }?.let { return it }
+    return frases[(java.time.LocalDate.now().dayOfYear + e.fraseExtra) % frases.size]
 }
 
 /** Un widget con tu propia imagen o GIF animado. */
@@ -828,5 +853,222 @@ private fun WidgetImagen(w: cl.nikalbazu.diptico.estado.Widget) {
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(22))).background(Color.Black)) {
         w.uri?.let { ImagenAnimada(android.net.Uri.parse(it), Modifier.fillMaxSize()) }
+    }
+}
+
+
+// ---------- Widgets con vida ----------
+
+/** "mm:ss" (o "h:mm:ss") que falta para [fin]. */
+@Composable
+private fun cuentaRegresiva(fin: Long): String {
+    var ahora by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(fin) { while (true) { ahora = System.currentTimeMillis(); kotlinx.coroutines.delay(500) } }
+    return formatoReloj(((fin - ahora).coerceAtLeast(0) + 999) / 1000)
+}
+
+@Composable
+private fun cronometro(e: Estado): String {
+    var ahora by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(e.cronoInicio) { while (e.cronoInicio > 0L) { ahora = System.currentTimeMillis(); kotlinx.coroutines.delay(250) } }
+    val ms = e.cronoAcumulado + if (e.cronoInicio > 0L) (ahora - e.cronoInicio) else 0L
+    return formatoReloj(ms / 1000)
+}
+
+private fun formatoReloj(seg: Long): String =
+    if (seg >= 3600) "${seg / 3600}:${((seg % 3600) / 60).toString().padStart(2, '0')}:${(seg % 60).toString().padStart(2, '0')}"
+    else "${seg / 60}:${(seg % 60).toString().padStart(2, '0')}"
+
+@Composable
+private fun FilaCuenta(icono: Icono, titulo: String, valor: String, color: Color) {
+    val esc = LocalEscala.current
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = esc.d(2))) {
+        IconoDiptico(icono, color, 14f)
+        Spacer(Modifier.width(esc.d(6)))
+        Detalle(titulo, 12f, lineas = 1, modifier = Modifier.weight(1f))
+        Texto(valor, 15f, color = color, lineas = 1, traducir = false)
+    }
+}
+
+/** Bisa con identidad propia: su morado de siempre, su cara, una burbuja que cambia y accesos directos. */
+@Composable
+private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int) {
+    val esc = LocalEscala.current
+    val w = LocalWidget.current
+    val forma = RoundedCornerShape(esc.d((w?.radio ?: 22).toFloat()))
+    val j = e.seleccionado
+    val frases = remember(j?.clave, e.chat.size) {
+        buildList {
+            add(saludo() + ". ¿En qué te ayudo?")
+            if (j != null) add("¿Quieres un truco para ${j.titulo}?")
+            j?.let { e.datos[it.clave]?.paso }?.takeIf { it.isNotBlank() }?.let { add("Quedaste en: $it") }
+            add("¿No sabes qué jugar? Te recomiendo uno.")
+            add("Puedo cambiarte el tema, la música o el inicio.")
+            add("Mientras juegas, toca mi burbuja si te trabas.")
+        }
+    }
+    var k by remember { mutableStateOf(0) }
+    LaunchedEffect(frases) { while (true) { kotlinx.coroutines.delay(7000); k++ } }
+    Box(
+        Modifier.fillMaxSize().clip(forma)
+            .background(Brush.linearGradient(listOf(Color(0xFF34295A), Color(0xFF17132A))))
+            .border(esc.d(1.5f), Uva.copy(alpha = 0.55f), forma)
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("asistente") }, onLongClick = { Diptico.editarWidgets() }),
+    ) {
+        // Un brillo que respira detrás de Bisa.
+        Box(Modifier.align(Alignment.CenterStart).size(esc.d(140)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.35f), Color.Transparent))))
+        Row(Modifier.fillMaxSize().padding(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
+            cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(if (compacto) 40f else if (al >= 2) 64f else 48f).value)
+            Spacer(Modifier.width(esc.d(10)))
+            Column(Modifier.weight(1f)) {
+                if (!compacto) Etiqueta("Bisa", Coral, 10.5f)
+                androidx.compose.animation.AnimatedContent(
+                    targetState = frases[k.mod(frases.size)],
+                    transitionSpec = { (fadeIn(tween(400)) + androidx.compose.animation.slideInVertically(tween(400)) { it / 3 }) togetherWith fadeOut(tween(250)) },
+                    label = "burbuja",
+                ) { f ->
+                    Box(
+                        Modifier.clip(RoundedCornerShape(esc.d(4), esc.d(14), esc.d(14), esc.d(14))).background(Color.White.copy(alpha = 0.12f))
+                            .padding(horizontal = esc.d(10), vertical = esc.d(5)),
+                    ) { Texto(f, 13f, color = Color.White, lineas = if (compacto) 1 else 2) }
+                }
+                if (!compacto && al >= 2) {
+                    Spacer(Modifier.height(esc.d(7)))
+                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                        ChipBisa("Hablar") { Diptico.abrirAsistente() }
+                        if (j != null) ChipBisa("Un truco") { Diptico.abrirAsistente(); Diptico.preguntar("Dame un buen truco o consejo para ${j.titulo}.") }
+                        ChipBisa("¿Qué juego?") { Diptico.abrirAsistente(); Diptico.preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChipBisa(t: String, accion: () -> Unit) {
+    val esc = LocalEscala.current
+    Box(
+        Modifier.clip(RoundedCornerShape(50)).background(Uva.copy(alpha = 0.85f)).clickable { accion() }
+            .padding(horizontal = esc.d(10), vertical = esc.d(4)),
+    ) { Texto(t, 11.5f, color = SobreUva, lineas = 1) }
+}
+
+/** El contenido de un widget abierto (en la pantalla de los botones): su vista grande arriba y lo que se puede hacer. */
+@Composable
+fun PanelWidget(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val w = e.widgets.getOrNull(e.widgetAbierto) ?: return
+    val opciones = remember(e) { Diptico.opcionesWidget(e) }
+    val esBisa = w.tipo == "asistente"
+    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+        if (esBisa) Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF34295A).copy(alpha = 0.6f), Color.Transparent))))
+        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (esBisa) cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(38).value)
+                else Box(Modifier.size(esc.d(36)).clip(CircleShape).background(Uva.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                    IconoDiptico(Widgets.icono(w.tipo), p.tinta, 18f, acento = Coral)
+                }
+                Spacer(Modifier.width(esc.d(10)))
+                Column(Modifier.weight(1f)) {
+                    Texto(if (esBisa) "Bisa" else Widgets.nombre(w.tipo), 18f, lineas = 1)
+                    Detalle(if (esBisa) "Tus accesos rápidos" else Widgets.descripcion(w.tipo), 12f, lineas = 1)
+                }
+                Box(
+                    Modifier.size(esc.d(34)).clip(CircleShape).background(p.superficie).clickable { Diptico.cerrarPanel() },
+                    contentAlignment = Alignment.Center,
+                ) { IconoDiptico(Icono.CERRAR, p.tinta, 16f) }
+            }
+            // Cabeceras con vida: el reloj cuenta, la música suena, la frase se lee entera.
+            when (w.tipo) {
+                "reloj" -> if (e.temporizadorFin > 0L || e.cronoInicio > 0L || e.cronoAcumulado > 0L) {
+                    Spacer(Modifier.height(esc.d(8)))
+                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                        if (e.temporizadorFin > 0L) CuadroCuenta("Temporizador", cuentaRegresiva(e.temporizadorFin), Coral, Modifier.weight(1f))
+                        if (e.cronoInicio > 0L || e.cronoAcumulado > 0L) CuadroCuenta("Cronómetro", cronometro(e), Uva, Modifier.weight(1f))
+                    }
+                }
+                "frase" -> {
+                    Spacer(Modifier.height(esc.d(8)))
+                    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(p.superficie).padding(esc.d(14))) {
+                        Texto(fraseDelDia(e), 17f, lineas = 4)
+                    }
+                }
+            }
+            Spacer(Modifier.height(esc.d(8)))
+            val lista = rememberLazyListState()
+            LaunchedEffect(e.indice) { lista.mostrar(e.indice) }
+            androidx.compose.foundation.lazy.LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                items(opciones.size) { i -> FilaOpcion(opciones[i], i == e.indice, Uva) { Diptico.elegirIndice(i) } }
+            }
+            opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let {
+                Spacer(Modifier.height(esc.d(4)))
+                Detalle(it, 12.5f, lineas = 2)
+            }
+            Spacer(Modifier.height(esc.d(4)))
+            Pistas("↑ ↓" to "Moverte", "A" to "Elegir", "← →" to "Cambiar", "B" to "Volver")
+        }
+    }
+}
+
+@Composable
+private fun CuadroCuenta(titulo: String, valor: String, color: Color, modifier: Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie).padding(esc.d(10))) {
+        Etiqueta(titulo, color, 10.5f)
+        Texto(valor, 30f, color = color, lineas = 1, traducir = false)
+    }
+}
+
+/** La otra pantalla con un widget abierto: el widget en grande (el reloj, la música, el juego elegido de la lista…). */
+@Composable
+fun LecturaWidget(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val w = e.widgets.getOrNull(e.widgetAbierto) ?: return
+    val opcion = Diptico.opcionesWidget(e).getOrNull(e.indice)
+    // En las listas de juegos se ve el juego elegido de la lista.
+    val juego = if (w.tipo in setOf("recientes", "favoritos", "sugerencia")) e.juegos.firstOrNull { it.titulo == opcion?.titulo } else null
+    Box(Modifier.fillMaxSize().background(p.fondo)) {
+        if (juego != null) {
+            Heroe(juego, 1f)
+            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(p.fondo.copy(alpha = 0.92f), p.fondo.copy(alpha = 0.2f)), endX = 1200f)))
+            Column(Modifier.align(Alignment.CenterStart).padding(esc.d(28)).widthIn(max = esc.d(380))) {
+                Etiqueta(Consolas.porId(juego.consolaId)?.bonito ?: "", Coral, 12f)
+                Texto(juego.titulo, 30f, lineas = 3, traducir = false)
+                e.datos[juego.clave]?.paso?.takeIf { it.isNotBlank() }?.let { Spacer(Modifier.height(esc.d(8))); Detalle("Tu paso: $it", 14f, lineas = 3) }
+                Spacer(Modifier.height(esc.d(10)))
+                Pista("A", "¡Jugar!")
+            }
+            return@Box
+        }
+        Box(Modifier.align(Alignment.TopEnd).size(esc.d(480)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.22f), Color.Transparent))))
+        Box(Modifier.fillMaxSize().padding(esc.d(28)), contentAlignment = Alignment.Center) {
+            when (w.tipo) {
+                "reloj" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Texto(rememberHora(), 96f, peso = FontWeight.Medium, lineas = 1)
+                    Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 18f, lineas = 1)
+                    if (e.temporizadorFin > 0L) { Spacer(Modifier.height(esc.d(14))); Texto("⏳ " + cuentaRegresiva(e.temporizadorFin), 34f, color = Coral, traducir = false) }
+                    if (e.cronoInicio > 0L || e.cronoAcumulado > 0L) { Spacer(Modifier.height(esc.d(6))); Texto("⏱ " + cronometro(e), 34f, color = Uva, traducir = false) }
+                }
+                "asistente" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(130).value)
+                    Spacer(Modifier.height(esc.d(14)))
+                    Texto(opcion?.titulo ?: "¿En qué te ayudo?", 24f, lineas = 2, alinear = TextAlign.Center)
+                    opcion?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 14f, lineas = 2) }
+                }
+                else -> {
+                    // El widget mismo, en grande.
+                    val k = 2.2f
+                    Box(Modifier.size(esc.d(4 * 92f * k / 2), esc.d(3 * 80f * k / 2))) {
+                        CompositionLocalProvider(LocalWidget provides w.copy(an = 4, al = 3)) {
+                            if (w.tipo.startsWith("imagen")) WidgetImagen(w) else WidgetVista(e, w.tipo, 4, 3)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
