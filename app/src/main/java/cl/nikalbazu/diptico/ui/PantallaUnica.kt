@@ -96,6 +96,12 @@ fun PantallaUnica(e: Estado) {
         )
 
         BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos) {
+            // Con una sola pantalla no hay barra de accesos: las apps y el menú quedan arriba.
+            Box(
+                Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f)).clickable { Diptico.abrirApps() },
+                contentAlignment = Alignment.Center,
+            ) { IconoDiptico(Icono.APPS, p.tinta, 17f, acento = Cielo) }
+            Spacer(Modifier.width(esc.d(8)))
             Box(
                 Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f)).clickable { Diptico.abrirMenu() },
                 contentAlignment = Alignment.Center,
