@@ -106,7 +106,7 @@ fun PantallaInicio(e: Estado) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.15f), p.fondo.copy(alpha = 0.7f)))))
         } else {
             e.seleccionado?.let { j ->
-                ArteJuego(j, preferirArte = true, maxLado = 900, modifier = Modifier.fillMaxSize().then(if (Estilo.efectosCompletos) Modifier.blur(28.dp) else Modifier).graphicsLayer { alpha = 0.32f })
+                ArteJuego(j, preferirArte = true, maxLado = 480, modifier = Modifier.fillMaxSize().then(if (Estilo.efectosCompletos) Modifier.blur(28.dp) else Modifier).graphicsLayer { alpha = 0.32f })
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.45f), p.fondo.copy(alpha = 0.92f)))))
         }

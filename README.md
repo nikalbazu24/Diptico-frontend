@@ -2,7 +2,19 @@
 
 Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué trae la 1.0 beta.3
+## Qué trae la 1.0 beta.4
+
+- **¿Arriba o abajo?** Mantén A (o el dedo) sobre un juego o una app y elige en qué pantalla se abre. Se puede recordar por juego.
+- **Botón Turbo** en la barra: tocar libera memoria al instante; mantener enciende o apaga el turbo al jugar.
+- **Sticks configurables** (Menú › Controles): el izquierdo elige juegos y el derecho recorre los widgets (o al revés, o el clásico). En el editor, el stick desliza la pantalla.
+- **Actualizaciones desde la app**: aviso con notificación cuando sale una versión nueva, y se descarga e instala desde Menú › Acerca de.
+- **Tour de novedades** la primera vez que abres cada versión.
+- **¿Dónde quedaste?** rediseñado: escribirlo, una nota de voz, un pin en el mapa del juego o pasar de largo. Se puede desactivar (Menú › Inicio). La continuación muestra la nota de voz y el mapa.
+- **Widgets pulidos**: marcos que siempre se ven completos, sin puntos ni sombras raras en temas claros, GIF sin fondo, y cada widget abierto (tiempo, estadísticas, colección, batería, música, notificaciones, frase, fiestas, logros) con un diseño propio y grande en la pantalla de arriba.
+- **Cajas parejas en «Todos»** (póster o cuadradas) e **imagen del inicio** elegible para todos o por juego (ventana del juego, Y).
+- Volver atrás desde ajustes de un juego regresa a donde estabas, no a Temas.
+
+## Qué trajo la 1.0 beta.3
 
 - **Widgets más fáciles de acomodar**: en el editor, la cruceta o el stick eligen cualquier widget (sin un orden fijo); A lo levanta y lo mueve; si lo pones sobre otro, el otro se corre. Con el dedo se arrastra y se estira libremente desde su esquina.
 - **Burbuja para agregar**: mantén A (o el dedo) en un lugar del inicio y aparece un globo con todos los widgets para agregar justo ahí.

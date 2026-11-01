@@ -79,13 +79,6 @@ object Teclas {
             return true
         }
 
-        // Bienvenida al encender: A sigue jugando, cualquier otro botón la cierra.
-        if (e.bienvenida > 0L && !e.bienvenidaBreve && e.sesion == null) {
-            if (arriba) { if (esA(code)) Diptico.seguirDesdeBienvenida() else Diptico.cerrarBienvenida() }
-            return true
-        }
-        if (e.bienvenida > 0L && e.bienvenidaBreve && arriba) Diptico.cerrarBienvenida()
-
         // Tour de novedades: A o → sigue, ← vuelve, B o Start lo cierran.
         if (e.novedades >= 0) {
             if (abajo && ev.repeatCount == 0) when (code) {
@@ -98,6 +91,13 @@ object Teclas {
             }
             return true
         }
+
+        // Bienvenida al encender: A sigue jugando, cualquier otro botón la cierra.
+        if (e.bienvenida > 0L && !e.bienvenidaBreve && e.sesion == null) {
+            if (arriba) { if (esA(code)) Diptico.seguirDesdeBienvenida() else Diptico.cerrarBienvenida() }
+            return true
+        }
+        if (e.bienvenida > 0L && e.bienvenidaBreve && arriba) Diptico.cerrarBienvenida()
 
         // Marcar en el mapa: la cruceta mueve el pin (se puede mantener), A guarda, Y otra imagen, X quita el mapa, B cancela.
         if (e.marcandoMapa != null) {
