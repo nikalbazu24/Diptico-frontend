@@ -420,6 +420,7 @@ object Teclas {
                         Panel.FICHA -> if (ev.repeatCount == 0) Diptico.cambiarPestanaFicha(d)
                         Panel.RAPIDO -> Diptico.moverRapido(d, 0)
                         Panel.EDITAR_CONSOLA -> Diptico.ladoEditarConsola(d)
+                        Panel.WIDGET -> if (ev.repeatCount == 0 || ev.repeatCount % 3 == 0) Diptico.ladoWidget(d)
                         Panel.BUSCAR, Panel.IMAGENES, Panel.GALERIA, Panel.APPS -> Diptico.moverIndice(d)
                         else -> Unit
                     }

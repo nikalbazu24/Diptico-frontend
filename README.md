@@ -2,7 +2,24 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué trae la 1.0 beta
+## Qué trae la 1.0 beta.2
+
+- **Widgets con vida**: con ↑ desde el estante (o la cruceta, con una sola pantalla) te mueves por los widgets; A abre su contenido. El reloj trae temporizador, cronómetro y recordatorio de pausas al jugar; la música, sus controles; recientes, favoritos y "¿Qué juego hoy?", listas para jugar; batería, fiestas, notificaciones, frase y colección, sus detalles.
+- **Bisa con identidad propia**: su widget tiene su cara, una burbuja que cambia y accesos directos (truco, ¿qué juego?, hablar).
+- **Mover widgets es más fácil**: si pones uno encima de otro, el de abajo se corre para dejarle espacio.
+- **Modo sobremesa (tele)**: al conectar la tele, Díptico pasa a una pantalla, todo más grande, con margen de seguridad, efectos completos y sonidos más fuertes. Todo se ajusta en Menú › Modo sobremesa.
+- **Botones extra (L4, R4…)**: cada botón hace lo que elijas (Bisa, música, apps, un juego al azar…) y Díptico aprende cuál es en tu control.
+- **Juegos de PC**: agrega juegos de Steam por su nombre (los abre GameNative o GameHub Lite) y detecta GameHub, Winlator, WinNative, DroidDeck, Steam Link y Moonlight para sumarlos a tus Ports.
+- **Encuadrar portadas y heroes**: corre y acerca cada foto para que quede centrada en la forma de la caja.
+- **Zoom lento** en la portada elegida y en la imagen grande (se apaga en Apariencia).
+- **Tu propio orden**: mueve juegos de lugar ("Mover de lugar" en la ventana del juego) y ordena las consolas (Personalizar consola › Lugar en la lista).
+- **Consolas con imágenes de internet**: ícono, hero y logo desde SteamGridDB, Wikipedia y los paquetes de RetroArch. Más estilos de íconos (sellos, neón, Daite) con la misma línea.
+- **Más sonidos**: llegar al borde, cambiar de pestaña, mover widgets, interruptores, avisos; y cuatro juegos de sonidos (clásicos, bloques, retro 8 bits y burbuja).
+- **Música mientras juegas**: si suena Spotify o YouTube Music, se controla desde la pantalla de abajo.
+- **Claves desde el teléfono**: escaneas el QR, pegas la clave en el teléfono y llega sola a la consola.
+- Arreglado el error 416 al bajar la IA de Bisa. Las listas ya no saltan al medio en cada paso. Mantener B vuelve al primer juego, y avisa cuando queda poca batería.
+
+## Lo que trajo la 1.0 beta
 
 - **Ajustes ordenados en grupos** (Empieza aquí, Cómo se ve, Tus juegos, Asistente, Consola), con subtítulos dentro de las secciones largas.
 - **Vista previa en vivo de cada ajuste**: la otra pantalla muestra en miniatura la parte de Díptico que cambia (la pantalla de arriba, la de abajo, las dos con la atenuación, el tema, la bienvenida, la IA…). Con una sola pantalla, la vista previa va al lado del menú.
@@ -163,6 +180,8 @@ En **Menú › Emuladores** aprieta A sobre una consola para pasar por los emula
 | X | Ficha del juego |
 | Select | Inicio con widgets / carátulas (mantener: intercambiar pantallas) |
 | L3 / R3 | Buscar / cambiar la vista |
+| ↑ (desde el estante) | Entrar a los widgets (A abre, B vuelve) |
+| L4 / R4 | Lo que elijas en Menú › Botones extra |
 | Start | Menú (mantener: centro de control) |
 
 ## Cómo se construye

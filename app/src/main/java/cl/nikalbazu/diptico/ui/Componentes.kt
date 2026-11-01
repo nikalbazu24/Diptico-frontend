@@ -533,7 +533,9 @@ fun MedioPixel(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Mo
 suspend fun androidx.compose.foundation.lazy.LazyListState.mostrar(i: Int, margen: Int = 0) {
     val info = layoutInfo
     val vis = info.visibleItemsInfo
-    if (vis.isEmpty() || i < 0) return
+    if (i < 0) return
+    // Recién abierta (aún sin medir): salta directo cerca del elegido.
+    if (vis.isEmpty()) { if (i > 1) scrollToItem(i - 1); return }
     val ini = info.viewportStartOffset + margen
     val fin = info.viewportEndOffset - margen
     val it = vis.firstOrNull { it.index == i }
@@ -551,7 +553,8 @@ suspend fun androidx.compose.foundation.lazy.LazyListState.mostrar(i: Int, marge
 suspend fun androidx.compose.foundation.lazy.grid.LazyGridState.mostrar(i: Int, margen: Int = 0) {
     val info = layoutInfo
     val vis = info.visibleItemsInfo
-    if (vis.isEmpty() || i < 0) return
+    if (i < 0) return
+    if (vis.isEmpty()) { if (i > 0) scrollToItem(i); return }
     val ini = info.viewportStartOffset + margen
     val fin = info.viewportEndOffset - margen
     val it = vis.firstOrNull { it.index == i }

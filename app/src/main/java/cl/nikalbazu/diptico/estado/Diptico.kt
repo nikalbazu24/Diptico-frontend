@@ -3835,7 +3835,7 @@ object Diptico {
 
     private fun opcionesSobremesa(e: Estado): List<Opcion> {
         val modos = listOf("auto", "si", "no")
-        fun nombreModo(m: String) = when (m) { "si" -> "Siempre"; "no" -> "Nunca"; else -> "Al conectar la tele" }
+        fun nombreModo(m: String) = when (m) { "si" -> "Siempre"; "no" -> "Nunca"; else -> "Automático" }
         val tams = listOf(1f, 1.1f, 1.2f, 1.35f, 1.5f)
         fun nombreTam(t: Float) = when { t <= 1f -> "Normal"; t <= 1.1f -> "Un poco más grande"; t <= 1.2f -> "Grande"; t <= 1.35f -> "Muy grande"; else -> "Enorme" }
         val margenes = listOf(0, 2, 3, 5, 8)
@@ -3852,12 +3852,12 @@ object Diptico {
             Opcion(
                 "Tamaño en la tele", nombreTam(e.sobremesaTam), Icono.TEXTO, "Todo más grande, para verlo cómodo desde el sillón.",
                 menos = { val v = tams[(tams.indexOfFirst { it >= estado.value.sobremesaTam - 0.01f }.coerceAtLeast(0) - 1).coerceAtLeast(0)]; guardarSobremesa("sobremesaTam", v.toString()) { it.copy(sobremesaTam = v) } },
-            ) { val v = tams[(tams.indexOfFirst { it >= estado.value.sobremesaTam - 0.01f }.coerceAtLeast(0) + 1).coerceAtMost(tams.size - 1)]; guardarSobremesa("sobremesaTam", v.toString()) { it.copy(sobremesaTam = v) } },
+            ) { val v = tams[(tams.indexOfFirst { it >= estado.value.sobremesaTam - 0.01f }.coerceAtLeast(0) + 1).mod(tams.size)]; guardarSobremesa("sobremesaTam", v.toString()) { it.copy(sobremesaTam = v) } },
             Opcion(
                 "Margen de seguridad", if (e.sobremesaMargen == 0) "Sin margen" else "${e.sobremesaMargen}%", Icono.FORMA,
                 "Algunas teles cortan los bordes de la imagen. Sube el margen si no ves la hora o los botones de las orillas.",
                 menos = { val v = margenes[(margenes.indexOf(estado.value.sobremesaMargen).coerceAtLeast(0) - 1).coerceAtLeast(0)]; guardarSobremesa("sobremesaMargen", v.toString()) { it.copy(sobremesaMargen = v) } },
-            ) { val v = margenes[(margenes.indexOf(estado.value.sobremesaMargen).coerceAtLeast(0) + 1).coerceAtMost(margenes.size - 1)]; guardarSobremesa("sobremesaMargen", v.toString()) { it.copy(sobremesaMargen = v) } },
+            ) { val v = margenes[(margenes.indexOf(estado.value.sobremesaMargen).coerceAtLeast(0) + 1).mod(margenes.size)]; guardarSobremesa("sobremesaMargen", v.toString()) { it.copy(sobremesaMargen = v) } },
             Opcion(
                 "Una sola pantalla en la tele", if (e.sobremesaUna) "Sí" else "No", Icono.UNA,
                 "Todo Díptico en la tele (como en una Odin), y la pantalla de abajo de la consola se apaga.",
@@ -4049,6 +4049,13 @@ object Diptico {
         actualizar { it.copy(panel = Panel.WIDGET, widgetAbierto = i, widgetFoco = i, indice = 0) }
     }
 
+    /** ← → dentro de un widget abierto: cambia las opciones con valor (minutos, pausas…). */
+    fun ladoWidget(d: Int) {
+        val o = opcionesWidget().getOrNull(estado.value.indice) ?: return
+        if (o.menos == null) return
+        if (d < 0) o.menos.invoke() else o.accion()
+    }
+
     /** Tres juegos para descubrir (primero los que nunca has jugado). */
     fun nuevasSugerencias() {
         val e = estado.value
@@ -4145,7 +4152,7 @@ object Diptico {
         val w = e.widgets.getOrNull(e.widgetAbierto) ?: return emptyList()
         fun juegosComo(l: List<cl.nikalbazu.diptico.data.Juego>) = l.map { j ->
             val d = e.datos[j.clave]
-            Opcion(j.titulo, (Consolas.porId(j.consolaId)?.nombre ?: "") + (d?.tiempo?.takeIf { it > 0 }?.let { " · ${formatoTiempoCorto(it)}" } ?: ""), Icono.JUGAR, d?.paso.orEmpty()) { jugarDesdeWidget(j.clave) }
+            Opcion(j.titulo, (Consolas.porId(j.consolaId)?.nombre ?: "") + (d?.tiempo?.takeIf { it >= 60 }?.let { " · ${formatoTiempoCorto(it)}" } ?: ""), Icono.JUGAR, d?.paso.orEmpty()) { jugarDesdeWidget(j.clave) }
         }
         return when (w.tipo) {
             "reloj" -> listOf(
@@ -4254,8 +4261,8 @@ object Diptico {
         return InfoBateria(nivel, est, (i?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0) / 10f, i?.getIntExtra(android.os.BatteryManager.EXTRA_VOLTAGE, 0) ?: 0, salud)
     }
 
-    private fun formatoTiempoCorto(ms: Long): String {
-        val min = ms / 60_000
+    private fun formatoTiempoCorto(seg: Long): String {
+        val min = seg / 60
         return if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"
     }
 
