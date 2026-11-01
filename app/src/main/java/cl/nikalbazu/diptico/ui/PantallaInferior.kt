@@ -105,7 +105,9 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo2)) {
         val s = e.sesion
-        Box(Modifier.fillMaxSize().difuminar(e)) {
+        // Con la lupa no se difumina nada encima (la copia de la pantalla de arriba se veía rara con el desenfoque).
+        val conLupa = s != null && e.datos[s.clave]?.lupa == true && s.displayId == android.view.Display.DEFAULT_DISPLAY && !s.dosPantallas
+        Box(Modifier.fillMaxSize().then(if (conLupa) Modifier else Modifier.difuminar(e))) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Column(Modifier.fillMaxSize()) {
@@ -410,15 +412,20 @@ private fun Dock(e: Estado) {
                 .padding(horizontal = esc.d(4)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ItemDock(Icono.CONTINUAR, "Continuar", Coral) { Diptico.continuar() }
-            ItemDock(Icono.BUSCAR, "Buscar", tecla = "L3") { Diptico.abrirBuscar() }
-            ItemDock(Icono.VISTA, Diptico.nombreVista(e.vista), tecla = "R3") { Diptico.cambiarVista() }
-            Spacer(Modifier.weight(1.15f))
-            // Turbo: tocar libera memoria ahora; mantener enciende o apaga el turbo al jugar.
-            ItemDock(Icono.CHISPA, "Turbo", if (e.turbo) Color(0xFFFF5252) else p.tenue, alMantener = { Diptico.alternarTurbo() }) { Diptico.turboAhora() }
-            ItemDock(Icono.APPS, "Apps", Cielo) { Diptico.abrirApps() }
-            ItemDock(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets", tecla = "Sel") { Diptico.alternarInicio() }
-            ItemDock(Icono.MENU, "Menú", tecla = "Start") { Diptico.abrirMenu() }
+            // Dos mitades iguales: Bisa queda siempre justo al centro, aunque a un lado haya más accesos.
+            Row(Modifier.weight(1f).fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
+                ItemDock(Icono.CONTINUAR, "Continuar", Coral) { Diptico.continuar() }
+                ItemDock(Icono.BUSCAR, "Buscar", tecla = "L3") { Diptico.abrirBuscar() }
+                ItemDock(Icono.VISTA, Diptico.nombreVista(e.vista), tecla = "R3") { Diptico.cambiarVista() }
+            }
+            Spacer(Modifier.width(esc.d(66)))
+            Row(Modifier.weight(1f).fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
+                // Turbo: tocar libera memoria ahora; mantener enciende o apaga el turbo al jugar.
+                ItemDock(Icono.CHISPA, "Turbo", if (e.turbo) Color(0xFFFF5252) else p.tenue, alMantener = { Diptico.alternarTurbo() }) { Diptico.turboAhora() }
+                ItemDock(Icono.APPS, "Apps", Cielo) { Diptico.abrirApps() }
+                ItemDock(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets", tecla = "Sel") { Diptico.alternarInicio() }
+                ItemDock(Icono.MENU, "Menú", tecla = "Start") { Diptico.abrirMenu() }
+            }
         }
         // Bisa: un círculo que sobresale de la barra.
         Column(Modifier.align(Alignment.TopCenter).offset(y = esc.d(-12)), horizontalAlignment = Alignment.CenterHorizontally) {

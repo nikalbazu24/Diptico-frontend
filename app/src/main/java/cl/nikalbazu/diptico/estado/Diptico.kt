@@ -1463,10 +1463,12 @@ object Diptico {
 
     fun pedirPermisoLupa(luegoJugar: Boolean) {
         try {
-            app.startActivity(
-                Intent(app, cl.nikalbazu.diptico.lupa.PermisoLupaActivity::class.java)
-                    .putExtra("luegoJugar", luegoJugar).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
+            // Mientras juegas, el permiso se pide en la pantalla de abajo: así no tapa ni pausa el juego de arriba.
+            val i = Intent(app, cl.nikalbazu.diptico.lupa.PermisoLupaActivity::class.java)
+                .putExtra("luegoJugar", luegoJugar).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val abajo = Pantallas.inferior(app)
+            if (!luegoJugar && abajo != null) app.startActivity(i, android.app.ActivityOptions.makeBasic().setLaunchDisplayId(abajo.displayId).toBundle())
+            else app.startActivity(i)
         } catch (_: Exception) {
             avisar("No pude pedir el permiso de la lupa")
         }
@@ -1485,9 +1487,16 @@ object Diptico {
         else android.graphics.RectF(0.79f, 0.02f, 0.99f, 0.36f)
     }
 
+    /** Guarda la zona de la lupa sin rearmar la biblioteca (antes cada toque hacía ese trabajo pesado y la lupa se trababa). */
     fun guardarZonaLupa(clave: String, r: android.graphics.RectF) {
-        cambiarDatos(clave) { it.copy(zonaLupa = "${r.left},${r.top},${r.width()},${r.height()}") }
+        val datos = estado.value.datos.toMutableMap()
+        datos[clave] = (datos[clave] ?: DatosJuego()).copy(zonaLupa = "${r.left},${r.top},${r.width()},${r.height()}")
+        actualizar { it.copy(datos = datos) }
+        zonaJob?.cancel()
+        zonaJob = scope.launch { delay(600); almacen.guardarDatos(estado.value.datos) }
     }
+
+    private var zonaJob: Job? = null
 
     /** Enciende o apaga la lupa para un juego (si se está jugando, se pide el permiso al tiro). */
     fun alternarLupaJuego(clave: String, encender: Boolean = estado.value.datos[clave]?.lupa != true) {
@@ -2279,10 +2288,7 @@ object Diptico {
                 when (d?.pantalla) { "arriba" -> "Arriba"; "abajo" -> "Abajo"; else -> "Según el menú" },
                 Icono.PANTALLAS,
             ) { ciclarPantallaJuego(juego.clave) }
-            lista += Opcion(
-                "Lupa en la pantalla de abajo", if (d?.lupa == true) "Sí" else "No", Icono.BUSCAR,
-                "Mientras juegas arriba, la pantalla de abajo muestra ampliada una parte de la de arriba: el minimapa, la vida, los subtítulos. La zona se elige en la misma lupa.",
-            ) { alternarLupaJuego(juego.clave) }
+            // La lupa ya no está aquí: se enciende mientras juegas, desde la pantalla de abajo (botón Lupa).
         }
         lista += Opcion("Imagen en el inicio", nombreHeroe(e.heroes[juego.clave]), Icono.PORTADA,
             "Qué imagen de este juego se ve en grande en el inicio: la imagen grande, la portada, o la que elijan todos (Menú › Inicio).") { ciclarHeroe(juego.clave) }

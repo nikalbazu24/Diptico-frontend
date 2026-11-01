@@ -440,8 +440,10 @@ private fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an
 /** Qué tanto crece el contenido según cuánto más grande es el widget que su tamaño de siempre. */
 private fun escalaAuto(w: cl.nikalbazu.diptico.estado.Widget): Float {
     val base = cl.nikalbazu.diptico.estado.Widgets.porDefecto.firstOrNull { it.tipo == w.tipo } ?: return 1f
-    val r = kotlin.math.sqrt((w.an * w.al).toFloat() / (base.an * base.al).toFloat())
-    return if (r > 1f) r.coerceAtMost(1.35f) else 1f
+    // Crece solo si el widget es más grande en las dos direcciones (si solo es más ancho o más alto, el texto no cabría).
+    val area = kotlin.math.sqrt((w.an * w.al).toFloat() / (base.an * base.al).toFloat())
+    val r = minOf(area, w.an.toFloat() / base.an, w.al.toFloat() / base.al)
+    return if (r > 1f) r.coerceAtMost(1.25f) else 1f
 }
 
 /** El widget que se está dibujando (su estilo, color, fondo y esquinas). */
@@ -489,8 +491,8 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
     when (tipo) {
         "juego" -> {
             val j = e.seleccionado
-            if (variante == 1 && j != null) {
-                // Arte de fondo: la imagen del juego llena el widget y el título va encima.
+            if ((variante == 1 || an <= 2) && j != null) {
+                // Arte de fondo (también en los widgets angostos, donde la caja y el título no caben lado a lado): la imagen del juego llena el widget y el título va encima.
                 val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
                 Box(
                     Modifier.fillMaxSize().clip(forma).background(p.superficie)
@@ -598,8 +600,20 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
                 return@Tarjeta
             }
+            if (compacto) {
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                    IconoDiptico(Icono.BATERIA, if (b in 0..19) Coral else p.tinta, 20f, acento = Coral)
+                    Spacer(Modifier.width(esc.d(8)))
+                    Texto(if (b >= 0) "$b%" else "—", 20f, lineas = 1, traducir = false)
+                    Spacer(Modifier.width(esc.d(10)))
+                    Box(Modifier.weight(1f).height(esc.d(9)).clip(RoundedCornerShape(50)).background(p.linea)) {
+                        Box(Modifier.fillMaxWidth((b.coerceIn(0, 100)) / 100f).fillMaxHeight().clip(RoundedCornerShape(50)).background(if (b in 0..19) Coral else Uva))
+                    }
+                }
+                return@Tarjeta
+            }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-                Texto(if (b >= 0) "$b%" else "—", if (compacto) 22f else 40f)
+                Texto(if (b >= 0) "$b%" else "—", 40f)
                 Spacer(Modifier.height(esc.d(8)))
                 Box(Modifier.fillMaxWidth().height(esc.d(10)).clip(RoundedCornerShape(50)).background(p.linea)) {
                     Box(Modifier.fillMaxWidth((b.coerceIn(0, 100)) / 100f).fillMaxHeight().clip(RoundedCornerShape(50)).background(if (b in 0..19) Coral else Uva))
@@ -634,7 +648,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 Texto(fraseDelDia(e), 16f, lineas = if (compacto) 1 else 3)
             }
         }
-        "paso" -> Tarjeta(alPulsar = { Diptico.abrirPaso() }) {
+        "paso" -> Tarjeta(alPulsar = { Diptico.abrirQuedaste() }) {
             val paso = e.seleccionado?.let { e.datos[it.clave]?.paso }.orEmpty()
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -646,8 +660,26 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 Texto(paso.ifEmpty { "Aprieta Y para anotar dónde quedaste" }, 16f, lineas = 4, color = if (paso.isEmpty()) p.tenue else p.tinta, peso = FontWeight.SemiBold)
             }
         }
-        "estadisticas" -> Tarjeta(alPulsar = { Diptico.abrirEstadisticas() }) {
+        "estadisticas" -> Tarjeta(alPulsar = { Diptico.abrirWidgetTipo("estadisticas") }) {
             val total = e.datos.values.sumOf { it.tiempo }
+            if (compacto) {
+                // Una fila: el total y la consola más jugada con su barra.
+                val top = e.datos.entries.filter { it.value.tiempo > 0 }.groupBy { it.key.substringBefore('/') }
+                    .mapValues { (_, v) -> v.sumOf { it.value.tiempo } }.maxByOrNull { it.value }
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                    IconoDiptico(Icono.RELOJ, Uva, 20f, acento = Coral)
+                    Spacer(Modifier.width(esc.d(8)))
+                    Column(Modifier.weight(1f)) {
+                        Etiqueta("Estadísticas", p.tenue, 10.5f)
+                        Texto(formatoTiempo(total), 15f, lineas = 1)
+                    }
+                    if (top != null && tam >= 2) {
+                        Spacer(Modifier.width(esc.d(8)))
+                        Detalle(Consolas.porId(top.key)?.nombre ?: top.key, 12f, lineas = 1)
+                    }
+                }
+                return@Tarjeta
+            }
             val porConsola = e.datos.entries.filter { it.value.tiempo > 0 }
                 .groupBy { it.key.substringBefore('/') }.mapValues { (_, v) -> v.sumOf { it.value.tiempo } }
                 .entries.sortedByDescending { it.value }.take(if (tam >= 2) 4 else 2)
@@ -686,7 +718,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
             }
         }
-        "logros" -> Tarjeta(alPulsar = { if (e.usuarioRA.isBlank()) Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.LOGROS) else Diptico.abrirEstadisticas() }) {
+        "logros" -> Tarjeta(alPulsar = { Diptico.abrirWidgetTipo("logros") }) {
             val ra = e.perfilRA
             LaunchedEffect(e.usuarioRA) { if (ra == null) Diptico.cargarPerfilRA() }
             Column {
@@ -720,14 +752,21 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         "asistente" -> WidgetBisa(e, compacto, al, an)
         "apps" -> Tarjeta { WidgetApps(e, an) }
         "accesos" -> Tarjeta {
-            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                Diptico.opcionesCentro().take(if (tam >= 2) 6 else 4).forEach { o ->
-                    Column(Modifier.clip(RoundedCornerShape(esc.d(12))).clickable { o.accion() }.padding(esc.d(4)), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(Modifier.size(esc.d(40)).clip(CircleShape).background(p.fondo.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
-                            o.icono?.let { IconoDiptico(it, p.tinta, 22f, acento = Coral) }
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                // Solo los accesos que caben enteros (nunca uno cortado), y botones que caben en el alto.
+                val anchoU = maxWidth.value / esc.factor
+                val altoU = maxHeight.value / esc.factor
+                val boton = minOf(40f, altoU - (if (al >= 2) 22f else 4f)).coerceAtLeast(24f)
+                val cabe = ((anchoU + 6f) / (maxOf(boton, if (al >= 2) 56f else boton) + 6f)).toInt().coerceIn(1, 6)
+                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                    Diptico.opcionesCentro().take(cabe).forEach { o ->
+                        Column(Modifier.clip(RoundedCornerShape(esc.d(12))).clickable { o.accion() }.padding(esc.d(2)), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(Modifier.size(esc.d(boton)).clip(CircleShape).background(p.fondo.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
+                                o.icono?.let { IconoDiptico(it, p.tinta, boton * 0.55f, acento = Coral) }
+                            }
+                            // Con una sola fila de alto no caben los nombres.
+                            if (al >= 2) Texto(o.titulo, 10.5f, color = p.tenue, lineas = 1, modifier = Modifier.widthIn(max = esc.d(60)))
                         }
-                        // Con una sola fila de alto no caben los nombres.
-                        if (al >= 2) Texto(o.titulo, 10.5f, color = p.tenue, lineas = 1)
                     }
                 }
             }
@@ -750,7 +789,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
             }
         }
-        "tiempo" -> Tarjeta(alPulsar = { Diptico.abrirEstadisticas() }) {
+        "tiempo" -> Tarjeta(alPulsar = { Diptico.abrirWidgetTipo("tiempo") }) {
             val total = e.datos.values.sumOf { it.tiempo }
             val top = e.datos.maxByOrNull { it.value.tiempo }?.takeIf { it.value.tiempo > 0 }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
@@ -873,6 +912,17 @@ private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
     val s by Medios.sonando.collectAsState()
     if (!permiso) {
         Tarjeta(alPulsar = { Medios.pedirPermiso(ctx) }) {
+            if (compacto) {
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                    IconoDiptico(Icono.MUSICA, Uva, 22f, acento = Coral)
+                    Spacer(Modifier.width(esc.d(10)))
+                    Column(Modifier.weight(1f)) {
+                        Texto("Widget de música", 14.5f, lineas = 1)
+                        Detalle("Toca para dar permiso", 11.5f, lineas = 1)
+                    }
+                }
+                return@Tarjeta
+            }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 IconoDiptico(Icono.MUSICA, Uva, 26f, acento = Coral)
                 Spacer(Modifier.height(esc.d(6)))
@@ -1031,6 +1081,12 @@ internal fun WidgetImagen(w: cl.nikalbazu.diptico.estado.Widget) {
             )
             .combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = { Diptico.editarWidgets() }),
     ) {
+        if (w.uri == null) {
+            Column(Modifier.fillMaxSize().clip(forma).background(LocalPaleta.current.superficie.copy(alpha = 0.6f)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                IconoDiptico(Icono.PORTADA, LocalPaleta.current.tenue, 22f, acento = Coral)
+                Detalle("Toca para elegir", 11f, lineas = 1)
+            }
+        }
         w.uri?.let { ImagenAnimada(android.net.Uri.parse(it), Modifier.fillMaxSize(), recortar = w.variante == 1) }
     }
 }
@@ -1137,10 +1193,10 @@ private fun WidgetMini(e: Estado, tipo: String, al: Int) {
     }
     Tarjeta(alPulsar = { if (tipo == "musica") cl.nikalbazu.diptico.audio.Medios.alternar() else Diptico.abrirWidgetTipo(tipo) }) {
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            if (icono != null) IconoDiptico(icono, p.tinta, if (valor.isEmpty()) 26f else 18f, acento = Coral)
+            if (icono != null) IconoDiptico(icono, p.tinta, if (valor.isEmpty()) 24f else if (al >= 2) 18f else 14f, acento = Coral)
             if (valor.isNotEmpty()) {
-                if (icono != null) Spacer(Modifier.height(esc.d(2)))
-                Texto(valor, if (tipo == "reloj") (if (al >= 2) 26f else 19f) else 18f, lineas = 1, traducir = false)
+                if (icono != null && al >= 2) Spacer(Modifier.height(esc.d(2)))
+                Texto(valor, if (tipo == "reloj") (if (al >= 2) 26f else 18f) else if (al >= 2) 18f else 15f, lineas = 1, traducir = false, interlineado = if (al >= 2) null else 17f)
             }
         }
     }
@@ -1226,9 +1282,9 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
                     Spacer(Modifier.height(esc.d(7)))
                     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
                         ChipBisa("Hablar") { Diptico.abrirAsistente() }
-                        // En widgets angostos caben dos accesos; en los anchos, tres.
+                        // Los accesos que caben: uno en los angostos, dos en los medianos y tres en los anchos.
                         if (j != null && an >= 4) ChipBisa("Un truco") { Diptico.abrirAsistente(); Diptico.preguntar("Dame un buen truco o consejo para ${j.titulo}.") }
-                        ChipBisa("¿Qué juego?") { Diptico.abrirAsistente(); Diptico.preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") }
+                        if (an >= 3) ChipBisa("¿Qué juego?") { Diptico.abrirAsistente(); Diptico.preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") }
                     }
                 }
             }
@@ -1298,7 +1354,9 @@ fun PanelWidget(e: Estado) {
                 Detalle(it, 12.5f, lineas = 2)
             }
             Spacer(Modifier.height(esc.d(4)))
-            Pistas("↑ ↓" to "Moverte", "A" to "Elegir", "← →" to "Cambiar", "B" to "Volver")
+            // Solo las pistas que caben (← → solo si alguna opción se cambia hacia los lados).
+            if (opciones.any { it.menos != null }) Pistas("↑ ↓" to "Moverte", "A" to "Elegir", "← →" to "Cambiar")
+            else Pistas("↑ ↓" to "Moverte", "A" to "Elegir", "B" to "Volver")
         }
     }
 }

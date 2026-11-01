@@ -35,8 +35,13 @@ class VistaLupa(ctx: Context) : TextureView(ctx), TextureView.SurfaceTextureList
     /** Si la lupa ya sabe el tamaño real de la pantalla de arriba, la textura lo usa (así no se deforma). */
     fun refrescar() {
         try { surfaceTexture?.setDefaultBufferSize(LupaServicio.ancho, LupaServicio.alto) } catch (_: Exception) {}
+        tamano = LupaServicio.ancho to LupaServicio.alto
         ajustar()
     }
+
+    /** El tamaño de pantalla con que se armó la textura (para no rehacerla sin necesidad). */
+    var tamano: Pair<Int, Int> = 0 to 0
+        private set
 
     private fun ajustar() {
         if (width == 0 || height == 0) return
@@ -65,6 +70,7 @@ class VistaLupa(ctx: Context) : TextureView(ctx), TextureView.SurfaceTextureList
 
     override fun onSurfaceTextureAvailable(st: SurfaceTexture, width: Int, height: Int) {
         st.setDefaultBufferSize(LupaServicio.ancho, LupaServicio.alto)
+        tamano = LupaServicio.ancho to LupaServicio.alto
         val s = Surface(st)
         superficie = s
         LupaServicio.ponerSuperficie(s)

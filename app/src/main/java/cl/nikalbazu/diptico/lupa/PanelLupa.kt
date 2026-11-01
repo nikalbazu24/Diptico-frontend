@@ -97,7 +97,12 @@ fun PanelLupa(e: Estado, clave: String) {
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(
             factory = { VistaLupa(it).also { v -> vista = v } },
-            update = { v -> v.refrescar(); v.zona = if (editando) null else zona },
+            update = { v ->
+                // Solo se toca la vista si algo cambió (antes se rehacía en cada cuadro y la imagen parpadeaba).
+                val z = if (editando) null else zona
+                if (v.zona != z) v.zona = z
+                if (v.tamano != LupaServicio.ancho to LupaServicio.alto) v.refrescar()
+            },
             modifier = Modifier.fillMaxSize().onSizeChanged { if (it.height > 0) aspecto = it.width.toFloat() / it.height },
         )
         if (editando) {
@@ -153,7 +158,7 @@ fun PanelLupa(e: Estado, clave: String) {
                 }
             }
         }
-        if (!LupaServicio.activa) {
+        if (!e.lupaActiva) {
             Detalle("Encendiendo la lupa…", 14f, color = Color.White, modifier = Modifier.align(Alignment.Center))
         }
     }

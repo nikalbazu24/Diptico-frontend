@@ -193,7 +193,7 @@ private fun LecturaBateria(e: Estado) {
     val color = if (baja) Coral else if (info.estado == "Cargando") Color(0xFF2EC4A6) else Uva
     val a = rememberEntrada(b)
     Row(Modifier.fillMaxSize().padding(esc.d(26)), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.fillMaxHeight(0.82f).aspectRatio(1f), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxWidth(0.5f).aspectRatio(1f), contentAlignment = Alignment.Center) {
             val linea = p.linea
             Canvas(Modifier.fillMaxSize()) {
                 val g = size.minDimension * 0.09f
@@ -205,7 +205,7 @@ private fun LecturaBateria(e: Estado) {
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 IconoDiptico(Icono.BATERIA, color, 26f, acento = color)
-                Texto(if (b >= 0) "${(b * a).toInt()}%" else "—", 54f, lineas = 1, traducir = false)
+                Texto(if (b >= 0) "${(b * a).toInt()}%" else "—", 40f, lineas = 1, traducir = false)
             }
         }
         Spacer(Modifier.width(esc.d(22)))
@@ -277,7 +277,7 @@ private fun LecturaMusica() {
     val m by cl.nikalbazu.diptico.audio.Medios.sonando.collectAsState()
     Row(Modifier.fillMaxSize().padding(esc.d(26)), verticalAlignment = Alignment.CenterVertically) {
         Box(
-            Modifier.fillMaxHeight(0.78f).aspectRatio(1f).clip(RoundedCornerShape(esc.d(22)))
+            Modifier.fillMaxWidth(0.46f).aspectRatio(1f).clip(RoundedCornerShape(esc.d(22)))
                 .background(Brush.linearGradient(listOf(Uva, Coral))),
             contentAlignment = Alignment.Center,
         ) {
@@ -288,7 +288,7 @@ private fun LecturaMusica() {
         Spacer(Modifier.width(esc.d(22)))
         Column(Modifier.weight(1f)) {
             Etiqueta(m?.app ?: "Música", Coral, 12f)
-            Texto(m?.titulo ?: "No suena nada", 26f, lineas = 3, traducir = m == null)
+            Texto(m?.titulo ?: "No suena nada", 22f, lineas = 3, traducir = m == null)
             m?.artista?.takeIf { it.isNotBlank() }?.let { Detalle(it, 16f, lineas = 1) }
             Spacer(Modifier.height(esc.d(14)))
             Row(verticalAlignment = Alignment.CenterVertically) {
