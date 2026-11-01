@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.Lifecycle
@@ -52,14 +53,16 @@ class MainActivity : BaseActivity() {
             val vertical = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
             val mi = miDisplay()
             val t = e.tamTexto
-            val z = e.zoomArriba
+            // En la tele: todo más grande y con margen para que no se corte nada en los bordes.
+            val z = e.zoomArriba * (if (e.sobremesa) e.sobremesaTam else 1f)
+            val margen = if (e.sobremesa) e.sobremesaMargen else 0
             when {
                 !hayInferior && vertical && e.configurado -> Column(Modifier.fillMaxSize().background(Color.Black)) {
                     Lienzo(e.oscuro, Modifier.fillMaxWidth().aspectRatio(16f / 9f), t) { Raiz(e, Rol.SUPERIOR, mi) }
                     Lienzo(e.oscuro, Modifier.fillMaxWidth().weight(1f), t) { Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) }
                 }
-                e.unaPantalla -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t, z) { Raiz(e, Rol.UNICA, mi) }
-                else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t, z) {
+                e.unaPantalla -> Lienzo(e.oscuro, Modifier.fillMaxSize().margenPorcentaje(margen), t, z) { Raiz(e, Rol.UNICA, mi) }
+                else -> Lienzo(e.oscuro, Modifier.fillMaxSize().margenPorcentaje(margen), t, z) {
                     Intercambio(e.intercambiar, esArriba = true) { inter ->
                         if (inter) Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) else Raiz(e, Rol.SUPERIOR, mi)
                     }
@@ -100,4 +103,12 @@ class MainActivity : BaseActivity() {
             Diptico.avisar("No pude abrir la pantalla de abajo")
         }
     }
+}
+
+/** Deja un margen (en % del ancho y del alto) alrededor: para teles que cortan los bordes de la imagen. */
+fun Modifier.margenPorcentaje(pct: Int): Modifier = if (pct <= 0) this else this.layout { medible, c ->
+    val px = (c.maxWidth * pct / 100f).toInt()
+    val py = (c.maxHeight * pct / 100f).toInt()
+    val pl = medible.measure(c.copy(minWidth = 0, minHeight = 0, maxWidth = (c.maxWidth - 2 * px).coerceAtLeast(0), maxHeight = (c.maxHeight - 2 * py).coerceAtLeast(0)))
+    layout(c.maxWidth, c.maxHeight) { pl.place(px, py) }
 }

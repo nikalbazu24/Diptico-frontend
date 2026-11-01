@@ -71,6 +71,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
     ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.", "Asistente"),
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.", "Consola"),
+    SOBREMESA("Modo sobremesa (tele)", Icono.VISTA, "Cuando conectas la consola a la tele: una sola pantalla, todo más grande, margen para que nada se corte y más."),
+    CONTROLES("Botones extra", Icono.MANDO, "Dale uso a los botones de atrás (L4 y R4 de la Odin 2 y otras): Bisa, apps, música, un juego al azar…"),
     CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
@@ -129,6 +131,27 @@ data class ConsolaPropia(
 }
 
 /** Forma de las cajas de una consola en el estante. */
+/** Un botón extra del control: su tecla de Android y la acción que le toca. */
+data class BotonExtra(val nombre: String, val tecla: Int, val accion: String) {
+    companion object {
+        /** L4 y R4 suelen llegar como BUTTON_C y BUTTON_Z; si los tuyos son otros, Díptico los aprende. */
+        val PORDEFECTO = listOf(
+            BotonExtra("L4", android.view.KeyEvent.KEYCODE_BUTTON_C, "bisa"),
+            BotonExtra("R4", android.view.KeyEvent.KEYCODE_BUTTON_Z, "musica"),
+        )
+        val ACCIONES = listOf("nada", "bisa", "musica", "siguiente", "apps", "buscar", "azar", "widgets", "vista", "centro", "favorito", "ficha", "intercambiar", "menu")
+        fun nombreAccion(a: String) = when (a) {
+            "bisa" -> "Hablar con Bisa"; "musica" -> "Pausar o seguir la música"; "siguiente" -> "Siguiente canción"; "apps" -> "Abrir las apps"
+            "buscar" -> "Buscar un juego"; "azar" -> "Un juego al azar"; "widgets" -> "Widgets ↔ carátulas"; "vista" -> "Cambiar la vista"
+            "centro" -> "Centro de control"; "favorito" -> "Favorito sí / no"; "ficha" -> "Ficha del juego"; "intercambiar" -> "Intercambiar pantallas"
+            "menu" -> "Abrir el menú"; else -> "Nada"
+        }
+    }
+}
+
+/** Un juego de PC que Díptico abre con GameNative, GameHub Lite o el que elijas: su tienda y su número. */
+data class JuegoPC(val titulo: String, val id: Int, val tienda: String = "STEAM")
+
 data class FormaCfg(val forma: String = "original", val tam: Float = 1f, val imagen: String = "portada")
 
 /** Cómo se encuadra una imagen dentro de su caja: hacia dónde se corre (-1 a 1) y cuánto se acerca. */
@@ -348,6 +371,11 @@ data class Estado(
     val filtro: String = "todos",
     /** "az", "recientes" o "tiempo". */
     val orden: String = "az",
+    /** Tu orden de las consolas y, por consola ("todo" = todos), tu orden de los juegos. */
+    val ordenConsolas: List<String> = emptyList(),
+    val ordenPropio: Map<String, List<String>> = emptyMap(),
+    /** Moviendo un juego de lugar con la cruceta. */
+    val ordenando: Boolean = false,
     val busqueda: String = "",
     val formas: Map<String, FormaCfg> = emptyMap(),
     /** Encuadres propios de las imágenes ("clave|portada" o "clave|arte"). */
@@ -358,6 +386,20 @@ data class Estado(
     /** Acercamiento lento en las portadas elegidas y en la imagen grande. */
     val zoomLento: Boolean = true,
     val paqueteSonidos: String = "tema",
+    /** Juegos de PC agregados desde Díptico (Steam por su número) y lo último que se buscó en Steam. */
+    val juegosPC: List<JuegoPC> = emptyList(),
+    val resultadosSteam: List<JuegoPC> = emptyList(),
+    /** Modo sobremesa (tele): "auto" (al conectar la tele), "si" o "no"; y la tele que se ve conectada. */
+    val sobremesaModo: String = "auto",
+    val teleConectada: String? = null,
+    val sobremesaTam: Float = 1.2f,
+    val sobremesaMargen: Int = 3,
+    val sobremesaUna: Boolean = true,
+    val sobremesaEfectos: Boolean = true,
+    val sobremesaSonidos: Boolean = true,
+    /** Botones extra (L4, R4…): qué tecla es cada uno y qué hace. Y si se está esperando que aprietes uno para aprenderlo. */
+    val botonesExtra: List<BotonExtra> = BotonExtra.PORDEFECTO,
+    val aprendiendoBoton: Int = -1,
     /** Navegar los widgets con la cruceta: cuál tiene el foco (-1 = ninguno, el control maneja el estante). */
     val widgetFoco: Int = -1,
     /** El widget abierto (su contenido) en Panel.WIDGET. */
@@ -426,16 +468,25 @@ data class Estado(
     /** Díptico es la app de inicio de Android (el botón Inicio trae aquí). */
     val esInicio: Boolean = true,
 ) {
-    /** Todo Díptico vive en una sola pantalla (siempre durante el tutorial). */
+    /** Conectada a la tele (o forzado en los ajustes): se usa el perfil de sobremesa. */
+    val sobremesa: Boolean
+        get() = configurado && (sobremesaModo == "si" || (sobremesaModo == "auto" && teleConectada != null))
+
+    /** Todo Díptico vive en una sola pantalla (siempre durante el tutorial, y en la tele si así se eligió). */
     val unaPantalla: Boolean
-        get() = !configurado || modoPantallas != "dos" || !dosDisponibles
+        get() = !configurado || modoPantallas != "dos" || !dosDisponibles || (sobremesa && sobremesaUna)
 
     /** Se está escribiendo con el teclado de Díptico (en la pantalla contraria a la del texto). */
     val conTeclado: Boolean
         get() = tecladoPropio && !unaPantalla && (panel == Panel.PASO || panel == Panel.CLAVE)
 
     val consolasConJuegos: List<Consola>
-        get() = Consolas.todas.filter { c -> juegos.any { it.consolaId == c.id } }
+        get() {
+            val l = Consolas.todas.filter { c -> juegos.any { it.consolaId == c.id } }
+            if (ordenConsolas.isEmpty()) return l
+            // Tu orden primero; las que no ordenaste quedan después, en su orden de siempre.
+            return l.withIndex().sortedBy { (k, c) -> ordenConsolas.indexOf(c.id).let { if (it < 0) 10_000 + k else it } }.map { it.value }
+        }
 
     /** Consolas que usan emulador (todas menos Ports). */
     val consolasEmu: List<Consola>
@@ -464,6 +515,10 @@ data class Estado(
             l = l.filter { Busqueda.normalizar(it.titulo).contains(q) }
         }
         when (orden) {
+            "propio" -> {
+                val o = ordenPropio[consolaSel].orEmpty()
+                l.sortedWith(compareBy<Juego>({ o.indexOf(it.clave).let { k -> if (k < 0) Int.MAX_VALUE else k } }, { it.titulo.lowercase() }))
+            }
             "recientes" -> l.sortedByDescending { d(it)?.ultimo ?: 0L }
             "tiempo" -> l.sortedByDescending { d(it)?.tiempo ?: 0L }
             else -> if (consolaSel == "todo" && filtro == "todos" && busqueda.isBlank()) l else l.sortedBy { it.titulo.lowercase() }
@@ -573,11 +628,21 @@ object Diptico {
             enSistemas = almacen.texto("vistaConsolas", "arriba") == "sistemas",
             tamJuegos = almacen.texto("tamJuegos", "1").toFloatOrNull() ?: 1f,
             orden = almacen.texto("orden", "az"),
+            ordenConsolas = almacen.texto("ordenConsolas").split(",").filter { it.isNotBlank() },
+            ordenPropio = leerOrdenPropio(almacen.texto("ordenPropio", "{}")),
             formas = leerFormas(almacen.texto("formas", "{}")),
             encuadres = leerEncuadres(almacen.texto("encuadres", "{}")),
             zoomLento = almacen.bool("zoomLento", true),
             paqueteSonidos = almacen.texto("paqueteSonidos", "tema"),
             pausaCada = almacen.texto("pausaCada", "0").toIntOrNull() ?: 0,
+            sobremesaModo = almacen.texto("sobremesaModo", "auto"),
+            sobremesaTam = almacen.texto("sobremesaTam", "1.2").toFloatOrNull() ?: 1.2f,
+            sobremesaMargen = almacen.texto("sobremesaMargen", "3").toIntOrNull() ?: 3,
+            sobremesaUna = almacen.bool("sobremesaUna", true),
+            sobremesaEfectos = almacen.bool("sobremesaEfectos", true),
+            sobremesaSonidos = almacen.bool("sobremesaSonidos", true),
+            botonesExtra = leerBotonesExtra(almacen.texto("botonesExtra", "")),
+            juegosPC = leerJuegosPC(almacen.texto("juegosPC", "")),
             temporizadorMin = almacen.texto("temporizadorMin", "10").toIntOrNull() ?: 10,
             zoomArriba = almacen.texto("zoomArriba", "1").toFloatOrNull() ?: 1f,
             zoomAbajo = almacen.texto("zoomAbajo", "1").toFloatOrNull() ?: 1f,
@@ -612,6 +677,7 @@ object Diptico {
         aplicarFluidez()
         vigilarProtector()
         vigilarPausas()
+        vigilarTele()
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
             Avisos.nuevos.collect { a ->
@@ -821,7 +887,7 @@ object Diptico {
     }.sortedBy { it.titulo.lowercase() }
 
     internal fun todosCrudos(): List<Juego> =
-        crudos + juegosApps(estado.value.ports, Consolas.PORTS) + juegosApps(estado.value.android, Consolas.ANDROID)
+        crudos + juegosApps(estado.value.ports, Consolas.PORTS) + juegosApps(estado.value.android, Consolas.ANDROID) + juegosDePC()
 
     /** Junta lo escaneado, los ports y lo descargado, y lo muestra. */
     internal fun publicarJuegos() {
@@ -1225,6 +1291,7 @@ object Diptico {
         val v = e.visibles
         if (v.isEmpty()) return
         val i = (e.indiceSel + delta).coerceIn(0, v.size - 1)
+        if (i == e.indiceSel && delta != 0) Sonidos.borde()
         actualizar { it.copy(juegoSel = v[i].clave) }
     }
 
@@ -2086,6 +2153,7 @@ object Diptico {
         // Lista de abajo: ajustes de este juego.
         lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA) { abrirFicha(); elegirPestanaFicha(3) }
         lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA) { abrirFicha(); buscarCandidatos("portada") }
+        lista += Opcion("Mover de lugar", if (e.orden == "propio") "A tu gusto" else "Ordénalos a tu gusto", Icono.VISTA, "Corre este juego con la cruceta y deja tus juegos en el orden que quieras.") { empezarOrdenar() }
         if (consola != null && !consola.sinEmulador) {
             lista += Opcion("Emulador", d?.emulador?.let { id -> Lanzador.opciones(app, consola).firstOrNull { it.id == id }?.nombre } ?: "El de la consola", Icono.EMULADOR) {
                 ciclarEmuladorJuego(juego.clave, consola)
@@ -2166,6 +2234,13 @@ object Diptico {
     /** Las opciones de una sección. Se arman una vez por cada cambio de estado (las dos pantallas las comparten). */
     /** Subtítulo que agrupa las opciones largas de algunas secciones (así es más fácil encontrar algo). "" = sin grupo. */
     fun grupoOpcion(s: Seccion, t: String): String = when (s) {
+        Seccion.BIBLIOTECA -> when {
+            t == "Agregar un juego de Steam" || t.startsWith("Agregar: ") || estado.value.juegosPC.any { it.titulo == t } ||
+                LANZADORES_PC.any { it.nombre == t } -> "Juegos de PC"
+            else -> "Tus juegos"
+        }
+        Seccion.CONTROLES -> if (t.startsWith("Botón") || t.startsWith("Aprender")) "Botones" else "Más"
+        Seccion.SOBREMESA -> if (t.startsWith("Activar") || t == "Tele conectada") "Cuándo" else "En la tele"
         Seccion.ASISTENTE -> when {
             t == "Hablar con Bisa" || t == "Bisa mientras juegas" || t == "Burbuja flotante" -> "Bisa"
             t.startsWith("Clave de") -> "Claves de IA en la nube"
@@ -2226,6 +2301,8 @@ object Diptico {
         when (s) {
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
+            Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
+            Seccion.CONTROLES -> lista += opcionesBotones(e)
             Seccion.CONSOLAS -> {
                 lista += opcionesIconos(e).first()
                 for (c in e.consolasConJuegos) {
@@ -2559,6 +2636,7 @@ object Diptico {
                 lista += Opcion("Ir a lo último que jugaste", icono = Icono.CONTINUAR, ayuda = "Salta directo a tu último juego.") {
                     cerrarPanel(); continuar()
                 }
+                lista += opcionesPC(e)
             }
             Seccion.SISTEMA -> {
                 lista += Opcion("Repetir el tutorial", icono = Icono.TUTORIAL, ayuda = "Vuelve a configurar todo paso a paso.") { reiniciarTutorial() }
@@ -3543,6 +3621,325 @@ object Diptico {
         Sonidos.aceptar()
     }
 
+    // ---------- Juegos de PC: GameHub, Winlator, GameNative, WinNative, DroidDeck… ----------
+
+    /** Apps para juegos de PC en Android: nombre, paquetes conocidos, cómo se reconocen por su nombre y para qué sirve. */
+    private data class LanzadorPC(val nombre: String, val paquetes: List<String>, val etiqueta: Regex, val ayuda: String)
+
+    private val LANZADORES_PC = listOf(
+        LanzadorPC("GameHub Lite", listOf("gamehub.lite", "emuready.gamehub.lite"), Regex("gamehub ?lite", RegexOption.IGNORE_CASE),
+            "Juegos de Steam y locales. Díptico los abre directo con su número de Steam."),
+        LanzadorPC("GameHub", listOf("com.xiaoji.egggame"), Regex("^gamehub$", RegexOption.IGNORE_CASE),
+            "La app de GameSir para juegos de PC. Agrégala a tus Ports para abrirla desde el estante."),
+        LanzadorPC("GameNative", listOf("app.gamenative"), Regex("gamenative", RegexOption.IGNORE_CASE),
+            "Steam, Epic, GOG y Amazon. Díptico abre tus juegos de Steam directo con su número."),
+        LanzadorPC("Winlator", listOf("com.winlator.cmod", "com.winlator", "com.cmodded.winlator", "com.winlator.vanilla"), Regex("winlator", RegexOption.IGNORE_CASE),
+            "Juegos de Windows. En Winlator usa \"Exportar para frontend\" y deja los accesos en la carpeta \"windows\" de tus juegos."),
+        LanzadorPC("WinNative", listOf("com.winnative.cmod"), Regex("winnative", RegexOption.IGNORE_CASE),
+            "Accesos de Windows, Steam y Epic: déjalos en las carpetas \"windows\", \"steam\" o \"epic\" de tus juegos."),
+        LanzadorPC("DroidDeck", emptyList(), Regex("droid ?deck", RegexOption.IGNORE_CASE),
+            "Agrégala a tus Ports para abrirla desde el estante, con su ficha y tiempo jugado."),
+        LanzadorPC("Steam Link", listOf("com.valvesoftware.steamlink"), Regex("steam ?link", RegexOption.IGNORE_CASE),
+            "Juega lo de tu PC por Wi-Fi. Agrégala a tus Ports."),
+        LanzadorPC("Moonlight", listOf("com.limelight", "com.limelight.root"), Regex("moonlight", RegexOption.IGNORE_CASE),
+            "Juegos de tu PC por streaming. Agrégala a tus Ports."),
+    )
+
+    /** El paquete instalado de un lanzador de PC (por sus paquetes conocidos o por su nombre). */
+    private fun paqueteLanzador(l: LanzadorPC, apps: List<App>): String? =
+        l.paquetes.firstOrNull { Lanzador.instalado(app, it) } ?: apps.firstOrNull { l.etiqueta.containsMatchIn(it.nombre) }?.paquete
+
+    private var appsCache: Pair<Long, List<App>>? = null
+    private fun appsInstaladasRapido(): List<App> {
+        val c = appsCache
+        if (c != null && SystemClock.uptimeMillis() - c.first < 60_000) return c.second
+        val l = try { Lanzador.apps(app) } catch (_: Exception) { emptyList() }
+        appsCache = SystemClock.uptimeMillis() to l
+        return l
+    }
+
+    private fun leerJuegosPC(t: String): List<JuegoPC> = t.split("\n").mapNotNull { linea ->
+        val c = linea.split("\t")
+        if (c.size < 3) null else c[1].toIntOrNull()?.let { JuegoPC(c[0], it, c[2]) }
+    }
+
+    private fun guardarJuegosPC(l: List<JuegoPC>) {
+        almacen.guardarTexto("juegosPC", l.joinToString("\n") { "${it.titulo.replace("\t", " ")}\t${it.id}\t${it.tienda}" })
+        actualizar { it.copy(juegosPC = l) }
+        publicarJuegos()
+    }
+
+    /** Cada juego de PC agregado es un archivito con su número (como los que exporta ES-DE), en la carpeta de Díptico. */
+    private fun juegosDePC(): List<Juego> = estado.value.juegosPC.mapNotNull { g ->
+        try {
+            val consola = if (g.tienda == "STEAM") "steam" else "windows"
+            val dir = java.io.File(app.filesDir, "pc/$consola").apply { mkdirs() }
+            val nombre = g.titulo.replace(Regex("[\\\\/:*?\"<>|]"), "").trim().ifEmpty { "juego${g.id}" } + ".steam"
+            val f = java.io.File(dir, nombre)
+            if (!f.exists() || f.readText().trim() != g.id.toString()) f.writeText(g.id.toString())
+            Juego("$consola/pc-${g.id}", consola, g.titulo, nombre, Uri.fromFile(f), "", null)
+        } catch (_: Exception) { null }
+    }
+
+    /** Busca en la tienda de Steam (por nombre) para agregar un juego que abrirán GameNative o GameHub Lite. */
+    fun buscarEnSteam(texto: String) {
+        val q = texto.trim()
+        if (q.isEmpty()) return
+        avisar("Buscando \"$q\" en Steam…")
+        scope.launch {
+            val l = withContext(Dispatchers.IO) {
+                try {
+                    val c = java.net.URL("https://store.steampowered.com/api/storesearch/?term=" + java.net.URLEncoder.encode(q, "UTF-8") + "&l=spanish&cc=US")
+                        .openConnection() as java.net.HttpURLConnection
+                    c.connectTimeout = 10_000; c.readTimeout = 10_000
+                    val j = org.json.JSONObject(c.inputStream.bufferedReader().readText())
+                    val it = j.optJSONArray("items") ?: org.json.JSONArray()
+                    (0 until it.length()).map { k -> it.getJSONObject(k) }.filter { it.optString("type") == "app" }
+                        .map { JuegoPC(it.optString("name"), it.optInt("id"), "STEAM") }.filter { it.id > 0 }.take(10)
+                } catch (_: Exception) { null }
+            }
+            if (l == null) { avisar("No pude conectarme con Steam. Revisa el Wi-Fi."); return@launch }
+            actualizar { it.copy(resultadosSteam = l) }
+            if (l.isEmpty()) avisar("No encontré \"$q\" en Steam") else {
+                abrirMenu(Seccion.BIBLIOTECA)
+                val i = opcionesSeccion(Seccion.BIBLIOTECA).indexOfFirst { it.titulo.startsWith("Agregar: ") }
+                actualizar { it.copy(enOpciones = true, indice = i.coerceAtLeast(0)) }
+            }
+        }
+    }
+
+    private fun opcionesPC(e: Estado): List<Opcion> = buildList {
+        val apps = appsInstaladasRapido()
+        add(Opcion("Agregar un juego de Steam", icono = Icono.BUSCAR, ayuda = "Escribe su nombre: Díptico lo busca en Steam y lo abre con GameNative o GameHub Lite (elige cuál en Emuladores › Valve Steam).") { abrirTexto("pc_steam") })
+        for (g in e.resultadosSteam) add(Opcion("Agregar: ${g.titulo}", "Steam ${g.id}", Icono.DESCARGA, "Queda en tu estante de Steam, con portada, ficha y tiempo jugado.") {
+            if (estado.value.juegosPC.none { it.id == g.id }) guardarJuegosPC(estado.value.juegosPC + g)
+            actualizar { it.copy(resultadosSteam = emptyList()) }
+            avisar("${g.titulo} agregado a tu estante de Steam")
+            descargarFaltantesLuego()
+        })
+        for (g in e.juegosPC) add(Opcion(g.titulo, "Quitar", Icono.BORRAR, "Juego de PC agregado desde Díptico (Steam ${g.id}). Elige para quitarlo de tu estante.") {
+            guardarJuegosPC(estado.value.juegosPC.filter { it.id != g.id })
+            avisar("${g.titulo} quitado")
+        })
+        for (l in LANZADORES_PC) {
+            val pkg = paqueteLanzador(l, apps)
+            if (pkg == null) {
+                add(Opcion(l.nombre, "No instalado", Icono.MOVIL, l.ayuda, apagada = false) { avisar("${l.nombre} no está instalado") })
+                continue
+            }
+            val enPorts = pkg in e.ports
+            add(Opcion(l.nombre, if (enPorts) "En tus Ports ✓" else "Instalado", Icono.MOVIL, l.ayuda, paquete = pkg) {
+                if (!enPorts) {
+                    val nuevo = estado.value.ports + pkg
+                    almacen.ports = nuevo
+                    actualizar { it.copy(ports = nuevo) }
+                    publicarJuegos()
+                    avisar("${l.nombre} agregado a tus Ports")
+                } else abrirPaquete(pkg)
+            })
+        }
+    }
+
+    /** Después de agregar juegos de PC, busca sus portadas (si hay conexión). */
+    private fun descargarFaltantesLuego() {
+        scope.launch {
+            delay(600)
+            estado.value.juegos.filter { it.clave.contains("/pc-") && it.portada == null }.forEach { descargarUno(it) }
+        }
+    }
+
+    // ---------- Modo sobremesa (tele) ----------
+
+    private val NOMBRE_TELE = Regex("hdmi|displayport|\\bdp\\b|external|externa|usb|\\btv\\b|wireless|cast|miracast", RegexOption.IGNORE_CASE)
+
+    /** Mira si hay una tele conectada (HDMI, USB-C, inalámbrica) y avisa al conectar o desconectar. */
+    private fun vigilarTele() {
+        val dm = app.getSystemService(android.hardware.display.DisplayManager::class.java) ?: return
+        fun revisar(avisarCambio: Boolean) {
+            val tele = buscarTele(dm)
+            val antes = estado.value.teleConectada
+            if (tele == antes) return
+            actualizar { it.copy(teleConectada = tele) }
+            aplicarSobremesa()
+            if (avisarCambio && estado.value.sobremesaModo == "auto") {
+                if (tele != null) { avisar("Tele conectada: modo sobremesa activado"); Sonidos.aviso() } else avisar("Volviste a la consola: modo portátil")
+            }
+        }
+        revisar(false)
+        dm.registerDisplayListener(object : android.hardware.display.DisplayManager.DisplayListener {
+            override fun onDisplayAdded(id: Int) = revisar(true)
+            override fun onDisplayRemoved(id: Int) = revisar(true)
+            override fun onDisplayChanged(id: Int) = revisar(true)
+        }, android.os.Handler(android.os.Looper.getMainLooper()))
+    }
+
+    /**
+     * La tele, si hay: una pantalla que no es la principal y que por su nombre es externa (HDMI, DP, USB, inalámbrica),
+     * o una tercera pantalla (la Thor ya trae dos).
+     */
+    private fun buscarTele(dm: android.hardware.display.DisplayManager): String? {
+        val otras = dm.displays.filter { it.displayId != android.view.Display.DEFAULT_DISPLAY && it.state != android.view.Display.STATE_OFF }
+        if (otras.isEmpty()) return null
+        // Con una sola pantalla extra en una consola de dos pantallas (la Thor), esa es la de abajo, no una tele.
+        val e = estado.value
+        if (otras.size == 1 && e.modoPantallas == "dos" && e.dosDisponibles) return null
+        otras.firstOrNull { NOMBRE_TELE.containsMatchIn(it.name ?: "") }?.let { return it.name }
+        return if (otras.size >= 2) otras.last().name else null
+    }
+
+    /** Todas las pantallas que ve Android (para el ajuste, por si la tele no se detecta sola). */
+    fun pantallasVistas(): String = try {
+        app.getSystemService(android.hardware.display.DisplayManager::class.java)?.displays
+            ?.joinToString(" · ") { "${it.displayId}: ${it.name}" } ?: ""
+    } catch (_: Exception) { "" }
+
+    /** Aplica lo que cambia en la tele: efectos y volumen de los sonidos. */
+    private fun aplicarSobremesa() {
+        val e = estado.value
+        Sonidos.volumen = if (e.sobremesa && e.sobremesaSonidos) 0.9f else 0.6f
+        aplicarFluidez()
+    }
+
+    private fun guardarSobremesa(clave: String, valor: String, f: (Estado) -> Estado) {
+        almacen.guardarTexto(clave, valor)
+        actualizar(f)
+        aplicarSobremesa()
+    }
+
+    private fun opcionesSobremesa(e: Estado): List<Opcion> {
+        val modos = listOf("auto", "si", "no")
+        fun nombreModo(m: String) = when (m) { "si" -> "Siempre"; "no" -> "Nunca"; else -> "Al conectar la tele" }
+        val tams = listOf(1f, 1.1f, 1.2f, 1.35f, 1.5f)
+        fun nombreTam(t: Float) = when { t <= 1f -> "Normal"; t <= 1.1f -> "Un poco más grande"; t <= 1.2f -> "Grande"; t <= 1.35f -> "Muy grande"; else -> "Enorme" }
+        val margenes = listOf(0, 2, 3, 5, 8)
+        return listOf(
+            Opcion(
+                "Activar el modo sobremesa", nombreModo(e.sobremesaModo), Icono.VISTA,
+                "Al conectar la tele, Díptico se acomoda solo. Si tu tele no se detecta, elige \"Siempre\" mientras juegas en ella.",
+                menos = { val v = modos[(modos.indexOf(estado.value.sobremesaModo) - 1).mod(modos.size)]; guardarSobremesa("sobremesaModo", v) { it.copy(sobremesaModo = v) } },
+            ) { val v = modos[(modos.indexOf(estado.value.sobremesaModo) + 1).mod(modos.size)]; guardarSobremesa("sobremesaModo", v) { it.copy(sobremesaModo = v) } },
+            Opcion(
+                "Tele conectada", e.teleConectada ?: "Ninguna", Icono.INFO,
+                "Pantallas que veo: " + pantallasVistas().ifBlank { "solo la principal" } + (if (e.sobremesa) ". El modo sobremesa está activo." else ""),
+            ) {},
+            Opcion(
+                "Tamaño en la tele", nombreTam(e.sobremesaTam), Icono.TEXTO, "Todo más grande, para verlo cómodo desde el sillón.",
+                menos = { val v = tams[(tams.indexOfFirst { it >= estado.value.sobremesaTam - 0.01f }.coerceAtLeast(0) - 1).coerceAtLeast(0)]; guardarSobremesa("sobremesaTam", v.toString()) { it.copy(sobremesaTam = v) } },
+            ) { val v = tams[(tams.indexOfFirst { it >= estado.value.sobremesaTam - 0.01f }.coerceAtLeast(0) + 1).coerceAtMost(tams.size - 1)]; guardarSobremesa("sobremesaTam", v.toString()) { it.copy(sobremesaTam = v) } },
+            Opcion(
+                "Margen de seguridad", if (e.sobremesaMargen == 0) "Sin margen" else "${e.sobremesaMargen}%", Icono.FORMA,
+                "Algunas teles cortan los bordes de la imagen. Sube el margen si no ves la hora o los botones de las orillas.",
+                menos = { val v = margenes[(margenes.indexOf(estado.value.sobremesaMargen).coerceAtLeast(0) - 1).coerceAtLeast(0)]; guardarSobremesa("sobremesaMargen", v.toString()) { it.copy(sobremesaMargen = v) } },
+            ) { val v = margenes[(margenes.indexOf(estado.value.sobremesaMargen).coerceAtLeast(0) + 1).coerceAtMost(margenes.size - 1)]; guardarSobremesa("sobremesaMargen", v.toString()) { it.copy(sobremesaMargen = v) } },
+            Opcion(
+                "Una sola pantalla en la tele", if (e.sobremesaUna) "Sí" else "No", Icono.UNA,
+                "Todo Díptico en la tele (como en una Odin), y la pantalla de abajo de la consola se apaga.",
+            ) { val v = !estado.value.sobremesaUna; almacen.guardarBool("sobremesaUna", v); actualizar { it.copy(sobremesaUna = v) } },
+            Opcion(
+                "Todos los efectos en la tele", if (e.sobremesaEfectos) "Sí" else "No", Icono.CHISPA,
+                "Enchufada a la corriente, la consola puede con los difuminados y animaciones aunque uses el modo ahorro.",
+            ) { val v = !estado.value.sobremesaEfectos; almacen.guardarBool("sobremesaEfectos", v); actualizar { it.copy(sobremesaEfectos = v) }; aplicarSobremesa() },
+            Opcion(
+                "Sonidos más fuertes", if (e.sobremesaSonidos) "Sí" else "No", Icono.VOLUMEN,
+                "Los sonidos al moverte suenan más, porque la tele queda lejos.",
+            ) { val v = !estado.value.sobremesaSonidos; almacen.guardarBool("sobremesaSonidos", v); actualizar { it.copy(sobremesaSonidos = v) }; aplicarSobremesa(); Sonidos.aceptar() },
+        )
+    }
+
+    // ---------- Botones extra (L4, R4…) ----------
+
+    private fun leerBotonesExtra(t: String): List<BotonExtra> {
+        if (t.isBlank()) return BotonExtra.PORDEFECTO
+        return t.split(";").mapNotNull { p ->
+            val c = p.split(",")
+            if (c.size < 3) null else BotonExtra(c[0], c[1].toIntOrNull() ?: return@mapNotNull null, c[2])
+        }.ifEmpty { BotonExtra.PORDEFECTO }
+    }
+
+    private fun guardarBotonesExtra(l: List<BotonExtra>) {
+        almacen.guardarTexto("botonesExtra", l.joinToString(";") { "${it.nombre},${it.tecla},${it.accion}" })
+        actualizar { it.copy(botonesExtra = l) }
+    }
+
+    private fun cambiarAccionBoton(i: Int, d: Int) {
+        val l = estado.value.botonesExtra.toMutableList()
+        val b = l.getOrNull(i) ?: return
+        val a = BotonExtra.ACCIONES
+        l[i] = b.copy(accion = a[(a.indexOf(b.accion).coerceAtLeast(0) + d).mod(a.size)])
+        guardarBotonesExtra(l)
+    }
+
+    /** Espera a que aprietes el botón para aprender cuál es (sirve para cualquier control). */
+    fun aprenderBoton(i: Int) {
+        actualizar { it.copy(aprendiendoBoton = i) }
+        avisar("Aprieta el botón ${estado.value.botonesExtra.getOrNull(i)?.nombre ?: ""} ahora")
+    }
+
+    /** Lo llama el control mientras se aprende un botón: guarda la tecla y vuelve. */
+    fun aprendido(tecla: Int) {
+        val e = estado.value
+        val i = e.aprendiendoBoton
+        if (i < 0) return
+        val l = e.botonesExtra.toMutableList()
+        if (i >= l.size) return
+        // Si esa tecla estaba en otro botón, se la quita.
+        for (k in l.indices) if (k != i && l[k].tecla == tecla) l[k] = l[k].copy(tecla = 0)
+        l[i] = l[i].copy(tecla = tecla)
+        actualizar { it.copy(aprendiendoBoton = -1) }
+        guardarBotonesExtra(l)
+        Sonidos.interruptor(true)
+        avisar("Listo: ${l[i].nombre} aprendido (${android.view.KeyEvent.keyCodeToString(tecla).removePrefix("KEYCODE_")})")
+    }
+
+    fun cancelarAprender() = actualizar { it.copy(aprendiendoBoton = -1) }
+
+    /** Si [tecla] es un botón extra con acción, la hace. Devuelve true si era uno de ellos. */
+    fun botonExtra(tecla: Int): Boolean {
+        val b = estado.value.botonesExtra.firstOrNull { it.tecla == tecla && it.tecla != 0 } ?: return false
+        if (b.accion == "nada") return false
+        val e = estado.value
+        when (b.accion) {
+            "bisa" -> if (e.sesion != null) prepararAyuda() else abrirAsistente()
+            "musica" -> if (cl.nikalbazu.diptico.audio.Medios.sonando.value != null) cl.nikalbazu.diptico.audio.Medios.alternar() else fijarMusica(!e.musica)
+            "siguiente" -> cl.nikalbazu.diptico.audio.Medios.siguiente()
+            "apps" -> abrirApps()
+            "buscar" -> abrirBuscar()
+            "azar" -> sorprendeme()
+            "widgets" -> alternarInicio()
+            "vista" -> cambiarVista()
+            "centro" -> abrirCentro()
+            "favorito" -> e.seleccionado?.let { alternarFavorito(it.clave) }
+            "ficha" -> abrirFicha()
+            "intercambiar" -> intercambiar()
+            "menu" -> abrirMenu()
+        }
+        return true
+    }
+
+    private fun opcionesBotones(e: Estado): List<Opcion> = buildList {
+        e.botonesExtra.forEachIndexed { i, b ->
+            add(
+                Opcion(
+                    "Botón ${b.nombre}", BotonExtra.nombreAccion(b.accion), Icono.MANDO,
+                    "Qué hace ${b.nombre} en Díptico (← → para cambiar). Dentro de un juego el botón es del juego.",
+                    menos = { cambiarAccionBoton(i, -1) },
+                ) { cambiarAccionBoton(i, 1) },
+            )
+            add(
+                Opcion(
+                    "Aprender el botón ${b.nombre}", if (e.aprendiendoBoton == i) "Aprieta el botón…" else if (b.tecla == 0) "Sin aprender" else android.view.KeyEvent.keyCodeToString(b.tecla).removePrefix("KEYCODE_").lowercase(),
+                    Icono.LAPIZ, "Elige esto y aprieta el botón en tu control: así funciona con la Odin 2, la Retroid, la Thor o el control que sea.",
+                ) { aprenderBoton(i) },
+            )
+        }
+        if (e.botonesExtra.size < 4) add(Opcion("Agregar otro botón", icono = Icono.MANDO, ayuda = "Para controles con más botones (M1, M2, paletas de atrás…).") {
+            val l = estado.value.botonesExtra + BotonExtra("Extra ${estado.value.botonesExtra.size - 1}", 0, "nada")
+            guardarBotonesExtra(l)
+            aprenderBoton(l.size - 1)
+        })
+        add(Opcion("Volver a lo original", icono = Icono.BORRAR, ayuda = "L4 = Bisa y R4 = música, con las teclas de siempre.") { guardarBotonesExtra(BotonExtra.PORDEFECTO) })
+    }
+
     // ---------- Widgets con vida: foco con la cruceta y contenido al abrirlos ----------
 
     /** Widgets visibles de la página actual del inicio (índices de la lista). */
@@ -4056,6 +4453,11 @@ object Diptico {
                 buscarCandidatos(e.candidatoPara, t)
                 return
             }
+            "pc_steam" -> {
+                actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.BIBLIOTECA, enOpciones = true) }
+                buscarEnSteam(t)
+                return
+            }
             "asistente" -> {
                 actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
                 if (t.isNotEmpty()) preguntar(t)
@@ -4263,8 +4665,72 @@ object Diptico {
         "favoritos" -> "Favoritos"; "recientes" -> "Jugados hace poco"; "mas" -> "Más jugados"; "sinjugar" -> "Sin jugar"; "ocultos" -> "Ocultos"; else -> "Todos"
     }
 
-    val ORDENES = listOf("az", "recientes", "tiempo")
-    fun nombreOrden(o: String) = when (o) { "recientes" -> "Últimos jugados"; "tiempo" -> "Más tiempo"; else -> "A → Z" }
+    val ORDENES = listOf("az", "recientes", "tiempo", "propio")
+    fun nombreOrden(o: String) = when (o) { "recientes" -> "Últimos jugados"; "tiempo" -> "Más tiempo"; "propio" -> "A tu gusto"; else -> "A → Z" }
+
+    // ---------- Tu propio orden ----------
+
+    private fun leerOrdenPropio(t: String): Map<String, List<String>> = try {
+        val o = org.json.JSONObject(t)
+        o.keys().asSequence().associateWith { k -> o.getString(k).split("\u0001").filter { it.isNotEmpty() } }
+    } catch (_: Exception) { emptyMap() }
+
+    private fun guardarOrdenPropio(m: Map<String, List<String>>) {
+        val o = org.json.JSONObject()
+        m.forEach { (k, v) -> o.put(k, v.joinToString("\u0001")) }
+        almacen.guardarTexto("ordenPropio", o.toString())
+    }
+
+    /** Empieza a mover el juego elegido de lugar (la cruceta lo corre, A o B terminan). Pasa al orden "A tu gusto". */
+    fun empezarOrdenar() {
+        val e = estado.value
+        if (e.orden != "propio") {
+            // Se parte del orden que se ve ahora, para que nada salte.
+            val actual = e.visibles.map { it.clave }
+            val m = e.ordenPropio + (e.consolaSel to actual)
+            guardarOrdenPropio(m)
+            almacen.guardarTexto("orden", "propio")
+            actualizar { it.copy(orden = "propio", ordenPropio = m) }
+        }
+        actualizar { it.copy(ordenando = true, panel = Panel.NINGUNO, indice = 0) }
+        Sonidos.levantar()
+    }
+
+    fun terminarOrdenar() {
+        actualizar { it.copy(ordenando = false) }
+        Sonidos.soltar()
+        avisar("Orden guardado")
+    }
+
+    /** Corre el juego elegido [d] lugares (en la lista que se ve). */
+    fun moverJuegoDeLugar(d: Int) {
+        val e = estado.value
+        val sel = e.seleccionado ?: return
+        val visto = e.visibles.map { it.clave }.toMutableList()
+        val i = visto.indexOf(sel.clave)
+        val n = (i + d).coerceIn(0, visto.size - 1)
+        if (i < 0 || n == i) { Sonidos.borde(); return }
+        visto.removeAt(i)
+        visto.add(n, sel.clave)
+        // Los que no se ven (por un filtro) conservan su lugar al final.
+        val resto = e.ordenPropio[e.consolaSel].orEmpty().filter { it !in visto }
+        val m = e.ordenPropio + (e.consolaSel to (visto + resto))
+        guardarOrdenPropio(m)
+        actualizar { it.copy(ordenPropio = m) }
+    }
+
+    /** Cambia el lugar de una consola en la lista (para "Tus consolas" y las vistas de consolas). */
+    fun moverConsola(id: String, d: Int) {
+        val e = estado.value
+        val l = e.consolasConJuegos.map { it.id }.toMutableList()
+        val i = l.indexOf(id)
+        val n = (i + d).coerceIn(0, l.size - 1)
+        if (i < 0 || n == i) { Sonidos.borde(); return }
+        l.removeAt(i)
+        l.add(n, id)
+        almacen.guardarTexto("ordenConsolas", l.joinToString(","))
+        actualizar { it.copy(ordenConsolas = l) }
+    }
 
     fun cambiarFiltro(delta: Int = 1) {
         val f = FILTROS[(FILTROS.indexOf(estado.value.filtro) + delta).mod(FILTROS.size)]
@@ -4742,7 +5208,9 @@ object Diptico {
     fun fluidezEfectiva(e: Estado = estado.value) = if (e.fluidez == "auto") e.fluidezDetectada else e.fluidez
 
     private fun aplicarFluidez() {
-        val f = fluidezEfectiva()
+        val e0 = estado.value
+        // En la tele (enchufada) se puede con todos los efectos.
+        val f = if (e0.sobremesa && e0.sobremesaEfectos) "alta" else fluidezEfectiva()
         cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = f != "ahorro"
         cl.nikalbazu.diptico.ui.Estilo.efecto = estado.value.efecto
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = estado.value.decoraciones && f != "ahorro"
@@ -5190,6 +5658,11 @@ object Diptico {
         fun archivo(que: String, tipo: String = "image/*") = pedirArchivoPara("consola_$que:$id", tipo)
         return listOf(
             Opcion("Nombre", p.nombre ?: "Original", Icono.TITULO, "Cómo se llama esta consola en todo Díptico.") { abrirTexto("consola_nombre", p.nombre ?: "") },
+            Opcion(
+                "Lugar en la lista", "${e.consolasConJuegos.indexOfFirst { it.id == id } + 1} de ${e.consolasConJuegos.size}", Icono.VISTA,
+                "Corre esta consola antes o después (← →). Así quedan en el orden que tú quieras.",
+                menos = { moverConsola(id, -1) },
+            ) { moverConsola(id, 1) },
             Opcion(
                 "Color", if (p.color == 0L) "Original" else "Propio", Icono.PALETA, "El color de sus tarjetas, del carrusel y del fondo de su vista.",
                 menos = { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) - 1).mod(COLORES_CONSOLA.size)]) } },

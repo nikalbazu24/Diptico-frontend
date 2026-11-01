@@ -49,6 +49,23 @@ object Teclas {
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
 
+        // Aprendiendo un botón extra: el primero que se apriete (que no sea A, B ni la cruceta) queda guardado.
+        if (e.aprendiendoBoton >= 0) {
+            if (arriba) {
+                when {
+                    esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.cancelarAprender()
+                    esA(code) || code in cruceta -> Unit
+                    else -> Diptico.aprendido(code)
+                }
+            }
+            return true
+        }
+        // Botones extra (L4, R4…): su acción, fuera de los juegos y del teclado.
+        if (!e.conTeclado && e.panel != Panel.CLAVE && e.panel != Panel.PASO && e.botonesExtra.any { it.tecla == code && it.tecla != 0 && it.accion != "nada" }) {
+            if (arriba) Diptico.botonExtra(code)
+            return true
+        }
+
         // Reloj grande: cualquier botón lo cierra.
         if (e.relojGrande && (esA(code) || esB(code) || code in botonesControl)) {
             if (arriba) Diptico.alternarReloj()
@@ -206,6 +223,20 @@ object Teclas {
         }
 
         val hayPanel = e.panel != Panel.NINGUNO
+
+        // Moviendo un juego de lugar: la cruceta lo corre; A, B o Start terminan.
+        if (e.ordenando && !hayPanel) {
+            if (abajo) {
+                when (code) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> Diptico.moverJuegoDeLugar(-1)
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> Diptico.moverJuegoDeLugar(1)
+                    KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverJuegoDeLugar(if (e.vista == "cuadricula" || e.vista == "lista") -columnasEstante(e) else -1)
+                    KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverJuegoDeLugar(if (e.vista == "cuadricula" || e.vista == "lista") columnasEstante(e) else 1)
+                }
+            }
+            if (arriba && (esA(code) || esB(code) || code == KeyEvent.KEYCODE_BUTTON_START)) Diptico.terminarOrdenar()
+            return true
+        }
 
         // Inicio con widgets: ↑ desde el estante entra a los widgets; ahí la cruceta salta entre ellos, A abre y B vuelve.
         if (!hayPanel && e.sesion == null && e.inicio == "widgets" && !e.editandoWidgets) {

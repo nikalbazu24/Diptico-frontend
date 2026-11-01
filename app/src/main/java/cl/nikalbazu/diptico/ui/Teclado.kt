@@ -92,6 +92,7 @@ fun TecladoDiptico(e: Estado) {
         e.textoPara == "asistente" -> "Pregúntale a Bisa"
         e.textoPara == "buscar_ajuste" -> "Buscar un ajuste"
         e.textoPara == "buscar_imagen" -> "Buscar con otro nombre"
+        e.textoPara == "pc_steam" -> "Nombre del juego de Steam"
         else -> "Escribe"
     }
     val oculto = e.panel == Panel.CLAVE && (e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave")

@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -142,6 +144,8 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                     t.contains("inicio", true) -> PreviaThor(ev, t)
                     else -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PanelCentro(ev.copy(panel = Panel.CENTRO)) }
                 }
+                Seccion.SOBREMESA -> PreviaTele(ev)
+                Seccion.CONTROLES -> Marco { PreviaBotonesExtra(ev) }
                 Seccion.IDIOMA -> Marco { PreviaIdioma(t) }
                 Seccion.SISTEMA, Seccion.ESENCIAL -> Marco { PreviaAcerca() }
             }
@@ -273,6 +277,66 @@ private fun PreviaAcerca() {
         Detalle("Hecho con cariño para la AYN Thor", 12.5f, lineas = 1)
         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
             listOf(Uva, Coral, Sol, Cielo).forEach { Box(Modifier.size(esc.d(10)).clip(CircleShape).background(it)) }
+        }
+    }
+}
+
+
+/** La tele con Díptico adentro: como se verá en modo sobremesa (tamaño y margen incluidos). */
+@Composable
+private fun PreviaTele(e: Estado) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Box(
+            Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(esc.d(10))).background(Color(0xFF0B0B0F))
+                .border(esc.d(5), Color(0xFF26252E), RoundedCornerShape(esc.d(10))).padding(esc.d(5)),
+        ) {
+            val m = e.sobremesaMargen / 100f
+            Box(Modifier.fillMaxSize().padding(horizontal = esc.d(220f * m), vertical = esc.d(124f * m))) {
+                MiniPantalla(ARRIBA_AN / e.sobremesaTam, ARRIBA_AL / e.sobremesaTam, Modifier.fillMaxSize()) {
+                    PantallaUnica(e.copy(modoPantallas = "una"))
+                }
+            }
+        }
+        // El pie de la tele.
+        Box(Modifier.width(esc.d(70)).height(esc.d(6)).background(Color(0xFF26252E)))
+        Box(Modifier.width(esc.d(130)).height(esc.d(5)).clip(RoundedCornerShape(50)).background(Color(0xFF26252E)))
+        Spacer(Modifier.height(esc.d(8)))
+        Detalle(if (e.sobremesa) "Activo ahora" + (e.teleConectada?.let { " · $it" } ?: "") else "Se activa al conectar la tele", 12f, color = p.tenue, lineas = 1)
+    }
+}
+
+/** La consola vista desde atrás, con sus botones extra y lo que hace cada uno. */
+@Composable
+private fun PreviaBotonesExtra(e: Estado) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    Column(Modifier.fillMaxSize().padding(esc.d(14)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Etiqueta("Vista de atrás", p.tenue, 10.5f)
+        Spacer(Modifier.height(esc.d(8)))
+        Box(
+            Modifier.fillMaxWidth(0.92f).aspectRatio(2.3f).clip(RoundedCornerShape(esc.d(40))).background(p.superficie)
+                .border(esc.d(2), p.linea, RoundedCornerShape(esc.d(40))),
+        ) {
+            // Gatillos arriba.
+            Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(26)), horizontalArrangement = Arrangement.SpaceBetween) {
+                Box(Modifier.width(esc.d(54)).height(esc.d(12)).clip(RoundedCornerShape(bottomEnd = esc.d(6), bottomStart = esc.d(6))).background(p.linea))
+                Box(Modifier.width(esc.d(54)).height(esc.d(12)).clip(RoundedCornerShape(bottomEnd = esc.d(6), bottomStart = esc.d(6))).background(p.linea))
+            }
+            // Los botones de atrás.
+            Row(Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = esc.d(20)), horizontalArrangement = Arrangement.SpaceBetween) {
+                for (b in e.botonesExtra.take(2)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            Modifier.width(esc.d(46)).height(esc.d(30)).clip(RoundedCornerShape(esc.d(10))).fondoBoton(Uva),
+                            contentAlignment = Alignment.Center,
+                        ) { Texto(b.nombre, 13f, color = SobreUva, lineas = 1, traducir = false) }
+                        Spacer(Modifier.height(esc.d(4)))
+                        Detalle(cl.nikalbazu.diptico.estado.BotonExtra.nombreAccion(b.accion), 10.5f, lineas = 2, modifier = Modifier.widthIn(max = esc.d(110)))
+                    }
+                }
+            }
         }
     }
 }

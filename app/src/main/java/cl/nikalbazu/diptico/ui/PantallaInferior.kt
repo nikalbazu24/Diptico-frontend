@@ -88,6 +88,8 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.zIndex
 import androidx.compose.animation.togetherWith
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Medio
@@ -145,6 +147,23 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
 /** Menús, próximo paso, clave y avisos: se dibujan encima de todo. */
 @Composable
 fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
+    // Moviendo un juego de lugar: un cartel arriba con lo que hace cada botón.
+    androidx.compose.animation.AnimatedVisibility(
+        e.ordenando && e.panel == Panel.NINGUNO, Modifier.align(Alignment.TopCenter).padding(top = LocalEscala.current.d(10)).zIndex(5f),
+        enter = fadeIn() + slideInVertically { -it }, exit = fadeOut() + slideOutVertically { -it },
+    ) {
+        val esc = LocalEscala.current
+        Row(
+            Modifier.clip(RoundedCornerShape(50)).fondoBoton(Coral).padding(horizontal = esc.d(14), vertical = esc.d(7)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconoDiptico(Icono.VISTA, Color.White, 16f)
+            Spacer(Modifier.width(esc.d(8)))
+            Texto("Moviendo ${e.seleccionado?.titulo ?: ""}", 13.5f, color = Color.White, lineas = 1, modifier = Modifier.widthIn(max = esc.d(220)))
+            Spacer(Modifier.width(esc.d(10)))
+            Texto("✥ correr · A listo", 12f, color = Color.White.copy(alpha = 0.85f), lineas = 1)
+        }
+    }
     // Cada panel entra y sale con su animación: los de pantalla completa suben, los flotantes crecen.
     AnimatedContent(
         targetState = e.panel,
@@ -797,6 +816,7 @@ private fun PanelClave(e: Estado) {
                 "ra_usuario" -> listOf(Icono.TROFEO, "Usuario de RetroAchievements", "Tu nombre de usuario en retroachievements.org (no tu correo).", "Ej: Nikalbazu")
                 "ra_clave" -> listOf(Icono.CLAVE, "Clave de RetroAchievements", "En retroachievements.org entra a Settings y copia tu \"Web API Key\". Solo se guarda en tu consola.", "Pega tu Web API Key")
                 "buscar_imagen" -> listOf(Icono.BUSCAR, "Buscar con otro nombre", "Escribe el nombre del juego como se conoce en inglés o su nombre completo.", "Ej: The Legend of Zelda")
+                "pc_steam" -> listOf(Icono.BUSCAR, "Agregar un juego de Steam", "Escribe su nombre como aparece en Steam. Lo abrirá GameNative o GameHub Lite.", "Ej: Hollow Knight")
                 "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
                 "ia_pedido" -> listOf(Icono.CHISPA, "Crear tema con IA", "Escribe tu idea, como \"Halloween japonés\" o \"Navidad en la playa\". Si lo dejas vacío, la IA elige la fiesta del mundo más cercana a hoy.", "Ej: Año Nuevo Lunar con faroles")
                 "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")

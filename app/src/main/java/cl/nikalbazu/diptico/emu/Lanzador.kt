@@ -22,9 +22,14 @@ import cl.nikalbazu.diptico.data.Juego
 object Pantallas {
     fun inferior(ctx: Context): Display? {
         val dm = ctx.getSystemService(DisplayManager::class.java) ?: return null
+        // La pantalla de abajo de la consola, nunca la tele (HDMI, USB-C, inalámbrica) si hay una conectada.
+        val tele = Regex("hdmi|displayport|\\bdp\\b|external|externa|usb|\\btv\\b|wireless|cast|miracast", RegexOption.IGNORE_CASE)
+        val otras = dm.displays.filter { it.displayId != Display.DEFAULT_DISPLAY }
+        // Solo se descarta por el nombre si hay más de una (por si la pantalla propia tuviera un nombre raro).
+        val propias = if (otras.size >= 2) otras.filter { !tele.containsMatchIn(it.name ?: "") }.ifEmpty { otras.take(1) } else otras
         val presentacion = dm.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)
-            .firstOrNull { it.displayId != Display.DEFAULT_DISPLAY }
-        return presentacion ?: dm.displays.firstOrNull { it.displayId != Display.DEFAULT_DISPLAY }
+            .firstOrNull { d -> d.displayId != Display.DEFAULT_DISPLAY && propias.any { it.displayId == d.displayId } }
+        return presentacion ?: propias.firstOrNull()
     }
 }
 
@@ -150,7 +155,8 @@ object Lanzador {
     /** Arma el Intent de ES-DE para un juego. */
     private fun construir(ctx: Context, op: Opcion, juego: Juego, consola: Consola, rom: Uri, raiz: Uri?): Intent {
         val linea = op.comando.linea
-        val ruta = rutaReal(juego.docId)
+        // Accesos creados por Díptico (juegos de PC de Steam, Epic, GOG…) viven en su carpeta interna.
+        val ruta = if (juego.uri.scheme == "file") juego.uri.path else rutaReal(juego.docId)
         val raizRuta = raiz?.let { r -> try { rutaReal(DocumentsContract.getTreeDocumentId(r)) } catch (e: Exception) { null } }
         val base = if (juego.esCarpeta) juego.archivo else juego.archivo.substringBeforeLast('.')
 
@@ -270,7 +276,8 @@ object Lanzador {
         }
         base.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-        val conPermiso = Intent(base).apply {
+        // Los accesos internos de Díptico (file://) no se comparten: el emulador recibe solo el código del juego.
+        val conPermiso = if (juego.uri.scheme == "file") base else Intent(base).apply {
             clipData = ClipData.newRawUri("rom", rom).apply {
                 addItem(ClipData.Item(juego.uri))
                 raiz?.let { addItem(ClipData.Item(it)) }
