@@ -832,6 +832,9 @@ private fun PanelClave(e: Estado) {
                 "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
                 "ia_pedido" -> listOf(Icono.CHISPA, "Crear tema con IA", "Escribe tu idea, como \"Halloween japonés\" o \"Navidad en la playa\". Si lo dejas vacío, la IA elige la fiesta del mundo más cercana a hoy.", "Ej: Año Nuevo Lunar con faroles")
                 "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")
+                "buscar_juego" -> listOf(Icono.BUSCAR, "Buscar un juego", "Escribe parte del nombre; también puedes dictarlo con la tecla Voz.", "Ej: zelda")
+                "coleccion_nueva" -> listOf(Icono.CARPETA, "Nombre de la colección", "Por ejemplo \"Para jugar con mi hijo\" o \"RPG pendientes\". Aparecerá como widget en tu inicio.", "Ej: RPG pendientes")
+                "consola_nombre" -> listOf(Icono.TEXTO, "Nombre de la consola", "Así se verá en las pestañas y en todo Díptico.", "Ej: Mi Super Nintendo")
                 "notas" -> listOf(Icono.LAPIZ, "Mis trucos y notas", "Claves, trucos, coleccionables, lo que quieras recordar de este juego.", "Ej: el código del cofre es 4-2-1")
                 else -> listOf(Icono.CLAVE, "Clave de SteamGridDB", "Es gratis: entra a steamgriddb.com, inicia sesión, ve a Preferencias › API y copia tu clave aquí.", "Pega tu clave")
             }

@@ -50,7 +50,7 @@ enum class Icono {
     PORTADA, DESCARGA, CLAVE, TITULO, BORRAR, BIBLIOTECA, BUSCAR, TUTORIAL, INFO, CERRAR, JUGAR, DADO, LAPIZ,
     CONTINUAR, MENU, CHECK, ARRIBA, ABAJO, ESTRELLA, APPS, RELOJ, PALETA, MOVIL, CHISPA, CORAZON, MUNDO, WEB,
     CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA, MANDO, BATERIA, TROFEO, ASISTENTE, IDIOMA, OCULTAR,
-    COPIAR, PEGAR, BISA, EDITAR,
+    COPIAR, PEGAR, BISA, EDITAR, MICROFONO,
 }
 
 /**
@@ -1587,7 +1587,7 @@ object Diptico {
             val j = e.seleccionado
             return e.colecciones.map { (id, c) ->
                 val dentro = j != null && j.clave in c.juegos
-                ItemGaleria(id, c.nombre, "${c.juegos.size} juegos" + if (dentro) " · este juego está aquí" else "", dentro) { j?.let { alternarEnColeccion(id, it.clave) } }
+                ItemGaleria(id, c.nombre, (if (c.juegos.size == 1) "1 juego" else "${c.juegos.size} juegos") + if (dentro) " · este juego está aquí" else "", dentro) { j?.let { alternarEnColeccion(id, it.clave) } }
             } + ItemGaleria("_nueva", "Nueva colección", if (j != null) "Con ${j.titulo}" else "Vacía", false) { abrirTexto("coleccion_nueva") }
         }
         return when (e.galeria) {
@@ -3530,7 +3530,7 @@ object Diptico {
         val e = estado.value
         // Hablar va primero: escribir en la consola cansa.
         val lista = mutableListOf(
-            Opcion("Hablar", "voz", Icono.VOLUMEN) { dictar("bisa") },
+            Opcion("Hablar", "voz", Icono.MICROFONO) { dictar("bisa") },
             Opcion("Escribir", "texto", Icono.TEXTO) { escribirAlAsistente() },
         )
         val ultima = e.chat.lastOrNull()

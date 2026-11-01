@@ -92,6 +92,8 @@ fun TecladoDiptico(e: Estado) {
         e.textoPara == "asistente" -> "Pregúntale a Bisa"
         e.textoPara == "buscar_ajuste" -> "Buscar un ajuste"
         e.textoPara == "buscar_imagen" -> "Buscar con otro nombre"
+        e.textoPara == "buscar_juego" -> "Buscar un juego"
+        e.textoPara == "coleccion_nueva" -> "Nombre de la colección"
         e.textoPara == "pc_steam" -> "Nombre del juego de Steam"
         else -> "Escribe"
     }
@@ -144,7 +146,7 @@ fun TecladoDiptico(e: Estado) {
                                     .clickable { Diptico.pulsarTecla(f, c) },
                                 contentAlignment = Alignment.Center,
                             ) {
-                                val icono = when (t) { "Copiar", "Cortar" -> Icono.COPIAR; "Pegar" -> Icono.PEGAR; "Voz" -> Icono.VOLUMEN; else -> null }
+                                val icono = when (t) { "Copiar", "Cortar" -> Icono.COPIAR; "Pegar" -> Icono.PEGAR; "Voz" -> Icono.MICROFONO; else -> null }
                                 val etiqueta = when (t) { "␣" -> "espacio"; "✓" -> "Listo"; "⌫" -> "⌫"; else -> t }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     if (icono != null && !esc.angosta) {

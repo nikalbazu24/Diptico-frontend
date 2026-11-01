@@ -92,6 +92,12 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             camino(a) { m(16.5f, 8.5f); quadraticBezierTo(19f * k, 12f * k, 16.5f * k, 15.5f * k) }
             camino(a) { m(19f, 6f); quadraticBezierTo(23f * k, 12f * k, 19f * k, 18f * k) }
         }
+        Icono.MICROFONO -> {
+            caja(9f, 3f, 6f, 11f, 3f, lleno = true)
+            camino(a) { m(5.5f, 11f); quadraticBezierTo(5.5f * k, 17f * k, 12f * k, 17f * k); quadraticBezierTo(18.5f * k, 17f * k, 18.5f * k, 11f * k) }
+            linea(12f, 17f, 12f, 21f, a)
+            linea(9f, 21f, 15f, 21f, a)
+        }
         Icono.SILENCIO -> {
             camino(lleno = true) { m(4f, 9f); l(8f, 9f); l(13f, 5f); l(13f, 19f); l(8f, 15f); l(4f, 15f); close() }
             linea(16f, 9f, 21f, 15f, a); linea(21f, 9f, 16f, 15f, a)

@@ -975,8 +975,7 @@ class Capturas {
 
     @Test fun t216_carpetas_una() = foto("216_carpetas_una_pantalla", conRecientes(base()).copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "gba", modoPantallas = "una_negra"), Rol.UNICA)
 
-    @Config(qualifiers = ABAJO)
-    @Test fun t217_centro_activos() = foto("217_centro_accesos_activos", base().copy(panel = Panel.CENTRO, indice = 0, turbo = true), Rol.INFERIOR)
+    @Test fun t217_centro_activos() = foto("217_centro_accesos_activos", base().copy(panel = Panel.CENTRO, indice = 0, turbo = true), Rol.SUPERIOR)
 
     @Test fun t218_bienvenida_nueva() = foto("218_bienvenida_animada", conRecientes(base()).copy(bienvenida = 1L, ausencia = 2 * 3_600_000L, nombre = "Nico"), Rol.SUPERIOR)
 

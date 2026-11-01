@@ -2,7 +2,18 @@
 
 Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué trae la 1.0 beta.4
+## Qué trae la 1.0 beta.5
+
+- **Bisa más inteligente**: botón Hablar (dictado por voz), busca en internet (también con la IA de la consola), respuestas y seguimientos para tocar, y cara nueva más amigable.
+- **Teclado más grande**, con tecla Voz para dictar; el teclado de Android ya no aparece (también al buscar y con una sola pantalla).
+- **Colecciones y accesos directos** como widgets del inicio (ventana del juego › Colecciones / Acceso directo, o desde la burbuja del editor).
+- **Vista Carpetas** para las consolas (cada una como una carpeta con sus portadas).
+- **Centro de control**: lo encendido se pinta de verde; nuevos accesos Turbo y No molestar.
+- **Tu equipo**: Díptico reconoce Thor, Odin, Retroid, Anbernic, AYANEO, teléfonos, tablets y teles, y se acomoda (Menú › Pantallas).
+- **Switch 2** (lista para cuando haya emulador) y más nombres de carpetas reconocidos.
+- Bienvenida al desbloquear con más animación, botones de la portada más chicos, carrusel sin parpadeo, lupa más estable, y arreglos varios.
+
+## Qué trajo la 1.0 beta.4
 
 - **¿Arriba o abajo?** Mantén A (o el dedo) sobre un juego o una app y elige en qué pantalla se abre. Se puede recordar por juego.
 - **Botón Turbo** en la barra: tocar libera memoria al instante; mantener enciende o apaga el turbo al jugar.

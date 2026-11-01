@@ -68,7 +68,7 @@ fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = fa
                 .background(Brush.linearGradient(listOf(Color(0xFF2A2146), Color(0xFF14111F)))),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(Modifier.size((tamDp * 0.72f).dp)) {
+            Canvas(Modifier.size((tamDp * 0.86f).dp)) {
                 dibujarBisa(size.width / 24f, Uva, Coral, parpadeo = parpadeo, mirar = flotar * 0.4f)
             }
         }

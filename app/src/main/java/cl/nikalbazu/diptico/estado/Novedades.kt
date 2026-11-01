@@ -9,8 +9,8 @@ package cl.nikalbazu.diptico.estado
 object Novedades {
     data class Pagina(val titulo: String, val texto: String, val icono: Icono, val color: Long, val tecla: String = "")
 
-    const val ID = "1.0-beta.4"
-    const val NOMBRE = "1.0 beta.4"
+    const val ID = "1.0-beta.5"
+    const val NOMBRE = "1.0 beta.5"
 
     val paginas = listOf(
         Pagina(
@@ -18,32 +18,32 @@ object Novedades {
             Icono.CHISPA, 0xFF6B4EFF,
         ),
         Pagina(
-            "¿Arriba o abajo?", "Mantén A sobre un juego o una app y elige en qué pantalla se abre. Puedes dejarlo recordado para ese juego.",
-            Icono.PANTALLAS, 0xFF3BA8FF, "Mantén A",
+            "Bisa, más lista", "Háblale con el botón Hablar en vez de escribir, busca en internet por ti y te ofrece respuestas listas para tocar. Y estrena cara.",
+            Icono.BISA, 0xFFFF7A59, "Hablar",
         ),
         Pagina(
-            "¿Dónde quedaste?", "Al terminar de jugar: escríbelo, déjalo en una nota de voz o márcalo en el mapa del juego. O pasa de largo. Se apaga en Menú › Inicio.",
-            Icono.LAPIZ, 0xFFFF7A59, "Nota de voz",
+            "Teclado grande", "Teclas más grandes, una tecla Voz para dictar, y el teclado de Android ya no aparece encima.",
+            Icono.TEXTO, 0xFF3BA8FF, "Voz",
         ),
         Pagina(
-            "Turbo a un toque", "El botón Turbo de la barra libera memoria al instante. Mantenlo para encender o apagar el turbo al jugar.",
-            Icono.CHISPA, 0xFFFF5252, "Turbo",
+            "Colecciones y accesos", "Junta juegos en tus propias carpetas o deja un juego a un toque en tu inicio de widgets. En la ventana de cada juego (Y).",
+            Icono.CARPETA, 0xFF2EC4A6, "Y · Colecciones",
         ),
         Pagina(
-            "Un stick para cada cosa", "El izquierdo elige tus juegos y el derecho recorre los widgets. En el editor, el stick desliza la pantalla. Se cambia en Menú › Controles.",
-            Icono.MANDO, 0xFFFFA726, "Sticks",
+            "Vista Carpetas", "Cada consola como una carpeta con sus portadas asomándose. Menú › Estante › Consolas.",
+            Icono.VISTA, 0xFFFFA726, "Carpetas",
         ),
         Pagina(
-            "Widgets pulidos", "Marcos que siempre se ven completos, GIF sin fondo que flotan sobre tu inicio y cada widget abierto en grande en la pantalla de arriba.",
-            Icono.APPS, 0xFF2EC4A6, "Widgets",
+            "Lo encendido se nota", "En el centro de control, lo que está activo (Wi-Fi, Bluetooth, turbo, No molestar) se pinta de verde.",
+            Icono.WIFI, 0xFF2EC4A6, "Centro de control",
         ),
         Pagina(
-            "Todos parejos", "En «Todos» las cajas se ven iguales (póster o cuadradas). Y eliges qué imagen va en grande en el inicio desde la ventana de cada juego (Y).",
-            Icono.FORMA, 0xFFB388FF, "Y · Imagen en el inicio",
+            "Díptico conoce tu equipo", "Reconoce si es una Thor, una Odin, una Retroid, un teléfono o una tablet y se acomoda solo. Menú › Pantallas › Tu equipo.",
+            Icono.MANDO, 0xFFB388FF, "Tu equipo",
         ),
         Pagina(
-            "Actualiza desde aquí", "Cuando salga una versión nueva te aviso, y la descargas e instalas desde Menú › Acerca de, sin buscar en GitHub.",
-            Icono.DESCARGA, 0xFFFFC93C, "Acerca de",
+            "Switch 2 y más", "Consola Switch 2 lista para cuando haya emulador, y más nombres de carpetas reconocidos. Además: bienvenida animada, carrusel sin parpadeo y la portada más limpia.",
+            Icono.EMULADOR, 0xFFE60012, "Más consolas",
         ),
     )
 }

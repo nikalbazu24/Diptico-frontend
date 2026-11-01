@@ -96,7 +96,7 @@ fun TarjetaQuedaste(e: Estado) {
                 val grab = e.grabando > 0L
                 FormaQuedaste(Icono.LAPIZ, "Escribir", "Una nota corta", e.quedasteSel == 0, Uva, Modifier.weight(1f)) { Diptico.elegirQuedaste(0) }
                 FormaQuedaste(
-                    Icono.VOLUMEN, if (grab) "Grabando" else "Nota de voz",
+                    Icono.MICROFONO, if (grab) "Grabando" else "Nota de voz",
                     if (grab) "A para terminar" else if (tieneVoz) "Reemplaza la anterior" else "Hasta 1 minuto",
                     e.quedasteSel == 1, Coral, Modifier.weight(1f), grabando = if (grab) e.grabando else 0L,
                 ) { Diptico.elegirQuedaste(1) }
