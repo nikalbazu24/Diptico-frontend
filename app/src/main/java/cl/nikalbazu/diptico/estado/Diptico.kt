@@ -4806,8 +4806,7 @@ object Diptico {
                 else -> "${v.bytes / (1024 * 1024)} MB"
             }
             add(Opcion("Descargar e instalar ${v.nombre}", valor, Icono.DESCARGA,
-                "La versión nueva se instala encima: tus juegos, portadas y ajustes se quedan. " + v.notas.replace("
-", " · ").take(160)) { descargarActualizacion() })
+                "La versión nueva se instala encima: tus juegos, portadas y ajustes se quedan. " + v.notas.replace("\n", " · ").take(160)) { descargarActualizacion() })
         } else add(Opcion("Buscar actualizaciones", if (e.buscandoAct) "Buscando…" else "Versión ${Actualizador.numeroActual(app)}", Icono.DESCARGA,
             "Mira si hay una versión más nueva de Díptico en GitHub.") { buscarActualizacion() })
         add(Opcion("Avisarme de versiones nuevas", if (e.actualizarSolo) "Sí" else "No", Icono.CAMPANA,
