@@ -134,7 +134,7 @@ private fun Caratulas(e: Estado) {
             }
             return@Box
         }
-        Heroe(juego, if (angosta) 1f else 0.8f)
+        Heroe(juego, if (angosta) 1f else 0.86f)
         Box(
             Modifier.fillMaxSize().background(
                 if (angosta) Brush.verticalGradient(0f to p.fondo.copy(alpha = 0.35f), 0.45f to p.fondo.copy(alpha = 0.7f), 1f to p.fondo)
@@ -159,7 +159,7 @@ private fun Caratulas(e: Estado) {
         Row(
             Modifier.align(Alignment.BottomStart).padding(start = esc.d(margen), bottom = esc.d(22)),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(esc.d(16)),
+            horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
             BotonJugar()
             AccionRapida("X", "Ficha") { Diptico.abrirFicha() }
@@ -258,12 +258,12 @@ private fun AccionRapida(tecla: String, texto: String, accion: () -> Unit) {
     val esc = LocalEscala.current
     Row(
         Modifier.clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = 0.85f)).clickable { accion() }
-            .padding(start = esc.d(5), end = esc.d(14), top = esc.d(5), bottom = esc.d(5)),
+            .padding(start = esc.d(4), end = esc.d(11), top = esc.d(4), bottom = esc.d(4)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(esc.d(26)).clip(CircleShape).background(p.fondo), contentAlignment = Alignment.Center) { Texto(tecla, 12.5f, traducir = false) }
-        Spacer(Modifier.width(esc.d(7)))
-        Texto(texto, 14f, lineas = 1)
+        Box(Modifier.size(esc.d(21)).clip(CircleShape).background(p.fondo), contentAlignment = Alignment.Center) { Texto(tecla, 10.5f, traducir = false) }
+        Spacer(Modifier.width(esc.d(6)))
+        Texto(texto, 12.5f, lineas = 1)
     }
 }
 
@@ -305,7 +305,7 @@ fun InfoJuego(e: Estado, j: Juego, tamTitulo: Float, conPaso: Boolean = true) {
         if (logo != null) {
             Image(
                 logo, contentDescription = j.titulo, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart,
-                modifier = Modifier.heightIn(max = esc.d(tamTitulo * 2.4f)).widthIn(max = esc.d(320)),
+                modifier = Modifier.heightIn(max = esc.d(tamTitulo * 3f)).widthIn(max = esc.d(380)),
             )
         } else {
             Texto(j.titulo, tamTitulo, lineas = 3, interlineado = tamTitulo * 1.06f, sombra = true)
@@ -356,14 +356,15 @@ fun BotonJugar() {
             .clip(RoundedCornerShape(50))
             .fondoBoton(Uva)
             .clickable { Diptico.jugar() }
-            .padding(start = esc.d(6), end = esc.d(20), top = esc.d(6), bottom = esc.d(6)),
+            .padding(start = esc.d(4), end = esc.d(14), top = esc.d(4), bottom = esc.d(4)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(esc.d(34)).clip(CircleShape).background(SobreUva), contentAlignment = Alignment.Center) {
-            Texto("A", 15f, color = Uva)
+        // Más chico que antes: así luce el logo y la imagen grande del juego.
+        Box(Modifier.size(esc.d(25)).clip(CircleShape).background(SobreUva), contentAlignment = Alignment.Center) {
+            Texto("A", 12f, color = Uva)
         }
-        Spacer(Modifier.width(esc.d(10)))
-        Texto("¡Jugar!", 18f, color = SobreUva)
+        Spacer(Modifier.width(esc.d(7)))
+        Texto("¡Jugar!", 14.5f, color = SobreUva)
     }
 }
 

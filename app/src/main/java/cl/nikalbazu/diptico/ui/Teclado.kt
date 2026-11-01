@@ -101,7 +101,7 @@ fun TecladoDiptico(e: Estado) {
         // Arriba se sigue viendo la pantalla, apenas oscurecida.
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.35f to Color.Black.copy(alpha = 0.25f), 0.45f to p.fondo.copy(alpha = 0.9f))))
         Column(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.6f)
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.76f)
                 .clip(RoundedCornerShape(topStart = esc.d(24), topEnd = esc.d(24))).background(p.fondo2.copy(alpha = 0.97f)).sinCerrar()
                 .padding(horizontal = esc.d(12), vertical = esc.d(8)),
         ) {
@@ -115,7 +115,7 @@ fun TecladoDiptico(e: Estado) {
             }
             Spacer(Modifier.height(esc.d(4)))
             TextoEscrito(
-                e.borrador.takeLast(300), "Escribe con la cruceta y A, o tocando las teclas", 15f, 26f,
+                e.borrador.takeLast(300), "Escribe con la cruceta y A, toca las teclas, o usa Voz para dictar", 17f, 30f,
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(12))).background(p.superficie)
                     .border(esc.d(1.5f), Uva.copy(alpha = 0.6f), RoundedCornerShape(esc.d(12))).padding(horizontal = esc.d(10), vertical = esc.d(5)),
                 cursor = e.cursor - maxOf(0, e.borrador.length - 300).let { if (e.cursor < 0) 0 else it },
@@ -128,7 +128,7 @@ fun TecladoDiptico(e: Estado) {
                     Row(Modifier.weight(if (edicion) 0.8f else 1f), horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
                         fila.forEachIndexed { c, t ->
                             val activa = f == e.teclaFila && c == e.teclaCol
-                            val peso = when (t) { "␣" -> 3.6f; "✓" -> 1.8f; "⇧", "#", "abc", "⌫" -> 1.4f; else -> 1f }
+                            val peso = when (t) { "␣" -> 3.2f; "✓" -> 1.8f; "Voz" -> 1.5f; "⇧", "#", "abc", "⌫" -> 1.4f; else -> 1f }
                             val especial = f == filas.size - 1 || edicion
                             val marcada = (t == "⇧" && e.mayus) || (t == "Selec." && e.ancla != null)
                             val fondo = when {
@@ -144,14 +144,14 @@ fun TecladoDiptico(e: Estado) {
                                     .clickable { Diptico.pulsarTecla(f, c) },
                                 contentAlignment = Alignment.Center,
                             ) {
-                                val icono = when (t) { "Copiar", "Cortar" -> Icono.COPIAR; "Pegar" -> Icono.PEGAR; else -> null }
+                                val icono = when (t) { "Copiar", "Cortar" -> Icono.COPIAR; "Pegar" -> Icono.PEGAR; "Voz" -> Icono.VOLUMEN; else -> null }
                                 val etiqueta = when (t) { "␣" -> "espacio"; "✓" -> "Listo"; "⌫" -> "⌫"; else -> t }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     if (icono != null && !esc.angosta) {
                                         IconoDiptico(icono, if (activa) SobreUva else p.tinta, 12f, acento = if (activa) SobreUva else Coral)
                                         Spacer(Modifier.width(esc.d(3)))
                                     }
-                                    Texto(etiqueta, if (t.length == 1) 15f else 11.5f, color = if (activa || t == "✓") SobreUva else p.tinta, lineas = 1)
+                                    Texto(etiqueta, if (t.length == 1) 20f else 13f, color = if (activa || t == "✓") SobreUva else p.tinta, lineas = 1)
                                 }
                             }
                         }

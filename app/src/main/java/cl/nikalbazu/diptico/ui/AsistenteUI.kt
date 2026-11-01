@@ -76,30 +76,43 @@ private fun Burbuja(m: MensajeChat) {
     }
 }
 
-/** Chat con el asistente: la conversación, sus botones y sugerencias. */
+/**
+ * Chat con Bisa, pensado para escribir poco: abajo dos botones grandes (Hablar y Escribir)
+ * y debajo respuestas y preguntas listas para tocar (o elegir con la cruceta).
+ */
 @Composable
 fun PanelAsistente(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val elementos = remember(e) { Diptico.elementosAsistente() }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
-        Box(Modifier.align(Alignment.TopEnd).size(esc.d(320)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.22f), Color.Transparent))))
-        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
+        Box(Modifier.align(Alignment.TopEnd).size(esc.d(320)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
+        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(8))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(40).value)
+                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(42).value)
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
                     Texto("Bisa", 20f, lineas = 1)
                     Detalle(
-                        if (e.pensando) "Pensando…" else when (Diptico.motorEfectivo(e)) {
-                            "local" -> "IA en tu consola · sin internet ni créditos"
-                            "gemini" -> "Gemini · en la nube, con tu clave"
-                            "openai" -> "ChatGPT · en la nube, con tu clave"
-                            "claude" -> "Claude · en la nube, con tu clave"
+                        if (e.pensando) e.pensandoQue.ifBlank { "Pensando…" } else when (Diptico.motorEfectivo(e)) {
+                            "local" -> "IA de tu consola"
+                            "gemini" -> "Gemini"
+                            "openai" -> "ChatGPT"
+                            "claude" -> "Claude"
                             else -> "Elige su IA en Menú › Bisa"
                         },
                         12f, lineas = 1,
                     )
+                }
+                if (e.bisaWeb && Diptico.motorEfectivo(e) != "ninguno") {
+                    Row(
+                        Modifier.clip(RoundedCornerShape(50)).background(Color(0xFF2EC4A6).copy(alpha = 0.18f)).padding(horizontal = esc.d(9), vertical = esc.d(4)),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconoDiptico(cl.nikalbazu.diptico.estado.Icono.WEB, Color(0xFF2EC4A6), 13f)
+                        Spacer(Modifier.width(esc.d(4)))
+                        Texto("Con internet", 11.5f, color = Color(0xFF2EC4A6), lineas = 1)
+                    }
                 }
             }
             Spacer(Modifier.height(esc.d(8)))
@@ -108,34 +121,63 @@ fun PanelAsistente(e: Estado) {
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 if (e.chat.isEmpty()) item {
                     Column(Modifier.padding(vertical = esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                        Texto("¡Hola! Soy Bisa. ¿En qué te ayudo?", 18f)
+                        Texto("¡Hola! ¿En qué te ayudo?", 20f)
                         Detalle(
-                            if (Diptico.motorEfectivo(e) == "ninguno") "Para pensar necesito una IA: la de tu consola (gratis, sin internet) o Gemini, ChatGPT o Claude. Elige \"Escribir una pregunta\" y te muestro las opciones."
-                            else "Conozco tus juegos. Pídeme recomendaciones, trucos, o que cambie el tema o la vista.",
+                            if (Diptico.motorEfectivo(e) == "ninguno") "Para pensar necesito una IA: la de tu consola (gratis) o Gemini, ChatGPT o Claude. Elige Escribir y te muestro las opciones."
+                            else "Háblame o toca una pregunta de abajo. Conozco tus juegos y puedo buscar en internet.",
                             13.5f,
                         )
                     }
                 }
                 itemsIndexed(e.chat) { _, m -> Burbuja(m) }
-                if (e.pensando) item { Row(Modifier.padding(start = esc.d(34), top = esc.d(4))) { Pensando() } }
-                // Botones y sugerencias
-                item {
-                    Column(Modifier.padding(top = esc.d(4)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                        elementos.forEachIndexed { i, o ->
-                            val activo = i == e.indice
-                            val esAccion = o.valor != "sugerencia" && i > 0
-                            Row(
-                                Modifier.clip(RoundedCornerShape(50))
-                                    .then(if (activo) Modifier.fondoBoton(Uva) else Modifier.background(if (esAccion) Coral.copy(alpha = 0.18f) else p.superficie.copy(alpha = 0.7f)))
-                                    .border(esc.d(if (esAccion && !activo) 1.5f else 0f), if (esAccion && !activo) Coral else Color.Transparent, RoundedCornerShape(50))
-                                    .clickable { if (activo) o.accion() else Diptico.elegirIndice(i) }
-                                    .padding(horizontal = esc.d(12), vertical = esc.d(7)),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                o.icono?.let { IconoDiptico(it, if (activo) SobreUva else p.tinta, 15f, acento = if (activo) SobreUva else Coral) }
-                                Spacer(Modifier.width(esc.d(6)))
-                                Texto(o.titulo, 13.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
-                            }
+                if (e.pensando) item {
+                    Row(Modifier.padding(start = esc.d(34), top = esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
+                        Pensando()
+                        Spacer(Modifier.width(esc.d(8)))
+                        Detalle(e.pensandoQue.ifBlank { "Pensando…" }, 12.5f, lineas = 1)
+                    }
+                }
+            }
+            Spacer(Modifier.height(esc.d(8)))
+            // Hablar y Escribir, grandes.
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                elementos.take(2).forEachIndexed { i, o ->
+                    val activo = i == e.indice
+                    val voz = i == 0
+                    Row(
+                        Modifier.weight(if (voz) 1.3f else 1f).clip(RoundedCornerShape(esc.d(18)))
+                            .then(if (activo) Modifier.fondoBoton(if (voz) Coral else Uva) else Modifier.background(if (voz) Coral.copy(alpha = 0.2f) else p.superficie))
+                            .border(esc.d(if (activo) 2f else 0f), if (activo) Color.White else Color.Transparent, RoundedCornerShape(esc.d(18)))
+                            .clickable { o.accion() }.padding(vertical = esc.d(10)),
+                        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        o.icono?.let { IconoDiptico(it, if (activo) Color.White else p.tinta, 18f, acento = if (activo) Color.White else Coral) }
+                        Spacer(Modifier.width(esc.d(8)))
+                        Texto(o.titulo, 15.5f, color = if (activo) Color.White else p.tinta, lineas = 1)
+                    }
+                }
+            }
+            // Respuestas y preguntas listas para tocar.
+            val resto = elementos.drop(2)
+            if (resto.isNotEmpty()) {
+                Spacer(Modifier.height(esc.d(6)))
+                val chips = rememberLazyListState()
+                LaunchedEffect(e.indice) { if (e.indice >= 2) chips.mostrar(e.indice - 2) }
+                androidx.compose.foundation.lazy.LazyRow(state = chips, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    items(resto.size) { k ->
+                        val o = resto[k]
+                        val activo = k + 2 == e.indice
+                        val esAccion = o.valor != "sugerencia"
+                        Row(
+                            Modifier.widthIn(max = esc.d(220)).clip(RoundedCornerShape(esc.d(14)))
+                                .then(if (activo) Modifier.fondoBoton(Uva) else Modifier.background(if (esAccion) Coral.copy(alpha = 0.18f) else p.superficie.copy(alpha = 0.8f)))
+                                .clickable { if (activo) o.accion() else { Diptico.elegirIndice(k + 2); o.accion() } }
+                                .padding(horizontal = esc.d(11), vertical = esc.d(8)),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            o.icono?.let { IconoDiptico(it, if (activo) SobreUva else p.tinta, 14f, acento = if (activo) SobreUva else Coral) }
+                            Spacer(Modifier.width(esc.d(6)))
+                            Texto(o.titulo, 12.5f, color = if (activo) SobreUva else p.tinta, lineas = 2, interlineado = 15f)
                         }
                     }
                 }

@@ -473,7 +473,7 @@ object Teclas {
                         Panel.RAPIDO -> Diptico.moverRapido(d, 0)
                         Panel.EDITAR_CONSOLA -> Diptico.ladoEditarConsola(d)
                         Panel.WIDGET -> if (ev.repeatCount == 0 || ev.repeatCount % 3 == 0) Diptico.ladoWidget(d)
-                        Panel.BUSCAR, Panel.IMAGENES, Panel.GALERIA, Panel.APPS -> Diptico.moverIndice(d)
+                        Panel.BUSCAR, Panel.IMAGENES, Panel.GALERIA, Panel.APPS, Panel.ASISTENTE -> Diptico.moverIndice(d)
                         else -> Unit
                     }
                 }
@@ -515,7 +515,7 @@ object Teclas {
                     Panel.FICHA -> Diptico.cerrarPanel()
                     Panel.CENTRO -> Diptico.descartarAvisoSel()
                     Panel.ASISTENTE -> Diptico.escribirAlAsistente()
-                    Panel.BUSCAR -> Diptico.limpiarBusqueda()
+                    Panel.BUSCAR -> if (e.tecladoPropio) Diptico.abrirTexto("buscar_juego", e.busqueda) else Diptico.limpiarBusqueda()
                     Panel.APPS -> Diptico.appsVisibles(e).getOrNull(e.indice)?.let { Diptico.infoApp(it.paquete) }
                     else -> Unit
                 }

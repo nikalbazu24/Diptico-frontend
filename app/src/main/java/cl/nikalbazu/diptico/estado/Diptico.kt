@@ -92,6 +92,8 @@ data class Opcion(
     val paquete: String? = null,
     /** Para opciones con valor: qué hace ← (la acción normal es →). */
     val menos: (() -> Unit)? = null,
+    /** Para los accesos que se encienden y apagan (Wi-Fi, Bluetooth, turbo…): si está encendido ahora. null = no aplica. */
+    val activa: Boolean? = null,
     val accion: () -> Unit,
 )
 
@@ -426,6 +428,10 @@ data class Estado(
     val descargaAct: Float = -1f,
     val actualizarSolo: Boolean = true,
     val buscandoAct: Boolean = false,
+    /** Lo que Bisa está haciendo mientras piensa ("Buscando en internet…"), para mostrarlo. */
+    val pensandoQue: String = "",
+    /** Cambia cuando un acceso del centro de control se enciende o apaga (para redibujarlo). */
+    val centroVersion: Int = 0,
     /** "¿Dónde quedaste?" al terminar de jugar: si se pregunta, la tarjeta abierta, la opción marcada y si se está grabando (desde cuándo). */
     val preguntarQuedaste: Boolean = true,
     val quedaste: Boolean = false,
@@ -525,7 +531,7 @@ data class Estado(
 
     /** Se está escribiendo con el teclado de Díptico (en la pantalla contraria a la del texto). */
     val conTeclado: Boolean
-        get() = tecladoPropio && !unaPantalla && (panel == Panel.PASO || panel == Panel.CLAVE)
+        get() = tecladoPropio && (panel == Panel.PASO || panel == Panel.CLAVE)
 
     val consolasConJuegos: List<Consola>
         get() {
@@ -1923,7 +1929,7 @@ object Diptico {
             "1234567890", "qwertyuiop", "asdfghjklñ", "zxcvbnm,.?",
         )
         val letras = filas.map { f -> f.map { c -> if (e.mayus && !e.simbolos) c.uppercase() else c.toString() } }
-        return listOf(EDICION) + letras + listOf(listOf("⇧", if (e.simbolos) "abc" else "#", "␣", "⌫", "✓"))
+        return listOf(EDICION) + letras + listOf(listOf("⇧", if (e.simbolos) "abc" else "#", "Voz", "␣", "⌫", "✓"))
     }
 
     /** Fila de arriba del teclado: mover el cursor, seleccionar, copiar, cortar y pegar. */
@@ -1965,6 +1971,7 @@ object Diptico {
             "␣" -> escribir(" ")
             "⌫" -> borrarLetra()
             "✓" -> terminarTexto()
+            "Voz" -> dictar("teclado")
             "◀" -> moverCursor(-1)
             "▶" -> moverCursor(1)
             "Selec." -> alternarSeleccion()
@@ -3493,11 +3500,30 @@ object Diptico {
     /** Lo que se puede elegir con la cruceta en el asistente: escribir, los botones de la última respuesta o las sugerencias. */
     fun elementosAsistente(): List<Opcion> {
         val e = estado.value
-        val lista = mutableListOf(Opcion("Escribir una pregunta", icono = Icono.TEXTO) { escribirAlAsistente() })
+        // Hablar va primero: escribir en la consola cansa.
+        val lista = mutableListOf(
+            Opcion("Hablar", "voz", Icono.VOLUMEN) { dictar("bisa") },
+            Opcion("Escribir", "texto", Icono.TEXTO) { escribirAlAsistente() },
+        )
         val ultima = e.chat.lastOrNull()
         if (ultima?.rol == "ia") ultima.acciones.forEach { a -> lista += Opcion(a.etiqueta, a.tipo, Icono.CHISPA) { ejecutarAccion(a) } }
+        if (!e.pensando && ultima?.rol == "ia") {
+            // Seguir la conversación con un toque.
+            val pregunta = e.chat.lastOrNull { it.rol == "yo" }?.texto.orEmpty()
+            lista += Opcion("Más simple", "sugerencia", Icono.CHISPA) { preguntar("Explícamelo más simple y corto.") }
+            lista += Opcion("Más detalles", "sugerencia", Icono.INFO) { preguntar("Dame más detalles, paso a paso.") }
+            if (pregunta.isNotBlank()) lista += Opcion("Búscalo en internet", "sugerencia", Icono.WEB) { preguntar("Busca en internet y respóndeme con datos actuales: $pregunta", forzarWeb = true) }
+        }
         if (e.chat.isEmpty() || !e.pensando && ultima?.acciones.isNullOrEmpty()) {
-            val sug = if (e.chat.isEmpty()) Asistente.sugerencias else Asistente.sugerencias.shuffled(java.util.Random(e.chat.size.toLong())).take(3)
+            val j = e.seleccionado
+            val propias = buildList {
+                if (j != null) {
+                    add("¿Cómo sigo en ${j.titulo}?")
+                    add("Un truco para ${j.titulo}")
+                }
+                addAll(Asistente.sugerencias)
+            }
+            val sug = if (e.chat.isEmpty()) propias.take(6) else propias.shuffled(java.util.Random(e.chat.size.toLong())).take(3)
             sug.forEach { s -> lista += Opcion(s, "sugerencia", Icono.ASISTENTE) { preguntar(s) } }
         }
         return lista
@@ -3558,7 +3584,7 @@ object Diptico {
 
     fun claveTexto(p: String) = when (p) { "gemini" -> "ia_clave_gemini"; "openai" -> "ia_clave_openai"; else -> "ia_clave" }
 
-    fun preguntar(texto: String) {
+    fun preguntar(texto: String, forzarWeb: Boolean = false) {
         val e = estado.value
         if (e.pensando) return
         val motor = motorEfectivo(e)
@@ -3580,7 +3606,12 @@ object Diptico {
                 try {
                     val historia = chat.takeLast(12).filter { it.texto.isNotBlank() }.map { (if (it.rol == "yo") "user" to it.texto else "assistant" to it.texto) }
                     if (motor == "local") {
-                        val sistema = Asistente.sistemaLocal(estado.value)
+                        // La IA de la consola no sabe buscar: Díptico busca por ella y le pasa lo encontrado.
+                        val web = if (forzarWeb || (estado.value.bisaWeb && Web.conviene(texto))) {
+                            actualizar { it.copy(pensandoQue = "Buscando en internet…") }
+                            Web.comoContexto(Web.buscar(texto, estado.value.idioma)).also { actualizar { it.copy(pensandoQue = "Pensando…") } }
+                        } else ""
+                        val sistema = Asistente.sistemaLocal(estado.value) + if (web.isNotBlank()) "\n\n$web" else ""
                         var ultimo = 0L
                         Result.success(
                             IALocal.responder(app, sistema, historia) { parcial ->
@@ -3594,14 +3625,15 @@ object Diptico {
                         )
                     } else {
                         val sistema = Asistente.sistema(estado.value)
-                        Result.success(IA.conversar(Llave(motor, claveDe(motor)), sistema, historia, 1200, listos = true, buscarWeb = estado.value.bisaWeb))
+                        if (forzarWeb || estado.value.bisaWeb) actualizar { it.copy(pensandoQue = "Pensando y buscando…") }
+                        Result.success(IA.conversar(Llave(motor, claveDe(motor)), sistema, historia, 1200, listos = true, buscarWeb = forzarWeb || estado.value.bisaWeb))
                     }
                 } catch (ex: Exception) {
                     Result.failure(ex)
                 }
             }
             val msg = r.fold({ Asistente.interpretar(it) }, { MensajeChat("ia", "⚠ " + (it.message ?: "No pude hablar con la IA.")) })
-            actualizar { it.copy(chat = chat + msg, pensando = false, indice = if (msg.acciones.isNotEmpty()) 1 else 0) }
+            actualizar { it.copy(chat = chat + msg, pensando = false, pensandoQue = "", indice = if (msg.acciones.isNotEmpty()) 2 else 0) }
         }
     }
 
@@ -4497,6 +4529,26 @@ object Diptico {
 
     // ---------- Imagen grande del inicio y cajas en "Todos" ----------
 
+    // ---------- Dictado por voz (para Bisa y el teclado) ----------
+
+    /** Abre el reconocimiento de voz de Android (lo registra la pantalla activa). */
+    var pedirVoz: (() -> Boolean)? = null
+    private var vozPara = ""
+
+    fun dictar(para: String) {
+        vozPara = para
+        if (pedirVoz?.invoke() != true) avisar("Esta consola no tiene dictado por voz. Instala la app de Google para usarlo.")
+    }
+
+    fun vozRecibida(texto: String) {
+        val t = texto.trim()
+        if (t.isEmpty()) return
+        when (vozPara) {
+            "bisa" -> { if (estado.value.panel != Panel.ASISTENTE) abrirAsistente(); preguntar(t.replaceFirstChar { it.uppercase() }) }
+            else -> escribir((if (estado.value.borrador.isNotEmpty() && !estado.value.borrador.endsWith(" ")) " " else "") + t)
+        }
+    }
+
     fun nombreHeroe(v: String?) = when (v) { null -> "Como todos"; "portada" -> "Portada"; else -> "Imagen grande" }
 
     private fun ciclarHeroe(clave: String) {
@@ -5065,6 +5117,10 @@ object Diptico {
                 buscarCandidatos(e.candidatoPara, t)
                 return
             }
+            "buscar_juego" -> {
+                actualizar { it.copy(panel = Panel.BUSCAR, busqueda = t.take(40), indice = 0) }
+                return
+            }
             "pc_steam" -> {
                 actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.BIBLIOTECA, enOpciones = true) }
                 buscarEnSteam(t)
@@ -5600,13 +5656,33 @@ object Diptico {
         appsDeConsola().map { a -> Opcion(a.nombre, "Consola", Icono.MANDO, paquete = a.paquete) { abrirPaquete(a.paquete) } } +
         appsMusica().map { a -> Opcion(a.nombre, "Música", Icono.MUSICA, paquete = a.paquete) { abrirPaquete(a.paquete) } }
 
+    /** Cómo están ahora los accesos que se encienden y apagan (para que se note cuáles están activos). */
+    private fun wifiEncendido(): Boolean? = try { (app.applicationContext.getSystemService(Context.WIFI_SERVICE) as? android.net.wifi.WifiManager)?.isWifiEnabled } catch (_: Exception) { null }
+    private fun bluetoothEncendido(): Boolean? = try { app.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.isEnabled } catch (_: Exception) { null }
+    private fun conSonido(): Boolean? = try { (app.getSystemService(android.media.AudioManager::class.java)?.getStreamVolume(android.media.AudioManager.STREAM_MUSIC) ?: 0) > 0 } catch (_: Exception) { null }
+    private fun brilloAuto(): Boolean? = try { android.provider.Settings.System.getInt(app.contentResolver, android.provider.Settings.System.SCREEN_BRIGHTNESS_MODE) == 1 } catch (_: Exception) { null }
+    private fun noMolestarActivo(): Boolean = try {
+        (app.getSystemService(android.app.NotificationManager::class.java)?.currentInterruptionFilter ?: 1) > android.app.NotificationManager.INTERRUPTION_FILTER_ALL
+    } catch (_: Exception) { false }
+
+    fun alternarNoMolestar() {
+        if (!Turbo.puedeNoMolestar(app)) { Turbo.pedirNoMolestar(app); avisar("Activa Díptico en la lista y vuelve"); return }
+        val nm = app.getSystemService(android.app.NotificationManager::class.java) ?: return
+        val activar = !noMolestarActivo()
+        try { nm.setInterruptionFilter(if (activar) android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY else android.app.NotificationManager.INTERRUPTION_FILTER_ALL) } catch (_: Exception) {}
+        avisar(if (activar) "No molestar: encendido" else "No molestar: apagado")
+        actualizar { it.copy(centroVersion = it.centroVersion + 1) }
+    }
+
     private fun opcionesSistema(): List<Opcion> = listOf(
-        Opcion("Wi-Fi", icono = Icono.WIFI) {
+        Opcion("Wi-Fi", icono = Icono.WIFI, activa = wifiEncendido()) {
             abrirIntent(Intent(android.provider.Settings.Panel.ACTION_INTERNET_CONNECTIVITY), "No pude abrir el Wi-Fi")
         },
-        Opcion("Bluetooth", icono = Icono.BLUETOOTH) { abrirIntent(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS), "No pude abrir el Bluetooth") },
-        Opcion("Volumen", icono = Icono.VOLUMEN) { abrirIntent(Intent(android.provider.Settings.Panel.ACTION_VOLUME), "No pude abrir el volumen") },
-        Opcion("Pantalla", icono = Icono.BRILLO) { abrirIntent(Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS), "No pude abrir la pantalla") },
+        Opcion("Bluetooth", icono = Icono.BLUETOOTH, activa = bluetoothEncendido()) { abrirIntent(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS), "No pude abrir el Bluetooth") },
+        Opcion("Volumen", icono = Icono.VOLUMEN, activa = conSonido()) { abrirIntent(Intent(android.provider.Settings.Panel.ACTION_VOLUME), "No pude abrir el volumen") },
+        Opcion("Pantalla", icono = Icono.BRILLO, activa = brilloAuto()) { abrirIntent(Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS), "No pude abrir la pantalla") },
+        Opcion("Turbo", icono = Icono.CHISPA, activa = estado.value.turbo) { alternarTurbo(); actualizar { it.copy(centroVersion = it.centroVersion + 1) } },
+        Opcion("No molestar", icono = Icono.SILENCIO, activa = noMolestarActivo()) { alternarNoMolestar() },
         Opcion("Todas las apps", icono = Icono.APPS) { abrirApps() },
         Opcion("Archivos", icono = Icono.CARPETA) { abrirArchivos() },
         Opcion("Batería", icono = Icono.BATERIA) { abrirIntent(Intent(Intent.ACTION_POWER_USAGE_SUMMARY), "No pude abrir la batería") },

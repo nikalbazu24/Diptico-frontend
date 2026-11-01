@@ -220,7 +220,13 @@ fun PanelBuscar(e: Estado) {
                 ) {
                     IconoDiptico(Icono.BUSCAR, p.tenue, 20f, acento = Uva)
                     Spacer(Modifier.width(esc.d(10)))
-                    Box(Modifier.weight(1f)) {
+                    if (e.tecladoPropio) {
+                        // Con el teclado de Díptico (más grande y con dictado): el de Android no aparece.
+                        Box(Modifier.weight(1f).fillMaxHeight().clickable { Diptico.abrirTexto("buscar_juego", e.busqueda) }, contentAlignment = Alignment.CenterStart) {
+                            if (e.busqueda.isEmpty()) Texto("Toca aquí o aprieta X para escribir", 16f, color = p.tenue, peso = FontWeight.Medium, lineas = 1)
+                            else Texto(e.busqueda, 17f, peso = FontWeight.Medium, lineas = 1, traducir = false)
+                        }
+                    } else Box(Modifier.weight(1f)) {
                         BasicTextField(
                             value = e.busqueda,
                             onValueChange = { Diptico.cambiarBusqueda(it) },
@@ -273,7 +279,7 @@ fun PanelBuscar(e: Estado) {
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            Pistas("L1 R1" to "Mostrar", "L2 R2" to "Orden", "X" to "Limpiar", "B" to "Cerrar")
+            Pistas("L1 R1" to "Mostrar", "L2 R2" to "Orden", "X" to (if (e.tecladoPropio) "Escribir" else "Limpiar"), "B" to "Cerrar")
         }
     }
 }
@@ -390,7 +396,7 @@ fun PanelCentro(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val avisos by Avisos.lista.collectAsState()
-    val acciones = remember { Diptico.opcionesCentro() }
+    val acciones = remember(e.centroVersion, e.turbo) { Diptico.opcionesCentro() }
     val bajar = remember { Animatable(-1f) }
     // Baja con un rebote suave, como una cortina elástica.
     LaunchedEffect(Unit) { bajar.animateTo(0f, spring(dampingRatio = 0.55f, stiffness = 260f)) }
@@ -495,16 +501,32 @@ private fun AccesoCentro(o: Opcion, activo: Boolean, modifier: Modifier, alPulsa
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val escala by animateFloatAsState(if (activo) 1.06f else 1f, spring(stiffness = 700f), label = "acceso")
-    Column(
-        modifier.height(esc.d(62)).graphicsLayer { scaleX = escala; scaleY = escala }.clip(RoundedCornerShape(esc.d(18)))
-            .then(if (activo) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie.copy(alpha = 0.75f)))
-            .clickable { alPulsar() },
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-    ) {
-        if (o.paquete != null) IconoApp(o.paquete, 26f)
-        else o.icono?.let { IconoDiptico(it, if (activo) SobreUva else p.tinta, 21f, acento = if (activo) SobreUva else Coral) }
-        Spacer(Modifier.height(esc.d(4)))
-        Texto(o.titulo, 11f, color = if (activo) SobreUva else p.tinta, lineas = 1)
+    // Encendido: el acceso se pinta del color verde-agua con un punto; apagado: se ve apagadito.
+    val encendido = o.activa == true
+    val verde = Color(0xFF2EC4A6)
+    Box(modifier.height(esc.d(62)).graphicsLayer { scaleX = escala; scaleY = escala }) {
+        Column(
+            Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(18)))
+                .then(
+                    when {
+                        activo -> Modifier.fondoBoton(Uva)
+                        encendido -> Modifier.background(verde.copy(alpha = 0.26f)).border(esc.d(1.5f), verde.copy(alpha = 0.8f), RoundedCornerShape(esc.d(18)))
+                        else -> Modifier.background(p.superficie.copy(alpha = 0.75f))
+                    },
+                )
+                .clickable { alPulsar() },
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+        ) {
+            val apagado = o.activa == false
+            if (o.paquete != null) IconoApp(o.paquete, 26f)
+            else o.icono?.let { IconoDiptico(it, if (activo) SobreUva else if (encendido) verde else p.tinta.copy(alpha = if (apagado) 0.5f else 1f), 21f, acento = if (activo) SobreUva else if (encendido) verde else Coral) }
+            Spacer(Modifier.height(esc.d(4)))
+            Texto(o.titulo, 11f, color = if (activo) SobreUva else if (apagado) p.tenue else p.tinta, lineas = 1)
+        }
+        if (o.activa != null) Box(
+            Modifier.align(Alignment.TopEnd).padding(esc.d(7)).size(esc.d(8)).clip(CircleShape)
+                .background(if (encendido) verde else p.linea),
+        )
     }
 }
 

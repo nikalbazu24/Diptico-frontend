@@ -359,27 +359,35 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
  * Es su ícono propio y único (no se parece a ningún otro de Díptico).
  */
 fun DrawScope.dibujarBisa(k: Float, c: Color, a: Color, parpadeo: Float = 1f, mirar: Float = 0f) {
+    // Bisa: una carita redonda y amable, mitad de cada color (el díptico), con ojos grandes que miran y parpadean,
+    // mejillas sonrojadas, una sonrisa y una chispa arriba (su "idea").
     fun p(x: Float, y: Float) = Offset(x * k, y * k)
-    // Panel izquierdo (un poco inclinado) y panel derecho
-    val izq = Path().apply {
-        moveTo(3f * k, 6.5f * k); lineTo(11f * k, 4.5f * k); lineTo(11f * k, 19.5f * k); lineTo(3f * k, 17.5f * k); close()
+    val centro = p(12f, 13f)
+    val r = 9.6f * k
+    drawArc(c, 90f, 180f, true, Offset(centro.x - r, centro.y - r), Size(r * 2, r * 2))
+    drawArc(a, -90f, 180f, true, Offset(centro.x - r, centro.y - r), Size(r * 2, r * 2))
+    // Brillo suave arriba a la izquierda (volumen).
+    drawCircle(Color.White.copy(alpha = 0.16f), 4.2f * k, p(8.4f, 8.6f))
+    // Chispa de idea.
+    drawLine(Color.White.copy(alpha = 0.85f), p(12f, 3.4f), p(12f, 1.4f), 1.1f * k, StrokeCap.Round)
+    drawCircle(Color.White, 1.05f * k, p(12f, 1.3f))
+    // Ojos: blancos ovalados con pupila que mira; al parpadear se cierran.
+    val alto = 4.6f * k * parpadeo.coerceIn(0.1f, 1f)
+    val dx = mirar * 0.7f * k
+    for (x in listOf(8.4f, 15.6f)) {
+        drawOval(Color.White, Offset(x * k - 1.9f * k, 12f * k - alto / 2), Size(3.8f * k, alto))
+        if (parpadeo > 0.4f) {
+            drawCircle(Color(0xFF1C1A33), 1.15f * k, Offset(x * k + dx, 12.3f * k))
+            drawCircle(Color.White, 0.42f * k, Offset(x * k + dx + 0.45f * k, 11.8f * k))
+        }
     }
-    val der = Path().apply {
-        moveTo(13f * k, 4.5f * k); lineTo(21f * k, 6.5f * k); lineTo(21f * k, 17.5f * k); lineTo(13f * k, 19.5f * k); close()
-    }
-    drawPath(izq, c)
-    drawPath(der, a)
-    // Bisagra
-    drawLine(c.copy(alpha = 0.6f), p(12f, 5f), p(12f, 19f), 1.2f * k, StrokeCap.Round)
-    // Ojos (parpadean)
-    val alto = 2.6f * k * parpadeo.coerceIn(0.12f, 1f)
-    val dx = mirar * 0.8f * k
-    drawRoundRect(Color.White, Offset(6f * k - 1.1f * k + dx, 10f * k - alto / 2), Size(2.2f * k, alto), CornerRadius(1.1f * k))
-    drawRoundRect(Color.White, Offset(16f * k - 1.1f * k + dx, 10f * k - alto / 2), Size(2.2f * k, alto), CornerRadius(1.1f * k))
-    // Sonrisa que cruza la bisagra
+    // Mejillas.
+    drawCircle(Color(0xFFFF8FB1).copy(alpha = 0.55f), 1.35f * k, p(6.2f, 15.6f))
+    drawCircle(Color(0xFFFF8FB1).copy(alpha = 0.55f), 1.35f * k, p(17.8f, 15.6f))
+    // Sonrisa.
     val boca = Path().apply {
-        moveTo(8.5f * k, 14f * k)
-        cubicTo(10f * k, 16.2f * k, 14f * k, 16.2f * k, 15.5f * k, 14f * k)
+        moveTo(9.6f * k, 15.9f * k)
+        cubicTo(10.6f * k, 18.1f * k, 13.4f * k, 18.1f * k, 14.4f * k, 15.9f * k)
     }
-    drawPath(boca, Color.White, style = Stroke(1.6f * k, cap = StrokeCap.Round))
+    drawPath(boca, Color.White, style = Stroke(1.5f * k, cap = StrokeCap.Round))
 }

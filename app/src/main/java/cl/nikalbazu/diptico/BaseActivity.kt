@@ -34,6 +34,12 @@ abstract class BaseActivity : ComponentActivity() {
         if (uri != null) Diptico.archivoElegido(uri)
     }
 
+    // Dictado por voz: Android escucha y devuelve el texto (para Bisa y el teclado).
+    private val dictado = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        val t = r.data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+        if (r.resultCode == RESULT_OK && t != null) Diptico.vozRecibida(t)
+    }
+
     // Pedirle a Android que Díptico sea la app de inicio. Si la persona no lo elige ahí, se abren los ajustes de inicio.
     private val serInicio = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         Diptico.revisarInicio()
@@ -78,6 +84,13 @@ abstract class BaseActivity : ComponentActivity() {
             } catch (e: Exception) {
                 Diptico.avisar("No pude abrir el selector de archivos")
             }
+        }
+        Diptico.pedirVoz = {
+            val i = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault().toLanguageTag())
+                .putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, cl.nikalbazu.diptico.estado.Idioma.t("Habla, te escucho"))
+            try { dictado.launch(i); true } catch (_: Exception) { false }
         }
         Diptico.pedirMicrofono = {
             try { requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 53) } catch (_: Exception) {}

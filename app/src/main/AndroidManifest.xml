@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Para que el centro de control muestre si el Wi-Fi y el Bluetooth están encendidos -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <!-- Modo turbo: dormir apps de fondo antes de jugar y "No molestar" mientras juegas -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
@@ -51,6 +54,10 @@
         <package android:name="aenu.aps3e.premium" />
         <package android:name="com.bachatas4.android" />
         <package android:name="com.bachatas4.android.github" />
+        <!-- Dictado por voz (para Bisa y el teclado) -->
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
         <!-- Para elegir ports y apps que se pueden abrir -->
         <intent>
             <action android:name="android.intent.action.MAIN" />

@@ -60,7 +60,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             ) { RelojGrande(e) }
             // Teclado de Díptico: en la pantalla contraria a la del texto.
             AnimatedVisibility(
-                visible = e.conTeclado && rol == Rol.SUPERIOR,
+                visible = e.conTeclado && (rol == Rol.SUPERIOR || rol == Rol.UNICA),
                 enter = fadeIn(tween(200)) + androidx.compose.animation.slideInVertically(tween(300)) { it / 3 },
                 exit = fadeOut(tween(160)),
             ) { TecladoDiptico(e) }
