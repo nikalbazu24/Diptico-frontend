@@ -290,18 +290,22 @@ fun AyudaMenu(e: Estado) {
             Modifier.align(Alignment.CenterEnd).size(esc.d(520))
                 .background(Brush.radialGradient(listOf(color.copy(alpha = 0.28f), Color.Transparent))),
         )
-        BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
+        val angosta = esc.angosta
+        if (!angosta) BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
         AnimatedContent(
             targetState = Triple(s, o?.titulo, o?.valor),
             // Transición corta: así recorrer opciones con la cruceta se siente fluido.
             transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(90)) },
             label = "ayuda",
-            modifier = Modifier.fillMaxSize().padding(start = esc.d(36), end = esc.d(36), top = esc.d(60), bottom = esc.d(54)),
+            modifier = Modifier.fillMaxSize().padding(
+                start = esc.d(if (angosta) 20 else 36), end = esc.d(if (angosta) 20 else 36),
+                top = esc.d(if (angosta) 18 else 60), bottom = esc.d(if (angosta) 46 else 54),
+            ),
         ) { (sec, titulo, valor) ->
             Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(0.9f), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Column(Modifier.weight(0.9f).then(if (angosta) Modifier.fillMaxHeight() else Modifier), verticalArrangement = Arrangement.spacedBy(esc.d(if (angosta) 7 else 10))) {
                     Etiqueta("Menú · ${sec.titulo}", color, 13f)
-                    Texto(titulo ?: sec.titulo, if (esc.angosta) 30f else 38f, lineas = 2, interlineado = if (esc.angosta) 34f else 42f)
+                    Texto(titulo ?: sec.titulo, if (angosta) 25f else 38f, lineas = 2, interlineado = if (angosta) 29f else 42f)
                     if (!valor.isNullOrEmpty()) {
                         Box(
                             Modifier.clip(RoundedCornerShape(50)).background(color.copy(alpha = 0.18f))
@@ -310,10 +314,10 @@ fun AyudaMenu(e: Estado) {
                     }
                     Detalle(
                         (if (titulo != null && sec == s) o?.ayuda else null)?.ifEmpty { null } ?: sec.ayuda,
-                        17f, lineas = 4,
+                        if (angosta) 14.5f else 17f, lineas = if (angosta) 3 else 4,
                     )
-                    // En pantallas angostas la vista previa va debajo del texto.
-                    if (esc.angosta) PreviaAjuste(e, sec, if (sec == s) o else null, Modifier.height(esc.d(170)).fillMaxWidth())
+                    // En pantallas angostas (la de abajo) la vista previa va debajo del texto, con lo que queda de alto.
+                    if (angosta) PreviaAjuste(e, sec, if (sec == s) o else null, Modifier.weight(1f).fillMaxWidth())
                 }
                 if (!esc.angosta) {
                     Spacer(Modifier.width(esc.d(24)))
@@ -323,7 +327,7 @@ fun AyudaMenu(e: Estado) {
         }
         Pistas(
             "A" to "Cambiar", "B" to "Volver", "Start" to "Cerrar",
-            modifier = Modifier.align(Alignment.BottomStart).padding(start = esc.d(36), bottom = esc.d(20)),
+            modifier = Modifier.align(Alignment.BottomStart).padding(start = esc.d(if (angosta) 20 else 36), bottom = esc.d(if (angosta) 12 else 20)),
         )
     }
 }

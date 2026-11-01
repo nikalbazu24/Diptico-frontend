@@ -46,7 +46,9 @@ import cl.nikalbazu.diptico.estado.Panel
 @Composable
 fun PantallaSuperior(e: Estado) {
     if (e.panel == Panel.MENU) {
-        AyudaMenu(e)
+        // El menú siempre en la pantalla de arriba; la ayuda queda abajo.
+        if (!e.intercambiar) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
+        else AyudaMenu(e)
         return
     }
     if (e.panel == Panel.WIDGET) {

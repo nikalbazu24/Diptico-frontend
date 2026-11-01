@@ -180,7 +180,8 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
         modifier = Modifier.fillMaxSize(),
     ) { panel ->
         when (panel) {
-            Panel.MENU -> PanelMenu(e, conAyuda)
+            // Con dos pantallas, el menú va arriba (la pantalla grande) y aquí la ayuda con su vista previa.
+            Panel.MENU -> if (!conAyuda && !e.intercambiar) AyudaMenu(e) else PanelMenu(e, conAyuda)
             Panel.RAPIDO -> VentanaJuego(e)
             Panel.BUSCAR -> PanelBuscar(e)
             Panel.CENTRO -> Box(Modifier.fillMaxSize())
