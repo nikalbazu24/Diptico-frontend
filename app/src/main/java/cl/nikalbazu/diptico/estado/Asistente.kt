@@ -116,6 +116,29 @@ object Asistente {
         """.trimIndent()
     }
 
+    /** Instrucciones cortas para la IA local (cabe poco en su memoria). */
+    fun sistemaLocal(e: Estado): String {
+        val juegos = e.juegos.filter { e.datos[it.clave]?.oculto != true }
+        val recientes = e.datos.entries.filter { it.value.ultimo > 1 }.sortedByDescending { it.value.ultimo }.take(4).map { it.key }
+        val prioridad = (listOfNotNull(e.sesion?.clave, e.seleccionado?.clave) + recientes).distinct()
+        val resto = juegos.map { it.clave }.filter { it !in prioridad }.shuffled(java.util.Random(juegos.size.toLong())).take(14)
+        indice = (prioridad + resto).filter { c -> juegos.any { it.clave == c } }
+        val lista = indice.mapIndexed { i, c ->
+            val j = juegos.first { it.clave == c }
+            "#$i ${j.titulo} (${Consolas.porId(j.consolaId)?.nombre ?: j.consolaId})"
+        }.joinToString("\n")
+        val actual = (e.sesion?.clave ?: e.seleccionado?.clave)?.let { c -> juegos.firstOrNull { it.clave == c } }
+        return """
+            Eres Bisa, la asistente de juegos de Díptico (una consola portátil). Responde en ${Idioma.nombreParaIA(e.idioma)}, corto (2 a 5 oraciones), amable y concreto.
+            Sabes de videojuegos: trucos, jefes, acertijos. Si alguien está atascado, da primero una pista suave; si pide la solución, dala en pasos cortos.
+            No inventes datos: si no estás segura, dilo y sugiere qué buscar.
+            Puedes agregar al final botones, uno por línea: [[jugar:#N|texto]] abre el juego N; [[ficha:#N|texto]] abre su ficha; [[pista:directa|Más directa]]; [[pista:solucion|Dime la solución]].
+            ${actual?.let { "Juego actual: ${it.titulo}. ${dificultad(e, it.clave)}." } ?: ""}
+            Juegos de la persona:
+            $lista
+        """.trimIndent()
+    }
+
     private val ACCION = Regex("""\[\[(\w+):([^|\]]+)\|([^\]]+)]]""")
 
     /** Separa el texto de la respuesta y los botones que propone. */

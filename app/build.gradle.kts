@@ -15,7 +15,9 @@ android {
         minSdk = 29
         targetSdk = 34
         versionCode = numero
-        versionName = "0.7.$numero"
+        versionName = "0.8.$numero"
+        // La Thor (y casi todas las consolas Android) es arm64: así el APK no carga librerías que no usa.
+        ndk { abiFilters += "arm64-v8a" }
     }
 
     signingConfigs {
@@ -80,6 +82,8 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // IA local (Bisa sin internet ni créditos): modelos .task de MediaPipe
+    implementation("com.google.mediapipe:tasks-genai:0.10.27")
 
     // Capturas automáticas de las pantallas (solo para revisar el diseño, no van en la app)
     testImplementation("junit:junit:4.13.2")

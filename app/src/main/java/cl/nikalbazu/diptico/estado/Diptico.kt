@@ -214,6 +214,9 @@ data class Estado(
     val pensando: Boolean = false,
     /** Bisa puede buscar guías en internet (cuesta un poco más de la clave). */
     val bisaWeb: Boolean = true,
+    /** Motor de Bisa: auto, local o claude. */
+    val motorIA: String = "auto",
+    val iaLocalLista: Boolean = false,
     /** Bisa ofrece ayuda mientras juegas (aviso y burbuja). */
     val bisaEnJuego: Boolean = true,
     /** Burbuja flotante de Bisa: abierta (ventanita) y con aviso. */
@@ -377,7 +380,7 @@ object Diptico {
     private var crudos: List<Juego> = emptyList()
     private var medios: Map<String, MediosJuego> = emptyMap()
 
-    const val VERSION = "0.7"
+    const val VERSION = "0.8"
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -426,6 +429,8 @@ object Diptico {
             claveIa = almacen.texto("claveIa"),
             usuarioRA = almacen.texto("usuarioRA"),
             bisaWeb = almacen.bool("bisaWeb", true),
+            motorIA = almacen.texto("motorIA", "auto"),
+            iaLocalLista = IALocal.listo(app),
             tamLogo = almacen.texto("tamLogo", "1").toFloatOrNull() ?: 1f,
             atenuacion = almacen.texto("atenuacion", "0.04").toFloatOrNull() ?: 0.04f,
             bisaEnJuego = almacen.bool("bisaEnJuego", true),
@@ -1864,6 +1869,30 @@ object Diptico {
                     actualizar { it.copy(bisaWeb = v) }
                 }
                 lista += Opcion(
+                    "IA de Bisa", nombreMotor(e.motorIA) + if (e.motorIA == "auto") " · " + nombreMotor(motorEfectivo(e)).lowercase() else "", Icono.CHISPA,
+                    "En tu consola: gratis, sin internet y privada (ocupa memoria solo mientras responde). Claude: más lista y busca en internet, pero usa los créditos de tu clave. Automático usa la de tu consola si está bajada.",
+                ) {
+                    val l = listOf("auto", "local", "claude")
+                    val v = l[(l.indexOf(estado.value.motorIA) + 1).mod(l.size)]
+                    almacen.guardarTexto("motorIA", v)
+                    actualizar { it.copy(motorIA = v) }
+                }
+                lista += Opcion(
+                    "IA en tu consola",
+                    when { e.iaLocalLista -> "Lista ✓ · ${IALocal.NOMBRE_MODELO}"; trabajosMapa.containsKey("ialocal") -> "Bajando…"; else -> "Bajar (1,6 GB)" },
+                    Icono.DESCARGA,
+                    "Un modelo de IA libre (${IALocal.NOMBRE_MODELO}) que corre en tu consola. Se baja una vez; después Bisa funciona sin internet y sin gastar créditos, aunque compartas Díptico.",
+                ) { if (estado.value.iaLocalLista) avisar("La IA local ya está lista") else descargarIALocal() }
+                lista += Opcion(
+                    "Usar un modelo propio", icono = Icono.CARPETA,
+                    ayuda = "Si tienes otro modelo en formato .task de MediaPipe (por ejemplo Gemma), elígelo y Bisa lo usará.",
+                ) { pedirArchivoPara("modeloIA", "*/*") }
+                if (e.iaLocalLista) lista += Opcion("Borrar la IA local", "Libera 1,6 GB", Icono.BORRAR) {
+                    IALocal.borrar(app)
+                    actualizar { it.copy(iaLocalLista = false) }
+                    avisar("IA local borrada")
+                }
+                lista += Opcion(
                     "Clave de IA (Claude)", if (e.claveIa.isBlank()) "Pegar" else "Guardada ✓", Icono.CLAVE,
                     "El asistente y los temas con IA usan tu clave de console.anthropic.com. Corre en la nube: no ocupa memoria ni hace más lenta tu consola.",
                 ) { abrirTexto("ia_clave", estado.value.claveIa) }
@@ -2692,24 +2721,74 @@ object Diptico {
         return lista
     }
 
+    /** Qué IA usa Bisa: la local (en la consola) o Claude (en la nube, con tu clave). */
+    fun motorEfectivo(e: Estado = estado.value): String = when (e.motorIA) {
+        "local" -> "local"
+        "claude" -> "claude"
+        else -> if (IALocal.listo(app)) "local" else if (e.claveIa.isNotBlank()) "claude" else "ninguno"
+    }
+
+    fun nombreMotor(m: String) = when (m) { "local" -> "En tu consola"; "claude" -> "Claude (nube)"; else -> "Automático" }
+
     fun preguntar(texto: String) {
         val e = estado.value
         if (e.pensando) return
-        if (e.claveIa.isBlank()) { claveParaAsistente = true; abrirTexto("ia_clave"); avisar("El asistente usa tu clave de IA (Claude). Pégala primero."); return }
+        val motor = motorEfectivo(e)
+        if (motor == "ninguno" || (motor == "local" && !IALocal.listo(app))) {
+            abrirMenu(Seccion.ASISTENTE)
+            avisar("Para hablar con Bisa, baja su IA local (gratis, sin internet) en Menú › Bisa")
+            return
+        }
+        if (motor == "claude" && e.claveIa.isBlank()) { claveParaAsistente = true; abrirTexto("ia_clave"); avisar("Para usar Claude pega tu clave, o elige la IA local en Menú › Bisa."); return }
         val chat = e.chat + MensajeChat("yo", texto)
+        // La respuesta aparece mientras se escribe (con la IA local).
         actualizar { it.copy(chat = chat, pensando = true, indice = 0) }
         scope.launch {
             val r = withContext(Dispatchers.IO) {
                 try {
-                    val sistema = Asistente.sistema(estado.value)
-                    val historia = chat.takeLast(12).map { (if (it.rol == "yo") "user" to it.texto else "assistant" to it.texto) }
-                    Result.success(IA.conversar(estado.value.claveIa, sistema, historia, 1200, IA.MODELOS_LISTOS, buscarWeb = estado.value.bisaWeb))
+                    val historia = chat.takeLast(12).filter { it.texto.isNotBlank() }.map { (if (it.rol == "yo") "user" to it.texto else "assistant" to it.texto) }
+                    if (motor == "local") {
+                        val sistema = Asistente.sistemaLocal(estado.value)
+                        var ultimo = 0L
+                        Result.success(
+                            IALocal.responder(app, sistema, historia) { parcial ->
+                                val ahora = System.currentTimeMillis()
+                                if (ahora - ultimo > 120) {
+                                    ultimo = ahora
+                                    val visible = parcial.substringBefore("[[").trim()
+                                    actualizar { it.copy(chat = chat + MensajeChat("ia", visible)) }
+                                }
+                            },
+                        )
+                    } else {
+                        val sistema = Asistente.sistema(estado.value)
+                        Result.success(IA.conversar(estado.value.claveIa, sistema, historia, 1200, IA.MODELOS_LISTOS, buscarWeb = estado.value.bisaWeb))
+                    }
                 } catch (ex: Exception) {
                     Result.failure(ex)
                 }
             }
             val msg = r.fold({ Asistente.interpretar(it) }, { MensajeChat("ia", "⚠ " + (it.message ?: "No pude hablar con la IA.")) })
-            actualizar { it.copy(chat = it.chat + msg, pensando = false, indice = if (msg.acciones.isNotEmpty()) 1 else 0) }
+            actualizar { it.copy(chat = chat + msg, pensando = false, indice = if (msg.acciones.isNotEmpty()) 1 else 0) }
+        }
+    }
+
+    /** Baja la IA local (unos 1,6 GB). Se puede cortar y seguir después. */
+    fun descargarIALocal() {
+        if (IALocal.listo(app)) { avisar("La IA local ya está lista"); return }
+        if (trabajosMapa.containsKey("ialocal")) return
+        trabajo("ialocal", "Bajando la IA de Bisa", IALocal.bajado(app) / IALocal.TAMANO.toFloat())
+        avisar("Bajando la IA de Bisa (1,6 GB). Puedes seguir usando Díptico.")
+        scope.launch {
+            val error = withContext(Dispatchers.IO) {
+                IALocal.descargar(app) { a -> scope.launch { trabajo("ialocal", "Bajando la IA de Bisa", a) } }
+            }
+            terminarTrabajo("ialocal")
+            if (error != null) avisar(error) else {
+                avisar("¡Listo! Bisa ya piensa dentro de tu consola, sin internet")
+                if (estado.value.motorIA == "claude") actualizar { it.copy(motorIA = "auto") }
+            }
+            actualizar { it.copy(iaLocalLista = IALocal.listo(app)) }
         }
     }
 
@@ -3029,6 +3108,17 @@ object Diptico {
     }
 
     fun archivoElegido(uri: Uri) {
+        if (archivoPara == "modeloIA") {
+            archivoPara = ""
+            trabajo("ialocal", "Copiando el modelo de IA")
+            scope.launch {
+                val error = withContext(Dispatchers.IO) { IALocal.usarPropio(app, uri) }
+                terminarTrabajo("ialocal")
+                avisar(error ?: "¡Listo! Bisa usará tu modelo")
+                actualizar { it.copy(iaLocalLista = IALocal.listo(app)) }
+            }
+            return
+        }
         try {
             app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         } catch (_: Exception) {
