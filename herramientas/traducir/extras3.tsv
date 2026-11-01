@@ -1,0 +1,85 @@
+Agrega páginas en la barra de arriba	Add pages in the top bar	Adicione páginas na barra de cima	在上方栏中添加页面	上のバーでページを追加
+Ajustes de este juego	This game's settings	Ajustes deste jogo	这款游戏的设置	このゲームの設定
+Ajustes del widget	Widget settings	Ajustes do widget	小组件设置	ウィジェットの設定
+Amplia	Wide	Ampla	宽松	広め
+Así se ve tu interfaz	This is how your interface looks	Assim fica sua interface	你的界面效果	インターフェースの見え方
+Atenuación mientras juegas	Dimming while playing	Escurecer enquanto joga	游戏时调暗	プレイ中の減光
+Auto	Auto	Auto	自动	自動
+Baja su IA local gratis en Menú › Bisa	Download her free local AI in Menu › Bisa	Baixe a IA local grátis em Menu › Bisa	在 菜单 › Bisa 中免费下载本地 AI	メニュー › Bisa で無料のローカル AI をダウンロード
+Bajando la IA de Bisa	Downloading Bisa's AI	Baixando a IA da Bisa	正在下载 Bisa 的 AI	Bisa の AI をダウンロード中
+Bajando la IA de Bisa (1,6 GB). Puedes seguir usando Díptico.	Downloading Bisa's AI (1.6 GB). You can keep using Díptico.	Baixando a IA da Bisa (1,6 GB). Você pode continuar usando o Díptico.	正在下载 Bisa 的 AI（1.6 GB）。你可以继续使用 Díptico。	Bisa の AI をダウンロード中（1.6 GB）。Díptico はそのまま使えます。
+Bajando…	Downloading…	Baixando…	下载中…	ダウンロード中…
+Bajar (1,6 GB)	Download (1.6 GB)	Baixar (1,6 GB)	下载（1.6 GB）	ダウンロード（1.6 GB）
+Borrar la IA local	Delete local AI	Apagar a IA local	删除本地 AI	ローカル AI を削除
+Cada tema trae su música	Each theme has its music	Cada tema tem sua música	每个主题都有自己的音乐	テーマごとの音楽
+Canciones	Songs	Músicas	歌曲	曲
+Claude (nube)	Claude (cloud)	Claude (nuvem)	Claude（云端）	Claude（クラウド）
+Claude · en la nube, con tu clave	Claude · in the cloud, with your key	Claude · na nuvem, com sua chave	Claude · 云端，使用你的密钥	Claude · クラウド、あなたのキーで
+Colores	Colors	Cores	颜色	カラー
+Copiando el modelo de IA	Copying the AI model	Copiando o modelo de IA	正在复制 AI 模型	AI モデルをコピー中
+Crear con IA	Create with AI	Criar com IA	用 AI 创建	AI で作成
+Cruceta mueve · A ajustes del widget · Select otro · Y agregar · B listo	D-pad moves · A widget settings · Select next · Y add · B done	Direcional move · A ajustes do widget · Select outro · Y adicionar · B pronto	十字键移动 · A 小组件设置 · Select 下一个 · Y 添加 · B 完成	十字キーで移動 · A ウィジェット設定 · Select 次へ · Y 追加 · B 完了
+Cruceta mueve · L1 R1 ancho · L2 R2 alto · A ajustes del widget · X estilo · Select otro · B listo	D-pad moves · L1 R1 width · L2 R2 height · A widget settings · X style · Select next · B done	Direcional move · L1 R1 largura · L2 R2 altura · A ajustes do widget · X estilo · Select outro · B pronto	十字键移动 · L1 R1 宽度 · L2 R2 高度 · A 小组件设置 · X 样式 · Select 下一个 · B 完成	十字キーで移動 · L1 R1 幅 · L2 R2 高さ · A ウィジェット設定 · X スタイル · Select 次へ · B 完了
+Del tema	From theme	Do tema	跟随主题	テーマに合わせる
+Detalles	Details	Detalhes	细节	アクセント
+El servidor del modelo respondió con un error ({0}).	The model server replied with an error ({0}).	O servidor do modelo respondeu com um erro ({0}).	模型服务器返回了错误（{0}）。	モデルのサーバーがエラーを返しました（{0}）。
+Elegir tema	Choose theme	Escolher tema	选择主题	テーマを選ぶ
+Elige tú el color principal, el secundario, los detalles, el fondo y las letras de todo Díptico.	Choose the main color, secondary, details, background and text for all of Díptico.	Escolha a cor principal, a secundária, os detalhes, o fundo e as letras de todo o Díptico.	自己选择 Díptico 的主色、副色、细节色、背景和文字颜色。	Díptico 全体のメイン、サブ、アクセント、背景、文字の色を選べます。
+En tu consola	On your console	No seu console	在你的主机上	本体で
+En tu consola: gratis, sin internet y privada (ocupa memoria solo mientras responde). Claude: más lista y busca en internet, pero usa los créditos de tu clave. Automático usa la de tu consola si está bajada.	On your console: free, offline and private (uses memory only while answering). Claude: smarter and searches the web, but uses your key's credits. Automatic uses the console one if downloaded.	No seu console: grátis, sem internet e privada (só usa memória enquanto responde). Claude: mais esperta e busca na internet, mas usa os créditos da sua chave. Automático usa a do console se estiver baixada.	在主机上：免费、离线、私密（仅在回答时占用内存）。Claude：更聪明且能上网搜索，但会消耗你密钥的额度。自动：已下载本地 AI 时优先使用。	本体：無料・オフライン・プライベート（答える間だけメモリを使用）。Claude：より賢くネット検索もできますが、キーのクレジットを使います。自動はダウンロード済みなら本体を使います。
+Ese archivo no parece un modelo .task	That file doesn't look like a .task model	Esse arquivo não parece um modelo .task	该文件不像是 .task 模型	そのファイルは .task モデルではないようです
+Esquinas	Corners	Cantos	圆角	角
+Estilo	Style	Estilo	样式	スタイル
+IA de Bisa	Bisa's AI	IA da Bisa	Bisa 的 AI	Bisa の AI
+IA en tu consola	AI on your console	IA no seu console	主机上的 AI	本体の AI
+IA en tu consola · sin internet ni créditos	AI on your console · no internet or credits	IA no seu console · sem internet nem créditos	主机上的 AI · 无需网络和额度	本体の AI · ネットもクレジットも不要
+IA local borrada	Local AI deleted	IA local apagada	已删除本地 AI	ローカル AI を削除しました
+Juntos	Tight	Juntos	紧凑	詰める
+La IA local no pudo responder.	The local AI couldn't answer.	A IA local não conseguiu responder.	本地 AI 无法回答。	ローカル AI が答えられませんでした。
+La IA local ya está lista	The local AI is already ready	A IA local já está pronta	本地 AI 已就绪	ローカル AI は準備済みです
+La descarga quedó incompleta. Vuelve a intentarlo y sigue donde quedó.	The download is incomplete. Try again and it'll resume.	O download ficou incompleto. Tente de novo e ele continua de onde parou.	下载未完成。重试即可从中断处继续。	ダウンロードが途中です。もう一度試すと続きから再開します。
+Letras	Text	Letras	文字	文字
+Libera 1,6 GB	Frees 1.6 GB	Libera 1,6 GB	释放 1.6 GB	1.6 GB を解放
+Lista ✓ · {0}	Ready ✓ · {0}	Pronta ✓ · {0}	就绪 ✓ · {0}	準備完了 ✓ · {0}
+Lo que elijas se aplica al tiro a toda la interfaz (queda guardado como "Mi tema").	What you pick applies right away to the whole interface (saved as "My theme").	O que você escolher se aplica na hora a toda a interface (fica salvo como "Meu tema").	你的选择会立即应用到整个界面（保存为“我的主题”）。	選んだ色はすぐにインターフェース全体に反映されます（「マイテーマ」として保存）。
+Lupa · zoom {0}×	Magnifier · zoom {0}×	Lupa · zoom {0}×	放大镜 · 缩放 {0}×	ルーペ · ズーム {0}×
+Media	Medium	Média	中等	中
+Mi paso	My step	Meu passo	我的进度	次の目標
+Mis colores	My colors	Minhas cores	我的颜色	マイカラー
+Muy oscura	Very dark	Muito escura	非常暗	とても暗い
+Muy redondas	Very round	Muito redondos	很圆	とても丸い
+No hay espacio: se necesitan unos 1,8 GB libres.	Not enough space: about 1.8 GB free is needed.	Sem espaço: são necessários uns 1,8 GB livres.	空间不足：需要约 1.8 GB 可用空间。	空き容量が足りません：約 1.8 GB 必要です。
+No pude copiar el modelo	I couldn't copy the model	Não consegui copiar o modelo	无法复制模型	モデルをコピーできませんでした
+Oscura	Dark	Escura	暗	暗い
+Para hablar con Bisa, baja su IA local (gratis, sin internet) en Menú › Bisa	To talk to Bisa, download her local AI (free, offline) in Menu › Bisa	Para falar com a Bisa, baixe a IA local (grátis, sem internet) em Menu › Bisa	要和 Bisa 聊天，请在 菜单 › Bisa 中下载本地 AI（免费、离线）	Bisa と話すには、メニュー › Bisa でローカル AI（無料・オフライン）をダウンロードしてください
+Para usar Claude pega tu clave, o elige la IA local en Menú › Bisa.	To use Claude paste your key, or choose the local AI in Menu › Bisa.	Para usar o Claude cole sua chave, ou escolha a IA local em Menu › Bisa.	要使用 Claude 请粘贴密钥，或在 菜单 › Bisa 中选择本地 AI。	Claude を使うにはキーを貼り付けるか、メニュー › Bisa でローカル AI を選んでください。
+Primero baja la IA local en Menú › Bisa.	First download the local AI in Menu › Bisa.	Primeiro baixe a IA local em Menu › Bisa.	请先在 菜单 › Bisa 中下载本地 AI。	まずメニュー › Bisa でローカル AI をダウンロードしてください。
+Principal	Main	Principal	主色	メイン
+Propio	Custom	Próprio	自定义	カスタム
+Página	Page	Página	页面	ページ
+Quitar este widget	Remove this widget	Remover este widget	移除这个小组件	このウィジェットを削除
+Qué tan oscura queda la otra pantalla mientras juegas. Se atenúa sola 5 segundos después de abrir el juego; tocarla la despierta.	How dark the other screen gets while you play. It dims by itself 5 seconds after the game opens; touching it wakes it.	O quanto a outra tela escurece enquanto você joga. Escurece sozinha 5 segundos depois de abrir o jogo; tocar nela acende.	游戏时另一块屏幕有多暗。游戏打开 5 秒后会自动调暗；触摸即可唤醒。	プレイ中にもう一方の画面をどれだけ暗くするか。ゲーム起動 5 秒後に自動で暗くなり、タッチで明るくなります。
+Rectas	Square	Retos	直角	直角
+Redondas	Round	Redondos	圆	丸い
+Saludo arriba	Greeting on top	Saudação em cima	顶部问候语	上のあいさつ
+Se cortó la descarga. Vuelve a intentarlo y sigue donde quedó.	The download was interrupted. Try again and it'll resume.	O download foi interrompido. Tente de novo e ele continua de onde parou.	下载中断了。重试即可从中断处继续。	ダウンロードが途切れました。もう一度試すと続きから再開します。
+Secundario	Secondary	Secundária	副色	サブ
+Según el tema	By theme	Conforme o tema	跟随主题	テーマに合わせる
+Separación entre widgets	Space between widgets	Espaço entre widgets	小组件间距	ウィジェットの間隔
+Si tienes otro modelo en formato .task de MediaPipe (por ejemplo Gemma), elígelo y Bisa lo usará.	If you have another MediaPipe .task model (for example Gemma), choose it and Bisa will use it.	Se você tem outro modelo .task do MediaPipe (por exemplo Gemma), escolha-o e a Bisa vai usá-lo.	如果你有其他 MediaPipe .task 模型（例如 Gemma），选择它，Bisa 就会使用。	MediaPipe の .task モデル（Gemma など）があれば、選ぶと Bisa が使います。
+Sin atenuar	Not dimmed	Sem escurecer	不调暗	減光しない
+Sonando	Playing	Tocando	播放中	再生中
+Suave	Soft	Suave	轻微	やや暗い
+Suaves	Soft	Suaves	柔和	やわらか
+Terminé	Done	Terminei	我玩完了	終了
+Tienda de imágenes	Image store	Loja de imagens	图片商店	画像ストア
+Toda la interfaz	The whole interface	Toda a interface	整个界面	インターフェース全体
+Todas las canciones de Díptico en una lista, para escucharlas y elegir.	All of Díptico's songs in one list, to listen and choose.	Todas as músicas do Díptico numa lista, para ouvir e escolher.	Díptico 的所有歌曲都在一个列表里，可以试听和选择。	Díptico の曲を一覧で聴いて選べます。
+Tu carpeta	Your folder	Sua pasta	你的文件夹	あなたのフォルダ
+Tus temas	Your themes	Seus temas	你的主题	あなたのテーマ
+Un modelo de IA libre ({0}) que corre en tu consola. Se baja una vez; después Bisa funciona sin internet y sin gastar créditos, aunque compartas Díptico.	A free AI model ({0}) that runs on your console. Download it once; then Bisa works offline and without credits, even if you share Díptico.	Um modelo de IA livre ({0}) que roda no seu console. Baixa uma vez; depois a Bisa funciona sem internet e sem gastar créditos, mesmo se você compartilhar o Díptico.	一个在你主机上运行的免费 AI 模型（{0}）。下载一次后，Bisa 就能离线使用、不耗额度，即使你分享 Díptico 也一样。	本体で動く無料の AI モデル（{0}）。一度ダウンロードすれば、Díptico を共有してもオフラインでクレジットなしに使えます。
+Una galería con todos los temas, separados en pestañas: colores, fiestas del mundo y los tuyos. Se ve cómo queda antes de elegir.	A gallery of all themes in tabs: colors, world holidays and yours. See how it looks before choosing.	Uma galeria com todos os temas em abas: cores, festas do mundo e os seus. Veja como fica antes de escolher.	包含所有主题的图库，按标签分类：颜色、世界节日和你的主题。选择前可先预览。	すべてのテーマをタブで分けたギャラリー：カラー、世界の祝日、あなたのテーマ。選ぶ前に見え方を確認できます。
+¡Listo! Bisa usará tu modelo	Done! Bisa will use your model	Pronto! A Bisa vai usar seu modelo	完成！Bisa 将使用你的模型	完了！Bisa があなたのモデルを使います
+¡Listo! Bisa ya piensa dentro de tu consola, sin internet	Done! Bisa now thinks inside your console, offline	Pronto! A Bisa já pensa dentro do seu console, sem internet	完成！Bisa 现在可以在你的主机里离线思考了	完了！Bisa は本体の中でオフラインで考えられるようになりました
+Guías	Guides	Guias	攻略	攻略
+Fiestas del mundo	World holidays	Festas do mundo	世界节日	世界の祝日

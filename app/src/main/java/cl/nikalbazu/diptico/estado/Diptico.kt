@@ -62,13 +62,13 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String) {
     TEMAS("Temas", Icono.PALETA, "Colores, temas de fiestas del mundo y temas creados con IA."),
     APARIENCIA("Apariencia", Icono.TEMA, "Claro u oscuro, decoraciones, íconos de las consolas y la animación de entrada."),
     MUSICA("Música", Icono.MUSICA, "La música de fondo. Se calla sola al abrir un juego o si pones Spotify o YouTube Music."),
+    ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti."),
+    LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
     EMULADORES("Emuladores", Icono.EMULADOR, "Con qué emulador, o con qué núcleo de RetroArch, se abre cada consola."),
     PORTADAS("Portadas", Icono.PORTADA, "Descarga portadas, imágenes, logos y títulos de internet."),
-    ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti."),
-    IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
-    LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
     BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Tu carpeta de juegos y las imágenes que ya tengas de ES-DE."),
     CONSOLA("Consola", Icono.CAMPANA, "Notificaciones, Díptico como launcher principal y accesos rápidos de Android."),
+    IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Sistema", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
 }
 

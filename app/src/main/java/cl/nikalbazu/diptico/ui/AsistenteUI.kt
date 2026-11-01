@@ -92,7 +92,14 @@ fun PanelAsistente(e: Estado) {
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
                     Texto("Bisa", 20f, lineas = 1)
-                    Detalle(if (e.pensando) "Pensando…" else "Con IA en la nube: no gasta memoria de tu consola", 12f, lineas = 1)
+                    Detalle(
+                        if (e.pensando) "Pensando…" else when (Diptico.motorEfectivo(e)) {
+                            "local" -> "IA en tu consola · sin internet ni créditos"
+                            "claude" -> "Claude · en la nube, con tu clave"
+                            else -> "Baja su IA local gratis en Menú › Bisa"
+                        },
+                        12f, lineas = 1,
+                    )
                 }
             }
             Spacer(Modifier.height(esc.d(8)))

@@ -2,7 +2,17 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.7
+## Qué hace la v0.8
+
+- **Bisa con IA local**: baja una vez un modelo libre (Qwen 2.5, 1,6 GB) y Bisa responde dentro de la consola, sin internet ni créditos de nadie. Claude queda como opción.
+- **Compañero de partida rediseñado**: todo en una pantalla (hora, batería, sesión, logo del juego con movimiento y tamaño ajustable, y los botones). Se atenúa a los 5 segundos y el nivel se elige en Ajustes › Pantallas.
+- **Galerías** para elegir temas (colores, fiestas del mundo, los tuyos) y música, con vista previa en la otra pantalla.
+- **Mis colores**: color principal, secundario, detalles, fondo y letras de toda la interfaz.
+- **Widgets con control total**: cada widget tiene ajustes de tamaño, estilo, color, fondo, esquinas y página; separación entre widgets; y en modo edición los widgets tiemblan para que se note.
+- **Menú del juego compacto**: fila de acciones grandes y una lista que se desliza con todo lo demás.
+- **Lupa sin deformar** y con zoom (− y +).
+
+### Lo que trajo la v0.7
 
 - **Lupa**: mientras juegas arriba, la pantalla de abajo muestra ampliada una parte de la de arriba (el minimapa de Genshin, la vida, los subtítulos). Se enciende por juego en sus opciones (Y) y la zona se guarda para cada juego.
 - **Bisa**, la asistente: con nombre y cara propia, más lista (usa los modelos más capaces y puede buscar guías en internet), da pistas por niveles (suave, más directa, solución). Si reintentas varias veces seguidas un juego, te ofrece ayuda en la pantalla libre o en una burbuja flotante encima del juego (DS, 3DS o modo una pantalla).

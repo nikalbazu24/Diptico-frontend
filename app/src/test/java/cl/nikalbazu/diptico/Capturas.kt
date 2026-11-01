@@ -465,6 +465,60 @@ class Capturas {
 
     @Config(qualifiers = ABAJO)
     @Test fun t85_menu_rapido_juego() = foto("85_opciones_del_juego", base().copy(panel = Panel.RAPIDO), Rol.INFERIOR)
+
+    // ---------- v0.8 ----------
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t86_companero() = foto(
+        "86_companero_de_partida",
+        base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true),
+        Rol.INFERIOR, mi = 1,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t87_menu_juego() = foto("87_menu_del_juego", base().copy(panel = Panel.RAPIDO, indice = 6), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t88_galeria_temas() = foto("88_galeria_de_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", indice = 2), Rol.INFERIOR)
+
+    @Test fun t89_galeria_temas_arriba() = foto("89_galeria_temas_arriba", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 1, indice = 3), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t90_mis_colores() = foto("90_mis_colores", base().copy(panel = Panel.GALERIA, galeria = "colores", indice = 9), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t91_galeria_musica() = foto("91_galeria_de_musica", base().copy(panel = Panel.GALERIA, galeria = "musica", indice = 1), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t92_ajustes_widget() = foto(
+        "92_ajustes_del_widget",
+        base().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0, panel = Panel.AJUSTE_WIDGET, indice = 3),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t93_widgets_personalizados() = foto(
+        "93_widgets_personalizados",
+        base().copy(
+            inicio = "widgets", huecoInicio = 16,
+            widgets = cl.nikalbazu.diptico.estado.Widgets.porDefecto.mapIndexed { i, w ->
+                when (i) {
+                    0 -> w.copy(estilo = "solido", color = 0xFF2EC4A6, radio = 34)
+                    1 -> w.copy(estilo = "vidrio", radio = 6)
+                    2 -> w.copy(estilo = "contorno", color = 0xFFFF5D8F)
+                    else -> w.copy(opacidad = 0.5f)
+                }
+            },
+        ),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t94_menu_bisa() = foto("94_menu_bisa_ia_local", base().copy(panel = Panel.MENU, seccion = Seccion.ASISTENTE, enOpciones = true, indice = 1), Rol.INFERIOR)
+
+    @Test fun t95_tema_mis_colores() = foto(
+        "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
+        Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),
+    )
 }
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"
