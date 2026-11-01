@@ -330,8 +330,6 @@ data class Estado(
     val appsTodas: List<App> = emptyList(),
     val appsFijadas: List<String> = emptyList(),
     val appsPestana: Int = 0,
-    /** Íconos de las apps: "tema" (con la forma del tema), "mono" (un solo color) u "original". */
-    val estiloApps: String = "tema",
     val cargandoTodas: Boolean = false,
     /** Personalización de cada consola (id -> lo que se cambió) y la consola que se está editando. */
     val consolasPropias: Map<String, ConsolaPropia> = emptyMap(),
@@ -546,7 +544,6 @@ object Diptico {
             vistaConsolas = almacen.texto("vistaConsolas", "arriba"),
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
-            estiloApps = almacen.texto("estiloApps", "tema"),
             enSistemas = almacen.texto("vistaConsolas", "arriba") == "sistemas",
             tamJuegos = almacen.texto("tamJuegos", "1").toFloatOrNull() ?: 1f,
             orden = almacen.texto("orden", "az"),
@@ -2666,7 +2663,6 @@ object Diptico {
         val activo = fiesta?.tema ?: elegido
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = e.decoraciones
-        cl.nikalbazu.diptico.ui.Estilo.iconosApps = e.estiloApps
         Sonidos.juego = activo.sonidos
         val pista = musicaDeTema(activo)
         if (fiesta?.id != e.fiesta?.id || pista != e.pistaTema) actualizar { it.copy(fiesta = fiesta, pistaTema = pista) }
@@ -2787,21 +2783,10 @@ object Diptico {
         else -> Descargas.PAQUETES.firstOrNull { it.id == s }?.nombre ?: s
     }
 
-    fun nombreEstiloApps(v: String) = when (v) { "mono" -> "Un solo color"; "original" -> "Originales"; else -> "Al tema" }
-
     private fun opcionesIconos(e: Estado): List<Opcion> {
         val c = Consolas.porId(e.consolaSel)
         val lista = mutableListOf(
-            Opcion(
-                "Íconos de apps", nombreEstiloApps(e.estiloApps), Icono.APPS,
-                "Al tema: con la forma y los colores de Díptico (esquinas de píxel en Mundo de bloques). Un solo color: todos del color del tema. Originales: como vienen.",
-            ) {
-                val l = listOf("tema", "mono", "original")
-                val v = l[(l.indexOf(estado.value.estiloApps) + 1).mod(l.size)]
-                almacen.guardarTexto("estiloApps", v)
-                cl.nikalbazu.diptico.ui.Estilo.iconosApps = v
-                actualizar { it.copy(estiloApps = v) }
-            },
+
             Opcion(
                 "Íconos de consola", nombreEstiloIconos(e.estiloIconos), Icono.EMULADOR,
                 "Los dibujos de Díptico, siglas, o paquetes de íconos de RetroArch (se descargan una vez).",
