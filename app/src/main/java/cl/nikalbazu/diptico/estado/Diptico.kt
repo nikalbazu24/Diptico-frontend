@@ -71,7 +71,7 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
     ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.", "Asistente"),
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.", "Consola"),
-    SOBREMESA("Modo sobremesa (tele)", Icono.VISTA, "Cuando conectas la consola a la tele: una sola pantalla, todo más grande, margen para que nada se corte y más."),
+    SOBREMESA("Sobremesa", Icono.VISTA, "Cuando conectas la consola a la tele: una sola pantalla, todo más grande, margen para que nada se corte y más."),
     CONTROLES("Botones extra", Icono.MANDO, "Dale uso a los botones de atrás (L4 y R4 de la Odin 2 y otras): Bisa, apps, música, un juego al azar…"),
     CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
@@ -2249,7 +2249,7 @@ object Diptico {
             else -> "Tus juegos"
         }
         Seccion.CONTROLES -> if (t.startsWith("Botón") || t.startsWith("Aprender")) "Botones" else "Más"
-        Seccion.SOBREMESA -> if (t.startsWith("Activar") || t == "Tele conectada") "Cuándo" else "En la tele"
+        Seccion.SOBREMESA -> if (t == "Cuándo se activa" || t == "Tele conectada") "Cuándo" else "En la tele"
         Seccion.ASISTENTE -> when {
             t == "Hablar con Bisa" || t == "Bisa mientras juegas" || t == "Burbuja flotante" -> "Bisa"
             t.startsWith("Clave de") -> "Claves de IA en la nube"
@@ -3841,7 +3841,7 @@ object Diptico {
         val margenes = listOf(0, 2, 3, 5, 8)
         return listOf(
             Opcion(
-                "Activar el modo sobremesa", nombreModo(e.sobremesaModo), Icono.VISTA,
+                "Cuándo se activa", nombreModo(e.sobremesaModo), Icono.VISTA,
                 "Al conectar la tele, Díptico se acomoda solo. Si tu tele no se detecta, elige \"Siempre\" mientras juegas en ella.",
                 menos = { val v = modos[(modos.indexOf(estado.value.sobremesaModo) - 1).mod(modos.size)]; guardarSobremesa("sobremesaModo", v) { it.copy(sobremesaModo = v) } },
             ) { val v = modos[(modos.indexOf(estado.value.sobremesaModo) + 1).mod(modos.size)]; guardarSobremesa("sobremesaModo", v) { it.copy(sobremesaModo = v) } },
