@@ -222,3 +222,74 @@ Sin elegir	Not chosen	Não escolhida	未选择	未選択
 Auto	Auto	Auto	自动	自動
 1 juego	1 game	1 jogo	1 款游戏	1 本のゲーム
 juego	game	jogo	款游戏	ゲーム
+Sacar mi clave (abre la página)	Get my key (opens the page)	Pegar minha chave (abre a página)	获取我的密钥（打开网页）	キーを取得（ページを開く）
+O escanea el código con tu teléfono.	Or scan the code with your phone.	Ou escaneie o código com o celular.	或用手机扫描二维码。	またはスマホでコードを読み取ります。
+Escanéalo	Scan it	Escaneie	扫一扫	読み取る
+Sacar clave ↗	Get key ↗	Pegar chave ↗	获取密钥 ↗	キーを取得 ↗
+Sacar la clave	Get the key	Pegar a chave	获取密钥	キーを取得
+Abriendo la página. Copia la clave y vuelve a Díptico para pegarla	Opening the page. Copy the key and come back to Díptico to paste it	Abrindo a página. Copie a chave e volte ao Díptico para colar	正在打开网页。复制密钥后回到 Díptico 粘贴	ページを開いています。キーをコピーして Díptico に戻り貼り付けてください
+Vista previa	Preview	Prévia	预览	プレビュー
+Tu juego	Your game	Seu jogo	你的游戏	あなたのゲーム
+Libre para otras apps	Free for other apps	Livre para outros apps	留给其他应用	他のアプリ用
+En negro	Black	Em preto	黑屏	黒画面
+Hecho con cariño para la AYN Thor	Made with love for the AYN Thor	Feito com carinho para o AYN Thor	为 AYN Thor 用心打造	AYN Thor のために心を込めて
+Versión {0}	Version {0}	Versão {0}	版本 {0}	バージョン {0}
+Empieza aquí	Start here	Comece aqui	从这里开始	ここから
+Cómo se ve	How it looks	Aparência	外观	見た目
+Tus juegos	Your games	Seus jogos	你的游戏	ゲーム
+Asistente	Assistant	Assistente	助手	アシスタント
+Consola	Console	Console	主机	本体
+Tus consolas	Your consoles	Seus consoles	你的主机	あなたの機種
+Sistema Android	Android system	Sistema Android	Android 系统	Android システム
+Acerca de	About	Sobre	关于	このアプリについて
+Su cerebro	Its brain	O cérebro	它的大脑	頭脳
+Claves de IA en la nube	Cloud AI keys	Chaves de IA na nuvem	云端 AI 密钥	クラウド AI のキー
+Conversación	Conversation	Conversa	对话	会話
+Elegir	Choose	Escolher	选择	選ぶ
+Con IA	With AI	Com IA	用 AI	AI で
+Al encender	When turned on	Ao ligar	开机时	起動時
+Pantalla principal	Main screen	Tela principal	主屏幕	メイン画面
+Más	More	Mais	更多	その他
+Escribir	Typing	Escrever	输入	入力
+Pantallas	Screens	Telas	屏幕	画面
+Personalizar consola	Customize console	Personalizar console	自定义主机	機種をカスタマイズ
+Personalizar	Customize	Personalizar	自定义	カスタマイズ
+Personalizada ✓	Customized ✓	Personalizado ✓	已自定义 ✓	カスタマイズ済み ✓
+Nombre	Name	Nome	名称	名前
+Original	Original	Original	原始	オリジナル
+Propio	Custom	Próprio	自定义	カスタム
+Propia ✓	Custom ✓	Próprio ✓	自定义 ✓	カスタム ✓
+Propio ✓	Custom ✓	Próprio ✓	自定义 ✓	カスタム ✓
+Elegir imagen	Choose image	Escolher imagem	选择图片	画像を選ぶ
+Elegir canción	Choose song	Escolher música	选择歌曲	曲を選ぶ
+Imagen grande (hero)	Large image (hero)	Imagem grande (hero)	大图（hero）	大きな画像（ヒーロー）
+Forma de las cajas	Box shape	Forma das caixas	游戏盒形状	パッケージの形
+Tamaño de las cajas	Box size	Tamanho das caixas	游戏盒大小	パッケージの大きさ
+Imagen de las cajas	Box image	Imagem das caixas	游戏盒图片	パッケージの画像
+No necesita	Not needed	Não precisa	不需要	不要
+Quitar imágenes y música propias	Remove custom images and music	Remover imagens e música próprias	移除自定义图片和音乐	カスタム画像と音楽を削除
+Cómo se llama esta consola en todo Díptico.	What this console is called throughout Díptico.	Como este console se chama em todo o Díptico.	这台主机在 Díptico 中的名称。	Díptico 全体でのこの機種の名前。
+El color de sus tarjetas, del carrusel y del fondo de su vista.	The color of its cards, carousel and view background.	A cor dos cartões, do carrossel e do fundo da vista.	卡片、轮播和背景的颜色。	カード、カルーセル、背景の色。
+Cualquier imagen de tu consola como ícono.	Any image on your console as the icon.	Qualquer imagem do console como ícone.	用主机里的任意图片作为图标。	本体の好きな画像をアイコンに。
+El fondo de esta consola en la vista grande y en su tarjeta del carrusel.	This console's background in the big view and its carousel card.	O fundo deste console na vista grande e no cartão do carrossel.	大视图和轮播卡片中的背景。	大きな表示とカルーセルのカードの背景。
+Un logo (mejor con fondo transparente) que reemplaza al nombre en la vista grande.	A logo (best with a transparent background) that replaces the name in the big view.	Um logo (melhor com fundo transparente) que substitui o nome na vista grande.	在大视图中替代名称的标志（最好是透明背景）。	大きな表示で名前の代わりになるロゴ（背景透過がおすすめ）。
+Suena mientras recorres esta consola (si el juego no tiene su propia canción).	Plays while you browse this console (if the game has no song of its own).	Toca enquanto você navega neste console (se o jogo não tiver música própria).	浏览这台主机时播放（游戏没有自己的歌曲时）。	この機種を見ている間に流れます（ゲーム専用の曲がない場合）。
+Portada, captura del juego o su logo.	Cover, game screenshot or its logo.	Capa, captura do jogo ou logo.	封面、游戏截图或标志。	カバー、スクリーンショット、ロゴ。
+Nombre, color, imágenes y música originales.	Original name, color, images and music.	Nome, cor, imagens e música originais.	恢复原始名称、颜色、图片和音乐。	名前・色・画像・音楽を元に戻します。
+{0} como al principio	{0} back to the start	{0} como no começo	{0} 已恢复初始	{0} を初期状態に戻しました
+Elige una consola (no "Todo") para personalizarla	Choose a console (not "All") to customize it	Escolha um console (não "Tudo") para personalizar	请选择一台主机（不是“全部”）进行自定义	カスタマイズする機種を選んでください（「すべて」以外）
+Aún no hay consolas	No consoles yet	Ainda não há consoles	还没有主机	まだ機種がありません
+Elige tu carpeta de juegos	Choose your games folder	Escolha sua pasta de jogos	选择你的游戏文件夹	ゲームフォルダを選択
+Cambia su nombre, color, ícono, imagen grande, logo, música, cajas y emulador.	Change its name, color, icon, large image, logo, music, boxes and emulator.	Mude nome, cor, ícone, imagem grande, logo, música, caixas e emulador.	更改名称、颜色、图标、大图、标志、音乐、游戏盒和模拟器。	名前・色・アイコン・大きな画像・ロゴ・音楽・パッケージ・エミュレーターを変更。
+Personaliza cada consola: nombre, color, ícono, imagen grande, logo, música y cajas.	Customize each console: name, color, icon, large image, logo, music and boxes.	Personalize cada console: nome, cor, ícone, imagem grande, logo, música e caixas.	自定义每台主机：名称、颜色、图标、大图、标志、音乐和游戏盒。	機種ごとにカスタマイズ：名前・色・アイコン・大きな画像・ロゴ・音楽・パッケージ。
+Colores, temas de fiestas del mundo, tus propios colores y temas creados con IA.	Colors, world celebration themes, your own colors and AI-made themes.	Cores, temas de festas do mundo, suas cores e temas criados com IA.	颜色、世界节日主题、自定义颜色和 AI 主题。	カラー、世界のお祭りテーマ、自分の色、AI テーマ。
+Claro u oscuro, efecto de los botones, decoraciones, íconos de las consolas y la animación de entrada.	Light or dark, button effect, decorations, console icons and the intro animation.	Claro ou escuro, efeito dos botões, decorações, ícones dos consoles e a animação de entrada.	浅色或深色、按钮效果、装饰、主机图标和开场动画。	ライトかダーク、ボタンの効果、装飾、機種アイコン、起動アニメ。
+La pantalla principal: el juego en grande o tu inicio con widgets, y la bienvenida al encender.	The main screen: the game big or your widget home, and the welcome when turned on.	A tela principal: o jogo em destaque ou seu início com widgets, e as boas-vindas ao ligar.	主屏幕：大图显示游戏或你的小组件主页，以及开机欢迎。	メイン画面：ゲームの大きな表示かウィジェットのホーム、起動時のあいさつ。
+Cómo se ven tus consolas y tus juegos: vistas, tamaño, filtros y orden.	How your consoles and games look: views, size, filters and order.	Como seus consoles e jogos aparecem: vistas, tamanho, filtros e ordem.	主机和游戏的显示方式：视图、大小、筛选和排序。	機種とゲームの見え方：表示、サイズ、絞り込み、並び順。
+La música de fondo y los sonidos. Se calla sola al abrir un juego o si pones Spotify o YouTube Music.	Background music and sounds. It goes quiet by itself when you open a game or play Spotify or YouTube Music.	A música de fundo e os sons. Silencia sozinha ao abrir um jogo ou ao tocar Spotify ou YouTube Music.	背景音乐和音效。打开游戏或播放 Spotify、YouTube Music 时会自动静音。	BGM と効果音。ゲームを開いたり Spotify や YouTube Music を流すと自動で止まります。
+Tus carpetas de juegos, ports, juegos de Android y las imágenes que ya tengas de ES-DE.	Your game folders, ports, Android games and any images you already have from ES-DE.	Suas pastas de jogos, ports, jogos de Android e as imagens que você já tem do ES-DE.	你的游戏文件夹、移植版、Android 游戏和已有的 ES-DE 图片。	ゲームフォルダ、移植作、Android ゲーム、ES-DE の既存画像。
+Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.	How many screens Díptico uses, what goes on each, text size and dimming while playing.	Quantas telas o Díptico usa, o que vai em cada uma, o tamanho da letra e o escurecimento ao jogar.	Díptico 使用几块屏幕、每块显示什么、字体大小和游戏时变暗。	Díptico が使う画面の数、それぞれの内容、文字サイズ、プレイ中の減光。
+Díptico como inicio, notificaciones y accesos rápidos de Android.	Díptico as home, notifications and Android shortcuts.	Díptico como início, notificações e atalhos do Android.	将 Díptico 设为主屏幕、通知和 Android 快捷方式。	Díptico をホームに、通知、Android のショートカット。
+Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.	Bisa, your AI assistant: knows your games, helps when you're stuck and changes things in Díptico for you.	Bisa, sua assistente com IA: conhece seus jogos, ajuda quando você trava e muda coisas no Díptico por você.	Bisa 是你的 AI 助手：了解你的游戏，卡关时帮你，还能帮你调整 Díptico。	Bisa はあなたの AI アシスタント：ゲームを知り、詰まったら助け、Díptico の設定も変えてくれます。
+Vista previa en vivo	Live preview	Prévia ao vivo	实时预览	ライブプレビュー
+Toca un widget para elegirlo, o arrástralo	Tap a widget to select it, or drag it	Toque num widget para escolher, ou arraste	点按小组件选择，或拖动它	ウィジェットをタップで選択、またはドラッグ

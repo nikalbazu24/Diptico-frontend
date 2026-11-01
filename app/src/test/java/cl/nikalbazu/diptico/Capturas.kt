@@ -625,6 +625,43 @@ class Capturas {
 
     @Test fun t116_sistemas_una_pantalla() = foto("116_sistemas_una_pantalla", base().copy(modoPantallas = "una_negra", vistaConsolas = "sistemas", enSistemas = true, consolaSel = "gba"), Rol.UNICA)
 
+    // ---------- 1.0 beta ----------
+
+    @Test fun t117_previa_estante() = foto("117_previa_ajuste_estante", base().copy(panel = Panel.MENU, seccion = Seccion.ESTANTE, enOpciones = true, indice = 0), Rol.SUPERIOR)
+
+    @Test fun t118_previa_atenuacion() = foto("118_previa_atenuacion", base().copy(panel = Panel.MENU, seccion = Seccion.PANTALLAS, enOpciones = true, indice = 3, atenuacion = 0.12f), Rol.SUPERIOR)
+
+    @Test fun t119_previa_bienvenida() = foto("119_previa_bienvenida", conRecientes(base()).copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 0, nombre = "Nico"), Rol.SUPERIOR)
+
+    @Test fun t120_previa_clave_gemini() = foto("120_previa_clave_gemini", base().copy(panel = Panel.MENU, seccion = Seccion.ASISTENTE, enOpciones = true, indice = 6), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t121_menu_agrupado() = foto("121_menu_bisa_agrupado", base().copy(panel = Panel.MENU, seccion = Seccion.ASISTENTE, enOpciones = true, indice = 3), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t122_clave_con_qr() = foto("122_clave_gemini_con_qr", base().copy(panel = Panel.CLAVE, textoPara = "ia_clave_gemini", tecladoPropio = false), Rol.INFERIOR)
+
+    private fun conConsolaPropia(e: Estado): Estado {
+        val m = mapOf("snes" to cl.nikalbazu.diptico.estado.ConsolaPropia(nombre = "Super Famicom", color = 0xFFE63946))
+        cl.nikalbazu.diptico.data.Consolas.personalizar(m.mapValues { (_, v) -> v.nombre to v.color })
+        return e.copy(consolasPropias = m)
+    }
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t123_editar_consola() = foto("123_personalizar_consola", conConsolaPropia(base()).copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 1), Rol.INFERIOR)
+
+    @Test fun t124_editar_consola_arriba() = foto("124_personalizar_consola_arriba", conConsolaPropia(conRecientes(base())).copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", consolaSel = "snes"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t125_menu_consolas() = foto("125_menu_tus_consolas", conConsolaPropia(base()).copy(panel = Panel.MENU, seccion = Seccion.CONSOLAS, enOpciones = true, indice = 0), Rol.INFERIOR)
+
+    @Test fun t126_menu_una_pantalla() = foto("126_menu_una_pantalla_con_previa", base().copy(modoPantallas = "una_negra", panel = Panel.MENU, seccion = Seccion.TEMAS, enOpciones = true, indice = 0), Rol.UNICA)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t127_sistemas_propios() = foto("127_sistemas_consola_propia", conConsolaPropia(base()).copy(vistaConsolas = "sistemas", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR)
+
+    @Test fun t128_galeria_ia_qr() = foto("128_ia_con_qr_arriba", base().copy(panel = Panel.GALERIA, galeria = "ia", indice = 3), Rol.SUPERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),
