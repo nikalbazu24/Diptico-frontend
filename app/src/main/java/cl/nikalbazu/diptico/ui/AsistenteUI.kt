@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -95,8 +94,10 @@ fun PanelAsistente(e: Estado) {
                     Detalle(
                         if (e.pensando) "Pensando…" else when (Diptico.motorEfectivo(e)) {
                             "local" -> "IA en tu consola · sin internet ni créditos"
+                            "gemini" -> "Gemini · en la nube, con tu clave"
+                            "openai" -> "ChatGPT · en la nube, con tu clave"
                             "claude" -> "Claude · en la nube, con tu clave"
-                            else -> "Baja su IA local gratis en Menú › Bisa"
+                            else -> "Elige su IA en Menú › Bisa"
                         },
                         12f, lineas = 1,
                     )
@@ -110,7 +111,7 @@ fun PanelAsistente(e: Estado) {
                     Column(Modifier.padding(vertical = esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
                         Texto("¡Hola! Soy Bisa. ¿En qué te ayudo?", 18f)
                         Detalle(
-                            if (e.claveIa.isBlank()) "Para usarme necesitas una clave de IA (Claude). Elige \"Escribir una pregunta\" y te pido la clave."
+                            if (Diptico.motorEfectivo(e) == "ninguno") "Para pensar necesito una IA: la de tu consola (gratis, sin internet) o Gemini, ChatGPT o Claude. Elige \"Escribir una pregunta\" y te muestro las opciones."
                             else "Conozco tus juegos. Pídeme recomendaciones, trucos, o que cambie el tema o la vista.",
                             13.5f,
                         )

@@ -34,7 +34,7 @@ jobs:
           grep -E "^e: |What went wrong" -A1 compilar.log | head -60 | while IFS= read -r l; do echo "::error::${l}"; done
 
       - name: Nombrar el APK
-        run: cp app/build/outputs/apk/release/app-release.apk "Diptico-v0.8.${{ github.run_number }}.apk"
+        run: cp app/build/outputs/apk/release/app-release.apk "Diptico-v0.9.${{ github.run_number }}.apk"
 
       - name: Sacar fotos de las pantallas
         continue-on-error: true
@@ -43,7 +43,7 @@ jobs:
       - name: Juntar las fotos
         if: always()
         run: |
-          if [ -d app/capturas ]; then cd app && zip -qr "../Capturas-v0.8.${{ github.run_number }}.zip" capturas; fi
+          if [ -d app/capturas ]; then cd app && zip -qr "../Capturas-v0.9.${{ github.run_number }}.zip" capturas; fi
           ls -la
 
       - uses: actions/upload-artifact@v4
@@ -58,12 +58,12 @@ jobs:
       - name: Publicar versión para descargar
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.8.${{ github.run_number }}
-          name: Díptico v0.8.${{ github.run_number }}
+          tag_name: v0.9.${{ github.run_number }}
+          name: Díptico v0.9.${{ github.run_number }}
           prerelease: true
           files: |
             Diptico-*.apk
             Capturas-*.zip
           body: |
-            Descarga el archivo **Diptico-v0.8.${{ github.run_number }}.apk** desde la Thor e instálalo.
+            Descarga el archivo **Diptico-v0.9.${{ github.run_number }}.apk** desde la Thor e instálalo.
             Si Android lo pide, permite instalar apps desde el navegador.

@@ -43,7 +43,7 @@ fun Decoracion(tema: Tema) {
     }
     val particulas = remember(tema.decor) {
         val r = Random(tema.decor.hashCode())
-        val n = when (tema.decor) { "estrellas" -> 26; "fuegos" -> 5; "faroles" -> 9; "murcielagos" -> 7; else -> 18 }
+        val n = when (tema.decor) { "estrellas" -> 26; "bloques" -> 16; "fuegos" -> 5; "faroles" -> 9; "murcielagos" -> 7; else -> 18 }
         List(n) { Particula(r.nextFloat(), r.nextFloat(), 0.4f + r.nextFloat() * 0.8f, 0.6f + r.nextFloat() * 0.8f, r.nextFloat() * 6.28f, r.nextInt(3)) }
     }
     val colores = listOf(Color(tema.acento), Color(tema.acento2), Color(tema.acento3))
@@ -95,6 +95,18 @@ fun Decoracion(tema: Tema) {
                     val y = p.y * 0.6f + sin(tiempo * 1.3f + p.fase) * 0.03f
                     murcielago(Offset(x * size.width, y * size.height), 10f * u * p.t, sin(tiempo * 12f + p.fase), Color(0xFF1A1026).copy(alpha = 0.7f))
                 }
+                "bloques" -> {
+                    // Cubitos que bajan flotando despacio, y chispitas cuadradas que titilan.
+                    if (p.t < 1.2f) {
+                        val y = ((p.y + tiempo * 0.025f * p.v) % 1.2f) - 0.1f
+                        val x = p.x + sin(tiempo * 0.4f + p.fase) * 0.015f
+                        cubo(Offset(x * size.width, y * size.height), 9f * u * p.t, p.color)
+                    } else {
+                        val brillo = (sin(tiempo * 2.4f * p.v + p.fase) + 1f) / 2f
+                        val l = 3f * u
+                        drawRect(Color(0xFF5CE1E6).copy(alpha = 0.15f + 0.45f * brillo), Offset(p.x * size.width, p.y * size.height), Size(l, l))
+                    }
+                }
                 "fuegos" -> {
                     // Cada fuego explota cada cierto tiempo en su lugar.
                     val ciclo = 3.2f + p.v
@@ -111,6 +123,28 @@ fun Decoracion(tema: Tema) {
                 }
             }
         }
+    }
+}
+
+/** Un cubito isométrico de píxeles: pasto con tierra, piedra o madera. */
+private fun DrawScope.cubo(c: Offset, r: Float, tipo: Int) {
+    val (arriba, lado) = when (tipo) {
+        0 -> Color(0xFF6CC24A) to Color(0xFF8B5A2B)
+        1 -> Color(0xFFA7A7A7) to Color(0xFF7A7A7A)
+        else -> Color(0xFFC79A5B) to Color(0xFF8E6535)
+    }
+    val a = 0.5f
+    val h = r * 0.58f
+    val tapa = Path().apply { moveTo(c.x, c.y - h); lineTo(c.x + r, c.y - h / 2 + 0f); lineTo(c.x, c.y); lineTo(c.x - r, c.y - h / 2); close() }
+    val izq = Path().apply { moveTo(c.x - r, c.y - h / 2); lineTo(c.x, c.y); lineTo(c.x, c.y + r); lineTo(c.x - r, c.y + r - h / 2); close() }
+    val der = Path().apply { moveTo(c.x + r, c.y - h / 2); lineTo(c.x, c.y); lineTo(c.x, c.y + r); lineTo(c.x + r, c.y + r - h / 2); close() }
+    drawPath(tapa, arriba.copy(alpha = a))
+    drawPath(izq, lado.copy(alpha = a))
+    drawPath(der, lerpColor(lado, Color.Black, 0.25f).copy(alpha = a))
+    // Franja de pasto que cae por los lados.
+    if (tipo == 0) {
+        drawPath(Path().apply { moveTo(c.x - r, c.y - h / 2); lineTo(c.x, c.y); lineTo(c.x, c.y + r * 0.22f); lineTo(c.x - r, c.y - h / 2 + r * 0.22f); close() }, arriba.copy(alpha = a))
+        drawPath(Path().apply { moveTo(c.x + r, c.y - h / 2); lineTo(c.x, c.y); lineTo(c.x, c.y + r * 0.22f); lineTo(c.x + r, c.y - h / 2 + r * 0.22f); close() }, lerpColor(arriba, Color.Black, 0.2f).copy(alpha = a))
     }
 }
 

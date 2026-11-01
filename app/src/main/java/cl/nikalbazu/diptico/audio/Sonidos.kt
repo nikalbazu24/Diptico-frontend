@@ -18,6 +18,10 @@ object Sonidos {
     @Volatile
     var volumen = 0.6f
 
+    /** Juego de sonidos del tema ("" = los normales, "bloques" = madera y pops). */
+    @Volatile
+    var juego = ""
+
     fun iniciar(ctx: Context) {
         if (pool != null) return
         val p = SoundPool.Builder()
@@ -28,13 +32,15 @@ object Sonidos {
         mapOf(
             "mover" to R.raw.sfx_mover, "consola" to R.raw.sfx_consola, "aceptar" to R.raw.sfx_aceptar,
             "atras" to R.raw.sfx_atras, "abrir" to R.raw.sfx_abrir, "jugar" to R.raw.sfx_jugar,
+            "b_mover" to R.raw.sfx_b_mover, "b_consola" to R.raw.sfx_b_consola, "b_aceptar" to R.raw.sfx_b_aceptar,
+            "b_atras" to R.raw.sfx_b_atras, "b_abrir" to R.raw.sfx_b_abrir, "b_jugar" to R.raw.sfx_b_jugar,
         ).forEach { (k, r) -> ids[k] = p.load(app, r, 1) }
         pool = p
     }
 
     private fun tocar(nombre: String, tono: Float = 1f) {
         if (!activo) return
-        val id = ids[nombre] ?: return
+        val id = (if (juego == "bloques") ids["b_$nombre"] else null) ?: ids[nombre] ?: return
         pool?.play(id, volumen, volumen, 1, 0, tono)
     }
 

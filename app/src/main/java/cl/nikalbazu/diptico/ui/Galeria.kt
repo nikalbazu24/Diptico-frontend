@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -49,6 +48,7 @@ fun PanelGaleria(e: Estado) {
     val (titulo, icono) = when (e.galeria) {
         "temas" -> "Temas" to Icono.PALETA
         "colores" -> "Mis colores" to Icono.PALETA
+        "ia" -> "IA de Bisa" to Icono.CHISPA
         else -> "Música" to Icono.MUSICA
     }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
@@ -79,6 +79,10 @@ fun PanelGaleria(e: Estado) {
                 Spacer(Modifier.height(esc.d(6)))
                 Detalle("Lo que elijas se aplica al tiro a toda la interfaz (queda guardado como \"Mi tema\").", 12f, lineas = 2)
             }
+            if (e.galeria == "ia") {
+                Spacer(Modifier.height(esc.d(6)))
+                Detalle("Cada persona usa su propia IA: nadie gasta los créditos de otro al compartir Díptico.", 12f, lineas = 2)
+            }
             Spacer(Modifier.height(esc.d(10)))
             val cols = when (e.galeria) {
                 "colores" -> if (esc.angosta) 8 else 12
@@ -99,6 +103,7 @@ fun PanelGaleria(e: Estado) {
                     when (e.galeria) {
                         "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
                         "temas" -> TarjetaTema(it, activo) { Diptico.elegirIndice(i) }
+                        "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
                         else -> FilaCancion(it, activo) { Diptico.elegirIndice(i) }
                     }
                 }
@@ -151,6 +156,43 @@ private fun MuestraColor(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () 
     }
 }
 
+/** Una IA para Bisa: su sello de color, nombre y en qué estado está. */
+@Composable
+private fun FilaIA(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val (sello, letra) = selloIA(it.id)
+    Row(
+        Modifier.fillMaxWidth().height(esc.d(60)).clip(RoundedCornerShape(esc.d(16)))
+            .then(if (activo) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie))
+            .border(esc.d(if (it.enUso && !activo) 2f else 0f), if (it.enUso && !activo) Sol else Color.Transparent, RoundedCornerShape(esc.d(16)))
+            .clickable { alPulsar() }.padding(horizontal = esc.d(12)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(esc.d(38)).clip(RoundedCornerShape(esc.d(11))).background(sello), contentAlignment = Alignment.Center) {
+            if (it.id == "local") cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(30).value)
+            else Texto(letra, 17f, color = Color.White, lineas = 1, traducir = false)
+        }
+        Spacer(Modifier.width(esc.d(12)))
+        Column(Modifier.weight(1f)) {
+            Texto(it.nombre, 15.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
+            Detalle(it.detalle, 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, lineas = 1)
+        }
+        if (it.enUso) Box(Modifier.clip(RoundedCornerShape(50)).background(Sol.copy(alpha = 0.25f)).padding(horizontal = esc.d(8), vertical = esc.d(3))) {
+            Texto("En uso", 11f, color = if (activo) SobreUva else p.tinta, lineas = 1)
+        }
+    }
+}
+
+/** Color y letra de cada IA (sin logos de marcas: solo un sello simple). */
+fun selloIA(id: String): Pair<Color, String> = when (id) {
+    "gemini" -> Color(0xFF4F7DF3) to "G"
+    "openai" -> Color(0xFF10A37F) to "C"
+    "claude" -> Color(0xFFD97757) to "A"
+    "local" -> Color(0xFF2A2440) to ""
+    else -> Uva to "✦"
+}
+
 @Composable
 private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
@@ -189,6 +231,7 @@ fun VistaGaleria(e: Estado) {
                 Texto(it.nombre, 26f, lineas = 1)
                 if (it.detalle.isNotBlank()) Detalle(it.detalle, 15f, lineas = 1)
             }
+            e.galeria == "ia" && it != null -> ExplicaIA(it.id)
             e.galeria == "colores" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(cl.nikalbazu.diptico.ui.Estilo.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))
@@ -257,5 +300,69 @@ fun PanelAjusteWidget(e: Estado) {
             Spacer(Modifier.height(esc.d(6)))
             Pistas("← →" to "Cambiar", "↑ ↓" to "Moverte", "B" to "Listo")
         }
+    }
+}
+
+/** En la otra pantalla: qué es cada IA, lo bueno, lo no tan bueno y cómo conseguirla. */
+@Composable
+private fun ExplicaIA(id: String) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val (sello, letra) = selloIA(id)
+    val (titulo, bueno, malo, como) = when (id) {
+        "local" -> listOf(
+            "En tu consola", "Gratis para siempre, sin internet y privada: nada sale de tu consola.",
+            "Es más simple que las de la nube, no busca guías en internet y ocupa 1,6 GB.",
+            "Elígela y se baja sola. Puedes seguir usando Díptico mientras baja.",
+        )
+        "gemini" -> listOf(
+            "Gemini · Google", "Muy lista, rápida y con un nivel gratis: basta tu cuenta de Google. Puede buscar en internet.",
+            "El nivel gratis tiene un límite de preguntas por día. Necesita internet.",
+            "Entra a aistudio.google.com/apikey con tu cuenta de Google, toca \"Create API key\", cópiala y pégala aquí.",
+        )
+        "openai" -> listOf(
+            "ChatGPT · OpenAI", "Muy lista y conocida. Puede buscar en internet.",
+            "Se paga por uso con saldo en tu cuenta de OpenAI (la suscripción ChatGPT Plus no sirve para esto).",
+            "Entra a platform.openai.com/api-keys, crea una clave, agrega saldo en Billing y pégala aquí.",
+        )
+        "claude" -> listOf(
+            "Claude · Anthropic", "Muy lista para conversar y ayudarte paso a paso. Puede buscar en internet.",
+            "Se paga por uso con saldo en tu cuenta de Anthropic.",
+            "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí.",
+        )
+        else -> listOf(
+            "Automático", "Díptico elige solo: primero la IA de tu consola y, si no está, la primera IA de la nube con clave.",
+            "Si no tienes ninguna lista, Bisa te pedirá elegir una.",
+            "Ideal si compartes Díptico: cada persona usa lo que tenga.",
+        )
+    }
+    Column(Modifier.fillMaxWidth(0.86f), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(esc.d(60)).clip(RoundedCornerShape(esc.d(16))).background(sello), contentAlignment = Alignment.Center) {
+                if (id == "local") cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(48).value)
+                else Texto(letra, 28f, color = Color.White, lineas = 1, traducir = false)
+            }
+            Spacer(Modifier.width(esc.d(16)))
+            Texto(titulo, 28f, lineas = 1)
+        }
+        @Composable
+        fun Fila(icono: Icono, color: Color, etiqueta: String, texto: String) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(p.superficie).padding(esc.d(14)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(esc.d(36)).clip(CircleShape).background(color.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                    IconoDiptico(icono, color, 18f, acento = color)
+                }
+                Spacer(Modifier.width(esc.d(12)))
+                Column(Modifier.weight(1f)) {
+                    Etiqueta(etiqueta, color, 11f)
+                    Detalle(texto, 14f, color = p.tinta, lineas = 3)
+                }
+            }
+        }
+        Fila(Icono.CHECK, Color(0xFF2EC4A6), "Lo bueno", bueno)
+        Fila(Icono.INFO, Coral, "A tener en cuenta", malo)
+        Fila(Icono.CLAVE, Sol, "Cómo tenerla", como)
     }
 }

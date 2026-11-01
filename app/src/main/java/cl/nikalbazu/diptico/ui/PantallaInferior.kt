@@ -42,7 +42,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -694,7 +693,9 @@ private fun PanelClave(e: Estado) {
             verticalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
             val (icono, titulo, ayuda, ejemplo) = when (e.textoPara) {
-                "ia_clave" -> listOf(Icono.CLAVE, "Clave de IA (Claude)", "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
+                "ia_clave" -> listOf(Icono.CLAVE, "Clave de Claude", "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
+                "ia_clave_gemini" -> listOf(Icono.CLAVE, "Clave de Gemini (gratis)", "Entra a aistudio.google.com/apikey con tu cuenta de Google, toca \"Create API key\" y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
+                "ia_clave_openai" -> listOf(Icono.CLAVE, "Clave de ChatGPT", "Entra a platform.openai.com/api-keys, crea una clave y pégala aquí. Usa el saldo de tu cuenta de OpenAI. Solo se guarda en tu consola.", "Pega tu clave")
                 "ra_usuario" -> listOf(Icono.TROFEO, "Usuario de RetroAchievements", "Tu nombre de usuario en retroachievements.org (no tu correo).", "Ej: Nikalbazu")
                 "ra_clave" -> listOf(Icono.CLAVE, "Clave de RetroAchievements", "En retroachievements.org entra a Settings y copia tu \"Web API Key\". Solo se guarda en tu consola.", "Pega tu Web API Key")
                 "buscar_imagen" -> listOf(Icono.BUSCAR, "Buscar con otro nombre", "Escribe el nombre del juego como se conoce en inglés o su nombre completo.", "Ej: The Legend of Zelda")
@@ -710,11 +711,11 @@ private fun PanelClave(e: Estado) {
                 Texto(titulo as String, 20f, lineas = 1)
             }
             Detalle(ayuda as String, 14f)
-            val esClave = e.textoPara == "sgdb" || e.textoPara == "ia_clave" || e.textoPara == "ra_clave"
+            val esClave = e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave"
             CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas") 130f else 60f)
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
-                val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; else -> e.claveIa }).isNotBlank()
+                val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; "ia_clave_gemini" -> e.claveGemini; "ia_clave_openai" -> e.claveOpenAI; else -> e.claveIa }).isNotBlank()
                 BotonGrande(
                     when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; e.textoPara == "asistente" -> "Preguntar"; else -> "Guardar" },
                     Uva, SobreUva, Modifier.weight(1.4f),

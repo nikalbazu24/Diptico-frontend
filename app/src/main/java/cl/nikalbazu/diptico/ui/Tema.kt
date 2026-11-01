@@ -142,17 +142,29 @@ fun paletaDe(t: Tema, oscuroPersona: Boolean): Paleta {
     }
 }
 
-val Fredoka = FontFamily(
+private val FredokaBase = FontFamily(
     Font(R.font.fredoka_medium, FontWeight.Medium),
     Font(R.font.fredoka_semibold, FontWeight.SemiBold),
     Font(R.font.fredoka_bold, FontWeight.Bold),
 )
 
-val Nunito = FontFamily(
+private val NunitoBase = FontFamily(
     Font(R.font.nunito_semibold, FontWeight.SemiBold),
     Font(R.font.nunito_bold, FontWeight.Bold),
     Font(R.font.nunito_extrabold, FontWeight.ExtraBold),
 )
+
+/** Letra de píxeles (Pixelify Sans, licencia OFL) para el tema Mundo de bloques. */
+val Pixel = FontFamily(
+    Font(R.font.pixelify_medium, FontWeight.Medium),
+    Font(R.font.pixelify_medium, FontWeight.SemiBold),
+    Font(R.font.pixelify_bold, FontWeight.Bold),
+    Font(R.font.pixelify_bold, FontWeight.ExtraBold),
+)
+
+/** Las letras de Díptico. Si el tema trae letra propia (píxeles), todas cambian solas. */
+val Fredoka: FontFamily get() = if (Estilo.tema.fuente == "pixel") Pixel else FredokaBase
+val Nunito: FontFamily get() = if (Estilo.tema.fuente == "pixel") Pixel else NunitoBase
 
 /** Alto del lienzo de diseño, en unidades. Toda pantalla mide 400 de alto; el ancho depende de su forma. */
 const val ALTO_DISENO = 400f

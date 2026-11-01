@@ -5,36 +5,63 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** Llamadas a Claude con la clave de la persona (temas y nombres de juegos). */
+/** Una IA en la nube y la clave de la persona para usarla. [proveedor]: "gemini", "openai" o "claude". */
+data class Llave(val proveedor: String, val clave: String)
+
+/**
+ * IA en la nube con la clave de cada persona: Gemini (Google, tiene nivel gratis), ChatGPT (OpenAI) o Claude (Anthropic).
+ * Se usa para Bisa, los temas con IA y reconocer los nombres de los juegos.
+ */
 object IA {
-    const val MODELO = "claude-haiku-5-5"
+    /** Proveedores en la nube, en el orden en que se ofrecen. */
+    val PROVEEDORES = listOf("gemini", "openai", "claude")
 
-    /** Envía un pedido y devuelve el texto de la respuesta. Lanza una excepción con un mensaje en español si falla. */
-    /** Modelos a probar, en orden (si uno no está disponible para la clave, se usa el siguiente). */
-    private val MODELOS = listOf(MODELO, "claude-sonnet-5-5", "claude-haiku-4-5", "claude-sonnet-4-5")
+    fun nombre(p: String) = when (p) {
+        "gemini" -> "Gemini"; "openai" -> "ChatGPT"; "claude" -> "Claude"; else -> p
+    }
 
-    fun pedir(clave: String, prompt: String, maxTokens: Int = 800): String =
-        conversar(clave, null, listOf("user" to prompt), maxTokens)
+    fun empresa(p: String) = when (p) {
+        "gemini" -> "Google"; "openai" -> "OpenAI"; "claude" -> "Anthropic"; else -> ""
+    }
 
-    /** Para el asistente: primero los modelos más capaces. */
-    val MODELOS_LISTOS = listOf("claude-sonnet-5-5", "claude-opus-5-5", MODELO, "claude-sonnet-4-5", "claude-haiku-4-5")
+    /** Dónde se saca la clave de cada uno. */
+    fun dondeClave(p: String) = when (p) {
+        "gemini" -> "aistudio.google.com/apikey"
+        "openai" -> "platform.openai.com/api-keys"
+        else -> "console.anthropic.com"
+    }
+
+    // Modelos a probar en orden: si uno no existe para esa clave, se usa el siguiente.
+    private val CLAUDE = listOf("claude-haiku-5-5", "claude-sonnet-5-5", "claude-haiku-4-5", "claude-sonnet-4-5")
+    private val CLAUDE_LISTOS = listOf("claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5", "claude-sonnet-4-5", "claude-haiku-4-5")
+    private val GEMINI = listOf("gemini-flash-latest", "gemini-3.8-flash", "gemini-3-flash", "gemini-2.5-flash", "gemini-flash-lite-latest")
+    private val OPENAI = listOf("gpt-5.4-mini", "gpt-5-mini", "gpt-4.1-mini", "gpt-4o-mini")
+
+    fun pedir(llave: Llave, prompt: String, maxTokens: Int = 800): String =
+        conversar(llave, null, listOf("user" to prompt), maxTokens)
 
     /**
      * Conversación con instrucciones de sistema e historial ("user"/"assistant", texto).
-     * Con [buscarWeb], la IA puede buscar guías en internet (si la cuenta no lo permite, sigue sin buscar).
+     * [listos]: usar los modelos más capaces (para Bisa). [buscarWeb]: dejar que la IA busque guías en internet
+     * (si la cuenta no lo permite, sigue sin buscar).
      */
     fun conversar(
-        clave: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int = 800,
-        modelos: List<String> = MODELOS, buscarWeb: Boolean = false,
+        llave: Llave, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int = 800,
+        listos: Boolean = false, buscarWeb: Boolean = false,
     ): String {
+        val modelos = when (llave.proveedor) {
+            "gemini" -> GEMINI
+            "openai" -> OPENAI
+            else -> if (listos) CLAUDE_LISTOS else CLAUDE
+        }
         var ultimo: Exception? = null
         var web = buscarWeb
         for (m in modelos) {
             try {
-                return pedirCon(m, clave, sistema, mensajes, maxTokens, web)
+                return pedirCon(llave, m, sistema, mensajes, maxTokens, web)
             } catch (e: SinBusqueda) {
                 web = false
-                try { return pedirCon(m, clave, sistema, mensajes, maxTokens, false) } catch (e2: ModeloNoDisponible) { ultimo = e2 }
+                try { return pedirCon(llave, m, sistema, mensajes, maxTokens, false) } catch (e2: ModeloNoDisponible) { ultimo = e2 }
             } catch (e: ModeloNoDisponible) {
                 ultimo = e
             }
@@ -46,56 +73,120 @@ object IA {
     private class SinBusqueda : Exception()
 
     /** Explica en español el error que devolvió la API. */
-    private fun explicar(codigo: Int, cuerpo: String): String {
-        val detalle = try { JSONObject(cuerpo).getJSONObject("error").getString("message") } catch (e: Exception) { cuerpo.take(140) }
+    private fun explicar(p: String, codigo: Int, cuerpo: String): String {
+        val detalle = try {
+            JSONObject(cuerpo).let { o -> o.optJSONObject("error")?.optString("message") ?: o.optString("message") }
+        } catch (e: Exception) { cuerpo.take(140) }
+        val n = nombre(p)
         return when {
-            codigo == 401 -> "La clave de IA no es válida. Revísala en Menú › Temas › Clave de IA."
-            codigo == 403 -> "La clave no tiene permiso para usar la IA ($detalle)."
-            codigo == 429 -> "La IA está ocupada o llegaste al límite. Prueba en un rato."
-            detalle.contains("credit", true) || detalle.contains("balance", true) -> "Tu cuenta de Anthropic no tiene saldo. Agrega créditos en console.anthropic.com › Billing."
-            codigo == 529 || codigo >= 500 -> "Los servidores de la IA están saturados. Prueba en un rato."
-            else -> "La IA respondió con un error ($codigo): $detalle"
+            codigo == 401 || (codigo == 400 && detalle.contains("API key", true)) -> "La clave de $n no es válida. Revísala en Menú › Bisa."
+            codigo == 403 -> "La clave de $n no tiene permiso para esto ($detalle)."
+            codigo == 429 && p == "gemini" -> "Llegaste al límite gratis de Gemini por ahora. Prueba en un rato."
+            codigo == 429 && (detalle.contains("quota", true) || detalle.contains("billing", true)) -> "Tu cuenta de $n no tiene saldo. Agrega créditos en ${dondeClave(p)}."
+            codigo == 429 -> "$n está ocupada o llegaste al límite. Prueba en un rato."
+            detalle.contains("credit", true) || detalle.contains("balance", true) -> "Tu cuenta de $n no tiene saldo. Agrega créditos en ${dondeClave(p)}."
+            codigo == 529 || codigo >= 500 -> "Los servidores de $n están saturados. Prueba en un rato."
+            else -> "$n respondió con un error ($codigo): $detalle"
         }
     }
 
-    private fun pedirCon(modelo: String, clave: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean = false): String {
-        val lista = JSONArray()
-        for ((rol, texto) in mensajes) lista.put(JSONObject().put("role", rol).put("content", texto))
-        val cuerpo = JSONObject()
-            .put("model", modelo)
-            .put("max_tokens", maxTokens)
-            .put("messages", lista)
-        if (!sistema.isNullOrBlank()) cuerpo.put("system", sistema)
-        if (web) cuerpo.put("tools", JSONArray().put(JSONObject().put("type", "web_search_20250305").put("name", "web_search").put("max_uses", 3)))
-        val c = URL("https://api.anthropic.com/v1/messages").openConnection() as HttpURLConnection
+    private fun pedirCon(llave: Llave, modelo: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean): String =
+        when (llave.proveedor) {
+            "gemini" -> gemini(llave.clave, modelo, sistema, mensajes, maxTokens, web)
+            "openai" -> openai(llave.clave, modelo, sistema, mensajes, maxTokens, web)
+            else -> claude(llave.clave, modelo, sistema, mensajes, maxTokens, web)
+        }
+
+    /** Hace el pedido HTTP y devuelve el cuerpo de la respuesta, o lanza el error ya explicado. */
+    private fun enviar(p: String, url: String, cabeceras: Map<String, String>, cuerpo: JSONObject, web: Boolean): String {
+        val c = URL(url).openConnection() as HttpURLConnection
         c.requestMethod = "POST"
         c.connectTimeout = 15_000
-        c.readTimeout = 60_000
+        c.readTimeout = 90_000
         c.doOutput = true
         c.setRequestProperty("content-type", "application/json")
-        c.setRequestProperty("x-api-key", clave.trim())
-        c.setRequestProperty("anthropic-version", "2023-06-01")
+        cabeceras.forEach { (k, v) -> c.setRequestProperty(k, v) }
         try {
             c.outputStream.use { it.write(cuerpo.toString().toByteArray()) }
             val codigo = c.responseCode
             if (codigo !in 200..299) {
                 val error = try { c.errorStream?.use { it.bufferedReader().readText() } ?: "" } catch (e: Exception) { "" }
-                if (web && codigo in 400..403 && (error.contains("web_search", true) || error.contains("tool", true))) throw SinBusqueda()
-                if (codigo == 404 || (codigo == 400 && error.contains("model", true))) throw ModeloNoDisponible(explicar(codigo, error))
-                throw IllegalStateException(explicar(codigo, error))
+                if (web && codigo in 400..403 && (error.contains("search", true) || error.contains("tool", true) || error.contains("grounding", true))) throw SinBusqueda()
+                if (codigo == 404 || (codigo == 400 && error.contains("model", true) && !error.contains("API key", true))) throw ModeloNoDisponible(explicar(p, codigo, error))
+                throw IllegalStateException(explicar(p, codigo, error))
             }
-            val respuesta = c.inputStream.use { it.bufferedReader().readText() }
-            // Con búsqueda web la respuesta trae varios bloques: se juntan los de texto.
-            val contenido = JSONObject(respuesta).getJSONArray("content")
-            val texto = StringBuilder()
-            for (i in 0 until contenido.length()) {
-                val b = contenido.getJSONObject(i)
-                if (b.optString("type") == "text") texto.append(b.optString("text"))
-            }
-            return texto.toString().trim()
+            return c.inputStream.use { it.bufferedReader().readText() }
         } finally {
             c.disconnect()
         }
+    }
+
+    private fun claude(clave: String, modelo: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean): String {
+        val lista = JSONArray()
+        for ((rol, texto) in mensajes) lista.put(JSONObject().put("role", rol).put("content", texto))
+        val cuerpo = JSONObject().put("model", modelo).put("max_tokens", maxTokens).put("messages", lista)
+        if (!sistema.isNullOrBlank()) cuerpo.put("system", sistema)
+        if (web) cuerpo.put("tools", JSONArray().put(JSONObject().put("type", "web_search_20250305").put("name", "web_search").put("max_uses", 3)))
+        val r = enviar(
+            "claude", "https://api.anthropic.com/v1/messages",
+            mapOf("x-api-key" to clave.trim(), "anthropic-version" to "2023-06-01"), cuerpo, web,
+        )
+        // Con búsqueda web la respuesta trae varios bloques: se juntan los de texto.
+        val contenido = JSONObject(r).getJSONArray("content")
+        val texto = StringBuilder()
+        for (i in 0 until contenido.length()) {
+            val b = contenido.getJSONObject(i)
+            if (b.optString("type") == "text") texto.append(b.optString("text"))
+        }
+        return texto.toString().trim()
+    }
+
+    private fun gemini(clave: String, modelo: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean): String {
+        val lista = JSONArray()
+        for ((rol, texto) in mensajes) {
+            lista.put(JSONObject().put("role", if (rol == "assistant") "model" else "user").put("parts", JSONArray().put(JSONObject().put("text", texto))))
+        }
+        val cuerpo = JSONObject().put("contents", lista)
+            // Los modelos que "piensan" gastan parte del límite en pensar: se deja espacio de sobra.
+            .put("generationConfig", JSONObject().put("maxOutputTokens", maxOf(maxTokens * 4, 2048)))
+        if (!sistema.isNullOrBlank()) cuerpo.put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", sistema))))
+        if (web) cuerpo.put("tools", JSONArray().put(JSONObject().put("google_search", JSONObject())))
+        val r = enviar(
+            "gemini", "https://generativelanguage.googleapis.com/v1beta/models/$modelo:generateContent",
+            mapOf("x-goog-api-key" to clave.trim()), cuerpo, web,
+        )
+        val candidatos = JSONObject(r).optJSONArray("candidates")
+        val partes = candidatos?.optJSONObject(0)?.optJSONObject("content")?.optJSONArray("parts")
+            ?: throw IllegalStateException("Gemini no quiso responder eso. Prueba preguntándolo de otra forma.")
+        val texto = StringBuilder()
+        for (i in 0 until partes.length()) {
+            val p = partes.getJSONObject(i)
+            if (!p.optBoolean("thought", false)) texto.append(p.optString("text"))
+        }
+        return texto.toString().trim()
+    }
+
+    private fun openai(clave: String, modelo: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean): String {
+        val entrada = JSONArray()
+        for ((rol, texto) in mensajes) entrada.put(JSONObject().put("role", rol).put("content", texto))
+        val cuerpo = JSONObject().put("model", modelo).put("input", entrada).put("max_output_tokens", maxOf(maxTokens * 3, 2000))
+        if (!sistema.isNullOrBlank()) cuerpo.put("instructions", sistema)
+        if (web) cuerpo.put("tools", JSONArray().put(JSONObject().put("type", "web_search")))
+        val r = enviar("openai", "https://api.openai.com/v1/responses", mapOf("Authorization" to "Bearer ${clave.trim()}"), cuerpo, web)
+        val o = JSONObject(r)
+        val salida = o.optJSONArray("output") ?: JSONArray()
+        val texto = StringBuilder()
+        for (i in 0 until salida.length()) {
+            val item = salida.getJSONObject(i)
+            if (item.optString("type") != "message") continue
+            val contenido = item.optJSONArray("content") ?: continue
+            for (k in 0 until contenido.length()) {
+                val c = contenido.getJSONObject(k)
+                if (c.optString("type") == "output_text") texto.append(c.optString("text"))
+            }
+        }
+        if (texto.isBlank()) throw IllegalStateException("ChatGPT no alcanzó a responder. Prueba de nuevo.")
+        return texto.toString().trim()
     }
 
     /** Saca el primer objeto JSON de un texto. */
@@ -105,7 +196,7 @@ object IA {
      * Reconoce los juegos a partir del nombre de sus archivos.
      * [archivos]: (consola, nombre de archivo). Devuelve nombre de archivo -> nombre oficial.
      */
-    fun nombres(clave: String, archivos: List<Pair<String, String>>): Map<String, String> {
+    fun nombres(llave: Llave, archivos: List<Pair<String, String>>): Map<String, String> {
         val lista = archivos.joinToString("\n") { (c, a) -> "$c | $a" }
         val prompt = """
             Eres un experto en videojuegos. Cada línea es "consola | nombre de archivo" de un juego.
@@ -116,7 +207,7 @@ object IA {
 
             $lista
         """.trimIndent()
-        val o = json(pedir(clave, prompt, 4000))
+        val o = json(pedir(llave, prompt, 4000))
         return o.keys().asSequence().associateWith { o.getString(it).trim() }.filterValues { it.isNotEmpty() && it.length < 120 }
     }
 }

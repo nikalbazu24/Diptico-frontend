@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -87,14 +86,14 @@ fun TecladoDiptico(e: Estado) {
         e.textoPara == "titulo" -> "Nombre del juego"
         e.textoPara == "notas" -> "Notas y trucos"
         e.textoPara == "ia_pedido" -> "Pídele un tema a la IA"
-        e.textoPara == "sgdb" || e.textoPara == "ia_clave" || e.textoPara == "ra_clave" -> "Pega o escribe tu clave"
+        e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave" -> "Pega o escribe tu clave"
         e.textoPara == "ra_usuario" -> "Tu usuario de RetroAchievements"
         e.textoPara == "asistente" -> "Pregúntale a Bisa"
         e.textoPara == "buscar_ajuste" -> "Buscar un ajuste"
         e.textoPara == "buscar_imagen" -> "Buscar con otro nombre"
         else -> "Escribe"
     }
-    val oculto = e.panel == Panel.CLAVE && (e.textoPara == "sgdb" || e.textoPara == "ia_clave" || e.textoPara == "ra_clave")
+    val oculto = e.panel == Panel.CLAVE && (e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave")
     val sel = Diptico.seleccion(e)
     Box(Modifier.fillMaxSize()) {
         // Arriba se sigue viendo la pantalla, apenas oscurecida.

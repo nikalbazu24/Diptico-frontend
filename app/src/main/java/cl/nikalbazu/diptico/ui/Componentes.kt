@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -169,7 +168,15 @@ fun BotonGrande(texto: String, fondo: Color, tinta: Color, modifier: Modifier = 
  * Va después de clip(forma).
  */
 @Composable
-fun Modifier.fondoBoton(color: Color): Modifier = when (Estilo.efecto) {
+fun Modifier.fondoBoton(color: Color): Modifier = if (Estilo.tema.forma == "pixel") this.background(color).drawWithContent {
+    // Botón de bloque: color parejo con borde claro arriba-izquierda y oscuro abajo-derecha.
+    drawContent()
+    val b = 2.5f * density
+    drawRect(Color.White.copy(alpha = 0.28f), size = androidx.compose.ui.geometry.Size(size.width, b))
+    drawRect(Color.White.copy(alpha = 0.18f), size = androidx.compose.ui.geometry.Size(b, size.height))
+    drawRect(Color.Black.copy(alpha = 0.3f), topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - b), size = androidx.compose.ui.geometry.Size(size.width, b))
+    drawRect(Color.Black.copy(alpha = 0.22f), topLeft = androidx.compose.ui.geometry.Offset(size.width - b, 0f), size = androidx.compose.ui.geometry.Size(b, size.height))
+} else when (Estilo.efecto) {
     "degradado" -> this.background(
         Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(color, Color.White, 0.2f), color, androidx.compose.ui.graphics.lerp(color, Color.Black, 0.28f))),
     )

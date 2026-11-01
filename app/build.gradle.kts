@@ -15,7 +15,7 @@ android {
         minSdk = 29
         targetSdk = 34
         versionCode = numero
-        versionName = "0.8.$numero"
+        versionName = "0.9.$numero"
         // La Thor (y casi todas las consolas Android) es arm64: así el APK no carga librerías que no usa.
         ndk { abiFilters += "arm64-v8a" }
     }

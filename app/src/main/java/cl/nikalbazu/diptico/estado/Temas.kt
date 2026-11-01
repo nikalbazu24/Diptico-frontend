@@ -27,17 +27,22 @@ data class Tema(
     /** Color del fondo y de las letras (0 = el automático, según el color principal). */
     val fondo: Long = 0L,
     val tinta: Long = 0L,
+    /** Estilo completo: "pixel" usa letra de píxeles; forma "pixel" hace las esquinas escalonadas; sonidos "bloques". */
+    val fuente: String = "",
+    val forma: String = "",
+    val sonidos: String = "",
 ) {
     fun json(): JSONObject = JSONObject()
         .put("id", id).put("nombre", nombre).put("acento", acento).put("acento2", acento2).put("acento3", acento3)
         .put("base", base).put("decor", decor).put("mensaje", mensaje).put("propio", propio)
-        .put("fondo", fondo).put("tinta", tinta)
+        .put("fondo", fondo).put("tinta", tinta).put("fuente", fuente).put("forma", forma).put("sonidos", sonidos)
 
     companion object {
         fun deJson(o: JSONObject) = Tema(
             o.getString("id"), o.getString("nombre"), o.getLong("acento"), o.getLong("acento2"), o.getLong("acento3"),
             o.optString("base", "auto"), o.optString("decor", "nada"), o.optString("mensaje", ""), o.optBoolean("propio", true),
             o.optLong("fondo", 0L), o.optLong("tinta", 0L),
+            o.optString("fuente", ""), o.optString("forma", ""), o.optString("sonidos", ""),
         )
     }
 }
@@ -46,12 +51,12 @@ data class Tema(
 data class Fiesta(val id: String, val nombre: String, val donde: String, val tema: Tema, val paises: Set<String> = emptySet())
 
 object Temas {
-    val DECORACIONES = listOf("nada", "nieve", "hojas", "murcielagos", "petalos", "confeti", "corazones", "estrellas", "faroles", "burbujas", "fuegos")
+    val DECORACIONES = listOf("nada", "nieve", "hojas", "murcielagos", "petalos", "confeti", "corazones", "estrellas", "faroles", "burbujas", "fuegos", "bloques")
 
     fun nombreDecor(d: String) = when (d) {
         "nieve" -> "Nieve"; "hojas" -> "Hojas"; "murcielagos" -> "Murciélagos"; "petalos" -> "Pétalos"
         "confeti" -> "Confeti"; "corazones" -> "Corazones"; "estrellas" -> "Estrellas"; "faroles" -> "Faroles"
-        "burbujas" -> "Burbujas"; "fuegos" -> "Fuegos artificiales"; else -> "Sin decoración"
+        "burbujas" -> "Burbujas"; "fuegos" -> "Fuegos artificiales"; "bloques" -> "Bloques que caen"; else -> "Sin decoración"
     }
 
     /** Colores para armar temas propios. */
@@ -62,6 +67,11 @@ object Temas {
 
     val incluidos = listOf(
         Tema("diptico", "Díptico", 0xFF6B4EFF, 0xFFFF7A59, 0xFFFFC93C),
+        // Mundo de bloques: pasto, tierra y diamante; letra de píxeles, esquinas escalonadas, sonidos de madera y piano tranquilo.
+        Tema(
+            "bloques", "Mundo de bloques", 0xFF62B33F, 0xFFA0703F, 0xFF5CE1E6, "oscuro", "bloques",
+            fondo = 0xFF1A1714, tinta = 0xFFF4ECDA, fuente = "pixel", forma = "pixel", sonidos = "bloques",
+        ),
         Tema("medianoche", "Medianoche", 0xFF3B82F6, 0xFF22D3EE, 0xFFA78BFA, "oscuro", "estrellas"),
         Tema("atardecer", "Atardecer", 0xFFFF7A59, 0xFFFF5D8F, 0xFFFFC93C),
         Tema("sakura", "Sakura", 0xFFFF8FB1, 0xFFB388FF, 0xFFFFD6E0, decor = "petalos"),
@@ -212,10 +222,10 @@ object Temas {
     // ---------- Temas creados con IA ----------
 
     /**
-     * Pide a Claude un tema nuevo. [pedido] puede ser "Halloween en Japón" o vacío (elige la celebración más cercana del mundo).
-     * Necesita la clave de API de Anthropic de la persona.
+     * Pide a la IA un tema nuevo. [pedido] puede ser "Halloween en Japón" o vacío (elige la celebración más cercana del mundo).
+     * Usa la IA en la nube que la persona tenga conectada (Gemini, ChatGPT o Claude).
      */
-    fun conIA(clave: String, pedido: String, hoy: LocalDate = LocalDate.now()): Tema {
+    fun conIA(llave: Llave, pedido: String, hoy: LocalDate = LocalDate.now()): Tema {
         val tarea = pedido.ifBlank {
             "la celebración más importante del mundo que ocurra cerca de la fecha $hoy (piensa en todos los países, no solo en uno)"
         }
@@ -226,26 +236,9 @@ object Temas {
             "base" ("oscuro" o "claro"), "decor" (una de: ${DECORACIONES.joinToString(", ")}),
             "mensaje" (un saludo corto en español, máximo 50 caracteres).
         """.trimIndent()
-        val cuerpo = JSONObject()
-            .put("model", "claude-haiku-5-5")
-            .put("max_tokens", 400)
-            .put("messages", JSONArray().put(JSONObject().put("role", "user").put("content", prompt)))
-        val c = URL("https://api.anthropic.com/v1/messages").openConnection() as HttpURLConnection
-        c.requestMethod = "POST"
-        c.connectTimeout = 15_000
-        c.readTimeout = 40_000
-        c.doOutput = true
-        c.setRequestProperty("content-type", "application/json")
-        c.setRequestProperty("x-api-key", clave.trim())
-        c.setRequestProperty("anthropic-version", "2023-06-01")
-        try {
-            c.outputStream.use { it.write(cuerpo.toString().toByteArray()) }
-            val codigo = c.responseCode
-            if (codigo == 401) throw IllegalStateException("La clave de IA no es válida.")
-            if (codigo !in 200..299) throw IllegalStateException("La IA respondió con un error ($codigo). Prueba de nuevo.")
-            val respuesta = c.inputStream.use { it.bufferedReader().readText() }
-            val texto = JSONObject(respuesta).getJSONArray("content").getJSONObject(0).getString("text")
-            val j = JSONObject(texto.substring(texto.indexOf('{'), texto.lastIndexOf('}') + 1))
+        val texto = IA.pedir(llave, prompt, 500)
+        run {
+            val j = IA.json(texto)
             fun color(k: String, defecto: Long): Long = try {
                 0xFF000000 or j.getString(k).removePrefix("#").take(6).toLong(16)
             } catch (e: Exception) {
@@ -263,8 +256,6 @@ object Temas {
                 mensaje = j.optString("mensaje", "").take(60),
                 propio = true,
             )
-        } finally {
-            c.disconnect()
         }
     }
 }

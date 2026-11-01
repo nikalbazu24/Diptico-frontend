@@ -208,6 +208,9 @@ data class Estado(
     val decoraciones: Boolean = true,
     val temasPropios: List<Tema> = emptyList(),
     val claveIa: String = "",
+    /** Claves de otras IA en la nube: Gemini (Google) y ChatGPT (OpenAI). */
+    val claveGemini: String = "",
+    val claveOpenAI: String = "",
     /** Cuenta de RetroAchievements. */
     val usuarioRA: String = "",
     val claveRA: String = "",
@@ -220,7 +223,7 @@ data class Estado(
     val pensando: Boolean = false,
     /** Bisa puede buscar guías en internet (cuesta un poco más de la clave). */
     val bisaWeb: Boolean = true,
-    /** Motor de Bisa: auto, local o claude. */
+    /** Motor de Bisa: auto, local, gemini, openai o claude. */
     val motorIA: String = "auto",
     val iaLocalLista: Boolean = false,
     /** Bisa ofrece ayuda mientras juegas (aviso y burbuja). */
@@ -392,7 +395,7 @@ object Diptico {
     private var crudos: List<Juego> = emptyList()
     private var medios: Map<String, MediosJuego> = emptyMap()
 
-    const val VERSION = "0.8"
+    const val VERSION = "0.9"
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -439,6 +442,8 @@ object Diptico {
             decoraciones = almacen.bool("decoraciones", true),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             claveIa = almacen.texto("claveIa"),
+            claveGemini = almacen.texto("claveGemini"),
+            claveOpenAI = almacen.texto("claveOpenAI"),
             usuarioRA = almacen.texto("usuarioRA"),
             bisaWeb = almacen.bool("bisaWeb", true),
             motorIA = almacen.texto("motorIA", "auto"),
@@ -1128,6 +1133,7 @@ object Diptico {
     fun pestanasGaleria(tipo: String = estado.value.galeria): List<String> = when (tipo) {
         "temas" -> listOf("Colores", "Fiestas del mundo", "Tus temas")
         "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
+        "ia" -> listOf("El cerebro de Bisa")
         else -> listOf("Canciones")
     }
 
@@ -1154,8 +1160,8 @@ object Diptico {
                 0 -> Temas.incluidos.map { t -> ItemGaleria(t.id, t.nombre, if (t.decor != "nada") Temas.nombreDecor(t.decor) else "", actual.id == t.id, t) { elegirTema(t.id) } }
                 1 -> Temas.fiestas.map { f -> ItemGaleria(f.tema.id, f.nombre, f.donde, actual.id == f.tema.id, f.tema) { elegirTema(f.tema.id) } }
                 else -> e.temasPropios.map { t -> ItemGaleria(t.id, t.nombre, "Creado por ti", actual.id == t.id, t) { elegirTema(t.id) } } +
-                    ItemGaleria("_ia", "Crear con IA", if (e.claveIa.isBlank()) "Necesita una clave" else "Escribe tu idea", false) {
-                        if (estado.value.claveIa.isBlank()) abrirTexto("ia_clave") else abrirTexto("ia_pedido")
+                    ItemGaleria("_ia", "Crear con IA", if (llaveNube(e) == null) "Necesita una IA en la nube" else "Escribe tu idea", false) {
+                        if (llaveNube() == null) pedirIANube("Crear temas") else abrirTexto("ia_pedido")
                     } +
                     ItemGaleria("_colores", "Mis colores", "Toda la interfaz", false) { abrirGaleria("colores") }
             }
@@ -1164,6 +1170,16 @@ object Diptico {
                 val valor = when (e.galeriaPestana) { 0 -> mio.acento; 1 -> mio.acento2; 2 -> mio.acento3; 3 -> mio.fondo; else -> mio.tinta }
                 val auto = if (e.galeriaPestana >= 3) listOf(ItemGaleria("_auto", "Automático", "", valor == 0L, color = 0L) { ponerColor(0L) }) else emptyList()
                 auto + MUESTRAS_COLOR.map { c -> ItemGaleria(c.toString(), "", "", c == valor, color = c) { ponerColor(c) } }
+            }
+            "ia" -> {
+                fun estadoNube(p: String) = if (claveDe(p, e).isBlank()) "Falta tu clave" else "Clave guardada ✓"
+                listOf(
+                    ItemGaleria("auto", "Automático", "Usa la de tu consola si está; si no, la primera con clave", e.motorIA == "auto") { elegirIA("auto") },
+                    ItemGaleria("local", "En tu consola", if (e.iaLocalLista) "Lista ✓ · gratis y sin internet" else "Bajar 1,6 GB · gratis y sin internet", e.motorIA == "local") { elegirIA("local") },
+                    ItemGaleria("gemini", "Gemini", "Google · gratis con límite diario · " + estadoNube("gemini"), e.motorIA == "gemini") { elegirIA("gemini") },
+                    ItemGaleria("openai", "ChatGPT", "OpenAI · pagado por uso · " + estadoNube("openai"), e.motorIA == "openai") { elegirIA("openai") },
+                    ItemGaleria("claude", "Claude", "Anthropic · pagado por uso · " + estadoNube("claude"), e.motorIA == "claude") { elegirIA("claude") },
+                )
             }
             else -> {
                 val sonando = if (e.musicaTema && e.pista != "mia") e.pistaTema else e.pista
@@ -1361,7 +1377,7 @@ object Diptico {
 
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave", "ia_pedido", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && para != "ia_clave" && !para.startsWith("ra_")) }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_")) }
     }
 
     fun cerrarPanel() {
@@ -1371,7 +1387,12 @@ object Diptico {
             actualizar { it.copy(panel = Panel.FICHA) }
             return
         }
-        if (e.panel == Panel.CLAVE && (e.textoPara == "asistente" || e.textoPara == "ia_clave" && claveParaAsistente)) {
+        if (e.panel == Panel.CLAVE && e.textoPara.startsWith("ia_clave") && claveVieneDeGaleria) {
+            claveVieneDeGaleria = false
+            abrirGaleria("ia")
+            return
+        }
+        if (e.panel == Panel.CLAVE && (e.textoPara == "asistente" || e.textoPara.startsWith("ia_clave") && claveParaAsistente)) {
             claveParaAsistente = false
             actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
             return
@@ -1404,7 +1425,8 @@ object Diptico {
             return
         }
         if (e.panel == Panel.GALERIA) {
-            actualizar { it.copy(panel = Panel.MENU, seccion = if (e.galeria == "musica") Seccion.MUSICA else Seccion.TEMAS, enOpciones = true, indice = 0) }
+            val sec = when (e.galeria) { "musica" -> Seccion.MUSICA; "ia" -> Seccion.ASISTENTE; else -> Seccion.TEMAS }
+            actualizar { it.copy(panel = Panel.MENU, seccion = sec, enOpciones = true, indice = 0) }
             return
         }
         if (e.panel == Panel.WIDGETS) {
@@ -1970,21 +1992,16 @@ object Diptico {
                     "Para juegos que usan las dos pantallas (DS, 3DS) o el modo una pantalla: Bisa aparece como una burbuja encima del juego, con su botón para volver.",
                 ) { if (cl.nikalbazu.diptico.bisa.BurbujaBisa.puedeFlotar(app)) avisar("La burbuja ya tiene permiso") else cl.nikalbazu.diptico.bisa.BurbujaBisa.pedirPermisoFlotante(app) }
                 lista += Opcion(
+                    "Elegir la IA de Bisa", textoMotor(e), Icono.CHISPA,
+                    "Su cerebro: la IA de tu consola (gratis, sin internet), Gemini (Google, con nivel gratis), ChatGPT o Claude. Cada persona usa su propia clave.",
+                ) { abrirGaleria("ia") }
+                lista += Opcion(
                     "Buscar guías en internet", if (e.bisaWeb) "Sí" else "No", Icono.WEB,
-                    "Bisa busca en internet para darte datos exactos de cada juego. Si tu cuenta de Anthropic no lo permite, responde sin buscar.",
+                    "Con Gemini, ChatGPT o Claude, Bisa busca en internet para darte datos exactos de cada juego. La IA de tu consola no busca.",
                 ) {
                     val v = !estado.value.bisaWeb
                     almacen.guardarBool("bisaWeb", v)
                     actualizar { it.copy(bisaWeb = v) }
-                }
-                lista += Opcion(
-                    "IA de Bisa", nombreMotor(e.motorIA) + if (e.motorIA == "auto") motorEfectivo(e).let { m -> if (m == "local" || m == "claude") " · " + nombreMotor(m).lowercase() else " · sin IA aún" } else "", Icono.CHISPA,
-                    "En tu consola: gratis, sin internet y privada (ocupa memoria solo mientras responde). Claude: más lista y busca en internet, pero usa los créditos de tu clave. Automático usa la de tu consola si está bajada.",
-                ) {
-                    val l = listOf("auto", "local", "claude")
-                    val v = l[(l.indexOf(estado.value.motorIA) + 1).mod(l.size)]
-                    almacen.guardarTexto("motorIA", v)
-                    actualizar { it.copy(motorIA = v) }
                 }
                 lista += Opcion(
                     "IA en tu consola",
@@ -1992,6 +2009,14 @@ object Diptico {
                     Icono.DESCARGA,
                     "Un modelo de IA libre (${IALocal.NOMBRE_MODELO}) que corre en tu consola. Se baja una vez; después Bisa funciona sin internet y sin gastar créditos, aunque compartas Díptico.",
                 ) { if (estado.value.iaLocalLista) avisar("La IA local ya está lista") else descargarIALocal() }
+                for (prov in IA.PROVEEDORES) {
+                    val clave = claveDe(prov, e)
+                    lista += Opcion(
+                        "Clave de ${IA.nombre(prov)}" + if (prov == "gemini") " (gratis)" else "",
+                        if (clave.isBlank()) "Pegar" else "Guardada ✓", Icono.CLAVE,
+                        "Se saca en ${IA.dondeClave(prov)}. Solo se guarda en tu consola." + if (prov == "gemini") " Con tu cuenta de Google es gratis (con un límite diario)." else " Usa el saldo de tu cuenta.",
+                    ) { abrirTexto(claveTexto(prov), clave) }
+                }
                 lista += Opcion(
                     "Usar un modelo propio", icono = Icono.CARPETA,
                     ayuda = "Si tienes otro modelo en formato .task de MediaPipe (por ejemplo Gemma), elígelo y Bisa lo usará.",
@@ -2001,10 +2026,6 @@ object Diptico {
                     actualizar { it.copy(iaLocalLista = false) }
                     avisar("IA local borrada")
                 }
-                lista += Opcion(
-                    "Clave de IA (Claude)", if (e.claveIa.isBlank()) "Pegar" else "Guardada ✓", Icono.CLAVE,
-                    "El asistente y los temas con IA usan tu clave de console.anthropic.com. Corre en la nube: no ocupa memoria ni hace más lenta tu consola.",
-                ) { abrirTexto("ia_clave", estado.value.claveIa) }
                 lista += Opcion("Borrar la conversación", if (e.chat.isEmpty()) "Vacía" else "${e.chat.size} mensajes", Icono.BORRAR) { borrarChat(); avisar("Conversación borrada") }
             }
             Seccion.IDIOMA -> Idioma.IDIOMAS.forEach { (cod, nombre) ->
@@ -2122,7 +2143,7 @@ object Diptico {
                     ayuda = "Busca el nombre oficial de cada juego en libretro (gratis). Se hace solo al buscar juegos nuevos.",
                 ) { identificarNombres(avisarAlFinal = true) }
                 lista += Opcion(
-                    "Reconocer nombres con IA", if (e.claveIa.isBlank()) "Necesita clave" else "Para los que faltan", Icono.CHISPA,
+                    "Reconocer nombres con IA", if (llaveNube(e) == null) "Necesita IA en la nube" else "Para los que faltan", Icono.CHISPA,
                     "La IA reconoce los juegos que libretro no conoce (Switch, PS3, archivos con nombres raros) y les pone su nombre real.",
                 ) { identificarConIA() }
                 val d = e.descarga
@@ -2393,6 +2414,7 @@ object Diptico {
         val activo = fiesta?.tema ?: elegido
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = e.decoraciones
+        Sonidos.juego = activo.sonidos
         val pista = musicaDeTema(activo)
         if (fiesta?.id != e.fiesta?.id || pista != e.pistaTema) actualizar { it.copy(fiesta = fiesta, pistaTema = pista) }
     }
@@ -2427,11 +2449,7 @@ object Diptico {
     }
 
     fun crearTemaIA(pedido: String) {
-        val clave = estado.value.claveIa
-        if (clave.isBlank()) {
-            abrirTexto("ia_clave")
-            return
-        }
+        val clave = llaveNube() ?: return pedirIANube("Crear temas")
         trabajo("tema", "Creando tu tema con IA")
         avisar("Pidiendo un tema a la IA…")
         scope.launch {
@@ -2469,9 +2487,9 @@ object Diptico {
             lista += Opcion("Hoy: ${f.nombre}", f.donde, Icono.ESTRELLA, f.tema.mensaje) { avisar(f.tema.mensaje.ifBlank { f.nombre }) }
         }
         lista += Opcion(
-            "Crear tema con IA", if (e.claveIa.isBlank()) "Necesita una clave" else "Escribe tu idea", Icono.CHISPA,
+            "Crear tema con IA", if (llaveNube(e) == null) "Necesita una IA en la nube" else "Escribe tu idea", Icono.CHISPA,
             "Escribe algo como \"Halloween japonés\" o \"Navidad en la playa\", o déjalo vacío y la IA elige la fiesta del mundo más cercana a hoy.",
-        ) { if (estado.value.claveIa.isBlank()) abrirTexto("ia_clave") else abrirTexto("ia_pedido") }
+        ) { if (llaveNube() == null) pedirIANube("Crear temas") else abrirTexto("ia_pedido") }
         lista.add(
             0,
             Opcion(
@@ -2494,9 +2512,9 @@ object Diptico {
             editarMiTema { t -> t.copy(decor = Temas.DECORACIONES[(Temas.DECORACIONES.indexOf(t.decor) + 1).mod(Temas.DECORACIONES.size)]) }
         }
         lista += Opcion(
-            "Clave de IA (Claude)", if (e.claveIa.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
-            "Para crear temas con IA. Se saca en console.anthropic.com › API Keys. Cada tema cuesta muy poquito.",
-        ) { abrirTexto("ia_clave", estado.value.claveIa) }
+            "IA para crear temas", llaveNube(e)?.let { IA.nombre(it.proveedor) + " ✓" } ?: "Elegir", Icono.CLAVE,
+            "Los temas con IA usan una IA en la nube: Gemini (gratis con tu cuenta de Google), ChatGPT o Claude.",
+        ) { abrirGaleria("ia") }
         if (e.temasPropios.any { it.id != "mio" }) {
             lista += Opcion("Borrar temas creados con IA", icono = Icono.BORRAR) {
                 guardarTemasPropios(estado.value.temasPropios.filter { it.id == "mio" })
@@ -2807,7 +2825,7 @@ object Diptico {
     private var claveParaAsistente = false
 
     fun escribirAlAsistente() {
-        if (estado.value.claveIa.isBlank()) { claveParaAsistente = true; abrirTexto("ia_clave"); avisar("El asistente usa tu clave de IA (Claude). Pégala primero."); return }
+        if (motorEfectivo() == "ninguno") { abrirGaleria("ia"); avisar("Primero elige el cerebro de Bisa"); return }
         abrirTexto("asistente")
     }
 
@@ -2828,25 +2846,72 @@ object Diptico {
         return lista
     }
 
-    /** Qué IA usa Bisa: la local (en la consola) o Claude (en la nube, con tu clave). */
+    /** La clave guardada para una IA en la nube. */
+    fun claveDe(p: String, e: Estado = estado.value) = when (p) { "gemini" -> e.claveGemini; "openai" -> e.claveOpenAI; else -> e.claveIa }
+
+    /** Qué IA usa Bisa ahora: local (en la consola), gemini, openai, claude o "ninguno". */
     fun motorEfectivo(e: Estado = estado.value): String = when (e.motorIA) {
-        "local" -> "local"
-        "claude" -> "claude"
-        else -> if (IALocal.listo(app)) "local" else if (e.claveIa.isNotBlank()) "claude" else "ninguno"
+        "local", "gemini", "openai", "claude" -> e.motorIA
+        else -> when {
+            IALocal.listo(app) -> "local"
+            else -> IA.PROVEEDORES.firstOrNull { claveDe(it, e).isNotBlank() } ?: "ninguno"
+        }
     }
 
-    fun nombreMotor(m: String) = when (m) { "local" -> "En tu consola"; "claude" -> "Claude (nube)"; else -> "Automático" }
+    fun nombreMotor(m: String) = when (m) {
+        "local" -> "En tu consola"; "gemini" -> "Gemini"; "openai" -> "ChatGPT"; "claude" -> "Claude"; "ninguno" -> "Sin IA aún"; else -> "Automático"
+    }
+
+    /** Valor que se muestra en el menú: el motor elegido (y, en automático, cuál está usando). */
+    fun textoMotor(e: Estado = estado.value): String =
+        if (e.motorIA == "auto") "Automático · " + nombreMotor(motorEfectivo(e)) else nombreMotor(e.motorIA)
+
+    /** Una IA en la nube con clave, para temas y nombres: la de Bisa si es de la nube, si no la primera con clave. */
+    fun llaveNube(e: Estado = estado.value): Llave? {
+        val m = motorEfectivo(e)
+        if (m in IA.PROVEEDORES && claveDe(m, e).isNotBlank()) return Llave(m, claveDe(m, e))
+        return IA.PROVEEDORES.firstOrNull { claveDe(it, e).isNotBlank() }?.let { Llave(it, claveDe(it, e)) }
+    }
+
+    /** Para algo que necesita IA en la nube y no hay ninguna clave: abre el selector de IA con una explicación. */
+    private fun pedirIANube(para: String) {
+        abrirGaleria("ia")
+        avisar("$para necesita una IA en la nube. Gemini tiene un nivel gratis: elígela y pega tu clave.")
+    }
+
+    fun elegirMotor(m: String) {
+        almacen.guardarTexto("motorIA", m)
+        actualizar { it.copy(motorIA = m) }
+    }
+
+    /** Elegir una IA en el selector: si le falta algo (bajarla o la clave), lo pide. */
+    fun elegirIA(m: String) {
+        val e = estado.value
+        when {
+            m == "local" && !IALocal.listo(app) -> { elegirMotor("local"); descargarIALocal() }
+            m in IA.PROVEEDORES && claveDe(m, e).isBlank() -> { elegirMotor(m); claveVieneDeGaleria = true; abrirTexto(claveTexto(m)) }
+            else -> { elegirMotor(m); avisar("Bisa ahora usa: ${nombreMotor(m)}") }
+        }
+    }
+
+    private var claveVieneDeGaleria = false
+
+    fun claveTexto(p: String) = when (p) { "gemini" -> "ia_clave_gemini"; "openai" -> "ia_clave_openai"; else -> "ia_clave" }
 
     fun preguntar(texto: String) {
         val e = estado.value
         if (e.pensando) return
         val motor = motorEfectivo(e)
         if (motor == "ninguno" || (motor == "local" && !IALocal.listo(app))) {
-            abrirMenu(Seccion.ASISTENTE)
-            avisar("Para hablar con Bisa, baja su IA local (gratis, sin internet) en Menú › Bisa")
+            abrirGaleria("ia")
+            avisar("Elige el cerebro de Bisa: la IA de tu consola (gratis, sin internet) o una en la nube como Gemini")
             return
         }
-        if (motor == "claude" && e.claveIa.isBlank()) { claveParaAsistente = true; abrirTexto("ia_clave"); avisar("Para usar Claude pega tu clave, o elige la IA local en Menú › Bisa."); return }
+        if (motor in IA.PROVEEDORES && claveDe(motor, e).isBlank()) {
+            claveParaAsistente = true; abrirTexto(claveTexto(motor))
+            avisar("Para usar ${nombreMotor(motor)} pega tu clave, o elige otra IA en Menú › Bisa.")
+            return
+        }
         val chat = e.chat + MensajeChat("yo", texto)
         // La respuesta aparece mientras se escribe (con la IA local).
         actualizar { it.copy(chat = chat, pensando = true, indice = 0) }
@@ -2869,7 +2934,7 @@ object Diptico {
                         )
                     } else {
                         val sistema = Asistente.sistema(estado.value)
-                        Result.success(IA.conversar(estado.value.claveIa, sistema, historia, 1200, IA.MODELOS_LISTOS, buscarWeb = estado.value.bisaWeb))
+                        Result.success(IA.conversar(Llave(motor, claveDe(motor)), sistema, historia, 1200, listos = true, buscarWeb = estado.value.bisaWeb))
                     }
                 } catch (ex: Exception) {
                     Result.failure(ex)
@@ -2893,7 +2958,7 @@ object Diptico {
             terminarTrabajo("ialocal")
             if (error != null) avisar(error) else {
                 avisar("¡Listo! Bisa ya piensa dentro de tu consola, sin internet")
-                if (estado.value.motorIA == "claude") actualizar { it.copy(motorIA = "auto") }
+                if (estado.value.motorIA != "local") elegirMotor("auto")
             }
             actualizar { it.copy(iaLocalLista = IALocal.listo(app)) }
         }
@@ -3177,18 +3242,22 @@ object Diptico {
                 actualizar { it.copy(claveRA = t, perfilRA = null) }
                 cargarPerfilRA(true)
             }
-            "ia_clave" -> {
-                almacen.guardarTexto("claveIa", t)
-                actualizar { it.copy(claveIa = t) }
+            "ia_clave", "ia_clave_gemini", "ia_clave_openai" -> {
+                when (e.textoPara) {
+                    "ia_clave_gemini" -> { almacen.guardarTexto("claveGemini", t); actualizar { it.copy(claveGemini = t) } }
+                    "ia_clave_openai" -> { almacen.guardarTexto("claveOpenAI", t); actualizar { it.copy(claveOpenAI = t) } }
+                    else -> { almacen.guardarTexto("claveIa", t); actualizar { it.copy(claveIa = t) } }
+                }
+                if (claveVieneDeGaleria) {
+                    claveVieneDeGaleria = false
+                    abrirGaleria("ia")
+                    if (t.isNotEmpty()) avisar("Clave guardada. Bisa ya puede pensar con ${nombreMotor(estado.value.motorIA)}.")
+                    return
+                }
                 if (t.isNotEmpty() && claveParaAsistente) {
                     claveParaAsistente = false
                     abrirTexto("asistente")
                     avisar("Clave guardada. Ahora escribe tu pregunta.")
-                    return
-                }
-                if (t.isNotEmpty() && estado.value.seccion != Seccion.ASISTENTE) {
-                    abrirTexto("ia_pedido")
-                    avisar("Clave guardada. Ahora escribe tu idea (o déjalo vacío).")
                     return
                 }
             }
@@ -3631,12 +3700,7 @@ object Diptico {
 
     /** Pide a la IA el nombre de los juegos que no se reconocieron (Switch, PS3, archivos con nombres raros…). */
     fun identificarConIA() {
-        val clave = estado.value.claveIa
-        if (clave.isBlank()) {
-            abrirTexto("ia_clave")
-            avisar("Para reconocer nombres con IA necesito tu clave de Claude")
-            return
-        }
+        val clave = llaveNube() ?: return pedirIANube("Reconocer nombres")
         val pendientes = crudos.filter { medios[it.clave]?.titulo == null }
         if (pendientes.isEmpty()) {
             avisar("Todos tus juegos ya tienen nombre")
@@ -3687,6 +3751,7 @@ object Diptico {
         "oceano", "songkran" -> "oceano"
         "bosque", "tierra", "sanpatricio", "gracias", "andino" -> "bosque"
         "portatil" -> "portatil"
+        "bloques" -> "bloques"
         "halloween", "muertos" -> "fantasma"
         "navidad", "anionuevo", "reyes", "janucá", "diwali" -> "nieve"
         "carnaval", "holi", "orgullo", "independencia", "oktoberfest", "sanvalentin" -> "fiesta"
