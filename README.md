@@ -2,7 +2,14 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.9
+## Qué trae la 1.0 beta
+
+- **Ajustes ordenados en grupos** (Empieza aquí, Cómo se ve, Tus juegos, Asistente, Consola), con subtítulos dentro de las secciones largas.
+- **Vista previa en vivo de cada ajuste**: la otra pantalla muestra en miniatura la parte de Díptico que cambia (la pantalla de arriba, la de abajo, las dos con la atenuación, el tema, la bienvenida, la IA…). Con una sola pantalla, la vista previa va al lado del menú.
+- **Tus consolas**: cada consola se personaliza como un juego: nombre, color, ícono, imagen grande (hero), logo, música, cajas y emulador. Se abre desde Menú › Tus consolas, manteniendo apretada una consola, o con X en el carrusel de Sistemas.
+- **Enlaces directos a las claves**: botón "Sacar mi clave" que abre la página de Gemini, ChatGPT, Claude, SteamGridDB o RetroAchievements, y un código QR para hacerlo desde el teléfono.
+
+## Lo que trajo la v0.9
 
 - **Bisa con la IA que elijas**: en tu consola (gratis y sin internet), Gemini (Google, con nivel gratis), ChatGPT (OpenAI) o Claude (Anthropic). Cada persona usa su propia clave. Se elige en Menú › Bisa › IA de Bisa.
 - **Estudio de widgets**: un panel ordenado con pestañas (Widget, Agregar, Página): forma y tamaño, diseño (reloj digital, analógico o mínimo; juego con caja o arte de fondo; batería en barra o anillo; listas), estilo, color, fondo, esquinas, tamaño del contenido y página. Con dos pantallas, el inicio se ve en vivo arriba; con una, en miniatura al lado.

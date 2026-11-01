@@ -71,7 +71,7 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
     ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.", "Asistente"),
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.", "Consola"),
-    CONSOLA("Sistema Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
+    CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
 }

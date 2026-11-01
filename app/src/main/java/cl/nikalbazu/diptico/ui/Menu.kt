@@ -88,15 +88,17 @@ private fun tintaSobre(c: Color) = if (c.luminance() > 0.55f) Tinta else Color.W
 fun PanelMenu(e: Estado, conAyuda: Boolean) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    conAyudaAngosta = conAyuda && !esc.angosta
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Row(Modifier.fillMaxSize()) {
-            ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta) 148f else 196f)).fillMaxHeight())
+            // Con una sola pantalla la columna de secciones es más angosta, para dejar lugar a la vista previa.
+            ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta || conAyuda) 156f else 196f)).fillMaxHeight())
             Box(Modifier.fillMaxHeight().width(esc.d(1)).background(p.linea))
             PaginaSeccion(e, conAyuda, Modifier.weight(1f).fillMaxHeight())
             // Con una sola pantalla, la vista previa va a la derecha del menú.
             if (conAyuda && !esc.angosta) {
                 val o = if (e.enOpciones) Diptico.opcionesSeccion(e.seccion).getOrNull(e.indice) else null
-                PreviaAjuste(e, e.seccion, o, Modifier.width(esc.d(230)).fillMaxHeight().padding(start = esc.d(4), end = esc.d(12), top = esc.d(14), bottom = esc.d(14)))
+                PreviaAjuste(e, e.seccion, o, Modifier.width(esc.d(220)).fillMaxHeight().padding(start = esc.d(4), end = esc.d(12), top = esc.d(14), bottom = esc.d(14)))
             }
         }
     }
@@ -232,6 +234,9 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
     }
 }
 
+/** Con una sola pantalla y vista previa al lado, los valores se acortan para que el título no se corte. */
+private var conAyudaAngosta = false
+
 /** Una opción del menú: ícono, título, y a la derecha su valor o un interruptor. */
 @Composable
 private fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
@@ -264,7 +269,7 @@ private fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () ->
             o.valor.isNotEmpty() -> Box(
                 Modifier.clip(RoundedCornerShape(50)).background(if (activa) color.copy(alpha = 0.22f) else p.fondo2.copy(alpha = 0.6f))
                     .padding(horizontal = esc.d(10), vertical = esc.d(4)),
-            ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = esc.d(170))) }
+            ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = esc.d(if (conAyudaAngosta) 110f else 170f))) }
             else -> Texto("›", 20f, color = p.tenue)
         }
     }
