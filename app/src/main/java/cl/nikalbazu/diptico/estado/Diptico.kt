@@ -678,6 +678,7 @@ object Diptico {
         vigilarProtector()
         vigilarPausas()
         vigilarTele()
+        vigilarBateria()
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
             Avisos.nuevos.collect { a ->
@@ -1293,6 +1294,14 @@ object Diptico {
         val i = (e.indiceSel + delta).coerceIn(0, v.size - 1)
         if (i == e.indiceSel && delta != 0) Sonidos.borde()
         actualizar { it.copy(juegoSel = v[i].clave) }
+    }
+
+    /** Vuelve al primer juego de la lista (manteniendo B). */
+    fun alPrincipio() {
+        val v = estado.value.visibles
+        if (v.isEmpty()) return
+        actualizar { it.copy(juegoSel = v.first().clave) }
+        Sonidos.deslizar()
     }
 
     fun elegirJuego(clave: String) {
@@ -3752,6 +3761,24 @@ object Diptico {
 
     private val NOMBRE_TELE = Regex("hdmi|displayport|\\bdp\\b|external|externa|usb|\\btv\\b|wireless|cast|miracast", RegexOption.IGNORE_CASE)
 
+    /** Batería baja (15 % o menos, sin cargar) mientras navegas: un aviso una sola vez por carga. */
+    private fun vigilarBateria() {
+        scope.launch {
+            var avisado = false
+            while (true) {
+                delay(60_000)
+                val b = try { infoBateria() } catch (_: Exception) { continue }
+                val cargando = b.estado == "Cargando" || b.estado == "Llena"
+                if (cargando || b.nivel > 20) avisado = false
+                if (!avisado && !cargando && b.nivel in 1..15 && estado.value.sesion == null && estado.value.aLaVista > 0) {
+                    avisado = true
+                    avisar("Te queda ${b.nivel}% de batería: buen momento para guardar y enchufar")
+                    Sonidos.aviso()
+                }
+            }
+        }
+    }
+
     /** Mira si hay una tele conectada (HDMI, USB-C, inalámbrica) y avisa al conectar o desconectar. */
     private fun vigilarTele() {
         val dm = app.getSystemService(android.hardware.display.DisplayManager::class.java) ?: return
@@ -3820,7 +3847,7 @@ object Diptico {
             ) { val v = modos[(modos.indexOf(estado.value.sobremesaModo) + 1).mod(modos.size)]; guardarSobremesa("sobremesaModo", v) { it.copy(sobremesaModo = v) } },
             Opcion(
                 "Tele conectada", e.teleConectada ?: "Ninguna", Icono.INFO,
-                "Pantallas que veo: " + pantallasVistas().ifBlank { "solo la principal" } + (if (e.sobremesa) ". El modo sobremesa está activo." else ""),
+                Idioma.t("Pantallas que veo: {0}").replace("{0}", pantallasVistas().ifBlank { Idioma.t("solo la principal") }) + (if (e.sobremesa) " · " + Idioma.t("Activo ahora") else ""),
             ) {},
             Opcion(
                 "Tamaño en la tele", nombreTam(e.sobremesaTam), Icono.TEXTO, "Todo más grande, para verlo cómodo desde el sillón.",

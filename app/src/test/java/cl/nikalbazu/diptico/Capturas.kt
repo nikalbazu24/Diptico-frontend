@@ -680,6 +680,100 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t132_barra_bloques() = foto("132_barra_tema_bloques", base().copy(vista = "cuadricula"), Rol.INFERIOR, bloques)
 
+    // ---------- 1.0 beta.2 ----------
+
+    private fun conWidgets(e: Estado) = e.copy(
+        inicio = "widgets",
+        widgets = cl.nikalbazu.diptico.estado.Widgets.porDefecto.map {
+            when (it.tipo) {
+                "musica" -> it.copy(visible = false)
+                "asistente" -> it.copy(visible = true, x = 0, y = 2, an = 3, al = 2)
+                else -> it
+            }
+        },
+    )
+
+    @Test fun t133_widgets_foco() = foto("133_widgets_con_foco", conWidgets(conRecientes(base())).copy(widgetFoco = 1), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t134_widget_reloj_abierto() = foto(
+        "134_widget_reloj_abierto",
+        conWidgets(base()).copy(panel = Panel.WIDGET, widgetAbierto = 1, widgetFoco = 1, temporizadorFin = System.currentTimeMillis() + 7 * 60_000L, cronoAcumulado = 95_000L, pausaCada = 60),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t135_widget_reloj_arriba() = foto(
+        "135_widget_reloj_arriba",
+        conWidgets(base()).copy(panel = Panel.WIDGET, widgetAbierto = 1, temporizadorFin = System.currentTimeMillis() + 7 * 60_000L),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t136_widget_bisa_abierto() = foto("136_widget_bisa_accesos", conWidgets(base()).copy(panel = Panel.WIDGET, widgetAbierto = 16, indice = 1), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t137_widget_recientes() = foto("137_widget_recientes_abierto", conWidgets(conRecientes(base())).copy(panel = Panel.WIDGET, widgetAbierto = 3), Rol.INFERIOR)
+
+    @Test fun t138_widget_recientes_arriba() = foto("138_widget_recientes_arriba", conWidgets(conRecientes(base())).copy(panel = Panel.WIDGET, widgetAbierto = 3, indice = 0), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t139_encuadre() = foto(
+        "139_encuadrar_portada",
+        base().copy(panel = Panel.ENCUADRE, encuadreDe = "snes/1|portada", encuadreBorrador = cl.nikalbazu.diptico.estado.Encuadre(0.3f, -0.2f, 1.4f)),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t140_encuadre_arriba() = foto("140_encuadrar_arriba", base().copy(panel = Panel.ENCUADRE, encuadreDe = "snes/1|arte"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t141_musica_en_juego() {
+        cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(cl.nikalbazu.diptico.audio.Sonando("Spotify", "Canción de prueba", "Artista", null, true, "com.spotify.music"))
+        foto("141_musica_mientras_juegas", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
+        cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(null)
+    }
+
+    @Test fun t142_menu_sobremesa() = foto("142_menu_sobremesa_previa", base().copy(panel = Panel.MENU, seccion = Seccion.SOBREMESA, enOpciones = true, indice = 3, sobremesaMargen = 5), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t143_menu_sobremesa_abajo() = foto("143_menu_sobremesa", base().copy(panel = Panel.MENU, seccion = Seccion.SOBREMESA, enOpciones = true, indice = 0), Rol.INFERIOR)
+
+    @Test fun t144_tele() = foto("144_en_la_tele", base().copy(sobremesaModo = "si", sobremesaTam = 1.2f), Rol.UNICA)
+
+    @Test fun t145_menu_botones() = foto("145_menu_botones_extra", base().copy(panel = Panel.MENU, seccion = Seccion.CONTROLES, enOpciones = true, indice = 0), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t146_menu_pc() = foto(
+        "146_menu_juegos_de_pc",
+        base().copy(panel = Panel.MENU, seccion = Seccion.BIBLIOTECA, enOpciones = true, indice = 7, resultadosSteam = listOf(cl.nikalbazu.diptico.estado.JuegoPC("Hollow Knight", 367520))),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t147_ordenando() = foto("147_moviendo_un_juego", base().copy(ordenando = true, orden = "propio"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t148_tienda_consola() = foto(
+        "148_tienda_imagenes_consola",
+        base().copy(panel = Panel.IMAGENES, consolaEditando = "snes", candidatoPara = "c_icono", nombreImagen = "Super Nintendo"),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t149_iconos_neon() = foto("149_iconos_neon", base().copy(estiloIconos = "neon"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t150_iconos_sellos() = foto("150_iconos_sellos", base().copy(estiloIconos = "solido", vistaConsolas = "lado"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t151_temas_galeria() = foto("151_galeria_temas_sin_saltos", base().copy(panel = Panel.GALERIA, galeria = "temas", indice = 7), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t152_editar_consola_lugar() = foto("152_personalizar_consola_lugar", base().copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "gba", indice = 1), Rol.INFERIOR)
+
+    @Test fun t153_widget_bisa_inicio() = foto("153_widget_bisa_en_el_inicio", conWidgets(conRecientes(base())), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t154_menu_sonidos() = foto("154_menu_juego_de_sonidos", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true, indice = 4, paqueteSonidos = "retro"), Rol.INFERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),

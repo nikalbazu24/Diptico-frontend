@@ -55,6 +55,9 @@ object Medios {
     private val _sonando = MutableStateFlow<Sonando?>(null)
     val sonando: StateFlow<Sonando?> = _sonando
 
+    /** Para las capturas de prueba. */
+    fun fijarParaPrueba(s: Sonando?) { _sonando.value = s }
+
     private val _permiso = MutableStateFlow(false)
     val permiso: StateFlow<Boolean> = _permiso
 

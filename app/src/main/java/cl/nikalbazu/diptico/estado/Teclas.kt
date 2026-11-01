@@ -18,6 +18,7 @@ object Teclas {
     private var aLargo = false
     private var selectLargo = false
     private var startLargo = false
+    private var bLargo = false
 
     private fun esA(code: Int) = code == KeyEvent.KEYCODE_BUTTON_A || code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
     private fun esB(code: Int) = code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE
@@ -325,6 +326,12 @@ object Teclas {
                 }
                 return true
             }
+            // Mantener B en el estante: vuelve al primer juego de la lista.
+            if (esB(code) && !hayPanel) {
+                if (ev.repeatCount == 0) bLargo = false
+                else if (!bLargo && ev.eventTime - ev.downTime > 550) { bLargo = true; Diptico.alPrincipio() }
+                return true
+            }
             if (esB(code) || code in botonesControl) return true
             return false
         }
@@ -340,6 +347,7 @@ object Teclas {
                 return true
             }
             if (esB(code)) {
+                if (bLargo) { bLargo = false; return true }
                 if (hayPanel) Diptico.atras()
                 else if (e.vistaConsolas == "sistemas" && e.sesion == null) Diptico.volverASistemas()
                 return true
