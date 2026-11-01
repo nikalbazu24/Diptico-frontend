@@ -1978,7 +1978,7 @@ object Diptico {
                     actualizar { it.copy(bisaWeb = v) }
                 }
                 lista += Opcion(
-                    "IA de Bisa", nombreMotor(e.motorIA) + if (e.motorIA == "auto") " · " + nombreMotor(motorEfectivo(e)).lowercase() else "", Icono.CHISPA,
+                    "IA de Bisa", nombreMotor(e.motorIA) + if (e.motorIA == "auto") motorEfectivo(e).let { m -> if (m == "local" || m == "claude") " · " + nombreMotor(m).lowercase() else " · sin IA aún" } else "", Icono.CHISPA,
                     "En tu consola: gratis, sin internet y privada (ocupa memoria solo mientras responde). Claude: más lista y busca en internet, pero usa los créditos de tu clave. Automático usa la de tu consola si está bajada.",
                 ) {
                     val l = listOf("auto", "local", "claude")
