@@ -148,7 +148,7 @@ object Cartel {
                 background = GradientDrawable().apply {
                     cornerRadius = 28 * dp
                     setColor(0xF215131F.toInt())
-                    setStroke((2 * dp).toInt(), 0x886B4EFF)
+                    setStroke((2 * dp).toInt(), 0x886B4EFF.toInt())
                 }
                 elevation = 16 * dp
             }
