@@ -33,12 +33,14 @@ jobs:
         run: |
           grep -E "^e: |What went wrong" -A1 compilar.log | head -60 | while IFS= read -r l; do echo "::error::${l}"; done
 
-      - name: Nombrar el APK
-        run: cp app/build/outputs/apk/release/app-release.apk "Diptico-v1.0-beta.${{ github.run_number }}.apk"
+      - name: Nombrar los APK
+        run: |
+          cp app/build/outputs/apk/completa/release/app-completa-release.apk "Diptico-v1.0-beta.${{ github.run_number }}.apk"
+          cp app/build/outputs/apk/movil/release/app-movil-release.apk "Diptico-v1.0-beta.${{ github.run_number }}-movil.apk"
 
       - name: Sacar fotos de las pantallas
         continue-on-error: true
-        run: gradle :app:testDebugUnitTest --tests "cl.nikalbazu.diptico.Capturas" --no-daemon
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.Capturas" --no-daemon
 
       - name: Juntar las fotos
         if: always()
@@ -65,5 +67,6 @@ jobs:
             Diptico-*.apk
             Capturas-*.zip
           body: |
-            Descarga el archivo **Diptico-v1.0-beta.${{ github.run_number }}.apk** desde la Thor e instálalo.
+            Descarga el archivo **Diptico-v1.0-beta.${{ github.run_number }}.apk** desde la Thor (o la consola) e instálalo.
+            En un teléfono usa **Diptico-v1.0-beta.${{ github.run_number }}-movil.apk** (Google Play Protect bloquea la versión completa en teléfonos).
             Si Android lo pide, permite instalar apps desde el navegador.

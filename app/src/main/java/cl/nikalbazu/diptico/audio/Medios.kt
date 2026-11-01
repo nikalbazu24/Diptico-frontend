@@ -89,6 +89,11 @@ object Medios {
 
     /** Abre los ajustes de Android para dar el permiso de "acceso a notificaciones". */
     fun pedirPermiso(ctx: Context) {
+        // En la versión para teléfonos no existe el acceso a notificaciones (Play Protect lo bloquea fuera de Play Store).
+        if (cl.nikalbazu.diptico.estado.Actualizador.esMovil(ctx)) {
+            cl.nikalbazu.diptico.estado.Diptico.avisar("En la versión para teléfonos no hay widget de música ni notificaciones")
+            return
+        }
         try {
             ctx.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (_: Exception) {

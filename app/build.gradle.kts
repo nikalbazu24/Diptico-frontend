@@ -54,6 +54,15 @@ android {
         compose = true
     }
 
+    // Dos versiones del mismo Díptico:
+    // "completa" (consolas) y "movil" (teléfonos): sin el acceso a notificaciones, que Google Play Protect
+    // bloquea en teléfonos cuando la app no viene de Play Store. En la móvil no hay widget de música ni notificaciones.
+    flavorDimensions += "tipo"
+    productFlavors {
+        create("completa") { dimension = "tipo" }
+        create("movil") { dimension = "tipo" }
+    }
+
     lint {
         checkReleaseBuilds = false
         abortOnError = false

@@ -51,9 +51,12 @@ object Actualizador {
             val n = Regex("(\\d+)$").find(tag)?.groupValues?.get(1)?.toIntOrNull() ?: continue
             if (n <= actual || (mejor != null && n <= mejor.numero)) continue
             val assets = r.optJSONArray("assets") ?: continue
+            val movil = esMovil(ctx)
             for (a in 0 until assets.length()) {
                 val o = assets.getJSONObject(a)
-                if (o.optString("name").endsWith(".apk")) {
+                val n = o.optString("name")
+                // Cada versión baja su mismo tipo: la de consolas o la de teléfonos ("-movil").
+                if (n.endsWith(".apk") && n.contains("-movil") == movil) {
                     mejor = VersionNueva(
                         n, tag.removePrefix("v"), o.optString("browser_download_url"), o.optLong("size"),
                         r.optString("body").lineSequence().map { it.trim() }.filter { it.isNotBlank() }.take(4).joinToString("\n"),
@@ -64,6 +67,12 @@ object Actualizador {
         }
         return mejor
     }
+
+    /** ¿Es la versión para teléfonos? (la que no trae el acceso a notificaciones). */
+    fun esMovil(ctx: Context): Boolean = try {
+        ctx.packageManager.getServiceInfo(android.content.ComponentName(ctx, "cl.nikalbazu.diptico.audio.OyenteMedios"), 0)
+        false
+    } catch (_: Exception) { true }
 
     private fun archivo(ctx: Context): File = File(ctx.cacheDir, "actualizacion").apply { mkdirs() }.let { File(it, "Diptico.apk") }
 

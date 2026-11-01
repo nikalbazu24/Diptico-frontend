@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Versión para teléfonos: sin el oyente de notificaciones (Play Protect bloquea las apps instaladas fuera de Play Store que lo piden). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <service android:name=".audio.OyenteMedios" tools:node="remove" />
+    </application>
+</manifest>
