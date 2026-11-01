@@ -806,7 +806,12 @@ object Diptico {
         val paso = e.datos[s.clave]?.paso.orEmpty()
         actualizar { it.copy(continuacion = System.currentTimeMillis()) }
         despertar()
-        cl.nikalbazu.diptico.bisa.Cartel.mostrar(
+        // Sin otra pantalla libre (una pantalla, o un juego que usa las dos): la tarjeta grande va encima del juego.
+        if (e.unaPantalla || s.dosPantallas) {
+            cl.nikalbazu.diptico.bisa.Cartel.continuacion(
+                app, s.displayId, j.titulo, if (minutos > 0) "$minutos min en esta partida" else "Recién empezaste esta partida", paso, j.portada,
+            )
+        } else cl.nikalbazu.diptico.bisa.Cartel.mostrar(
             app, s.displayId, "Sigues jugando", j.titulo,
             listOfNotNull(if (minutos > 0) "$minutos min en esta partida" else null, paso.takeIf { it.isNotBlank() }?.let { "Tu paso: $it" }).joinToString(" · "),
         )
@@ -2262,7 +2267,7 @@ object Diptico {
             else -> "Elegir"
         }
         Seccion.INICIO -> when {
-            t.startsWith("Bienvenida") || t == "Tu nombre" -> "Al encender"
+            t.startsWith("Bienvenida") || t.startsWith("Continuación") || t == "Tu nombre" -> "Al encender"
             t == "Estilo del inicio" || t.contains("widget", true) && !t.startsWith("Permiso") -> "Pantalla principal"
             else -> "Más"
         }
@@ -3034,6 +3039,15 @@ object Diptico {
             "Bienvenida al encender", nombreBienvenida(e.bienvenidaModo), Icono.CHISPA,
             "Al prender la consola: un saludo con la hora, tu último juego para seguir y Bisa. Si estabas jugando, un recordatorio de dónde ibas. Nada se detiene mientras tanto.",
         ) { cambiarBienvenidaModo() },
+        Opcion(
+            "Continuación sobre el juego", if (cl.nikalbazu.diptico.bisa.Cartel.puede(app)) "Lista ✓" else "Dar permiso", Icono.CONTINUAR,
+            "Con una pantalla, al prender la consola en medio de un juego aparece encima una tarjeta con el juego, tu tiempo y tu próximo paso. Android pide permiso para mostrarse sobre otras apps.",
+        ) {
+            if (cl.nikalbazu.diptico.bisa.Cartel.puede(app)) avisar("La continuación ya está lista")
+            else try {
+                app.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${app.packageName}")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (_: Exception) { avisar("No pude abrir el permiso") }
+        },
         Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Para que Bisa te salude por tu nombre.") { abrirTexto("nombre", estado.value.nombre) },
         Opcion(
             "Estilo del inicio", if (e.inicio == "widgets") "Con widgets" else "Carátulas", Icono.APPS,

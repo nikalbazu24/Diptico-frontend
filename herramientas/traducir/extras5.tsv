@@ -266,3 +266,7 @@ Pantallas que veo: {0}	Screens I see: {0}	Telas que vejo: {0}	我看到的屏幕
 Sobremesa	TV mode	Modo TV	电视模式	テレビモード
 Cuándo se activa	When it turns on	Quando liga	何时开启	オンになるとき
 Automático	Automatic	Automático	自动	自動
+Continuación sobre el juego	Resume card over the game	Continuação sobre o jogo	游戏上方的继续提示	ゲーム上の続きカード
+La continuación ya está lista	The resume card is ready	A continuação já está pronta	继续提示已就绪	続きカードの準備ができています
+No pude abrir el permiso	I couldn't open the permission	Não consegui abrir a permissão	无法打开权限设置	許可の画面を開けませんでした
+Con una pantalla, al prender la consola en medio de un juego aparece encima una tarjeta con el juego, tu tiempo y tu próximo paso. Android pide permiso para mostrarse sobre otras apps.	With one screen, when you turn the console on in the middle of a game, a card with the game, your time and your next step appears on top. Android asks for permission to show over other apps.	Com uma tela, ao ligar o console no meio de um jogo aparece por cima um cartão com o jogo, seu tempo e seu próximo passo. O Android pede permissão para aparecer sobre outros apps.	单屏时，在游戏中途开机，会在上方显示一张卡片：游戏、时间和下一步。Android 需要"显示在其他应用上层"的权限。	1画面でゲームの途中に電源を入れると、ゲーム・プレイ時間・次の目標のカードが上に表示されます。他のアプリの上に表示する許可が必要です。

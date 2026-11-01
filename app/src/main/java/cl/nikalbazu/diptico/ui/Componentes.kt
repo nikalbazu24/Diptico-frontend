@@ -527,43 +527,38 @@ fun MedioPixel(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Mo
 }
 
 /**
- * Desplaza la lista solo lo justo para que se vea el elegido: si ya se ve entero no se mueve nada,
- * así todas las opciones quedan quietas y a la vista (nada de recentrar en cada paso).
+ * Desplaza la lista solo cuando el elegido no se ve entero: si ya se ve, no se mueve nada (las opciones quedan quietas).
+ * Se cuenta en elementos, no en píxeles, para que nunca se quede pegada aunque mantengas la cruceta:
+ * bajando, el elegido queda como penúltimo a la vista; subiendo, como segundo.
  */
-suspend fun androidx.compose.foundation.lazy.LazyListState.mostrar(i: Int, margen: Int = 0) {
+suspend fun androidx.compose.foundation.lazy.LazyListState.mostrar(i: Int) {
+    if (i < 0) return
     val info = layoutInfo
     val vis = info.visibleItemsInfo
-    if (i < 0) return
-    // Recién abierta (aún sin medir): salta directo cerca del elegido.
     if (vis.isEmpty()) { if (i > 1) scrollToItem(i - 1); return }
-    val ini = info.viewportStartOffset + margen
-    val fin = info.viewportEndOffset - margen
-    val it = vis.firstOrNull { it.index == i }
-    when {
-        i == 0 && it == null -> animateScrollToItem(0)
-        it != null && it.offset < ini -> animateScrollBy((it.offset - ini).toFloat())
-        it != null && it.offset + it.size > fin -> animateScrollBy((it.offset + it.size - fin).toFloat().coerceAtMost((it.offset - ini).toFloat().coerceAtLeast(0f)))
-        it != null -> {}
-        i < vis.first().index -> animateScrollToItem(i)
-        else -> { scrollToItem(i); scrollBy(-((fin - ini) - (vis.firstOrNull()?.size ?: 0)).toFloat().coerceAtLeast(0f)) }
-    }
+    val fin = info.viewportEndOffset - info.afterContentPadding
+    val completos = vis.filter { it.offset >= 0 && it.offset + it.size <= fin }
+    if (completos.any { it.index == i }) return
+    val primero = completos.firstOrNull()?.index ?: vis.first().index
+    val n = completos.size.coerceAtLeast(2)
+    if (i <= primero) animateScrollToItem((i - 1).coerceAtLeast(0))
+    else animateScrollToItem((i - n + 2).coerceIn(0, i))
 }
 
-/** Lo mismo para grillas (de arriba hacia abajo). */
-suspend fun androidx.compose.foundation.lazy.grid.LazyGridState.mostrar(i: Int, margen: Int = 0) {
+/** Lo mismo para grillas (por filas). */
+suspend fun androidx.compose.foundation.lazy.grid.LazyGridState.mostrar(i: Int) {
+    if (i < 0) return
     val info = layoutInfo
     val vis = info.visibleItemsInfo
-    if (i < 0) return
     if (vis.isEmpty()) { if (i > 0) scrollToItem(i); return }
-    val ini = info.viewportStartOffset + margen
-    val fin = info.viewportEndOffset - margen
-    val it = vis.firstOrNull { it.index == i }
-    when {
-        i == 0 && it == null -> animateScrollToItem(0)
-        it != null && it.offset.y < ini -> animateScrollBy((it.offset.y - ini).toFloat())
-        it != null && it.offset.y + it.size.height > fin -> animateScrollBy((it.offset.y + it.size.height - fin).toFloat().coerceAtMost((it.offset.y - ini).toFloat().coerceAtLeast(0f)))
-        it != null -> {}
-        i < vis.first().index -> animateScrollToItem(i)
-        else -> { scrollToItem(i); scrollBy(-((fin - ini) - (vis.firstOrNull()?.size?.height ?: 0)).toFloat().coerceAtLeast(0f)) }
-    }
+    val fin = info.viewportEndOffset - info.afterContentPadding
+    val cols = vis.count { it.row == vis.first().row }.coerceAtLeast(1)
+    val completos = vis.filter { it.offset.y >= 0 && it.offset.y + it.size.height <= fin }
+    if (completos.any { it.index == i }) return
+    val filaI = i / cols
+    val filas = completos.map { it.row }.distinct()
+    val primera = filas.minOrNull() ?: vis.first().row
+    val n = filas.size.coerceAtLeast(2)
+    val destino = if (filaI <= primera) (filaI - 1).coerceAtLeast(0) else (filaI - n + 2).coerceIn(0, filaI)
+    animateScrollToItem(destino * cols)
 }
