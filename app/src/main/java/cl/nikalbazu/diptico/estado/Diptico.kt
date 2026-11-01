@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Panel { NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
+enum class Panel { EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
 
 /** Carpetas que Díptico puede pedir. */
 enum class Carpeta { JUEGOS, MEDIA, MUSICA }
@@ -53,23 +53,27 @@ enum class Icono {
     COPIAR, PEGAR, BISA, EDITAR,
 }
 
-/** Secciones del menú principal. */
-enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String) {
-    ESENCIAL("Lo esencial", Icono.ESTRELLA, "Lo que más se cambia, todo junto. Y para buscar cualquier ajuste por su nombre."),
-    PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una y el tamaño de la letra."),
-    INICIO("Inicio", Icono.APPS, "Cómo se ve la pantalla principal: el juego en grande o tu inicio con widgets."),
-    ESTANTE("Estante", Icono.VISTA, "Cómo se ven tus juegos: vista, tamaño, orden y la forma de las cajas de cada consola."),
-    TEMAS("Temas", Icono.PALETA, "Colores, temas de fiestas del mundo y temas creados con IA."),
-    APARIENCIA("Apariencia", Icono.TEMA, "Claro u oscuro, decoraciones, íconos de las consolas y la animación de entrada."),
-    MUSICA("Música", Icono.MUSICA, "La música de fondo. Se calla sola al abrir un juego o si pones Spotify o YouTube Music."),
-    ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti."),
-    LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
-    EMULADORES("Emuladores", Icono.EMULADOR, "Con qué emulador, o con qué núcleo de RetroArch, se abre cada consola."),
+/**
+ * Secciones del menú, ordenadas por grupos: lo que más se cambia arriba, lo técnico abajo.
+ * [grupo] es el título que aparece sobre la primera sección de cada grupo.
+ */
+enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val grupo: String = "") {
+    ESENCIAL("Lo esencial", Icono.ESTRELLA, "Lo que más se cambia, todo junto. Y para buscar cualquier ajuste por su nombre.", "Empieza aquí"),
+    TEMAS("Temas", Icono.PALETA, "Colores, temas de fiestas del mundo, tus propios colores y temas creados con IA.", "Cómo se ve"),
+    APARIENCIA("Apariencia", Icono.TEMA, "Claro u oscuro, efecto de los botones, decoraciones, íconos de las consolas y la animación de entrada."),
+    INICIO("Inicio", Icono.APPS, "La pantalla principal: el juego en grande o tu inicio con widgets, y la bienvenida al encender."),
+    ESTANTE("Estante", Icono.VISTA, "Cómo se ven tus consolas y tus juegos: vistas, tamaño, filtros y orden."),
+    MUSICA("Música", Icono.MUSICA, "La música de fondo y los sonidos. Se calla sola al abrir un juego o si pones Spotify o YouTube Music."),
+    CONSOLAS("Tus consolas", Icono.MANDO, "Personaliza cada consola: nombre, color, ícono, imagen grande, logo, música y cajas.", "Tus juegos"),
+    BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Tus carpetas de juegos, ports, juegos de Android y las imágenes que ya tengas de ES-DE."),
     PORTADAS("Portadas", Icono.PORTADA, "Descarga portadas, imágenes, logos y títulos de internet."),
-    BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Tu carpeta de juegos y las imágenes que ya tengas de ES-DE."),
-    CONSOLA("Consola", Icono.CAMPANA, "Notificaciones, Díptico como launcher principal y accesos rápidos de Android."),
+    EMULADORES("Emuladores", Icono.EMULADOR, "Con qué emulador, o con qué núcleo de RetroArch, se abre cada consola."),
+    LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
+    ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.", "Asistente"),
+    PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.", "Consola"),
+    CONSOLA("Sistema Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
-    SISTEMA("Sistema", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
+    SISTEMA("Acerca de", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
 }
 
 /** Un juego abierto ahora mismo. */
@@ -112,6 +116,17 @@ data class Widget(
     val variante: Int = 0,
     val escala: Float = 1f,
 )
+
+/** Lo que la persona cambió de una consola: nombre, color, imagen grande (hero), logo y música. */
+data class ConsolaPropia(
+    val nombre: String? = null,
+    val color: Long = 0L,
+    val hero: String? = null,
+    val logo: String? = null,
+    val musica: String? = null,
+) {
+    val vacia: Boolean get() = nombre.isNullOrBlank() && color == 0L && hero == null && logo == null && musica == null
+}
 
 /** Forma de las cajas de una consola en el estante. */
 data class FormaCfg(val forma: String = "original", val tam: Float = 1f, val imagen: String = "portada")
@@ -309,6 +324,9 @@ data class Estado(
     val relojGrande: Boolean = false,
     /** "estante", "cuadricula", "lista" o "carrusel". */
     val vista: String = "estante",
+    /** Personalización de cada consola (id -> lo que se cambió) y la consola que se está editando. */
+    val consolasPropias: Map<String, ConsolaPropia> = emptyMap(),
+    val consolaEditando: String = "",
     /** Cómo se ven las consolas: "arriba" (pestañas), "lado" (columna), "rueda" (dial) o "sistemas" (carrusel y luego juegos). */
     val vistaConsolas: String = "arriba",
     /** En modo sistemas: true mientras se elige la consola (antes de entrar a sus juegos). */
@@ -454,7 +472,7 @@ object Diptico {
     private var crudos: List<Juego> = emptyList()
     private var medios: Map<String, MediosJuego> = emptyMap()
 
-    const val VERSION = "0.9"
+    const val VERSION = "1.0 beta"
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -517,6 +535,7 @@ object Diptico {
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
             vista = almacen.texto("vista", "estante"),
             vistaConsolas = almacen.texto("vistaConsolas", "arriba"),
+            consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             enSistemas = almacen.texto("vistaConsolas", "arriba") == "sistemas",
             tamJuegos = almacen.texto("tamJuegos", "1").toFloatOrNull() ?: 1f,
             orden = almacen.texto("orden", "az"),
@@ -542,6 +561,7 @@ object Diptico {
             nombre = almacen.texto("nombre"),
             esInicio = Inicio.esPredeterminado(app),
         )
+        Consolas.personalizar(estado.value.consolasPropias.mapValues { (_, v) -> v.nombre to v.color })
         Inicio.vigilarPantalla(app)
         Inicio.inicioAbajo(app, !(almacen.modoElegido && almacen.modoPantallas == "una_libre"))
         bienvenidaPendiente = true
@@ -567,7 +587,9 @@ object Diptico {
         scope.launch {
             estado.map { e ->
                 // Si el juego elegido tiene su propia canción, suena esa.
-                val propia = if (e.configurado && e.panel != Panel.MENU) e.seleccionado?.let { e.datos[it.clave]?.musica } else null
+                val propia = if (e.configurado && e.panel != Panel.MENU) {
+                    e.seleccionado?.let { e.datos[it.clave]?.musica } ?: e.consolasPropias[e.consolaSel]?.musica
+                } else null
                 val pista = when {
                     propia != null -> "archivo:$propia"
                     e.configurado && e.musicaTema && e.pista != "mia" -> e.pistaTema
@@ -1569,6 +1591,14 @@ object Diptico {
             actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
             return
         }
+        if (e.panel == Panel.CLAVE && e.textoPara == "consola_nombre") {
+            actualizar { it.copy(panel = Panel.EDITAR_CONSOLA) }
+            return
+        }
+        if (e.panel == Panel.EDITAR_CONSOLA) {
+            actualizar { it.copy(panel = if (editarDesdeMenu) Panel.MENU else Panel.NINGUNO, seccion = Seccion.CONSOLAS, enOpciones = true, indice = 0) }
+            return
+        }
         if (e.panel == Panel.CLAVE && e.textoPara == "buscar_ajuste") {
             actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.ESENCIAL, enOpciones = false) }
             return
@@ -1839,6 +1869,10 @@ object Diptico {
                 val total = elementosAsistente().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
+            Panel.EDITAR_CONSOLA -> {
+                val total = opcionesEditarConsola().size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
             Panel.ESTUDIO -> {
                 val total = controlesEstudio(e).size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
@@ -1914,6 +1948,7 @@ object Diptico {
             Panel.IMAGENES -> usarCandidato()
             Panel.GALERIA -> itemsGaleria(e).getOrNull(e.indice)?.accion?.invoke()
             Panel.ESTUDIO -> aceptarControl()
+            Panel.EDITAR_CONSOLA -> opcionesEditarConsola().getOrNull(e.indice)?.accion?.invoke()
             Panel.ASISTENTE -> elementosAsistente().getOrNull(e.indice)?.accion?.invoke()
             Panel.CENTRO -> {
                 val acciones = opcionesCentro()
@@ -2033,6 +2068,32 @@ object Diptico {
     private var cacheOpciones: Pair<Estado, HashMap<Seccion, List<Opcion>>>? = null
 
     /** Las opciones de una sección. Se arman una vez por cada cambio de estado (las dos pantallas las comparten). */
+    /** Subtítulo que agrupa las opciones largas de algunas secciones (así es más fácil encontrar algo). "" = sin grupo. */
+    fun grupoOpcion(s: Seccion, t: String): String = when (s) {
+        Seccion.ASISTENTE -> when {
+            t == "Hablar con Bisa" || t == "Bisa mientras juegas" || t == "Burbuja flotante" -> "Bisa"
+            t.startsWith("Clave de") -> "Claves de IA en la nube"
+            t == "Borrar la conversación" -> "Conversación"
+            else -> "Su cerebro"
+        }
+        Seccion.TEMAS -> when {
+            t.startsWith("Mi tema") -> "Mi tema"
+            t.contains("IA") -> "Con IA"
+            else -> "Elegir"
+        }
+        Seccion.INICIO -> when {
+            t.startsWith("Bienvenida") || t == "Tu nombre" -> "Al encender"
+            t == "Estilo del inicio" || t.contains("widget", true) && !t.startsWith("Permiso") -> "Pantalla principal"
+            else -> "Más"
+        }
+        Seccion.PANTALLAS -> when {
+            t.startsWith("Tamaño") || t.contains("letra", true) -> "Tamaño"
+            t.startsWith("Teclado") -> "Escribir"
+            else -> "Pantallas"
+        }
+        else -> ""
+    }
+
     fun opcionesSeccion(s: Seccion): List<Opcion> {
         val e = estado.value
         val c = cacheOpciones?.takeIf { it.first === e }?.second ?: HashMap<Seccion, List<Opcion>>().also { cacheOpciones = e to it }
@@ -2069,6 +2130,17 @@ object Diptico {
         when (s) {
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
+            Seccion.CONSOLAS -> {
+                for (c in e.consolasConJuegos) {
+                    val n = e.juegos.count { it.consolaId == c.id }
+                    val propia = e.consolasPropias[c.id]?.vacia == false || e.iconosPropios.containsKey(c.id)
+                    lista += Opcion(
+                        c.bonito, if (propia) "Personalizada ✓" else if (n == 1) "1 juego" else "$n juegos", Icono.MANDO,
+                        "Cambia su nombre, color, ícono, imagen grande, logo, música, cajas y emulador.",
+                    ) { abrirEditarConsola(c.id, desdeMenu = true) }
+                }
+                if (lista.isEmpty()) lista += Opcion("Aún no hay consolas", "Elige tu carpeta de juegos", Icono.CARPETA) { abrirMenu(Seccion.BIBLIOTECA) }
+            }
             Seccion.PANTALLAS -> {
                 lista += Opcion(
                     "Tamaño en la pantalla de arriba", nombreZoom(e.zoomArriba), Icono.ARRIBA,
@@ -3368,7 +3440,24 @@ object Diptico {
         avisar(if (estado.value.datos[clave]?.favorito == true) "Agregado a favoritos" else "Quitado de favoritos")
     }
 
-    private fun abrirWeb(url: String) {
+    /** La página donde se saca cada clave (para el botón "Sacar mi clave" y su código QR). */
+    fun urlClave(para: String): String? = when (para) {
+        "ia_clave_gemini", "gemini" -> "https://aistudio.google.com/apikey"
+        "ia_clave_openai", "openai" -> "https://platform.openai.com/api-keys"
+        "ia_clave", "claude" -> "https://console.anthropic.com/settings/keys"
+        "sgdb" -> "https://www.steamgriddb.com/profile/preferences/api"
+        "ra_clave", "ra_usuario" -> "https://retroachievements.org/settings"
+        else -> null
+    }
+
+    /** Abre en el navegador la página para sacar la clave de [para]. */
+    fun abrirPaginaClave(para: String) {
+        val u = urlClave(para) ?: return
+        avisar("Abriendo la página. Copia la clave y vuelve a Díptico para pegarla")
+        abrirWeb(u)
+    }
+
+    fun abrirWeb(url: String) {
         try {
             app.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (e: Exception) {
@@ -3394,6 +3483,11 @@ object Diptico {
             "asistente" -> {
                 actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
                 if (t.isNotEmpty()) preguntar(t)
+                return
+            }
+            "consola_nombre" -> {
+                cambiarConsolaPropia(e.consolaEditando) { it.copy(nombre = t.take(30).ifBlank { null }) }
+                actualizar { it.copy(panel = Panel.EDITAR_CONSOLA) }
                 return
             }
             "nombre" -> {
@@ -3485,6 +3579,13 @@ object Diptico {
                 guardarWidgets(estado.value.widgets + w)
                 alternarWidget(estado.value.widgets.size - 1)
                 avisar("Imagen agregada a tu inicio")
+            }
+            archivoPara.startsWith("consola_") -> {
+                val (que, id) = archivoPara.removePrefix("consola_").split(":", limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+                cambiarConsolaPropia(id) {
+                    when (que) { "hero" -> it.copy(hero = u); "logo" -> it.copy(logo = u); "musica" -> it.copy(musica = u); else -> it }
+                }
+                avisar("¡Listo! Cambio guardado")
             }
             archivoPara.startsWith("icono:") -> {
                 val id = archivoPara.removePrefix("icono:")
@@ -4352,7 +4453,93 @@ object Diptico {
 
     /** ← en un panel de valores. */
     fun menosEnPanel() {
-        if (estado.value.panel == Panel.ESTUDIO) cambiarControl(-1)
+        val e = estado.value
+        if (e.panel == Panel.ESTUDIO) cambiarControl(-1)
+        if (e.panel == Panel.EDITAR_CONSOLA) opcionesEditarConsola().getOrNull(e.indice)?.let { o -> (o.menos ?: o.accion).invoke() }
+    }
+
+    // ---------- Personalizar consolas ----------
+
+    /** ← y → al personalizar una consola: cambian los valores que tienen ‹ › (como el color). */
+    fun ladoEditarConsola(d: Int) {
+        val o = opcionesEditarConsola().getOrNull(estado.value.indice) ?: return
+        if (o.menos == null) return
+        if (d < 0) o.menos.invoke() else o.accion()
+    }
+
+    private var editarDesdeMenu = false
+
+    private fun leerConsolasPropias(s: String): Map<String, ConsolaPropia> = try {
+        val o = org.json.JSONObject(s)
+        o.keys().asSequence().associateWith { k ->
+            val c = o.getJSONObject(k)
+            fun txt(n: String) = c.optString(n, "").ifEmpty { null }
+            ConsolaPropia(txt("nombre"), c.optLong("color", 0L), txt("hero"), txt("logo"), txt("musica"))
+        }
+    } catch (e: Exception) {
+        emptyMap()
+    }
+
+    private fun escribirConsolasPropias(m: Map<String, ConsolaPropia>): String = org.json.JSONObject().apply {
+        m.forEach { (k, c) ->
+            put(k, org.json.JSONObject().put("nombre", c.nombre ?: "").put("color", c.color).put("hero", c.hero ?: "").put("logo", c.logo ?: "").put("musica", c.musica ?: ""))
+        }
+    }.toString()
+
+    private fun cambiarConsolaPropia(id: String, f: (ConsolaPropia) -> ConsolaPropia) {
+        if (id.isBlank()) return
+        val actual = estado.value.consolasPropias[id] ?: ConsolaPropia()
+        val nueva = f(actual)
+        val m = if (nueva.vacia) estado.value.consolasPropias - id else estado.value.consolasPropias + (id to nueva)
+        almacen.guardarTexto("consolasPropias", escribirConsolasPropias(m))
+        Consolas.personalizar(m.mapValues { (_, v) -> v.nombre to v.color })
+        actualizar { it.copy(consolasPropias = m, iconosVersion = it.iconosVersion + 1) }
+    }
+
+    /** Abre la personalización de una consola (desde el menú, una pestaña o el carrusel). */
+    fun abrirEditarConsola(id: String, desdeMenu: Boolean = false) {
+        if (id == "todo" || Consolas.porId(id) == null) { avisar("Elige una consola (no \"Todo\") para personalizarla"); return }
+        editarDesdeMenu = desdeMenu
+        actualizar { it.copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = id, indice = 0) }
+    }
+
+    private val COLORES_CONSOLA = listOf(0L) + Temas.MUESTRAS
+
+    /** Todo lo que se puede cambiar de la consola que se está editando. */
+    fun opcionesEditarConsola(): List<Opcion> {
+        val e = estado.value
+        val id = e.consolaEditando
+        val c = Consolas.porId(id) ?: return emptyList()
+        val p = e.consolasPropias[id] ?: ConsolaPropia()
+        val f = e.formas[id] ?: FormaCfg()
+        fun archivo(que: String, tipo: String = "image/*") = pedirArchivoPara("consola_$que:$id", tipo)
+        return listOf(
+            Opcion("Nombre", p.nombre ?: "Original", Icono.TITULO, "Cómo se llama esta consola en todo Díptico.") { abrirTexto("consola_nombre", p.nombre ?: "") },
+            Opcion(
+                "Color", if (p.color == 0L) "Original" else "Propio", Icono.PALETA, "El color de sus tarjetas, del carrusel y del fondo de su vista.",
+                menos = { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) - 1).mod(COLORES_CONSOLA.size)]) } },
+            ) { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) + 1).mod(COLORES_CONSOLA.size)]) } },
+            Opcion("Ícono", if (e.iconosPropios.containsKey(id)) "Propio ✓" else "Elegir imagen", Icono.EMULADOR, "Cualquier imagen de tu consola como ícono.") { pedirImagen("icono:$id") },
+            Opcion("Imagen grande (hero)", if (p.hero != null) "Propia ✓" else "Elegir imagen", Icono.PORTADA, "El fondo de esta consola en la vista grande y en su tarjeta del carrusel.") { archivo("hero") },
+            Opcion("Logo", if (p.logo != null) "Propio ✓" else "Elegir imagen", Icono.ESTRELLA, "Un logo (mejor con fondo transparente) que reemplaza al nombre en la vista grande.") { archivo("logo") },
+            Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") },
+            Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA) { ciclarForma(id) },
+            Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA) { ciclarTamForma(id) },
+            Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) },
+            Opcion("Emulador", if (c.sinEmulador) "No necesita" else nombreEmulador(c), Icono.MANDO) { if (!c.sinEmulador) ciclarEmulador(c) },
+            Opcion("Quitar imágenes y música propias", icono = Icono.BORRAR) {
+                cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null) }
+                if (estado.value.iconosPropios.containsKey(id)) {
+                    val m = estado.value.iconosPropios - id
+                    almacen.guardarTexto("iconosPropios", escribirMapa(m))
+                    actualizar { it.copy(iconosPropios = m) }
+                }
+            },
+            Opcion("Volver a como venía", icono = Icono.BORRAR, ayuda = "Nombre, color, imágenes y música originales.") {
+                cambiarConsolaPropia(id) { ConsolaPropia() }
+                avisar("${Consolas.porId(id)?.nombre ?: ""} como al principio")
+            },
+        )
     }
 
     private fun moverWidgetPagina(i: Int, d: Int) {

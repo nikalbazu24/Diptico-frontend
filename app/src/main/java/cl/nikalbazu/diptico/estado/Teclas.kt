@@ -177,7 +177,7 @@ object Teclas {
 
         // Paneles con su propia forma de moverse.
         when (e.panel) {
-            Panel.FICHA, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA ->
+            Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.TRABAJOS, Panel.RAPIDO, Panel.BUSCAR, Panel.CENTRO, Panel.CARPETAS, Panel.PORTS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA ->
                 return panelEnGrilla(ev, e)
             Panel.MENU -> return menu(ev, e)
             else -> Unit
@@ -197,7 +197,8 @@ object Teclas {
             if (arriba) {
                 when {
                     esA(code) -> { Diptico.entrarSistema(); return true }
-                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_X -> return true
+                    esB(code) -> return true
+                    code == KeyEvent.KEYCODE_BUTTON_X -> { Diptico.abrirEditarConsola(e.consolaSel); return true }
                     code == KeyEvent.KEYCODE_BUTTON_Y -> { Diptico.sorprendeme(); Diptico.entrarSistema(); return true }
                 }
             }
@@ -333,6 +334,7 @@ object Teclas {
                         Panel.CENTRO -> Diptico.moverCentro(d, 0)
                         Panel.FICHA -> if (ev.repeatCount == 0) Diptico.cambiarPestanaFicha(d)
                         Panel.RAPIDO -> Diptico.moverRapido(d, 0)
+                        Panel.EDITAR_CONSOLA -> Diptico.ladoEditarConsola(d)
                         Panel.BUSCAR, Panel.IMAGENES, Panel.GALERIA -> Diptico.moverIndice(d)
                         else -> Unit
                     }
@@ -372,6 +374,7 @@ object Teclas {
                     Panel.CENTRO -> cl.nikalbazu.diptico.audio.Avisos.descartarTodas()
                     Panel.ASISTENTE -> Diptico.borrarChat()
                     Panel.IMAGENES -> Diptico.abrirTexto("buscar_imagen", e.nombreImagen)
+                    Panel.GALERIA -> if (e.galeria == "ia") Diptico.itemsGaleria(e).getOrNull(e.indice)?.let { Diptico.abrirPaginaClave(it.id) }
                     Panel.RAPIDO -> Diptico.cerrarPanel()
                     else -> Unit
                 }

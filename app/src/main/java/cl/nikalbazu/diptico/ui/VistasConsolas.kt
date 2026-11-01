@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package cl.nikalbazu.diptico.ui
 
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -8,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -95,7 +98,7 @@ fun RielConsolas(e: Estado, modifier: Modifier = Modifier) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = esc.d(6)).clip(RoundedCornerShape(esc.d(14)))
                     .background(if (activa) colorConsola(id).copy(alpha = 0.22f) else Color.Transparent)
-                    .clickable { Diptico.elegirConsola(id) }.padding(vertical = esc.d(6)),
+                    .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { Diptico.elegirConsola(id) }.padding(vertical = esc.d(6)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.width(esc.d(3)).height(esc.d(30)).clip(RoundedCornerShape(50)).background(if (activa) Coral else Color.Transparent))
@@ -158,7 +161,7 @@ fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
                     .size(esc.d(caja)).clip(CircleShape)
                     .background(if (k == sel) colorConsola(id).copy(alpha = 0.3f) else p.superficie.copy(alpha = 0.6f))
                     .then(if (k == sel) Modifier.border(esc.d(2), Coral, CircleShape) else Modifier)
-                    .clickable { Diptico.elegirConsola(id) },
+                    .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { Diptico.elegirConsola(id) },
                 contentAlignment = Alignment.Center,
             ) { IconoConsola(Consolas.porId(id), tam * 0.74f, p.fondo2) }
         }
@@ -218,6 +221,10 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
                         .clickable { if (frente) Diptico.entrarSistema() else Diptico.elegirConsola(id) },
                     contentAlignment = Alignment.Center,
                 ) {
+                    e.consolasPropias[id]?.hero?.let { h ->
+                        ImagenAnimada(android.net.Uri.parse(h), Modifier.fillMaxSize())
+                        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)))))
+                    }
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(esc.d(12))) {
                         Box(Modifier.size(esc.d(anchoCaja * 0.5f)).clip(CircleShape).background(Color.Black.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
                             IconoConsola(Consolas.porId(id), anchoCaja * 0.34f, Color.Transparent)
@@ -231,7 +238,7 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
             if (ancho > 0f && n == 0) Detalle("Aquí aparecerán tus consolas", 15f)
         }
         Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
-            Pistas("← →" to "Consola", "A" to "Entrar", "Y" to "Al azar")
+            Pistas("← →" to "Consola", "A" to "Entrar", "X" to "Personalizar", "Y" to "Al azar")
         }
     }
 }
@@ -272,16 +279,24 @@ fun VistaSistema(e: Estado, completa: Boolean = true) {
     val juegos = if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id }
     val tiempo = juegos.sumOf { e.datos[it.clave]?.tiempo ?: 0L }
     val ultimo = juegos.maxByOrNull { e.datos[it.clave]?.ultimo ?: 0L }?.takeIf { (e.datos[it.clave]?.ultimo ?: 0L) > 0 }
+    val propia = e.consolasPropias[id]
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(lerp(p.fondo, color, 0.35f), p.fondo, p.fondo)))) {
+        // La imagen grande propia de la consola (si la tiene), con un degradado para leer bien el texto.
+        if (propia?.hero != null) {
+            ImagenAnimada(android.net.Uri.parse(propia.hero), Modifier.fillMaxSize())
+            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to p.fondo.copy(alpha = 0.92f), 0.5f to p.fondo.copy(alpha = 0.55f), 1f to Color.Transparent)))
+        }
         // Un ícono gigante de la consola, de fondo.
-        if (completa) Box(Modifier.align(Alignment.CenterEnd).padding(end = esc.d(30)).graphicsLayer { alpha = 0.16f; rotationZ = -8f }) {
+        if (completa && propia?.hero == null) Box(Modifier.align(Alignment.CenterEnd).padding(end = esc.d(30)).graphicsLayer { alpha = 0.16f; rotationZ = -8f }) {
             IconoConsola(c, 300f, Color.Transparent)
         }
         BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 32f, trabajos = e.trabajos)
         Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(36), end = esc.d(36)).fillMaxWidth(if (completa) 0.62f else 0.46f)) {
             Etiqueta(if (id == "todo") "Toda tu colección" else "Consola", Coral, 12f)
             Spacer(Modifier.height(esc.d(4)))
-            Texto(c?.bonito ?: "Todos tus juegos", 38f, lineas = 2, interlineado = 42f, sombra = true)
+            // El logo propio reemplaza al nombre.
+            if (propia?.logo != null) ImagenAnimada(android.net.Uri.parse(propia.logo), Modifier.height(esc.d(90)).fillMaxWidth(), recortar = false)
+            else Texto(c?.bonito ?: "Todos tus juegos", 38f, lineas = 2, interlineado = 42f, sombra = true)
             Spacer(Modifier.height(esc.d(10)))
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 Dato("${juegos.size}", if (juegos.size == 1) "juego" else "juegos")

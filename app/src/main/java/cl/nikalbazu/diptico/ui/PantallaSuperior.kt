@@ -53,6 +53,10 @@ fun PantallaSuperior(e: Estado) {
         LecturaFicha(e)
         return
     }
+    if (e.panel == Panel.EDITAR_CONSOLA) {
+        VistaSistema(e.copy(consolaSel = e.consolaEditando))
+        return
+    }
     if (e.panel == Panel.GALERIA) {
         VistaGaleria(e)
         return

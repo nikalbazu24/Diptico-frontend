@@ -75,6 +75,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.BIBLIOTECA -> Color(0xFF2EC4A6)
     Seccion.CONSOLA -> Color(0xFF8BC34A)
     Seccion.SISTEMA -> Color(0xFF8E8AAE)
+    Seccion.CONSOLAS -> Color(0xFFFF5D5D)
 }
 
 private fun tintaSobre(c: Color) = if (c.luminance() > 0.55f) Tinta else Color.White
@@ -92,6 +93,11 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
             ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta) 148f else 196f)).fillMaxHeight())
             Box(Modifier.fillMaxHeight().width(esc.d(1)).background(p.linea))
             PaginaSeccion(e, conAyuda, Modifier.weight(1f).fillMaxHeight())
+            // Con una sola pantalla, la vista previa va a la derecha del menú.
+            if (conAyuda && !esc.angosta) {
+                val o = if (e.enOpciones) Diptico.opcionesSeccion(e.seccion).getOrNull(e.indice) else null
+                PreviaAjuste(e, e.seccion, o, Modifier.width(esc.d(230)).fillMaxHeight().padding(start = esc.d(4), end = esc.d(12), top = esc.d(14), bottom = esc.d(14)))
+            }
         }
     }
 }
@@ -101,9 +107,11 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val secciones = remember { Diptico.seccionesMenu() }
+    // Secciones con el título de su grupo encima (Empieza aquí, Cómo se ve, Tus juegos, Asistente, Consola).
+    val filas = remember(secciones) { secciones.flatMap { s -> if (s.grupo.isNotEmpty()) listOf<Any>(s.grupo, s) else listOf<Any>(s) } }
     val lista = rememberLazyListState()
     LaunchedEffect(e.seccion) {
-        val i = e.seccion.ordinal
+        val i = filas.indexOf(e.seccion)
         val vis = lista.layoutInfo.visibleItemsInfo
         // Solo se desplaza si la sección elegida quedó fuera de la vista (así no salta en cada paso).
         if (vis.isEmpty() || i < vis.first().index + 1 || i > vis.last().index - 1) lista.animateScrollToItem((i - 2).coerceAtLeast(0))
@@ -132,7 +140,12 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
             contentPadding = PaddingValues(horizontal = esc.d(8), vertical = esc.d(4)),
             verticalArrangement = Arrangement.spacedBy(esc.d(3)),
         ) {
-            itemsIndexed(secciones, key = { _, s -> s.name }) { _, s ->
+            itemsIndexed(filas, key = { _, f -> if (f is Seccion) f.name else "g_$f" }) { k, f ->
+                if (f is String) {
+                    Etiqueta(f, p.tenue.copy(alpha = 0.8f), 10f, Modifier.padding(start = esc.d(8), top = esc.d(if (k == 0) 2f else 10f), bottom = esc.d(2)))
+                    return@itemsIndexed
+                }
+                val s = f as Seccion
                 val activa = s == e.seccion
                 val color = colorSeccion(s)
                 val enfoque = activa && !e.enOpciones
@@ -197,7 +210,16 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
             contentPadding = PaddingValues(start = esc.d(12), end = esc.d(12), top = esc.d(8), bottom = esc.d(8)),
             verticalArrangement = Arrangement.spacedBy(esc.d(6)),
         ) {
-            itemsIndexed(opciones) { i, o -> FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) } }
+            itemsIndexed(opciones) { i, o ->
+                // Título de grupo cuando empieza uno nuevo.
+                val g = Diptico.grupoOpcion(s, o.titulo)
+                Column {
+                    if (g.isNotEmpty() && (i == 0 || Diptico.grupoOpcion(s, opciones[i - 1].titulo) != g)) {
+                        Etiqueta(g, color, 10.5f, Modifier.padding(start = esc.d(6), top = esc.d(if (i == 0) 0f else 6f), bottom = esc.d(5)))
+                    }
+                    FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) }
+                }
+            }
         }
         if (conAyuda && e.enOpciones) {
             val o = opciones.getOrNull(e.indice)
@@ -271,7 +293,7 @@ fun AyudaMenu(e: Estado) {
             modifier = Modifier.fillMaxSize().padding(start = esc.d(36), end = esc.d(36), top = esc.d(60), bottom = esc.d(54)),
         ) { (sec, titulo, valor) ->
             Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Column(Modifier.weight(0.9f), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
                     Etiqueta("Menú · ${sec.titulo}", color, 13f)
                     Texto(titulo ?: sec.titulo, if (esc.angosta) 30f else 38f, lineas = 2, interlineado = if (esc.angosta) 34f else 42f)
                     if (!valor.isNullOrEmpty()) {
@@ -284,20 +306,12 @@ fun AyudaMenu(e: Estado) {
                         (if (titulo != null && sec == s) o?.ayuda else null)?.ifEmpty { null } ?: sec.ayuda,
                         17f, lineas = 4,
                     )
-                    if (esc.angosta && tienePrevia(sec)) VistaPrevia(e, sec, titulo, Modifier.height(esc.d(130)).fillMaxWidth())
+                    // En pantallas angostas la vista previa va debajo del texto.
+                    if (esc.angosta) PreviaAjuste(e, sec, if (sec == s) o else null, Modifier.height(esc.d(170)).fillMaxWidth())
                 }
                 if (!esc.angosta) {
-                    Spacer(Modifier.width(esc.d(28)))
-                    if (tienePrevia(sec)) {
-                        VistaPrevia(e, sec, titulo, Modifier.width(esc.d(270)).height(esc.d(190)))
-                    } else Box(
-                        Modifier.size(esc.d(170)).clip(CircleShape).background(color.copy(alpha = 0.16f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Box(Modifier.size(esc.d(118)).clip(CircleShape).background(color), contentAlignment = Alignment.Center) {
-                            IconoDiptico(sec.icono, if (sec == Seccion.PORTADAS) Tinta else Color.White, 64f)
-                        }
-                    }
+                    Spacer(Modifier.width(esc.d(24)))
+                    PreviaAjuste(e, sec, if (sec == s) o else null, Modifier.weight(1.1f).fillMaxHeight())
                 }
             }
         }

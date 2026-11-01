@@ -190,6 +190,21 @@ object Consolas {
     var todas: List<Consola> = basicas()
         private set
 
+    /** Las consolas tal como vienen, antes de los cambios de la persona (nombre y color propios). */
+    private var originales: List<Consola>? = null
+
+    /** Aplica el nombre y el color que la persona eligió para cada consola. [propios]: id -> (nombre, color 0xAARRGGBB o 0). */
+    fun personalizar(propios: Map<String, Pair<String?, Long>>) {
+        val base = originales ?: todas.also { originales = it }
+        todas = base.map { c ->
+            val (n, col) = propios[c.id] ?: return@map c
+            var r = c
+            if (!n.isNullOrBlank()) r = r.copy(nombre = n, nombreLargo = n, bonito = n)
+            if (col != 0L) r = r.copy(color = androidx.compose.ui.graphics.Color(col))
+            r
+        }
+    }
+
     private var cargado = false
 
     /** Lee el catálogo (assets/sistemas.json, generado desde ES-DE). */
@@ -220,6 +235,7 @@ object Consolas {
                     j.optString("icono", "").takeIf { it.isNotEmpty() && it != "null" },
                 )
             }
+            originales = null
             todas = lista.sortedWith(compareBy<Consola>({ ORDEN.indexOf(it.id).let { p -> if (p < 0) 999 else p } }, { it.esPorts || it.esAndroid }, { it.bonito }))
                 .let { l -> l.filter { !it.sinEmulador } + l.filter { it.sinEmulador } }
             cargado = true

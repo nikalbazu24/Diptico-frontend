@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package cl.nikalbazu.diptico.ui
 
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -145,7 +147,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
+            val completo = targetState in setOf(Panel.MENU, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
             val entra = if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
@@ -170,6 +172,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.IMAGENES -> PanelImagenes(e)
             Panel.GALERIA -> PanelGaleria(e)
             Panel.ESTUDIO -> PanelEstudio(e)
+            Panel.EDITAR_CONSOLA -> PanelEditarConsola(e)
             Panel.ASISTENTE -> if (e.sesion == null) PanelAsistente(e) else Box(Modifier.fillMaxSize())
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
         }
@@ -244,7 +247,8 @@ fun Cinta(e: Estado) {
             val activa = id == e.consolaSel
             val escala by animateFloatAsState(if (activa) 1.14f else 1f, spring(dampingRatio = 0.5f), label = "icono")
             Column(
-                Modifier.width(esc.d(64)).clickable { Diptico.elegirConsola(id) },
+                // Mantener apretada una consola abre su personalización.
+                Modifier.width(esc.d(64)).combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { Diptico.elegirConsola(id) },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(Modifier.height(esc.d(36)), contentAlignment = Alignment.Center) {
@@ -738,6 +742,25 @@ private fun PanelClave(e: Estado) {
                 Texto(titulo as String, 20f, lineas = 1)
             }
             Detalle(ayuda as String, 14f)
+            // Enlace directo a la página de la clave, y un QR por si prefieres sacarla desde el teléfono.
+            Diptico.urlClave(e.textoPara)?.let { url ->
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(p.fondo2).padding(esc.d(10)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Box(
+                            Modifier.clip(RoundedCornerShape(50)).fondoBoton(Coral).clickable { Diptico.abrirPaginaClave(e.textoPara) }
+                                .padding(horizontal = esc.d(14), vertical = esc.d(8)),
+                        ) { Texto("Sacar mi clave (abre la página)", 13.5f, color = Color.White, lineas = 1) }
+                        Spacer(Modifier.height(esc.d(6)))
+                        Detalle("O escanea el código con tu teléfono.", 12f, lineas = 1)
+                        Detalle(url.removePrefix("https://"), 11f, lineas = 1)
+                    }
+                    Spacer(Modifier.width(esc.d(10)))
+                    CodigoQR(url, 64f)
+                }
+            }
             val esClave = e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave"
             CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas") 130f else 60f)
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {

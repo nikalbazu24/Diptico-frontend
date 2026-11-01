@@ -109,7 +109,13 @@ fun PanelGaleria(e: Estado) {
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            Pistas(*(if (pestanas.size > 1) arrayOf("A" to "Elegir", "L1 R1" to "Pestaña", "B" to "Volver") else arrayOf("A" to "Elegir", "B" to "Volver")))
+            Pistas(
+                *(when {
+                    e.galeria == "ia" -> arrayOf("A" to "Elegir", "Y" to "Sacar la clave", "B" to "Volver")
+                    pestanas.size > 1 -> arrayOf("A" to "Elegir", "L1 R1" to "Pestaña", "B" to "Volver")
+                    else -> arrayOf("A" to "Elegir", "B" to "Volver")
+                }),
+            )
         }
     }
 }
@@ -177,6 +183,12 @@ private fun FilaIA(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Uni
         Column(Modifier.weight(1f)) {
             Texto(it.nombre, 15.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
             Detalle(it.detalle, 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, lineas = 1)
+        }
+        if (Diptico.urlClave(it.id) != null) {
+            Box(
+                Modifier.padding(end = esc.d(6)).clip(RoundedCornerShape(50)).background(if (activo) SobreUva.copy(alpha = 0.2f) else p.fondo)
+                    .clickable { Diptico.abrirPaginaClave(it.id) }.padding(horizontal = esc.d(9), vertical = esc.d(4)),
+            ) { Texto("Sacar clave ↗", 11f, color = if (activo) SobreUva else p.tinta, lineas = 1) }
         }
         if (it.enUso) Box(Modifier.clip(RoundedCornerShape(50)).background(Sol.copy(alpha = 0.25f)).padding(horizontal = esc.d(8), vertical = esc.d(3))) {
             Texto("En uso", 11f, color = if (activo) SobreUva else p.tinta, lineas = 1)
@@ -246,7 +258,7 @@ fun VistaGaleria(e: Estado) {
 
 /** En la otra pantalla: qué es cada IA, lo bueno, lo no tan bueno y cómo conseguirla. */
 @Composable
-private fun ExplicaIA(id: String) {
+fun ExplicaIA(id: String) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val (sello, letra) = selloIA(id)
@@ -304,6 +316,16 @@ private fun ExplicaIA(id: String) {
         }
         Fila(Icono.CHECK, Color(0xFF2EC4A6), "Lo bueno", bueno)
         Fila(Icono.INFO, Coral, "A tener en cuenta", malo)
-        Fila(Icono.CLAVE, Sol, "Cómo tenerla", como)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) { Fila(Icono.CLAVE, Sol, "Cómo tenerla", como) }
+            Diptico.urlClave(id)?.let { url ->
+                Spacer(Modifier.width(esc.d(12)))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CodigoQR(url, 70f)
+                    Spacer(Modifier.height(esc.d(4)))
+                    Detalle("Escanéalo", 11f, lineas = 1)
+                }
+            }
+        }
     }
 }
