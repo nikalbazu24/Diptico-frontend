@@ -63,6 +63,8 @@ import kotlin.math.sin
 
 private fun colorConsola(id: String): Color = Consolas.porId(id)?.color ?: Uva
 private fun nombreConsola(id: String): String = Consolas.porId(id)?.nombre ?: "Todo"
+/** "1 juego" o "N juegos". */
+fun juegosTexto(n: Int) = if (n == 1) "1 juego" else "$n juegos"
 private fun cuantos(e: Estado, id: String) = if (id == "todo") e.juegos.size else e.juegos.count { it.consolaId == id }
 
 /** Distancia más corta entre dos posiciones de una lista circular (para que la rueda gire por el lado corto). */
@@ -132,7 +134,7 @@ fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
     ) {
         val alto = maxHeight.value / esc.factor
         val paso = (alto / 6.2f).coerceIn(44f, 62f)
-        fun x(off: Float) = 50f - 7.5f * off * off
+        fun x(off: Float) = 54f - 4.2f * off * off
         fun y(off: Float) = alto / 2f + off * paso
         // El arco por donde giran.
         androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
@@ -163,7 +165,7 @@ fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
         // Nombre de la consola elegida, al lado de la rueda.
         Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(84), end = esc.d(4))) {
             Texto(nombreConsola(e.consolaSel), 14f, lineas = 1)
-            Detalle("${cuantos(e, e.consolaSel)} juegos", 11f, lineas = 1)
+            Detalle(juegosTexto(cuantos(e, e.consolaSel)), 11f, lineas = 1)
         }
     }
 }
@@ -201,8 +203,8 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
                 val cerca = 1f - (abs(off) / 2.6f).coerceIn(0f, 1f)
                 Box(
                     Modifier.zIndex(10f - abs(off))
+                        .offset(x = esc.d(off * anchoCaja * 0.72f))
                         .graphicsLayer {
-                            translationX = off * anchoCaja * 0.72f * esc.factor * density
                             rotationY = (-off * 24f).coerceIn(-40f, 40f)
                             val s = 1f - abs(off).coerceAtMost(2f) * 0.14f
                             scaleX = s; scaleY = s
@@ -222,7 +224,7 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
                         }
                         Spacer(Modifier.height(esc.d(10)))
                         Texto(nombreConsola(id), 20f, color = Color.White, lineas = 1, sombra = true)
-                        Detalle("${cuantos(e, id)} juegos", 12.5f, color = Color.White.copy(alpha = 0.8f), lineas = 1)
+                        Detalle(juegosTexto(cuantos(e, id)), 12.5f, color = Color.White.copy(alpha = 0.8f), lineas = 1)
                     }
                 }
             }
@@ -254,7 +256,7 @@ fun CabeceraSistema(e: Estado) {
         Spacer(Modifier.width(esc.d(8)))
         Column(Modifier.weight(1f)) {
             Texto(Consolas.porId(e.consolaSel)?.nombreLargo ?: "Todos tus juegos", 15f, lineas = 1)
-            Detalle("${e.visibles.size} juegos", 11.5f, lineas = 1)
+            Detalle(juegosTexto(e.visibles.size), 11.5f, lineas = 1)
         }
     }
 }
@@ -282,7 +284,7 @@ fun VistaSistema(e: Estado, completa: Boolean = true) {
             Texto(c?.bonito ?: "Todos tus juegos", 38f, lineas = 2, interlineado = 42f, sombra = true)
             Spacer(Modifier.height(esc.d(10)))
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                Dato("${juegos.size}", "juegos")
+                Dato("${juegos.size}", if (juegos.size == 1) "juego" else "juegos")
                 Dato(if (tiempo > 0) formatoTiempo(tiempo) else "0 min", "jugado")
                 Dato("${juegos.count { e.datos[it.clave]?.favorito == true }}", "favoritos")
             }

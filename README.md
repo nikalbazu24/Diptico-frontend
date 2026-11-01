@@ -2,7 +2,16 @@
 
 Un launcher para la **AYN Thor** que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué hace la v0.8
+## Qué hace la v0.9
+
+- **Bisa con la IA que elijas**: en tu consola (gratis y sin internet), Gemini (Google, con nivel gratis), ChatGPT (OpenAI) o Claude (Anthropic). Cada persona usa su propia clave. Se elige en Menú › Bisa › IA de Bisa.
+- **Estudio de widgets**: un panel ordenado con pestañas (Widget, Agregar, Página): forma y tamaño, diseño (reloj digital, analógico o mínimo; juego con caja o arte de fondo; batería en barra o anillo; listas), estilo, color, fondo, esquinas, tamaño del contenido y página. Con dos pantallas, el inicio se ve en vivo arriba; con una, en miniatura al lado.
+- **Tema Mundo de bloques**: letra de píxeles, esquinas escalonadas, botones de bloque, cubitos que caen, sonidos de madera y un piano tranquilo propio.
+- **Otras formas de ver las consolas**: arriba (pestañas), al costado, en una rueda que gira o Sistemas (un carrusel grande de consolas y luego sus juegos). Y una vista de juegos nueva: el carrusel 3D.
+- **Bienvenida al encender**: si apagaste la consola en Díptico, al prenderla te saluda (con tu nombre), muestra la hora y tu último juego para seguir. Si estabas jugando, un recordatorio de qué jugabas y tu próximo paso. Nada se detiene mientras tanto.
+- **Díptico siempre primero**: se ofrece como app de inicio de Android y ahora también es el inicio de la pantalla de abajo.
+
+### Lo que trajo la v0.8
 
 - **Bisa con IA local**: baja una vez un modelo libre (Qwen 2.5, 1,6 GB) y Bisa responde dentro de la consola, sin internet ni créditos de nadie. Claude queda como opción.
 - **Compañero de partida rediseñado**: todo en una pantalla (hora, batería, sesión, logo del juego con movimiento y tamaño ajustable, y los botones). Se atenúa a los 5 segundos y el nivel se elige en Ajustes › Pantallas.
@@ -154,6 +163,8 @@ En **Menú › Emuladores** aprieta A sobre una consola para pasar por los emula
 Cada cambio en `main` hace que GitHub Actions compile el APK, saque fotos de todas las pantallas con el tamaño de la Thor y publique ambas cosas en Releases. Las órdenes para abrir cada emulador vienen de las reglas de ES-DE para Android.
 
 ## Créditos
+
+- Letra de píxeles del tema Mundo de bloques: Tiny5 (The Tiny5 Project Authors, licencia SIL Open Font License 1.1).
 
 - Las reglas para abrir cada emulador y la lista de consolas vienen de [ES-DE](https://es-de.org) (licencia MIT).
 - Portadas de [libretro-thumbnails](https://github.com/libretro-thumbnails) e íconos de consola de [retroarch-assets](https://github.com/libretro/retroarch-assets).

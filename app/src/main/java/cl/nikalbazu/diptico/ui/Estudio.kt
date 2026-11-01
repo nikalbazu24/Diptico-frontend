@@ -102,6 +102,10 @@ fun PanelEstudio(e: Estado) {
                 val pos = filas.indexOfFirst { it.first == e.indice }
                 if (pos < 0) return@LaunchedEffect
                 val vistos = lista.layoutInfo.visibleItemsInfo
+                if (vistos.isEmpty()) {
+                    if (pos > 5) lista.scrollToItem((pos - 2).coerceAtLeast(0))
+                    return@LaunchedEffect
+                }
                 val primero = vistos.firstOrNull()?.index ?: 0
                 val ultimo = vistos.lastOrNull()?.index ?: 0
                 val conTitulo = if (pos > 0 && filas[pos - 1].first < 0) pos - 1 else pos
@@ -125,6 +129,7 @@ fun PanelEstudio(e: Estado) {
             }
             Spacer(Modifier.height(esc.d(6)))
             if (e.estudioMover) Pistas("Cruceta" to "Mover", "L1 R1" to "Ancho", "L2 R2" to "Alto", "A" to "Listo")
+            else if (lateral) Pistas("↑ ↓" to "Elegir", "← →" to "Cambiar", "B" to "Terminar")
             else Pistas("↑ ↓" to "Elegir", "← →" to "Cambiar", "L1 R1" to "Pestaña", "B" to "Terminar")
         }
     }
