@@ -58,7 +58,7 @@ object IALocal {
      * Devuelve null si salió bien, o el motivo si no.
      * Si el pedazo ya bajado no calza con el servidor (error 416), revisa si ya está completo o empieza de nuevo.
      */
-    fun descargar(ctx: Context, avance: (Float) -> Unit, reintento: Boolean = false): String? {
+    fun descargar(ctx: Context, reintento: Boolean = false, avance: (Float) -> Unit): String? {
         val dir = carpeta(ctx)
         val destino = File(dir, ARCHIVO)
         val parte = File(dir, "$ARCHIVO.parte")
@@ -83,7 +83,7 @@ object IALocal {
                     return null
                 }
                 parte.delete()
-                return if (reintento) "El servidor del modelo no acepta la descarga ahora. Prueba en un rato." else descargar(ctx, avance, true)
+                return if (reintento) "El servidor del modelo no acepta la descarga ahora. Prueba en un rato." else descargar(ctx, true, avance)
             }
             if (codigo == 200) desde = 0L else if (codigo != 206) return "El servidor del modelo respondió con un error ($codigo)."
             // Tamaño real del archivo según el servidor.

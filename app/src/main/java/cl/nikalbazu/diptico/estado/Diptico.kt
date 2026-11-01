@@ -2806,7 +2806,7 @@ object Diptico {
 
     // ---------- Íconos de consola ----------
 
-    private fun estilosIconos(): List<String> = listOf("diptico", "insignia", "contorno", "pixel", "siglas") + Descargas.PAQUETES.map { it.id }
+    private fun estilosIconos(): List<String> = listOf("diptico", "insignia", "solido", "contorno", "neon", "pixel", "siglas") + Descargas.PAQUETES.map { it.id }
 
     fun nombreEstiloIconos(s: String) = when (s) {
         "diptico" -> "Formatos de Díptico"
@@ -2814,6 +2814,8 @@ object Diptico {
         "insignia" -> "Insignias"
         "contorno" -> "Contornos"
         "pixel" -> "Píxeles"
+        "solido" -> "Sellos de color"
+        "neon" -> "Neón"
         else -> Descargas.PAQUETES.firstOrNull { it.id == s }?.nombre ?: s
     }
 

@@ -450,6 +450,7 @@ object Descargas {
     val PAQUETES = listOf(
         PaqueteIconos("systematic", "Consolas a color", false),
         PaqueteIconos("dot-art", "Pixel art", false),
+        PaqueteIconos("daite", "Daite", false),
         PaqueteIconos("flatux", "Controles", false),
         PaqueteIconos("retrosystem", "Controles retro", false),
         PaqueteIconos("automatic", "Contornos", true),

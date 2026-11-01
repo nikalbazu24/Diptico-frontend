@@ -465,13 +465,15 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
     }
     val uri = propio ?: archivo
     val img = rememberImagen(uri, 192)
+    // Si un paquete no trae el ícono de esta consola, se dibuja uno con la misma línea (a color o en contorno).
+    val dibujo = if (paquete != null) (if (paquete.blanco) "contorno" else "insignia") else cfg.estilo
     when {
         img != null -> Image(
             img, contentDescription = c.nombre, contentScale = ContentScale.Fit,
             colorFilter = if (propio == null && paquete?.blanco == true) ColorFilter.tint(p.tinta) else null,
             modifier = modifier.size(esc.d(tam)),
         )
-        cfg.estilo == "siglas" -> Box(
+        dibujo == "siglas" -> Box(
             modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(c.color),
             contentAlignment = Alignment.Center,
         ) {
@@ -479,17 +481,29 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
             Texto(siglas, tam * (if (siglas.length > 3) 0.3f else 0.38f), color = if (c.color.luminance() > 0.6f) Tinta else Color.White, lineas = 1)
         }
         // Estilos dibujados por Díptico: todas las consolas con la misma línea.
-        cfg.estilo == "insignia" -> Box(
+        dibujo == "insignia" -> Box(
             modifier.size(esc.d(tam)).clip(CircleShape)
                 .background(Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(c.color, Color.White, 0.18f), androidx.compose.ui.graphics.lerp(c.color, Color.Black, 0.3f)))),
             contentAlignment = Alignment.Center,
         ) { IconoMedio(c.medio, Color.White, c.color, tam = tam * 0.64f) }
-        cfg.estilo == "contorno" -> Box(
+        dibujo == "neon" -> Box(
+            modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(Color(0xFF0E0C16))
+                .border(esc.d(tam * 0.045f), c.color.copy(alpha = 0.9f), RoundedCornerShape(esc.d(tam * 0.28f))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.size(esc.d(tam * 0.7f)).background(Brush.radialGradient(listOf(c.color.copy(alpha = 0.35f), Color.Transparent))))
+            IconoMedio(c.medio, androidx.compose.ui.graphics.lerp(c.color, Color.White, 0.35f), Color(0xFF0E0C16), tam = tam * 0.6f)
+        }
+        dibujo == "solido" -> Box(
+            modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(c.color),
+            contentAlignment = Alignment.Center,
+        ) { IconoMedio(c.medio, if (c.color.luminance() > 0.6f) Tinta else Color.White, c.color, tam = tam * 0.62f) }
+        dibujo == "contorno" -> Box(
             modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(c.color.copy(alpha = 0.14f))
                 .border(esc.d(tam * 0.06f), c.color, RoundedCornerShape(esc.d(tam * 0.28f))),
             contentAlignment = Alignment.Center,
         ) { IconoMedio(c.medio, c.color, fondo, tam = tam * 0.62f) }
-        cfg.estilo == "pixel" -> MedioPixel(c.medio, c.color, fondo, modifier, tam)
+        dibujo == "pixel" -> MedioPixel(c.medio, c.color, fondo, modifier, tam)
         else -> IconoMedio(c.medio, c.color, fondo, modifier, tam)
     }
 }
