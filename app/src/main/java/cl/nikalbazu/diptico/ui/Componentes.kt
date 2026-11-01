@@ -87,6 +87,23 @@ fun rememberHora(): String {
 private fun bateria(ctx: Context): Int =
     ctx.getSystemService(BatteryManager::class.java)?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1
 
+/** ¿Está cargando? */
+fun cargando(ctx: Context): Boolean =
+    ctx.getSystemService(BatteryManager::class.java)?.isCharging ?: false
+
+@Composable
+fun rememberCargando(): Boolean {
+    val ctx = LocalContext.current
+    var c by remember { mutableStateOf(cargando(ctx)) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            c = cargando(ctx)
+            delay(30_000)
+        }
+    }
+    return c
+}
+
 @Composable
 fun rememberBateria(): Int {
     val ctx = LocalContext.current

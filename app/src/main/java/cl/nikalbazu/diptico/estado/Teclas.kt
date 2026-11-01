@@ -309,14 +309,23 @@ object Teclas {
         }
         if (abajo) {
             when (code) {
-                KeyEvent.KEYCODE_DPAD_UP -> if (e.panel == Panel.CENTRO) Diptico.moverCentro(0, -1) else Diptico.moverIndice(-cols)
-                KeyEvent.KEYCODE_DPAD_DOWN -> if (e.panel == Panel.CENTRO) Diptico.moverCentro(0, 1) else Diptico.moverIndice(cols)
+                KeyEvent.KEYCODE_DPAD_UP -> when (e.panel) {
+                    Panel.CENTRO -> Diptico.moverCentro(0, -1)
+                    Panel.RAPIDO -> Diptico.moverRapido(0, -1)
+                    else -> Diptico.moverIndice(-cols)
+                }
+                KeyEvent.KEYCODE_DPAD_DOWN -> when (e.panel) {
+                    Panel.CENTRO -> Diptico.moverCentro(0, 1)
+                    Panel.RAPIDO -> Diptico.moverRapido(0, 1)
+                    else -> Diptico.moverIndice(cols)
+                }
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
                     val d = if (code == KeyEvent.KEYCODE_DPAD_LEFT) -1 else 1
                     when (e.panel) {
                         Panel.CENTRO -> Diptico.moverCentro(d, 0)
                         Panel.FICHA -> if (ev.repeatCount == 0) Diptico.cambiarPestanaFicha(d)
-                        Panel.RAPIDO, Panel.BUSCAR, Panel.IMAGENES -> Diptico.moverIndice(d)
+                        Panel.RAPIDO -> Diptico.moverRapido(d, 0)
+                        Panel.BUSCAR, Panel.IMAGENES -> Diptico.moverIndice(d)
                         else -> Unit
                     }
                 }

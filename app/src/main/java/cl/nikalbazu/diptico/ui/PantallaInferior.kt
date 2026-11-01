@@ -1,5 +1,11 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -368,7 +374,11 @@ private fun RowScope.ItemDock(icono: Icono, texto: String, color: Color = LocalP
     }
 }
 
-/** Mientras juegas en la otra pantalla: esta se atenúa y muestra el logo o el nombre del juego. */
+/**
+ * Compañero de partida: mientras juegas en la otra pantalla, aquí queda todo a mano en una sola vista.
+ * Arriba la hora, la batería y el tiempo de la sesión; al centro el logo del juego (con movimiento y tamaño a gusto);
+ * abajo los botones. A los 5 segundos se atenúa sola (el nivel se elige en Ajustes › Pantallas); tocar la despierta.
+ */
 @Composable
 private fun EnJuego(e: Estado) {
     val p = LocalPaleta.current
@@ -389,73 +399,118 @@ private fun EnJuego(e: Estado) {
         }
     }
     val seg = (ahora - s.inicio) / 1000
-    val reloj = "${seg / 60}:${(seg % 60).toString().padStart(2, '0')}"
+    val reloj = if (seg >= 3600) "${seg / 3600}:${((seg % 3600) / 60).toString().padStart(2, '0')}:${(seg % 60).toString().padStart(2, '0')}"
+    else "${seg / 60}:${(seg % 60).toString().padStart(2, '0')}"
     val color = juego?.let { colorDe(it.clave) } ?: Uva
+    val bateria = rememberBateria()
+    val cargando = rememberCargando()
+    val t = rememberInfiniteTransition(label = "compa")
+    val flotar by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
+    val respirar by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(3400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respirar")
+    val brillo by t.animateFloat(0.18f, 0.42f, infiniteRepeatable(tween(4200), RepeatMode.Reverse), label = "brillo")
 
     Box(
-        Modifier.fillMaxSize().background(Color(0xFF07060C)).clickable(
-            interactionSource = remember { MutableInteractionSource() }, indication = null,
-        ) { if (!e.despierta) Diptico.despertar() },
+        Modifier.fillMaxSize().background(Color(0xFF07060C)).pointerInput(Unit) {
+            detectTapGestures { Diptico.despertar() }
+        },
     ) {
-        if (!e.despierta) {
+        // Brillo del color del juego que respira detrás del logo.
+        Box(
+            Modifier.align(Alignment.Center).size(esc.d(420)).graphicsLayer { scaleX = respirar; scaleY = respirar }
+                .background(Brush.radialGradient(listOf(color.copy(alpha = brillo), Color.Transparent))),
+        )
+        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(16), vertical = esc.d(12))) {
+            // Barra de estado: hora, batería y sesión.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Texto(rememberHora(), 18f, color = Color.White)
+                Spacer(Modifier.width(esc.d(12)))
+                IconoDiptico(Icono.BATERIA, if (bateria in 0..15 && !cargando) Coral else Color(0xFFB9B5D6), 18f, acento = if (cargando) Sol else Color(0xFFB9B5D6))
+                Spacer(Modifier.width(esc.d(4)))
+                Texto(if (bateria >= 0) "$bateria%" + if (cargando) " ⚡" else "" else "", 14f, color = Color(0xFFB9B5D6), traducir = false)
+                Spacer(Modifier.weight(1f))
+                Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.08f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
+                    Texto("Sesión · $reloj", 13f, color = Color(0xFFB9B5D6))
+                }
+                Spacer(Modifier.width(esc.d(8)))
+                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(32).value, Modifier.clickable { Diptico.prepararAyuda() })
+            }
+            // Logo del juego con movimiento; su tamaño se ajusta con − y + (o pellizcando).
             Box(
-                Modifier.align(Alignment.Center).size(esc.d(380)).background(
-                    Brush.radialGradient(listOf(color.copy(alpha = 0.35f), Color.Transparent)),
-                ),
-            )
-            Column(Modifier.align(Alignment.Center).padding(horizontal = esc.d(24)), horizontalAlignment = Alignment.CenterHorizontally) {
-                Etiqueta(c?.nombreLargo ?: "", color, 12f)
-                Spacer(Modifier.height(esc.d(12)))
-                val logo = rememberImagen(juego?.logo, 800)
-                if (logo != null) {
-                    Image(
-                        logo, contentDescription = juego?.titulo, contentScale = ContentScale.Fit,
-                        modifier = Modifier.heightIn(max = esc.d(150)).widthIn(max = esc.d(380)),
-                    )
-                } else {
-                    Texto(juego?.titulo ?: "Jugando", 40f, color = Color.White, lineas = 3, interlineado = 44f, alinear = TextAlign.Center)
+                Modifier.weight(1f).fillMaxWidth().pointerInput(Unit) {
+                    detectTransformGestures { _, _, zoom, _ -> if (zoom != 1f) Diptico.cambiarTamLogo(zoom) }
+                },
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.graphicsLayer {
+                        translationY = flotar * 6f * density
+                        scaleX = e.tamLogo * respirar
+                        scaleY = e.tamLogo * respirar
+                    },
+                ) {
+                    Etiqueta(c?.nombreLargo ?: "", color, 11f)
+                    Spacer(Modifier.height(esc.d(8)))
+                    val logo = rememberImagen(juego?.logo, 800)
+                    if (logo != null) {
+                        Image(
+                            logo, contentDescription = juego?.titulo, contentScale = ContentScale.Fit,
+                            modifier = Modifier.heightIn(max = esc.d(120)).widthIn(max = esc.d(330)),
+                        )
+                    } else {
+                        Texto(juego?.titulo ?: "Jugando", 32f, color = Color.White, lineas = 2, interlineado = 36f, alinear = TextAlign.Center, traducir = false)
+                    }
+                }
+                Row(Modifier.align(Alignment.BottomEnd), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    BotonRedondo("−") { Diptico.cambiarTamLogo(0.9f) }
+                    BotonRedondo("+") { Diptico.cambiarTamLogo(1.1f) }
                 }
             }
-            // Bisa siempre a mano, arriba a la derecha.
-            cl.nikalbazu.diptico.bisa.AvatarBisa(
-                esc.d(44).value,
-                Modifier.align(Alignment.TopEnd).padding(esc.d(14)).clickable { Diptico.prepararAyuda() },
-            )
-            Texto(
-                "Sesión · $reloj", 15f, color = Color(0xFF8E8AAE),
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(46)),
-            )
-            Detalle(
-                "Toca o aprieta un botón para abrir el compañero", 13f, color = Color(0xFF6E6A8E),
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(20)),
-            )
-        } else {
-            Column(Modifier.fillMaxSize().background(p.fondo2).padding(esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(esc.d(48)).clip(RoundedCornerShape(esc.d(14))).background(color), contentAlignment = Alignment.Center) {
-                        IconoDiptico(Icono.JUGAR, Color.White, 24f)
-                    }
-                    Spacer(Modifier.width(esc.d(12)))
-                    Column(Modifier.weight(1f)) {
-                        Texto(juego?.titulo ?: "", 20f, lineas = 1)
-                        Detalle("Sesión de $reloj", 13f)
-                    }
+            // Paso anotado, si hay.
+            val paso = e.datos[s.clave]?.paso.orEmpty()
+            if (paso.isNotBlank()) {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14))).background(Color.White.copy(alpha = 0.06f)).padding(esc.d(10)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.size(esc.d(8)).clip(CircleShape).background(Coral))
+                    Spacer(Modifier.width(esc.d(8)))
+                    Detalle(paso, 13.5f, color = Color(0xFFE6E3FA), lineas = 2)
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                    BotonGrande("Anotar mi paso", Coral, Tinta, Modifier.weight(1f), alto = 64f) { Diptico.abrirPaso() }
-                    BotonGrande("Atenuar", Sol, Tinta, Modifier.weight(1f), alto = 64f) { Diptico.atenuar() }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                    BotonGrande("Pedir ayuda a Bisa", p.superficie, p.tinta, Modifier.weight(1f), alto = 64f) { Diptico.prepararAyuda() }
-                    if (s.displayId == android.view.Display.DEFAULT_DISPLAY) {
-                        BotonGrande("Lupa", p.superficie, p.tinta, Modifier.weight(1f), alto = 64f) { Diptico.alternarLupaJuego(s.clave, true) }
-                    }
-                }
-                BotonGrande("Terminé de jugar", Uva, Color.White, Modifier.fillMaxWidth(), alto = 64f) { Diptico.cerrarSesion(preguntar = true) }
-                Spacer(Modifier.weight(1f))
-                Detalle("Se vuelve a atenuar sola en unos segundos.", 13f)
+                Spacer(Modifier.height(esc.d(8)))
+            }
+            // Botones: todos a la vista.
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                AccionCompa(Icono.LAPIZ, "Mi paso", Modifier.weight(1f)) { Diptico.abrirPaso() }
+                AccionCompa(Icono.BISA, "Bisa", Modifier.weight(1f)) { Diptico.prepararAyuda() }
+                if (s.displayId == android.view.Display.DEFAULT_DISPLAY) AccionCompa(Icono.BUSCAR, "Lupa", Modifier.weight(1f)) { Diptico.alternarLupaJuego(s.clave, true) }
+                AccionCompa(Icono.TUTORIAL, "Guías", Modifier.weight(1f)) { Diptico.abrirFichaDe(s.clave, 2) }
+                AccionCompa(Icono.NEGRO, "Atenuar", Modifier.weight(1f)) { Diptico.atenuar() }
+                AccionCompa(Icono.CHECK, "Terminé", Modifier.weight(1f), Uva) { Diptico.cerrarSesion(preguntar = true) }
             }
         }
+    }
+}
+
+@Composable
+private fun BotonRedondo(texto: String, accion: () -> Unit) {
+    val esc = LocalEscala.current
+    Box(
+        Modifier.size(esc.d(32)).clip(CircleShape).background(Color.White.copy(alpha = 0.1f)).clickable { accion() },
+        contentAlignment = Alignment.Center,
+    ) { Texto(texto, 16f, color = Color.White, traducir = false) }
+}
+
+@Composable
+private fun AccionCompa(icono: Icono, texto: String, modifier: Modifier, fondo: Color = Color.White.copy(alpha = 0.08f), accion: () -> Unit) {
+    val esc = LocalEscala.current
+    Column(
+        modifier.height(esc.d(62)).clip(RoundedCornerShape(esc.d(16))).background(fondo).clickable { accion() }.padding(esc.d(4)),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        IconoDiptico(icono, Color.White, 20f, acento = Coral)
+        Spacer(Modifier.height(esc.d(4)))
+        Texto(texto, 11.5f, color = Color.White, lineas = 1)
     }
 }
 

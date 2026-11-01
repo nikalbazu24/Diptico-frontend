@@ -32,6 +32,12 @@ class VistaLupa(ctx: Context) : TextureView(ctx), TextureView.SurfaceTextureList
         return RectF(ox, oy, ox + w * s, oy + h * s)
     }
 
+    /** Si la lupa ya sabe el tamaño real de la pantalla de arriba, la textura lo usa (así no se deforma). */
+    fun refrescar() {
+        try { surfaceTexture?.setDefaultBufferSize(LupaServicio.ancho, LupaServicio.alto) } catch (_: Exception) {}
+        ajustar()
+    }
+
     private fun ajustar() {
         if (width == 0 || height == 0) return
         val w = LupaServicio.ancho.toFloat()

@@ -221,6 +221,10 @@ data class Estado(
     val burbujaAlerta: Boolean = false,
     /** La lupa está copiando la pantalla de arriba. */
     val lupaActiva: Boolean = false,
+    /** Tamaño del logo en el compañero de partida (0.6 a 1.8). */
+    val tamLogo: Float = 1f,
+    /** Brillo de la pantalla atenuada mientras juegas (0.01 a 0.4; 1 = no atenuar). */
+    val atenuacion: Float = 0.04f,
     /** Idioma de Díptico: es, en, pt, zh, ja. */
     val idioma: String = "es",
     /** Lo que se escribió para buscar un ajuste (en "Lo esencial"). */
@@ -422,6 +426,8 @@ object Diptico {
             claveIa = almacen.texto("claveIa"),
             usuarioRA = almacen.texto("usuarioRA"),
             bisaWeb = almacen.bool("bisaWeb", true),
+            tamLogo = almacen.texto("tamLogo", "1").toFloatOrNull() ?: 1f,
+            atenuacion = almacen.texto("atenuacion", "0.04").toFloatOrNull() ?: 0.04f,
             bisaEnJuego = almacen.bool("bisaEnJuego", true),
             claveRA = almacen.texto("claveRA"),
             inicio = almacen.texto("inicio", "heroe"),
@@ -1034,6 +1040,8 @@ object Diptico {
                 burbujaAlerta = false,
             )
         }
+        // La pantalla del compañero queda encendida 5 segundos y después se atenúa.
+        despertar()
         // Bisa acompaña el juego. Si se nota que lo reintenta mucho, ofrece ayuda.
         if (e.bisaEnJuego) {
             val atascado = Asistente.reintentos(juego.clave) >= 2
@@ -1068,7 +1076,7 @@ object Diptico {
     fun zonaLupa(clave: String): android.graphics.RectF {
         val s = estado.value.datos[clave]?.zonaLupa?.split(",")?.mapNotNull { it.toFloatOrNull() }
         return if (s != null && s.size == 4) android.graphics.RectF(s[0], s[1], s[0] + s[2], s[1] + s[3])
-        else android.graphics.RectF(0.75f, 0f, 1f, 0.33f)
+        else android.graphics.RectF(0.79f, 0.02f, 0.99f, 0.36f)
     }
 
     fun guardarZonaLupa(clave: String, r: android.graphics.RectF) {
@@ -1155,11 +1163,29 @@ object Diptico {
         }
     }
 
+    fun cambiarTamLogo(factor: Float) {
+        val v = (estado.value.tamLogo * factor).coerceIn(0.6f, 1.8f)
+        actualizar { it.copy(tamLogo = v) }
+        almacen.guardarTexto("tamLogo", v.toString())
+    }
+
+    /** Abre la ficha de un juego en una pestaña (0 resumen, 1 historia, 2 guías, 3 personalizar, 4 logros). */
+    fun abrirFichaDe(clave: String, pestana: Int) {
+        actualizar { it.copy(juegoSel = clave, consolaSel = "todo") }
+        abrirFicha()
+        elegirPestanaFicha(pestana)
+    }
+
+    val NIVELES_ATENUACION = listOf(0.01f, 0.04f, 0.12f, 0.25f, 1f)
+    fun nombreAtenuacion(v: Float) = when {
+        v >= 1f -> "Sin atenuar"; v >= 0.2f -> "Suave"; v >= 0.1f -> "Media"; v >= 0.03f -> "Oscura"; else -> "Muy oscura"
+    }
+
     fun despertar() {
         actualizar { it.copy(despierta = true) }
         despiertaJob?.cancel()
         despiertaJob = scope.launch {
-            delay(8000)
+            delay(5000)
             actualizar { it.copy(despierta = false) }
         }
     }
@@ -1613,25 +1639,24 @@ object Diptico {
     // ---------- Menú rápido de un juego (mantener A) ----------
 
     /** La ventana de un juego (Y o mantener A): acciones en mosaico. */
+    /** Las primeras opciones de la ventana del juego van grandes, en una fila. */
+    const val PRIMARIAS_RAPIDO = 5
+
     fun opcionesRapido(): List<Opcion> {
         val e = estado.value
         val juego = e.seleccionado ?: return emptyList()
         val d = e.datos[juego.clave]
         val consola = Consolas.porId(juego.consolaId)
         val lista = mutableListOf<Opcion>()
+        // Fila de arriba: lo más usado.
         lista += Opcion("Jugar", icono = Icono.JUGAR) { cerrarPanel(); jugar() }
-        lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA) { abrirFicha(); elegirPestanaFicha(3) }
-        lista += Opcion("Ficha", "Historia y guías", Icono.TUTORIAL) { abrirFicha() }
-        lista += Opcion("Mi próximo paso", d?.paso?.take(30) ?: "", Icono.LAPIZ) { abrirPaso() }
+        lista += Opcion("Ficha", icono = Icono.TUTORIAL) { abrirFicha() }
+        lista += Opcion("Mi paso", d?.paso?.take(30) ?: "", Icono.LAPIZ) { abrirPaso() }
         lista += Opcion(if (d?.favorito == true) "Favorito ✓" else "Favorito", icono = Icono.CORAZON) { alternarFavorito(juego.clave) }
-        if (!e.unaPantalla) lista += Opcion(
-            "Lupa en la pantalla de abajo", if (d?.lupa == true) "Sí" else "No", Icono.BUSCAR,
-            "Mientras juegas arriba, la pantalla de abajo muestra ampliada una parte de la de arriba: el minimapa, la vida, los subtítulos. La zona se elige en la misma lupa.",
-        ) { alternarLupaJuego(juego.clave) }
-        lista += Opcion(
-            if (d?.oculto == true) "Mostrar este juego" else "Ocultar este juego",
-            if (d?.oculto == true) "Vuelve al estante" else "Se ve con el filtro Ocultos", Icono.OCULTAR,
-        ) { alternarOculto(juego.clave) }
+        lista += Opcion("Bisa", icono = Icono.BISA) { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${juego.titulo}.") }
+        // Lista de abajo: ajustes de este juego.
+        lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA) { abrirFicha(); elegirPestanaFicha(3) }
+        lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA) { abrirFicha(); buscarCandidatos("portada") }
         if (consola != null && !consola.sinEmulador) {
             lista += Opcion("Emulador", d?.emulador?.let { id -> Lanzador.opciones(app, consola).firstOrNull { it.id == id }?.nombre } ?: "El de la consola", Icono.EMULADOR) {
                 ciclarEmuladorJuego(juego.clave, consola)
@@ -1643,16 +1668,38 @@ object Diptico {
                 when (d?.pantalla) { "arriba" -> "Arriba"; "abajo" -> "Abajo"; else -> "Según el menú" },
                 Icono.PANTALLAS,
             ) { ciclarPantallaJuego(juego.clave) }
-        }
-        lista += Opcion("Imágenes", if (juego.portada != null) "Buscar de nuevo" else "Buscar en internet", Icono.DESCARGA) {
-            cerrarPanel(); descargarUno(juego)
+            lista += Opcion(
+                "Lupa en la pantalla de abajo", if (d?.lupa == true) "Sí" else "No", Icono.BUSCAR,
+                "Mientras juegas arriba, la pantalla de abajo muestra ampliada una parte de la de arriba: el minimapa, la vida, los subtítulos. La zona se elige en la misma lupa.",
+            ) { alternarLupaJuego(juego.clave) }
         }
         if (consola != null) {
             lista += Opcion("Cajas de ${consola.nombre}", nombreForma(e.formas[consola.id]?.forma ?: "original"), Icono.FORMA) {
                 ciclarForma(consola.id)
             }
         }
+        lista += Opcion(
+            if (d?.oculto == true) "Mostrar este juego" else "Ocultar este juego",
+            if (d?.oculto == true) "Vuelve al estante" else "Se ve con el filtro Ocultos", Icono.OCULTAR,
+        ) { alternarOculto(juego.clave) }
         return lista
+    }
+
+    /** Moverse en la ventana del juego: fila de botones grandes arriba, lista abajo. */
+    fun moverRapido(dx: Int, dy: Int) {
+        val e = estado.value
+        val total = opcionesRapido().size
+        if (total == 0) return
+        val i = e.indice
+        val n = when {
+            i < PRIMARIAS_RAPIDO && dx != 0 -> (i + dx).coerceIn(0, PRIMARIAS_RAPIDO - 1)
+            i < PRIMARIAS_RAPIDO && dy > 0 -> PRIMARIAS_RAPIDO.coerceAtMost(total - 1)
+            i < PRIMARIAS_RAPIDO -> i
+            dy < 0 -> if (i == PRIMARIAS_RAPIDO) 0 else i - 1
+            dy > 0 -> (i + 1).coerceAtMost(total - 1)
+            else -> i
+        }
+        if (n != i) actualizar { it.copy(indice = n) }
     }
 
     /** Columnas de la ventana del juego (la interfaz avisa cuántas caben). */
@@ -1744,6 +1791,16 @@ object Diptico {
                         val siguiente = when (estado.value.modoPantallas) { "dos" -> "una_negra"; "una_negra" -> "una_libre"; else -> "dos" }
                         elegirModo(siguiente)
                     }
+                }
+                lista += Opcion(
+                    "Atenuación mientras juegas", nombreAtenuacion(e.atenuacion), Icono.NEGRO,
+                    "Qué tan oscura queda la otra pantalla mientras juegas. Se atenúa sola 5 segundos después de abrir el juego; tocarla la despierta.",
+                    apagada = e.unaPantalla,
+                ) {
+                    val l = NIVELES_ATENUACION
+                    val v = l[(l.indexOfFirst { kotlin.math.abs(it - estado.value.atenuacion) < 0.005f } + 1).mod(l.size)]
+                    almacen.guardarTexto("atenuacion", v.toString())
+                    actualizar { it.copy(atenuacion = v) }
                 }
                 lista += Opcion(
                     "Teclado", if (e.tecladoPropio) "Díptico, en la otra pantalla" else "El de Android", Icono.TEXTO,

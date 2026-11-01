@@ -86,7 +86,7 @@ class InferiorActivity : BaseActivity() {
             !e.configurado -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
             e.unaPantalla -> 0.01f
             e.protector -> 0.06f
-            atenuarJuego -> 0.04f
+            atenuarJuego -> if (e.atenuacion >= 1f) WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE else e.atenuacion
             else -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
         }
         val lp = window.attributes

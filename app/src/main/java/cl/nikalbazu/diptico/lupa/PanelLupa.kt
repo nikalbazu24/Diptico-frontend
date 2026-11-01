@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.layout.onSizeChanged
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.ui.Coral
@@ -46,52 +47,69 @@ import cl.nikalbazu.diptico.ui.Uva
 import cl.nikalbazu.diptico.ui.fondoBoton
 import kotlinx.coroutines.delay
 
-/** Zonas típicas: dónde suelen estar el minimapa, la vida o los subtítulos. */
+/** Zonas típicas (centro x, centro y, ancho): dónde suelen estar el minimapa, la vida o los subtítulos. */
 val ZONAS_LUPA = listOf(
-    "Arriba izq." to RectF(0f, 0f, 0.25f, 0.33f),
-    "Arriba der." to RectF(0.75f, 0f, 1f, 0.33f),
-    "Abajo izq." to RectF(0f, 0.67f, 0.25f, 1f),
-    "Abajo der." to RectF(0.75f, 0.67f, 1f, 1f),
-    "Centro" to RectF(0.3f, 0.3f, 0.7f, 0.7f),
-    "Subtítulos" to RectF(0.1f, 0.78f, 0.9f, 1f),
+    "Arriba izq." to floatArrayOf(0.11f, 0.19f, 0.2f),
+    "Arriba der." to floatArrayOf(0.89f, 0.19f, 0.2f),
+    "Abajo izq." to floatArrayOf(0.11f, 0.81f, 0.2f),
+    "Abajo der." to floatArrayOf(0.89f, 0.81f, 0.2f),
+    "Centro" to floatArrayOf(0.5f, 0.5f, 0.3f),
+    "Subtítulos" to floatArrayOf(0.5f, 0.88f, 0.7f),
 )
 
 /**
- * La lupa en la pantalla de abajo: muestra ampliada la zona elegida de la de arriba.
- * Tocar muestra los controles; "Ajustar zona" muestra la pantalla entera para mover y achicar el cuadro con los dedos.
+ * Arma la zona con la misma forma que la pantalla de abajo, así llena la vista sin bordes ni deformarse.
+ * [cx], [cy] centro y [w] ancho, en fracciones de la pantalla de arriba; [aspecto] = ancho/alto de la vista de la lupa.
+ */
+fun zonaConForma(cx: Float, cy: Float, w: Float, aspecto: Float): RectF {
+    val W = LupaServicio.ancho.toFloat()
+    val H = LupaServicio.alto.toFloat()
+    var ancho = w.coerceIn(0.04f, 1f)
+    var alto = ancho * W / aspecto / H
+    if (alto > 1f) { ancho /= alto; alto = 1f }
+    val x = (cx - ancho / 2).coerceIn(0f, 1f - ancho)
+    val y = (cy - alto / 2).coerceIn(0f, 1f - alto)
+    return RectF(x, y, x + ancho, y + alto)
+}
+
+/**
+ * La lupa en la pantalla de abajo: muestra ampliada la zona elegida de la de arriba, llenando la pantalla sin deformarse.
+ * Tocar muestra los controles; − y + cambian el zoom; "Ajustar zona" muestra la pantalla entera para mover el cuadro.
  */
 @Composable
 fun PanelLupa(e: Estado, clave: String) {
     val esc = LocalEscala.current
     val guardada = remember(clave, e.datos[clave]?.zonaLupa) { Diptico.zonaLupa(clave) }
+    var aspecto by remember { mutableStateOf(1.15f) }
     var zona by remember(clave) { mutableStateOf(guardada) }
     var editando by remember { mutableStateOf(false) }
     var controles by remember { mutableStateOf(true) }
     var vista by remember { mutableStateOf<VistaLupa?>(null) }
     LaunchedEffect(controles, editando) { if (controles && !editando) { delay(3500); controles = false } }
+    // Cuando se conoce la forma de la vista (o el tamaño real de arriba), la zona se ajusta a esa forma.
+    LaunchedEffect(aspecto, e.lupaActiva) { zona = zonaConForma(zona.centerX(), zona.centerY(), zona.width(), aspecto) }
+    fun zoom(f: Float) {
+        zona = zonaConForma(zona.centerX(), zona.centerY(), zona.width() / f, aspecto)
+        Diptico.guardarZonaLupa(clave, zona)
+        controles = true
+    }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(
             factory = { VistaLupa(it).also { v -> vista = v } },
-            update = { v -> v.zona = if (editando) null else zona },
-            modifier = Modifier.fillMaxSize(),
+            update = { v -> v.refrescar(); v.zona = if (editando) null else zona },
+            modifier = Modifier.fillMaxSize().onSizeChanged { if (it.height > 0) aspecto = it.width.toFloat() / it.height },
         )
         if (editando) {
-            // Cuadro de la zona encima de la pantalla entera: un dedo lo mueve, dos dedos lo agrandan o achican.
+            // Cuadro de la zona encima de la pantalla entera: un dedo lo mueve, dos dedos cambian el zoom.
             Canvas(
                 Modifier.fillMaxSize().pointerInput(Unit) {
                     detectTransformGestures { _, mov, z, _ ->
                         val v = vista ?: return@detectTransformGestures
                         val r = v.rectoCompleto()
                         if (r.width() <= 0f) return@detectTransformGestures
-                        val dx = mov.x / r.width()
-                        val dy = mov.y / r.height()
                         val actual = zona
-                        val w = (actual.width() / z).coerceIn(0.06f, 1f)
-                        val h = (actual.height() / z).coerceIn(0.06f, 1f)
-                        val cx = (actual.centerX() + dx).coerceIn(w / 2, 1 - w / 2)
-                        val cy = (actual.centerY() + dy).coerceIn(h / 2, 1 - h / 2)
-                        zona = RectF(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
+                        zona = zonaConForma(actual.centerX() + mov.x / r.width(), actual.centerY() + mov.y / r.height(), actual.width() / z, aspecto)
                     }
                 },
             ) {
@@ -101,7 +119,6 @@ fun PanelLupa(e: Estado, clave: String) {
                 val y = r.top + zona.top * r.height()
                 val w = zona.width() * r.width()
                 val h = zona.height() * r.height()
-                // Oscurece lo de afuera.
                 drawRect(Color.Black.copy(alpha = 0.45f), Offset(0f, 0f), Size(size.width, y))
                 drawRect(Color.Black.copy(alpha = 0.45f), Offset(0f, y + h), Size(size.width, size.height - y - h))
                 drawRect(Color.Black.copy(alpha = 0.45f), Offset(0f, y), Size(x, h))
@@ -113,10 +130,16 @@ fun PanelLupa(e: Estado, clave: String) {
         }
 
         AnimatedVisibility(controles || editando, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.align(Alignment.BottomCenter)) {
-            Column(
-                Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.7f)).padding(esc.d(10)),
-            ) {
-                Texto(if (editando) "Mueve el cuadro con un dedo y agrándalo con dos" else "Lupa · toca para ocultar estos botones", 13f, color = Color.White, lineas = 1)
+            Column(Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.7f)).padding(esc.d(10))) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Texto(
+                        if (editando) "Mueve el cuadro con un dedo y agrándalo con dos" else "Lupa · zoom ${"%.1f".format(1f / zona.width())}×",
+                        13f, color = Color.White, lineas = 1, modifier = Modifier.weight(1f),
+                    )
+                    BotonLupa("−") { zoom(0.8f) }
+                    androidx.compose.foundation.layout.Spacer(Modifier.padding(start = esc.d(6)))
+                    BotonLupa("+") { zoom(1.25f) }
+                }
                 Row(
                     Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = esc.d(6)),
                     horizontalArrangement = Arrangement.spacedBy(esc.d(6)),
@@ -125,7 +148,7 @@ fun PanelLupa(e: Estado, clave: String) {
                         if (editando) Diptico.guardarZonaLupa(clave, zona)
                         editando = !editando
                     }
-                    ZONAS_LUPA.forEach { (n, r) -> BotonLupa(n) { zona = RectF(r); Diptico.guardarZonaLupa(clave, zona) } }
+                    ZONAS_LUPA.forEach { (n, z) -> BotonLupa(n) { zona = zonaConForma(z[0], z[1], z[2], aspecto); Diptico.guardarZonaLupa(clave, zona) } }
                     BotonLupa("Apagar lupa") { Diptico.alternarLupaJuego(clave, false) }
                 }
             }
