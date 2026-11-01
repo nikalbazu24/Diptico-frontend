@@ -196,9 +196,11 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
             "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
             "carrusel" -> CarruselJuegos(e, Modifier.fillMaxSize())
-            else -> Column(Modifier.fillMaxSize()) {
+            // El estante y su información quedan centrados en el espacio disponible.
+            else -> Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Estante(e, alto = (if (esc.angosta) 192f else 214f) * t.coerceAtMost(1.25f), escala = escalaEstante * t)
                 Info(e)
+                Spacer(Modifier.height(esc.d(8)))
             }
         }
     }

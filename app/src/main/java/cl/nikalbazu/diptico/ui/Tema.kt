@@ -154,12 +154,13 @@ private val NunitoBase = FontFamily(
     Font(R.font.nunito_extrabold, FontWeight.ExtraBold),
 )
 
-/** Letra de píxeles (Pixelify Sans, licencia OFL) para el tema Mundo de bloques. */
+/** Letra de píxeles (Tiny5, licencia OFL) para el tema Mundo de bloques. Un solo grosor: así los píxeles quedan nítidos. */
 val Pixel = FontFamily(
-    Font(R.font.pixelify_medium, FontWeight.Medium),
-    Font(R.font.pixelify_medium, FontWeight.SemiBold),
-    Font(R.font.pixelify_bold, FontWeight.Bold),
-    Font(R.font.pixelify_bold, FontWeight.ExtraBold),
+    Font(R.font.tiny5, FontWeight.Normal),
+    Font(R.font.tiny5, FontWeight.Medium),
+    Font(R.font.tiny5, FontWeight.SemiBold),
+    Font(R.font.tiny5, FontWeight.Bold),
+    Font(R.font.tiny5, FontWeight.ExtraBold),
 )
 
 /** Las letras de Díptico. Si el tema trae letra propia (píxeles), todas cambian solas. */

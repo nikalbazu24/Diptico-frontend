@@ -2154,7 +2154,7 @@ object Diptico {
                     "Para juegos que usan las dos pantallas (DS, 3DS) o el modo una pantalla: Bisa aparece como una burbuja encima del juego, con su botón para volver.",
                 ) { if (cl.nikalbazu.diptico.bisa.BurbujaBisa.puedeFlotar(app)) avisar("La burbuja ya tiene permiso") else cl.nikalbazu.diptico.bisa.BurbujaBisa.pedirPermisoFlotante(app) }
                 lista += Opcion(
-                    "Elegir la IA de Bisa", textoMotor(e), Icono.CHISPA,
+                    "IA de Bisa", textoMotor(e), Icono.CHISPA,
                     "Su cerebro: la IA de tu consola (gratis, sin internet), Gemini (Google, con nivel gratis), ChatGPT o Claude. Cada persona usa su propia clave.",
                 ) { abrirGaleria("ia") }
                 lista += Opcion(
@@ -3029,8 +3029,11 @@ object Diptico {
     }
 
     /** Valor que se muestra en el menú: el motor elegido (y, en automático, cuál está usando). */
-    fun textoMotor(e: Estado = estado.value): String =
-        if (e.motorIA == "auto") "Automático · " + nombreMotor(motorEfectivo(e)) else nombreMotor(e.motorIA)
+    fun textoMotor(e: Estado = estado.value): String = when {
+        e.motorIA != "auto" -> nombreMotor(e.motorIA)
+        motorEfectivo(e) == "ninguno" -> "Sin elegir"
+        else -> "Auto · " + nombreMotor(motorEfectivo(e))
+    }
 
     /** Una IA en la nube con clave, para temas y nombres: la de Bisa si es de la nube, si no la primera con clave. */
     fun llaveNube(e: Estado = estado.value): Llave? {

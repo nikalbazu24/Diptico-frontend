@@ -97,9 +97,19 @@ fun PanelEstudio(e: Estado) {
                 }
             }
             val lista = rememberLazyListState()
+            // Solo se desplaza si el ajuste elegido quedó fuera de la vista (incluye su título de grupo).
             LaunchedEffect(e.indice, e.estudioPestana) {
                 val pos = filas.indexOfFirst { it.first == e.indice }
-                if (pos >= 0) lista.animateScrollToItem((pos - 2).coerceAtLeast(0))
+                if (pos < 0) return@LaunchedEffect
+                val vistos = lista.layoutInfo.visibleItemsInfo
+                val primero = vistos.firstOrNull()?.index ?: 0
+                val ultimo = vistos.lastOrNull()?.index ?: 0
+                val conTitulo = if (pos > 0 && filas[pos - 1].first < 0) pos - 1 else pos
+                when {
+                    e.indice == 0 -> lista.animateScrollToItem(0)
+                    conTitulo < primero || (conTitulo == primero && (vistos.firstOrNull()?.offset ?: 0) < 0) -> lista.animateScrollToItem(conTitulo)
+                    pos >= ultimo -> lista.animateScrollToItem((conTitulo - 1).coerceAtLeast(0))
+                }
             }
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
                 items(filas.size) { k ->

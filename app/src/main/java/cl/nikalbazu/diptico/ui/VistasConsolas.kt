@@ -107,7 +107,7 @@ fun RielConsolas(e: Estado, modifier: Modifier = Modifier) {
     }
 }
 
-/** Las consolas en un arco que gira, como un dial. La elegida queda al centro, más grande. */
+/** Las consolas en un arco que gira, como un dial: la elegida al centro y más grande, las demás se curvan hacia atrás. */
 @Composable
 fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
     val p = LocalPaleta.current
@@ -116,51 +116,54 @@ fun RuedaConsolas(e: Estado, modifier: Modifier = Modifier) {
     val sel = e.pestanas.indexOf(e.consolaSel).coerceAtLeast(0)
     // La rueda gira con suavidad hacia la consola elegida (por el lado más corto).
     val objetivo = remember { floatArrayOf(sel.toFloat()) }
-    val salto = distancia(sel, objetivo[0], n)
-    objetivo[0] = objetivo[0] + salto
-    val pos by animateFloatAsState(objetivo[0], spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow), label = "rueda")
+    objetivo[0] = objetivo[0] + distancia(sel, objetivo[0], n)
+    val pos by animateFloatAsState(objetivo[0], spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow), label = "rueda")
+    val linea = p.linea
     BoxWithConstraints(
-        modifier.width(esc.d(132)).fillMaxHeight()
+        modifier.width(esc.d(150)).fillMaxHeight()
             .pointerInput(Unit) {
                 var acumulado = 0f
                 detectVerticalDragGestures(onDragEnd = { acumulado = 0f }) { cambio, d ->
                     cambio.consume()
                     acumulado += d
-                    val u = 46f * density
-                    if (abs(acumulado) > u) { Diptico.cambiarConsola(if (acumulado > 0) -1 else 1); acumulado = 0f }
+                    if (abs(acumulado) > 46f * density) { Diptico.cambiarConsola(if (acumulado > 0) -1 else 1); acumulado = 0f }
                 }
             },
     ) {
         val alto = maxHeight.value / esc.factor
-        val radio = alto * 0.62f
-        // Arco de fondo.
-        Box(
-            Modifier.offset(x = esc.d(-radio + 52f), y = esc.d(alto / 2f - radio)).size(esc.d(radio * 2f))
-                .border(esc.d(1.5f), p.linea, CircleShape),
-        )
+        val paso = (alto / 6.2f).coerceIn(44f, 62f)
+        fun x(off: Float) = 50f - 7.5f * off * off
+        fun y(off: Float) = alto / 2f + off * paso
+        // El arco por donde giran.
+        androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+            val u = size.height / alto
+            val camino = androidx.compose.ui.graphics.Path()
+            var k = -3.6f
+            camino.moveTo(x(k) * u, y(k) * u)
+            while (k < 3.6f) { k += 0.1f; camino.lineTo(x(k) * u, y(k) * u) }
+            drawPath(camino, linea, style = androidx.compose.ui.graphics.drawscope.Stroke(1.5f * u))
+        }
         for (k in 0 until n) {
             val off = distancia(k, pos.mod(n.toFloat()), n)
-            if (abs(off) > 3.6f) continue
-            val ang = off * 0.42f
-            val x = -radio + 52f + radio * cos(ang)
-            val y = alto / 2f + radio * sin(ang)
-            val cerca = (1f - abs(off) / 3.6f).coerceIn(0f, 1f)
-            val tam = 26f + 18f * (1f - abs(off).coerceAtMost(1f))
+            if (abs(off) > 3.4f) continue
+            val cerca = (1f - abs(off) / 3.4f).coerceIn(0f, 1f)
+            val tam = 24f + 18f * (1f - abs(off).coerceAtMost(1f))
             val id = e.pestanas[k]
+            val caja = tam + 12f
             Box(
-                Modifier.offset(x = esc.d(x - tam / 2f - 6f), y = esc.d(y - tam / 2f - 6f)).zIndex(cerca)
-                    .graphicsLayer { alpha = 0.25f + 0.75f * cerca }
-                    .size(esc.d(tam + 12f)).clip(CircleShape)
-                    .background(if (k == sel) colorConsola(id).copy(alpha = 0.28f) else p.superficie.copy(alpha = 0.5f))
+                Modifier.offset(x = esc.d(x(off) - caja / 2f), y = esc.d(y(off) - caja / 2f)).zIndex(cerca)
+                    .graphicsLayer { alpha = 0.3f + 0.7f * cerca }
+                    .size(esc.d(caja)).clip(CircleShape)
+                    .background(if (k == sel) colorConsola(id).copy(alpha = 0.3f) else p.superficie.copy(alpha = 0.6f))
                     .then(if (k == sel) Modifier.border(esc.d(2), Coral, CircleShape) else Modifier)
                     .clickable { Diptico.elegirConsola(id) },
                 contentAlignment = Alignment.Center,
-            ) { IconoConsola(Consolas.porId(id), tam * 0.78f, p.fondo2) }
+            ) { IconoConsola(Consolas.porId(id), tam * 0.74f, p.fondo2) }
         }
         // Nombre de la consola elegida, al lado de la rueda.
-        Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(76))) {
-            Texto(nombreConsola(e.consolaSel), 13f, lineas = 1)
-            Detalle("${cuantos(e, e.consolaSel)}", 11f, lineas = 1)
+        Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(84), end = esc.d(4))) {
+            Texto(nombreConsola(e.consolaSel), 14f, lineas = 1)
+            Detalle("${cuantos(e, e.consolaSel)} juegos", 11f, lineas = 1)
         }
     }
 }
@@ -175,7 +178,7 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
     val objetivo = remember { floatArrayOf(sel.toFloat()) }
     objetivo[0] = objetivo[0] + distancia(sel, objetivo[0], n)
     val pos by animateFloatAsState(objetivo[0], tween(380, easing = FastOutSlowInEasing), label = "sistemas")
-    Column(modifier) {
+    Column(modifier.background(Brush.radialGradient(listOf(colorConsola(e.consolaSel).copy(alpha = 0.22f), Color.Transparent)))) {
         BoxWithConstraints(
             Modifier.fillMaxWidth().weight(1f).pointerInput(Unit) {
                 var acumulado = 0f
@@ -199,10 +202,9 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
                 Box(
                     Modifier.zIndex(10f - abs(off))
                         .graphicsLayer {
-                            translationX = off * anchoCaja * 0.78f * esc.factor * density
-                            rotationY = (-off * 38f).coerceIn(-60f, 60f)
-                            cameraDistance = 14f * density
-                            val s = 1f - abs(off).coerceAtMost(2f) * 0.16f
+                            translationX = off * anchoCaja * 0.72f * esc.factor * density
+                            rotationY = (-off * 24f).coerceIn(-40f, 40f)
+                            val s = 1f - abs(off).coerceAtMost(2f) * 0.14f
                             scaleX = s; scaleY = s
                             alpha = 0.35f + 0.65f * cerca
                         }
@@ -259,7 +261,7 @@ fun CabeceraSistema(e: Estado) {
 
 /** En la otra pantalla, en modo Sistemas: la consola elegida en grande, con lo último que jugaste en ella. */
 @Composable
-fun VistaSistema(e: Estado) {
+fun VistaSistema(e: Estado, completa: Boolean = true) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val id = e.consolaSel
@@ -270,7 +272,7 @@ fun VistaSistema(e: Estado) {
     val ultimo = juegos.maxByOrNull { e.datos[it.clave]?.ultimo ?: 0L }?.takeIf { (e.datos[it.clave]?.ultimo ?: 0L) > 0 }
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(lerp(p.fondo, color, 0.35f), p.fondo, p.fondo)))) {
         // Un ícono gigante de la consola, de fondo.
-        Box(Modifier.align(Alignment.CenterEnd).padding(end = esc.d(30)).graphicsLayer { alpha = 0.16f; rotationZ = -8f }) {
+        if (completa) Box(Modifier.align(Alignment.CenterEnd).padding(end = esc.d(30)).graphicsLayer { alpha = 0.16f; rotationZ = -8f }) {
             IconoConsola(c, 300f, Color.Transparent)
         }
         BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 32f, trabajos = e.trabajos)
@@ -299,7 +301,7 @@ fun VistaSistema(e: Estado) {
                 }
             }
         }
-        Row(Modifier.align(Alignment.BottomStart).padding(start = esc.d(36), bottom = esc.d(22))) {
+        if (completa) Row(Modifier.align(Alignment.BottomStart).padding(start = esc.d(36), bottom = esc.d(22))) {
             Pistas("A" to "Entrar", "← →" to "Otra consola")
         }
     }
@@ -355,9 +357,8 @@ fun CarruselJuegos(e: Estado, modifier: Modifier = Modifier) {
                 Box(
                     Modifier.zIndex(10f - abs(off))
                         .graphicsLayer {
-                            translationX = (off.coerceIn(-1f, 1f) * base.ancho * escala * 0.62f + (off - off.coerceIn(-1f, 1f)) * base.ancho * escala * 0.3f) * esc.factor * density
-                            rotationY = -off.coerceIn(-1f, 1f) * 50f
-                            cameraDistance = 12f * density
+                            translationX = (off.coerceIn(-1f, 1f) * base.ancho * escala * 0.78f + (off - off.coerceIn(-1f, 1f)) * base.ancho * escala * 0.34f) * esc.factor * density
+                            rotationY = -off.coerceIn(-1f, 1f) * 42f
                             val s = if (abs(off) < 1f) 1f - abs(off) * 0.18f else 0.82f
                             scaleX = s; scaleY = s
                             alpha = if (abs(off) > 3.5f) 0f else 1f - (abs(off) - 1f).coerceAtLeast(0f) * 0.22f

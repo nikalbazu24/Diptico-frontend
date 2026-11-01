@@ -301,7 +301,7 @@ fun Continuacion(e: Estado) {
     val t = rememberEntrada().value
     val minutos = ((System.currentTimeMillis() - s.inicio) / 60_000).coerceAtLeast(0)
     val paso = e.datos[s.clave]?.paso.orEmpty()
-    Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = 0.96f)).clickable(interactionSource = null, indication = null) {
+    Box(Modifier.fillMaxSize().background(p.fondo).clickable(interactionSource = null, indication = null) {
         Diptico.actualizar { it.copy(continuacion = 0L) }
     }) {
         ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.22f * t })
