@@ -10,9 +10,9 @@ import android.view.MotionEvent
 /**
  * Traduce los botones y sticks del control a acciones de Díptico.
  *
- * Inicio: A juega (mantener = ventana del juego), Y ventana del juego, X ficha, B vuelve,
+ * Inicio: A juega (mantener = elegir la pantalla), Y ventana del juego, X ficha, B vuelve,
  * Select cambia inicio de carátulas/widgets (mantener = intercambiar pantallas), Start menú (mantener = centro de control),
- * L1/R1 consola, L2/R2 saltan de letra, L3 buscar, R3 cambia la vista. Stick izquierdo = cruceta, stick derecho = consola y desplazamiento.
+ * L1/R1 consola, L2/R2 saltan de letra, L3 buscar, R3 cambia la vista. Sticks: ver [accionStick] (se eligen en Ajustes › Controles).
  */
 object Teclas {
     private var aLargo = false
@@ -85,6 +85,57 @@ object Teclas {
             return true
         }
         if (e.bienvenida > 0L && e.bienvenidaBreve && arriba) Diptico.cerrarBienvenida()
+
+        // Tour de novedades: A o → sigue, ← vuelve, B o Start lo cierran.
+        if (e.novedades >= 0) {
+            if (abajo && ev.repeatCount == 0) when (code) {
+                KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverNovedades(-1)
+                KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverNovedades(1)
+            }
+            if (arriba) when {
+                esA(code) -> Diptico.moverNovedades(1)
+                esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.cerrarNovedades()
+            }
+            return true
+        }
+
+        // Marcar en el mapa: la cruceta mueve el pin (se puede mantener), A guarda, Y otra imagen, X quita el mapa, B cancela.
+        if (e.marcandoMapa != null) {
+            if (abajo) dir(code)?.let { (dx, dy) -> Diptico.moverPin(dx * 0.02f, dy * 0.02f) }
+            if (arriba) when {
+                esA(code) -> Diptico.guardarPin()
+                esB(code) -> Diptico.cerrarMapa()
+                code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.cambiarImagenMapa()
+                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.quitarMapa()
+            }
+            return true
+        }
+
+        // ¿Dónde quedaste?: ← → eligen la forma, A la usa (en la nota de voz, A otra vez termina), Y escucha la nota,
+        // X no vuelve a preguntar, B pasa de largo.
+        if (e.quedaste) {
+            if (abajo && ev.repeatCount == 0) dir(code)?.let { (dx, dy) -> Diptico.moverQuedaste(if (dx + dy < 0) -1 else 1) }
+            if (arriba) when {
+                esA(code) -> Diptico.elegirQuedaste()
+                esB(code) -> Diptico.cerrarQuedaste()
+                code == KeyEvent.KEYCODE_BUTTON_Y -> e.seleccionado?.let { Diptico.escucharNota(it.clave) }
+                code == KeyEvent.KEYCODE_BUTTON_X -> if (e.quedastePregunta) Diptico.noPreguntarQuedaste()
+            }
+            return true
+        }
+
+        // ¿En qué pantalla lo abro?: ↑ ↓ eligen, A abre, Y recuerda la pantalla para ese juego, X más opciones, B cancela.
+        if (e.donde != null) {
+            if (abajo && ev.repeatCount == 0) dir(code)?.let { (dx, dy) -> Diptico.moverDonde(if (dx + dy < 0) -1 else 1) }
+            if (arriba) when {
+                // El A que se soltó después de mantenerlo (lo que abrió esta ventana) no cuenta.
+                esA(code) -> if (aLargo) aLargo = false else Diptico.confirmarDonde()
+                esB(code) -> Diptico.cerrarDonde()
+                code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.alternarRecordarDonde()
+                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.confirmarDonde(2)
+            }
+            return true
+        }
 
         // Sonidos de navegación.
         if (e.sesion == null && e.panel != Panel.PASO && e.panel != Panel.CLAVE) {
@@ -305,8 +356,9 @@ object Teclas {
                 if (ev.repeatCount == 0) {
                     aLargo = false
                 } else if (!aLargo && !hayPanel && ev.eventTime - ev.downTime > 550) {
+                    // Mantener A: elegir en qué pantalla se abre (con una sola pantalla, la ventana del juego).
                     aLargo = true
-                    Diptico.abrirRapido()
+                    Diptico.elegirPantalla("juego")
                 }
                 return true
             }
@@ -439,12 +491,22 @@ object Teclas {
                 KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> if (ev.repeatCount == 0 && e.panel == Panel.BUSCAR) {
                     Diptico.cambiarOrden(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
                 }
-                else -> return esA(code) || esB(code) || code in botonesControl
+                else -> {
+                    // En las apps: mantener A elige en qué pantalla abrirla.
+                    if (esA(code) && e.panel == Panel.APPS) {
+                        if (ev.repeatCount == 0) aLargo = false
+                        else if (!aLargo && ev.eventTime - ev.downTime > 550) {
+                            Diptico.appsVisibles(e).getOrNull(e.indice)?.let { aLargo = true; Diptico.elegirPantalla("app:${it.paquete}") }
+                        }
+                    }
+                    return esA(code) || esB(code) || code in botonesControl
+                }
             }
             return true
         }
         if (arriba) {
             when {
+                esA(code) && aLargo -> aLargo = false
                 esA(code) -> Diptico.aceptar()
                 // Si el centro se abrió manteniendo Start, al soltarlo se queda abierto.
                 code == KeyEvent.KEYCODE_BUTTON_START && startLargo -> startLargo = false
@@ -606,8 +668,6 @@ object Teclas {
     // ---------- Sticks ----------
 
     private val manejador = Handler(Looper.getMainLooper())
-    private var dirIzq: Int? = null
-    private var dirDer: Int? = null
     private const val UMBRAL = 0.55f
 
     /** Convierte el stick en una dirección de cruceta (o null si está al centro). */
@@ -623,42 +683,78 @@ object Teclas {
         if (repeticion == 0) manejar(KeyEvent(t, t, KeyEvent.ACTION_UP, code, 0))
     }
 
-    private val repetirIzq = object : Runnable {
+    /** Un stick que repite su dirección mientras se mantiene (rápido después de las primeras veces). */
+    private class Repetir(val alMover: (Int, Boolean) -> Unit) : Runnable {
+        var dir: Int? = null
         var veces = 0
+        fun cambiar(d: Int?) {
+            if (d == dir) return
+            dir = d
+            manejador.removeCallbacks(this)
+            if (d != null) { veces = 0; alMover(d, false); manejador.postDelayed(this, 380) }
+        }
         override fun run() {
-            val d = dirIzq ?: return
+            val d = dir ?: return
             veces++
-            pulsar(d, 0)
+            alMover(d, true)
             manejador.postDelayed(this, if (veces < 3) 220 else 120)
         }
     }
 
+    private val stickIzq = Repetir { d, rep -> accionStick(true, d, rep) }
+    private val stickDer = Repetir { d, rep -> accionStick(false, d, rep) }
+
     /**
-     * Sticks analógicos: el izquierdo funciona como la cruceta (con repetición al mantenerlo),
-     * el derecho cambia de consola (← →) o desplaza (↑ ↓).
+     * Qué hace cada stick. Ajustes › Controles › Sticks:
+     * "dividido" (lo normal): el izquierdo elige juegos y el derecho recorre los widgets;
+     * "invertido": al revés; "clasico": el izquierdo es la cruceta y el derecho cambia de consola.
+     * En el editor de widgets, el stick de los widgets desliza la grilla (↑ ↓) y cambia de página (← →).
      */
+    private fun accionStick(izquierdo: Boolean, d: Int, repetido: Boolean) {
+        val e = Diptico.estado.value
+        val (dx, dy) = dir(d) ?: return
+        val modo = e.sticks
+        val deWidgets = when (modo) { "invertido" -> izquierdo; "clasico" -> false; else -> !izquierdo }
+        val deJuegos = when (modo) { "invertido" -> !izquierdo; "clasico" -> false; else -> izquierdo }
+        val libre = e.sesion == null && !e.conTeclado && e.configurado && !e.intro && e.bienvenida == 0L
+        // Editor de widgets: un stick desliza para ver todo, el otro elige como la cruceta.
+        if (libre && e.editandoWidgets && (e.panel == Panel.NINGUNO || e.panel == Panel.ESTUDIO) && e.burbuja == null) {
+            val desliza = if (modo == "clasico") !izquierdo else deWidgets
+            if (desliza) {
+                if (dy != 0) Diptico.desplazarInicio(dy) else if (!repetido) Diptico.cambiarPagina(dx)
+                return
+            }
+            if (e.panel == Panel.NINGUNO || e.estudioZona == "grilla") { pulsar(d, 0); return }
+        }
+        val enInicio = libre && e.inicio == "widgets" && e.panel == Panel.NINGUNO && !e.editandoWidgets && !e.ordenando &&
+            !(e.vistaConsolas == "sistemas" && e.enSistemas)
+        if (enInicio && deWidgets) {
+            if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
+            return
+        }
+        if (enInicio && deJuegos) {
+            if (e.widgetFoco >= 0) Diptico.salirWidgets()
+            val enGrilla = e.vista == "cuadricula" || e.vista == "lista"
+            Diptico.moverJuego(if (dy != 0) (if (enGrilla) dy * columnasEstante(e) else dy) else dx)
+            cl.nikalbazu.diptico.audio.Sonidos.mover()
+            return
+        }
+        // En todo lo demás: el izquierdo (o el de juegos) es la cruceta; el otro cambia de consola (← →) o desplaza (↑ ↓).
+        val comoCruceta = if (modo == "invertido") !izquierdo else izquierdo
+        if (comoCruceta) { pulsar(d, 0); return }
+        if (repetido) return
+        when (d) {
+            KeyEvent.KEYCODE_DPAD_LEFT -> pulsar(KeyEvent.KEYCODE_BUTTON_L1, 0)
+            KeyEvent.KEYCODE_DPAD_RIGHT -> pulsar(KeyEvent.KEYCODE_BUTTON_R1, 0)
+            else -> pulsar(d, 0)
+        }
+    }
+
+    /** Sticks analógicos (ver [accionStick]) y la cruceta de los controles que llega como "hat". */
     fun movimiento(ev: MotionEvent): Boolean {
         if (ev.source and InputDevice.SOURCE_JOYSTICK != InputDevice.SOURCE_JOYSTICK || ev.action != MotionEvent.ACTION_MOVE) return false
-        val izq = direccion(ev.getAxisValue(MotionEvent.AXIS_X), ev.getAxisValue(MotionEvent.AXIS_Y))
-        if (izq != dirIzq) {
-            dirIzq = izq
-            manejador.removeCallbacks(repetirIzq)
-            if (izq != null) {
-                repetirIzq.veces = 0
-                pulsar(izq, 0)
-                manejador.postDelayed(repetirIzq, 380)
-            }
-        }
-        val der = direccion(ev.getAxisValue(MotionEvent.AXIS_Z), ev.getAxisValue(MotionEvent.AXIS_RZ))
-        if (der != dirDer) {
-            dirDer = der
-            when (der) {
-                KeyEvent.KEYCODE_DPAD_LEFT -> pulsar(KeyEvent.KEYCODE_BUTTON_L1, 0)
-                KeyEvent.KEYCODE_DPAD_RIGHT -> pulsar(KeyEvent.KEYCODE_BUTTON_R1, 0)
-                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> pulsar(der, 0)
-            }
-        }
-        // La cruceta de algunos controles llega como "hat".
+        stickIzq.cambiar(direccion(ev.getAxisValue(MotionEvent.AXIS_X), ev.getAxisValue(MotionEvent.AXIS_Y)))
+        stickDer.cambiar(direccion(ev.getAxisValue(MotionEvent.AXIS_Z), ev.getAxisValue(MotionEvent.AXIS_RZ)))
         val hat = direccion(ev.getAxisValue(MotionEvent.AXIS_HAT_X), ev.getAxisValue(MotionEvent.AXIS_HAT_Y))
         if (hat != null && hat != dirHat) pulsar(hat, 0)
         dirHat = hat

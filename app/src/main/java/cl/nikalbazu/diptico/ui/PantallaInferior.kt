@@ -354,7 +354,7 @@ private fun EstanteDe(e: Estado, consola: String, alto: Float, escala: Float) {
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         // Mantener presionado abre la ventana del juego (personalizar, ficha, favoritos…).
-                        onLongClick = { Diptico.elegirJuego(j.clave); Diptico.abrirRapido() },
+                        onLongClick = { Diptico.elegirJuego(j.clave); Diptico.elegirPantalla("juego") },
                     ) { if (elegido) Diptico.jugar() else Diptico.elegirJuego(j.clave) },
                 ) {
                     Box(
@@ -414,6 +414,8 @@ private fun Dock(e: Estado) {
             ItemDock(Icono.BUSCAR, "Buscar", tecla = "L3") { Diptico.abrirBuscar() }
             ItemDock(Icono.VISTA, Diptico.nombreVista(e.vista), tecla = "R3") { Diptico.cambiarVista() }
             Spacer(Modifier.weight(1.15f))
+            // Turbo: tocar libera memoria ahora; mantener enciende o apaga el turbo al jugar.
+            ItemDock(Icono.CHISPA, "Turbo", if (e.turbo) Color(0xFFFF5252) else p.tenue, alMantener = { Diptico.alternarTurbo() }) { Diptico.turboAhora() }
             ItemDock(Icono.APPS, "Apps", Cielo) { Diptico.abrirApps() }
             ItemDock(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets", tecla = "Sel") { Diptico.alternarInicio() }
             ItemDock(Icono.MENU, "Menú", tecla = "Start") { Diptico.abrirMenu() }
@@ -433,11 +435,12 @@ private fun Dock(e: Estado) {
 }
 
 @Composable
-private fun RowScope.ItemDock(icono: Icono, texto: String, color: Color = LocalPaleta.current.tinta, tecla: String? = null, accion: () -> Unit) {
+private fun RowScope.ItemDock(icono: Icono, texto: String, color: Color = LocalPaleta.current.tinta, tecla: String? = null, alMantener: (() -> Unit)? = null, accion: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Column(
-        Modifier.weight(1f).fillMaxHeight().padding(vertical = esc.d(4)).clip(RoundedCornerShape(esc.d(14))).clickable { accion() },
+        Modifier.weight(1f).fillMaxHeight().padding(vertical = esc.d(4)).clip(RoundedCornerShape(esc.d(14)))
+            .combinedClickable(onLongClick = alMantener) { accion() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

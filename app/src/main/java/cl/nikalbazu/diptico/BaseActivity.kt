@@ -53,6 +53,7 @@ abstract class BaseActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Diptico.iniciar(this)
+        if (intent?.getBooleanExtra("actualizar", false) == true) Diptico.abrirActualizacion()
         // Los botones de volumen controlan la música (también la de Díptico).
         volumeControlStream = AudioManager.STREAM_MUSIC
         pantallaCompleta()
@@ -77,6 +78,9 @@ abstract class BaseActivity : ComponentActivity() {
             } catch (e: Exception) {
                 Diptico.avisar("No pude abrir el selector de archivos")
             }
+        }
+        Diptico.pedirMicrofono = {
+            try { requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 53) } catch (_: Exception) {}
         }
         Diptico.pedirSerInicio = {
             val pedido = cl.nikalbazu.diptico.estado.Inicio.pedido(this)
@@ -156,6 +160,7 @@ abstract class BaseActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         if (intent.hasCategory(android.content.Intent.CATEGORY_HOME)) Diptico.alInicio()
+        if (intent.getBooleanExtra("actualizar", false)) Diptico.abrirActualizacion()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

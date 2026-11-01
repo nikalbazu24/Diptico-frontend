@@ -9,6 +9,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -53,6 +54,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.blur
 import androidx.compose.runtime.LaunchedEffect
@@ -107,7 +110,8 @@ fun PantallaInicio(e: Estado) {
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.45f), p.fondo.copy(alpha = 0.92f)))))
         }
-        Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
+        // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
+        if (p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 20f, trabajos = e.trabajos)
 
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(48), bottom = esc.d(8))) {
@@ -141,8 +145,8 @@ fun PantallaInicio(e: Estado) {
             if (e.editandoWidgets) {
                 Spacer(Modifier.height(esc.d(2)))
                 Detalle(
-                    if (e.unaPantalla) "Arrastra los widgets con el dedo · todo lo demás en el estudio de la derecha"
-                    else "Arrastra los widgets con el dedo · todo lo demás en el estudio, en la otra pantalla",
+                    if (e.unaPantalla) "Cruceta o dedo para elegir y mover · mantén A o el dedo para agregar · R1 opciones"
+                    else "Cruceta o dedo para elegir y mover · mantén A o el dedo para agregar · opciones en la otra pantalla",
                     12f, lineas = 1,
                 )
             }
@@ -176,7 +180,7 @@ private fun Grilla(e: Estado, pagina: Int, modifier0: Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     // Margen de seguridad: el marco y el agrandado del widget elegido siempre se ven completos.
-    val modifier = modifier0.padding(esc.d(8))
+    val modifier = modifier0.padding(esc.d(MARGEN_GRILLA))
     val densidad = LocalDensity.current
     // Con más de 4 filas, la página se desplaza hacia abajo.
     val desplazar = rememberScrollState()
@@ -189,8 +193,26 @@ private fun Grilla(e: Estado, pagina: Int, modifier0: Modifier) {
         val celdaAl = (altoU - hueco * (visibles - 1)) / visibles
         val pasoX = with(densidad) { esc.d(celdaAn + hueco).toPx() }
         val pasoY = with(densidad) { esc.d(celdaAl + hueco).toPx() }
+        // El stick (en el editor) desliza la grilla; y al elegir un widget con la cruceta, la grilla lo sigue para que se vea entero.
+        if (pagina == e.paginaInicio) {
+            LaunchedEffect(pasoY) {
+                Diptico.desplazamientos.collect { d -> desplazar.animateScrollBy(d * pasoY, spring(dampingRatio = 0.9f, stiffness = 500f)) }
+            }
+            val sel = if (e.editandoWidgets) e.widgetSel else e.widgetFoco
+            val ws = e.widgets.getOrNull(sel)
+            val altoVista = with(densidad) { maxHeight.toPx() }
+            LaunchedEffect(sel, ws?.y, ws?.al, pasoY) {
+                if (ws == null || ws.pagina != pagina) return@LaunchedEffect
+                val arriba = ws.y * pasoY
+                val abajo = (ws.y + ws.al) * pasoY
+                when {
+                    arriba < desplazar.value -> desplazar.animateScrollTo(arriba.toInt())
+                    abajo > desplazar.value + altoVista -> desplazar.animateScrollTo((abajo - altoVista).toInt().coerceAtLeast(0))
+                }
+            }
+        }
         Box(
-            Modifier.fillMaxSize().verticalScroll(desplazar, enabled = Widgets.FILAS > 4 && !e.editandoWidgets)
+            Modifier.fillMaxSize().verticalScroll(desplazar, enabled = Widgets.FILAS > 4)
                 // Mantener apretado: fuera del editor entra a acomodar; dentro, abre la burbuja para agregar ahí.
                 .pointerInput(e.editandoWidgets, pasoX, pasoY) {
                     if (!e.editandoWidgets) detectTapGestures(onLongPress = { Diptico.editarWidgets() })
@@ -224,7 +246,13 @@ private fun Grilla(e: Estado, pagina: Int, modifier0: Modifier) {
                 val y by animateDpAsState(esc.d(w.y * (celdaAl + hueco)), spring(dampingRatio = 0.75f, stiffness = 500f), label = "y")
                 val an by animateDpAsState(esc.d(w.an * celdaAn + (w.an - 1) * hueco), spring(dampingRatio = 0.8f), label = "an")
                 val al by animateDpAsState(esc.d(w.al * celdaAl + (w.al - 1) * hueco), spring(dampingRatio = 0.8f), label = "al")
-                val tam by animateFloatAsState(if (elegido) 1.03f else if (enfocado) 1.045f else 1f, spring(dampingRatio = 0.5f), label = "tam")
+                // Se agranda un poco al elegirlo, pero nunca más de 4 dp por lado: así el marco cabe siempre en el margen,
+                // sea un widget chico o uno que ocupa toda la pantalla.
+                val lado = maxOf(w.an * celdaAn + (w.an - 1) * hueco, w.al * celdaAl + (w.al - 1) * hueco)
+                val crecer = minOf(if (elegido) 0.03f else 0.045f, 8f / lado)
+                val tam by animateFloatAsState(if (elegido || enfocado) 1f + crecer else 1f, spring(dampingRatio = 0.5f), label = "tam")
+                // El temblor del modo edición también se achica en los widgets grandes (sus esquinas no se salen).
+                val giro = minOf(0.8f, 170f / lado)
                 // En modo edición los widgets tiemblan un poquito (cada uno a su ritmo), como en los teléfonos.
                 val tiemble = if (e.editandoWidgets) {
                     val t = rememberInfiniteTransition(label = "tiemble")
@@ -235,15 +263,16 @@ private fun Grilla(e: Estado, pagina: Int, modifier0: Modifier) {
                         .zIndex(if (elegido || enfocado) 2f else 1f)
                         .graphicsLayer {
                             translationX = arrastre.x; translationY = arrastre.y; scaleX = tam; scaleY = tam
-                            rotationZ = if (elegido) tiemble * 0.4f else tiemble * 0.8f
+                            rotationZ = if (elegido) tiemble * giro * 0.5f else tiemble * giro
                         }
                         .then(if (elegido) Modifier.border(esc.d(3), if (e.estudioMover) Coral else Uva, RoundedCornerShape(esc.d((w.radio + 2).toFloat()))) else Modifier)
                         .then(
-                            if (enfocado) Modifier.shadow(esc.d(18), RoundedCornerShape(esc.d(w.radio.toFloat())), ambientColor = Uva, spotColor = Uva)
-                                .border(esc.d(3), if (p == PaletaOscura) Color.White else Uva, RoundedCornerShape(esc.d((w.radio + 2).toFloat())))
+                            if (enfocado) Modifier.anilloFoco(w.radio.toFloat(), if (p.fondo.luminance() < 0.4f) Color.White else Uva)
                             else Modifier,
                         ),
                 ) {
+                    // El enfocado lleva un fondo sólido detrás: así nada de lo de atrás se transparenta.
+                    if (enfocado && !w.tipo.startsWith("imagen")) Box(Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(w.radio.toFloat()))).background(p.fondo))
                     // Cada widget puede agrandar o achicar su contenido (Tamaño del contenido).
                     // El contenido crece un poco cuando el widget es más grande que su tamaño de siempre.
                     val auto = remember(w.tipo, w.an, w.al) { escalaAuto(w) }
@@ -311,6 +340,24 @@ private fun Grilla(e: Estado, pagina: Int, modifier0: Modifier) {
             BurbujaAgregar(e, b, celdaAn, celdaAl, hueco, anchoU, altoU)
         }
     }
+}
+
+/** Aire alrededor de la grilla de widgets: el aro del marco (6,5 dp) y el agrandado (4 dp) siempre caben. */
+private const val MARGEN_GRILLA = 12f
+
+/** Marco del widget enfocado: una línea firme y un aro suave por fuera (sin sombras ni degradados, que en algunas pantallas se ven punteados). */
+@Composable
+private fun Modifier.anilloFoco(radio: Float, color: Color): Modifier {
+    val esc = LocalEscala.current
+    return this.drawBehind {
+        val fuera = esc.d(5).toPx()
+        val r = esc.d(radio + 2).toPx()
+        drawRoundRect(
+            color.copy(alpha = 0.28f), topLeft = androidx.compose.ui.geometry.Offset(-fuera, -fuera),
+            size = androidx.compose.ui.geometry.Size(size.width + fuera * 2, size.height + fuera * 2),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(r + fuera), style = androidx.compose.ui.graphics.drawscope.Stroke(esc.d(3).toPx()),
+        )
+    }.border(esc.d(3), color, RoundedCornerShape(esc.d(radio + 2)))
 }
 
 /** La burbuja de "agregar": un globo que crece desde la celda tocada, con burbujas de cada widget disponible. */
@@ -670,7 +717,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
             }
         }
-        "asistente" -> WidgetBisa(e, compacto, al)
+        "asistente" -> WidgetBisa(e, compacto, al, an)
         "apps" -> Tarjeta { WidgetApps(e, an) }
         "accesos" -> Tarjeta {
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
@@ -941,7 +988,7 @@ private fun WidgetCompacto(e: Estado, tipo: String) {
 }
 
 /** Una frase distinta cada día para el widget de saludo. */
-private fun fraseDelDia(e: Estado): String {
+internal fun fraseDelDia(e: Estado): String {
     val frases = listOf(
         "Hoy es un buen día para terminar ese juego pendiente.",
         "Un nivel más y paras. (Seguro que no.)",
@@ -964,13 +1011,24 @@ private fun fraseDelDia(e: Estado): String {
 
 /** Un widget con tu propia imagen o GIF animado. */
 @Composable
-private fun WidgetImagen(w: cl.nikalbazu.diptico.estado.Widget) {
+internal fun WidgetImagen(w: cl.nikalbazu.diptico.estado.Widget) {
     val esc = LocalEscala.current
-    // Sin fondo: los PNG y GIF con transparencia se ven tal cual. La imagen se ajusta entera al tamaño del widget.
+    // Sin fondo (siempre, salvo que elijas "Color", "Vidrio" o "Contorno" en el estudio): los PNG y GIF con transparencia
+    // flotan sobre el inicio, sin tarjeta detrás. La imagen se ajusta entera al tamaño del widget.
     val forma = RoundedCornerShape(esc.d(w.radio.toFloat()))
+    val conFondo = w.estilo == "solido" || w.estilo == "vidrio" || w.estilo == "contorno"
+    val propio = w.color.takeIf { it != 0L }?.let { Color(it) } ?: Uva
     Box(
-        Modifier.fillMaxSize().clip(forma)
-            .then(if (w.estilo == "sinfondo") Modifier else Modifier.background(LocalPaleta.current.superficie.copy(alpha = 0.6f * w.opacidad)))
+        Modifier.fillMaxSize()
+            .then(if (conFondo || w.variante == 1) Modifier.clip(forma) else Modifier)
+            .then(
+                when (w.estilo) {
+                    "solido" -> Modifier.background(propio.copy(alpha = 0.8f * w.opacidad))
+                    "vidrio" -> Modifier.background(Color.White.copy(alpha = 0.14f * w.opacidad)).border(esc.d(1.2f), Color.White.copy(alpha = 0.22f), forma)
+                    "contorno" -> Modifier.border(esc.d(2), propio.copy(alpha = 0.8f), forma)
+                    else -> Modifier
+                },
+            )
             .combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = { Diptico.editarWidgets() }),
     ) {
         w.uri?.let { ImagenAnimada(android.net.Uri.parse(it), Modifier.fillMaxSize(), recortar = w.variante == 1) }
@@ -982,7 +1040,7 @@ private fun WidgetImagen(w: cl.nikalbazu.diptico.estado.Widget) {
  * (no recarga la interfaz) y se pausa solo mientras juegas o cuando no se ve.
  */
 @Composable
-private fun WidgetVideo(w: cl.nikalbazu.diptico.estado.Widget, activo: Boolean) {
+internal fun WidgetVideo(w: cl.nikalbazu.diptico.estado.Widget, activo: Boolean) {
     val esc = LocalEscala.current
     val uri = w.uri ?: return
     val forma = RoundedCornerShape(esc.d(w.radio.toFloat()))
@@ -1124,7 +1182,7 @@ private fun FilaCuenta(icono: Icono, titulo: String, valor: String, color: Color
 
 /** Bisa con identidad propia: su morado de siempre, su cara, una burbuja que cambia y accesos directos. */
 @Composable
-private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int) {
+private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
     val esc = LocalEscala.current
     val w = LocalWidget.current
     val forma = RoundedCornerShape(esc.d((w?.radio ?: 22).toFloat()))
@@ -1168,7 +1226,8 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int) {
                     Spacer(Modifier.height(esc.d(7)))
                     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
                         ChipBisa("Hablar") { Diptico.abrirAsistente() }
-                        if (j != null) ChipBisa("Un truco") { Diptico.abrirAsistente(); Diptico.preguntar("Dame un buen truco o consejo para ${j.titulo}.") }
+                        // En widgets angostos caben dos accesos; en los anchos, tres.
+                        if (j != null && an >= 4) ChipBisa("Un truco") { Diptico.abrirAsistente(); Diptico.preguntar("Dame un buen truco o consejo para ${j.titulo}.") }
                         ChipBisa("¿Qué juego?") { Diptico.abrirAsistente(); Diptico.preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") }
                     }
                 }
@@ -1297,7 +1356,9 @@ fun LecturaWidget(e: Estado) {
             }
             return@Box
         }
-        Box(Modifier.align(Alignment.TopEnd).size(esc.d(480)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.22f), Color.Transparent))))
+        if (p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(480)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.22f), Color.Transparent))))
+        // Los widgets con diseño propio en grande (tiempo, colección, batería, música, frase, fiestas, logros, imágenes…).
+        if (w.tipo != "reloj" && w.tipo != "asistente" && LecturaGrande(e, w, opcion)) return@Box
         Box(Modifier.fillMaxSize().padding(esc.d(28)), contentAlignment = Alignment.Center) {
             when (w.tipo) {
                 "reloj" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1318,6 +1379,52 @@ fun LecturaWidget(e: Estado) {
                     Box(Modifier.size(esc.d(4 * 92f * k / 2), esc.d(3 * 80f * k / 2))) {
                         CompositionLocalProvider(LocalWidget provides w.copy(an = 4, al = 3)) {
                             if (w.tipo.startsWith("imagen")) WidgetImagen(w) else WidgetVista(e, w.tipo, 4, 3)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Muestrario para revisar el diseño: todos los widgets con el mismo tamaño ([an] × [al] celdas), uno al lado del otro,
+ * con el tamaño de celda real de la pantalla de arriba. Solo lo usan las capturas de prueba.
+ */
+@Composable
+internal fun MuestrarioWidgets(e: Estado, an: Int, al: Int, foco: Int = -1) {
+    // La misma escala de la pantalla de arriba de la Thor (411 dp de alto), aunque la foto sea más grande.
+    val e0 = LocalEscala.current
+    CompositionLocalProvider(LocalEscala provides Escala(411f / ALTO_DISENO, e0.ancho, e0.texto)) { MuestrarioWidgets0(e, an, al, foco) }
+}
+
+@Composable
+private fun MuestrarioWidgets0(e: Estado, an: Int, al: Int, foco: Int) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val hueco = e.huecoInicio.toFloat()
+    val celdaAn = 102f
+    val celdaAl = 63f
+    val ancho = an * celdaAn + (an - 1) * hueco
+    val alto = al * celdaAl + (al - 1) * hueco
+    val tipos = Widgets.porDefecto.map { it.tipo } + listOf("imagen1")
+    BoxWithConstraints(Modifier.fillMaxSize().background(p.fondo).padding(esc.d(16))) {
+        val porFila = ((maxWidth.value / esc.factor + 18f) / (ancho + 18f)).toInt().coerceAtLeast(1)
+        Column(verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
+            Texto("Widgets de $an × $al", 18f, lineas = 1, traducir = false)
+            tipos.chunked(porFila).forEachIndexed { f, fila ->
+                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(18))) {
+                    fila.forEachIndexed { c, tipo ->
+                        val k = f * porFila + c
+                        val w = (Widgets.porDefecto.firstOrNull { it.tipo == tipo } ?: Widget(tipo, 0, 0, an, al)).copy(an = an, al = al, visible = true)
+                        Column {
+                            Detalle(tipo, 10f, lineas = 1)
+                            Box(Modifier.size(esc.d(ancho), esc.d(alto)).then(if (k == foco) Modifier.anilloFoco(w.radio.toFloat(), if (p.fondo.luminance() < 0.4f) Color.White else Uva) else Modifier)) {
+                                val auto = remember(w.tipo, w.an, w.al) { escalaAuto(w) }
+                                CompositionLocalProvider(LocalWidget provides w, LocalEscala provides Escala(esc.factor * w.escala * auto, esc.ancho, esc.texto)) {
+                                    ContenidoWidget(e, w, an, al)
+                                }
+                            }
                         }
                     }
                 }

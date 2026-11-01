@@ -13,6 +13,10 @@
     <!-- Modo turbo: dormir apps de fondo antes de jugar y "No molestar" mientras juegas -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- Actualizaciones desde la misma app (Android pide confirmar cada instalación) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Notas de voz: "¿dónde quedaste?" dicho en voz alta -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- Para encontrar los emuladores, ports y juegos de Android instalados (Díptico es un launcher) -->
     <uses-permission
@@ -142,6 +146,11 @@
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Respuesta de Android al instalar una actualización descargada desde Díptico. -->
+        <receiver
+            android:name=".estado.ReceptorInstalacion"
+            android:exported="false" />
 
         <!-- Para el widget de música: ver y controlar lo que suena en Spotify, YouTube Music, etc. -->
         <service

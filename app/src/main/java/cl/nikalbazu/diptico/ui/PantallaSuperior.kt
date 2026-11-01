@@ -39,6 +39,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -217,15 +220,36 @@ fun RecordatorioWidgets(e: Estado, modifier: Modifier = Modifier) {
 fun Heroe(juego: Juego, ancho: Float) {
     // Un acercamiento lento y suave sobre el arte (se apaga en modo ahorro).
     val zoom = zoomLento(true, 1.06f, 14000)
+    val (porJuego, todos) = LocalHeroes.current
     Crossfade(targetState = juego, animationSpec = tween(650), label = "arte", modifier = Modifier.fillMaxSize()) { j ->
         Box(Modifier.fillMaxSize()) {
-            ArteJuego(
-                j, preferirArte = true, maxLado = 1600,
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho).graphicsLayer { scaleX = zoom; scaleY = zoom },
-            )
+            val tipo = porJuego[j.clave] ?: todos
+            if (tipo == "portada" && j.portada != null) {
+                // La portada entera (sin recortarla), sobre ella misma difuminada para llenar el espacio.
+                Box(Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho)) {
+                    ArteJuego(
+                        j, preferirArte = false, maxLado = 500,
+                        modifier = Modifier.fillMaxSize().then(if (Estilo.efectosCompletos) Modifier.blur(36.dp) else Modifier).graphicsLayer { alpha = 0.55f; scaleX = 1.15f; scaleY = 1.15f },
+                    )
+                    ArteJuego(
+                        j, preferirArte = false, maxLado = 1100,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = LocalEscala.current.d(40), top = LocalEscala.current.d(54), bottom = LocalEscala.current.d(30))
+                            .fillMaxHeight().aspectRatio(0.72f).graphicsLayer { scaleX = zoom; scaleY = zoom }
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(LocalEscala.current.d(14))),
+                    )
+                }
+            } else {
+                ArteJuego(
+                    j, preferirArte = true, maxLado = 1600,
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho).graphicsLayer { scaleX = zoom; scaleY = zoom },
+                )
+            }
         }
     }
 }
+
+/** Qué imagen va en grande en el inicio: la elegida por juego y la de todos ("arte" o "portada"). */
+val LocalHeroes = androidx.compose.runtime.staticCompositionLocalOf { emptyMap<String, String>() to "arte" }
 
 /** Un botón con la tecla del control que lo hace: se toca o se aprieta. */
 @Composable

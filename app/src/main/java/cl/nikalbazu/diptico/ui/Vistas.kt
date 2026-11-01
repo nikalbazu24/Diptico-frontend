@@ -83,7 +83,7 @@ private fun Celda(j: Juego, elegido: Boolean, anchoCelda: Float, altoCelda: Floa
     Column(
         Modifier.width(esc.d(anchoCelda)).combinedClickable(
             interactionSource = null, indication = null,
-            onLongClick = { Diptico.elegirJuego(j.clave); Diptico.abrirRapido() },
+            onLongClick = { Diptico.elegirJuego(j.clave); Diptico.elegirPantalla("juego") },
         ) { alElegir() },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -162,7 +162,7 @@ fun ListaJuegos(e: Estado, modifier: Modifier = Modifier) {
                     Modifier.fillMaxWidth().height(esc.d(58f * t)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
                         .combinedClickable(
                             interactionSource = null, indication = null,
-                            onLongClick = { Diptico.elegirJuego(j.clave); Diptico.abrirRapido() },
+                            onLongClick = { Diptico.elegirJuego(j.clave); Diptico.elegirPantalla("juego") },
                         ) { if (elegido) Diptico.jugar() else Diptico.elegirJuego(j.clave) }
                         .padding(horizontal = esc.d(8)),
                     verticalAlignment = Alignment.CenterVertically,

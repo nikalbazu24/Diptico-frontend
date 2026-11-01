@@ -126,7 +126,7 @@ fun PanelApps(e: Estado) {
                     verticalArrangement = Arrangement.spacedBy(esc.d(8)), horizontalArrangement = Arrangement.spacedBy(esc.d(6)),
                 ) {
                     itemsIndexed(apps, key = { _, a -> a.paquete }) { i, a ->
-                        CeldaApp(a, i == e.indice, a.paquete in e.appsFijadas, onLongClick = { Diptico.alternarFijada(a.paquete) }) {
+                        CeldaApp(a, i == e.indice, a.paquete in e.appsFijadas, onLongClick = { Diptico.elegirPantalla("app:${a.paquete}") }) {
                             if (i == e.indice) Diptico.abrirPaquete(a.paquete) else Diptico.elegirIndice(i)
                         }
                     }

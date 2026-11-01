@@ -73,7 +73,7 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.", "Consola"),
     SOBREMESA("Sobremesa", Icono.VISTA, "Cuando conectas la consola a la tele: una sola pantalla, todo más grande, margen para que nada se corte y más."),
     RENDIMIENTO("Rendimiento", Icono.CHISPA, "Modo turbo al jugar: libera memoria cerrando apps de fondo, pone a Díptico en reposo y, si quieres, activa No molestar."),
-    CONTROLES("Botones extra", Icono.MANDO, "Dale uso a los botones de atrás (L4 y R4 de la Odin 2 y otras): Bisa, apps, música, un juego al azar…"),
+    CONTROLES("Controles", Icono.MANDO, "Qué hace cada stick y los botones de atrás (L4 y R4 de la Odin 2 y otras): Bisa, apps, música, un juego al azar…"),
     CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
@@ -413,6 +413,37 @@ data class Estado(
     val turboNoMolestar: Boolean = false,
     val turboReposo: Boolean = true,
     val turboUltimo: String = "",
+    /** Sticks: "dividido" (izquierdo juegos, derecho widgets), "invertido" o "clasico" (izquierdo = cruceta). */
+    val sticks: String = "dividido",
+    /** ¿En qué pantalla lo abro?: "juego" o "app:paquete" mientras se elige; la opción marcada y si se recuerda. */
+    val donde: String? = null,
+    val dondeSel: Int = 0,
+    val dondeRecordar: Boolean = false,
+    /** Tour de novedades de esta versión: la página que se ve (-1 = cerrado). */
+    val novedades: Int = -1,
+    /** Actualizaciones: la versión nueva encontrada, el avance de la descarga (-1 = sin descargar) y si se buscan solas. */
+    val actualizacion: VersionNueva? = null,
+    val descargaAct: Float = -1f,
+    val actualizarSolo: Boolean = true,
+    val buscandoAct: Boolean = false,
+    /** "¿Dónde quedaste?" al terminar de jugar: si se pregunta, la tarjeta abierta, la opción marcada y si se está grabando (desde cuándo). */
+    val preguntarQuedaste: Boolean = true,
+    val quedaste: Boolean = false,
+    val quedastePregunta: Boolean = false,
+    val quedasteSel: Int = 0,
+    val grabando: Long = 0L,
+    /** Mapas de los juegos (una imagen y dónde quedaste) y el que se está marcando. */
+    val mapas: Map<String, MapaJuego> = emptyMap(),
+    val marcandoMapa: String? = null,
+    val pinX: Float = 0.5f,
+    val pinY: Float = 0.5f,
+    /** Para que la continuación sepa qué notas de voz existen sin leer el disco a cada rato. */
+    val notasVoz: Set<String> = emptySet(),
+    /** Qué imagen del juego se ve en grande en el inicio: "arte" (imagen grande) o "portada"; y la elegida por juego. */
+    val imagenHeroe: String = "arte",
+    val heroes: Map<String, String> = emptyMap(),
+    /** En la consola "Todo": todas las cajas con la misma forma ("poster", "cuadrada") o cada consola la suya ("propia"). */
+    val formaTodos: String = "poster",
     /** El widget abierto (su contenido) en Panel.WIDGET. */
     val widgetAbierto: Int = -1,
     /** Reloj: temporizador (cuándo termina y cuánto dura), cronómetro y cada cuánto recordar una pausa al jugar. */
@@ -655,6 +686,14 @@ object Diptico {
             turboCerrarApps = almacen.bool("turboCerrarApps", true),
             turboNoMolestar = almacen.bool("turboNoMolestar", false),
             turboReposo = almacen.bool("turboReposo", true),
+            sticks = almacen.texto("sticks", "dividido"),
+            preguntarQuedaste = almacen.bool("preguntarQuedaste", true),
+            mapas = leerMapas(almacen.texto("mapas", "{}")),
+            notasVoz = leerNotasVoz(),
+            imagenHeroe = almacen.texto("imagenHeroe", "arte"),
+            heroes = leerMapa(almacen.texto("heroes", "{}")),
+            formaTodos = almacen.texto("formaTodos", "poster"),
+            actualizarSolo = almacen.bool("actualizarSolo", true),
             sobremesaModo = almacen.texto("sobremesaModo", "auto"),
             sobremesaTam = almacen.texto("sobremesaTam", "1.2").toFloatOrNull() ?: 1.2f,
             sobremesaMargen = almacen.texto("sobremesaMargen", "3").toIntOrNull() ?: 3,
@@ -700,6 +739,10 @@ object Diptico {
         vigilarTele()
         vigilarReposo()
         vigilarBateria()
+        vigilarActualizaciones()
+        // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
+        if (!estado.value.configurado) almacen.guardarTexto("novedadesVistas", Novedades.ID)
+        else if (almacen.texto("novedadesVistas") != Novedades.ID) actualizar { it.copy(novedades = 0) }
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
             Avisos.nuevos.collect { a ->
@@ -724,7 +767,8 @@ object Diptico {
                     e.configurado && e.musicaTema && e.pista != "mia" -> e.pistaTema
                     else -> e.pista
                 }
-                listOf(e.listo && e.musica && e.aLaVista > 0 && e.sesion == null, pista, e.volumen, e.carpetaMusica)
+                // Se calla mientras grabas una nota de voz o escuchas una.
+                listOf(e.listo && e.musica && e.aLaVista > 0 && e.sesion == null && e.grabando == 0L, pista, e.volumen, e.carpetaMusica)
             }.distinctUntilChanged().collect { (sonar, pista, vol, carpetaM) ->
                 Musica.sincronizar(sonar as Boolean, pista as String, vol as Float, carpetaM as Uri?)
             }
@@ -1462,7 +1506,26 @@ object Diptico {
     /** Un elemento de una galería. [color] es la muestra (en colores) y [tema] la vista previa (en temas). */
     data class ItemGaleria(val id: String, val nombre: String, val detalle: String, val enUso: Boolean, val tema: Tema? = null, val color: Long = 0L, val accion: () -> Unit)
 
+    /** De dónde se abrió una galería o un cuadro de texto: al volver (B) se regresa justo ahí, no a otra sección. */
+    private data class Regreso(val panel: Panel, val seccion: Seccion, val enOpciones: Boolean, val indice: Int, val fichaPestana: Int)
+    private var galeriaDesde: Regreso? = null
+    private var claveDesde: Regreso? = null
+
+    private fun regresoActual(): Regreso? {
+        val e = estado.value
+        return if (e.panel == Panel.NINGUNO || e.panel == Panel.GALERIA || e.panel == Panel.CLAVE) null
+        else Regreso(e.panel, e.seccion, e.enOpciones, e.indice, e.pestanaFicha)
+    }
+
+    /** Vuelve a [r]: true si había a dónde volver. */
+    private fun volverA(r: Regreso?): Boolean {
+        if (r == null) return false
+        actualizar { it.copy(panel = r.panel, seccion = r.seccion, enOpciones = r.enOpciones, indice = r.indice, pestanaFicha = r.fichaPestana) }
+        return true
+    }
+
     fun abrirGaleria(tipo: String) {
+        if (estado.value.panel != Panel.GALERIA) galeriaDesde = regresoActual()
         actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = 0, indice = 0) }
         val i = itemsGaleria().indexOfFirst { it.enUso }
         if (i > 0) actualizar { it.copy(indice = i) }
@@ -1608,21 +1671,17 @@ object Diptico {
             sesiones = d.sesiones + if (duracion >= 15) 1 else 0,
         )
         almacen.guardarDatos(datos)
-        val hacerPregunta = preguntar && duracion >= 60
+        // ¿Dónde quedaste?: una tarjeta con formas rápidas de anotarlo (escribir, nota de voz, mapa) o pasar de largo.
+        val hacerPregunta = preguntar && duracion >= 60 && estado.value.preguntarQuedaste
         actualizar {
             it.copy(
                 sesion = null,
                 despierta = false,
                 datos = datos,
                 juegoSel = s.clave,
-                panel = if (hacerPregunta) Panel.PASO else it.panel,
-                borrador = if (hacerPregunta) d.paso else it.borrador,
-                pregunta = hacerPregunta,
-                teclaFila = if (hacerPregunta) 2 else it.teclaFila,
-                cursor = if (hacerPregunta) -1 else it.cursor,
-                ancla = if (hacerPregunta) null else it.ancla,
-                teclaCol = if (hacerPregunta) 0 else it.teclaCol,
-                mayus = if (hacerPregunta) d.paso.isEmpty() else it.mayus,
+                quedaste = hacerPregunta || it.quedaste,
+                quedastePregunta = hacerPregunta,
+                quedasteSel = 0,
             )
         }
     }
@@ -1730,6 +1789,7 @@ object Diptico {
 
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave", "ia_pedido", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
+        if (estado.value.panel != Panel.CLAVE) claveDesde = regresoActual()
         actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_")) }
         // Para las claves: el teléfono puede mandarla directo (QR con la página de la consola en tu Wi-Fi).
         val oficial = urlClave(para)
@@ -1790,6 +1850,7 @@ object Diptico {
             return
         }
         if (e.panel == Panel.CLAVE && e.configurado) {
+            if (volverA(claveDesde.also { claveDesde = null })) return
             val s = when {
                 e.textoPara.startsWith("ra_") -> Seccion.LOGROS
                 e.textoPara == "nombre" -> Seccion.INICIO
@@ -1823,6 +1884,8 @@ object Diptico {
             return
         }
         if (e.panel == Panel.GALERIA) {
+            // Se vuelve a donde se abrió (la ficha del juego, la ventana, la consola o la misma sección del menú).
+            if (volverA(galeriaDesde.also { galeriaDesde = null })) return
             val sec = when (e.galeria) { "musica" -> Seccion.MUSICA; "ia" -> Seccion.ASISTENTE; else -> Seccion.TEMAS }
             actualizar { it.copy(panel = Panel.MENU, seccion = sec, enOpciones = true, indice = 0) }
             return
@@ -2198,7 +2261,7 @@ object Diptico {
         // Fila de arriba: lo más usado.
         lista += Opcion("Jugar", icono = Icono.JUGAR) { cerrarPanel(); jugar() }
         lista += Opcion("Ficha", icono = Icono.TUTORIAL) { abrirFicha() }
-        lista += Opcion("Mi paso", d?.paso?.take(30) ?: "", Icono.LAPIZ) { abrirPaso() }
+        lista += Opcion("Mi paso", d?.paso?.take(30) ?: "", Icono.LAPIZ) { cerrarPanel(); abrirQuedaste() }
         lista += Opcion(if (d?.favorito == true) "Favorito ✓" else "Favorito", icono = Icono.CORAZON) { alternarFavorito(juego.clave) }
         lista += Opcion("Bisa", icono = Icono.BISA) { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${juego.titulo}.") }
         // Lista de abajo: ajustes de este juego.
@@ -2221,10 +2284,14 @@ object Diptico {
                 "Mientras juegas arriba, la pantalla de abajo muestra ampliada una parte de la de arriba: el minimapa, la vida, los subtítulos. La zona se elige en la misma lupa.",
             ) { alternarLupaJuego(juego.clave) }
         }
+        lista += Opcion("Imagen en el inicio", nombreHeroe(e.heroes[juego.clave]), Icono.PORTADA,
+            "Qué imagen de este juego se ve en grande en el inicio: la imagen grande, la portada, o la que elijan todos (Menú › Inicio).") { ciclarHeroe(juego.clave) }
         if (consola != null) {
             lista += Opcion("Cajas de ${consola.nombre}", nombreForma(e.formas[consola.id]?.forma ?: "original"), Icono.FORMA) {
                 abrirCajas(consola.id)
             }
+            lista += Opcion("Imagen en las cajas de ${consola.nombre}", nombreImagenCaja(e.formas[consola.id]?.imagen ?: "portada"), Icono.PORTADA,
+                "Portada, captura del juego o logo, para todas las cajas de esta consola.") { ciclarImagenCaja(consola.id) }
         }
         lista += Opcion(
             if (d?.oculto == true) "Mostrar este juego" else "Ocultar este juego",
@@ -2291,7 +2358,7 @@ object Diptico {
             else -> "Tus juegos"
         }
         Seccion.RENDIMIENTO -> if (t == "Optimizar ahora" || t == "Memoria disponible") "Ahora" else "Al jugar"
-        Seccion.CONTROLES -> if (t.startsWith("Botón") || t.startsWith("Aprender")) "Botones" else "Más"
+        Seccion.CONTROLES -> if (t == "Sticks") "Sticks" else if (t.startsWith("Botón") || t.startsWith("Aprender")) "Botones extra" else "Más"
         Seccion.SOBREMESA -> if (t == "Cuándo se activa" || t == "Tele conectada") "Cuándo" else "En la tele"
         Seccion.ASISTENTE -> when {
             t == "Hablar con Bisa" || t == "Bisa mientras juegas" || t == "Burbuja flotante" -> "Bisa"
@@ -2306,6 +2373,8 @@ object Diptico {
         }
         Seccion.INICIO -> when {
             t.startsWith("Bienvenida") || t.startsWith("Continuación") || t == "Tu nombre" -> "Al encender"
+            t.startsWith("Preguntar dónde") -> "Al terminar de jugar"
+            t.startsWith("Imagen grande") -> "Pantalla principal"
             t == "Estilo del inicio" || t.contains("widget", true) && !t.startsWith("Permiso") -> "Pantalla principal"
             else -> "Más"
         }
@@ -2692,9 +2761,11 @@ object Diptico {
                 lista += opcionesPC(e)
             }
             Seccion.SISTEMA -> {
+                lista += opcionesActualizar(e)
+                lista += Opcion("Ver las novedades de esta versión", icono = Icono.CHISPA, ayuda = "El tour corto de lo nuevo, otra vez.") { cerrarPanel(); actualizar { it.copy(novedades = 0) } }
                 lista += Opcion("Repetir el tutorial", icono = Icono.TUTORIAL, ayuda = "Vuelve a configurar todo paso a paso.") { reiniciarTutorial() }
                 lista += Opcion(
-                    "Acerca de Díptico", "Versión $VERSION", Icono.INFO,
+                    "Acerca de Díptico", "Versión $VERSION.${Actualizador.numeroActual(app)}", Icono.INFO,
                     "Hecho para la AYN Thor y consolas de una pantalla. Abre los emuladores con las reglas de ES-DE.",
                 ) { avisar("Díptico $VERSION · hecho con cariño para jugar") }
                 lista += Opcion("Cerrar el menú", icono = Icono.CERRAR, ayuda = "También con B o Start.") { cerrarPanel() }
@@ -3088,6 +3159,18 @@ object Diptico {
             } catch (_: Exception) { avisar("No pude abrir el permiso") }
         },
         Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Para que Bisa te salude por tu nombre.") { abrirTexto("nombre", estado.value.nombre) },
+        Opcion("Preguntar dónde quedaste", if (e.preguntarQuedaste) "Sí" else "No", Icono.LAPIZ,
+            "Al terminar de jugar, una tarjeta para anotar dónde quedaste: escribiendo, con una nota de voz o marcando en el mapa del juego. Siempre se puede pasar de largo.") {
+            val v = !estado.value.preguntarQuedaste
+            almacen.guardarBool("preguntarQuedaste", v)
+            actualizar { it.copy(preguntarQuedaste = v) }
+        },
+        Opcion("Imagen grande de los juegos", nombreHeroe(e.imagenHeroe), Icono.PORTADA,
+            "Qué imagen se ve en grande en el inicio: la imagen grande (hero) o la portada. Cada juego puede tener la suya (ventana del juego, Y).") {
+            val v = if (estado.value.imagenHeroe == "portada") "arte" else "portada"
+            almacen.guardarTexto("imagenHeroe", v)
+            actualizar { it.copy(imagenHeroe = v) }
+        },
         Opcion(
             "Estilo del inicio", if (e.inicio == "widgets") "Con widgets" else "Carátulas", Icono.APPS,
             "Carátulas: el arte del juego ocupa la pantalla. Con widgets: tu inicio con reloj, música, recientes y más. " +
@@ -3653,6 +3736,7 @@ object Diptico {
                 Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA) { buscarCandidatos("portada") },
                 Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA) { buscarCandidatos("arte") },
                 Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA) { buscarCandidatos("logo") },
+                Opcion("Imagen en el inicio", nombreHeroe(e.heroes[j.clave]), Icono.PORTADA, "Qué imagen se ve en grande en el inicio para este juego.") { ciclarHeroe(j.clave) },
                 Opcion("Encuadrar la portada", if (e.encuadres.containsKey("${j.clave}|portada")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
                     "Corre y acerca la foto para que quede centrada en la forma de la caja.") { abrirEncuadre("portada") },
                 Opcion("Encuadrar la imagen grande", if (e.encuadres.containsKey("${j.clave}|arte")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
@@ -4084,6 +4168,15 @@ object Diptico {
     }
 
     private fun opcionesBotones(e: Estado): List<Opcion> = buildList {
+        val modos = listOf("dividido", "invertido", "clasico")
+        fun cambiarSticks(d: Int) {
+            val v = modos[(modos.indexOf(estado.value.sticks).coerceAtLeast(0) + d).mod(modos.size)]
+            almacen.guardarTexto("sticks", v)
+            actualizar { it.copy(sticks = v) }
+        }
+        add(Opcion("Sticks", nombreSticks(e.sticks), Icono.MANDO,
+            "Dividido: el stick izquierdo elige juegos y el derecho recorre los widgets. Invertido: al revés. Clásico: el izquierdo es la cruceta y el derecho cambia de consola. En el editor de widgets, el stick de los widgets desliza la pantalla.",
+            menos = { cambiarSticks(-1) }) { cambiarSticks(1) })
         e.botonesExtra.forEachIndexed { i, b ->
             add(
                 Opcion(
@@ -4167,11 +4260,9 @@ object Diptico {
         val w = e.widgets.getOrNull(i) ?: return
         when (w.tipo) {
             "juego" -> { abrirFicha(); return }
-            "paso" -> { abrirPaso(); return }
-            "estadisticas", "tiempo" -> { abrirEstadisticas(); return }
+            "paso" -> { abrirQuedaste(); return }
             "accesos" -> { abrirCentro(); return }
             "apps" -> { abrirApps(); return }
-            "logros" -> { if (e.usuarioRA.isBlank()) abrirMenu(Seccion.LOGROS) else abrirEstadisticas(); return }
         }
         if (w.tipo == "sugerencia" && e.sugeridas.isEmpty()) nuevasSugerencias()
         actualizar { it.copy(panel = Panel.WIDGET, widgetAbierto = i, widgetFoco = i, indice = 0) }
@@ -4340,6 +4431,15 @@ object Diptico {
                     Opcion("Ajustes de batería de Android", icono = Icono.AJUSTES) { cerrarPanel(); abrirAjusteAndroid(android.content.Intent.ACTION_POWER_USAGE_SUMMARY) },
                 )
             }
+            "tiempo", "estadisticas" -> {
+                val top = e.datos.entries.filter { it.value.tiempo > 0 }.sortedByDescending { it.value.tiempo }.mapNotNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }.take(8)
+                listOf(Opcion("Ver todas las estadísticas", icono = Icono.TROFEO, ayuda = "Horas por juego y por consola, partidas y rachas.") { abrirEstadisticas() }) + juegosComo(top)
+            }
+            "logros" -> if (e.usuarioRA.isBlank()) listOf(Opcion("Conectar RetroAchievements", icono = Icono.CLAVE, ayuda = "Tu usuario y tu clave web de retroachievements.org.") { abrirMenu(Seccion.LOGROS) })
+            else listOf(
+                Opcion("Ver mis logros", icono = Icono.TROFEO, ayuda = "Tus puntos, los últimos logros y los de cada juego.") { abrirEstadisticas() },
+                Opcion("Ajustes de logros", icono = Icono.AJUSTES) { abrirMenu(Seccion.LOGROS) },
+            )
             "consolas" -> e.consolasConJuegos.map { c ->
                 Opcion(c.bonito, "${e.juegos.count { it.consolaId == c.id }} juegos", Icono.BIBLIOTECA) { cerrarPanel(); actualizar { it.copy(widgetFoco = -1) }; elegirConsola(c.id) }
             }
@@ -4387,6 +4487,351 @@ object Diptico {
             else -> "—"
         }
         return InfoBateria(nivel, est, (i?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0) / 10f, i?.getIntExtra(android.os.BatteryManager.EXTRA_VOLTAGE, 0) ?: 0, salud)
+    }
+
+    // ---------- Imagen grande del inicio y cajas en "Todos" ----------
+
+    fun nombreHeroe(v: String?) = when (v) { null -> "Como todos"; "portada" -> "Portada"; else -> "Imagen grande" }
+
+    private fun ciclarHeroe(clave: String) {
+        val l = listOf(null, "arte", "portada")
+        val v = l[(l.indexOf(estado.value.heroes[clave]) + 1).mod(l.size)]
+        val m = if (v == null) estado.value.heroes - clave else estado.value.heroes + (clave to v)
+        almacen.guardarTexto("heroes", escribirMapa(m))
+        actualizar { it.copy(heroes = m) }
+    }
+
+    fun nombreFormaTodos(v: String) = when (v) { "cuadrada" -> "Todas cuadradas"; "propia" -> "Cada consola la suya"; else -> "Todas en póster" }
+
+    private fun ciclarFormaTodos() {
+        val l = listOf("poster", "cuadrada", "propia")
+        val v = l[(l.indexOf(estado.value.formaTodos) + 1).mod(l.size)]
+        almacen.guardarTexto("formaTodos", v)
+        actualizar { it.copy(formaTodos = v) }
+    }
+
+    private fun imagenTodasLasCajas() {
+        val e = estado.value
+        val actual = e.formas.values.firstOrNull()?.imagen ?: "portada"
+        val v = IMAGENES_CAJA[(IMAGENES_CAJA.indexOf(actual) + 1).mod(IMAGENES_CAJA.size)]
+        guardarFormas(Consolas.todas.associate { c -> c.id to (e.formas[c.id] ?: FormaCfg()).copy(imagen = v) })
+        avisar("Todas las cajas: ${nombreImagenCaja(v)}")
+    }
+
+    /** Las formas que se dibujan: en "Todo" (si así se eligió) todas las consolas con la misma forma. */
+    fun formasVisibles(e: Estado): Map<String, FormaCfg> =
+        if (e.consolaSel != "todo" || e.formaTodos == "propia") e.formas
+        else Consolas.todas.associate { c -> c.id to (e.formas[c.id] ?: FormaCfg()).copy(forma = e.formaTodos) }
+
+    // ---------- ¿Dónde quedaste? (al terminar de jugar, o desde la ventana del juego) ----------
+
+    /** Las formas de anotar, en orden: escribir, nota de voz, mapa y pasar de largo. */
+    val FORMAS_QUEDASTE = listOf("escribir", "voz", "mapa", "nada")
+
+    fun abrirQuedaste() {
+        if (estado.value.seleccionado == null) return
+        actualizar { it.copy(quedaste = true, quedastePregunta = false, quedasteSel = 0) }
+    }
+
+    fun moverQuedaste(d: Int) {
+        if (estado.value.grabando > 0L) return
+        actualizar { it.copy(quedasteSel = (it.quedasteSel + d).coerceIn(0, FORMAS_QUEDASTE.size - 1)) }
+        Sonidos.mover()
+    }
+
+    fun cerrarQuedaste() {
+        if (estado.value.grabando > 0L) { Notas.cancelar(); actualizar { it.copy(grabando = 0L) } }
+        actualizar { it.copy(quedaste = false, quedastePregunta = false) }
+    }
+
+    /** No volver a preguntar al terminar de jugar (se vuelve a activar en Menú › Inicio). */
+    fun noPreguntarQuedaste() {
+        almacen.guardarBool("preguntarQuedaste", false)
+        actualizar { it.copy(preguntarQuedaste = false) }
+        cerrarQuedaste()
+        avisar("Listo, no te pregunto más. Se activa en Menú › Inicio")
+    }
+
+    fun elegirQuedaste(i: Int = estado.value.quedasteSel) {
+        val e = estado.value
+        val clave = e.seleccionado?.clave ?: return
+        actualizar { it.copy(quedasteSel = i) }
+        when (FORMAS_QUEDASTE[i]) {
+            "escribir" -> {
+                val pregunta = e.quedastePregunta
+                actualizar { it.copy(quedaste = false) }
+                abrirPaso()
+                actualizar { it.copy(pregunta = pregunta) }
+            }
+            "voz" -> alternarGrabacion(clave)
+            "mapa" -> {
+                actualizar { it.copy(quedaste = false) }
+                abrirMapa(clave)
+            }
+            else -> cerrarQuedaste()
+        }
+    }
+
+    /** Pedirle a Android el micrófono (lo registra la pantalla activa). */
+    var pedirMicrofono: (() -> Unit)? = null
+
+    private var grabacionJob: Job? = null
+
+    private fun alternarGrabacion(clave: String) {
+        if (estado.value.grabando > 0L) { terminarGrabacion(clave); return }
+        if (!Notas.puedeGrabar(app)) {
+            pedirMicrofono?.invoke()
+            avisar("Dale permiso al micrófono y vuelve a elegir Nota de voz")
+            return
+        }
+        if (!Notas.grabar(app, clave)) { avisar("No pude usar el micrófono"); return }
+        Sonidos.abrir()
+        actualizar { it.copy(grabando = System.currentTimeMillis()) }
+        grabacionJob?.cancel()
+        grabacionJob = scope.launch {
+            delay(Notas.MAX_MS)
+            if (estado.value.grabando > 0L) terminarGrabacion(clave)
+        }
+    }
+
+    private fun terminarGrabacion(clave: String) {
+        grabacionJob?.cancel()
+        val ok = Notas.terminar(app)
+        actualizar { it.copy(grabando = 0L, quedaste = !ok && it.quedaste, notasVoz = if (ok) it.notasVoz + clave else it.notasVoz) }
+        if (ok) { Sonidos.aviso(); avisar("Nota de voz guardada") } else avisar("No se grabó nada")
+    }
+
+    fun escucharNota(clave: String) = Notas.reproducir(app, clave)
+
+    fun borrarNota(clave: String) {
+        Notas.borrar(app, clave)
+        actualizar { it.copy(notasVoz = it.notasVoz - clave) }
+        avisar("Nota de voz borrada")
+    }
+
+    private fun leerNotasVoz(): Set<String> = try {
+        val hay = java.io.File(app.filesDir, "notas").list()?.toSet() ?: emptySet()
+        crudos.map { it.clave }.filter { "${it.hashCode().toUInt()}.m4a" in hay }.toSet()
+    } catch (_: Exception) { emptySet() }
+
+    // ---------- Mapa del juego: una imagen tuya con un pin donde quedaste ----------
+
+    fun abrirMapa(clave: String) {
+        val m = estado.value.mapas[clave]
+        if (m == null) {
+            avisar("Elige una imagen del mapa del juego (una captura o una descargada)")
+            pedirArchivoPara("mapa:$clave", "image/*")
+            return
+        }
+        actualizar { it.copy(marcandoMapa = clave, pinX = m.x, pinY = m.y) }
+    }
+
+    fun moverPin(dx: Float, dy: Float) = actualizar { it.copy(pinX = (it.pinX + dx).coerceIn(0f, 1f), pinY = (it.pinY + dy).coerceIn(0f, 1f)) }
+    fun ponerPin(x: Float, y: Float) = actualizar { it.copy(pinX = x.coerceIn(0f, 1f), pinY = y.coerceIn(0f, 1f)) }
+
+    fun guardarPin() {
+        val e = estado.value
+        val clave = e.marcandoMapa ?: return
+        val m = e.mapas[clave] ?: return
+        guardarMapas(e.mapas + (clave to m.copy(x = e.pinX, y = e.pinY)))
+        actualizar { it.copy(marcandoMapa = null) }
+        Sonidos.aviso()
+        avisar("Marcado en el mapa")
+    }
+
+    fun cerrarMapa() = actualizar { it.copy(marcandoMapa = null) }
+
+    fun cambiarImagenMapa() {
+        val clave = estado.value.marcandoMapa ?: return
+        actualizar { it.copy(marcandoMapa = null) }
+        pedirArchivoPara("mapa:$clave", "image/*")
+    }
+
+    fun quitarMapa() {
+        val clave = estado.value.marcandoMapa ?: return
+        guardarMapas(estado.value.mapas - clave)
+        actualizar { it.copy(marcandoMapa = null) }
+        avisar("Mapa quitado")
+    }
+
+    private fun guardarMapas(m: Map<String, MapaJuego>) {
+        val o = org.json.JSONObject()
+        m.forEach { (k, v) -> o.put(k, org.json.JSONObject().put("uri", v.uri).put("x", v.x.toDouble()).put("y", v.y.toDouble())) }
+        almacen.guardarTexto("mapas", o.toString())
+        actualizar { it.copy(mapas = m) }
+    }
+
+    private fun leerMapas(s: String): Map<String, MapaJuego> = try {
+        val o = org.json.JSONObject(s)
+        o.keys().asSequence().associateWith { k -> o.getJSONObject(k).let { MapaJuego(it.getString("uri"), it.optDouble("x", 0.5).toFloat(), it.optDouble("y", 0.5).toFloat()) } }
+    } catch (_: Exception) { emptyMap() }
+
+    fun nombreSticks(m: String) = when (m) { "invertido" -> "Izquierdo widgets · derecho juegos"; "clasico" -> "Clásico (izquierdo = cruceta)"; else -> "Izquierdo juegos · derecho widgets" }
+
+    /** Para que el inicio se deslice con el stick en el editor de widgets (+1 baja, -1 sube). */
+    val desplazamientos = kotlinx.coroutines.flow.MutableSharedFlow<Int>(extraBufferCapacity = 8)
+    fun desplazarInicio(d: Int) { desplazamientos.tryEmit(d) }
+
+    // ---------- ¿En qué pantalla lo abro? (mantener A sobre un juego o una app) ----------
+
+    fun puedeElegirPantalla(e: Estado = estado.value) = !e.unaPantalla && Pantallas.inferior(app) != null
+
+    /** [destino]: "juego" (el elegido) o "app:paquete". Con una sola pantalla abre lo de siempre. */
+    fun elegirPantalla(destino: String) {
+        val e = estado.value
+        if (!puedeElegirPantalla(e)) {
+            if (destino == "juego") abrirRapido() else alternarFijada(destino.removePrefix("app:"))
+            return
+        }
+        if (destino == "juego" && e.seleccionado == null) return
+        val actual = if (destino == "juego") e.seleccionado?.let { e.datos[it.clave]?.pantalla } ?: e.pantallaJuegos else "arriba"
+        actualizar { it.copy(donde = destino, dondeSel = if (actual == "abajo") 1 else 0, dondeRecordar = false) }
+        Sonidos.abrir()
+    }
+
+    fun moverDonde(d: Int) { actualizar { it.copy(dondeSel = (it.dondeSel + d).coerceIn(0, 2)) }; Sonidos.mover() }
+    fun alternarRecordarDonde() = actualizar { it.copy(dondeRecordar = !it.dondeRecordar) }
+    fun cerrarDonde() { actualizar { it.copy(donde = null) }; Sonidos.atras() }
+
+    /** 0 = arriba, 1 = abajo, 2 = más opciones (la ventana del juego, o fijar la app). */
+    fun confirmarDonde(sel: Int = estado.value.dondeSel) {
+        val e = estado.value
+        val d = e.donde ?: return
+        actualizar { it.copy(donde = null) }
+        if (sel == 2) {
+            if (d == "juego") abrirRapido() else alternarFijada(d.removePrefix("app:"))
+            return
+        }
+        val pantalla = if (sel == 1) "abajo" else "arriba"
+        if (d == "juego") {
+            val j = e.seleccionado ?: return
+            if (e.dondeRecordar) cambiarDatos(j.clave) { it.copy(pantalla = pantalla) }
+            jugar(pantalla)
+        } else {
+            val pkg = d.removePrefix("app:")
+            val inferior = Pantallas.inferior(app)
+            val id = if (pantalla == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
+            cerrarPanel()
+            Lanzador.lanzarApp(app, pkg, Lanzador.nombreApp(app, pkg) ?: "La app", id)?.let { avisar(it) }
+        }
+    }
+
+    // ---------- Botón de turbo en el inicio ----------
+
+    /** Tocar: libera memoria ahora (y deja el turbo al jugar encendido). Mantener: enciende o apaga el turbo al jugar. */
+    fun turboAhora() {
+        if (!estado.value.turbo) { almacen.guardarBool("turbo", true); actualizar { it.copy(turbo = true) } }
+        optimizarAhora()
+    }
+
+    fun alternarTurbo() {
+        val v = !estado.value.turbo
+        almacen.guardarBool("turbo", v)
+        actualizar { it.copy(turbo = v) }
+        Sonidos.interruptor(v)
+        avisar(if (v) "Turbo al jugar: encendido" else "Turbo al jugar: apagado")
+    }
+
+    // ---------- Actualizaciones desde la app ----------
+
+    private fun vigilarActualizaciones() {
+        scope.launch {
+            delay(25_000)
+            while (true) {
+                if (estado.value.actualizarSolo) buscarActualizacion(silencioso = true)
+                delay(6 * 3600_000L)
+            }
+        }
+    }
+
+    fun buscarActualizacion(silencioso: Boolean = false) {
+        if (estado.value.buscandoAct) return
+        actualizar { it.copy(buscandoAct = true) }
+        if (!silencioso) avisar("Buscando una versión nueva…")
+        scope.launch {
+            val v = withContext(Dispatchers.IO) { try { Actualizador.buscar(app) } catch (_: Exception) { null } }
+            actualizar { it.copy(buscandoAct = false, actualizacion = v ?: it.actualizacion) }
+            when {
+                v != null -> {
+                    // Se avisa una sola vez por versión (en la notificación de Android y aquí).
+                    if (almacen.texto("actAvisada") != v.nombre) {
+                        almacen.guardarTexto("actAvisada", v.nombre)
+                        Actualizador.notificar(app, v)
+                        Sonidos.aviso()
+                    }
+                    avisar("¡Díptico ${v.nombre} ya está disponible! Menú › Acerca de")
+                }
+                !silencioso -> avisar("Ya tienes la versión más nueva")
+            }
+        }
+    }
+
+    /** Desde la notificación: abre Acerca de con la actualización lista para descargar. */
+    fun abrirActualizacion() {
+        abrirMenu(Seccion.SISTEMA)
+        if (estado.value.actualizacion == null) buscarActualizacion()
+    }
+
+    fun descargarActualizacion() {
+        val v = estado.value.actualizacion ?: run { buscarActualizacion(); return }
+        if (estado.value.descargaAct in 0f..0.999f) return
+        if (!Actualizador.puedeInstalar(app)) {
+            Actualizador.pedirPermisoInstalar(app)
+            avisar("Permite a Díptico instalar apps y vuelve a elegir Descargar")
+            return
+        }
+        actualizar { it.copy(descargaAct = 0f) }
+        scope.launch {
+            val apk = withContext(Dispatchers.IO) {
+                try { Actualizador.descargar(app, v) { a -> actualizar { it.copy(descargaAct = a.coerceAtMost(0.99f)) } } } catch (_: Exception) { null }
+            }
+            if (apk == null) { actualizar { it.copy(descargaAct = -1f) }; avisar("No pude descargar la versión nueva. Revisa el internet."); return@launch }
+            actualizar { it.copy(descargaAct = 1f) }
+            avisar("Descargada: Android te pedirá confirmar la instalación")
+            withContext(Dispatchers.IO) { try { Actualizador.instalar(app, apk) } catch (_: Exception) { null } }
+        }
+    }
+
+    fun instalacionFallida(motivo: String?) {
+        actualizar { it.copy(descargaAct = -1f) }
+        avisar("No se pudo instalar la actualización" + (motivo?.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""))
+    }
+
+    private fun opcionesActualizar(e: Estado): List<Opcion> = buildList {
+        val v = e.actualizacion
+        if (v != null) {
+            val valor = when {
+                e.descargaAct >= 1f -> "Instalando…"
+                e.descargaAct >= 0f -> "Descargando ${(e.descargaAct * 100).toInt()} %"
+                else -> "${v.bytes / (1024 * 1024)} MB"
+            }
+            add(Opcion("Descargar e instalar ${v.nombre}", valor, Icono.DESCARGA,
+                "La versión nueva se instala encima: tus juegos, portadas y ajustes se quedan. " + v.notas.replace("
+", " · ").take(160)) { descargarActualizacion() })
+        } else add(Opcion("Buscar actualizaciones", if (e.buscandoAct) "Buscando…" else "Versión ${Actualizador.numeroActual(app)}", Icono.DESCARGA,
+            "Mira si hay una versión más nueva de Díptico en GitHub.") { buscarActualizacion() })
+        add(Opcion("Avisarme de versiones nuevas", if (e.actualizarSolo) "Sí" else "No", Icono.CAMPANA,
+            "Díptico revisa cada algunas horas y te avisa con una notificación cuando sale una versión nueva.") {
+            val n = !estado.value.actualizarSolo
+            almacen.guardarBool("actualizarSolo", n)
+            actualizar { it.copy(actualizarSolo = n) }
+        })
+    }
+
+    // ---------- Tour de novedades ----------
+
+    fun moverNovedades(d: Int) {
+        val n = estado.value.novedades
+        if (n < 0) return
+        val sig = n + d
+        if (sig >= Novedades.paginas.size) { cerrarNovedades(); return }
+        actualizar { it.copy(novedades = sig.coerceAtLeast(0)) }
+        Sonidos.pagina()
+    }
+
+    fun cerrarNovedades() {
+        almacen.guardarTexto("novedadesVistas", Novedades.ID)
+        actualizar { it.copy(novedades = -1) }
     }
 
     private fun formatoTiempoCorto(seg: Long): String {
@@ -4736,6 +5181,13 @@ object Diptico {
                 }
                 avisar("¡Listo! Cambio guardado")
             }
+            archivoPara.startsWith("mapa:") -> {
+                val clave = archivoPara.removePrefix("mapa:")
+                val m = estado.value.mapas + (clave to MapaJuego(u))
+                guardarMapas(m)
+                actualizar { it.copy(marcandoMapa = clave, pinX = 0.5f, pinY = 0.5f) }
+                avisar("Ahora marca dónde quedaste")
+            }
             archivoPara.startsWith("icono:") -> {
                 val id = archivoPara.removePrefix("icono:")
                 val m = estado.value.iconosPropios + (id to u)
@@ -5016,11 +5468,11 @@ object Diptico {
             lista += Opcion("Cajas de ${c.nombre}: forma", nombreForma(f.forma), Icono.FORMA, "Elige la forma de las cajas de esta consola, viendo tus portadas en cada una.") { abrirCajas(c.id) }
             lista += Opcion("Cajas de ${c.nombre}: tamaño", nombreTamJuegos(f.tam), Icono.FORMA) { ciclarTamForma(c.id) }
             lista += Opcion("Cajas de ${c.nombre}: imagen", nombreImagenCaja(f.imagen), Icono.PORTADA, "Muestra la portada, una captura del juego o su logo.") { ciclarImagenCaja(c.id) }
-        } else {
-            lista += Opcion("Forma de las cajas", "Elige una consola", Icono.FORMA, "En el estante, elige una consola (L1 R1) y vuelve aquí para cambiar la forma de sus cajas.") {
-                avisar("Primero elige una consola en el estante con L1 o R1")
-            }
         }
+        lista += Opcion("Cajas en «Todos»", nombreFormaTodos(e.formaTodos), Icono.FORMA,
+            "Cuando ves todos tus juegos juntos: todas las cajas iguales (póster o cuadradas) para que se vea parejo, o cada consola con su forma.") { ciclarFormaTodos() }
+        lista += Opcion("Imagen en todas las cajas", nombreImagenCaja(e.formas.values.firstOrNull()?.imagen ?: "portada"), Icono.PORTADA,
+            "Portada, captura del juego o logo, para las cajas de todas tus consolas a la vez.") { imagenTodasLasCajas() }
         return lista
     }
 

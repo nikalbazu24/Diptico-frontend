@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package cl.nikalbazu.diptico.ui
 
 import androidx.compose.animation.AnimatedContent
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.border
 import androidx.compose.ui.layout.layout
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -114,7 +117,13 @@ private fun PantallaUnicaContenido(e: Estado) {
         )
 
         BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos) {
-            // Con una sola pantalla no hay barra de accesos: las apps y el menú quedan arriba.
+            // Con una sola pantalla no hay barra de accesos: el turbo, las apps y el menú quedan arriba.
+            Box(
+                Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f))
+                    .combinedClickable(onLongClick = { Diptico.alternarTurbo() }) { Diptico.turboAhora() },
+                contentAlignment = Alignment.Center,
+            ) { IconoDiptico(Icono.CHISPA, if (e.turbo) Color(0xFFFF5252) else p.tenue, 17f) }
+            Spacer(Modifier.width(esc.d(8)))
             Box(
                 Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f)).clickable { Diptico.abrirApps() },
                 contentAlignment = Alignment.Center,

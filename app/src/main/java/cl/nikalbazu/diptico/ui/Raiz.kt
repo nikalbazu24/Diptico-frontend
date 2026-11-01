@@ -4,6 +4,7 @@ import cl.nikalbazu.diptico.estado.Panel
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.blur
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -26,7 +27,8 @@ import cl.nikalbazu.diptico.estado.Estado
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     CompositionLocalProvider(
         LocalIconos provides IconosCfg(e.estiloIconos, e.iconosPropios, e.iconosVersion),
-        LocalFormas provides e.formas,
+        LocalFormas provides remember(e.formas, e.formaTodos, e.consolaSel) { cl.nikalbazu.diptico.estado.Diptico.formasVisibles(e) },
+        LocalHeroes provides (e.heroes to e.imagenHeroe),
         LocalEncuadres provides cl.nikalbazu.diptico.estado.Diptico.encuadresVisibles(e),
         LocalZoomLento provides e.zoomLento,
         LocalTamJuegos provides e.tamJuegos,
@@ -36,7 +38,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             (rol == Rol.UNICA || rol == (if (e.intercambiar) Rol.INFERIOR else Rol.SUPERIOR))
         val centroAqui = e.panel == Panel.CENTRO && arribaFisica
         // Desenfoque detrás de lo que se abre encima: el centro de control, la bienvenida, el reloj grande o la continuación.
-        val encima = centroAqui || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
+        val encima = centroAqui || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
         val desenfoque by animateDpAsState(if (encima && Estilo.efectosCompletos) 18.dp else 0.dp, tween(300), label = "desenfoque")
         Box(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
@@ -68,6 +70,21 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 visible = e.bienvenida > 0L && !e.intro && !(rol == Rol.INFERIOR && e.unaPantalla),
                 enter = fadeIn(tween(380)), exit = fadeOut(tween(420)),
             ) { Bienvenida(e, rol) }
+            // ¿En qué pantalla lo abro?: la ventana va donde está el estante (abajo); arriba, un marco si se abrirá ahí.
+            if (e.donde != null) {
+                val fisicaArriba = miPantalla == android.view.Display.DEFAULT_DISPLAY
+                if (rol != Rol.UNICA) MarcoDonde(if (fisicaArriba) e.dondeSel == 0 else e.dondeSel == 1)
+                if (rol == Rol.UNICA || rol == Rol.INFERIOR) VentanaDonde(e)
+            }
+            // ¿Dónde quedaste? y el mapa: en la pantalla del estante (la de abajo, o la única).
+            val delEstante = rol == Rol.UNICA || rol == Rol.INFERIOR
+            if (delEstante && e.quedaste && e.marcandoMapa == null) TarjetaQuedaste(e)
+            if (delEstante && e.marcandoMapa != null) MarcarMapa(e)
+            // Tour de novedades (una vez por versión): en la pantalla principal; la otra acompaña.
+            AnimatedVisibility(
+                visible = e.novedades >= 0 && !e.intro,
+                enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.95f), exit = fadeOut(tween(260)),
+            ) { if (rol == Rol.INFERIOR) NovedadesCompania(e) else TourNovedades(e) }
             val sc = e.sesion
             AnimatedVisibility(
                 visible = e.continuacion > 0L && sc != null && !sc.dosPantallas && miPantalla != sc.displayId && e.datos[sc.clave]?.lupa != true,

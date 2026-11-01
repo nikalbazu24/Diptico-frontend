@@ -1,5 +1,6 @@
 # Díptico: se conserva todo el código propio (el optimizador igual achica las librerías).
--keep class cl.nikalbazu.diptico.** { *; }
+# allowoptimization: R8 puede optimizar (inlining, quitar código muerto) sin cambiar nombres: más fluido.
+-keep,allowoptimization class cl.nikalbazu.diptico.** { *; }
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.drawWithContent
@@ -135,11 +136,12 @@ fun Detalle(texto: String, tam: Float = 14f, color: Color = LocalPaleta.current.
 fun Pista(tecla: String, texto: String, color: Color = LocalPaleta.current.tinta) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    // Un poquito de aire arriba y abajo: así el contorno del botón nunca queda cortado por el borde de la pantalla o del panel.
+    Row(Modifier.padding(vertical = esc.d(2)), verticalAlignment = Alignment.CenterVertically) {
         Box(
-            Modifier.height(esc.d(22)).border(esc.d(1.8f), p.tenue, RoundedCornerShape(50)).padding(horizontal = esc.d(7)),
+            Modifier.heightIn(min = esc.d(22)).widthIn(min = esc.d(22)).padding(esc.d(1)).border(esc.d(1.6f), p.tenue, RoundedCornerShape(50)).padding(horizontal = esc.d(6)),
             contentAlignment = Alignment.Center,
-        ) { Texto(tecla, 11f, color = color) }
+        ) { Texto(tecla, 11f, color = color, lineas = 1) }
         Spacer(Modifier.width(esc.d(6)))
         Texto(texto, 13f, color = color, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
     }

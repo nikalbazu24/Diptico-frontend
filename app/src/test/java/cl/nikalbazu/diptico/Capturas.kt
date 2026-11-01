@@ -851,6 +851,113 @@ class Capturas {
 
     @Test fun t167_recordatorio() = foto("167_widgets_con_recordatorio", conWidgets(conRecientes(base())).copy(avisoInicio = 1L), Rol.SUPERIOR)
 
+    // ---------- 1.0 beta.4: todos los widgets en todos los tamaños ----------
+
+    private fun muestrario(nombre: String, an: Int, al: Int, oscuro: Boolean = true, foco: Int = -1) {
+        val e = conRecientes(base()).copy(oscuro = oscuro, avisoInicio = 0L)
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(e)
+        Estilo.tema = Temas.incluidos[0]
+        Estilo.decoraciones = false
+        cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(cl.nikalbazu.diptico.audio.Sonando("Spotify", "Canción de prueba con nombre largo", "Artista", null, true, "com.spotify.music"))
+        regla.mainClock.autoAdvance = false
+        regla.setContent { Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { cl.nikalbazu.diptico.ui.MuestrarioWidgets(e, an, al, foco) } }
+        regla.mainClock.advanceTimeBy(1600)
+        regla.onRoot().captureRoboImage("capturas/$nombre.png")
+        cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(null)
+    }
+
+    @Config(qualifiers = MUESTRA) @Test fun t170_m_1x1() = muestrario("170_muestra_1x1", 1, 1, foco = 7)
+    @Config(qualifiers = MUESTRA) @Test fun t171_m_1x2() = muestrario("171_muestra_1x2", 1, 2)
+    @Config(qualifiers = MUESTRA) @Test fun t172_m_2x1() = muestrario("172_muestra_2x1", 2, 1)
+    @Config(qualifiers = MUESTRA) @Test fun t173_m_2x2() = muestrario("173_muestra_2x2", 2, 2)
+    @Config(qualifiers = MUESTRA) @Test fun t174_m_3x1() = muestrario("174_muestra_3x1", 3, 1)
+    @Config(qualifiers = MUESTRA) @Test fun t175_m_3x2() = muestrario("175_muestra_3x2", 3, 2)
+    @Config(qualifiers = MUESTRA_ALTA) @Test fun t176_m_2x3() = muestrario("176_muestra_2x3", 2, 3)
+    @Config(qualifiers = MUESTRA_ALTA) @Test fun t177_m_4x2() = muestrario("177_muestra_4x2", 4, 2)
+    @Config(qualifiers = MUESTRA_ALTA) @Test fun t178_m_3x3() = muestrario("178_muestra_3x3", 3, 3)
+    @Config(qualifiers = MUESTRA_ALTA) @Test fun t179_m_6x1() = muestrario("179_muestra_6x1", 6, 1)
+    @Config(qualifiers = MUESTRA_ALTA) @Test fun t180_m_6x2() = muestrario("180_muestra_6x2", 6, 2)
+    @Config(qualifiers = MUESTRA_ALTA) @Test fun t181_m_4x3() = muestrario("181_muestra_4x3", 4, 3)
+    @Config(qualifiers = MUESTRA) @Test fun t182_m_1x1_claro() = muestrario("182_muestra_1x1_claro", 1, 1, oscuro = false, foco = 7)
+    @Config(qualifiers = MUESTRA) @Test fun t183_m_2x1_claro() = muestrario("183_muestra_2x1_claro", 2, 1, oscuro = false)
+    @Config(qualifiers = MUESTRA) @Test fun t184_m_3x2_claro() = muestrario("184_muestra_3x2_claro", 3, 2, oscuro = false)
+    @Config(qualifiers = MUESTRA_ALTA) @Test fun t185_m_4x2_claro() = muestrario("185_muestra_4x2_claro", 4, 2, oscuro = false)
+
+    /** Como en la foto de la consola: tema claro, widgets de 1×1 y la batería con el foco. */
+    @Test fun t186_foco_claro() {
+        val e = conWidgetsVariados(conRecientes(base())).copy(oscuro = false)
+        foto("186_foco_en_tema_claro", e.copy(widgetFoco = e.widgets.indexOfFirst { it.tipo == "bateria" }), Rol.SUPERIOR)
+    }
+
+    /** Un widget grande (ancho completo) con el foco: el marco tiene que verse entero. */
+    @Test fun t187_foco_grande() {
+        val e = conWidgets(conRecientes(base()))
+        val l = e.widgets.map { if (it.tipo == "juego") it.copy(x = 0, y = 0, an = 6, al = 2) else if (it.tipo == "reloj") it.copy(visible = false) else it }
+        foto("187_foco_widget_grande", e.copy(widgets = l, widgetFoco = l.indexOfFirst { it.tipo == "juego" }), Rol.SUPERIOR)
+    }
+
+    // ---------- 1.0 beta.4: nuevas ventanas ----------
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t188_donde() = foto("188_donde_lo_abro", conRecientes(base()).copy(donde = "juego", dondeSel = 1, dondeRecordar = true), Rol.INFERIOR)
+
+    @Test fun t189_donde_arriba() = foto("189_donde_marco_arriba", conRecientes(base()).copy(donde = "juego", dondeSel = 0), Rol.SUPERIOR)
+
+    @Test fun t190_tour() = foto("190_tour_novedades", base().copy(novedades = 2), Rol.SUPERIOR)
+
+    @Test fun t191_tour_una() = foto("191_tour_una_pantalla", base().copy(novedades = 0, modoPantallas = "una_negra"), Rol.UNICA)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t192_tour_abajo() = foto("192_tour_abajo", base().copy(novedades = 2), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t193_quedaste() = foto("193_donde_quedaste", conRecientes(base()).copy(quedaste = true, quedastePregunta = true, quedasteSel = 1), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t194_grabando() = foto("194_grabando_nota", conRecientes(base()).copy(quedaste = true, quedasteSel = 1, grabando = System.currentTimeMillis() - 12_000), Rol.INFERIOR)
+
+    @Test fun t195_quedaste_una() = foto("195_quedaste_una_pantalla", conRecientes(base()).copy(quedaste = true, quedastePregunta = true, modoPantallas = "una_negra"), Rol.UNICA)
+
+    private fun lectura(nombre: String, tipo: String, e0: Estado = conWidgets(conRecientes(base()))) {
+        val i = e0.widgets.indexOfFirst { it.tipo == tipo }
+        foto(nombre, e0.copy(panel = Panel.WIDGET, widgetAbierto = i, widgetFoco = i, indice = 0), Rol.SUPERIOR)
+    }
+
+    @Test fun t196_l_tiempo() = lectura("196_abierto_tiempo", "tiempo")
+    @Test fun t197_l_estadisticas() = lectura("197_abierto_estadisticas", "estadisticas")
+    @Test fun t198_l_coleccion() = lectura("198_abierto_coleccion", "consolas")
+    @Test fun t199_l_bateria() = lectura("199_abierto_bateria", "bateria")
+    @Test fun t200_l_avisos() = lectura("200_abierto_notificaciones", "notificaciones")
+    @Test fun t201_l_musica() {
+        cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(cl.nikalbazu.diptico.audio.Sonando("Spotify", "Canción de prueba", "Artista", null, true, "com.spotify.music"))
+        lectura("201_abierto_musica", "musica")
+        cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(null)
+    }
+    @Test fun t202_l_frase() = lectura("202_abierto_frase", "frase")
+    @Test fun t203_l_fiesta() = lectura("203_abierto_fiestas", "fiesta")
+    @Test fun t204_l_logros() = lectura("204_abierto_logros", "logros")
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t205_todos_poster() = foto("205_todos_en_poster", conRecientes(base()).copy(consolaSel = "todo", formaTodos = "poster"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t206_todos_cuadradas() = foto("206_todos_cuadradas", conRecientes(base()).copy(consolaSel = "todo", formaTodos = "cuadrada", vista = "cuadricula"), Rol.INFERIOR)
+
+    @Test fun t207_inicio_portada() = foto("207_inicio_con_portada", base().copy(imagenHeroe = "portada"), Rol.SUPERIOR)
+
+    @Test fun t208_menu_actualizar() = foto(
+        "208_menu_actualizar",
+        base().copy(panel = Panel.MENU, seccion = Seccion.SISTEMA, enOpciones = true, indice = 0,
+            actualizacion = cl.nikalbazu.diptico.estado.VersionNueva(99, "1.0-beta.99", "https://x", 28_000_000, "Novedades de prueba"), descargaAct = 0.42f),
+        Rol.SUPERIOR,
+    )
+
+    @Test fun t209_menu_sticks() = foto("209_menu_controles_sticks", base().copy(panel = Panel.MENU, seccion = Seccion.CONTROLES, enOpciones = true, indice = 0), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t210_ventana_juego() = foto("210_ventana_juego_imagen_inicio", conRecientes(base()).copy(panel = Panel.RAPIDO, indice = 8), Rol.INFERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),
@@ -859,3 +966,5 @@ class Capturas {
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"
 const val ABAJO = "w472dp-h411dp-land-420dpi"
+const val MUESTRA = "w1600dp-h1100dp-land-160dpi"
+const val MUESTRA_ALTA = "w1600dp-h2600dp-port-160dpi"

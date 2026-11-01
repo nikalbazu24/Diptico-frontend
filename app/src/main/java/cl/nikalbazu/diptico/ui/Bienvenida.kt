@@ -176,6 +176,11 @@ private fun BienvenidaCompleta(e: Estado) {
                             Detalle(paso, 13f, color = p.tinta, lineas = 2)
                         }
                     }
+                    // La nota de voz y el mapa con el pin, si los dejaste.
+                    if (j.clave in e.notasVoz || e.mapas.containsKey(j.clave)) {
+                        Spacer(Modifier.height(esc.d(10)))
+                        RecuerdosJuego(e, j.clave, 64f)
+                    }
                     Spacer(Modifier.height(esc.d(12)))
                     Row(
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).fondoBoton(Uva).padding(vertical = esc.d(9)),
@@ -325,6 +330,10 @@ fun Continuacion(e: Estado) {
                     Spacer(Modifier.width(esc.d(8)))
                     Texto(paso, 14f, lineas = 2)
                 }
+            }
+            if (s.clave in e.notasVoz || e.mapas.containsKey(s.clave)) {
+                Spacer(Modifier.height(esc.d(12)))
+                Box(Modifier.entra(t, 0.36f)) { RecuerdosJuego(e, s.clave, 96f) }
             }
         }
     }
