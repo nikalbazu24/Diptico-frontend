@@ -1008,7 +1008,7 @@ class Capturas {
     @Config(qualifiers = MUESTRA_ALTA)
     @Test fun t224_menu_fuentes() = foto(
         "224_menu_portadas_fuentes",
-        base().copy(panel = Panel.MENU, seccion = Seccion.PORTADAS, enOpciones = true, indice = 6,
+        base().copy(panel = Panel.MENU, seccion = Seccion.PORTADAS, enOpciones = true, indice = 5,
             raspadores = cl.nikalbazu.diptico.data.Raspadores.Claves(igdbId = "abc123", igdbSecreto = "xyz789", rawg = "k1")),
         Rol.SUPERIOR,
     )

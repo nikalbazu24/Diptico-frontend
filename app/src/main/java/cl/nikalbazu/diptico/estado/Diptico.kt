@@ -1873,6 +1873,7 @@ object Diptico {
 
     fun cerrarPanel() {
         val e = estado.value
+        cadenaRaspador = emptyList()
         if (e.panel == Panel.CLAVE && e.enlaceUrl != null) { Enlace.detener(); actualizar { it.copy(enlaceUrl = null) } }
         // Desde la clave, se vuelve a donde estabas (menú o tutorial).
         if (e.panel == Panel.CLAVE && (e.textoPara == "titulo" || e.textoPara == "notas")) {
@@ -4714,6 +4715,13 @@ object Diptico {
         almacen.guardarTexto("ras_$campo", valor)
         val c = leerRaspadores()
         actualizar { it.copy(raspadores = c) }
+        // ¿Quedan datos por pedir de esta fuente? Se pide el siguiente.
+        if (cadenaRaspador.isNotEmpty()) {
+            val sig = cadenaRaspador.first()
+            cadenaRaspador = cadenaRaspador.drop(1)
+            abrirTexto("ras_$sig", valorRaspador(c, sig))
+            return
+        }
         cerrarPanel()
         // Si la fuente ya tiene todo lo que pide, se prueba al tiro.
         val fuente = when (campo) { "igdbId", "igdbSecreto" -> "igdb"; "rawg" -> "rawg"; "tgdb" -> "tgdb"; else -> "ss" }
@@ -4727,24 +4735,38 @@ object Diptico {
         }
     }
 
+    /** Los datos que faltan por pedir de la fuente que se está conectando (se piden uno tras otro). */
+    private var cadenaRaspador: List<String> = emptyList()
+
+    /** Conecta una fuente pidiendo sus datos uno tras otro (ScreenScraper pide 4; IGDB, 2). */
+    private fun conectarFuente(campos: List<String>) {
+        val c = estado.value.raspadores
+        cadenaRaspador = campos.drop(1)
+        abrirTexto("ras_${campos.first()}", valorRaspador(c, campos.first()))
+    }
+
+    private fun valorRaspador(c: cl.nikalbazu.diptico.data.Raspadores.Claves, campo: String) = when (campo) {
+        "igdbId" -> c.igdbId; "igdbSecreto" -> c.igdbSecreto; "ssUsuario" -> c.ssUsuario; "ssClave" -> c.ssClave
+        "ssDevId" -> c.ssDevId; "ssDevClave" -> c.ssDevClave; "rawg" -> c.rawg; else -> c.tgdb
+    }
+
     private fun opcionesRaspadores(e: Estado): List<Opcion> {
         val c = e.raspadores
-        fun estado(listo: Boolean, alguno: Boolean) = if (listo) "Conectado ✓" else if (alguno) "Falta un dato" else "Opcional"
-        fun dato(v: String, oculto: Boolean = true) = if (v.isBlank()) "Sin poner" else if (oculto) "•••• ${v.takeLast(3)}" else v
+        // Valor corto para que el nombre de la fuente se lea completo.
+        fun estado(listo: Boolean, alguno: Boolean) = if (listo) "✓" else if (alguno) "Falta" else "Añadir"
         return listOf(
-            Opcion("ScreenScraper · usuario", dato(c.ssUsuario, false), Icono.CLAVE,
-                "Tu cuenta gratis de screenscraper.fr: más rápido y más búsquedas por día. Trae cajas, fanart, capturas y logos de casi todas las consolas.") { abrirTexto("ras_ssUsuario", c.ssUsuario) },
-            Opcion("ScreenScraper · contraseña", dato(c.ssClave), Icono.CLAVE, "La contraseña de tu cuenta de ScreenScraper.") { abrirTexto("ras_ssClave", c.ssClave) },
-            Opcion("ScreenScraper · devid", estado(c.screenscraper, c.ssDevId.isNotBlank() || c.ssDevClave.isNotBlank()), Icono.CLAVE,
-                "ScreenScraper además pide credenciales de desarrollador: se piden gratis en su foro (sección API). Sin ellas, ScreenScraper no responde.") { abrirTexto("ras_ssDevId", c.ssDevId) },
-            Opcion("ScreenScraper · devpassword", dato(c.ssDevClave), Icono.CLAVE, "La contraseña de desarrollador que te da ScreenScraper.") { abrirTexto("ras_ssDevClave", c.ssDevClave) },
-            Opcion("IGDB · Client ID", estado(c.igdb, c.igdbId.isNotBlank() || c.igdbSecreto.isNotBlank()), Icono.CLAVE,
-                "IGDB (de Twitch) es gratis: entra a dev.twitch.tv › Your Console › Register Your Application, y copia el Client ID. Trae portadas, artes y capturas en alta calidad.") { abrirTexto("ras_igdbId", c.igdbId) },
-            Opcion("IGDB · Client Secret", dato(c.igdbSecreto), Icono.CLAVE, "En la misma app de Twitch toca New Secret y copia el secreto.") { abrirTexto("ras_igdbSecreto", c.igdbSecreto) },
-            Opcion("TheGamesDB · clave", estado(c.conTgdb, false), Icono.CLAVE,
-                "Clave gratis que se pide en el foro de thegamesdb.net. Trae cajas, fanart y logos.") { abrirTexto("ras_tgdb", c.tgdb) },
-            Opcion("RAWG · clave", estado(c.conRawg, false), Icono.CLAVE,
-                "Clave gratis en rawg.io/apidocs. Trae imágenes grandes y capturas (muy buena para juegos de PC y de consolas nuevas).") { abrirTexto("ras_rawg", c.rawg) },
+            Opcion("ScreenScraper", estado(c.screenscraper, listOf(c.ssUsuario, c.ssClave, c.ssDevId, c.ssDevClave).any { it.isNotBlank() }), Icono.CLAVE,
+                "Cajas, fanart, capturas y logos de casi todas las consolas. Te pide 4 datos: tu usuario y contraseña de screenscraper.fr, y el devid y devpassword de desarrollador que se piden gratis en su foro (sección API).") {
+                conectarFuente(listOf("ssUsuario", "ssClave", "ssDevId", "ssDevClave"))
+            },
+            Opcion("IGDB", estado(c.igdb, c.igdbId.isNotBlank() || c.igdbSecreto.isNotBlank()), Icono.CLAVE,
+                "Portadas, artes y capturas en alta calidad (de Twitch). Gratis: crea una app en dev.twitch.tv y copia su Client ID y su Client Secret.") {
+                conectarFuente(listOf("igdbId", "igdbSecreto"))
+            },
+            Opcion("TheGamesDB", estado(c.conTgdb, false), Icono.CLAVE,
+                "Cajas, fanart y logos. Clave gratis que se pide en el foro de thegamesdb.net.") { conectarFuente(listOf("tgdb")) },
+            Opcion("RAWG", estado(c.conRawg, false), Icono.CLAVE,
+                "Imágenes grandes y capturas, muy buena para juegos de PC y consolas nuevas. Clave gratis en rawg.io/apidocs.") { conectarFuente(listOf("rawg")) },
         )
     }
 
