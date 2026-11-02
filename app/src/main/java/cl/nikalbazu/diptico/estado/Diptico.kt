@@ -440,6 +440,8 @@ data class Estado(
     val centroVersion: Int = 0,
     /** Colecciones propias (id -> colección); se ven como widgets en el inicio. */
     val colecciones: Map<String, Coleccion> = emptyMap(),
+    /** Cuentas y claves de más fuentes de imágenes (IGDB, ScreenScraper, RAWG, TheGamesDB). */
+    val raspadores: cl.nikalbazu.diptico.data.Raspadores.Claves = cl.nikalbazu.diptico.data.Raspadores.Claves(),
     /** "¿Dónde quedaste?" al terminar de jugar: si se pregunta, la tarjeta abierta, la opción marcada y si se está grabando (desde cuándo). */
     val preguntarQuedaste: Boolean = true,
     val quedaste: Boolean = false,
@@ -708,6 +710,7 @@ object Diptico {
             heroes = leerMapa(almacen.texto("heroes", "{}")),
             formaTodos = almacen.texto("formaTodos", "poster"),
             colecciones = leerColecciones(almacen.texto("colecciones", "{}")),
+            raspadores = leerRaspadores(),
             actualizarSolo = almacen.bool("actualizarSolo", true),
             sobremesaModo = almacen.texto("sobremesaModo", "auto"),
             sobremesaTam = almacen.texto("sobremesaTam", "1.2").toFloatOrNull() ?: 1.2f,
@@ -1823,13 +1826,14 @@ object Diptico {
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave", "ia_pedido", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
         if (estado.value.panel != Panel.CLAVE) claveDesde = regresoActual()
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_")) }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_")) }
         // Para las claves: el teléfono puede mandarla directo (QR con la página de la consola en tu Wi-Fi).
         val oficial = urlClave(para)
         if (oficial != null && para != "ra_usuario") {
             val titulo = when (para) {
                 "ia_clave_gemini" -> "Clave de Gemini"; "ia_clave_openai" -> "Clave de ChatGPT"; "ia_clave" -> "Clave de Claude"
-                "sgdb" -> "Clave de SteamGridDB"; else -> "Clave de RetroAchievements"
+                "sgdb" -> "Clave de SteamGridDB"
+                else -> tituloRaspador(para) ?: "Clave de RetroAchievements"
             }
             val url = Enlace.iniciar(titulo, oficial) { clave -> recibirClaveRemota(para, clave) }
             actualizar { it.copy(enlaceUrl = url) }
@@ -2745,6 +2749,7 @@ object Diptico {
                     "Clave de SteamGridDB", if (e.claveSgdb.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
                     "Gratis en steamgriddb.com: entra, ve a Preferencias › API y copia tu clave. Trae arte grande y logos.",
                 ) { abrirClave() }
+                lista += opcionesRaspadores(e)
                 lista += Opcion(
                     "Títulos de libretro", if (e.titulosBonitos) "Sí" else "No", Icono.TITULO,
                     "Muestra el nombre oficial del juego en vez del nombre del archivo.",
@@ -2863,10 +2868,10 @@ object Diptico {
                 actualizar { it.copy(descarga = Descarga(i, pendientes.size, j.titulo, encontrados)) }
                 trabajo("portadas", "Portadas · ${j.titulo}", i / pendientes.size.toFloat())
                 val c = Consolas.porId(j.consolaId) ?: return@forEachIndexed
-                if (c.esPorts && clave.isBlank()) return@forEachIndexed
+                if (c.esPorts && clave.isBlank() && !estado.value.raspadores.alguna) return@forEachIndexed
                 val previo = if (todo) null else medios[j.clave]
                 val r = withContext(Dispatchers.IO) {
-                    try { Descargas.buscar(app, j, c, previo, clave) } catch (ex: Exception) { null }
+                    try { Descargas.buscar(app, j, c, previo, clave, estado.value.raspadores) } catch (ex: Exception) { null }
                 }
                 if (r != null) {
                     if (r.encontrado) encontrados++
@@ -2901,7 +2906,7 @@ object Diptico {
         trabajo("uno", "Imágenes de ${j.titulo}")
         scope.launch {
             val r = withContext(Dispatchers.IO) {
-                try { Descargas.buscar(app, crudo, c, null, estado.value.claveSgdb) } catch (ex: Exception) { null }
+                try { Descargas.buscar(app, crudo, c, null, estado.value.claveSgdb, estado.value.raspadores) } catch (ex: Exception) { null }
             }
             terminarTrabajo("uno")
             if (r == null || !r.encontrado) {
@@ -4669,6 +4674,60 @@ object Diptico {
         if (!silencioso) avisar("Listo: Díptico acomodado para tu ${q.nombre}")
     }
 
+    // ---------- Más fuentes de imágenes (IGDB, ScreenScraper, RAWG, TheGamesDB) ----------
+
+    /** Título corto de cada dato de las fuentes de imágenes (para el panel, el teclado y el QR). */
+    fun tituloRaspador(para: String): String? = when (para) {
+        "ras_igdbId" -> "IGDB · Client ID"; "ras_igdbSecreto" -> "IGDB · Client Secret"
+        "ras_ssUsuario" -> "Usuario de ScreenScraper"; "ras_ssClave" -> "Contraseña de ScreenScraper"
+        "ras_ssDevId" -> "ScreenScraper · devid"; "ras_ssDevClave" -> "ScreenScraper · devpassword"
+        "ras_rawg" -> "Clave de RAWG"; "ras_tgdb" -> "Clave de TheGamesDB"
+        else -> null
+    }
+
+    private fun leerRaspadores() = cl.nikalbazu.diptico.data.Raspadores.Claves(
+        almacen.texto("ras_igdbId"), almacen.texto("ras_igdbSecreto"), almacen.texto("ras_ssUsuario"), almacen.texto("ras_ssClave"),
+        almacen.texto("ras_ssDevId"), almacen.texto("ras_ssDevClave"), almacen.texto("ras_rawg"), almacen.texto("ras_tgdb"),
+    )
+
+    private fun guardarRaspador(campo: String, valor: String) {
+        almacen.guardarTexto("ras_$campo", valor)
+        val c = leerRaspadores()
+        actualizar { it.copy(raspadores = c) }
+        cerrarPanel()
+        // Si la fuente ya tiene todo lo que pide, se prueba al tiro.
+        val fuente = when (campo) { "igdbId", "igdbSecreto" -> "igdb"; "rawg" -> "rawg"; "tgdb" -> "tgdb"; else -> "ss" }
+        val lista = when (fuente) { "igdb" -> c.igdb; "rawg" -> c.conRawg; "tgdb" -> c.conTgdb; else -> c.screenscraper }
+        if (valor.isBlank()) { avisar("Dato quitado"); return }
+        if (!lista) { avisar("Guardado. Falta el otro dato de esta fuente"); return }
+        avisar("Probando la conexión…")
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { try { cl.nikalbazu.diptico.data.Raspadores.probar(c, fuente) } catch (_: Exception) { false } }
+            avisar(if (ok) "¡Conectado! Ya puedo buscar imágenes ahí" else "No funcionó. Revisa los datos o tu conexión")
+        }
+    }
+
+    private fun opcionesRaspadores(e: Estado): List<Opcion> {
+        val c = e.raspadores
+        fun estado(listo: Boolean, alguno: Boolean) = if (listo) "Conectado ✓" else if (alguno) "Falta un dato" else "Opcional"
+        fun dato(v: String, oculto: Boolean = true) = if (v.isBlank()) "Sin poner" else if (oculto) "•••• ${v.takeLast(3)}" else v
+        return listOf(
+            Opcion("ScreenScraper · usuario", dato(c.ssUsuario, false), Icono.CLAVE,
+                "Tu cuenta gratis de screenscraper.fr: más rápido y más búsquedas por día. Trae cajas, fanart, capturas y logos de casi todas las consolas.") { abrirTexto("ras_ssUsuario", c.ssUsuario) },
+            Opcion("ScreenScraper · contraseña", dato(c.ssClave), Icono.CLAVE, "La contraseña de tu cuenta de ScreenScraper.") { abrirTexto("ras_ssClave", c.ssClave) },
+            Opcion("ScreenScraper · devid", estado(c.screenscraper, c.ssDevId.isNotBlank() || c.ssDevClave.isNotBlank()), Icono.CLAVE,
+                "ScreenScraper además pide credenciales de desarrollador: se piden gratis en su foro (sección API). Sin ellas, ScreenScraper no responde.") { abrirTexto("ras_ssDevId", c.ssDevId) },
+            Opcion("ScreenScraper · devpassword", dato(c.ssDevClave), Icono.CLAVE, "La contraseña de desarrollador que te da ScreenScraper.") { abrirTexto("ras_ssDevClave", c.ssDevClave) },
+            Opcion("IGDB · Client ID", estado(c.igdb, c.igdbId.isNotBlank() || c.igdbSecreto.isNotBlank()), Icono.CLAVE,
+                "IGDB (de Twitch) es gratis: entra a dev.twitch.tv › Your Console › Register Your Application, y copia el Client ID. Trae portadas, artes y capturas en alta calidad.") { abrirTexto("ras_igdbId", c.igdbId) },
+            Opcion("IGDB · Client Secret", dato(c.igdbSecreto), Icono.CLAVE, "En la misma app de Twitch toca New Secret y copia el secreto.") { abrirTexto("ras_igdbSecreto", c.igdbSecreto) },
+            Opcion("TheGamesDB · clave", estado(c.conTgdb, false), Icono.CLAVE,
+                "Clave gratis que se pide en el foro de thegamesdb.net. Trae cajas, fanart y logos.") { abrirTexto("ras_tgdb", c.tgdb) },
+            Opcion("RAWG · clave", estado(c.conRawg, false), Icono.CLAVE,
+                "Clave gratis en rawg.io/apidocs. Trae imágenes grandes y capturas (muy buena para juegos de PC y de consolas nuevas).") { abrirTexto("ras_rawg", c.rawg) },
+        )
+    }
+
     fun nombreHeroe(v: String?) = when (v) { null -> "Como todos"; "portada" -> "Portada"; else -> "Imagen grande" }
 
     private fun ciclarHeroe(clave: String) {
@@ -5072,11 +5131,14 @@ object Diptico {
     fun nombreCandidato(t: String) = when (t) { "arte", "c_hero" -> "imagen grande"; "logo", "c_logo" -> "logo"; "c_icono" -> "ícono"; else -> "portada" }
 
     /** Pestañas de la tienda según qué se busca (las consolas usan RetroArch en vez de libretro). */
-    fun fuentesImagen(e: Estado = estado.value) = if (e.candidatoPara.startsWith("c_")) listOf("todas", "RetroArch", "SteamGridDB", "Wikipedia") else FUENTES_IMAGEN
+    fun fuentesImagen(e: Estado = estado.value) = if (e.candidatoPara.startsWith("c_")) listOf("todas", "RetroArch", "SteamGridDB", "Wikipedia") else FUENTES_IMAGEN.filter { f ->
+        val c = e.raspadores
+        when (f) { "ScreenScraper" -> c.screenscraper; "IGDB" -> c.igdb; "TheGamesDB" -> c.conTgdb; "RAWG" -> c.conRawg; else -> true }
+    }
 
     /** Busca varias opciones (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
     /** Fuentes de la tienda de imágenes (pestañas). */
-    val FUENTES_IMAGEN = listOf("todas", "SteamGridDB", "libretro", "Wikipedia")
+    val FUENTES_IMAGEN = listOf("todas", "SteamGridDB", "libretro", "ScreenScraper", "IGDB", "TheGamesDB", "RAWG", "Wikipedia")
     fun nombreFuente(f: String) = if (f == "todas") "Todas" else f
 
     /** Lo que se ve en la tienda: atajos (mis archivos, quitar, conectar SteamGridDB) y las imágenes de la fuente elegida. */
@@ -5131,7 +5193,7 @@ object Diptico {
             val lista = withContext(Dispatchers.IO) {
                 try {
                     val wiki = if (nombre == null) e.ficha ?: Fichas.buscar(app, titulo, c.bonito) else Fichas.buscar(app, titulo, c.bonito)
-                    Descargas.candidatos(app, crudo, c, tipo, titulo, e.claveSgdb, wiki)
+                    Descargas.candidatos(app, crudo, c, tipo, titulo, e.claveSgdb, wiki, e.raspadores)
                 } catch (ex: Exception) {
                     emptyList()
                 }
@@ -5199,6 +5261,11 @@ object Diptico {
 
     /** La página donde se saca cada clave (para el botón "Sacar mi clave" y su código QR). */
     fun urlClave(para: String): String? = when (para) {
+        "ras_igdbId", "ras_igdbSecreto" -> "https://dev.twitch.tv/console/apps/create"
+        "ras_ssUsuario", "ras_ssClave" -> "https://www.screenscraper.fr/membreinscription.php"
+        "ras_ssDevId", "ras_ssDevClave" -> "https://www.screenscraper.fr/forumsujets.php?frub=12&numpage=0"
+        "ras_rawg" -> "https://rawg.io/apidocs"
+        "ras_tgdb" -> "https://forums.thegamesdb.net/viewforum.php?f=10"
         "ia_clave_gemini", "gemini" -> "https://aistudio.google.com/apikey"
         "ia_clave_openai", "openai" -> "https://platform.openai.com/api-keys"
         "ia_clave", "claude" -> "https://console.anthropic.com/settings/keys"
@@ -5239,6 +5306,10 @@ object Diptico {
             }
             "coleccion_nueva" -> {
                 crearColeccion(t.ifBlank { "Mi colección" }, e.seleccionado?.clave)
+                return
+            }
+            "ras_igdbId", "ras_igdbSecreto", "ras_ssUsuario", "ras_ssClave", "ras_ssDevId", "ras_ssDevClave", "ras_rawg", "ras_tgdb" -> {
+                guardarRaspador(e.textoPara.removePrefix("ras_"), e.borrador.trim())
                 return
             }
             "buscar_juego" -> {

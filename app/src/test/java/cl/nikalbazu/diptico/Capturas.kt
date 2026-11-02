@@ -1005,6 +1005,17 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t223_carrusel() = foto("223_carrusel", conRecientes(base()).copy(vista = "carrusel", juegoSel = "psx/3"), Rol.INFERIOR)
 
+    @Config(qualifiers = MUESTRA_ALTA)
+    @Test fun t224_menu_fuentes() = foto(
+        "224_menu_portadas_fuentes",
+        base().copy(panel = Panel.MENU, seccion = Seccion.PORTADAS, enOpciones = true, indice = 6,
+            raspadores = cl.nikalbazu.diptico.data.Raspadores.Claves(igdbId = "abc123", igdbSecreto = "xyz789", rawg = "k1")),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t225_clave_igdb() = foto("225_clave_igdb", base().copy(panel = Panel.CLAVE, textoPara = "ras_igdbId"), Rol.INFERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),

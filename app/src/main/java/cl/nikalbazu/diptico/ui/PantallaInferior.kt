@@ -835,6 +835,11 @@ private fun PanelClave(e: Estado) {
                 "buscar_juego" -> listOf(Icono.BUSCAR, "Buscar un juego", "Escribe parte del nombre; también puedes dictarlo con la tecla Voz.", "Ej: zelda")
                 "coleccion_nueva" -> listOf(Icono.CARPETA, "Nombre de la colección", "Por ejemplo \"Para jugar con mi hijo\" o \"RPG pendientes\". Aparecerá como widget en tu inicio.", "Ej: RPG pendientes")
                 "consola_nombre" -> listOf(Icono.TEXTO, "Nombre de la consola", "Así se verá en las pestañas y en todo Díptico.", "Ej: Mi Super Nintendo")
+                "ras_igdbId", "ras_igdbSecreto" -> listOf(Icono.CLAVE, Diptico.tituloRaspador(e.textoPara)!!, "Gratis: entra a dev.twitch.tv › Your Console › Register Your Application (categoría «Application Integration», URL http://localhost). Copia el Client ID y toca New Secret para el secreto.", "Pégalo aquí")
+                "ras_ssUsuario", "ras_ssClave" -> listOf(Icono.CLAVE, Diptico.tituloRaspador(e.textoPara)!!, "Tu cuenta gratis de screenscraper.fr. Con cuenta hay más búsquedas por día y más rápidas.", if (e.textoPara == "ras_ssUsuario") "Ej: Nikalbazu" else "Tu contraseña")
+                "ras_ssDevId", "ras_ssDevClave" -> listOf(Icono.CLAVE, Diptico.tituloRaspador(e.textoPara)!!, "ScreenScraper pide credenciales de desarrollador para apps como Díptico. Se piden gratis en su foro, sección «API». Te llegan un devid y un devpassword.", "Pégalo aquí")
+                "ras_rawg" -> listOf(Icono.CLAVE, "Clave de RAWG", "Gratis: crea una cuenta en rawg.io, entra a rawg.io/apidocs, toca «Get API Key» y copia la clave.", "Pega tu clave")
+                "ras_tgdb" -> listOf(Icono.CLAVE, "Clave de TheGamesDB", "Gratis: se pide en el foro de thegamesdb.net (sección «API Key Requests»). Te llega una clave pública.", "Pega tu clave")
                 "notas" -> listOf(Icono.LAPIZ, "Mis trucos y notas", "Claves, trucos, coleccionables, lo que quieras recordar de este juego.", "Ej: el código del cofre es 4-2-1")
                 else -> listOf(Icono.CLAVE, "Clave de SteamGridDB", "Es gratis: entra a steamgriddb.com, inicia sesión, ve a Preferencias › API y copia tu clave aquí.", "Pega tu clave")
             }
@@ -867,11 +872,11 @@ private fun PanelClave(e: Estado) {
                     CodigoQR(e.enlaceUrl ?: url, 72f)
                 }
             }
-            val esClave = e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave"
+            val esClave = e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave" || (e.textoPara.startsWith("ras_") && e.textoPara != "ras_ssUsuario")
             CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas") 130f else 60f)
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
-                val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; "ia_clave_gemini" -> e.claveGemini; "ia_clave_openai" -> e.claveOpenAI; else -> e.claveIa }).isNotBlank()
+                val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; "ia_clave_gemini" -> e.claveGemini; "ia_clave_openai" -> e.claveOpenAI; else -> if (e.textoPara.startsWith("ras_")) Diptico.almacen.texto(e.textoPara) else e.claveIa }).isNotBlank()
                 BotonGrande(
                     when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; e.textoPara == "asistente" -> "Preguntar"; else -> "Guardar" },
                     Uva, SobreUva, Modifier.weight(1.4f),

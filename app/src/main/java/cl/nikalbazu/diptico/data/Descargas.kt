@@ -251,7 +251,7 @@ object Descargas {
      * Busca lo que falta de un juego. No toca lo que la persona ya tiene en su carpeta.
      * [previo] es lo ya descargado antes (para no repetir).
      */
-    fun buscar(ctx: Context, juego: Juego, consola: Consola, previo: MediosJuego?, claveSgdb: String): Resultado {
+    fun buscar(ctx: Context, juego: Juego, consola: Consola, previo: MediosJuego?, claveSgdb: String, mas: Raspadores.Claves = Raspadores.Claves()): Resultado {
         val dir = carpeta(ctx, "medios")
         val base = hash(juego.clave)
         var m = previo ?: MediosJuego()
@@ -316,6 +316,24 @@ object Descargas {
                 }
             }
         }
+        // Lo que todavía falte: IGDB, ScreenScraper, TheGamesDB y RAWG (si la persona conectó alguna).
+        val falta = (!tienePortada && !existe(m.portada)) || (juego.arte == null && !existe(m.arte)) || !existe(m.logo)
+        if (falta && mas.alguna) {
+            val h = Raspadores.buscar(mas, m.titulo ?: juego.titulo, juego.archivo, consola.id)
+            if (h.portadas.isNotEmpty() || h.artes.isNotEmpty() || h.logos.isNotEmpty()) encontrado = true
+            if (!tienePortada && !existe(m.portada)) h.portadas.firstOrNull()?.let { u ->
+                val f = File(dir, "$base-portada.${extension(u.url)}")
+                if (bajar(u.url, f)) m = m.copy(portada = f.absolutePath)
+            }
+            if (juego.arte == null && !existe(m.arte)) h.artes.firstOrNull()?.let { u ->
+                val f = File(dir, "$base-arte.${extension(u.url)}")
+                if (bajar(u.url, f)) m = m.copy(arte = f.absolutePath)
+            }
+            if (!existe(m.logo)) h.logos.firstOrNull()?.let { u ->
+                val f = File(dir, "$base-logo.${extension(u.url)}")
+                if (bajar(u.url, f)) m = m.copy(logo = f.absolutePath)
+            }
+        }
         return Resultado(m, encontrado)
     }
 
@@ -356,8 +374,12 @@ object Descargas {
      * Todas las opciones de internet para una imagen de un juego.
      * [tipo]: "portada", "arte" (imagen grande / hero) o "logo".
      */
-    fun candidatos(ctx: Context, juego: Juego, consola: Consola, tipo: String, titulo: String, claveSgdb: String, wiki: FichaInfo?): List<ImagenWeb> {
+    fun candidatos(ctx: Context, juego: Juego, consola: Consola, tipo: String, titulo: String, claveSgdb: String, wiki: FichaInfo?, mas: Raspadores.Claves = Raspadores.Claves()): List<ImagenWeb> {
         val lista = ArrayList<ImagenWeb>()
+        if (mas.alguna) {
+            val h = Raspadores.buscar(mas, titulo, juego.archivo, consola.id)
+            lista += when (tipo) { "portada" -> h.portadas; "logo" -> h.logos; else -> h.artes }
+        }
         val sistema = consola.libretro
         if (sistema != null && tipo != "logo") {
             val idx = try { indice(ctx, sistema) } catch (e: Exception) { emptyMap() }

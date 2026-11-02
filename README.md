@@ -2,7 +2,15 @@
 
 Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué trae la 1.0 beta.5
+## Qué trae la 1.0 beta.6
+
+- **Más fuentes de imágenes**: además de libretro, SteamGridDB y Wikipedia, ahora busca en **ScreenScraper**, **IGDB**, **TheGamesDB** y **RAWG**. Se conectan en Menú › Portadas y la tienda de imágenes muestra una pestaña por cada una.
+  - ScreenScraper: tu usuario y contraseña de screenscraper.fr, más un *devid* y *devpassword* de desarrollador (se piden gratis en su foro, sección API).
+  - IGDB: crea una app gratis en dev.twitch.tv y copia su Client ID y Client Secret.
+  - TheGamesDB: clave gratis pedida en su foro. RAWG: clave gratis en rawg.io/apidocs.
+- **Versión para teléfonos** (`-movil.apk`): sin acceso a notificaciones, para que Play Protect no la bloquee.
+
+## Qué trajo la 1.0 beta.5
 
 - **Bisa más inteligente**: botón Hablar (dictado por voz), busca en internet (también con la IA de la consola), respuestas y seguimientos para tocar, y cara nueva más amigable.
 - **Teclado más grande**, con tecla Voz para dictar; el teclado de Android ya no aparece (también al buscar y con una sola pantalla).
