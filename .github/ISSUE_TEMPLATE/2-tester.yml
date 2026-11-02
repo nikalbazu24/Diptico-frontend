@@ -1,0 +1,41 @@
+name: "🎮 I want to be a tester / Quiero ser probador"
+description: Join the beta and tell us about your device. / Súmate a la beta y cuéntanos de tu equipo.
+title: "Tester: "
+labels: ["tester"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Install the latest APK from [Releases](https://github.com/Nikalbazu24/diptico-frontend/releases), use it for a week as your launcher and tell us how it goes.
+        Instala el último APK desde [Releases](https://github.com/Nikalbazu24/diptico-frontend/releases), úsalo una semana como tu launcher y cuéntanos cómo te va.
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version / Equipo y versión de Android
+      placeholder: "AYN Thor, Android 13"
+    validations:
+      required: true
+  - type: dropdown
+    id: screens
+    attributes:
+      label: Screens / Pantallas
+      options:
+        - Two screens / Dos pantallas
+        - One screen / Una pantalla
+        - TV / Tele
+    validations:
+      required: true
+  - type: textarea
+    id: emulators
+    attributes:
+      label: Systems and emulators you use / Consolas y emuladores que usas
+      placeholder: "SNES (RetroArch), PS2 (NetherSX2), Switch (Eden)…"
+  - type: input
+    id: before
+    attributes:
+      label: Frontend you use today / Frontend que usas hoy
+      placeholder: "ES-DE, Daijishō, Cocoon, iiSU, none…"
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else? / ¿Algo más?

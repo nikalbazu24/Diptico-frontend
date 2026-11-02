@@ -1,0 +1,52 @@
+name: "🐞 Bug report / Reportar una falla"
+description: Something broke, froze or looks wrong. / Algo se cayó, se congeló o se ve mal.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing Díptico! Write in English or Spanish. / ¡Gracias por probar Díptico! Escribe en inglés o español.
+  - type: input
+    id: device
+    attributes:
+      label: Device / Equipo
+      placeholder: "AYN Thor, Retroid Pocket 5, Pixel 8…"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Díptico version / Versión
+      description: Menu › About / Menú › Acerca de
+      placeholder: "1.0-beta.74"
+    validations:
+      required: true
+  - type: dropdown
+    id: apk
+    attributes:
+      label: Which APK? / ¿Qué APK?
+      options:
+        - Full (consoles) / Completa (consolas)
+        - "-movil (phones) / -movil (teléfonos)"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / ¿Qué pasó?
+      placeholder: "I pressed A on a PS2 game and Díptico closed. / Apreté A en un juego de PS2 y Díptico se cerró."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to repeat it / Cómo repetirlo
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or video / Capturas o video
+      description: Drag images here. / Arrastra las imágenes aquí.

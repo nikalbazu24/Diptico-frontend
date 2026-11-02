@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "📥 Download the latest version / Descargar la última versión"
+    url: https://github.com/Nikalbazu24/diptico-frontend/releases
+    about: APKs for consoles and phones. / APK para consolas y teléfonos.
