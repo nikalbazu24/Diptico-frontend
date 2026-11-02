@@ -97,8 +97,14 @@ def plantilla(partes):
             t += texto.replace("{", "{{").replace("}", "}}") if False else texto
     return t, k
 
+# Palabras sueltas en minúscula que sí se ven en pantalla (el filtro de abajo las confunde con identificadores).
+VISIBLES = {"jugadas", "partidas", "puntos", "jugado"}
+
 def visible(t):
     s = re.sub(r"\{\d+\}", "", t).strip()
+    if t in VISIBLES: return True
+    # "{0} juegos", "{0} jugadas": número + palabra en minúscula = texto para la pantalla.
+    if re.fullmatch(r"\{\d+\} [a-záéíóúñ]+", t): return True
     if len(s) < 2 or len(t) > 420: return False
     if not re.search(r"[A-Za-zÁÉÍÓÚáéíóúÑñ]", s): return False
     if re.match(r"^(https?:|content:|app:|file:|android\.|image/|audio/|video/|vnd\.|application/|primary:|[a-z]+/[a-z*])", s): return False

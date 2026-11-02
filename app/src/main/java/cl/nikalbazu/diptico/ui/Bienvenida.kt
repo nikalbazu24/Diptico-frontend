@@ -49,7 +49,8 @@ import cl.nikalbazu.diptico.estado.Idioma
 private fun saludoCon(nombre: String): String {
     val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
     val base = when (h) { in 5..11 -> "Buenos días"; in 12..19 -> "Buenas tardes"; else -> "Buenas noches" }
-    return if (nombre.isBlank()) base else "$base, $nombre"
+    // Se traduce el saludo antes de sumarle el nombre (con el nombre ya no calza con la traducción).
+    return if (nombre.isBlank()) base else "${Idioma.t(base)}, $nombre"
 }
 
 /** Cuánto tiempo estuviste fuera, dicho en palabras. */
@@ -355,7 +356,7 @@ fun Continuacion(e: Estado) {
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun TextoPorPalabras(texto: String, tam: Float, t: Float, desde: Float) {
-    val palabras = texto.split(' ')
+    val palabras = Idioma.t(texto).split(' ')
     androidx.compose.foundation.layout.FlowRow {
         palabras.forEachIndexed { i, w ->
             Texto(w + " ", tam, lineas = 1, interlineado = tam * 1.12f, traducir = false, modifier = Modifier.entra(t, desde + i * 0.06f))
@@ -386,6 +387,7 @@ private fun RelojQueCae(hora: String, tam: Float, color: Color) {
 /** Texto que se va escribiendo letra por letra (como si Bisa lo tecleara). */
 @Composable
 private fun TextoQueSeEscribe(texto: String, tam: Float, demora: Long = 0) {
+    val texto = Idioma.t(texto)
     var n by androidx.compose.runtime.remember(texto) { androidx.compose.runtime.mutableIntStateOf(0) }
     LaunchedEffect(texto) {
         kotlinx.coroutines.delay(demora)
