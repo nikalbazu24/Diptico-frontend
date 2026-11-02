@@ -9,7 +9,7 @@ Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido
   - IGDB: crea una app gratis en dev.twitch.tv y copia su Client ID y Client Secret.
   - TheGamesDB: clave gratis pedida en su foro. RAWG: clave gratis en rawg.io/apidocs.
 - **Recorrido de bienvenida**: la primera vez que abres Díptico, un paseo por todas las opciones y botones (se puede repetir en Menú › Acerca de).
-- **Novedades al tiro**: después de actualizar, el tour de novedades aparece apenas abres Díptico.
+- **Novedades al tiro y juntas**: después de actualizar, el tour aparece apenas abres Díptico. Si te saltaste varias versiones, junta las novedades de todas.
 - **Versión para teléfonos** (`-movil.apk`): sin acceso a notificaciones, para que Play Protect no la bloquee.
 
 ## Qué trajo la 1.0 beta.5

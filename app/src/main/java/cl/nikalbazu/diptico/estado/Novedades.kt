@@ -7,13 +7,117 @@ package cl.nikalbazu.diptico.estado
  * Cada versión cambia [ID] y sus páginas; el tour sale solo si la persona todavía no vio este [ID].
  */
 object Novedades {
-    data class Pagina(val titulo: String, val texto: String, val icono: Icono, val color: Long, val tecla: String = "")
+    data class Pagina(val titulo: String, val texto: String, val icono: Icono, val color: Long, val tecla: String = "", val version: String = "")
+
+    /** Las novedades de una versión. */
+    data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
     const val ID = "1.0-beta.6"
     const val NOMBRE = "1.0 beta.6"
 
-    /** Páginas del tour que toca: el recorrido de bienvenida (primera vez) o las novedades de esta versión. */
-    fun paginasDe(recorrido: Boolean) = if (recorrido) RECORRIDO else paginas
+    /**
+     * Todas las versiones con novedades, de la más vieja a la más nueva.
+     * Para una versión nueva: se agrega al final y se cambian [ID] y [NOMBRE].
+     */
+    val HISTORIAL = listOf(
+        Version("1.0-beta.4", "1.0 beta.4", listOf(
+            Pagina(
+            "¿Arriba o abajo?", "Mantén A sobre un juego o una app y elige en qué pantalla se abre. Puedes dejarlo recordado para ese juego.",
+            Icono.PANTALLAS, 0xFF3BA8FF, "Mantén A",
+        ),
+        Pagina(
+            "¿Dónde quedaste?", "Al terminar de jugar: escríbelo, déjalo en una nota de voz o márcalo en el mapa del juego. O pasa de largo. Se apaga en Menú › Inicio.",
+            Icono.LAPIZ, 0xFFFF7A59, "Nota de voz",
+        ),
+        Pagina(
+            "Turbo a un toque", "El botón Turbo de la barra libera memoria al instante. Mantenlo para encender o apagar el turbo al jugar.",
+            Icono.CHISPA, 0xFFFF5252, "Turbo",
+        ),
+        Pagina(
+            "Un stick para cada cosa", "El izquierdo elige tus juegos y el derecho recorre los widgets. En el editor, el stick desliza la pantalla. Se cambia en Menú › Controles.",
+            Icono.MANDO, 0xFFFFA726, "Sticks",
+        ),
+        Pagina(
+            "Widgets pulidos", "Marcos que siempre se ven completos, GIF sin fondo que flotan sobre tu inicio y cada widget abierto en grande en la pantalla de arriba.",
+            Icono.APPS, 0xFF2EC4A6, "Widgets",
+        ),
+        Pagina(
+            "Todos parejos", "En «Todos» las cajas se ven iguales (póster o cuadradas). Y eliges qué imagen va en grande en el inicio desde la ventana de cada juego (Y).",
+            Icono.FORMA, 0xFFB388FF, "Y · Imagen en el inicio",
+        ),
+        Pagina(
+            "Actualiza desde aquí", "Cuando salga una versión nueva te aviso, y la descargas e instalas desde Menú › Acerca de, sin buscar en GitHub.",
+            Icono.DESCARGA, 0xFFFFC93C, "Acerca de",
+        )
+        )),
+        Version("1.0-beta.5", "1.0 beta.5", listOf(
+            Pagina(
+            "Bisa, más lista", "Háblale con el botón Hablar en vez de escribir, busca en internet por ti y te ofrece respuestas listas para tocar. Y estrena cara.",
+            Icono.BISA, 0xFFFF7A59, "Hablar",
+        ),
+        Pagina(
+            "Teclado grande", "Teclas más grandes, una tecla Voz para dictar, y el teclado de Android ya no aparece encima.",
+            Icono.TEXTO, 0xFF3BA8FF, "Voz",
+        ),
+        Pagina(
+            "Colecciones y accesos", "Junta juegos en tus propias carpetas o deja un juego a un toque en tu inicio de widgets. En la ventana de cada juego (Y).",
+            Icono.CARPETA, 0xFF2EC4A6, "Y · Colecciones",
+        ),
+        Pagina(
+            "Vista Carpetas", "Cada consola como una carpeta con sus portadas asomándose. Menú › Estante › Consolas.",
+            Icono.VISTA, 0xFFFFA726, "Carpetas",
+        ),
+        Pagina(
+            "Lo encendido se nota", "En el centro de control, lo que está activo (Wi-Fi, Bluetooth, turbo, No molestar) se pinta de verde.",
+            Icono.WIFI, 0xFF2EC4A6, "Centro de control",
+        ),
+        Pagina(
+            "Díptico conoce tu equipo", "Reconoce si es una Thor, una Odin, una Retroid, un teléfono o una tablet y se acomoda solo. Menú › Pantallas › Tu equipo.",
+            Icono.MANDO, 0xFFB388FF, "Tu equipo",
+        ),
+        Pagina(
+            "Switch 2 y más", "Consola Switch 2 lista para cuando haya emulador, y más nombres de carpetas reconocidos. Además: bienvenida animada, carrusel sin parpadeo y la portada más limpia.",
+            Icono.EMULADOR, 0xFFE60012, "Más consolas",
+        )
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina(
+            "Más fuentes de imágenes", "Ahora Díptico también busca portadas, arte y logos en ScreenScraper, IGDB, TheGamesDB y RAWG. Conéctalas en Menú › Portadas (son gratis).",
+            Icono.PORTADA, 0xFF3BA8FF, "Menú › Portadas",
+        ),
+        Pagina(
+            "Tienda con más pestañas", "Al cambiar una imagen (Y › Imágenes), cada fuente conectada tiene su propia pestaña para elegir.",
+            Icono.BUSCAR, 0xFF2EC4A6, "Y · Imágenes",
+        ),
+        Pagina(
+            "Versión para teléfonos", "Si instalas Díptico en un teléfono, usa el archivo «-movil»: no pide acceso a las notificaciones y Play Protect no lo bloquea. Se actualiza sola a su mismo tipo.",
+            Icono.MANDO, 0xFFFFA726,
+        )
+        )),
+    )
+
+    /**
+     * Las versiones que la persona todavía no vio, de la más nueva a la más vieja.
+     * [vista] es la última versión cuyas novedades vio; si no está en el historial (venía de antes), se muestran todas.
+     */
+    fun pendientes(vista: String): List<Version> {
+        val k = HISTORIAL.indexOfFirst { it.id == vista }
+        return HISTORIAL.drop(if (k >= 0) k + 1 else 0).reversed().ifEmpty { listOf(HISTORIAL.last()) }
+    }
+
+    /** Páginas del tour: el recorrido de bienvenida, o las novedades juntas de todas las versiones que te saltaste. */
+    fun paginasDe(recorrido: Boolean, vista: String = HISTORIAL.getOrNull(HISTORIAL.size - 2)?.id ?: ""): List<Pagina> {
+        if (recorrido) return RECORRIDO
+        val vs = pendientes(vista)
+        val intro = if (vs.size == 1) Pagina(
+            "Novedades de Díptico", "Un recorrido cortito por lo nuevo. A para seguir, B para saltarlo cuando quieras.",
+            Icono.CHISPA, 0xFF6B4EFF,
+        ) else Pagina(
+            "Te pusiste al día", "Saltaste ${vs.size} versiones, así que aquí va todo lo nuevo junto, empezando por lo más reciente. A para seguir, B para saltarlo.",
+            Icono.CHISPA, 0xFF6B4EFF,
+        )
+        return listOf(intro) + vs.flatMap { v -> v.paginas.map { it.copy(version = v.nombre) } }
+    }
 
     /** Recorrido por las opciones y funciones: se muestra la primera vez, al terminar de configurar Díptico. */
     val RECORRIDO = listOf(
@@ -60,25 +164,6 @@ object Novedades {
         Pagina(
             "El menú", "Start abre el menú: temas, portadas, pantallas, música, Bisa y mucho más. Todo se puede cambiar. ¡Que lo disfrutes!",
             Icono.MENU, 0xFF6B4EFF, "Start",
-        ),
-    )
-
-    val paginas = listOf(
-        Pagina(
-            "Novedades de Díptico", "Un recorrido cortito por lo nuevo. A para seguir, B para saltarlo cuando quieras.",
-            Icono.CHISPA, 0xFF6B4EFF,
-        ),
-        Pagina(
-            "Más fuentes de imágenes", "Ahora Díptico también busca portadas, arte y logos en ScreenScraper, IGDB, TheGamesDB y RAWG. Conéctalas en Menú › Portadas (son gratis).",
-            Icono.PORTADA, 0xFF3BA8FF, "Menú › Portadas",
-        ),
-        Pagina(
-            "Tienda con más pestañas", "Al cambiar una imagen (Y › Imágenes), cada fuente conectada tiene su propia pestaña para elegir.",
-            Icono.BUSCAR, 0xFF2EC4A6, "Y · Imágenes",
-        ),
-        Pagina(
-            "Versión para teléfonos", "Si instalas Díptico en un teléfono, usa el archivo «-movil»: no pide acceso a las notificaciones y Play Protect no lo bloquea. Se actualiza sola a su mismo tipo.",
-            Icono.MANDO, 0xFFFFA726,
         ),
     )
 }

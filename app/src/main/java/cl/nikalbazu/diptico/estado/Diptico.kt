@@ -431,6 +431,8 @@ data class Estado(
     val novedades: Int = -1,
     /** true: el tour que se ve es el recorrido de la primera vez (no las novedades de la versión). */
     val recorrido: Boolean = false,
+    /** Última versión cuyas novedades ya viste: el tour junta las de todas las versiones posteriores. */
+    val novedadesDesde: String = "",
     /** Actualizaciones: la versión nueva encontrada, el avance de la descarga (-1 = sin descargar) y si se buscan solas. */
     val actualizacion: VersionNueva? = null,
     val descargaAct: Float = -1f,
@@ -763,7 +765,10 @@ object Diptico {
         // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
         if (!estado.value.configurado) almacen.guardarTexto("novedadesVistas", Novedades.ID)
         // Recién actualizado: el tour sale al tiro, sin esperar la animación de entrada.
-        else if (almacen.texto("novedadesVistas") != Novedades.ID) actualizar { it.copy(novedades = 0, recorrido = false, intro = false) }
+        else if (almacen.texto("novedadesVistas") != Novedades.ID) {
+            val desde = almacen.texto("novedadesVistas")
+            actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = desde, intro = false) }
+        }
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
             Avisos.nuevos.collect { a ->
@@ -2822,7 +2827,7 @@ object Diptico {
             }
             Seccion.SISTEMA -> {
                 lista += opcionesActualizar(e)
-                lista += Opcion("Ver las novedades de esta versión", icono = Icono.CHISPA, ayuda = "El tour corto de lo nuevo, otra vez.") { cerrarPanel(); actualizar { it.copy(novedades = 0, recorrido = false) } }
+                lista += Opcion("Ver las novedades de esta versión", icono = Icono.CHISPA, ayuda = "El tour corto de lo nuevo, otra vez.") { cerrarPanel(); actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = "") } }
                 lista += Opcion("Recorrido por Díptico", icono = Icono.TUTORIAL, ayuda = "El paseo de la primera vez por todas las opciones y botones.") { verRecorrido() }
                 lista += Opcion("Repetir el tutorial", icono = Icono.TUTORIAL, ayuda = "Vuelve a configurar todo paso a paso.") { reiniciarTutorial() }
                 lista += Opcion(
@@ -5075,10 +5080,14 @@ object Diptico {
         val n = estado.value.novedades
         if (n < 0) return
         val sig = n + d
-        if (sig >= Novedades.paginasDe(estado.value.recorrido).size) { cerrarNovedades(); return }
+        if (sig >= paginasTour().size) { cerrarNovedades(); return }
         actualizar { it.copy(novedades = sig.coerceAtLeast(0)) }
         Sonidos.pagina()
     }
+
+    /** Las páginas del tour que se está viendo. */
+    fun paginasTour(e: Estado = estado.value) =
+        if (e.recorrido || e.novedadesDesde.isBlank()) Novedades.paginasDe(e.recorrido) else Novedades.paginasDe(false, e.novedadesDesde)
 
     fun cerrarNovedades() {
         almacen.guardarTexto("novedadesVistas", Novedades.ID)

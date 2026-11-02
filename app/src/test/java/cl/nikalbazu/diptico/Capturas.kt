@@ -1021,6 +1021,9 @@ class Capturas {
     @Test fun t228_recorrido_final() = foto("228_recorrido_final", base().copy(novedades = 10, recorrido = true), Rol.SUPERIOR)
     @Test fun t229_novedades_b6() = foto("229_novedades_beta6", base().copy(novedades = 1), Rol.SUPERIOR)
 
+    @Test fun t230_novedades_juntas() = foto("230_novedades_juntas_inicio", base().copy(novedades = 0, novedadesDesde = "1.0-beta.3"), Rol.SUPERIOR)
+    @Test fun t231_novedades_juntas_vieja() = foto("231_novedades_juntas_beta4", base().copy(novedades = 9, novedadesDesde = "1.0-beta.3"), Rol.SUPERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),

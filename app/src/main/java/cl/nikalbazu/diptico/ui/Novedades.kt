@@ -54,7 +54,7 @@ import cl.nikalbazu.diptico.estado.Novedades
 fun TourNovedades(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val paginas = Novedades.paginasDe(e.recorrido)
+    val paginas = Diptico.paginasTour(e)
     val k = e.novedades.coerceIn(0, paginas.size - 1)
     val flota = rememberInfiniteTransition(label = "flota")
     val y by flota.animateFloat(-4f, 4f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "y")
@@ -93,6 +93,7 @@ fun TourNovedades(e: Estado) {
                             when {
                                 e.recorrido -> if (i == 0) "Recorrido por Díptico" else "Paso $i de ${paginas.size - 1}"
                                 i == 0 -> "Díptico ${Novedades.NOMBRE}"
+                                paginas.map { it.version }.filter { it.isNotBlank() }.distinct().size > 1 -> "${pg.version} · Novedad $i de ${paginas.size - 1}"
                                 else -> "Novedad $i de ${paginas.size - 1}"
                             },
                             c, 11.5f,
@@ -139,7 +140,7 @@ private fun PuntosAvance(k: Int, n: Int, color: Color) {
 fun NovedadesCompania(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val paginas = Novedades.paginasDe(e.recorrido)
+    val paginas = Diptico.paginasTour(e)
     val k = e.novedades.coerceIn(0, paginas.size - 1)
     Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = 0.92f)).sinCerrar(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
