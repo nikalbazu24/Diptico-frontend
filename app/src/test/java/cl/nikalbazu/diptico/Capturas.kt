@@ -1024,6 +1024,37 @@ class Capturas {
     @Test fun t230_novedades_juntas() = foto("230_novedades_juntas_inicio", base().copy(novedades = 0, novedadesDesde = "1.0-beta.3"), Rol.SUPERIOR)
     @Test fun t231_novedades_juntas_vieja() = foto("231_novedades_juntas_beta4", base().copy(novedades = 9, novedadesDesde = "1.0-beta.3"), Rol.SUPERIOR)
 
+    // ---------- Fotos en inglés para el README (prefijo "readme_") ----------
+
+    @Test fun r01_arriba() = foto("readme_01_top", base().copy(idioma = "en"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun r02_abajo() = foto("readme_02_bottom", base().copy(idioma = "en"), Rol.INFERIOR)
+
+    @Test fun r03_widgets() = foto("readme_03_widgets", conHoras().copy(idioma = "en", inicio = "widgets"), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun r04_quedaste() = foto("readme_04_where_you_left_off", conRecientes(base()).copy(idioma = "en", quedaste = true, quedastePregunta = true, quedasteSel = 1), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun r05_carpetas() = foto("readme_05_folders", conRecientes(base()).copy(idioma = "en", vistaConsolas = "carpetas", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR)
+
+    @Test fun r06_halloween() = foto("readme_06_theme_top", base().copy(idioma = "en"), Rol.SUPERIOR, Temas.fiestas.first { it.id == "halloween" }.tema)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun r07_halloween_abajo() = foto("readme_07_theme_bottom", base().copy(idioma = "en"), Rol.INFERIOR, Temas.fiestas.first { it.id == "halloween" }.tema)
+
+    @Test fun r08_bienvenida() = foto("readme_08_welcome_back", conRecientes(base()).copy(idioma = "en", bienvenida = 1L, ausencia = 2 * 3_600_000L, nombre = "Nico"), Rol.SUPERIOR)
+
+    @Test fun r09_donde() = foto("readme_09_pick_screen", conRecientes(base()).copy(idioma = "en", donde = "juego", dondeSel = 0), Rol.SUPERIOR)
+
+    @Test fun r10_centro() = foto("readme_10_control_center", base().copy(idioma = "en", panel = Panel.CENTRO, indice = 0, turbo = true), Rol.SUPERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun r11_carrusel() = foto("readme_11_carousel", conRecientes(base()).copy(idioma = "en", vista = "carrusel", juegoSel = "psx/3"), Rol.INFERIOR)
+
+    @Test fun r12_recorrido() = foto("readme_12_tour", base().copy(idioma = "en", novedades = 2, recorrido = true), Rol.SUPERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),

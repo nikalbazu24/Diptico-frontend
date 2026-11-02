@@ -3,6 +3,12 @@ name: Construir APK
 on:
   push:
     branches: [main]
+    # Cambios solo de textos, imágenes del README o plantillas de GitHub no crean una versión nueva.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/workflows/limpiar-versiones.yml"
   workflow_dispatch:
 
 permissions:
@@ -67,6 +73,8 @@ jobs:
             Diptico-*.apk
             Capturas-*.zip
           body: |
-            Descarga el archivo **Diptico-v1.0-beta.${{ github.run_number }}.apk** desde la Thor (o la consola) e instálalo.
+            **English:** on a console (AYN Thor, Odin, Retroid…) install **Diptico-v1.0-beta.${{ github.run_number }}.apk**. On a phone, install **Diptico-v1.0-beta.${{ github.run_number }}-movil.apk** (Google Play Protect blocks the full version on phones). Found a bug? [Report it here](https://github.com/Nikalbazu24/diptico-frontend/issues/new/choose).
+
+            **Español:** descarga el archivo **Diptico-v1.0-beta.${{ github.run_number }}.apk** desde la Thor (o la consola) e instálalo.
             En un teléfono usa **Diptico-v1.0-beta.${{ github.run_number }}-movil.apk** (Google Play Protect bloquea la versión completa en teléfonos).
             Si Android lo pide, permite instalar apps desde el navegador.
