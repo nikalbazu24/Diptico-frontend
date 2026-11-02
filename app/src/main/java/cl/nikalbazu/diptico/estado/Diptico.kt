@@ -429,6 +429,8 @@ data class Estado(
     val dondeRecordar: Boolean = false,
     /** Tour de novedades de esta versión: la página que se ve (-1 = cerrado). */
     val novedades: Int = -1,
+    /** true: el tour que se ve es el recorrido de la primera vez (no las novedades de la versión). */
+    val recorrido: Boolean = false,
     /** Actualizaciones: la versión nueva encontrada, el avance de la descarga (-1 = sin descargar) y si se buscan solas. */
     val actualizacion: VersionNueva? = null,
     val descargaAct: Float = -1f,
@@ -760,7 +762,8 @@ object Diptico {
         vigilarActualizaciones()
         // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
         if (!estado.value.configurado) almacen.guardarTexto("novedadesVistas", Novedades.ID)
-        else if (almacen.texto("novedadesVistas") != Novedades.ID) actualizar { it.copy(novedades = 0) }
+        // Recién actualizado: el tour sale al tiro, sin esperar la animación de entrada.
+        else if (almacen.texto("novedadesVistas") != Novedades.ID) actualizar { it.copy(novedades = 0, recorrido = false, intro = false) }
         // Avisos emergentes de las notificaciones (nunca mientras juegas).
         scope.launch {
             Avisos.nuevos.collect { a ->
@@ -854,7 +857,7 @@ object Diptico {
 
     fun mostrarBienvenida(ausencia: Long) {
         val e = estado.value
-        if (e.bienvenidaModo == "no" || !e.configurado || e.sesion != null) return
+        if (e.bienvenidaModo == "no" || !e.configurado || e.sesion != null || e.novedades >= 0) return
         val breve = e.bienvenidaModo == "breve" || ultimoJugado(e) == null && e.juegos.isEmpty()
         actualizar { it.copy(bienvenida = System.currentTimeMillis(), bienvenidaBreve = breve, ausencia = ausencia, protector = false, relojGrande = false) }
         actividad()
@@ -1058,12 +1061,23 @@ object Diptico {
         // La distribución que mejor le queda a este equipo (consola de dos pantallas, portátil, teléfono, tablet o tele).
         optimizarParaEquipo(silencioso = true)
         almacen.configurado = true
-        actualizar { it.copy(configurado = true, panel = Panel.NINGUNO, indice = 0) }
-        // Para que Díptico sea siempre lo primero: se ofrece como app de inicio de Android.
+        // Primera vez: recorrido por las opciones y funciones. Al cerrarlo se ofrece Díptico como inicio de Android.
+        almacen.guardarTexto("novedadesVistas", Novedades.ID)
+        actualizar { it.copy(configurado = true, panel = Panel.NINGUNO, indice = 0, novedades = 0, recorrido = true) }
+    }
+
+    /** Para que Díptico sea siempre lo primero: se ofrece como app de inicio de Android. */
+    private fun ofrecerInicio() {
         scope.launch {
-            delay(1800)
+            delay(900)
             if (!Inicio.esPredeterminado(app)) { avisar("Elige Díptico como tu inicio para que siempre vuelvas aquí"); hacerInicio() }
         }
+    }
+
+    /** Vuelve a mostrar el recorrido de la primera vez. */
+    fun verRecorrido() {
+        cerrarPanel()
+        actualizar { it.copy(novedades = 0, recorrido = true) }
     }
 
     fun avisar(texto: String) {
@@ -2808,7 +2822,8 @@ object Diptico {
             }
             Seccion.SISTEMA -> {
                 lista += opcionesActualizar(e)
-                lista += Opcion("Ver las novedades de esta versión", icono = Icono.CHISPA, ayuda = "El tour corto de lo nuevo, otra vez.") { cerrarPanel(); actualizar { it.copy(novedades = 0) } }
+                lista += Opcion("Ver las novedades de esta versión", icono = Icono.CHISPA, ayuda = "El tour corto de lo nuevo, otra vez.") { cerrarPanel(); actualizar { it.copy(novedades = 0, recorrido = false) } }
+                lista += Opcion("Recorrido por Díptico", icono = Icono.TUTORIAL, ayuda = "El paseo de la primera vez por todas las opciones y botones.") { verRecorrido() }
                 lista += Opcion("Repetir el tutorial", icono = Icono.TUTORIAL, ayuda = "Vuelve a configurar todo paso a paso.") { reiniciarTutorial() }
                 lista += Opcion(
                     "Acerca de Díptico", "Versión $VERSION.${Actualizador.numeroActual(app)}", Icono.INFO,
@@ -5060,14 +5075,17 @@ object Diptico {
         val n = estado.value.novedades
         if (n < 0) return
         val sig = n + d
-        if (sig >= Novedades.paginas.size) { cerrarNovedades(); return }
+        if (sig >= Novedades.paginasDe(estado.value.recorrido).size) { cerrarNovedades(); return }
         actualizar { it.copy(novedades = sig.coerceAtLeast(0)) }
         Sonidos.pagina()
     }
 
     fun cerrarNovedades() {
         almacen.guardarTexto("novedadesVistas", Novedades.ID)
-        actualizar { it.copy(novedades = -1) }
+        val primeraVez = estado.value.recorrido && !almacen.texto("recorridoVisto").isNotEmpty()
+        if (estado.value.recorrido) almacen.guardarTexto("recorridoVisto", "si")
+        actualizar { it.copy(novedades = -1, recorrido = false) }
+        if (primeraVez) ofrecerInicio()
     }
 
     private fun formatoTiempoCorto(seg: Long): String {

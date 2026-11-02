@@ -1016,6 +1016,11 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t225_clave_igdb() = foto("225_clave_igdb", base().copy(panel = Panel.CLAVE, textoPara = "ras_igdbId"), Rol.INFERIOR)
 
+    @Test fun t226_recorrido_inicio() = foto("226_recorrido_1", base().copy(novedades = 0, recorrido = true), Rol.SUPERIOR)
+    @Test fun t227_recorrido_paso() = foto("227_recorrido_paso", base().copy(novedades = 3, recorrido = true), Rol.SUPERIOR)
+    @Test fun t228_recorrido_final() = foto("228_recorrido_final", base().copy(novedades = 10, recorrido = true), Rol.SUPERIOR)
+    @Test fun t229_novedades_b6() = foto("229_novedades_beta6", base().copy(novedades = 1), Rol.SUPERIOR)
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),
