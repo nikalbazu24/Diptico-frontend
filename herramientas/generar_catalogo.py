@@ -43,6 +43,8 @@ EXTRA = {
     'CITRON': ['org.citron.citron_emu/org.citron.citron_emu.activities.EmulationActivity'],
     'SUDACHI': ['org.sudachi.sudachi_emu/org.sudachi.sudachi_emu.activities.EmulationActivity'],
     'YUZU': ['org.yuzu.yuzu_emu/org.yuzu.yuzu_emu.activities.EmulationActivity'],
+    # Essentia: fan games de RPG Maker XP/VX/VX Ace (Pokémon Essentials). Abre los accesos .essentia.
+    'ESSENTIA': ['io.github.nikalbazu24.essentia/com.hatkid.mkxpz.LauncherActivity'],
 }
 for k, v in EXTRA.items():
     reglas.setdefault(k, v)
@@ -60,6 +62,10 @@ for s in sis.findall('system'):
     if l is None: sinlib.append(name)
     icono = l if (l and l in icon_names) else (full if full in icon_names else None)
     out.append({'id':name,'nombre':full,'ext':ext,'cmds':cmds,'libretro':l,'plataforma':s.findtext('platform'),'icono':icono})
+# Sistemas que ES-DE no trae
+out.append({'id':'rpgmaker','nombre':'RPG Maker XP / VX / VX Ace','ext':['essentia'],
+            'cmds':[['Essentia','%EMULATOR_ESSENTIA% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%']],
+            'libretro':None,'plataforma':'pc','icono':None})
 # emuladores usados pero sin regla
 usados=set(re.findall(r'%EMULATOR_([A-Z0-9_+\-]+)%',open(base+'es_systems.xml').read()))
 falta=[u for u in usados if u not in reglas]
