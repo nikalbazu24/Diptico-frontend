@@ -126,11 +126,11 @@ object Novedades {
         )),
         Version(ID, NOMBRE, listOf(
             Pagina(
-                "Un inicio más despejado", "La barra de abajo ahora flota en la pantalla de arriba y se esconde sola a los 5 segundos. Vuelve deslizando hacia arriba desde el borde de abajo, tocando la pantalla o con B. Si la quieres fija: Menú › Inicio › Barra de accesos.",
+                "Un inicio más despejado", "La barra de abajo ahora flota arriba y se esconde sola a los 5 segundos. Vuelve deslizando hacia arriba desde el borde de abajo, tocando o con B. Para dejarla fija: Menú › Inicio.",
                 Icono.APPS, 0xFF3BA8FF, "Desliza ↑ o B",
             ),
             Pagina(
-                "Menú simple", "El menú muestra solo las secciones de todos los días; lo avanzado está junto en «Más ajustes», a un toque. Cada opción explica qué hace y las parecidas van juntas. El menú completo vuelve en Lo esencial › Menú simple.",
+                "Menú simple", "El menú muestra solo lo de todos los días y lo avanzado queda junto en «Más ajustes», a un toque. Cada opción explica qué hace y las parecidas van juntas.",
                 Icono.VISTA, 0xFF8E7CFF, "Más ajustes",
             ),
             Pagina(
@@ -142,7 +142,7 @@ object Novedades {
                 Icono.PORTADA, 0xFFFFA726, "R3",
             ),
             Pagina(
-                "Más rápido con tus fan games", "Díptico recuerda tus fan games y ya no los vuelve a leer cada vez que abre, las imágenes ocupan menos memoria y la música vuelve sola cuando regresas de Essentia u otra app.",
+                "Más rápido con tus fan games", "Díptico recuerda tus fan games en vez de leerlos cada vez, las imágenes ocupan menos memoria y la música vuelve sola al regresar de Essentia u otra app.",
                 Icono.CHISPA, 0xFF2EC4A6,
             ),
         )),
