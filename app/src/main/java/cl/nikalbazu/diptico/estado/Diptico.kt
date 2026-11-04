@@ -1815,13 +1815,29 @@ object Diptico {
             if (!luegoJugar && abajo != null) app.startActivity(i, android.app.ActivityOptions.makeBasic().setLaunchDisplayId(abajo.displayId).toBundle())
             else app.startActivity(i)
         } catch (_: Exception) {
-            avisar("No pude pedir el permiso de la lupa")
+            lupaRechazada(luegoJugar)
         }
     }
 
     /** Android dio permiso: si estaba por abrir un juego, ahora sí. */
     fun lupaPermitida(luegoJugar: Boolean) {
-        if (luegoJugar) scope.launch { delay(350); jugar(pantallaPendiente, conLupaLista = true) }
+        if (luegoJugar) {
+            val destino = pantallaPendiente
+            pantallaPendiente = null
+            scope.launch { delay(350); jugar(destino, conLupaLista = true) }
+        }
+    }
+
+    /** Si se rechaza la captura, apaga la lupa de este juego y lo abre de todos modos. */
+    fun lupaRechazada(luegoJugar: Boolean) {
+        val clave = if (luegoJugar) estado.value.seleccionado?.clave else estado.value.sesion?.clave
+        if (clave != null) cambiarDatos(clave) { it.copy(lupa = false) }
+        avisar("Lupa apagada para este juego")
+        if (luegoJugar) {
+            val destino = pantallaPendiente
+            pantallaPendiente = null
+            scope.launch { delay(350); jugar(destino, conLupaLista = true) }
+        }
     }
 
     fun lupaCambio(activa: Boolean) = actualizar { it.copy(lupaActiva = activa) }
@@ -2641,7 +2657,10 @@ object Diptico {
                 when (d?.pantalla) { "arriba" -> "Arriba"; "abajo" -> "Abajo"; else -> "Según el menú" },
                 Icono.PANTALLAS, ayuda = "En qué pantalla se abre este juego. «Según el menú» sigue lo que elegiste en Menú › Pantallas.",
             ) { ciclarPantallaJuego(juego.clave) }
-            // La lupa ya no está aquí: se enciende mientras juegas, desde la pantalla de abajo (botón Lupa).
+            lista += Opcion(
+                "Lupa en este juego", if (d?.lupa == true) "Sí" else "No", Icono.BUSCAR,
+                ayuda = "Amplía una parte de la pantalla de arriba en la de abajo. Puedes apagarla aquí si afecta al juego.",
+            ) { alternarLupaJuego(juego.clave) }
         }
         lista += Opcion("Acceso directo en el inicio", if (e.widgets.any { it.tipo == "atajo-${juego.clave}" && it.visible }) "Ya está ✓" else "Agregar", Icono.CONTINUAR,
             "Un widget con este juego en tu inicio de widgets: un toque y a jugar.") { crearAtajo(juego.clave) }
