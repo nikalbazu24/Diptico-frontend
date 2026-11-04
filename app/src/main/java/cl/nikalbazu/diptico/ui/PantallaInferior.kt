@@ -106,7 +106,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
     Box(Modifier.fillMaxSize().background(p.fondo2)) {
         val s = e.sesion
         // Con la lupa no se difumina nada encima (la copia de la pantalla de arriba se veía rara con el desenfoque).
-        val conLupa = s != null && e.datos[s.clave]?.lupa == true && s.displayId == android.view.Display.DEFAULT_DISPLAY && !s.dosPantallas
+        val conLupa = s != null && e.lupaActiva && e.datos[s.clave]?.lupa == true && s.displayId == android.view.Display.DEFAULT_DISPLAY && !s.dosPantallas
         Box(Modifier.fillMaxSize().then(if (conLupa) Modifier else Modifier.difuminar(e))) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
@@ -409,7 +409,7 @@ private fun EnJuego(e: Estado) {
     val esc = LocalEscala.current
     val s = e.sesion ?: return
     // Lupa: el juego está arriba y aquí se ve ampliada una parte de esa pantalla.
-    if (e.datos[s.clave]?.lupa == true && s.displayId == android.view.Display.DEFAULT_DISPLAY && !s.dosPantallas) {
+    if (e.lupaActiva && e.datos[s.clave]?.lupa == true && s.displayId == android.view.Display.DEFAULT_DISPLAY && !s.dosPantallas) {
         cl.nikalbazu.diptico.lupa.PanelLupa(e, s.clave)
         return
     }
