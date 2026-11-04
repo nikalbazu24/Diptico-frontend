@@ -98,7 +98,6 @@ fun PanelAsistente(e: Estado) {
                             "local" -> "IA de tu consola"
                             "gemini" -> "Gemini"
                             "openai" -> "ChatGPT"
-                            "claude" -> "Claude"
                             else -> "Elige su IA en Menú › Bisa"
                         },
                         12f, lineas = 1,

@@ -172,21 +172,61 @@ object Biblioteca {
     private val ARCHIVOS_RPGMAKER = setOf("game.ini", "game.exe", "mkxp.json")
 
     /**
+     * Lo ya leído de cada fan game (título y pantalla de título), guardado entre arranques:
+     * así buscar juegos no vuelve a abrir cada Game.ini y cada carpeta de imágenes.
+     */
+    private var cacheRpg: MutableMap<String, Pair<String?, String?>>? = null
+
+    private fun cacheRpg(ctx: Context): MutableMap<String, Pair<String?, String?>> = cacheRpg ?: run {
+        val m = HashMap<String, Pair<String?, String?>>()
+        try {
+            val f = java.io.File(ctx.filesDir, "rpgmaker.json")
+            if (f.exists()) {
+                val o = org.json.JSONObject(f.readText())
+                for (k in o.keys()) o.getJSONArray(k).let { a -> m[k] = a.optString(0).ifEmpty { null } to a.optString(1).ifEmpty { null } }
+            }
+        } catch (_: Exception) {}
+        m.also { cacheRpg = it }
+    }
+
+    private fun guardarCacheRpg(ctx: Context) {
+        val m = cacheRpg ?: return
+        try {
+            val o = org.json.JSONObject()
+            for ((k, v) in m) o.put(k, org.json.JSONArray().put(v.first ?: "").put(v.second ?: ""))
+            java.io.File(ctx.filesDir, "rpgmaker.json").writeText(o.toString())
+        } catch (_: Exception) {}
+    }
+
+    /**
      * Un fan game de RPG Maker en su carpeta: el título sale del Game.ini y, si no hay imagen propia,
      * la pantalla de título del juego (Graphics/Titles) sirve de imagen grande.
      */
     private fun rpgMaker(ctx: Context, arbol: Uri, dir: Doc, consola: Consola, portadas: Map<String, Uri>, artes: Map<String, Uri>): Juego? {
-        val dentro = try { listar(ctx, arbol, dir.id) } catch (e: Exception) { return null }
-        if (dentro.none { !it.esCarpeta && it.nombre.lowercase() in ARCHIVOS_RPGMAKER }) return null
-        val ini = dentro.firstOrNull { !it.esCarpeta && it.nombre.equals("Game.ini", true) }
-        val titulo = ini?.let { tituloIni(ctx, DocumentsContract.buildDocumentUriUsingTree(arbol, it.id)) }
         val n = dir.nombre.lowercase()
-        val pantallaTitulo = if (artes[n] != null) null else try {
-            dentro.firstOrNull { it.esCarpeta && it.nombre.equals("Graphics", true) }
-                ?.let { g -> listar(ctx, arbol, g.id).firstOrNull { it.esCarpeta && it.nombre.equals("Titles", true) } }
-                ?.let { t -> listar(ctx, arbol, t.id).firstOrNull { !it.esCarpeta && it.nombre.substringAfterLast('.', "").lowercase() in IMAGENES } }
-                ?.let { DocumentsContract.buildDocumentUriUsingTree(arbol, it.id) }
-        } catch (e: Exception) { null }
+        val cache = cacheRpg(ctx)
+        val guardado = cache[dir.id]
+        val titulo: String?
+        val pantallaTitulo: Uri?
+        if (guardado != null) {
+            // Ya se leyó antes: nada de abrir archivos (si se borró, Díptico lo nota al jugar o al desinstalar).
+            titulo = guardado.first
+            pantallaTitulo = guardado.second?.let { DocumentsContract.buildDocumentUriUsingTree(arbol, it) }
+        } else {
+            val dentro = try { listar(ctx, arbol, dir.id) } catch (e: Exception) { return null }
+            if (dentro.none { !it.esCarpeta && it.nombre.lowercase() in ARCHIVOS_RPGMAKER }) return null
+            val ini = dentro.firstOrNull { !it.esCarpeta && it.nombre.equals("Game.ini", true) }
+            titulo = ini?.let { tituloIni(ctx, DocumentsContract.buildDocumentUriUsingTree(arbol, it.id)) }
+            val docTitulo = try {
+                dentro.firstOrNull { it.esCarpeta && it.nombre.equals("Graphics", true) }
+                    ?.let { g -> listar(ctx, arbol, g.id).firstOrNull { it.esCarpeta && it.nombre.equals("Titles", true) } }
+                    ?.let { t -> listar(ctx, arbol, t.id).firstOrNull { !it.esCarpeta && it.nombre.substringAfterLast('.', "").lowercase() in IMAGENES } }
+                    ?.id
+            } catch (e: Exception) { null }
+            pantallaTitulo = docTitulo?.let { DocumentsContract.buildDocumentUriUsingTree(arbol, it) }
+            cache[dir.id] = titulo to docTitulo
+            guardarCacheRpg(ctx)
+        }
         return Juego(
             clave = consola.id + "/" + dir.nombre,
             consolaId = consola.id,
@@ -198,6 +238,12 @@ object Biblioteca {
             arte = artes[n] ?: pantallaTitulo,
             esCarpeta = true,
         )
+    }
+
+    /** Olvida lo leído de los fan games (Menú › Biblioteca › Volver a buscar juegos, manteniendo). */
+    fun olvidarFanGames(ctx: Context) {
+        cacheRpg = HashMap()
+        try { java.io.File(ctx.filesDir, "rpgmaker.json").delete() } catch (_: Exception) {}
     }
 
     /** Lee "Title=" del Game.ini de un juego de RPG Maker. */

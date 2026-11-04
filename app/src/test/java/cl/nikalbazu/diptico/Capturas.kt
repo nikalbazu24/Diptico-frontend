@@ -347,9 +347,9 @@ class Capturas {
     )
 
     @Config(qualifiers = ABAJO)
-    @Test fun t64_asistente() = foto("64_asistente", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 1, claveIa = "x"), Rol.INFERIOR)
+    @Test fun t64_asistente() = foto("64_asistente", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 1, claveGemini = "x"), Rol.INFERIOR)
 
-    @Test fun t65_asistente_arriba() = foto("65_asistente_lectura_arriba", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 1, claveIa = "x"), Rol.SUPERIOR)
+    @Test fun t65_asistente_arriba() = foto("65_asistente_lectura_arriba", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 1, claveGemini = "x"), Rol.SUPERIOR)
 
     private fun logro(id: Int, t: String, d: String, p: Int, g: String = "", duro: Boolean = false) =
         cl.nikalbazu.diptico.data.Logro(id, t, d, p, "0000$id", g, duro)
@@ -441,7 +441,7 @@ class Capturas {
     @Test fun t83_bisa_en_juego() = foto(
         "83_bisa_ayuda_mientras_juegas",
         base().copy(
-            sesion = Sesion("snes/1", System.currentTimeMillis() - 600_000, 0, false), panel = Panel.ASISTENTE, claveIa = "x",
+            sesion = Sesion("snes/1", System.currentTimeMillis() - 600_000, 0, false), panel = Panel.ASISTENTE, claveGemini = "x",
             chat = listOf(
                 cl.nikalbazu.diptico.estado.MensajeChat(
                     "ia", "Veo que llevas varios intentos seguidos en Leyenda del Bosque. ¡Tranqui, nos pasa a todos! ¿Te doy una pista suave o prefieres la solución?",
@@ -566,7 +566,7 @@ class Capturas {
     )
 
     @Config(qualifiers = ABAJO)
-    @Test fun t99_galeria_ia() = foto("99_elegir_ia_de_bisa", base().copy(panel = Panel.GALERIA, galeria = "ia", indice = 2, claveIa = "x"), Rol.INFERIOR)
+    @Test fun t99_galeria_ia() = foto("99_elegir_ia_de_bisa", base().copy(panel = Panel.GALERIA, galeria = "ia", indice = 2, claveGemini = "x"), Rol.INFERIOR)
 
     @Test fun t100_galeria_ia_arriba() = foto("100_ia_explicacion_arriba", base().copy(panel = Panel.GALERIA, galeria = "ia", indice = 2), Rol.SUPERIOR)
 
@@ -961,10 +961,10 @@ class Capturas {
     // ---------- 1.0 beta.5 ----------
 
     @Config(qualifiers = ABAJO)
-    @Test fun t211_bisa_nueva() = foto("211_bisa_nueva", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 0, claveIa = "x"), Rol.INFERIOR)
+    @Test fun t211_bisa_nueva() = foto("211_bisa_nueva", base().copy(panel = Panel.ASISTENTE, chat = conversacion, indice = 0, claveGemini = "x"), Rol.INFERIOR)
 
     @Config(qualifiers = ABAJO)
-    @Test fun t212_bisa_vacia() = foto("212_bisa_vacia", base().copy(panel = Panel.ASISTENTE, indice = 0, claveIa = "x"), Rol.INFERIOR)
+    @Test fun t212_bisa_vacia() = foto("212_bisa_vacia", base().copy(panel = Panel.ASISTENTE, indice = 0, claveGemini = "x"), Rol.INFERIOR)
 
     @Test fun t213_teclado_grande() = foto("213_teclado_grande", base().copy(panel = Panel.CLAVE, textoPara = "asistente", borrador = "¿Cómo paso el templo del agua", teclaFila = 2, teclaCol = 3), Rol.SUPERIOR)
 
@@ -1116,6 +1116,24 @@ class Capturas {
         )),
         Rol.SUPERIOR,
     )
+
+    // ---------- 1.0 beta.8 ----------
+    @Test fun t243_barra_visible() = foto("243_inicio_barra_flotante", conRecientes(base()).copy(barra = true), Rol.SUPERIOR)
+    @Test fun t244_barra_escondida() = foto("244_inicio_barra_escondida", conRecientes(base()).copy(barra = false), Rol.SUPERIOR)
+    @Test fun t245_abajo_sin_dock() = foto("245_abajo_sin_barra", conRecientes(base()), Rol.INFERIOR)
+    @Test fun t246_widgets_barra() = foto("246_widgets_con_barra", base().copy(inicio = "widgets", barra = true), Rol.SUPERIOR)
+    @Test fun t247_discos() = foto("247_vista_discos", conRecientes(base()).copy(vistaConsolas = "discos", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR)
+    @Test fun t248_discos_arriba() = foto("248_discos_arriba", conRecientes(base()).copy(vistaConsolas = "discos", enSistemas = true, consolaSel = "snes"), Rol.SUPERIOR)
+    @Test fun t249_discos_una() = foto("249_discos_una_pantalla", conRecientes(base()).copy(vistaConsolas = "discos", enSistemas = true, consolaSel = "gba", modoPantallas = "una_negra"), Rol.UNICA)
+    @Test fun t250_abanico() = foto("250_juegos_en_abanico", conRecientes(base()).copy(vista = "abanico", juegoSel = "psx/3"), Rol.INFERIOR)
+    @Test fun t251_menu_simple() = foto("251_menu_simple_mas_ajustes", base().copy(panel = Panel.MENU, seccion = Seccion.MAS, enOpciones = true, indice = 2, menuSimple = true), Rol.SUPERIOR)
+    @Test fun t252_menu_simple_esencial() = foto("252_menu_simple_esencial", base().copy(panel = Panel.MENU, seccion = Seccion.ESENCIAL, enOpciones = false, menuSimple = true), Rol.SUPERIOR)
+    @Test fun t253_menu_completo_grupos() = foto("253_menu_completo_apariencia", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 0, menuSimple = false), Rol.SUPERIOR)
+    @Test fun t254_menu_musica_grupos() = foto("254_menu_musica_agrupado", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true, indice = 3), Rol.SUPERIOR)
+    @Test fun t255_menu_acerca_grupos() = foto("255_menu_acerca_agrupado", base().copy(panel = Panel.MENU, seccion = Seccion.SISTEMA, enOpciones = true, indice = 0), Rol.SUPERIOR)
+    @Test fun t256_ventana_juego_ayuda() = foto("256_ventana_juego_con_ayuda", conRecientes(base()).copy(panel = Panel.RAPIDO, indice = 1), Rol.INFERIOR)
+    @Test fun t257_novedades_b8() = foto("257_novedades_beta8", base().copy(novedades = 1, novedadesDesde = "1.0-beta.7"), Rol.SUPERIOR)
+    @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)
 
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,

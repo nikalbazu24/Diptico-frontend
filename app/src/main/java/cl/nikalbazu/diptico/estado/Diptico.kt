@@ -78,6 +78,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Respaldo en Google Drive, actualizaciones, reportar un problema, el tutorial y la versión de Díptico."),
+    /** Solo en el modo simple: la puerta a las secciones avanzadas (nada queda escondido). */
+    MAS("Más ajustes", Icono.AJUSTES, "Las secciones avanzadas, a un toque. Y para volver al menú completo.", "Avanzado"),
 }
 
 /** Un juego abierto ahora mismo. */
@@ -310,13 +312,12 @@ data class Estado(
     val android: List<String> = emptyList(),
     /** A qué estante se agregan las apps del panel: "ports" o "androidgames". */
     val appsDestino: String = "ports",
-    /** Para qué es el cuadro de texto: "sgdb", "ia_clave", "ia_pedido", "titulo" o "notas". */
+    /** Para qué es el cuadro de texto: "sgdb", "ia_clave_gemini", "ia_pedido", "titulo" o "notas". */
     val textoPara: String = "sgdb",
     val tema: String = "diptico",
     val temaFestivo: Boolean = true,
     val decoraciones: Boolean = true,
     val temasPropios: List<Tema> = emptyList(),
-    val claveIa: String = "",
     /** Claves de otras IA en la nube: Gemini (Google) y ChatGPT (OpenAI). */
     val claveGemini: String = "",
     val claveOpenAI: String = "",
@@ -332,7 +333,7 @@ data class Estado(
     val pensando: Boolean = false,
     /** Bisa puede buscar guías en internet (cuesta un poco más de la clave). */
     val bisaWeb: Boolean = true,
-    /** Motor de Bisa: auto, local, gemini, openai o claude. */
+    /** Motor de Bisa: auto, local, gemini u openai. */
     val motorIA: String = "auto",
     val iaLocalLista: Boolean = false,
     /** Bisa ofrece ayuda mientras juegas (aviso y burbuja). */
@@ -445,6 +446,11 @@ data class Estado(
     val galeriaConsola: String = "",
     /** Rendimiento al jugar: modo turbo, cerrar apps de fondo, no molestar y Díptico en reposo. */
     val turbo: Boolean = true,
+    /** La barra flotante del inicio (arriba) está a la vista; se esconde sola salvo que [barraFija]. */
+    val barra: Boolean = true,
+    val barraFija: Boolean = false,
+    /** Menú de ajustes simple: solo las secciones de siempre; las avanzadas viven en «Más ajustes». */
+    val menuSimple: Boolean = true,
     val turboCerrarApps: Boolean = true,
     val turboNoMolestar: Boolean = false,
     val turboReposo: Boolean = true,
@@ -706,8 +712,7 @@ object Diptico {
             decoraciones = almacen.bool("decoraciones", true),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             // La clave de Claude ya no se usa: se borra de la consola (cada persona usa Gemini, ChatGPT o la IA local).
-            claveIa = "".also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
-            claveGemini = almacen.texto("claveGemini"),
+            claveGemini = almacen.texto("claveGemini").also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
             claveOpenAI = almacen.texto("claveOpenAI"),
             usuarioRA = almacen.texto("usuarioRA"),
             bisaWeb = almacen.bool("bisaWeb", true),
@@ -740,6 +745,8 @@ object Diptico {
             paqueteSonidos = almacen.texto("paqueteSonidos", "tema"),
             pausaCada = almacen.texto("pausaCada", "0").toIntOrNull() ?: 0,
             turbo = almacen.bool("turbo", true),
+            barraFija = almacen.bool("barraFija", false),
+            menuSimple = almacen.bool("menuSimple", true),
             turboCerrarApps = almacen.bool("turboCerrarApps", true),
             turboNoMolestar = almacen.bool("turboNoMolestar", false),
             turboReposo = almacen.bool("turboReposo", true),
@@ -857,6 +864,29 @@ object Diptico {
     /** Una pantalla de Díptico aparece (+1) o se va (-1). */
     fun aLaVista(delta: Int) {
         actualizar { it.copy(aLaVista = (it.aLaVista + delta).coerceAtLeast(0)) }
+        // Volviste a Díptico (por ejemplo desde un juego): la música de fondo vuelve si se había cortado.
+        if (delta > 0 && estado.value.sesion == null) { Musica.alVolver(); mostrarBarra() }
+    }
+
+    // ---------- Barra flotante ----------
+
+    private var trabajoBarra: kotlinx.coroutines.Job? = null
+    const val BARRA_MS = 5_000L
+
+    /** Saca la barra flotante del inicio y la vuelve a esconder a los 5 segundos sin tocar nada. */
+    fun mostrarBarra() {
+        if (!estado.value.barra) actualizar { it.copy(barra = true) }
+        trabajoBarra?.cancel()
+        trabajoBarra = scope.launch {
+            delay(BARRA_MS)
+            if (!estado.value.barraFija) actualizar { it.copy(barra = false) }
+        }
+    }
+
+    fun cambiarBarraFija(v: Boolean) {
+        almacen.guardarBool("barraFija", v)
+        actualizar { it.copy(barraFija = v, barra = true) }
+        if (!v) mostrarBarra()
     }
 
     /** La pantalla de abajo existe ahora (por ejemplo, si se conecta o desconecta una pantalla). */
@@ -2111,7 +2141,7 @@ object Diptico {
 
     fun abrirClave() = abrirTexto("sgdb", estado.value.claveSgdb)
 
-    /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave", "ia_pedido", "titulo", "notas"). */
+    /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave_gemini", "ia_pedido", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
         if (estado.value.panel != Panel.CLAVE) claveDesde = regresoActual()
         actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_")) }
@@ -2119,7 +2149,7 @@ object Diptico {
         val oficial = urlClave(para)
         if (oficial != null && para != "ra_usuario") {
             val titulo = when (para) {
-                "ia_clave_gemini" -> "Clave de Gemini"; "ia_clave_openai" -> "Clave de ChatGPT"; "ia_clave" -> "Clave de Claude"
+                "ia_clave_gemini" -> "Clave de Gemini"; "ia_clave_openai" -> "Clave de ChatGPT"
                 "sgdb" -> "Clave de SteamGridDB"
                 else -> tituloRaspador(para) ?: "Clave de RetroAchievements"
             }
@@ -2448,9 +2478,7 @@ object Diptico {
         }
         when (e.panel) {
             Panel.MENU -> if (!e.enOpciones) {
-                val s = Seccion.values()
-                val n = (e.seccion.ordinal + delta).coerceIn(0, s.size - 1)
-                actualizar { it.copy(seccion = s[n], indice = 0) }
+                saltarSeccion(delta, envolver = false)
             } else {
                 val total = opcionesSeccion(e.seccion).size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta + total) % total) }
@@ -2568,8 +2596,15 @@ object Diptico {
         val e = estado.value
         when {
             !e.configurado && e.panel == Panel.NINGUNO -> pasoAnterior()
+            // Una sección avanzada abierta desde «Más ajustes»: B vuelve ahí, con esa sección marcada.
+            e.panel == Panel.MENU && e.enOpciones && e.seccion !in seccionesMenu() -> {
+                val i = opcionesMas(e).indexOfFirst { it.titulo == e.seccion.titulo }.coerceAtLeast(0)
+                actualizar { it.copy(seccion = Seccion.MAS, indice = i) }
+            }
             e.panel == Panel.MENU && e.enOpciones -> columnaMenu(false)
             e.panel != Panel.NINGUNO -> cerrarPanel()
+            // En el inicio, B saca la barra flotante (y la esconde si ya estaba a la vista).
+            e.configurado && e.sesion == null && !e.barraFija -> if (e.barra) { trabajoBarra?.cancel(); actualizar { it.copy(barra = false) } } else mostrarBarra()
         }
     }
 
@@ -2586,17 +2621,17 @@ object Diptico {
         val consola = Consolas.porId(juego.consolaId)
         val lista = mutableListOf<Opcion>()
         // Fila de arriba: lo más usado.
-        lista += Opcion("Jugar", icono = Icono.JUGAR) { cerrarPanel(); jugar() }
-        lista += Opcion("Ficha", icono = Icono.TUTORIAL) { abrirFicha() }
-        lista += Opcion("Mi paso", d?.paso?.take(30) ?: "", Icono.LAPIZ) { cerrarPanel(); abrirQuedaste() }
-        lista += Opcion(if (d?.favorito == true) "Favorito ✓" else "Favorito", icono = Icono.CORAZON) { alternarFavorito(juego.clave) }
-        lista += Opcion("Bisa", icono = Icono.BISA) { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${juego.titulo}.") }
+        lista += Opcion("Jugar", icono = Icono.JUGAR, ayuda = "Abre el juego con su emulador, en la pantalla que elegiste. También con A.") { cerrarPanel(); jugar() }
+        lista += Opcion("Ficha", icono = Icono.TUTORIAL, ayuda = "Todo del juego: de qué trata, tu tiempo, logros, trucos y notas, y para cambiar sus imágenes. También con X.") { abrirFicha() }
+        lista += Opcion("Mi paso", d?.paso?.take(30) ?: "", Icono.LAPIZ, ayuda = "Anota dónde quedaste (texto, voz o un punto en el mapa) para que Díptico te lo recuerde la próxima vez.") { cerrarPanel(); abrirQuedaste() }
+        lista += Opcion(if (d?.favorito == true) "Favorito ✓" else "Favorito", icono = Icono.CORAZON, ayuda = "Los favoritos se ven primero con el filtro Favoritos y en el widget de favoritos.") { alternarFavorito(juego.clave) }
+        lista += Opcion("Bisa", icono = Icono.BISA, ayuda = "Le pregunta a Bisa por un buen truco o consejo para este juego.") { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${juego.titulo}.") }
         // Lista de abajo: ajustes de este juego.
-        lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA) { abrirFicha(); elegirPestanaFicha(3) }
-        lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA) { abrirFicha(); buscarCandidatos("portada") }
+        lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA, ayuda = "Cambia el título, la portada, la imagen grande, el logo y la música de este juego.") { abrirFicha(); elegirPestanaFicha(3) }
+        lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA, ayuda = "Abre la tienda de imágenes para elegir otra portada de internet.") { abrirFicha(); buscarCandidatos("portada") }
         lista += Opcion("Mover de lugar", if (e.orden == "propio") "A tu gusto" else "Ordénalos a tu gusto", Icono.VISTA, "Corre este juego con la cruceta y deja tus juegos en el orden que quieras.") { empezarOrdenar() }
         if (consola != null && !consola.sinEmulador) {
-            lista += Opcion("Emulador", d?.emulador?.let { id -> Lanzador.opciones(app, consola).firstOrNull { it.id == id }?.nombre } ?: "El de la consola", Icono.EMULADOR) {
+            lista += Opcion("Emulador", d?.emulador?.let { id -> Lanzador.opciones(app, consola).firstOrNull { it.id == id }?.nombre } ?: "El de la consola", Icono.EMULADOR, ayuda = "Con qué emulador o núcleo se abre solo este juego. «El de la consola» usa el de Menú › Emuladores.") {
                 ciclarEmuladorJuego(juego.clave, consola)
             }
         }
@@ -2604,7 +2639,7 @@ object Diptico {
             lista += Opcion(
                 "Abre en",
                 when (d?.pantalla) { "arriba" -> "Arriba"; "abajo" -> "Abajo"; else -> "Según el menú" },
-                Icono.PANTALLAS,
+                Icono.PANTALLAS, ayuda = "En qué pantalla se abre este juego. «Según el menú» sigue lo que elegiste en Menú › Pantallas.",
             ) { ciclarPantallaJuego(juego.clave) }
             // La lupa ya no está aquí: se enciende mientras juegas, desde la pantalla de abajo (botón Lupa).
         }
@@ -2615,7 +2650,7 @@ object Diptico {
         lista += Opcion("Imagen en el inicio", nombreHeroe(e.heroes[juego.clave]), Icono.PORTADA,
             "Qué imagen de este juego se ve en grande en el inicio: la imagen grande, la portada, o la que elijan todos (Menú › Inicio).") { ciclarHeroe(juego.clave) }
         if (consola != null) {
-            lista += Opcion("Cajas de ${consola.nombre}", nombreForma(e.formas[consola.id]?.forma ?: "original"), Icono.FORMA) {
+            lista += Opcion("Cajas de ${consola.nombre}", nombreForma(e.formas[consola.id]?.forma ?: "original"), Icono.FORMA, ayuda = "La forma de las cajas de esta consola en el estante: cuadrada, póster, horizontal, disco, cartucho o tarjeta.") {
                 abrirCajas(consola.id)
             }
             lista += Opcion("Imagen en las cajas de ${consola.nombre}", nombreImagenCaja(e.formas[consola.id]?.imagen ?: "portada"), Icono.PORTADA,
@@ -2623,7 +2658,7 @@ object Diptico {
         }
         lista += Opcion(
             if (d?.oculto == true) "Mostrar este juego" else "Ocultar este juego",
-            if (d?.oculto == true) "Vuelve al estante" else "Se ve con el filtro Ocultos", Icono.OCULTAR,
+            if (d?.oculto == true) "Vuelve al estante" else "Se ve con el filtro Ocultos", Icono.OCULTAR, ayuda = "Lo saca del estante sin borrar nada. Para verlo de nuevo: filtro Ocultos en Menú › Estante.",
         ) { alternarOculto(juego.clave) }
         lista += Opcion(
             "Desinstalar", if (juego.uri.scheme == "file") "Quitar de Díptico" else "Borrar de la consola", Icono.BORRAR,
@@ -2825,7 +2860,46 @@ object Diptico {
 
     // ---------- Menú principal ----------
 
-    fun seccionesMenu(): List<Seccion> = Seccion.values().toList()
+    /** Las secciones del modo simple: lo de todos los días. Las demás quedan a un toque en «Más ajustes». */
+    val SECCIONES_SIMPLES = listOf(
+        Seccion.ESENCIAL, Seccion.TEMAS, Seccion.INICIO, Seccion.ESTANTE, Seccion.MUSICA,
+        Seccion.BIBLIOTECA, Seccion.EMULADORES, Seccion.ASISTENTE, Seccion.PANTALLAS, Seccion.SISTEMA,
+    )
+
+    fun seccionesMenu(simple: Boolean = estado.value.menuSimple): List<Seccion> =
+        if (simple) SECCIONES_SIMPLES + Seccion.MAS else Seccion.values().filter { it != Seccion.MAS }
+
+    /** L1/R1 y la cruceta en la columna de secciones: la anterior o la siguiente de las que se ven. */
+    fun saltarSeccion(delta: Int, envolver: Boolean) {
+        val e = estado.value
+        val s = seccionesMenu()
+        // Una sección avanzada abierta desde «Más ajustes» cuenta como «Más ajustes».
+        val i = s.indexOf(e.seccion).takeIf { it >= 0 } ?: s.indexOf(Seccion.MAS).coerceAtLeast(0)
+        val n = if (envolver) (i + delta + s.size) % s.size else (i + delta).coerceIn(0, s.size - 1)
+        if (envolver) elegirSeccion(s[n]) else actualizar { it.copy(seccion = s[n], indice = 0) }
+    }
+
+    fun cambiarMenuSimple(v: Boolean) {
+        almacen.guardarBool("menuSimple", v)
+        val visibles = seccionesMenu(v)
+        actualizar { it.copy(menuSimple = v, seccion = if (it.seccion in visibles) it.seccion else Seccion.ESENCIAL, indice = 0) }
+        avisar(if (v) "Menú simple: lo avanzado está en «Más ajustes»" else "Menú completo: todas las secciones a la vista")
+    }
+
+    private fun opcionMenuSimple(e: Estado) = Opcion(
+        "Menú simple", if (e.menuSimple) "Sí" else "No", Icono.VISTA,
+        "Sí: solo las secciones de todos los días y las avanzadas juntas en «Más ajustes». No: todas las secciones en la columna. Buscar encuentra cualquier ajuste igual.",
+    ) { cambiarMenuSimple(!estado.value.menuSimple) }
+
+    /** «Más ajustes»: cada sección avanzada con lo que trae, para abrirla de un toque. */
+    private fun opcionesMas(e: Estado): List<Opcion> {
+        val lista = mutableListOf(opcionMenuSimple(e))
+        for (s in Seccion.values()) {
+            if (s in SECCIONES_SIMPLES || s == Seccion.MAS) continue
+            lista += Opcion(s.titulo, "", s.icono, s.ayuda) { actualizar { it.copy(seccion = s, enOpciones = true, indice = 0) } }
+        }
+        return lista
+    }
 
     private var cacheOpciones: Pair<Estado, HashMap<Seccion, List<Opcion>>>? = null
 
@@ -2854,9 +2928,28 @@ object Diptico {
         Seccion.INICIO -> when {
             t == "Al abrir Díptico" || t.startsWith("Bienvenida") || t.startsWith("Continuación") || t == "Tu nombre" -> "Al encender"
             t.startsWith("Preguntar dónde") -> "Al terminar de jugar"
-            t.startsWith("Imagen grande") -> "Pantalla principal"
+            t.startsWith("Imagen grande") || t == "Barra de accesos" -> "Pantalla principal"
             t == "Estilo del inicio" || t.contains("widget", true) && !t.startsWith("Permiso") -> "Pantalla principal"
             else -> "Más"
+        }
+        Seccion.APARIENCIA -> when {
+            t == "Modo" || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
+            t.contains("protector", true) -> "Protector de pantalla"
+            t.startsWith("Zoom") || t == "Decoraciones" || t.contains("nimación") -> "Detalles"
+            else -> "Íconos de las consolas"
+        }
+        Seccion.MUSICA -> if (t.startsWith("Sonidos") || t.startsWith("Juego de sonidos")) "Sonidos" else "Música de fondo"
+        Seccion.ESTANTE -> if (t.startsWith("Cajas") || t.startsWith("Forma") || t.startsWith("Tamaño") || t.startsWith("Imagen")) "Cajas" else "Qué ves y en qué orden"
+        Seccion.PORTADAS -> when {
+            t.startsWith("Reconocer") || t == "Títulos de libretro" -> "Nombres de tus juegos"
+            t.startsWith("Descarga") || t.startsWith("Buscar de nuevo") || t.startsWith("Imágenes de") || t.startsWith("Borrar") -> "Imágenes"
+            else -> "Cuentas para más imágenes"
+        }
+        Seccion.SISTEMA -> when {
+            t.startsWith("Respald") || t.contains("respaldo", true) || t.startsWith("Cambiar dónde") || t.startsWith("Elegir dónde") -> "Respaldo"
+            t.startsWith("Descargar e instalar") || t.contains("actualizaciones") || t.startsWith("Avisarme") -> "Actualizaciones"
+            t.startsWith("Reportar") || t.startsWith("Ver las novedades") || t.startsWith("Recorrido") || t.startsWith("Repetir") -> "Ayuda"
+            else -> "Díptico"
         }
         Seccion.PANTALLAS -> when {
             t == "Tu equipo" -> "Tu equipo"
@@ -2875,7 +2968,7 @@ object Diptico {
 
     /** Ajustes que más se usan, sacados de todas las secciones. O, si se buscó algo, lo que coincide. */
     private fun opcionesEsenciales(e: Estado): List<Opcion> {
-        val todas = Seccion.values().filter { it != Seccion.ESENCIAL }.flatMap { s -> armarOpciones(s).map { s to it } }
+        val todas = Seccion.values().filter { it != Seccion.ESENCIAL && it != Seccion.MAS }.flatMap { s -> armarOpciones(s).map { s to it } }
         if (e.buscarAjuste.isNotBlank()) {
             val q = Busqueda.normalizar(e.buscarAjuste)
             val res = todas.filter { (s, o) ->
@@ -2888,7 +2981,8 @@ object Diptico {
             "Sonidos al moverte", "Fechas especiales", "Efecto de los botones", "Fluidez", "Bisa mientras juegas",
         )
         val lista = mutableListOf(
-            Opcion("Buscar un ajuste", "Y", Icono.BUSCAR, "Escribe una palabra (música, tema, teclado…) y te muestro dónde está.") { abrirTexto("buscar_ajuste") },
+            Opcion("Buscar un ajuste", "Y", Icono.BUSCAR, "Escribe una palabra (música, tema, teclado…) y te muestro dónde está, aunque esté en una sección avanzada.") { abrirTexto("buscar_ajuste") },
+            opcionMenuSimple(e),
             Opcion("Idioma", (Idioma.IDIOMAS.firstOrNull { it.first == e.idioma }?.second ?: e.idioma), Icono.IDIOMA) { abrirMenu(Seccion.IDIOMA) },
             Opcion("Acomodar el inicio", icono = Icono.EDITAR, ayuda = "Mueve, agranda y cambia el estilo de tus widgets. También manteniendo apretado el inicio.") { cerrarPanel(); editarWidgets() },
             Opcion("Hablar con Bisa", icono = Icono.BISA) { abrirAsistente() },
@@ -2916,7 +3010,7 @@ object Diptico {
                         "Cambia su nombre, color, ícono, imagen grande, logo, música, cajas y emulador.",
                     ) { abrirEditarConsola(c.id, desdeMenu = true) }
                 }
-                if (lista.isEmpty()) lista += Opcion("Aún no hay consolas", "Elige tu carpeta de juegos", Icono.CARPETA) { abrirMenu(Seccion.BIBLIOTECA) }
+                if (lista.isEmpty()) lista += Opcion("Aún no hay consolas", "Elige tu carpeta de juegos", Icono.CARPETA, ayuda = "Primero elige la carpeta donde guardas tus juegos y aquí aparecerán tus consolas.") { abrirMenu(Seccion.BIBLIOTECA) }
             }
             Seccion.PANTALLAS -> {
                 val q = equipo()
@@ -2993,6 +3087,7 @@ object Diptico {
             Seccion.TEMAS -> lista += opcionesTemas(e)
             Seccion.LOGROS -> lista += opcionesLogros(e)
             Seccion.ESENCIAL -> lista += opcionesEsenciales(e)
+            Seccion.MAS -> lista += opcionesMas(e)
             Seccion.ASISTENTE -> {
                 lista += Opcion("Hablar con Bisa", icono = Icono.BISA, ayuda = "Bisa es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
                 lista += Opcion(
@@ -3037,12 +3132,12 @@ object Diptico {
                     "Usar un modelo propio", icono = Icono.CARPETA,
                     ayuda = "Si tienes otro modelo en formato .task de MediaPipe (por ejemplo Gemma), elígelo y Bisa lo usará.",
                 ) { pedirArchivoPara("modeloIA", "*/*") }
-                if (e.iaLocalLista) lista += Opcion("Borrar la IA local", "Libera 1,6 GB", Icono.BORRAR) {
+                if (e.iaLocalLista) lista += Opcion("Borrar la IA local", "Libera 1,6 GB", Icono.BORRAR, ayuda = "Borra el modelo de IA que se descargó a la consola. Bisa sigue funcionando con lo básico o con la nube.") {
                     IALocal.borrar(app)
                     actualizar { it.copy(iaLocalLista = false) }
                     avisar("IA local borrada")
                 }
-                lista += Opcion("Borrar la conversación", if (e.chat.isEmpty()) "Vacía" else "${e.chat.size} mensajes", Icono.BORRAR) { borrarChat(); avisar("Conversación borrada") }
+                lista += Opcion("Borrar la conversación", if (e.chat.isEmpty()) "Vacía" else "${e.chat.size} mensajes", Icono.BORRAR, ayuda = "Borra lo que hablaste con Bisa. No toca tus ajustes ni tus juegos.") { borrarChat(); avisar("Conversación borrada") }
             }
             Seccion.IDIOMA -> Idioma.IDIOMAS.forEach { (cod, nombre) ->
                 lista += Opcion(nombre, if (e.idioma == cod) "En uso ✓" else "", Icono.IDIOMA, Idioma.ayuda(cod)) { cambiarIdioma(cod) }
@@ -3078,7 +3173,7 @@ object Diptico {
                     almacen.guardarTexto("protectorMin", v.toString())
                     actualizar { it.copy(protectorMin = v) }
                 }
-                lista += Opcion("Ver el protector ahora", icono = Icono.RELOJ) { cerrarPanel(); actualizar { it.copy(protector = true) } }
+                lista += Opcion("Ver el protector ahora", icono = Icono.RELOJ, ayuda = "Muestra el protector de pantalla ya mismo, para ver cómo queda.") { cerrarPanel(); actualizar { it.copy(protector = true) } }
                 lista += Opcion(
                     "Zoom lento en las portadas", if (e.zoomLento) "Sí" else "No", Icono.PORTADA,
                     "La portada elegida y la imagen grande se acercan muy despacio, como en un documental. Apágalo si prefieres todo quieto.",
@@ -3252,7 +3347,7 @@ object Diptico {
                 lista += opcionesActualizar(e)
                 lista += Opcion(
                     "Reportar un problema", icono = Icono.INFO,
-                    ayuda = "Abre GitHub con un informe listo (versión y equipo): cuenta qué pasó y envíalo. Lo leen quien hace Díptico y Claude.",
+                    ayuda = "Abre GitHub con un informe listo (versión y equipo): cuenta qué pasó y envíalo. Lo lee quien hace Díptico.",
                 ) { cerrarPanel(); abrirWeb(Fallas.urlProblema(app)) }
                 lista += Opcion("Ver las novedades de esta versión", icono = Icono.CHISPA, ayuda = "El tour corto de lo nuevo, otra vez.") { cerrarPanel(); actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = "") } }
                 lista += Opcion("Recorrido por Díptico", icono = Icono.TUTORIAL, ayuda = "El paseo de la primera vez por todas las opciones y botones.") { verRecorrido() }
@@ -3264,7 +3359,9 @@ object Diptico {
                 lista += Opcion("Cerrar el menú", icono = Icono.CERRAR, ayuda = "También con B o Start.") { cerrarPanel() }
             }
         }
-        return lista
+        // Las opciones de un mismo grupo quedan juntas, bajo un solo subtítulo (en el orden en que aparece cada grupo).
+        if (s == Seccion.ESENCIAL || s == Seccion.MAS) return lista
+        return lista.groupBy { grupoOpcion(s, it.titulo) }.values.flatten()
     }
 
     // ---------- Emuladores ----------
@@ -3546,10 +3643,10 @@ object Diptico {
             ) { abrirGaleria("colores") },
         )
         val mio = e.temasPropios.firstOrNull { it.id == "mio" }
-        lista += Opcion("Mi tema · fondo", when (mio?.base) { "oscuro" -> "Oscuro"; "claro" -> "Claro"; "oled" -> "Negro puro"; else -> "Según el modo" }, Icono.TEMA) {
+        lista += Opcion("Mi tema · fondo", when (mio?.base) { "oscuro" -> "Oscuro"; "claro" -> "Claro"; "oled" -> "Negro puro"; else -> "Según el modo" }, Icono.TEMA, ayuda = "El fondo de tu tema propio: oscuro, claro, negro puro (ideal para OLED) o según el modo.") {
             editarMiTema { it.copy(base = when (it.base) { "auto" -> "oscuro"; "oscuro" -> "oled"; "oled" -> "claro"; else -> "auto" }) }
         }
-        lista += Opcion("Mi tema · decoración", Temas.nombreDecor(mio?.decor ?: "nada"), Icono.ESTRELLA) {
+        lista += Opcion("Mi tema · decoración", Temas.nombreDecor(mio?.decor ?: "nada"), Icono.ESTRELLA, ayuda = "Un adorno suave sobre el fondo de tu tema propio.") {
             editarMiTema { t -> t.copy(decor = Temas.DECORACIONES[(Temas.DECORACIONES.indexOf(t.decor) + 1).mod(Temas.DECORACIONES.size)]) }
         }
         lista += Opcion(
@@ -3557,7 +3654,7 @@ object Diptico {
             "Los temas con IA usan una IA en la nube: Gemini (gratis con tu cuenta de Google) o ChatGPT.",
         ) { abrirGaleria("ia") }
         if (e.temasPropios.any { it.id != "mio" }) {
-            lista += Opcion("Borrar temas creados con IA", icono = Icono.BORRAR) {
+            lista += Opcion("Borrar temas creados con IA", icono = Icono.BORRAR, ayuda = "Borra los temas que inventó la IA. Los temas de Díptico y el tuyo no se tocan.") {
                 guardarTemasPropios(estado.value.temasPropios.filter { it.id == "mio" })
                 if (estado.value.tema.startsWith("ia_")) elegirTema("diptico")
             }
@@ -3601,7 +3698,7 @@ object Diptico {
                 "Usa cualquier imagen de tu teléfono como ícono de esta consola. Elige la consola en el estante antes de abrir el menú.",
             ) { pedirImagen("icono:${c.id}") }
             if (e.iconosPropios.containsKey(c.id)) {
-                lista += Opcion("Quitar ícono propio de ${c.nombre}", icono = Icono.BORRAR) {
+                lista += Opcion("Quitar ícono propio de ${c.nombre}", icono = Icono.BORRAR, ayuda = "Vuelve al ícono del estilo elegido para esta consola.") {
                     val m = estado.value.iconosPropios - c.id
                     almacen.guardarTexto("iconosPropios", escribirMapa(m))
                     actualizar { it.copy(iconosPropios = m) }
@@ -3656,6 +3753,10 @@ object Diptico {
                 app.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${app.packageName}")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
             } catch (_: Exception) { avisar("No pude abrir el permiso") }
         },
+        Opcion(
+            "Barra de accesos", if (e.barraFija) "Siempre visible" else "Se esconde sola", Icono.APPS,
+            "La barra flotante de la pantalla de arriba (jugar, ficha, buscar, apps, turbo, menú y Bisa). Se esconde sola a los 5 segundos para que luzca el juego; vuelve deslizando hacia arriba desde el borde de abajo, tocando la pantalla o con B.",
+        ) { cambiarBarraFija(!estado.value.barraFija) },
         Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Para que Bisa te salude por tu nombre.") { abrirTexto("nombre", estado.value.nombre) },
         Opcion("Preguntar dónde quedaste", if (e.preguntarQuedaste) "Sí" else "No", Icono.LAPIZ,
             "Al terminar de jugar, una tarjeta para anotar dónde quedaste: escribiendo, con una nota de voz o marcando en el mapa del juego. Siempre se puede pasar de largo.") {
@@ -4023,9 +4124,9 @@ object Diptico {
     }
 
     /** La clave guardada para una IA en la nube. */
-    fun claveDe(p: String, e: Estado = estado.value) = when (p) { "gemini" -> e.claveGemini; "openai" -> e.claveOpenAI; else -> e.claveIa }
+    fun claveDe(p: String, e: Estado = estado.value) = when (p) { "gemini" -> e.claveGemini; "openai" -> e.claveOpenAI; else -> "" }
 
-    /** Qué IA usa Bisa ahora: local (en la consola), gemini, openai, claude o "ninguno". */
+    /** Qué IA usa Bisa ahora: local (en la consola), gemini, openai o "ninguno". */
     fun motorEfectivo(e: Estado = estado.value): String = when (e.motorIA) {
         "local", "gemini", "openai" -> e.motorIA
         else -> when {
@@ -4035,7 +4136,7 @@ object Diptico {
     }
 
     fun nombreMotor(m: String) = when (m) {
-        "local" -> "En tu consola"; "gemini" -> "Gemini"; "openai" -> "ChatGPT"; "claude" -> "Claude"; "ninguno" -> "Sin IA aún"; else -> "Automático"
+        "local" -> "En tu consola"; "gemini" -> "Gemini"; "openai" -> "ChatGPT"; "ninguno" -> "Sin IA aún"; else -> "Automático"
     }
 
     /** Valor que se muestra en el menú: el motor elegido (y, en automático, cuál está usando). */
@@ -4075,7 +4176,7 @@ object Diptico {
 
     private var claveVieneDeGaleria = false
 
-    fun claveTexto(p: String) = when (p) { "gemini" -> "ia_clave_gemini"; "openai" -> "ia_clave_openai"; else -> "ia_clave" }
+    fun claveTexto(p: String) = if (p == "gemini") "ia_clave_gemini" else "ia_clave_openai"
 
     fun preguntar(texto: String, forzarWeb: Boolean = false) {
         val e = estado.value
@@ -4236,7 +4337,7 @@ object Diptico {
             "Cómo se ganan los logros", icono = Icono.INFO,
             ayuda = "Los logros se ganan jugando en RetroArch (o en otros emuladores compatibles) con tu cuenta iniciada allá: en RetroArch ve a Ajustes › Logros. Díptico te muestra cuáles tienes y cuáles faltan en la ficha de cada juego.",
         ) { avisar("En RetroArch: Ajustes › Logros, inicia sesión con tu misma cuenta") },
-        Opcion("Desconectar la cuenta", icono = Icono.BORRAR, apagada = e.usuarioRA.isBlank()) {
+        Opcion("Desconectar la cuenta", icono = Icono.BORRAR, apagada = e.usuarioRA.isBlank(), ayuda = "Saca tu cuenta de RetroAchievements de Díptico. Tus logros siguen en la página de RetroAchievements.") {
             almacen.guardarTexto("usuarioRA", ""); almacen.guardarTexto("claveRA", "")
             actualizar { it.copy(usuarioRA = "", claveRA = "", perfilRA = null, logrosFicha = null) }
             avisar("Cuenta de RetroAchievements desconectada")
@@ -4254,28 +4355,28 @@ object Diptico {
             2 -> buildList {
                 add(
                     Opcion(
-                        "Mis trucos y notas", d.notas.lineSequence().firstOrNull()?.take(40)?.ifEmpty { null } ?: "Escribir", Icono.LAPIZ,
+                        "Mis trucos y notas", d.notas.lineSequence().firstOrNull()?.take(40)?.ifEmpty { null } ?: "Escribir", Icono.LAPIZ, ayuda = "Tus apuntes de este juego: claves, trucos, lo que no quieres olvidar. Bisa también los lee.",
                     ) { abrirTexto("notas", d.notas) },
                 )
                 Fichas.enlacesGuias(j.titulo, consola?.bonito ?: "").forEach { (t, url) ->
-                    add(Opcion(t, "Abre el navegador", Icono.WEB) { abrirWeb(url) })
+                    add(Opcion(t, "Abre el navegador", Icono.WEB, ayuda = "Abre esta guía en el navegador.") { abrirWeb(url) })
                 }
-                e.ficha?.enlace?.let { url -> add(Opcion("Artículo completo en Wikipedia", icono = Icono.WEB) { abrirWeb(url) }) }
+                e.ficha?.enlace?.let { url -> add(Opcion("Artículo completo en Wikipedia", icono = Icono.WEB, ayuda = "Abre el artículo de Wikipedia de este juego en el navegador.") { abrirWeb(url) }) }
             }
             3 -> listOf(
-                Opcion("Título", d.titulo ?: j.titulo, Icono.TITULO) { abrirTexto("titulo", d.titulo ?: j.titulo) },
-                Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA) { buscarCandidatos("portada") },
-                Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA) { buscarCandidatos("arte") },
-                Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA) { buscarCandidatos("logo") },
+                Opcion("Título", d.titulo ?: j.titulo, Icono.TITULO, ayuda = "El nombre que se muestra en el estante y arriba. El archivo no se cambia.") { abrirTexto("titulo", d.titulo ?: j.titulo) },
+                Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "Elige otra portada en la tienda de imágenes o desde tus archivos.") { buscarCandidatos("portada") },
+                Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "La imagen grande que se ve de fondo en la pantalla de arriba.") { buscarCandidatos("arte") },
+                Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA, ayuda = "El logo que aparece sobre la imagen grande en vez del título escrito.") { buscarCandidatos("logo") },
                 Opcion("Imagen en el inicio", nombreHeroe(e.heroes[j.clave]), Icono.PORTADA, "Qué imagen se ve en grande en el inicio para este juego.") { ciclarHeroe(j.clave) },
                 Opcion("Encuadrar la portada", if (e.encuadres.containsKey("${j.clave}|portada")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
                     "Corre y acerca la foto para que quede centrada en la forma de la caja.") { abrirEncuadre("portada") },
                 Opcion("Encuadrar la imagen grande", if (e.encuadres.containsKey("${j.clave}|arte")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
                     "Corre y acerca el hero para que se vea lo importante.") { abrirEncuadre("arte") },
-                Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA) { pedirArchivoPara("musica", "audio/*") },
-                Opcion(if (d.favorito) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON) { alternarFavorito(j.clave) },
-                Opcion("Buscar todo automático", icono = Icono.DESCARGA) { descargarUno(j) },
-                Opcion("Volver a lo original", "Quita lo personalizado", Icono.BORRAR) {
+                Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA, ayuda = "Una canción que suena en el estante cuando este juego está elegido.") { pedirArchivoPara("musica", "audio/*") },
+                Opcion(if (d.favorito) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON, ayuda = "Los favoritos se ven primero con el filtro Favoritos.") { alternarFavorito(j.clave) },
+                Opcion("Buscar todo automático", icono = Icono.DESCARGA, ayuda = "Busca en internet portada, imagen grande y logo para este juego, de una vez.") { descargarUno(j) },
+                Opcion("Volver a lo original", "Quita lo personalizado", Icono.BORRAR, ayuda = "Quita el título, las imágenes, la música y los encuadres propios de este juego.") {
                     cambiarDatos(j.clave) { it.copy(titulo = null, portada = null, arte = null, logo = null, musica = null) }
                     guardarEncuadres(estado.value.encuadres - "${j.clave}|portada" - "${j.clave}|arte")
                     avisar("Listo, ${j.titulo} volvió a como era")
@@ -4920,11 +5021,11 @@ object Diptico {
         return when (w.tipo) {
             "reloj" -> listOf(
                 Opcion("Temporizador", "${e.temporizadorMin} min", Icono.RELOJ, "Elige los minutos con ← →. Te aviso con un cartel aunque estés jugando.", menos = { cambiarTemporizador(-1) }) { cambiarTemporizador(1) },
-                Opcion(if (e.temporizadorFin > 0L) "Detener el temporizador" else "Empezar el temporizador", icono = if (e.temporizadorFin > 0L) Icono.CERRAR else Icono.JUGAR) { alternarTemporizador() },
+                Opcion(if (e.temporizadorFin > 0L) "Detener el temporizador" else "Empezar el temporizador", icono = if (e.temporizadorFin > 0L) Icono.CERRAR else Icono.JUGAR, ayuda = "Un temporizador para avisarte cuando sea hora de dejar de jugar.") { alternarTemporizador() },
                 Opcion(if (e.cronoInicio > 0L) "Pausar el cronómetro" else if (e.cronoAcumulado > 0L) "Seguir el cronómetro" else "Empezar el cronómetro", icono = Icono.RELOJ, ayuda = "Para medir una partida, un speedrun o lo que quieras.") { alternarCrono() },
-                Opcion("Reiniciar el cronómetro", icono = Icono.BORRAR, apagada = e.cronoInicio == 0L && e.cronoAcumulado == 0L) { reiniciarCrono() },
+                Opcion("Reiniciar el cronómetro", icono = Icono.BORRAR, apagada = e.cronoInicio == 0L && e.cronoAcumulado == 0L, ayuda = "Vuelve el cronómetro a cero.") { reiniciarCrono() },
                 Opcion("Recordarme una pausa al jugar", if (e.pausaCada == 0) "No" else "Cada ${e.pausaCada} min", Icono.CORAZON, "Un cartel amable mientras juegas para descansar la vista y estirarte.", menos = { cambiarPausa(-1) }) { cambiarPausa(1) },
-                Opcion("Reloj a pantalla completa", icono = Icono.RELOJ) { cerrarPanel(); alternarReloj() },
+                Opcion("Reloj a pantalla completa", icono = Icono.RELOJ, ayuda = "Muestra la hora en grande en la pantalla de arriba.") { cerrarPanel(); alternarReloj() },
             )
             "musica" -> buildList {
                 val m = cl.nikalbazu.diptico.audio.Medios.sonando.value
@@ -4937,15 +5038,15 @@ object Diptico {
                 }
                 appsMusica().filter { it.paquete != m?.paquete }.forEach { a -> add(Opcion("Abrir ${a.nombre}", icono = Icono.MUSICA, paquete = a.paquete) { cerrarPanel(); abrirPaquete(a.paquete) }) }
                 add(Opcion("Música de Díptico", if (e.musica) "Sí" else "No", Icono.MUSICA, "La música propia de cada tema.") { fijarMusica(!estado.value.musica) })
-                add(Opcion("Elegir canción de Díptico", icono = Icono.MUSICA) { abrirGaleria("musica") })
+                add(Opcion("Elegir canción de Díptico", icono = Icono.MUSICA, ayuda = "Elige qué canción de fondo suena en Díptico.") { abrirGaleria("musica") })
             }
             "recientes" -> juegosComo(e.datos.entries.filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }.mapNotNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }.take(12))
                 .ifEmpty { listOf(Opcion("Todavía no juegas nada con Díptico", icono = Icono.INFO, apagada = true) {}) }
             "favoritos" -> juegosComo(e.juegos.filter { e.datos[it.clave]?.favorito == true })
                 .ifEmpty { listOf(Opcion("Marca favoritos con Y sobre un juego", icono = Icono.CORAZON, apagada = true) {}) }
             "sugerencia" -> juegosComo(e.sugeridas.mapNotNull { k -> e.juegos.firstOrNull { it.clave == k } }) + listOf(
-                Opcion("Otras sugerencias", icono = Icono.DADO) { nuevasSugerencias() },
-                Opcion("Pídele una recomendación a Bisa", icono = Icono.BISA) { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") },
+                Opcion("Otras sugerencias", icono = Icono.DADO, ayuda = "Te muestra otros juegos de tu biblioteca para jugar ahora.") { nuevasSugerencias() },
+                Opcion("Pídele una recomendación a Bisa", icono = Icono.BISA, ayuda = "Bisa elige un juego para ti según lo que te gusta.") { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") },
             )
             "fiesta" -> buildList {
                 e.fiesta?.let { f -> add(Opcion("Hoy: ${f.nombre}", f.donde, Icono.MUNDO, f.tema.mensaje) {}) }
@@ -4972,7 +5073,7 @@ object Diptico {
                         actualizar { it.copy(fluidez = v) }
                         aplicarFluidez()
                     },
-                    Opcion("Ajustes de batería de Android", icono = Icono.AJUSTES) { cerrarPanel(); abrirAjusteAndroid(android.content.Intent.ACTION_POWER_USAGE_SUMMARY) },
+                    Opcion("Ajustes de batería de Android", icono = Icono.AJUSTES, ayuda = "Abre los ajustes de batería de Android.") { cerrarPanel(); abrirAjusteAndroid(android.content.Intent.ACTION_POWER_USAGE_SUMMARY) },
                 )
             }
             "tiempo", "estadisticas" -> {
@@ -4982,14 +5083,14 @@ object Diptico {
             "logros" -> if (e.usuarioRA.isBlank()) listOf(Opcion("Conectar RetroAchievements", icono = Icono.CLAVE, ayuda = "Tu usuario y tu clave web de retroachievements.org.") { abrirMenu(Seccion.LOGROS) })
             else listOf(
                 Opcion("Ver mis logros", icono = Icono.TROFEO, ayuda = "Tus puntos, los últimos logros y los de cada juego.") { abrirEstadisticas() },
-                Opcion("Ajustes de logros", icono = Icono.AJUSTES) { abrirMenu(Seccion.LOGROS) },
+                Opcion("Ajustes de logros", icono = Icono.AJUSTES, ayuda = "Tu cuenta de RetroAchievements y cómo se ven tus logros.") { abrirMenu(Seccion.LOGROS) },
             )
             "consolas" -> e.consolasConJuegos.map { c ->
-                Opcion(c.bonito, "${e.juegos.count { it.consolaId == c.id }} juegos", Icono.BIBLIOTECA) { cerrarPanel(); actualizar { it.copy(widgetFoco = -1) }; elegirConsola(c.id) }
+                Opcion(c.bonito, "${e.juegos.count { it.consolaId == c.id }} juegos", Icono.BIBLIOTECA, ayuda = "Va a esta consola en el estante.") { cerrarPanel(); actualizar { it.copy(widgetFoco = -1) }; elegirConsola(c.id) }
             }
             "frase" -> listOf(
-                Opcion("Otra frase", icono = Icono.CHISPA) { actualizar { it.copy(fraseExtra = it.fraseExtra + 1) } },
-                Opcion("Pídele una a Bisa", icono = Icono.BISA) { abrirAsistente(); preguntar("Dame una frase corta y simpática para empezar a jugar hoy.") },
+                Opcion("Otra frase", icono = Icono.CHISPA, ayuda = "Muestra otra frase en el widget.") { actualizar { it.copy(fraseExtra = it.fraseExtra + 1) } },
+                Opcion("Pídele una a Bisa", icono = Icono.BISA, ayuda = "Bisa escribe una frase nueva para el widget.") { abrirAsistente(); preguntar("Dame una frase corta y simpática para empezar a jugar hoy.") },
             )
             "notificaciones" -> Avisos.lista.value.map { a -> Opcion(a.titulo.ifBlank { a.app }, a.app, Icono.CAMPANA, a.texto, paquete = a.paquete) { abrirAviso(a) } }
                 .ifEmpty { listOf(Opcion("Todo tranquilo: no hay notificaciones", icono = Icono.CHECK, apagada = true) {}) }
@@ -4997,12 +5098,12 @@ object Diptico {
                 val j = e.seleccionado
                 add(Opcion("Conversar con Bisa", icono = Icono.BISA, ayuda = "Pregúntale lo que quieras: trucos, qué jugar, o cambiar Díptico.") { abrirAsistente() })
                 if (j != null) {
-                    add(Opcion("Un truco para ${j.titulo}", icono = Icono.CHISPA) { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${j.titulo}.") })
-                    add(Opcion("¿De qué trata ${j.titulo}?", icono = Icono.TUTORIAL) { abrirAsistente(); preguntar("Cuéntame en pocas líneas de qué trata ${j.titulo} y por qué vale la pena.") })
-                    e.datos[j.clave]?.paso?.takeIf { it.isNotBlank() }?.let { paso -> add(Opcion("Ayúdame a seguir donde quedé", paso.take(30), Icono.LAPIZ) { abrirAsistente(); preguntar("En ${j.titulo} anoté esto: \"$paso\". ¿Qué me conviene hacer ahora?") }) }
+                    add(Opcion("Un truco para ${j.titulo}", icono = Icono.CHISPA, ayuda = "Le pregunta a Bisa por un truco para este juego.") { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${j.titulo}.") })
+                    add(Opcion("¿De qué trata ${j.titulo}?", icono = Icono.TUTORIAL, ayuda = "Bisa te cuenta de qué trata este juego, sin spoilers.") { abrirAsistente(); preguntar("Cuéntame en pocas líneas de qué trata ${j.titulo} y por qué vale la pena.") })
+                    e.datos[j.clave]?.paso?.takeIf { it.isNotBlank() }?.let { paso -> add(Opcion("Ayúdame a seguir donde quedé", paso.take(30), Icono.LAPIZ, ayuda = "Bisa te ayuda con lo que anotaste como tu próximo paso.") { abrirAsistente(); preguntar("En ${j.titulo} anoté esto: \"$paso\". ¿Qué me conviene hacer ahora?") }) }
                 }
-                add(Opcion("¿Qué juego hoy?", icono = Icono.DADO) { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") })
-                add(Opcion("Cámbiame el tema", icono = Icono.TEMA) { abrirAsistente(); preguntar("Cámbiame el tema de Díptico por uno que me sorprenda.") })
+                add(Opcion("¿Qué juego hoy?", icono = Icono.DADO, ayuda = "Bisa te recomienda qué jugar hoy.") { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") })
+                add(Opcion("Cámbiame el tema", icono = Icono.TEMA, ayuda = "Bisa te cambia el tema de Díptico.") { abrirAsistente(); preguntar("Cámbiame el tema de Díptico por uno que me sorprenda.") })
                 add(Opcion("Ayuda mientras juego", icono = Icono.BISA, ayuda = "Bisa mira tu partida y te ayuda (con el botón de Bisa en el juego).") { prepararAyuda() })
             }
             else -> if (w.tipo.startsWith("coleccion-")) {
@@ -5014,8 +5115,8 @@ object Diptico {
                     Opcion("Borrar esta colección", icono = Icono.BORRAR, ayuda = "Los juegos no se borran, solo la carpeta.") { borrarColeccion(id) },
                 )
             } else if (w.tipo.startsWith("imagen")) listOf(
-                Opcion("Cambiar la imagen o GIF", icono = Icono.PORTADA) { pedirArchivoPara("widget:${w.tipo}", "image/*") },
-                Opcion("Acomodar en el estudio", icono = Icono.APPS) { cerrarPanel(); editarWidgets(); elegirWidget(e.widgetAbierto) },
+                Opcion("Cambiar la imagen o GIF", icono = Icono.PORTADA, ayuda = "Elige una imagen o GIF de tus archivos para este widget.") { pedirArchivoPara("widget:${w.tipo}", "image/*") },
+                Opcion("Acomodar en el estudio", icono = Icono.APPS, ayuda = "Abre el estudio para mover, agrandar o cambiar el estilo de este widget.") { cerrarPanel(); editarWidgets(); elegirWidget(e.widgetAbierto) },
             ) else emptyList()
         }
     }
@@ -5763,7 +5864,6 @@ object Diptico {
         "ras_tgdb" -> "https://forums.thegamesdb.net/viewforum.php?f=10"
         "ia_clave_gemini", "gemini" -> "https://aistudio.google.com/apikey"
         "ia_clave_openai", "openai" -> "https://platform.openai.com/api-keys"
-        "ia_clave", "claude" -> "https://console.anthropic.com/settings/keys"
         "sgdb" -> "https://www.steamgriddb.com/profile/preferences/api"
         "ra_clave", "ra_usuario" -> "https://retroachievements.org/settings"
         else -> null
@@ -5846,12 +5946,9 @@ object Diptico {
                 actualizar { it.copy(claveRA = t, perfilRA = null) }
                 cargarPerfilRA(true)
             }
-            "ia_clave", "ia_clave_gemini", "ia_clave_openai" -> {
-                when (e.textoPara) {
-                    "ia_clave_gemini" -> { almacen.guardarTexto("claveGemini", t); actualizar { it.copy(claveGemini = t) } }
-                    "ia_clave_openai" -> { almacen.guardarTexto("claveOpenAI", t); actualizar { it.copy(claveOpenAI = t) } }
-                    else -> { almacen.guardarTexto("claveIa", t); actualizar { it.copy(claveIa = t) } }
-                }
+            "ia_clave_gemini", "ia_clave_openai" -> {
+                if (e.textoPara == "ia_clave_gemini") { almacen.guardarTexto("claveGemini", t); actualizar { it.copy(claveGemini = t) } }
+                else { almacen.guardarTexto("claveOpenAI", t); actualizar { it.copy(claveOpenAI = t) } }
                 if (claveVieneDeGaleria) {
                     claveVieneDeGaleria = false
                     abrirGaleria("ia")
@@ -5963,13 +6060,13 @@ object Diptico {
     }
     // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
 
-    private val VISTAS = listOf("estante", "carrusel", "lomos", "cuadricula", "lista")
-    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Cuadrícula"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "lomos" -> "Lomos"; else -> "Estante" }
+    private val VISTAS = listOf("estante", "carrusel", "abanico", "lomos", "cuadricula", "lista")
+    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Cuadrícula"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
 
-    val VISTAS_CONSOLAS = listOf("arriba", "lado", "rueda", "sistemas", "carpetas")
+    val VISTAS_CONSOLAS = listOf("arriba", "lado", "rueda", "sistemas", "carpetas", "discos")
     /** Vistas donde primero se elige la consola (en grande) y después se entra a sus juegos. */
-    val MODOS_ELEGIR = setOf("sistemas", "carpetas")
-    fun nombreVistaConsolas(v: String) = when (v) { "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"; else -> "Arriba" }
+    val MODOS_ELEGIR = setOf("sistemas", "carpetas", "discos")
+    fun nombreVistaConsolas(v: String) = when (v) { "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"; "discos" -> "Discos"; else -> "Arriba" }
 
     /** Cambia cómo se ven las consolas (arriba, al costado, rueda o sistemas). */
     fun elegirVistaConsolas(v: String) {
@@ -6205,10 +6302,10 @@ object Diptico {
         val lista = mutableListOf(
             Opcion(
                 "Consolas", nombreVistaConsolas(e.vistaConsolas), Icono.MANDO,
-                "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande) o Carpetas (cada consola como una carpeta con sus portadas asomándose). En Sistemas y Carpetas primero eliges la consola y después entras a sus juegos.",
+                "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande), Carpetas (cada consola como una carpeta con sus portadas asomándose) o Discos (cada consola es un vinilo en su funda, y la elegida saca su disco girando). En Sistemas, Carpetas y Discos primero eliges la consola y después entras a sus juegos.",
                 menos = { cambiarVistaConsolas(-1) },
             ) { cambiarVistaConsolas(1) },
-            Opcion("Juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, lomos (como una repisa de libros: el elegido se abre), cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { cambiarVista() },
+            Opcion("Juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, abanico (como cartas abiertas en la mano: la elegida sube al centro), lomos (como una repisa de libros: el elegido se abre), cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { cambiarVista() },
             Opcion("Forma de las cajas", nombreForma(e.formas[consolaParaCajas()]?.forma ?: "original"), Icono.FORMA,
                 "Elige cómo se ven las cajas (cuadrada, póster, horizontal, disco, cartucho o tarjeta) viendo tus portadas en cada forma. Para una consola o para todas.") { abrirCajas() },
             Opcion("Tamaño de los juegos", nombreTamJuegos(e.tamJuegos), Icono.FORMA, "Más chico para ver más juegos, o más grande para verlos mejor.") { cambiarTamJuegos(if (e.tamJuegos >= 1.39f) -3 else 1) },
@@ -6219,7 +6316,7 @@ object Diptico {
         if (c != null) {
             val f = e.formas[c.id] ?: FormaCfg()
             lista += Opcion("Cajas de ${c.nombre}: forma", nombreForma(f.forma), Icono.FORMA, "Elige la forma de las cajas de esta consola, viendo tus portadas en cada una.") { abrirCajas(c.id) }
-            lista += Opcion("Cajas de ${c.nombre}: tamaño", nombreTamJuegos(f.tam), Icono.FORMA) { ciclarTamForma(c.id) }
+            lista += Opcion("Cajas de ${c.nombre}: tamaño", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(c.id) }
             lista += Opcion("Cajas de ${c.nombre}: imagen", nombreImagenCaja(f.imagen), Icono.PORTADA, "Muestra la portada, una captura del juego o su logo.") { ciclarImagenCaja(c.id) }
         }
         lista += Opcion("Cajas en «Todos»", nombreFormaTodos(e.formaTodos), Icono.FORMA,
@@ -6436,7 +6533,7 @@ object Diptico {
             abrirIntent(Intent(android.provider.Settings.ACTION_HOME_SETTINGS), "No pude abrir los ajustes de inicio")
         },
         Opcion("Archivos", icono = Icono.CARPETA, ayuda = "Abre el administrador de archivos de Android.") { abrirArchivos() },
-        Opcion("Ajustes de Android", icono = Icono.AJUSTES) { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },
+        Opcion("Ajustes de Android", icono = Icono.AJUSTES, ayuda = "Abre los ajustes de Android.") { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },
     )
 
     // ---------- Reconocer los nombres de los juegos ----------
@@ -6444,7 +6541,8 @@ object Diptico {
     /** Busca el nombre oficial de los juegos en la lista de libretro (sin bajar imágenes). */
     fun identificarNombres(avisarAlFinal: Boolean = false) {
         if (!estado.value.titulosBonitos) return
-        val pendientes = crudos.filter { medios[it.clave]?.titulo == null }
+        // Solo las consolas que libretro conoce (los fan games y los ports ya traen su nombre): así no se reintenta en cada arranque.
+        val pendientes = crudos.filter { medios[it.clave]?.titulo == null && Consolas.porId(it.consolaId)?.libretro != null }
         if (pendientes.isEmpty()) {
             if (avisarAlFinal) avisar("Todos tus juegos ya tienen nombre")
             return
@@ -7233,10 +7331,10 @@ object Diptico {
             Opcion("Logo", if (p.logo != null) "Propio ✓" else "Buscar", Icono.ESTRELLA, "Un logo que reemplaza al nombre en la vista grande: de SteamGridDB, Wikipedia o tus archivos.") { buscarCandidatos("c_logo") },
             Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") },
             Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) },
-            Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA) { ciclarTamForma(id) },
+            Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(id) },
             Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) },
-            Opcion("Emulador", if (c.sinEmulador) "No necesita" else nombreEmulador(c), Icono.MANDO) { if (!c.sinEmulador) ciclarEmulador(c) },
-            Opcion("Quitar imágenes y música propias", icono = Icono.BORRAR) {
+            Opcion("Emulador", if (c.sinEmulador) "No necesita" else nombreEmulador(c), Icono.MANDO, ayuda = "Con qué emulador o núcleo se abren los juegos de esta consola.") { if (!c.sinEmulador) ciclarEmulador(c) },
+            Opcion("Quitar imágenes y música propias", icono = Icono.BORRAR, ayuda = "Quita las imágenes y la música que elegiste para esta consola.") {
                 cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null) }
                 if (estado.value.iconosPropios.containsKey(id)) {
                     val m = estado.value.iconosPropios - id
@@ -7312,7 +7410,7 @@ object Diptico {
             "Fondo del inicio", if (e.fondoInicio != null) "Propio ✓" else "Arte del juego", Icono.PORTADA,
             "Usa una imagen o un GIF animado como fondo de tu inicio con widgets.",
         ) { pedirArchivoPara("fondoInicio", "image/*") },
-        Opcion("Quitar fondo propio", icono = Icono.BORRAR) {
+        Opcion("Quitar fondo propio", icono = Icono.BORRAR, ayuda = "Vuelve a la imagen de fondo original de esta consola.") {
             almacen.guardarTexto("fondoInicio", "")
             actualizar { it.copy(fondoInicio = null) }
         },

@@ -11,7 +11,7 @@ data class AccionChat(val tipo: String, val valor: String, val etiqueta: String)
 data class MensajeChat(val rol: String, val texto: String, val acciones: List<AccionChat> = emptyList())
 
 /**
- * El asistente de Díptico. Corre en la nube (Claude, con la clave de la persona),
+ * El asistente de Díptico. Corre en la consola o en la nube (Gemini o ChatGPT, con la clave de la persona),
  * así que no gasta memoria ni batería de la consola: solo manda un texto corto y recibe la respuesta.
  */
 object Asistente {

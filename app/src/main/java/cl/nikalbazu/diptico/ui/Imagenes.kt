@@ -20,7 +20,16 @@ import kotlinx.coroutines.withContext
 
 /** Carga portadas y artes desde la carpeta del usuario, reducidas y en caché. */
 object Imagenes {
-    private val cache = LruCache<String, ImageBitmap>(120)
+    /**
+     * Caché medida en bytes (no en cantidad): una imagen grande pesa como 30 portadas chicas.
+     * Usa una sexta parte de la memoria de la app, para que recorrer el estante no llene la memoria ni dé tirones.
+     */
+    private val cache = object : LruCache<String, ImageBitmap>((Runtime.getRuntime().maxMemory() / 6).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()) {
+        override fun sizeOf(key: String, value: ImageBitmap): Int = (value.width * value.height * 4).coerceAtLeast(1)
+    }
+
+    /** La imagen si ya está lista (sin esperar): así no parpadea al volver a dibujarse. */
+    fun enCache(uri: Uri?, maxLado: Int): ImageBitmap? = uri?.let { cache.get("$it@$maxLado") }
 
     fun cargar(ctx: Context, uri: Uri, maxLado: Int): ImageBitmap? {
         val clave = "$uri@$maxLado"
@@ -45,7 +54,11 @@ object Imagenes {
         if (limites.outWidth <= 0 || limites.outHeight <= 0) return null
         var muestra = 1
         while (maxOf(limites.outWidth, limites.outHeight) / (muestra * 2) >= maxLado) muestra *= 2
-        val opciones = BitmapFactory.Options().apply { inSampleSize = muestra }
+        // Imagen en la memoria gráfica: se dibuja más rápido y no ocupa la memoria de la app.
+        val opciones = BitmapFactory.Options().apply {
+            inSampleSize = muestra
+            inPreferredConfig = android.graphics.Bitmap.Config.HARDWARE
+        }
         val bmp = cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) } ?: return null
         val img = bmp.asImageBitmap()
         cache.put(clave, img)
@@ -77,7 +90,8 @@ object Imagenes {
 @Composable
 fun rememberImagen(uri: Uri?, maxLado: Int): ImageBitmap? {
     val ctx = LocalContext.current
-    val img by produceState<ImageBitmap?>(initialValue = null, uri, maxLado) {
+    val img by produceState(initialValue = Imagenes.enCache(uri, maxLado), uri, maxLado) {
+        if (value != null && value === Imagenes.enCache(uri, maxLado)) return@produceState
         value = if (uri == null) null else withContext(Dispatchers.IO) {
             try {
                 Imagenes.cargar(ctx, uri, maxLado)

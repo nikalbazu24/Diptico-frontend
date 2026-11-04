@@ -88,8 +88,11 @@ private fun limpio(e: Estado) = e.copy(
 
 /** Para "Lo esencial" y la búsqueda: la sección de donde viene cada opción. */
 private fun seccionDe(o: Opcion?, s: Seccion): Seccion {
-    if (s != Seccion.ESENCIAL || o == null) return s
-    return Seccion.values().firstOrNull { sec -> sec != Seccion.ESENCIAL && Diptico.opcionesSeccion(sec).any { it.titulo == o.titulo } } ?: s
+    if (o == null) return s
+    // En «Más ajustes», cada opción es una sección: se muestra la vista previa de esa sección.
+    if (s == Seccion.MAS) return Seccion.values().firstOrNull { it.titulo == o.titulo } ?: Seccion.SISTEMA
+    if (s != Seccion.ESENCIAL) return s
+    return Seccion.values().firstOrNull { sec -> sec != Seccion.ESENCIAL && sec != Seccion.MAS && Diptico.opcionesSeccion(sec).any { it.titulo == o.titulo } } ?: s
 }
 
 /** La vista previa de la opción [o] de la sección [s]. Siempre dibuja algo útil, aunque no haya opción elegida. */
@@ -131,7 +134,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                 Seccion.ASISTENTE -> when {
                     t == "IA de Bisa" -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA(Diptico.motorEfectivo(e).let { if (it == "ninguno") "auto" else it }) } }
                     t.startsWith("Clave de") -> {
-                        val prov = when { t.contains("Gemini") -> "gemini"; t.contains("ChatGPT") -> "openai"; else -> "claude" }
+                        val prov = if (t.contains("Gemini")) "gemini" else "openai"
                         MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA(prov) } }
                     }
                     t == "IA en tu consola" || t.contains("modelo") -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA("local") } }
@@ -149,7 +152,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                 Seccion.CONTROLES -> Marco { PreviaBotonesExtra(ev) }
                 Seccion.RENDIMIENTO -> Marco { PreviaTurbo(ev) }
                 Seccion.IDIOMA -> Marco { PreviaIdioma(t) }
-                Seccion.SISTEMA, Seccion.ESENCIAL -> Marco { PreviaAcerca() }
+                Seccion.SISTEMA, Seccion.ESENCIAL, Seccion.MAS -> Marco { PreviaAcerca() }
             }
         }
     }

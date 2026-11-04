@@ -7,7 +7,7 @@ import java.net.URLEncoder
 
 /**
  * Bisa busca en internet (sin claves): resultados de DuckDuckGo y artículos de Wikipedia.
- * Lo usa la IA de la consola, que no sabe buscar sola; las IA en la nube (Gemini, ChatGPT, Claude) buscan con su propia herramienta.
+ * Lo usa la IA de la consola, que no sabe buscar sola; las IA en la nube (Gemini, ChatGPT) buscan con su propia herramienta.
  */
 object Web {
     data class Resultado(val titulo: String, val texto: String, val fuente: String)

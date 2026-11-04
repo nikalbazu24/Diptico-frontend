@@ -121,12 +121,36 @@ object Musica {
             cambiarA(pista, clave, carpeta)
             return
         }
-        if (focoPerdido) return
+        // Otra app (un juego, un emulador) se quedó con el sonido: al volver a Díptico se retoma, salvo que
+        // otra cosa siga sonando de verdad (Spotify, YouTube Music…).
+        if (focoPerdido && !retomarSiSePuede()) return
         if (mp?.isPlaying != true) {
             if (!pedirFoco()) return
             mp?.start()
         }
         fundir(volumenMax)
+    }
+
+    /** Al volver a Díptico: si la música se cortó porque un juego tomó el sonido, vuelve suave. */
+    fun alVolver() {
+        if (!::app.isInitialized || !debe || !focoPerdido) return
+        scope.launch {
+            // Un momento para que el juego termine de soltar el sonido.
+            delay(600)
+            if (debe && focoPerdido && retomarSiSePuede()) {
+                if (mp?.isPlaying != true) mp?.start()
+                fundir(volumenMax)
+            }
+        }
+    }
+
+    /** Pide el sonido otra vez si nadie más está tocando música. */
+    private fun retomarSiSePuede(): Boolean {
+        val am = app.getSystemService(AudioManager::class.java)
+        if (am != null && am.isMusicActive && mp?.isPlaying != true) return false
+        if (!pedirFoco()) return false
+        focoPerdido = false
+        return true
     }
 
     /** Escuchar una pista un momento (en el tutorial y en el menú). */

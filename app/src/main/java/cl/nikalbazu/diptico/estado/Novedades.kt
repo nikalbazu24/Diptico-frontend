@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "1.0-beta.7"
-    const val NOMBRE = "1.0 beta.7"
+    const val ID = "1.0-beta.8"
+    const val NOMBRE = "1.0 beta.8"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -94,7 +94,7 @@ object Novedades {
             Icono.MANDO, 0xFFFFA726,
         )
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("1.0-beta.7", "1.0 beta.7", listOf(
             Pagina(
                 "Tus fan games, directo", "Nueva consola RPG Maker: los fan games de Pokémon y otros se abren al tiro con Essentia. Pon cada juego en su carpeta dentro de «rpgmaker» o «fangames».",
                 Icono.EMULADOR, 0xFFE0452B, "Consola RPG Maker",
@@ -122,6 +122,28 @@ object Novedades {
             Pagina(
                 "Más fluido y más firme", "Arranca y se mueve más suave, los menús ya no cortan los textos, y si algo falla te ofrece mandar el reporte con un toque. Bisa ahora usa la IA de tu consola, Gemini o ChatGPT.",
                 Icono.CHISPA, 0xFFFF7A59,
+            ),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina(
+                "Un inicio más despejado", "La barra de abajo ahora flota en la pantalla de arriba y se esconde sola a los 5 segundos. Vuelve deslizando hacia arriba desde el borde de abajo, tocando la pantalla o con B. Si la quieres fija: Menú › Inicio › Barra de accesos.",
+                Icono.APPS, 0xFF3BA8FF, "Desliza ↑ o B",
+            ),
+            Pagina(
+                "Menú simple", "El menú muestra solo las secciones de todos los días; lo avanzado está junto en «Más ajustes», a un toque. Cada opción explica qué hace y las parecidas van juntas. El menú completo vuelve en Lo esencial › Menú simple.",
+                Icono.VISTA, 0xFF8E7CFF, "Más ajustes",
+            ),
+            Pagina(
+                "Vista Discos", "Cada consola es un vinilo en su funda con cuatro de sus portadas. La elegida saca su disco girando. Menú › Estante › Consolas › Discos.",
+                Icono.MUSICA, 0xFFFF7A59, "Discos",
+            ),
+            Pagina(
+                "Vista Abanico", "Tus juegos como cartas abiertas en la mano: la elegida sube al centro. Cámbiala con R3 o en Menú › Estante › Juegos.",
+                Icono.PORTADA, 0xFFFFA726, "R3",
+            ),
+            Pagina(
+                "Más rápido con tus fan games", "Díptico recuerda tus fan games y ya no los vuelve a leer cada vez que abre, las imágenes ocupan menos memoria y la música vuelve sola cuando regresas de Essentia u otra app.",
+                Icono.CHISPA, 0xFF2EC4A6,
             ),
         )),
     )
@@ -172,6 +194,10 @@ object Novedades {
             Icono.EDITAR, 0xFFFFA726, "Y · X",
         ),
         Pagina(
+            "La barra que se esconde", "Arriba flota una barra con jugar, buscar, apps, turbo, el menú y Bisa. A los 5 segundos se esconde para que luzca el juego; vuelve deslizando hacia arriba desde el borde de abajo, tocando o con B.",
+            Icono.APPS, 0xFF3BA8FF, "Desliza ↑ · B",
+        ),
+        Pagina(
             "Buscar y cambiar la vista", "Presiona el stick izquierdo para buscar un juego. El stick derecho cambia la forma de ver los juegos: estante, grilla, carrusel y más.",
             Icono.BUSCAR, 0xFF8E7CFF, "L3 · R3",
         ),
@@ -192,7 +218,7 @@ object Novedades {
             Icono.CONTINUAR, 0xFFB388FF,
         ),
         Pagina(
-            "El menú", "Start abre el menú: temas, portadas, pantallas, música, Bisa y mucho más. Todo se puede cambiar. ¡Que lo disfrutes!",
+            "El menú", "Start abre el menú: lo de todos los días a la vista y lo avanzado junto en «Más ajustes». Cada opción explica qué hace, y con Y buscas cualquier ajuste por su nombre. ¡Que lo disfrutes!",
             Icono.MENU, 0xFF6B4EFF, "Start",
         ),
     )

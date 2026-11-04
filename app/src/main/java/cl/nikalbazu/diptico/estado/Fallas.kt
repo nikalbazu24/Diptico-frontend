@@ -13,7 +13,7 @@ import java.util.Locale
 /**
  * Reporte de fallas: si Díptico se cierra de golpe, guarda qué pasó; al abrirse de nuevo pregunta
  * si quieres mandarlo. El reporte llega como un aviso (issue) al repositorio de GitHub, donde
- * lo ven tanto quien hace Díptico como Claude. No lleva datos personales: versión, equipo y el error.
+ * lo ve quien hace Díptico. No lleva datos personales: versión, equipo y el error.
  */
 object Fallas {
     private const val ARCHIVO = "ultima-caida.txt"

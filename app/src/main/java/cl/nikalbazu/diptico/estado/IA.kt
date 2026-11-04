@@ -5,11 +5,11 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** Una IA en la nube y la clave de la persona para usarla. [proveedor]: "gemini", "openai" o "claude". */
+/** Una IA en la nube y la clave de la persona para usarla. [proveedor]: "gemini" u "openai". */
 data class Llave(val proveedor: String, val clave: String)
 
 /**
- * IA en la nube con la clave de cada persona: Gemini (Google, tiene nivel gratis), ChatGPT (OpenAI) o Claude (Anthropic).
+ * IA en la nube con la clave de cada persona: Gemini (Google, tiene nivel gratis) o ChatGPT (OpenAI).
  * Se usa para Bisa, los temas con IA y reconocer los nombres de los juegos.
  */
 object IA {
@@ -17,23 +17,20 @@ object IA {
     val PROVEEDORES = listOf("gemini", "openai")
 
     fun nombre(p: String) = when (p) {
-        "gemini" -> "Gemini"; "openai" -> "ChatGPT"; "claude" -> "Claude"; else -> p
+        "gemini" -> "Gemini"; "openai" -> "ChatGPT"; else -> p
     }
 
     fun empresa(p: String) = when (p) {
-        "gemini" -> "Google"; "openai" -> "OpenAI"; "claude" -> "Anthropic"; else -> ""
+        "gemini" -> "Google"; "openai" -> "OpenAI"; else -> ""
     }
 
     /** Dónde se saca la clave de cada uno. */
     fun dondeClave(p: String) = when (p) {
         "gemini" -> "aistudio.google.com/apikey"
-        "openai" -> "platform.openai.com/api-keys"
-        else -> "console.anthropic.com"
+        else -> "platform.openai.com/api-keys"
     }
 
     // Modelos a probar en orden: si uno no existe para esa clave, se usa el siguiente.
-    private val CLAUDE = listOf("claude-haiku-5-5", "claude-sonnet-5-5", "claude-haiku-4-5", "claude-sonnet-4-5")
-    private val CLAUDE_LISTOS = listOf("claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5", "claude-sonnet-4-5", "claude-haiku-4-5")
     private val GEMINI = listOf("gemini-flash-latest", "gemini-3.8-flash", "gemini-3-flash", "gemini-2.5-flash", "gemini-flash-lite-latest")
     private val OPENAI = listOf("gpt-5.4-mini", "gpt-5-mini", "gpt-4.1-mini", "gpt-4o-mini")
 
@@ -49,11 +46,7 @@ object IA {
         llave: Llave, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int = 800,
         listos: Boolean = false, buscarWeb: Boolean = false,
     ): String {
-        val modelos = when (llave.proveedor) {
-            "gemini" -> GEMINI
-            "openai" -> OPENAI
-            else -> if (listos) CLAUDE_LISTOS else CLAUDE
-        }
+        val modelos = if (llave.proveedor == "gemini") GEMINI else OPENAI
         var ultimo: Exception? = null
         var web = buscarWeb
         for (m in modelos) {
@@ -93,8 +86,7 @@ object IA {
     private fun pedirCon(llave: Llave, modelo: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean): String =
         when (llave.proveedor) {
             "gemini" -> gemini(llave.clave, modelo, sistema, mensajes, maxTokens, web)
-            "openai" -> openai(llave.clave, modelo, sistema, mensajes, maxTokens, web)
-            else -> claude(llave.clave, modelo, sistema, mensajes, maxTokens, web)
+            else -> openai(llave.clave, modelo, sistema, mensajes, maxTokens, web)
         }
 
     /** Hace el pedido HTTP y devuelve el cuerpo de la respuesta, o lanza el error ya explicado. */
@@ -119,26 +111,6 @@ object IA {
         } finally {
             c.disconnect()
         }
-    }
-
-    private fun claude(clave: String, modelo: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean): String {
-        val lista = JSONArray()
-        for ((rol, texto) in mensajes) lista.put(JSONObject().put("role", rol).put("content", texto))
-        val cuerpo = JSONObject().put("model", modelo).put("max_tokens", maxTokens).put("messages", lista)
-        if (!sistema.isNullOrBlank()) cuerpo.put("system", sistema)
-        if (web) cuerpo.put("tools", JSONArray().put(JSONObject().put("type", "web_search_20250305").put("name", "web_search").put("max_uses", 3)))
-        val r = enviar(
-            "claude", "https://api.anthropic.com/v1/messages",
-            mapOf("x-api-key" to clave.trim(), "anthropic-version" to "2023-06-01"), cuerpo, web,
-        )
-        // Con búsqueda web la respuesta trae varios bloques: se juntan los de texto.
-        val contenido = JSONObject(r).getJSONArray("content")
-        val texto = StringBuilder()
-        for (i in 0 until contenido.length()) {
-            val b = contenido.getJSONObject(i)
-            if (b.optString("type") == "text") texto.append(b.optString("text"))
-        }
-        return texto.toString().trim()
     }
 
     private fun gemini(clave: String, modelo: String, sistema: String?, mensajes: List<Pair<String, String>>, maxTokens: Int, web: Boolean): String {

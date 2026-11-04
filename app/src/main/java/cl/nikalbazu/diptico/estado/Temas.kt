@@ -229,7 +229,7 @@ object Temas {
 
     /**
      * Pide a la IA un tema nuevo. [pedido] puede ser "Halloween en Japón" o vacío (elige la celebración más cercana del mundo).
-     * Usa la IA en la nube que la persona tenga conectada (Gemini, ChatGPT o Claude).
+     * Usa la IA en la nube que la persona tenga conectada (Gemini o ChatGPT).
      */
     fun conIA(llave: Llave, pedido: String, hoy: LocalDate = LocalDate.now()): Tema {
         val tarea = pedido.ifBlank {

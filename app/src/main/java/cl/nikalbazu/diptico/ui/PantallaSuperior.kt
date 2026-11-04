@@ -1,5 +1,11 @@
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.Icono
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -100,10 +106,15 @@ fun PantallaSuperior(e: Estado) {
             entra togetherWith sale
         },
         label = "inicio",
+        // Cualquier toque en esta pantalla vuelve a sacar la barra flotante.
+        modifier = Modifier.pointerInput(Unit) {
+            awaitEachGesture { awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial); Diptico.mostrarBarra() }
+        },
     ) { widgets ->
         if (widgets) Box(Modifier.fillMaxSize()) {
             PantallaInicio(e)
-            RecordatorioWidgets(e, Modifier.align(Alignment.BottomCenter))
+            RecordatorioWidgets(e, Modifier.align(Alignment.TopCenter).padding(top = LocalEscala.current.d(64)))
+            if (!e.editandoWidgets && e.sesion == null) BarraFlotante(e, null, Modifier.align(Alignment.BottomCenter))
         } else Caratulas(e)
     }
 }
@@ -113,7 +124,10 @@ fun PantallaSuperior(e: Estado) {
 private fun Caratulas(e: Estado) {
     // Modo Sistemas: mientras eliges consola, aquí se ve la consola en grande.
     if (e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas && e.sesion == null) {
-        VistaSistema(e)
+        Box(Modifier.fillMaxSize()) {
+            VistaSistema(e)
+            BarraFlotante(e, null, Modifier.align(Alignment.BottomCenter))
+        }
         return
     }
     val p = LocalPaleta.current
@@ -156,26 +170,8 @@ private fun Caratulas(e: Estado) {
                 .widthIn(max = esc.d(if (angosta) 460f else 400f)),
         ) { j -> InfoJuego(e, j, if (angosta) 32f else 38f) }
 
-        Row(
-            Modifier.align(Alignment.BottomStart).padding(start = esc.d(margen), bottom = esc.d(22)),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
-        ) {
-            BotonJugar()
-            AccionRapida("X", "Ficha") { Diptico.abrirFicha() }
-            if (!angosta) AccionRapida("Y", "Opciones") { Diptico.abrirRapido() }
-        }
-        // Bisa, abajo a la derecha, con un consejo según el juego.
-        if (e.sesion == null) {
-            Column(
-                Modifier.align(Alignment.BottomEnd).padding(end = esc.d(margen), bottom = esc.d(20)),
-                horizontalAlignment = Alignment.End,
-            ) {
-                ConsejoBisa(e, juego)
-                Spacer(Modifier.height(esc.d(8)))
-                BotonBisa()
-            }
-        }
+        // Todo lo de abajo va en una barra flotante que se esconde sola: así luce el juego.
+        if (e.sesion == null) BarraFlotante(e, juego, Modifier.align(Alignment.BottomCenter))
         if (e.sesion != null) {
             Etiqueta(
                 "Jugando ahora", Coral, 13f,
@@ -267,6 +263,82 @@ private fun AccionRapida(tecla: String, texto: String, accion: () -> Unit) {
     }
 }
 
+/**
+ * La barra flotante del inicio: jugar, ficha y opciones del juego, buscar, apps, turbo, menú y Bisa, en una sola
+ * píldora. Se esconde sola a los 5 segundos (o queda fija, en Menú › Inicio) y vuelve deslizando hacia arriba desde
+ * el borde de abajo, tocando la pantalla o con B. Escondida, solo queda una manija discreta.
+ */
+@Composable
+fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val visible = e.barra || e.barraFija
+    Box(modifier.fillMaxWidth().padding(bottom = esc.d(14), start = esc.d(16), end = esc.d(16)), contentAlignment = Alignment.BottomCenter) {
+        androidx.compose.animation.AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(tween(240)) + slideInVertically(androidx.compose.animation.core.spring(dampingRatio = 0.75f, stiffness = 420f)) { it / 2 },
+            exit = fadeOut(tween(420)) + androidx.compose.animation.slideOutVertically(tween(420)) { it / 3 },
+        ) {
+            Column(horizontalAlignment = Alignment.End) {
+                if (juego != null && !esc.angosta) {
+                    ConsejoBisa(e, juego)
+                    Spacer(Modifier.height(esc.d(8)))
+                }
+                Row(
+                    Modifier.shadow(esc.d(14), RoundedCornerShape(50)).clip(RoundedCornerShape(50))
+                        .background(p.fondo2.copy(alpha = 0.9f)).border(esc.d(1), Color.White.copy(alpha = 0.08f), RoundedCornerShape(50))
+                        .padding(horizontal = esc.d(6), vertical = esc.d(6)),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(esc.d(4)),
+                ) {
+                    if (juego != null) {
+                        BotonJugar()
+                        AccionRapida("X", "Ficha") { Diptico.abrirFicha() }
+                        if (!esc.angosta) AccionRapida("Y", "Opciones") { Diptico.abrirRapido() }
+                        Box(Modifier.padding(horizontal = esc.d(4)).size(esc.d(1), esc.d(26)).background(p.linea))
+                    }
+                    IconoBarra(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
+                    IconoBarra(Icono.APPS, "Apps") { Diptico.abrirApps() }
+                    // Turbo: tocar libera memoria ahora; mantener lo enciende o apaga al jugar.
+                    IconoBarra(Icono.CHISPA, "Turbo", if (e.turbo) Color(0xFFFF5252) else null, alMantener = { Diptico.alternarTurbo() }) { Diptico.turboAhora() }
+                    IconoBarra(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets") { Diptico.alternarInicio() }
+                    IconoBarra(Icono.MENU, "Menú") { Diptico.abrirMenu() }
+                    Box(
+                        Modifier.size(esc.d(40)).clip(CircleShape).background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Uva, Coral)))
+                            .clickable { Diptico.abrirAsistente() },
+                        contentAlignment = Alignment.Center,
+                    ) { cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(30).value) }
+                }
+            }
+        }
+        // Escondida: una manija discreta que recuerda que se puede sacar.
+        androidx.compose.animation.AnimatedVisibility(
+            visible = !visible,
+            enter = fadeIn(tween(600, delayMillis = 300)), exit = fadeOut(tween(150)),
+        ) {
+            Box(
+                Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.mostrarBarra() }.padding(horizontal = esc.d(18), vertical = esc.d(8)),
+            ) { Box(Modifier.size(esc.d(44), esc.d(5)).clip(RoundedCornerShape(50)).background(p.tinta.copy(alpha = 0.28f))) }
+        }
+    }
+}
+
+/** Un acceso redondo de la barra flotante, con su nombre chiquito debajo. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun IconoBarra(icono: Icono, texto: String, color: Color? = null, alMantener: (() -> Unit)? = null, accion: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(
+        Modifier.clip(RoundedCornerShape(esc.d(14))).combinedClickable(onLongClick = alMantener) { accion() }
+            .padding(horizontal = esc.d(8), vertical = esc.d(2)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        IconoDiptico(icono, color ?: p.tinta, 19f, acento = color ?: Coral)
+        Texto(texto, 9.5f, color = color ?: p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
+    }
+}
+
 /** Una burbuja de diálogo de Bisa con algo útil sobre el juego elegido. Al tocarla, Bisa responde. */
 @Composable
 private fun ConsejoBisa(e: Estado, j: Juego) {
@@ -328,7 +400,7 @@ fun InfoJuego(e: Estado, j: Juego, tamTitulo: Float, conPaso: Boolean = true) {
                 }
             }
         }
-        if (conPaso) {
+        if (conPaso && !datos?.paso.isNullOrBlank()) {
             Spacer(Modifier.height(esc.d(2)))
             Row {
                 Box(Modifier.padding(top = esc.d(6)).size(esc.d(9)).clip(CircleShape).background(Coral))

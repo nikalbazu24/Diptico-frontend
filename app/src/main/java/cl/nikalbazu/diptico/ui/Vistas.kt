@@ -344,7 +344,10 @@ fun VentanaJuego(e: Estado) {
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
                 opciones.take(n).forEachIndexed { i, o -> Mosaico(o, i == e.indice, Modifier.weight(1f)) { Diptico.elegirIndice(i) } }
             }
-            Spacer(Modifier.height(esc.d(10)))
+            // Qué hace lo que está elegido, en palabras simples (siempre el mismo alto: así nada salta).
+            Box(Modifier.fillMaxWidth().height(esc.d(38)).padding(top = esc.d(6), start = esc.d(4), end = esc.d(4))) {
+                opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 12f, lineas = 2) }
+            }
             Etiqueta("Ajustes de este juego", p.tenue, 11f)
             Spacer(Modifier.height(esc.d(6)))
             // Lista que se desliza sola siguiendo la selección (y con el dedo).

@@ -205,7 +205,6 @@ private fun FilaIA(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Uni
 fun selloIA(id: String): Pair<Color, String> = when (id) {
     "gemini" -> Color(0xFF4F7DF3) to "G"
     "openai" -> Color(0xFF10A37F) to "C"
-    "claude" -> Color(0xFFD97757) to "A"
     "local" -> Color(0xFF2A2440) to ""
     else -> Uva to "✦"
 }
@@ -282,11 +281,6 @@ fun ExplicaIA(id: String) {
             "ChatGPT · OpenAI", "Muy lista y conocida. Puede buscar en internet.",
             "Se paga por uso con saldo en tu cuenta de OpenAI (la suscripción ChatGPT Plus no sirve para esto).",
             "Entra a platform.openai.com/api-keys, crea una clave, agrega saldo en Billing y pégala aquí.",
-        )
-        "claude" -> listOf(
-            "Claude · Anthropic", "Muy lista para conversar y ayudarte paso a paso. Puede buscar en internet.",
-            "Se paga por uso con saldo en tu cuenta de Anthropic.",
-            "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí.",
         )
         else -> listOf(
             "Automático", "Díptico elige solo: primero la IA de tu consola y, si no está, la primera IA de la nube con clave.",

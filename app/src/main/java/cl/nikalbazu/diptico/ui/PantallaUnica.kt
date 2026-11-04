@@ -103,6 +103,17 @@ private fun PantallaUnicaContenido(e: Estado) {
         }
         return
     }
+    if (e.vistaConsolas == "discos" && e.enSistemas) {
+        // Con una pantalla: la consola en grande a la izquierda y la caja de discos a la derecha.
+        Box(Modifier.fillMaxSize().background(p.fondo)) {
+            Box(Modifier.fillMaxSize().difuminar(e)) {
+                VistaSistema(e, completa = false)
+                DiscosConsolas(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.55f).fillMaxHeight(0.82f).clipToBounds())
+            }
+            Paneles(e, conAyuda = true)
+        }
+        return
+    }
     if (e.vistaConsolas == "sistemas" && e.enSistemas) {
         Box(Modifier.fillMaxSize().background(p.fondo)) {
             Box(Modifier.fillMaxSize().difuminar(e)) {

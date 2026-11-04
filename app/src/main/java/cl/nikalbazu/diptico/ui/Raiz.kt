@@ -106,22 +106,34 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
 }
 
 /**
- * Detecta un deslizamiento hacia abajo que empieza en el borde de arriba (sin quitarle los toques a lo de abajo):
- * desde la mitad izquierda abre las notificaciones; desde la derecha, los ajustes rápidos.
+ * Gestos de los bordes (sin quitarle los toques a lo de abajo): hacia abajo desde el borde de arriba, por la
+ * izquierda las notificaciones y por la derecha los ajustes rápidos; hacia arriba desde el borde de abajo, la
+ * barra flotante del inicio.
  */
 private fun Modifier.cortinaDesdeArriba(puede: () -> Boolean): Modifier = this.then(
     Modifier.pointerInput(Unit) {
         awaitEachGesture {
             val inicio = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            if (!puede() || inicio.position.y > 44.dp.toPx()) return@awaitEachGesture
+            if (!puede()) return@awaitEachGesture
+            val borde = 44.dp.toPx()
+            val arriba = inicio.position.y <= borde
+            // Desde el borde de abajo, hacia arriba: vuelve la barra flotante del inicio.
+            val abajo = inicio.position.y >= size.height - borde
+            if (!arriba && !abajo) return@awaitEachGesture
             val izquierda = inicio.position.x < size.width / 2f
             while (true) {
                 val ev = awaitPointerEvent(PointerEventPass.Initial)
                 val c = ev.changes.firstOrNull { it.id == inicio.id } ?: break
                 if (!c.pressed) break
-                if (c.position.y - inicio.position.y > 56.dp.toPx()) {
+                val dy = c.position.y - inicio.position.y
+                if (arriba && dy > 56.dp.toPx()) {
                     c.consume()
                     cl.nikalbazu.diptico.estado.Diptico.abrirCentro(if (izquierda) "avisos" else "ajustes")
+                    break
+                }
+                if (abajo && dy < -56.dp.toPx()) {
+                    c.consume()
+                    cl.nikalbazu.diptico.estado.Diptico.mostrarBarra()
                     break
                 }
             }

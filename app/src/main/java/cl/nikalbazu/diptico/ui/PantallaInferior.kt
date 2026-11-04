@@ -118,14 +118,18 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             Box(Modifier.padding(vertical = esc.d(14)).width(esc.d(1)).fillMaxHeight().background(p.linea))
                             VistaJuegos(e, Modifier.weight(1f).fillMaxHeight(), escalaEstante * 0.9f)
                         }
-                        "sistemas", "carpetas" -> AnimatedContent(
+                        "sistemas", "carpetas", "discos" -> AnimatedContent(
                             targetState = e.enSistemas,
                             transitionSpec = {
                                 (fadeIn(tween(260)) + scaleIn(tween(320), initialScale = if (targetState) 1.06f else 0.94f)) togetherWith fadeOut(tween(160))
                             },
                             label = "sistemas", modifier = Modifier.fillMaxWidth().weight(1f),
                         ) { eligiendo ->
-                            if (eligiendo) { if (e.vistaConsolas == "carpetas") CarpetasConsolas(e, Modifier.fillMaxSize()) else SistemasCarrusel(e, Modifier.fillMaxSize()) }
+                            if (eligiendo) when (e.vistaConsolas) {
+                                "carpetas" -> CarpetasConsolas(e, Modifier.fillMaxSize())
+                                "discos" -> DiscosConsolas(e, Modifier.fillMaxSize())
+                                else -> SistemasCarrusel(e, Modifier.fillMaxSize())
+                            }
                             else Column(Modifier.fillMaxSize()) {
                                 CabeceraSistema(e)
                                 VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
@@ -137,7 +141,6 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
                         }
                     }
-                    Dock(e)
                 }
             }
         }
@@ -226,6 +229,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
             "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
             "carrusel" -> CarruselJuegos(e, Modifier.fillMaxSize())
+            "abanico" -> AbanicoJuegos(e, Modifier.fillMaxSize())
             "lomos" -> VistaLomos(e, Modifier.fillMaxSize())
             // El estante y su información quedan centrados en el espacio disponible.
             else -> Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
@@ -391,76 +395,6 @@ private fun Info(e: Estado) {
             Detalle("${c?.nombreLargo ?: ""} · ${e.indiceSel + 1} de ${e.visibles.size}", 12.5f, lineas = 1)
         }
         if (!esc.angosta) Pista("L1 R1", "Consola")
-    }
-}
-
-/**
- * La barra de accesos: una cápsula flotante con Bisa al centro, en grande y un poco más arriba.
- * A la izquierda lo de tus juegos (seguir, buscar, cambiar la vista); a la derecha las apps, el inicio y el menú.
- * Cada acceso muestra el botón del control que hace lo mismo.
- */
-@Composable
-private fun Dock(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Box(Modifier.fillMaxWidth().padding(start = esc.d(10), end = esc.d(10), top = esc.d(12), bottom = esc.d(8))) {
-        Row(
-            Modifier.fillMaxWidth().height(esc.d(58)).shadow(esc.d(10), RoundedCornerShape(esc.d(22)))
-                .clip(RoundedCornerShape(esc.d(22)))
-                .background(Brush.verticalGradient(listOf(p.superficie, androidx.compose.ui.graphics.lerp(p.superficie, p.fondo2, 0.5f))))
-                .border(esc.d(1), Color.White.copy(alpha = 0.07f), RoundedCornerShape(esc.d(22)))
-                .padding(horizontal = esc.d(4)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Dos mitades iguales: Bisa queda siempre justo al centro, aunque a un lado haya más accesos.
-            Row(Modifier.weight(1f).fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
-                ItemDock(Icono.CONTINUAR, "Continuar", Coral) { Diptico.continuar() }
-                ItemDock(Icono.BUSCAR, "Buscar", tecla = "L3") { Diptico.abrirBuscar() }
-                ItemDock(Icono.VISTA, Diptico.nombreVista(e.vista), tecla = "R3") { Diptico.cambiarVista() }
-            }
-            Spacer(Modifier.width(esc.d(66)))
-            Row(Modifier.weight(1f).fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
-                // Turbo: tocar libera memoria ahora; mantener enciende o apaga el turbo al jugar.
-                ItemDock(Icono.CHISPA, "Turbo", if (e.turbo) Color(0xFFFF5252) else p.tenue, alMantener = { Diptico.alternarTurbo() }) { Diptico.turboAhora() }
-                ItemDock(Icono.APPS, "Apps", Cielo) { Diptico.abrirApps() }
-                ItemDock(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets", tecla = "Sel") { Diptico.alternarInicio() }
-                ItemDock(Icono.MENU, "Menú", tecla = "Start") { Diptico.abrirMenu() }
-            }
-        }
-        // Bisa: un círculo que sobresale de la barra.
-        Column(Modifier.align(Alignment.TopCenter).offset(y = esc.d(-12)), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier.size(esc.d(52)).shadow(esc.d(8), CircleShape).clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Uva, Coral)))
-                    .border(esc.d(3), p.fondo2, CircleShape)
-                    .clickable { Diptico.abrirAsistente() },
-                contentAlignment = Alignment.Center,
-            ) { cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(36).value) }
-            Texto("Bisa", 10.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
-        }
-    }
-}
-
-@Composable
-private fun RowScope.ItemDock(icono: Icono, texto: String, color: Color = LocalPaleta.current.tinta, tecla: String? = null, alMantener: (() -> Unit)? = null, accion: () -> Unit) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Column(
-        Modifier.weight(1f).fillMaxHeight().padding(vertical = esc.d(4)).clip(RoundedCornerShape(esc.d(14)))
-            .combinedClickable(onLongClick = alMantener) { accion() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Box {
-            IconoDiptico(icono, color, 21f, acento = if (color == p.tinta) Coral else color)
-            // El botón del control que hace lo mismo, chiquito en la esquina.
-            if (tecla != null && !esc.angosta) Box(
-                Modifier.align(Alignment.TopEnd).offset(x = esc.d(14), y = esc.d(-4)).clip(RoundedCornerShape(50)).background(p.fondo2)
-                    .padding(horizontal = esc.d(3)),
-            ) { Texto(tecla, 7.5f, color = p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, traducir = false) }
-        }
-        Spacer(Modifier.height(esc.d(3)))
-        Texto(texto, 10.5f, color = if (color == p.tinta) p.tenue else color, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
     }
 }
 
@@ -821,7 +755,6 @@ private fun PanelClave(e: Estado) {
             verticalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
             val (icono, titulo, ayuda, ejemplo) = when (e.textoPara) {
-                "ia_clave" -> listOf(Icono.CLAVE, "Clave de Claude", "Entra a console.anthropic.com, ve a API Keys, crea una clave y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
                 "nombre" -> listOf(Icono.TEXTO, "¿Cómo te llamas?", "Bisa te saluda por tu nombre cuando prendes la consola.", "Ej: Nico")
                 "ia_clave_gemini" -> listOf(Icono.CLAVE, "Clave de Gemini (gratis)", "Entra a aistudio.google.com/apikey con tu cuenta de Google, toca \"Create API key\" y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
                 "ia_clave_openai" -> listOf(Icono.CLAVE, "Clave de ChatGPT", "Entra a platform.openai.com/api-keys, crea una clave y pégala aquí. Usa el saldo de tu cuenta de OpenAI. Solo se guarda en tu consola.", "Pega tu clave")
@@ -876,7 +809,7 @@ private fun PanelClave(e: Estado) {
             CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas") 130f else 60f)
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
-                val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; "ia_clave_gemini" -> e.claveGemini; "ia_clave_openai" -> e.claveOpenAI; else -> if (e.textoPara.startsWith("ras_")) Diptico.almacen.texto(e.textoPara) else e.claveIa }).isNotBlank()
+                val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; "ia_clave_gemini" -> e.claveGemini; "ia_clave_openai" -> e.claveOpenAI; else -> if (e.textoPara.startsWith("ras_")) Diptico.almacen.texto(e.textoPara) else "" }).isNotBlank()
                 BotonGrande(
                     when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; e.textoPara == "asistente" -> "Preguntar"; else -> "Guardar" },
                     Uva, SobreUva, Modifier.weight(1.4f),

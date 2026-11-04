@@ -314,7 +314,7 @@ object Teclas {
                     esB(code) -> { Diptico.salirWidgets(); return true }
                     code in cruceta -> return true
                 }
-            } else if (abajo && ((e.unaPantalla && code in cruceta) || (code == KeyEvent.KEYCODE_DPAD_UP && e.vistaConsolas !in setOf("lado", "rueda", "sistemas", "carpetas") &&
+            } else if (abajo && ((e.unaPantalla && code in cruceta) || (code == KeyEvent.KEYCODE_DPAD_UP && e.vistaConsolas !in setOf("lado", "rueda", "sistemas", "carpetas", "discos") &&
                     ((e.vista != "cuadricula" && e.vista != "lista") || e.indiceSel < columnasEstante(e))))
             ) {
                 if (Diptico.entrarWidgets()) return true
@@ -652,14 +652,8 @@ object Teclas {
                 KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(1)
                 KeyEvent.KEYCODE_DPAD_LEFT -> if (e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(false)
                 KeyEvent.KEYCODE_DPAD_RIGHT -> if (!e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(true)
-                KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) {
-                    val s = Seccion.values()
-                    Diptico.elegirSeccion(s[(e.seccion.ordinal - 1 + s.size) % s.size])
-                }
-                KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) {
-                    val s = Seccion.values()
-                    Diptico.elegirSeccion(s[(e.seccion.ordinal + 1) % s.size])
-                }
+                KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.saltarSeccion(-1, envolver = true)
+                KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.saltarSeccion(1, envolver = true)
                 else -> return esA(code) || esB(code) || code in botonesControl
             }
             return true

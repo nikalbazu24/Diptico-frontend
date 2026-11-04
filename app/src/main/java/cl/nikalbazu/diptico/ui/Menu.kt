@@ -69,6 +69,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.SOBREMESA -> Color(0xFF26A69A)
     Seccion.CONTROLES -> Color(0xFFFFA726)
     Seccion.RENDIMIENTO -> Color(0xFFFF5252)
+    Seccion.MAS -> Color(0xFF9AA4B8)
 }
 
 private fun tintaSobre(c: Color) = if (c.luminance() > 0.55f) Tinta else Color.White
@@ -101,12 +102,14 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
 private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val secciones = remember { Diptico.seccionesMenu() }
+    val secciones = remember(e.menuSimple) { Diptico.seccionesMenu(e.menuSimple) }
     // Secciones con el título de su grupo encima (Empieza aquí, Cómo se ve, Tus juegos, Asistente, Consola).
     val filas = remember(secciones) { secciones.flatMap { s -> if (s.grupo.isNotEmpty()) listOf<Any>(s.grupo, s) else listOf<Any>(s) } }
     val lista = rememberLazyListState()
     LaunchedEffect(e.seccion) {
-        val i = filas.indexOf(e.seccion)
+        // Una sección avanzada abierta desde «Más ajustes» marca «Más ajustes».
+        val i = filas.indexOf(e.seccion).takeIf { it >= 0 } ?: filas.indexOf(Seccion.MAS)
+        if (i < 0) return@LaunchedEffect
         // Solo se desplaza si la sección elegida quedó fuera de la vista (así no salta en cada paso).
         if (i > 0 && filas[i - 1] is String) lista.mostrar(i - 1)
         lista.mostrar(i)
@@ -141,7 +144,7 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
                     return@itemsIndexed
                 }
                 val s = f as Seccion
-                val activa = s == e.seccion
+                val activa = s == e.seccion || (s == Seccion.MAS && e.seccion !in secciones)
                 val color = colorSeccion(s)
                 val enfoque = activa && !e.enOpciones
                 val fondo by animateColorAsState(
