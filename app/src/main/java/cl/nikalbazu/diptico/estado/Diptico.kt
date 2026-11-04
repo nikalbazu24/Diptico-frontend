@@ -2852,7 +2852,7 @@ object Diptico {
             else -> "Elegir"
         }
         Seccion.INICIO -> when {
-            t.startsWith("Bienvenida") || t.startsWith("Continuación") || t == "Tu nombre" -> "Al encender"
+            t == "Al abrir Díptico" || t.startsWith("Bienvenida") || t.startsWith("Continuación") || t == "Tu nombre" -> "Al encender"
             t.startsWith("Preguntar dónde") -> "Al terminar de jugar"
             t.startsWith("Imagen grande") -> "Pantalla principal"
             t == "Estilo del inicio" || t.contains("widget", true) && !t.startsWith("Permiso") -> "Pantalla principal"
