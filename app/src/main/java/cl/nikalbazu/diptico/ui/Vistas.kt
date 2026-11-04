@@ -345,7 +345,7 @@ fun VentanaJuego(e: Estado) {
                 opciones.take(n).forEachIndexed { i, o -> Mosaico(o, i == e.indice, Modifier.weight(1f)) { Diptico.elegirIndice(i) } }
             }
             // Qué hace lo que está elegido, en palabras simples (siempre el mismo alto: así nada salta).
-            Box(Modifier.fillMaxWidth().height(esc.d(38)).padding(top = esc.d(6), start = esc.d(4), end = esc.d(4))) {
+            Box(Modifier.fillMaxWidth().height(esc.d(50)).padding(top = esc.d(6), start = esc.d(4), end = esc.d(4))) {
                 opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 12f, lineas = 2) }
             }
             Etiqueta("Ajustes de este juego", p.tenue, 11f)

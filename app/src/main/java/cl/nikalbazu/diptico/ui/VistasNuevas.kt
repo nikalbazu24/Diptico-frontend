@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -78,8 +79,8 @@ fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
                 Detalle(if (e.escaneando) "Buscando tus juegos…" else "Aquí aparecerán tus consolas", 15f, modifier = Modifier.align(Alignment.Center))
                 return@BoxWithConstraints
             }
-            // La funda cabe con su disco asomado por arriba (el disco sube hasta un 40 % de la funda).
-            val funda = minOf(maxHeight.value / 1.5f, maxWidth.value * 0.34f, 200f * esc.factor)
+            // La funda cabe con su disco asomado por arriba (el disco sube hasta la mitad de la funda).
+            val funda = minOf(maxHeight.value / 1.62f, maxWidth.value * 0.34f, 200f * esc.factor)
             val desde = (kotlin.math.floor(pos).toInt() - 4).coerceAtLeast(0)
             val hasta = (kotlin.math.ceil(pos).toInt() + 4).coerceAtMost(ids.size - 1)
             for (k in desde..hasta) {
@@ -89,7 +90,7 @@ fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
                     val cerca = off.coerceIn(-1f, 1f)
                     val frente = k == sel
                     Box(
-                        Modifier.padding(bottom = (funda * 0.06f).dp).size((funda * 1.42f).dp, (funda * 1.42f).dp)
+                        Modifier.padding(bottom = (funda * 0.06f).dp).size((funda * 1.55f).dp, (funda * 1.55f).dp)
                             .zIndex(10f - abs(off))
                             .graphicsLayer {
                                 // Al centro la del frente; las otras se juntan a los lados, como fundas en una caja.
@@ -129,20 +130,22 @@ private fun DiscoConsola(e: Estado, id: String, funda: Float, fuera: Float) {
         t.animateFloat(0f, 360f, infiniteRepeatable(tween(7000, easing = LinearEasing), RepeatMode.Restart), label = "giro").value
     } else 0f
     val lado = funda.dp
-    Box(Modifier.size(lado, (funda * 1.42f).dp), contentAlignment = Alignment.BottomCenter) {
+    Box(Modifier.size(lado, (funda * 1.55f).dp), contentAlignment = Alignment.BottomCenter) {
         // El disco, detrás de la funda: sube al salir.
         Box(
             Modifier.size(lado * 0.94f)
-                .graphicsLayer { translationY = -(funda * (0.06f + 0.36f * sale)) * density; rotationZ = giro },
+                .graphicsLayer { translationY = -(funda * (0.06f + 0.5f * sale)) * density; rotationZ = giro },
         ) {
             Canvas(Modifier.fillMaxSize()) {
                 val r = size.minDimension / 2f
-                drawCircle(Color(0xFF111114), r)
+                // Vinilo con un borde que capta la luz: así se lee aunque el fondo sea oscuro.
+                drawCircle(Brush.radialGradient(listOf(Color(0xFF2B2A33), Color(0xFF15151A)), radius = r), r)
+                drawCircle(lerp(color, Color.White, 0.35f).copy(alpha = 0.55f), r - 1.5f, style = Stroke(3f))
                 // Los surcos.
-                for (i in 1..7) drawCircle(Color.White.copy(alpha = 0.05f), r * (0.42f + i * 0.075f), style = Stroke(1.2f))
-                // Un brillo que cruza el disco.
-                drawArc(Color.White.copy(alpha = 0.10f), -60f, 40f, false, topLeft = Offset(r * 0.12f, r * 0.12f),
-                    size = androidx.compose.ui.geometry.Size(r * 1.76f, r * 1.76f), style = Stroke(r * 0.18f))
+                for (i in 1..8) drawCircle(Color.White.copy(alpha = 0.07f), r * (0.40f + i * 0.068f), style = Stroke(1.4f))
+                // Dos brillos que cruzan el disco (giran con él).
+                for (inicio in listOf(-70f, 110f)) drawArc(Color.White.copy(alpha = 0.13f), inicio, 36f, false, topLeft = Offset(r * 0.14f, r * 0.14f),
+                    size = androidx.compose.ui.geometry.Size(r * 1.72f, r * 1.72f), style = Stroke(r * 0.22f))
                 drawCircle(Brush.radialGradient(listOf(lerp(color, Color.White, 0.15f), color)), r * 0.36f)
                 drawCircle(Color(0xFF111114), r * 0.04f)
             }
@@ -190,7 +193,7 @@ fun AbanicoJuegos(e: Estado, modifier: Modifier = Modifier) {
     val pos by animateFloatAsState(sel.toFloat(), tween(320, easing = FastOutSlowInEasing), label = "abanico")
     Column(modifier) {
         BoxWithConstraints(
-            Modifier.fillMaxWidth().weight(1f).pointerInput(lista.size) {
+            Modifier.fillMaxWidth().weight(1f).clipToBounds().pointerInput(lista.size) {
                 var acumulado = 0f
                 detectHorizontalDragGestures(onDragEnd = { acumulado = 0f }) { cambio, d ->
                     cambio.consume()

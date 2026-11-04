@@ -286,7 +286,7 @@ fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier) {
                 }
                 Row(
                     Modifier.shadow(esc.d(14), RoundedCornerShape(50)).clip(RoundedCornerShape(50))
-                        .background(p.fondo2.copy(alpha = 0.9f)).border(esc.d(1), Color.White.copy(alpha = 0.08f), RoundedCornerShape(50))
+                        .background(p.fondo2.copy(alpha = 0.97f)).border(esc.d(1), Color.White.copy(alpha = 0.08f), RoundedCornerShape(50))
                         .padding(horizontal = esc.d(6), vertical = esc.d(6)),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(esc.d(4)),
