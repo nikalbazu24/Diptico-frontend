@@ -31,6 +31,8 @@ class LupaServicio : Service() {
     companion object {
         private const val CANAL = "lupa"
         private const val ID = 7201
+        private const val MAX_ANCHO_CAPTURA = 1280
+        private const val MAX_ALTO_CAPTURA = 720
 
         @Volatile var activa = false
             private set
@@ -95,7 +97,10 @@ class LupaServicio : Service() {
                 override fun onStop() { Handler(Looper.getMainLooper()).post { stopSelf() } }
             }, Handler(Looper.getMainLooper()))
             val t = tamanoArriba(this)
-            ancho = t.x; alto = t.y
+            // Genshin y otros juegos exigentes comparten la GPU con la lupa: limitar la copia a 720p.
+            val escala = minOf(1f, MAX_ANCHO_CAPTURA.toFloat() / t.x, MAX_ALTO_CAPTURA.toFloat() / t.y)
+            ancho = (t.x * escala).toInt().coerceAtLeast(1)
+            alto = (t.y * escala).toInt().coerceAtLeast(1)
             val dpi = resources.displayMetrics.densityDpi
             virtual = p.createVirtualDisplay(
                 "Diptico-lupa", ancho, alto, dpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, superficie, null, null,
