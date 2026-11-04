@@ -20,7 +20,7 @@ class PermisoLupaActivity : Activity() {
         try {
             @Suppress("DEPRECATION") startActivityForResult(pedido, 51)
         } catch (_: Exception) {
-            Diptico.avisar("Este equipo no permite la lupa")
+            Diptico.lupaRechazada(intent.getBooleanExtra("luegoJugar", false))
             finish()
         }
     }
@@ -32,7 +32,7 @@ class PermisoLupaActivity : Activity() {
             LupaServicio.iniciar(this, resultCode, data)
             Diptico.lupaPermitida(intent.getBooleanExtra("luegoJugar", false))
         } else {
-            Diptico.avisar("Sin permiso, la lupa no puede ver la pantalla de arriba")
+            Diptico.lupaRechazada(intent.getBooleanExtra("luegoJugar", false))
         }
         finish()
     }
