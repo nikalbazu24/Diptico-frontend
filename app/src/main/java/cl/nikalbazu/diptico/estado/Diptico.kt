@@ -1116,13 +1116,6 @@ object Diptico {
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 
-    /** Abre una página en el navegador. */
-    fun abrirWeb(url: String) {
-        try {
-            app.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
-        } catch (_: Exception) { avisar("No hay un navegador para abrir la página") }
-    }
-
     private val ARRANQUES = listOf("igual", "caratulas", "widgets", "consolas", "ultimo")
     fun nombreArranque(v: String) = when (v) {
         "caratulas" -> "Carátulas"; "widgets" -> "Widgets"; "consolas" -> "Tus consolas"; "ultimo" -> "Tu último juego"; else -> "Como lo dejaste"
