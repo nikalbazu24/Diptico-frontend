@@ -522,7 +522,7 @@ private fun ListaAvisos(e: Estado, avisos: List<cl.nikalbazu.diptico.audio.Aviso
         }
         Spacer(Modifier.height(esc.d(6)))
         if (!cl.nikalbazu.diptico.audio.Medios.tienePermiso(androidx.compose.ui.platform.LocalContext.current)) {
-            Detalle("Para ver tus notificaciones aquí, activa el permiso en Menú › Consola.", 14f)
+            Detalle("Para ver tus notificaciones aquí, activa el permiso en Menú › Android.", 14f)
             return
         }
         if (avisos.isEmpty()) {

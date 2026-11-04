@@ -1,5 +1,5 @@
  (carpeta)	 (folder)	 (pasta)	（文件夹）	（フォルダ）
- y liberar {0}	 and free up {0}	 e liberar {0}	，释放 {0}	、{0} を解放
+ y se liberarán {0}	 and free up {0}	 e liberar {0}	，释放 {0}	、{0} を解放
 1.0 beta.7	1.0 beta.7	1.0 beta.7	1.0 beta.7	1.0 beta.7
 A · {0}	A · {0}	A · {0}	A · {0}	A · {0}
 B · {0}	B · {0}	B · {0}	B · {0}	B · {0}
@@ -87,3 +87,7 @@ tu respaldo	your backup	seu backup	你的备份	バックアップ
 Última confirmación	Final confirmation	Última confirmação	最后确认	最終確認
 Último: {0}	Last: {0}	Último: {0}	上次：{0}	前回：{0}
 …y {0} más	…and {0} more	…e mais {0}	…还有 {0} 个	…ほか {0} 件
+Para ver tus notificaciones aquí, activa el permiso en Menú › Android.	To see your notifications here, turn on the permission in Menu › Android.	Para ver suas notificações aqui, ative a permissão em Menu › Android.	要在这里查看通知，请在 菜单 › Android 中开启权限。	ここで通知を見るには、メニュー › Android で許可をオンにしてください。
+ayer	yesterday	ontem	昨天	昨日
+hoy	today	hoje	今天	今日
+nunca	never	nunca	从未	なし

@@ -98,7 +98,7 @@ def plantilla(partes):
     return t, k
 
 # Palabras sueltas en minúscula que sí se ven en pantalla (el filtro de abajo las confunde con identificadores).
-VISIBLES = {"jugadas", "partidas", "puntos", "jugado"}
+VISIBLES = {"jugadas", "partidas", "puntos", "jugado", "hoy", "ayer", "nunca"}
 
 def visible(t):
     s = re.sub(r"\{\d+\}", "", t).strip()

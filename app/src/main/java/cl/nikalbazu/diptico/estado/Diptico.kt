@@ -1027,7 +1027,7 @@ object Diptico {
 
     private fun opcionesRespaldo(e: Estado): List<Opcion> {
         val conDrive = e.respaldoNombre.isNotBlank()
-        val cuando = if (e.respaldoUltimo == 0L) "nunca" else android.text.format.DateUtils.getRelativeTimeSpanString(e.respaldoUltimo).toString()
+        val cuando = cuandoFue(e.respaldoUltimo)
         return listOfNotNull(
             Opcion(
                 "Respaldo en Google Drive", if (conDrive) "Cada día ✓" else "Elegir dónde", Icono.DESCARGA,
@@ -1041,6 +1041,20 @@ object Diptico {
                 ayuda = "Elige un respaldo de Díptico (de Drive o de donde lo tengas) y recupera todo. Sirve para pasar tus cosas a otra consola. Reemplaza tus ajustes actuales.",
             ) { pedirTraerRespaldo?.invoke() ?: avisar("No pude abrir el selector de archivos") },
         )
+    }
+
+    /** "hoy 14:05", "ayer 09:30" o "3 nov" (en el idioma de Díptico). */
+    private fun cuandoFue(t: Long): String {
+        if (t <= 0L) return Idioma.t("nunca")
+        val c = java.util.Calendar.getInstance(); val hoy = c.get(java.util.Calendar.DAY_OF_YEAR) to c.get(java.util.Calendar.YEAR)
+        c.timeInMillis = t
+        val dia = c.get(java.util.Calendar.DAY_OF_YEAR) to c.get(java.util.Calendar.YEAR)
+        val hora = String.format(java.util.Locale.US, "%02d:%02d", c.get(java.util.Calendar.HOUR_OF_DAY), c.get(java.util.Calendar.MINUTE))
+        return when {
+            dia == hoy -> Idioma.t("hoy") + " " + hora
+            dia.second == hoy.second && dia.first == hoy.first - 1 -> Idioma.t("ayer") + " " + hora
+            else -> Idioma.fecha("dMMM", java.util.Date(t))
+        }
     }
 
     private fun elegirDondeRespaldar() {
@@ -2647,7 +2661,7 @@ object Diptico {
             val lista = withContext(Dispatchers.IO) { try { archivosDelJuego(j) } catch (_: Exception) { emptyList() } }
             if (lista.isEmpty()) { avisar("No encontré los archivos de ${j.titulo}"); return@launch }
             val total = lista.sumOf { it.bytes }
-            val espacio = if (total > 0) " y liberar ${tamanoBonito(total)}" else ""
+            val espacio = if (total > 0) " y se liberarán ${tamanoBonito(total)}" else ""
             mostrarDialogo(
                 Dialogo(
                     "desinstalar-1", "¿Desinstalar ${j.titulo}?",

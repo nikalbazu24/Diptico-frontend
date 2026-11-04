@@ -229,43 +229,55 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
 /** Con una sola pantalla y vista previa al lado, los valores se acortan para que el título no se corte. */
 private var conAyudaAngosta = false
 
-/** Una opción del menú: ícono, título, y a la derecha su valor o un interruptor. */
+/**
+ * Una opción del menú: ícono, título, y a la derecha su valor o un interruptor.
+ * El título nunca se corta: si la fila es angosta o el valor es largo, el valor pasa a una segunda línea
+ * debajo del título en vez de ir en la píldora de la derecha.
+ */
 @Composable
 fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val fondo by animateColorAsState(if (activa) p.superficie else p.superficie.copy(alpha = 0.45f), label = "fila")
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = esc.d(54)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
-            .then(if (activa) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(16))) else Modifier)
-            .clickable { alPulsar() }
-            .graphicsLayer { alpha = if (o.apagada) 0.5f else 1f }
-            .padding(horizontal = esc.d(12), vertical = esc.d(6)),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        o.icono?.let {
-            Box(Modifier.size(esc.d(34)).clip(CircleShape).background(color.copy(alpha = if (activa) 0.3f else 0.14f)), contentAlignment = Alignment.Center) {
-                IconoDiptico(it, p.tinta, 18f, acento = color)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val interruptor = esInterruptor(o)
+        val angosta = maxWidth < esc.d(400) || conAyudaAngosta
+        val valorAbajo = o.valor.isNotEmpty() && !interruptor && (o.valor.length + o.titulo.length > (if (angosta) 24 else 40))
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = esc.d(54)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
+                .then(if (activa) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(16))) else Modifier)
+                .clickable { alPulsar() }
+                .graphicsLayer { alpha = if (o.apagada) 0.5f else 1f }
+                .padding(horizontal = esc.d(12), vertical = esc.d(7)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            o.icono?.let {
+                Box(Modifier.size(esc.d(34)).clip(CircleShape).background(color.copy(alpha = if (activa) 0.3f else 0.14f)), contentAlignment = Alignment.Center) {
+                    IconoDiptico(it, p.tinta, 18f, acento = color)
+                }
+                Spacer(Modifier.width(esc.d(12)))
             }
-            Spacer(Modifier.width(esc.d(12)))
-        }
-        // El título nunca se corta: si es largo, usa dos líneas y una letra un poco más chica.
-        val largo = o.titulo.length > 20
-        Texto(o.titulo, if (largo) 14.5f else 15.5f, lineas = 2, interlineado = if (largo) 16.5f else 18f, modifier = Modifier.weight(1f))
-        Spacer(Modifier.width(esc.d(8)))
-        when {
-            esInterruptor(o) -> {
-                val si = o.valor == "Sí"
-                Box(
-                    Modifier.size(esc.d(46), esc.d(26)).clip(RoundedCornerShape(50)).background(if (si) color else p.linea),
-                    contentAlignment = if (si) Alignment.CenterEnd else Alignment.CenterStart,
-                ) { Box(Modifier.padding(esc.d(3)).size(esc.d(20)).clip(CircleShape).background(Color.White)) }
+            val largo = o.titulo.length > 22
+            Column(Modifier.weight(1f)) {
+                Texto(o.titulo, if (largo) 14.5f else 15.5f, lineas = 2, interlineado = if (largo) 16.5f else 18f)
+                if (valorAbajo) Texto(o.valor, 12.5f, color = if (activa) color else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
             }
-            o.valor.isNotEmpty() -> Box(
-                Modifier.clip(RoundedCornerShape(50)).background(if (activa) color.copy(alpha = 0.22f) else p.fondo2.copy(alpha = 0.6f))
-                    .padding(horizontal = esc.d(10), vertical = esc.d(4)),
-            ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = esc.d(if (conAyudaAngosta || largo) 104f else 160f))) }
-            else -> Texto("›", 20f, color = p.tenue)
+            Spacer(Modifier.width(esc.d(8)))
+            when {
+                interruptor -> {
+                    val si = o.valor == "Sí"
+                    Box(
+                        Modifier.size(esc.d(46), esc.d(26)).clip(RoundedCornerShape(50)).background(if (si) color else p.linea),
+                        contentAlignment = if (si) Alignment.CenterEnd else Alignment.CenterStart,
+                    ) { Box(Modifier.padding(esc.d(3)).size(esc.d(20)).clip(CircleShape).background(Color.White)) }
+                }
+                o.valor.isNotEmpty() && !valorAbajo -> Box(
+                    Modifier.clip(RoundedCornerShape(50)).background(if (activa) color.copy(alpha = 0.22f) else p.fondo2.copy(alpha = 0.6f))
+                        .padding(horizontal = esc.d(10), vertical = esc.d(4)),
+                ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = maxWidth * 0.36f)) }
+                valorAbajo -> Unit
+                else -> Texto("›", 20f, color = p.tenue)
+            }
         }
     }
 }
