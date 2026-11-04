@@ -241,7 +241,8 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
     val fondo by animateColorAsState(if (activa) p.superficie else p.superficie.copy(alpha = 0.45f), label = "fila")
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val interruptor = esInterruptor(o)
-        val angosta = maxWidth < esc.d(400) || conAyudaAngosta
+        val ancho = maxWidth
+        val angosta = ancho < esc.d(400) || conAyudaAngosta
         val valorAbajo = o.valor.isNotEmpty() && !interruptor && (o.valor.length + o.titulo.length > (if (angosta) 24 else 40))
         Row(
             Modifier.fillMaxWidth().heightIn(min = esc.d(54)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
@@ -274,7 +275,7 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
                 o.valor.isNotEmpty() && !valorAbajo -> Box(
                     Modifier.clip(RoundedCornerShape(50)).background(if (activa) color.copy(alpha = 0.22f) else p.fondo2.copy(alpha = 0.6f))
                         .padding(horizontal = esc.d(10), vertical = esc.d(4)),
-                ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = maxWidth * 0.36f)) }
+                ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = ancho * 0.36f)) }
                 valorAbajo -> Unit
                 else -> Texto("›", 20f, color = p.tenue)
             }
