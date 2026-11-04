@@ -24,7 +24,8 @@ object Pantallas {
         val dm = ctx.getSystemService(DisplayManager::class.java) ?: return null
         // La pantalla de abajo de la consola, nunca la tele (HDMI, USB-C, inalámbrica) si hay una conectada.
         val tele = Regex("hdmi|displayport|\\bdp\\b|external|externa|usb|\\btv\\b|wireless|cast|miracast", RegexOption.IGNORE_CASE)
-        val otras = dm.displays.filter { it.displayId != Display.DEFAULT_DISPLAY }
+        // La proyección de la lupa también aparece como pantalla, pero no es la pantalla física de abajo.
+        val otras = dm.displays.filter { it.displayId != Display.DEFAULT_DISPLAY && it.name != "Diptico-lupa" }
         // Solo se descarta por el nombre si hay más de una (por si la pantalla propia tuviera un nombre raro).
         val propias = if (otras.size >= 2) otras.filter { !tele.containsMatchIn(it.name ?: "") }.ifEmpty { otras.take(1) } else otras
         val presentacion = dm.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)
