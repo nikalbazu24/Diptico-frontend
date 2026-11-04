@@ -163,6 +163,13 @@ private val VISUALES: Map<String, Visual> = mapOf(
     "scummvm" to Visual("ScummVM", Medio.DISQUETE, 0xFF43A047, CAJA_PC),
     "3do" to Visual("3DO", Medio.CD, 0xFF9E9E9E, CAJA_CD),
     "steam" to Visual("Steam", Medio.APP, 0xFF1B2838, CAJA_APP),
+    // Fan games de RPG Maker XP/VX/VX Ace (Pokémon Essentials y otros), abiertos con Essentia.
+    // Cada subcarpeta con Game.ini es un juego; también sirven los accesos .essentia que crea Essentia.
+    "rpgmaker" to Visual(
+        "RPG Maker", Medio.DISQUETE, 0xFFE0452B, CAJA_PC, carpetasJuegos = true,
+        alias = listOf("fangames", "fan games", "fangame", "pokemonfangames", "fangamespokemon", "rpgmakerxp", "rpgmakervx", "rpgmakervxace", "rmxp", "essentia"),
+        bonito = "Fan games (RPG Maker)",
+    ),
     "ports" to Visual("Ports", Medio.APP, 0xFF2EC4A6, CAJA_APP, bonito = "Ports"),
     "androidgames" to Visual("Android", Medio.MOVIL, 0xFF3DDC84, CAJA_APP, bonito = "Juegos de Android"),
 )
@@ -190,13 +197,17 @@ private val ALIAS = mapOf(
 private val ORDEN = listOf(
     "switch2", "switch", "ps2", "gc", "wii", "wiiu", "psp", "psvita", "n3ds", "nds", "gba", "gbc", "gb", "snes", "sfc", "nes", "famicom",
     "n64", "psx", "ps3", "ps4", "xbox", "xbox360", "dreamcast", "saturn", "genesis", "megadrive", "mastersystem", "gamegear",
-    "segacd", "sega32x", "pcengine", "tg16", "neogeo", "arcade", "mame", "fbneo", "cps1", "cps2", "cps3", "dos", "scummvm",
+    "segacd", "sega32x", "pcengine", "tg16", "neogeo", "arcade", "mame", "fbneo", "cps1", "cps2", "cps3", "dos", "scummvm", "rpgmaker",
 )
 
 /** Todas las consolas que Díptico sabe abrir: las mismas que ES-DE para Android. */
 object Consolas {
     const val PORTS = "ports"
     const val ANDROID = "androidgames"
+    const val RPGMAKER = "rpgmaker"
+
+    /** Dónde descargar Essentia, el emulador de fan games de RPG Maker. */
+    const val URL_ESSENTIA = "https://github.com/Nikalbazu24/essentia/releases"
 
     /** Reglas de ES-DE: nombre del emulador -> "paquete/actividad" en orden de preferencia. */
     var reglas: Map<String, List<String>> = emptyMap()

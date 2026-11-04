@@ -260,6 +260,8 @@ object Lanzador {
                     return lanzarApp(ctx, pkg, juego.titulo, displayId)
                 }
                 op != null -> construir(ctx, op, juego, consola, rom, raiz)
+                consola.id == Consolas.RPGMAKER ->
+                    return "Para abrir ${juego.titulo} necesitas instalar Essentia. Descárgala desde github.com/Nikalbazu24/essentia"
                 consola.comandos.isEmpty() || juego.esCarpeta || juego.tipo in setOf("ps3", "ps4", "psvita") ->
                     return "Para abrir ${juego.titulo} necesitas instalar ${consola.sugerido}."
                 else -> {

@@ -1,0 +1,5 @@
+# Perfil de arranque de Díptico: le dice a Android qué código preparar de antemano
+# (todo lo de Díptico), para que abrir, recorrer el estante y los menús sea fluido desde la primera vez.
+# Las librerías de Compose traen sus propios perfiles; profileinstaller los aplica aunque el APK no venga de Play Store.
+HSPLcl/nikalbazu/diptico/**;->**(**)**
+Lcl/nikalbazu/diptico/**;

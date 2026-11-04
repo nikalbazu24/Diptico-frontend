@@ -122,6 +122,13 @@ object Biblioteca {
             val hayIndices = nombres.any { it.endsWith(".cue") || it.endsWith(".m3u") }
 
             for (f in hijos) {
+                // Fan games de RPG Maker: la carpeta es un juego solo si trae Game.ini (o Game.exe / mkxp.json).
+                if (f.esCarpeta && consola.id == Consolas.RPGMAKER) {
+                    val n = f.nombre.lowercase()
+                    if (n in CARPETAS_PORTADAS || n == "media" || n.startsWith(".")) continue
+                    rpgMaker(ctx, arbol, f, consola, portadas, artes)?.let { juegos += it }
+                    continue
+                }
                 if (f.esCarpeta) {
                     // Juegos en carpeta: PS3/Wii U/Xbox 360, o una carpeta con extensión ("Juego.ps3"), como en ES-DE.
                     val n = f.nombre.lowercase()
@@ -161,6 +168,48 @@ object Biblioteca {
         }
         return sinDuplicados(juegos).sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
     }
+
+    private val ARCHIVOS_RPGMAKER = setOf("game.ini", "game.exe", "mkxp.json")
+
+    /**
+     * Un fan game de RPG Maker en su carpeta: el título sale del Game.ini y, si no hay imagen propia,
+     * la pantalla de título del juego (Graphics/Titles) sirve de imagen grande.
+     */
+    private fun rpgMaker(ctx: Context, arbol: Uri, dir: Doc, consola: Consola, portadas: Map<String, Uri>, artes: Map<String, Uri>): Juego? {
+        val dentro = try { listar(ctx, arbol, dir.id) } catch (e: Exception) { return null }
+        if (dentro.none { !it.esCarpeta && it.nombre.lowercase() in ARCHIVOS_RPGMAKER }) return null
+        val ini = dentro.firstOrNull { !it.esCarpeta && it.nombre.equals("Game.ini", true) }
+        val titulo = ini?.let { tituloIni(ctx, DocumentsContract.buildDocumentUriUsingTree(arbol, it.id)) }
+        val n = dir.nombre.lowercase()
+        val pantallaTitulo = if (artes[n] != null) null else try {
+            dentro.firstOrNull { it.esCarpeta && it.nombre.equals("Graphics", true) }
+                ?.let { g -> listar(ctx, arbol, g.id).firstOrNull { it.esCarpeta && it.nombre.equals("Titles", true) } }
+                ?.let { t -> listar(ctx, arbol, t.id).firstOrNull { !it.esCarpeta && it.nombre.substringAfterLast('.', "").lowercase() in IMAGENES } }
+                ?.let { DocumentsContract.buildDocumentUriUsingTree(arbol, it.id) }
+        } catch (e: Exception) { null }
+        return Juego(
+            clave = consola.id + "/" + dir.nombre,
+            consolaId = consola.id,
+            titulo = titulo ?: limpiarTitulo(dir.nombre),
+            archivo = dir.nombre,
+            uri = DocumentsContract.buildDocumentUriUsingTree(arbol, dir.id),
+            docId = dir.id,
+            portada = portadas[n],
+            arte = artes[n] ?: pantallaTitulo,
+            esCarpeta = true,
+        )
+    }
+
+    /** Lee "Title=" del Game.ini de un juego de RPG Maker. */
+    private fun tituloIni(ctx: Context, uri: Uri): String? = try {
+        ctx.contentResolver.openInputStream(uri)?.use { s ->
+            val bytes = s.readBytes().let { if (it.size > 16_384) it.copyOf(16_384) else it }
+            // Los Game.ini suelen venir en UTF-8; los antiguos, en Windows-1252.
+            val texto = String(bytes, Charsets.UTF_8).let { if ('\uFFFD' in it) String(bytes, Charsets.ISO_8859_1) else it }
+            texto.lineSequence().map { it.trim() }.firstOrNull { it.startsWith("Title=", true) }
+                ?.substringAfter('=')?.trim()?.removePrefix("\uFEFF")?.takeIf { it.isNotEmpty() && it.length <= 80 }
+        }
+    } catch (e: Exception) { null }
 
     /** "Leyenda del Bosque (USA) [!]" -> "Leyenda del Bosque". */
     fun limpiarTitulo(base: String): String {

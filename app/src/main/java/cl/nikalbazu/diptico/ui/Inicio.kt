@@ -1508,10 +1508,31 @@ private fun WidgetAtajo(e: Estado, clave: String, al: Int) {
             Detalle("Juego no encontrado", 11f, modifier = Modifier.align(Alignment.Center).padding(esc.d(6)))
             return@Box
         }
-        ArteJuego(j, preferirArte = false, maxLado = 400, modifier = Modifier.fillMaxSize())
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.55f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
-        Column(Modifier.align(Alignment.BottomStart).padding(esc.d(8))) {
-            Texto(j.titulo, if (al >= 2) 13f else 11f, color = Color.White, lineas = 2, sombra = true, interlineado = if (al >= 2) 15f else 12.5f)
+        // Qué muestra (Diseño en los ajustes del widget): portada, imagen grande, logo o logo sobre la imagen grande.
+        val variante = LocalWidget.current?.variante ?: 0
+        when (variante) {
+            1 -> ArteJuego(j, preferirArte = true, maxLado = 640, modifier = Modifier.fillMaxSize())
+            2 -> ArteJuego(j, preferirArte = false, maxLado = 400, modifier = Modifier.fillMaxSize(), imagen = "logo")
+            3 -> {
+                ArteJuego(j, preferirArte = true, maxLado = 640, modifier = Modifier.fillMaxSize())
+                val logo = cl.nikalbazu.diptico.ui.rememberImagen(j.logo, 400)
+                if (logo != null) {
+                    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)))
+                    androidx.compose.foundation.Image(
+                        logo, contentDescription = null, contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                        modifier = Modifier.align(Alignment.Center).fillMaxSize(0.72f),
+                    )
+                }
+            }
+            else -> ArteJuego(j, preferirArte = false, maxLado = 400, modifier = Modifier.fillMaxSize())
+        }
+        // El nombre solo hace falta cuando no se ve el logo.
+        val conLogo = (variante == 2 || variante == 3) && j.logo != null
+        if (!conLogo) {
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.55f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
+            Column(Modifier.align(Alignment.BottomStart).padding(esc.d(8))) {
+                Texto(j.titulo, if (al >= 2) 13f else 11f, color = Color.White, lineas = 2, sombra = true, interlineado = if (al >= 2) 15f else 12.5f)
+            }
         }
         Box(
             Modifier.align(Alignment.TopEnd).padding(esc.d(6)).size(esc.d(24)).clip(CircleShape).background(Uva),

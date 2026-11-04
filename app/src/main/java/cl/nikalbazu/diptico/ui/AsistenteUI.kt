@@ -123,7 +123,7 @@ fun PanelAsistente(e: Estado) {
                     Column(Modifier.padding(vertical = esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
                         Texto("¡Hola! ¿En qué te ayudo?", 20f)
                         Detalle(
-                            if (Diptico.motorEfectivo(e) == "ninguno") "Para pensar necesito una IA: la de tu consola (gratis) o Gemini, ChatGPT o Claude. Elige Escribir y te muestro las opciones."
+                            if (Diptico.motorEfectivo(e) == "ninguno") "Para pensar necesito una IA: la de tu consola (gratis), Gemini o ChatGPT. Elige Escribir y te muestro las opciones."
                             else "Háblame o toca una pregunta de abajo. Conozco tus juegos y puedo buscar en internet.",
                             13.5f,
                         )

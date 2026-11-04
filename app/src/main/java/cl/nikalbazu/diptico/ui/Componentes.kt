@@ -325,7 +325,7 @@ private fun Campana() {
     val esc = LocalEscala.current
     val avisos by cl.nikalbazu.diptico.audio.Avisos.lista.collectAsState()
     Box(
-        Modifier.padding(end = esc.d(8)).size(esc.d(30)).clip(CircleShape).clickable { Diptico.abrirCentro() },
+        Modifier.padding(end = esc.d(8)).size(esc.d(30)).clip(CircleShape).clickable { Diptico.abrirCentro("avisos") },
         contentAlignment = Alignment.Center,
     ) {
         IconoDiptico(cl.nikalbazu.diptico.estado.Icono.CAMPANA, LocalPaleta.current.tinta, 18f, acento = Coral)

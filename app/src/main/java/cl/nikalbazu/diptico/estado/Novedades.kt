@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "1.0-beta.6"
-    const val NOMBRE = "1.0 beta.6"
+    const val ID = "1.0-beta.7"
+    const val NOMBRE = "1.0 beta.7"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -80,7 +80,7 @@ object Novedades {
             Icono.EMULADOR, 0xFFE60012, "Más consolas",
         )
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("1.0-beta.6", "1.0 beta.6", listOf(
             Pagina(
             "Más fuentes de imágenes", "Ahora Díptico también busca portadas, arte y logos en ScreenScraper, IGDB, TheGamesDB y RAWG. Conéctalas en Menú › Portadas (son gratis).",
             Icono.PORTADA, 0xFF3BA8FF, "Menú › Portadas",
@@ -93,6 +93,36 @@ object Novedades {
             "Versión para teléfonos", "Si instalas Díptico en un teléfono, usa el archivo «-movil»: no pide acceso a las notificaciones y Play Protect no lo bloquea. Se actualiza sola a su mismo tipo.",
             Icono.MANDO, 0xFFFFA726,
         )
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina(
+                "Tus fan games, directo", "Nueva consola RPG Maker: los fan games de Pokémon y otros se abren al tiro con Essentia. Pon cada juego en su carpeta dentro de «rpgmaker» o «fangames».",
+                Icono.EMULADOR, 0xFFE0452B, "Consola RPG Maker",
+            ),
+            Pagina(
+                "Notificaciones y ajustes, por separado", "Desliza hacia abajo desde la izquierda de arriba: tus notificaciones. Desde la derecha: los ajustes rápidos. Con el control, mantén Start y pasa de uno a otro con L1 y R1.",
+                Icono.CAMPANA, 0xFF3BA8FF, "L1 · R1",
+            ),
+            Pagina(
+                "Respaldo en Google Drive", "Guarda tus ajustes, colecciones, tiempos y notas en tu Drive, y Díptico lo actualiza solo cada día. Menú › Acerca de › Respaldo en Google Drive.",
+                Icono.DESCARGA, 0xFF2EC4A6, "Menú › Acerca de",
+            ),
+            Pagina(
+                "Una cosa a la vez", "Al abrir, los avisos y las tarjetas salen de a uno, nunca encimados. Y eliges con qué parte Díptico: Menú › Inicio › Al abrir Díptico.",
+                Icono.CHECK, 0xFF8E7CFF, "Al abrir Díptico",
+            ),
+            Pagina(
+                "Accesos directos a tu gusto", "El widget de un juego puede mostrar la portada, la imagen grande, el logo o el logo sobre la imagen. En sus ajustes, Diseño.",
+                Icono.CONTINUAR, 0xFFFFA726, "Diseño",
+            ),
+            Pagina(
+                "Desinstalar desde Díptico", "Y › Desinstalar borra un juego y todo lo suyo sin entrar a los archivos. Te muestra qué se borra y pide mantener A para confirmar. Tus partidas se conservan.",
+                Icono.BORRAR, 0xFFE5484D, "Y · Desinstalar",
+            ),
+            Pagina(
+                "Más fluido y más firme", "Arranca y se mueve más suave, los menús ya no cortan los textos, y si algo falla te ofrece mandar el reporte con un toque. Bisa ahora usa la IA de tu consola, Gemini o ChatGPT.",
+                Icono.CHISPA, 0xFFFF7A59,
+            ),
         )),
     )
 

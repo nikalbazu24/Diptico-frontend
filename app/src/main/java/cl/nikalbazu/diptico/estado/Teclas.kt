@@ -79,6 +79,15 @@ object Teclas {
             return true
         }
 
+        // Ventana de pregunta: A acepta (o se mantiene, si lo pide), B cancela. Nada más responde mientras está abierta.
+        e.dialogo?.let { d ->
+            if (esA(code)) {
+                if (d.mantener) { if (abajo && ev.repeatCount == 0) Diptico.empezarMantener() else if (arriba) Diptico.soltarMantener() }
+                else if (arriba) Diptico.responderDialogo(true)
+            } else if (arriba && esB(code)) Diptico.responderDialogo(false)
+            return true
+        }
+
         // Tour de novedades: A o → sigue, ← vuelve, B o Start lo cierran.
         if (e.novedades >= 0) {
             if (abajo && ev.repeatCount == 0) when (code) {
@@ -488,6 +497,7 @@ object Teclas {
                         Panel.IMAGENES -> Diptico.cambiarFuenteImagen(d)
                         Panel.GALERIA -> Diptico.cambiarPestanaGaleria(d)
                         Panel.APPS -> Diptico.cambiarPestanaApps(d)
+                        Panel.CENTRO -> Diptico.cambiarCortina(if (d < 0) "avisos" else "ajustes")
                         else -> Unit
                     }
                 }
@@ -524,7 +534,7 @@ object Teclas {
                 }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> when (e.panel) {
                     Panel.CARPETAS -> Diptico.quitarCarpeta()
-                    Panel.CENTRO -> cl.nikalbazu.diptico.audio.Avisos.descartarTodas()
+                    Panel.CENTRO -> if (e.cortina == "avisos") cl.nikalbazu.diptico.audio.Avisos.descartarTodas()
                     Panel.ASISTENTE -> Diptico.borrarChat()
                     Panel.IMAGENES -> Diptico.abrirTexto("buscar_imagen", e.nombreImagen)
                     Panel.GALERIA -> if (e.galeria == "ia") Diptico.itemsGaleria(e).getOrNull(e.indice)?.let { Diptico.abrirPaginaClave(it.id) }

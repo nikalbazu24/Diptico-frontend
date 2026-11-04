@@ -2,7 +2,17 @@
 
 Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
-## Qué trae la 1.0 beta.6
+## Qué trae la 1.0 beta.7
+
+- **Fan games con Essentia**: nueva consola **RPG Maker**. Los fan games de RPG Maker XP/VX/VX Ace (Pokémon Essentials y otros) se abren directo con [Essentia](https://github.com/Nikalbazu24/essentia). Pon cada juego en su carpeta (la que trae `Game.ini`) dentro de `rpgmaker` o `fangames`; también sirven los accesos `.essentia` que crea Essentia. El nombre sale del `Game.ini` y la pantalla de título del juego sirve de imagen grande.
+- **Notificaciones y ajustes rápidos por separado**: deslizando hacia abajo desde la izquierda de arriba, tus notificaciones; desde la derecha, los ajustes rápidos. Con el control, mantén Start y cambia con L1/R1.
+- **Respaldo en Google Drive**: Menú › Acerca de › Respaldo en Google Drive guarda tus ajustes, colecciones, tiempos, notas y notas de voz en un archivo en tu Drive y lo actualiza solo cada día. «Traer un respaldo» lo recupera (también para pasar todo a otra consola). Además, Android guarda una copia en tu cuenta de Google.
+- **Una cosa a la vez**: al abrir, avisos y tarjetas salen de a uno. Y eliges con qué parte Díptico (Menú › Inicio › Al abrir Díptico).
+- **Accesos directos a tu gusto**: portada, imagen grande, logo o logo sobre la imagen.
+- **Desinstalar desde Díptico** (Y › Desinstalar), con la lista de lo que se borra y mantener A para confirmar. Las partidas se conservan.
+- **Más estable y fluido**: reporte de fallas con un toque (llega a GitHub), las tareas que fallan ya no cierran Díptico, perfil de arranque para que todo se mueva más suave, y menús sin textos cortados. Se quitó la opción de Claude: Bisa usa la IA de la consola, Gemini o ChatGPT.
+
+## Qué trajo la 1.0 beta.6
 
 - **Más fuentes de imágenes**: además de libretro, SteamGridDB y Wikipedia, ahora busca en **ScreenScraper**, **IGDB**, **TheGamesDB** y **RAWG**. Se conectan en Menú › Portadas y la tienda de imágenes muestra una pestaña por cada una.
   - ScreenScraper: tu usuario y contraseña de screenscraper.fr, más un *devid* y *devpassword* de desarrollador (se piden gratis en su foro, sección API).

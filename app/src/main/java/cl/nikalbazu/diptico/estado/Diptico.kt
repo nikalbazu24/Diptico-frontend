@@ -3,6 +3,7 @@ package cl.nikalbazu.diptico.estado
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.os.SystemClock
 import android.view.Display
 import cl.nikalbazu.diptico.audio.Aviso
@@ -76,7 +77,7 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     CONTROLES("Controles", Icono.MANDO, "Qué hace cada stick y los botones de atrás (L4 y R4 de la Odin 2 y otras): Bisa, apps, música, un juego al azar…"),
     CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
-    SISTEMA("Acerca de", Icono.INFO, "Repite el tutorial o mira la versión de Díptico."),
+    SISTEMA("Acerca de", Icono.INFO, "Respaldo en Google Drive, actualizaciones, reportar un problema, el tutorial y la versión de Díptico."),
 }
 
 /** Un juego abierto ahora mismo. */
@@ -123,6 +124,22 @@ data class Widget(
     /** Diseño del contenido (por ejemplo reloj digital, analógico o mínimo) y tamaño de sus letras. */
     val variante: Int = 0,
     val escala: Float = 1f,
+)
+
+/**
+ * Una pregunta importante en una ventana (enviar un reporte, desinstalar un juego…).
+ * [mantener]: para confirmar hay que mantener A apretado (lo que no se puede deshacer).
+ */
+data class Dialogo(
+    val id: String,
+    val titulo: String,
+    val texto: String,
+    val icono: Icono,
+    val lineas: List<String> = emptyList(),
+    val si: String = "Sí",
+    val no: String = "No",
+    val mantener: Boolean = false,
+    val peligro: Boolean = false,
 )
 
 /** Lo que la persona cambió de una consola: nombre, color, imagen grande (hero), logo y música. */
@@ -217,7 +234,8 @@ object Widgets {
     }
 
     /** Diseños posibles del contenido de cada widget. */
-    fun variantes(tipo: String): List<String> = if (tipo.startsWith("imagen")) listOf("Ajustada", "Llenar") else when (tipo) {
+    fun variantes(tipo: String): List<String> = if (tipo.startsWith("imagen")) listOf("Ajustada", "Llenar")
+        else if (tipo.startsWith("atajo-")) listOf("Portada", "Imagen grande", "Logo", "Logo sobre imagen") else when (tipo) {
         "reloj" -> listOf("Digital", "Analógico", "Mínimo")
         "juego" -> listOf("Con caja", "Arte de fondo")
         "bateria" -> listOf("Barra", "Anillo")
@@ -353,6 +371,16 @@ data class Estado(
     val fuenteImagen: String = "todas",
     val nombreImagen: String = "",
     val inicio: String = "heroe",
+    /** Cómo abre Díptico: "igual", "caratulas", "widgets", "consolas" o "ultimo". */
+    val arranque: String = "igual",
+    /** Ventana con una pregunta importante (null = ninguna) y desde cuándo se mantiene A para confirmarla. */
+    val dialogo: Dialogo? = null,
+    /** La cortina de arriba: "avisos" (notificaciones, bajando por la izquierda) o "ajustes" (rápidos, por la derecha). */
+    val cortina: String = "ajustes",
+    /** Respaldo en Drive: dónde se guarda (vacío = sin elegir) y cuándo fue el último. */
+    val respaldoNombre: String = "",
+    val respaldoUltimo: Long = 0L,
+    val dialogoMantener: Long = 0L,
     val widgets: List<Widget> = Widgets.porDefecto,
     val estiloIconos: String = "diptico",
     val iconosPropios: Map<String, String> = emptyMap(),
@@ -619,7 +647,11 @@ object Diptico {
 
     internal lateinit var app: Context
     internal lateinit var almacen: Almacen
-    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    /** Una tarea de fondo que falla no cierra Díptico: se anota para el reporte de fallas y se sigue. */
+    private val sinCaidas = kotlinx.coroutines.CoroutineExceptionHandler { _, error ->
+        if (::app.isInitialized) Fallas.anotar(app, error)
+    }
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main + sinCaidas)
     private var avisoJob: Job? = null
     private var despiertaJob: Job? = null
     private var descargaJob: Job? = null
@@ -673,18 +705,23 @@ object Diptico {
             temaFestivo = almacen.bool("temaFestivo", true),
             decoraciones = almacen.bool("decoraciones", true),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
-            claveIa = almacen.texto("claveIa"),
+            // La clave de Claude ya no se usa: se borra de la consola (cada persona usa Gemini, ChatGPT o la IA local).
+            claveIa = "".also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
             claveGemini = almacen.texto("claveGemini"),
             claveOpenAI = almacen.texto("claveOpenAI"),
             usuarioRA = almacen.texto("usuarioRA"),
             bisaWeb = almacen.bool("bisaWeb", true),
-            motorIA = almacen.texto("motorIA", "auto"),
+            // Claude ya no es una opción: quien la tenía elegida pasa a automático.
+            motorIA = almacen.texto("motorIA", "auto").let { if (it == "claude") "auto" else it },
             iaLocalLista = IALocal.listo(app),
             tamLogo = almacen.texto("tamLogo", "1").toFloatOrNull() ?: 1f,
             atenuacion = almacen.texto("atenuacion", "0.04").toFloatOrNull() ?: 0.04f,
             bisaEnJuego = almacen.bool("bisaEnJuego", true),
             claveRA = almacen.texto("claveRA"),
             inicio = almacen.texto("inicio", "heroe"),
+            arranque = almacen.texto("arranque", "igual"),
+            respaldoNombre = almacen.texto("respaldoNombre"),
+            respaldoUltimo = almacen.texto("respaldoUltimo").toLongOrNull() ?: 0L,
             widgets = leerWidgets(almacen.texto("widgets")),
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
@@ -769,11 +806,18 @@ object Diptico {
             val desde = almacen.texto("novedadesVistas")
             actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = desde, intro = false) }
         }
-        // Avisos emergentes de las notificaciones (nunca mientras juegas).
+        aplicarArranque()
+        vigilarFila()
+        revisarCaida()
+        respaldoDiario()
+        // Avisos emergentes de las notificaciones (nunca mientras juegas, y de a uno: esperan si hay algo encima).
         scope.launch {
             Avisos.nuevos.collect { a ->
                 val e = estado.value
-                if (e.avisosEmergentes && e.sesion == null && e.aLaVista > 0) { avisar("${a.app}: ${a.titulo.ifBlank { a.texto }}".take(90)); Sonidos.aviso() }
+                if (e.avisosEmergentes && e.sesion == null && e.aLaVista > 0) {
+                    val texto = "${a.app}: ${a.titulo.ifBlank { a.texto }}".take(90)
+                    cuandoHayaLugar("aviso-${a.app}") { avisar(texto); Sonidos.aviso() }
+                }
             }
         }
         aplicarTema()
@@ -860,9 +904,234 @@ object Diptico {
         if (ausencia > 20_000 && e.aLaVista > 0) mostrarBienvenida(ausencia)
     }
 
+    // ---------- Una cosa a la vez ----------
+
+    /** Lo que espera su turno para aparecer: «¿dónde quedaste?», avisos de notificaciones… (una entrada por clave). */
+    private val enFila = java.util.concurrent.ConcurrentLinkedQueue<Pair<String, () -> Unit>>()
+
+    /** ¿Hay algo grande encima de la pantalla ahora mismo (tour, bienvenida, tarjetas)? */
+    fun hayAlgoEncima(e: Estado = estado.value): Boolean =
+        e.intro || e.dialogo != null || e.novedades >= 0 || e.bienvenida > 0L || e.quedaste || e.donde != null || e.marcandoMapa != null ||
+            e.continuacion > 0L || e.relojGrande || !e.configurado
+
+    /** Hace [accion] ahora si la pantalla está libre; si no, la deja en la fila para cuando se libere. */
+    private fun cuandoHayaLugar(clave: String, accion: () -> Unit) {
+        if (!hayAlgoEncima() && enFila.isEmpty()) { accion(); return }
+        enFila.removeIf { it.first == clave }
+        enFila.add(clave to accion)
+        // Los avisos viejos no sirven: la fila guarda como mucho 6 cosas.
+        while (enFila.size > 6) enFila.poll()
+    }
+
+    /** Saca de la fila lo que espera, de a uno, con una pausa entre cosa y cosa. */
+    private fun vigilarFila() {
+        scope.launch {
+            while (true) {
+                delay(700)
+                if (enFila.isEmpty() || hayAlgoEncima()) continue
+                delay(600)
+                if (hayAlgoEncima()) continue
+                val sig = enFila.poll() ?: continue
+                try { sig.second() } catch (_: Exception) {}
+            }
+        }
+    }
+
+    /** Cómo abre Díptico: como lo dejaste, carátulas, widgets, tus consolas o el último juego (Menú › Inicio). */
+    private fun aplicarArranque() {
+        when (estado.value.arranque) {
+            "caratulas" -> actualizar { it.copy(inicio = "heroe") }
+            "widgets" -> actualizar { it.copy(inicio = "widgets") }
+            "consolas" -> actualizar {
+                it.copy(inicio = "heroe", enSistemas = true, vistaConsolas = if (it.vistaConsolas in MODOS_ELEGIR) it.vistaConsolas else "carpetas")
+            }
+            "ultimo" -> scope.launch {
+                actualizar { it.copy(inicio = "heroe") }
+                // Los juegos pueden tardar un poco en cargarse.
+                repeat(40) {
+                    val j = ultimoJugado()
+                    if (j != null) { actualizar { it.copy(consolaSel = "todo", juegoSel = j.clave, enSistemas = false) }; return@launch }
+                    delay(250)
+                }
+            }
+        }
+    }
+
+    // ---------- Ventanas de pregunta ----------
+
+    private var dialogoSi: (() -> Unit)? = null
+    private var dialogoNo: (() -> Unit)? = null
+    private var mantenerJob: kotlinx.coroutines.Job? = null
+
+    /** Tiempo que hay que mantener A para confirmar algo que no se puede deshacer. */
+    const val MANTENER_MS = 1600L
+
+    fun mostrarDialogo(d: Dialogo, no: () -> Unit = {}, si: () -> Unit) {
+        dialogoSi = si; dialogoNo = no
+        actualizar { it.copy(dialogo = d, dialogoMantener = 0L) }
+        Sonidos.abrir()
+    }
+
+    fun responderDialogo(si: Boolean) {
+        val accion = if (si) dialogoSi else dialogoNo
+        dialogoSi = null; dialogoNo = null
+        mantenerJob?.cancel()
+        actualizar { it.copy(dialogo = null, dialogoMantener = 0L) }
+        if (si) Sonidos.aceptar() else Sonidos.atras()
+        try { accion?.invoke() } catch (ex: Exception) { Fallas.anotar(app, ex); avisar("No se pudo completar") }
+    }
+
+    /** Se empieza a mantener A (o el dedo) sobre una pregunta que lo pide. */
+    fun empezarMantener() {
+        val d = estado.value.dialogo ?: return
+        if (!d.mantener) return
+        if (estado.value.dialogoMantener > 0L) return
+        actualizar { it.copy(dialogoMantener = System.currentTimeMillis()) }
+        mantenerJob?.cancel()
+        mantenerJob = scope.launch {
+            delay(MANTENER_MS)
+            if (estado.value.dialogo?.id == d.id && estado.value.dialogoMantener > 0L) responderDialogo(true)
+        }
+    }
+
+    /** Se soltó antes de tiempo: no pasa nada. */
+    fun soltarMantener() {
+        if (estado.value.dialogoMantener == 0L) return
+        mantenerJob?.cancel()
+        actualizar { it.copy(dialogoMantener = 0L) }
+    }
+
+    /** Si Díptico se cerró de golpe la vez anterior, ofrece mandar el reporte (cuando la pantalla esté libre). */
+    private fun revisarCaida() {
+        val informe = Fallas.pendiente(app) ?: return
+        cuandoHayaLugar("falla") {
+            mostrarDialogo(
+                Dialogo(
+                    "falla", "Díptico se cerró de golpe",
+                    "La última vez Díptico se cerró solo. ¿Mandas el reporte? Se abre una página de GitHub con el informe listo (versión, equipo y el error, sin datos personales): solo cuenta qué estabas haciendo y envíalo.",
+                    Icono.INFO, si = "Enviar reporte", no = "Ahora no",
+                ),
+                no = { Fallas.olvidar(app) },
+            ) {
+                Fallas.olvidar(app)
+                abrirWeb(Fallas.urlReporte(informe))
+            }
+        }
+    }
+
+    // ---------- Respaldo en Google Drive ----------
+
+    /** Selectores de archivos de Android (los pone la pantalla activa). */
+    var pedirCrearRespaldo: ((String) -> Unit)? = null
+    var pedirTraerRespaldo: (() -> Unit)? = null
+
+    private fun opcionesRespaldo(e: Estado): List<Opcion> {
+        val conDrive = e.respaldoNombre.isNotBlank()
+        val cuando = if (e.respaldoUltimo == 0L) "nunca" else android.text.format.DateUtils.getRelativeTimeSpanString(e.respaldoUltimo).toString()
+        return listOfNotNull(
+            Opcion(
+                "Respaldo en Google Drive", if (conDrive) "Cada día ✓" else "Elegir dónde", Icono.DESCARGA,
+                "Guarda todos tus ajustes, colecciones, tiempo de juego, notas y notas de voz en un archivo en tu Google Drive (elige Drive en la ventana que se abre). " +
+                    "Después Díptico lo actualiza solo una vez al día. Además, Android guarda una copia en tu cuenta de Google y la devuelve si reinstalas Díptico.",
+            ) { if (conDrive) respaldarAhora() else elegirDondeRespaldar() },
+            if (conDrive) Opcion("Respaldar ahora", "Último: $cuando", Icono.CHECK, "Guarda el respaldo en ${e.respaldoNombre} en este momento.") { respaldarAhora() } else null,
+            if (conDrive) Opcion("Cambiar dónde se guarda", e.respaldoNombre.take(28), Icono.CARPETA, "Elige otro archivo u otra carpeta para el respaldo.") { elegirDondeRespaldar() } else null,
+            Opcion(
+                "Traer un respaldo", icono = Icono.PEGAR,
+                ayuda = "Elige un respaldo de Díptico (de Drive o de donde lo tengas) y recupera todo. Sirve para pasar tus cosas a otra consola. Reemplaza tus ajustes actuales.",
+            ) { pedirTraerRespaldo?.invoke() ?: avisar("No pude abrir el selector de archivos") },
+        )
+    }
+
+    private fun elegirDondeRespaldar() {
+        val fecha = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+        pedirCrearRespaldo?.invoke("Diptico-respaldo-$fecha.zip") ?: avisar("No pude abrir el selector de archivos")
+    }
+
+    /** Volvió el selector con el archivo nuevo (por ejemplo en Drive): se guarda el permiso y se respalda al tiro. */
+    fun respaldoCreado(uri: Uri) {
+        try {
+            app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        } catch (_: Exception) {}
+        val nombre = try {
+            app.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+        } catch (_: Exception) { null } ?: "tu respaldo"
+        almacen.guardarTexto("respaldoUri", uri.toString())
+        almacen.guardarTexto("respaldoNombre", nombre)
+        actualizar { it.copy(respaldoNombre = nombre) }
+        respaldarAhora()
+    }
+
+    fun respaldarAhora(silencioso: Boolean = false) {
+        val uri = almacen.texto("respaldoUri").takeIf { it.isNotBlank() }?.let(Uri::parse) ?: return elegirDondeRespaldar()
+        if (!silencioso) avisar("Guardando el respaldo…")
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { Respaldo.escribirEn(app, uri) }
+            if (ok) {
+                val ahora = System.currentTimeMillis()
+                almacen.guardarTexto("respaldoUltimo", ahora.toString())
+                actualizar { it.copy(respaldoUltimo = ahora) }
+                if (!silencioso) avisar("Respaldo guardado en ${estado.value.respaldoNombre}")
+            } else if (!silencioso) avisar("No pude guardar el respaldo. Elige otra vez dónde guardarlo.")
+        }
+    }
+
+    /** Una vez al día, al abrir Díptico, el respaldo se actualiza solo (si hay uno elegido). */
+    private fun respaldoDiario() {
+        if (almacen.texto("respaldoUri").isBlank()) return
+        if (System.currentTimeMillis() - estado.value.respaldoUltimo < 20 * 3_600_000L) return
+        scope.launch { delay(15_000); respaldarAhora(silencioso = true) }
+    }
+
+    /** Volvió el selector con un respaldo para traer: se confirma, se recupera y Díptico se reinicia. */
+    fun respaldoElegido(uri: Uri) {
+        mostrarDialogo(
+            Dialogo(
+                "traer-respaldo", "¿Traer este respaldo?",
+                "Tus ajustes, colecciones, tiempos y notas actuales se reemplazan por los del respaldo. Después Díptico se reinicia. Si cambiaste de consola, vuelve a elegir tu carpeta de juegos.",
+                Icono.PEGAR, si = "Traer", no = "Cancelar",
+            ),
+        ) {
+            scope.launch {
+                val n = withContext(Dispatchers.IO) {
+                    try { app.contentResolver.openInputStream(uri)?.use { Respaldo.restaurar(app, it) } ?: -1 } catch (_: Exception) { -1 }
+                }
+                if (n < 0) { avisar("Ese archivo no es un respaldo de Díptico"); return@launch }
+                avisar("Respaldo recuperado: Díptico se reinicia")
+                delay(1500)
+                reiniciarDiptico()
+            }
+        }
+    }
+
+    /** Cierra Díptico y lo vuelve a abrir (para cargar un respaldo). */
+    private fun reiniciarDiptico() {
+        try {
+            val i = app.packageManager.getLaunchIntentForPackage(app.packageName)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            if (i != null) {
+                val pi = android.app.PendingIntent.getActivity(app, 7771, i, android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_CANCEL_CURRENT)
+                (app.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager).set(android.app.AlarmManager.ELAPSED_REALTIME, android.os.SystemClock.elapsedRealtime() + 700, pi)
+            }
+        } catch (_: Exception) {}
+        android.os.Process.killProcess(android.os.Process.myPid())
+    }
+
+    /** Abre una página en el navegador. */
+    fun abrirWeb(url: String) {
+        try {
+            app.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) { avisar("No hay un navegador para abrir la página") }
+    }
+
+    private val ARRANQUES = listOf("igual", "caratulas", "widgets", "consolas", "ultimo")
+    fun nombreArranque(v: String) = when (v) {
+        "caratulas" -> "Carátulas"; "widgets" -> "Widgets"; "consolas" -> "Tus consolas"; "ultimo" -> "Tu último juego"; else -> "Como lo dejaste"
+    }
+
     fun mostrarBienvenida(ausencia: Long) {
         val e = estado.value
-        if (e.bienvenidaModo == "no" || !e.configurado || e.sesion != null || e.novedades >= 0) return
+        // La bienvenida no hace fila: si hay otra cosa encima, simplemente no sale (ya no sería «al encender»).
+        if (e.bienvenidaModo == "no" || !e.configurado || e.sesion != null || e.novedades >= 0 || e.quedaste || e.donde != null) return
         val breve = e.bienvenidaModo == "breve" || ultimoJugado(e) == null && e.juegos.isEmpty()
         actualizar { it.copy(bienvenida = System.currentTimeMillis(), bienvenidaBreve = breve, ausencia = ausencia, protector = false, relojGrande = false) }
         actividad()
@@ -1649,7 +1918,6 @@ object Diptico {
                     ItemGaleria("local", "En tu consola", if (e.iaLocalLista) "Lista ✓ · gratis y sin internet" else "Bajar 1,6 GB · gratis y sin internet", e.motorIA == "local") { elegirIA("local") },
                     ItemGaleria("gemini", "Gemini", "Google · gratis con límite diario · " + estadoNube("gemini"), e.motorIA == "gemini") { elegirIA("gemini") },
                     ItemGaleria("openai", "ChatGPT", "OpenAI · pagado por uso · " + estadoNube("openai"), e.motorIA == "openai") { elegirIA("openai") },
-                    ItemGaleria("claude", "Claude", "Anthropic · pagado por uso · " + estadoNube("claude"), e.motorIA == "claude") { elegirIA("claude") },
                 )
             }
             else -> {
@@ -1728,16 +1996,10 @@ object Diptico {
         almacen.guardarDatos(datos)
         // ¿Dónde quedaste?: una tarjeta con formas rápidas de anotarlo (escribir, nota de voz, mapa) o pasar de largo.
         val hacerPregunta = preguntar && duracion >= 60 && estado.value.preguntarQuedaste
-        actualizar {
-            it.copy(
-                sesion = null,
-                despierta = false,
-                datos = datos,
-                juegoSel = s.clave,
-                quedaste = hacerPregunta || it.quedaste,
-                quedastePregunta = hacerPregunta,
-                quedasteSel = 0,
-            )
+        actualizar { it.copy(sesion = null, despierta = false, datos = datos, juegoSel = s.clave) }
+        // Sale cuando no haya otra cosa encima (una cosa a la vez).
+        if (hacerPregunta) cuandoHayaLugar("quedaste") {
+            if (estado.value.sesion == null) actualizar { it.copy(juegoSel = s.clave, quedaste = true, quedastePregunta = true, quedasteSel = 0) }
         }
     }
 
@@ -2223,7 +2485,7 @@ object Diptico {
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
             Panel.CENTRO -> {
-                val total = opcionesCentro().size + Avisos.lista.value.size
+                val total = if (e.cortina == "avisos") Avisos.lista.value.size else opcionesCentro().size
                 if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
             }
             Panel.CARPETAS -> {
@@ -2286,8 +2548,8 @@ object Diptico {
             Panel.APPS -> appsVisibles(e).getOrNull(e.indice)?.let { abrirPaquete(it.paquete) }
             Panel.ASISTENTE -> elementosAsistente().getOrNull(e.indice)?.accion?.invoke()
             Panel.CENTRO -> {
-                val acciones = opcionesCentro()
-                if (e.indice < acciones.size) acciones[e.indice].accion() else Avisos.lista.value.getOrNull(e.indice - acciones.size)?.let { abrirAviso(it) }
+                if (e.cortina == "avisos") Avisos.lista.value.getOrNull(e.indice)?.let { abrirAviso(it) }
+                else opcionesCentro().getOrNull(e.indice)?.accion?.invoke()
             }
             Panel.TRABAJOS -> cerrarPanel()
             else -> Unit
@@ -2356,7 +2618,159 @@ object Diptico {
             if (d?.oculto == true) "Mostrar este juego" else "Ocultar este juego",
             if (d?.oculto == true) "Vuelve al estante" else "Se ve con el filtro Ocultos", Icono.OCULTAR,
         ) { alternarOculto(juego.clave) }
+        lista += Opcion(
+            "Desinstalar", if (juego.uri.scheme == "file") "Quitar de Díptico" else "Borrar de la consola", Icono.BORRAR,
+            "Borra el juego y todo lo suyo (otros discos, carpeta, imágenes y notas de Díptico) sin entrar a los archivos. Tus partidas guardadas se conservan. Pide confirmar dos veces.",
+        ) { desinstalarJuego() }
         return lista
+    }
+
+    // ---------- Desinstalar un juego ----------
+
+    /** Un archivo o carpeta del juego que se va a borrar. */
+    private class PorBorrar(val uri: Uri, val nombre: String, val bytes: Long)
+
+    /** Y › Desinstalar: muestra qué se borra y cuánto espacio libera, y pide mantener A para confirmar. */
+    fun desinstalarJuego() {
+        val j = estado.value.seleccionado ?: return
+        val consola = Consolas.porId(j.consolaId)
+        cerrarPanel()
+        // Ports y juegos de Android: los desinstala Android, con su propia ventana.
+        if (j.portada?.scheme == "app" || consola?.sinEmulador == true) {
+            try {
+                app.startActivity(android.content.Intent(android.content.Intent.ACTION_DELETE, Uri.parse("package:${j.archivo}")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (_: Exception) { avisar("No pude abrir la desinstalación de Android") }
+            return
+        }
+        // Juegos de PC (Steam, Epic…): son accesos de Díptico; se quitan de la lista, no se borra nada del PC.
+        if (j.uri.scheme == "file") {
+            mostrarDialogo(Dialogo("quitar-pc", "¿Quitar ${j.titulo}?", "Se quita de tu estante. El juego sigue en GameNative o GameHub.", Icono.BORRAR, si = "Quitar", no = "Cancelar")) {
+                quitarJuegoPC(j.clave)
+            }
+            return
+        }
+        avisar("Revisando los archivos de ${j.titulo}…")
+        scope.launch {
+            val lista = withContext(Dispatchers.IO) { try { archivosDelJuego(j) } catch (_: Exception) { emptyList() } }
+            if (lista.isEmpty()) { avisar("No encontré los archivos de ${j.titulo}"); return@launch }
+            val total = lista.sumOf { it.bytes }
+            val espacio = if (total > 0) " y liberar ${tamanoBonito(total)}" else ""
+            mostrarDialogo(
+                Dialogo(
+                    "desinstalar-1", "¿Desinstalar ${j.titulo}?",
+                    "Se borrará de tu consola$espacio. También sus imágenes, notas y notas de voz de Díptico. Tus partidas guardadas del emulador se conservan.",
+                    Icono.BORRAR, lineas = lista.map { it.nombre }, si = "Seguir", no = "Cancelar", peligro = true,
+                ),
+            ) {
+                mostrarDialogo(
+                    Dialogo(
+                        "desinstalar-2", "Última confirmación",
+                        "Mantén A hasta que se llene la barra para borrar ${j.titulo}. Esto no se puede deshacer.",
+                        Icono.BORRAR, si = "Borrar", no = "Cancelar", mantener = true, peligro = true,
+                    ),
+                ) { borrarJuego(j, lista) }
+            }
+        }
+    }
+
+    /** El juego y lo que va con él: los .bin de un .cue, los discos de un .m3u, las pistas de un .gdi, o su carpeta. */
+    private fun archivosDelJuego(j: Juego): List<PorBorrar> {
+        val cr = app.contentResolver
+        val arbolId = DocumentsContract.getTreeDocumentId(j.uri)
+        val arbol = DocumentsContract.buildTreeDocumentUri(j.uri.authority, arbolId)
+        fun info(docId: String): PorBorrar? {
+            val u = DocumentsContract.buildDocumentUriUsingTree(arbol, docId)
+            return try {
+                cr.query(u, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_SIZE, DocumentsContract.Document.COLUMN_MIME_TYPE), null, null, null)?.use { c ->
+                    if (!c.moveToFirst()) null else {
+                        val carpeta = c.getString(2) == DocumentsContract.Document.MIME_TYPE_DIR
+                        PorBorrar(u, c.getString(0) + if (carpeta) " (carpeta)" else "", if (carpeta) tamanoCarpeta(arbol, docId) else c.getLong(1))
+                    }
+                }
+            } catch (_: Exception) { null }
+        }
+        val principal = info(j.docId) ?: return emptyList()
+        if (j.esCarpeta) return listOf(principal)
+        val padre = j.docId.substringBeforeLast('/')
+        val salida = linkedMapOf(j.docId to principal)
+        // Archivos que nombra el juego por dentro (.cue, .m3u, .gdi), y los que nombran esos a su vez.
+        val porRevisar = ArrayDeque(listOf(j.docId))
+        while (porRevisar.isNotEmpty() && salida.size < 40) {
+            val id = porRevisar.removeFirst()
+            val ext = id.substringAfterLast('.', "").lowercase()
+            if (ext !in setOf("cue", "m3u", "gdi")) continue
+            val texto = try {
+                cr.openInputStream(DocumentsContract.buildDocumentUriUsingTree(arbol, id))?.use { it.readBytes().take(65_536).toByteArray().toString(Charsets.UTF_8) }
+            } catch (_: Exception) { null } ?: continue
+            val nombres = when (ext) {
+                "cue" -> Regex("FILE\\s+\"([^\"]+)\"", RegexOption.IGNORE_CASE).findAll(texto).map { it.groupValues[1] }.toList()
+                "gdi" -> texto.lineSequence().drop(1).mapNotNull { l -> Regex("^\\s*\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+(\"[^\"]+\"|\\S+)").find(l)?.groupValues?.get(1)?.removeSurrounding("\"") }.toList()
+                else -> texto.lineSequence().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }.toList()
+            }
+            for (n in nombres) {
+                // Solo archivos de la misma carpeta (o subcarpetas): nunca rutas hacia arriba.
+                if (n.contains("..") || n.startsWith("/")) continue
+                val hijo = "$padre/${n.replace('\\', '/')}"
+                if (hijo in salida) continue
+                info(hijo)?.let { salida[hijo] = it; porRevisar.add(hijo) }
+            }
+        }
+        return salida.values.toList()
+    }
+
+    private fun tamanoCarpeta(arbol: Uri, docId: String, profundidad: Int = 0): Long {
+        if (profundidad > 6) return 0L
+        var total = 0L
+        try {
+            app.contentResolver.query(
+                DocumentsContract.buildChildDocumentsUriUsingTree(arbol, docId),
+                arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_SIZE, DocumentsContract.Document.COLUMN_MIME_TYPE), null, null, null,
+            )?.use { c ->
+                while (c.moveToNext()) {
+                    total += if (c.getString(2) == DocumentsContract.Document.MIME_TYPE_DIR) tamanoCarpeta(arbol, c.getString(0), profundidad + 1) else c.getLong(1)
+                }
+            }
+        } catch (_: Exception) {}
+        return total
+    }
+
+    private fun tamanoBonito(b: Long): String = when {
+        b >= 1L shl 30 -> String.format(java.util.Locale.US, "%.1f GB", b / (1L shl 30).toDouble())
+        b >= 1L shl 20 -> "${b / (1L shl 20)} MB"
+        else -> "${(b / 1024).coerceAtLeast(1)} KB"
+    }
+
+    /** Borra los archivos y todo lo que Díptico guardaba del juego, y lo saca del estante. */
+    private fun borrarJuego(j: Juego, lista: List<PorBorrar>) {
+        scope.launch {
+            val fallidos = withContext(Dispatchers.IO) {
+                lista.count { pb ->
+                    !(try { DocumentsContract.deleteDocument(app.contentResolver, pb.uri) } catch (_: Exception) { false })
+                }
+            }
+            if (fallidos == lista.size) {
+                avisar("No pude borrar ${j.titulo}. Elige otra vez tu carpeta de juegos (Menú › Biblioteca) para darle permiso a Díptico.")
+                return@launch
+            }
+            // Lo de Díptico: imágenes descargadas, notas, nota de voz, mapa y su lugar en widgets y colecciones.
+            withContext(Dispatchers.IO) {
+                medios[j.clave]?.let { m -> listOfNotNull(m.portada, m.arte, m.logo).forEach { try { java.io.File(it).delete() } catch (_: Exception) {} } }
+                medios = medios - j.clave
+                almacen.guardarMedios(medios)
+                try { Notas.borrar(app, j.clave) } catch (_: Exception) {}
+                crudos = crudos.filter { it.clave != j.clave }
+                almacen.guardarBiblioteca(crudos)
+            }
+            val datos = estado.value.datos - j.clave
+            almacen.guardarDatos(datos)
+            val widgets = estado.value.widgets.filter { it.tipo != "atajo-${j.clave}" }
+            if (widgets.size != estado.value.widgets.size) guardarWidgets(widgets)
+            val colecciones = estado.value.colecciones.mapValues { (_, c) -> c.copy(juegos = c.juegos - j.clave) }
+            if (colecciones != estado.value.colecciones) guardarColecciones(colecciones)
+            actualizar { it.copy(datos = datos, notasVoz = it.notasVoz - j.clave) }
+            publicarJuegos()
+            avisar(if (fallidos > 0) "${j.titulo} se borró, pero quedaron $fallidos archivos que no pude borrar" else "${j.titulo} desinstalado")
+        }
     }
 
     /** Moverse en la ventana del juego: fila de botones grandes arriba, lista abajo. */
@@ -2588,11 +3002,11 @@ object Diptico {
                 ) { if (cl.nikalbazu.diptico.bisa.BurbujaBisa.puedeFlotar(app)) avisar("La burbuja ya tiene permiso") else cl.nikalbazu.diptico.bisa.BurbujaBisa.pedirPermisoFlotante(app) }
                 lista += Opcion(
                     "IA de Bisa", textoMotor(e), Icono.CHISPA,
-                    "Su cerebro: la IA de tu consola (gratis, sin internet), Gemini (Google, con nivel gratis), ChatGPT o Claude. Cada persona usa su propia clave.",
+                    "Su cerebro: la IA de tu consola (gratis, sin internet), Gemini (Google, con nivel gratis) o ChatGPT. Cada persona usa su propia clave.",
                 ) { abrirGaleria("ia") }
                 lista += Opcion(
                     "Buscar guías en internet", if (e.bisaWeb) "Sí" else "No", Icono.WEB,
-                    "Con Gemini, ChatGPT o Claude, Bisa busca en internet para darte datos exactos de cada juego. La IA de tu consola no busca.",
+                    "Con Gemini o ChatGPT, Bisa busca en internet para darte datos exactos de cada juego. La IA de tu consola no busca.",
                 ) {
                     val v = !estado.value.bisaWeb
                     almacen.guardarBool("bisaWeb", v)
@@ -2827,7 +3241,12 @@ object Diptico {
                 lista += opcionesPC(e)
             }
             Seccion.SISTEMA -> {
+                lista += opcionesRespaldo(e)
                 lista += opcionesActualizar(e)
+                lista += Opcion(
+                    "Reportar un problema", icono = Icono.INFO,
+                    ayuda = "Abre GitHub con un informe listo (versión y equipo): cuenta qué pasó y envíalo. Lo leen quien hace Díptico y Claude.",
+                ) { cerrarPanel(); abrirWeb(Fallas.urlProblema(app)) }
                 lista += Opcion("Ver las novedades de esta versión", icono = Icono.CHISPA, ayuda = "El tour corto de lo nuevo, otra vez.") { cerrarPanel(); actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = "") } }
                 lista += Opcion("Recorrido por Díptico", icono = Icono.TUTORIAL, ayuda = "El paseo de la primera vez por todas las opciones y botones.") { verRecorrido() }
                 lista += Opcion("Repetir el tutorial", icono = Icono.TUTORIAL, ayuda = "Vuelve a configurar todo paso a paso.") { reiniciarTutorial() }
@@ -3128,7 +3547,7 @@ object Diptico {
         }
         lista += Opcion(
             "IA para crear temas", llaveNube(e)?.let { IA.nombre(it.proveedor) + " ✓" } ?: "Elegir", Icono.CLAVE,
-            "Los temas con IA usan una IA en la nube: Gemini (gratis con tu cuenta de Google), ChatGPT o Claude.",
+            "Los temas con IA usan una IA en la nube: Gemini (gratis con tu cuenta de Google) o ChatGPT.",
         ) { abrirGaleria("ia") }
         if (e.temasPropios.any { it.id != "mio" }) {
             lista += Opcion("Borrar temas creados con IA", icono = Icono.BORRAR) {
@@ -3213,6 +3632,11 @@ object Diptico {
 
     private fun opcionesInicio(e: Estado): List<Opcion> = listOf(
         Opcion(
+            "Al abrir Díptico", nombreArranque(e.arranque), Icono.INTRO,
+            "Con qué parte Díptico cada vez que se abre: como lo dejaste, las carátulas, tus widgets, tus consolas o directo en tu último juego.",
+            menos = { cambiarArranque(-1) },
+        ) { cambiarArranque(1) },
+        Opcion(
             "Bienvenida al encender", nombreBienvenida(e.bienvenidaModo), Icono.CHISPA,
             "Al prender la consola: un saludo con la hora, tu último juego para seguir y Bisa. Si estabas jugando, un recordatorio de dónde ibas. Nada se detiene mientras tanto.",
         ) { cambiarBienvenidaModo() },
@@ -3258,6 +3682,14 @@ object Diptico {
             "Para mostrar y controlar lo que suena en Spotify, YouTube Music u otra app, Android pide activar el \"acceso a notificaciones\" de Díptico.",
         ) { if (!Medios.tienePermiso(app)) Medios.pedirPermiso(app) else avisar("El widget de música ya tiene permiso") },
     )
+
+    private fun cambiarArranque(d: Int) {
+        val i = ARRANQUES.indexOf(estado.value.arranque).coerceAtLeast(0)
+        val v = ARRANQUES[Math.floorMod(i + d, ARRANQUES.size)]
+        almacen.guardarTexto("arranque", v)
+        actualizar { it.copy(arranque = v) }
+        avisar("Al abrir: ${nombreArranque(v)}")
+    }
 
     /** Select: cambia entre el inicio con widgets y el de carátulas. */
     /** Abre un widget por su tipo (al tocarlo). */
@@ -3588,7 +4020,7 @@ object Diptico {
 
     /** Qué IA usa Bisa ahora: local (en la consola), gemini, openai, claude o "ninguno". */
     fun motorEfectivo(e: Estado = estado.value): String = when (e.motorIA) {
-        "local", "gemini", "openai", "claude" -> e.motorIA
+        "local", "gemini", "openai" -> e.motorIA
         else -> when {
             IALocal.listo(app) -> "local"
             else -> IA.PROVEEDORES.firstOrNull { claveDe(it, e).isNotBlank() } ?: "ninguno"
@@ -3912,6 +4344,13 @@ object Diptico {
         almacen.guardarTexto("juegosPC", l.joinToString("\n") { "${it.titulo.replace("\t", " ")}\t${it.id}\t${it.tienda}" })
         actualizar { it.copy(juegosPC = l) }
         publicarJuegos()
+    }
+
+    /** Quita un juego de PC del estante (clave "steam/pc-<id>" o "windows/pc-<id>"). */
+    private fun quitarJuegoPC(clave: String) {
+        val id = clave.substringAfter("/pc-").toIntOrNull() ?: return
+        guardarJuegosPC(estado.value.juegosPC.filter { it.id != id })
+        avisar("Quitado de tu estante")
     }
 
     /** Cada juego de PC agregado es un archivito con su número (como los que exporta ES-DE), en la carpeta de Díptico. */
@@ -5800,9 +6239,25 @@ object Diptico {
 
     // ---------- Centro de control y notificaciones ----------
 
-    fun abrirCentro() {
+    /**
+     * Abre la cortina de arriba: [cual] "avisos" (notificaciones) o "ajustes" (ajustes rápidos), como en los
+     * teléfonos Samsung o Xiaomi. Sin [cual], la de ajustes. Si ya estaba abierta en esa misma, se cierra.
+     */
+    fun abrirCentro(cual: String = "ajustes") {
         Medios.revisar(app)
-        actualizar { it.copy(panel = if (it.panel == Panel.CENTRO) Panel.NINGUNO else Panel.CENTRO, indice = 0) }
+        val e = estado.value
+        if (e.panel == Panel.CENTRO && e.cortina == cual) { cerrarPanel(); return }
+        actualizar { it.copy(panel = Panel.CENTRO, cortina = cual, indice = 0) }
+        Sonidos.deslizar()
+    }
+
+    /** L1/R1 (o tocar la pestaña): pasa de notificaciones a ajustes y al revés. */
+    fun cambiarCortina(cual: String? = null) {
+        val e = estado.value
+        val v = cual ?: if (e.cortina == "avisos") "ajustes" else "avisos"
+        if (v == e.cortina) return
+        actualizar { it.copy(cortina = v, indice = 0) }
+        Sonidos.pagina()
     }
 
     private fun abrirIntent(i: Intent, error: String) {
@@ -5878,22 +6333,22 @@ object Diptico {
     /** Mueve la selección del centro: grilla de accesos arriba, lista de notificaciones abajo. */
     fun moverCentro(dx: Int, dy: Int) {
         val e = estado.value
-        val n = opcionesCentro().size
-        val total = n + Avisos.lista.value.size
-        if (total == 0) return
         val i = e.indice
-        val nuevo = if (i < n) {
-            when {
-                dx != 0 -> (i + dx).coerceIn(0, n - 1)
-                dy < 0 -> if (i - COLUMNAS_CENTRO >= 0) i - COLUMNAS_CENTRO else i
-                else -> if (i + COLUMNAS_CENTRO < n) i + COLUMNAS_CENTRO else if (total > n) n else i
-            }
-        } else {
-            when {
-                dy < 0 -> if (i == n) ((n - 1) / COLUMNAS_CENTRO) * COLUMNAS_CENTRO else i - 1
-                dy > 0 -> (i + 1).coerceAtMost(total - 1)
-                else -> i
-            }
+        if (e.cortina == "avisos") {
+            // Notificaciones: una lista; ← → pasan a los ajustes.
+            if (dx != 0) { cambiarCortina("ajustes"); return }
+            val total = Avisos.lista.value.size
+            if (total == 0) return
+            val nuevo = (i + dy).coerceIn(0, total - 1)
+            if (nuevo != i) actualizar { it.copy(indice = nuevo) }
+            return
+        }
+        val n = opcionesCentro().size
+        if (n == 0) return
+        val nuevo = when {
+            dx != 0 -> (i + dx).coerceIn(0, n - 1)
+            dy < 0 -> if (i - COLUMNAS_CENTRO >= 0) i - COLUMNAS_CENTRO else i
+            else -> if (i + COLUMNAS_CENTRO < n) i + COLUMNAS_CENTRO else i
         }
         if (nuevo != i) actualizar { it.copy(indice = nuevo) }
     }
@@ -5945,12 +6400,15 @@ object Diptico {
 
     fun descartarAvisoSel() {
         val e = estado.value
-        val n = opcionesCentro().size
-        Avisos.lista.value.getOrNull(e.indice - n)?.let { Avisos.descartar(it) }
+        if (e.cortina != "avisos") return
+        Avisos.lista.value.getOrNull(e.indice)?.let { Avisos.descartar(it) }
+        val quedan = Avisos.lista.value.size
+        if (e.indice >= quedan && quedan > 0) actualizar { it.copy(indice = quedan - 1) }
     }
 
     private fun opcionesConsola(e: Estado): List<Opcion> = listOf(
-        Opcion("Centro de control", "Notificaciones y accesos", Icono.CAMPANA, "Wi-Fi, Bluetooth, volumen, archivos y tus notificaciones. También manteniendo Start o tocando la campana.") { abrirCentro() },
+        Opcion("Ajustes rápidos", "Wi-Fi, Bluetooth, brillo…", Icono.AJUSTES, "Wi-Fi, Bluetooth, volumen, brillo, turbo y apps de la consola. Desliza hacia abajo desde la esquina derecha de arriba, o mantén Start.") { abrirCentro("ajustes") },
+        Opcion("Notificaciones", "${Avisos.lista.value.size}", Icono.CAMPANA, "Tus notificaciones. Desliza hacia abajo desde la esquina izquierda de arriba, o toca la campana.") { abrirCentro("avisos") },
         Opcion(
             "Notificaciones en Díptico", if (Medios.tienePermiso(app)) "Activadas ✓" else "Dar permiso", Icono.CAMPANA,
             "Para ver las notificaciones de tus apps dentro de Díptico, Android pide activar el \"acceso a notificaciones\".",

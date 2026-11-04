@@ -30,6 +30,14 @@ abstract class BaseActivity : ComponentActivity() {
         if (uri != null) Diptico.carpetaElegida(uri, Carpeta.MUSICA)
     }
 
+    // Respaldo: crear el archivo (en Google Drive o donde se elija) y traer uno.
+    private val crearRespaldo = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri != null) Diptico.respaldoCreado(uri)
+    }
+    private val traerRespaldo = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) Diptico.respaldoElegido(uri)
+    }
+
     private val elegirArchivo = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) Diptico.archivoElegido(uri)
     }
@@ -84,6 +92,12 @@ abstract class BaseActivity : ComponentActivity() {
             } catch (e: Exception) {
                 Diptico.avisar("No pude abrir el selector de archivos")
             }
+        }
+        Diptico.pedirCrearRespaldo = { nombre ->
+            try { crearRespaldo.launch(nombre) } catch (_: Exception) { Diptico.avisar("No pude abrir el selector de archivos") }
+        }
+        Diptico.pedirTraerRespaldo = {
+            try { traerRespaldo.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) } catch (_: Exception) { Diptico.avisar("No pude abrir el selector de archivos") }
         }
         Diptico.pedirVoz = {
             val i = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)

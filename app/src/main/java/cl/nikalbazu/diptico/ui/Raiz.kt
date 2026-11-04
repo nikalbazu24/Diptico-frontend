@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import cl.nikalbazu.diptico.estado.Estado
 
 /**
@@ -38,9 +42,11 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             (rol == Rol.UNICA || rol == (if (e.intercambiar) Rol.INFERIOR else Rol.SUPERIOR))
         val centroAqui = e.panel == Panel.CENTRO && arribaFisica
         // Desenfoque detrás de lo que se abre encima: el centro de control, la bienvenida, el reloj grande o la continuación.
-        val encima = centroAqui || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
+        val encima = centroAqui || e.dialogo != null || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
         val desenfoque by animateDpAsState(if (encima && Estilo.efectosCompletos) 18.dp else 0.dp, tween(300), label = "desenfoque")
-        Box(Modifier.fillMaxSize()) {
+        // Deslizar hacia abajo desde el borde de arriba: por la izquierda, notificaciones; por la derecha, ajustes rápidos.
+        val libre by androidx.compose.runtime.rememberUpdatedState(e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro)
+        Box(Modifier.fillMaxSize().cortinaDesdeArriba { libre }) {
             Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
                 when {
                     !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
@@ -90,9 +96,35 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 visible = e.continuacion > 0L && sc != null && !sc.dosPantallas && miPantalla != sc.displayId && e.datos[sc.clave]?.lupa != true,
                 enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.94f), exit = fadeOut(tween(400)),
             ) { Continuacion(e) }
+            // Ventana de pregunta (reporte de fallas, desinstalar…): en la pantalla del estante, encima de todo.
+            if (delEstante && e.dialogo != null) VentanaDialogo(e)
             // En modo una pantalla, la de abajo no muestra la animación.
             val sinIntro = rol == Rol.INFERIOR && rolIntro == Rol.INFERIOR && e.unaPantalla
             if (e.intro && !sinIntro) Intro(rolIntro)
         }
     }
 }
+
+/**
+ * Detecta un deslizamiento hacia abajo que empieza en el borde de arriba (sin quitarle los toques a lo de abajo):
+ * desde la mitad izquierda abre las notificaciones; desde la derecha, los ajustes rápidos.
+ */
+private fun Modifier.cortinaDesdeArriba(puede: () -> Boolean): Modifier = this.then(
+    Modifier.pointerInput(Unit) {
+        awaitEachGesture {
+            val inicio = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            if (!puede() || inicio.position.y > 44.dp.toPx()) return@awaitEachGesture
+            val izquierda = inicio.position.x < size.width / 2f
+            while (true) {
+                val ev = awaitPointerEvent(PointerEventPass.Initial)
+                val c = ev.changes.firstOrNull { it.id == inicio.id } ?: break
+                if (!c.pressed) break
+                if (c.position.y - inicio.position.y > 56.dp.toPx()) {
+                    c.consume()
+                    cl.nikalbazu.diptico.estado.Diptico.abrirCentro(if (izquierda) "avisos" else "ajustes")
+                    break
+                }
+            }
+        }
+    },
+)

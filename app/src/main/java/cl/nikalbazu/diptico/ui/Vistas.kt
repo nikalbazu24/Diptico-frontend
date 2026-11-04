@@ -3,6 +3,10 @@ package cl.nikalbazu.diptico.ui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -388,8 +392,9 @@ private fun Mosaico(o: cl.nikalbazu.diptico.estado.Opcion, activo: Boolean, modi
 // ---------- Centro de control ----------
 
 /**
- * Centro de control: una cortina translúcida que baja desde arriba sobre lo de atrás difuminado.
- * Accesos de Android, las apps de la consola (AYN/Odin/Thor), tu música y tus notificaciones.
+ * La cortina de arriba, separada como en los teléfonos Samsung o Xiaomi: bajando por la izquierda, tus
+ * notificaciones; por la derecha, los ajustes rápidos (Wi-Fi, Bluetooth, brillo, turbo, apps de la consola).
+ * Arriba, dos pestañas para pasar de una a otra (L1/R1 o tocándolas). Baja con un rebote suave.
  */
 @Composable
 fun PanelCentro(e: Estado) {
@@ -397,8 +402,8 @@ fun PanelCentro(e: Estado) {
     val esc = LocalEscala.current
     val avisos by Avisos.lista.collectAsState()
     val acciones = remember(e.centroVersion, e.turbo) { Diptico.opcionesCentro() }
+    val esAvisos = e.cortina == "avisos"
     val bajar = remember { Animatable(-1f) }
-    // Baja con un rebote suave, como una cortina elástica.
     LaunchedEffect(Unit) { bajar.animateTo(0f, spring(dampingRatio = 0.55f, stiffness = 260f)) }
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { Diptico.cerrarPanel() }) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -415,82 +420,142 @@ fun PanelCentro(e: Estado) {
                     Texto(rememberHora(), 24f)
                     Spacer(Modifier.width(esc.d(10)))
                     Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM"), 13.5f, lineas = 1, modifier = Modifier.weight(1f))
-                    IconoDiptico(Icono.CAMPANA, p.tinta, 20f, acento = Coral)
-                    Spacer(Modifier.width(esc.d(6)))
-                    Texto(if (avisos.isEmpty()) "Sin avisos" else "${avisos.size}", 13f, color = p.tenue)
                 }
                 Spacer(Modifier.height(esc.d(8)))
-                // Accesos en grilla
-                val filas = acciones.chunked(Diptico.COLUMNAS_CENTRO)
-                Column(verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                    filas.forEachIndexed { f, fila ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                            for (c in 0 until Diptico.COLUMNAS_CENTRO) {
-                                val i = f * Diptico.COLUMNAS_CENTRO + c
-                                val o = fila.getOrNull(c)
-                                if (o == null) { Spacer(Modifier.weight(1f)); continue }
-                                // Cada acceso cae con su propio rebote, uno tras otro.
-                                val rebote = remember { Animatable(0f) }
-                                LaunchedEffect(Unit) {
-                                    kotlinx.coroutines.delay(90L + i * 35L)
-                                    rebote.animateTo(1f, spring(dampingRatio = 0.42f, stiffness = 380f))
-                                }
-                                AccesoCentro(
-                                    o, i == e.indice,
-                                    Modifier.weight(1f).graphicsLayer {
-                                        val r = rebote.value
-                                        alpha = r.coerceIn(0f, 1f)
-                                        translationY = (1f - r) * -60f * density
-                                        scaleX = 0.7f + 0.3f * r; scaleY = 0.7f + 0.3f * r
-                                    },
-                                ) { Diptico.elegirIndice(i) }
-                            }
-                        }
-                    }
+                // Las dos cortinas: notificaciones a la izquierda, ajustes a la derecha (igual que de dónde se bajan).
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = 0.6f)).padding(esc.d(4)),
+                    horizontalArrangement = Arrangement.spacedBy(esc.d(4)),
+                ) {
+                    PestanaCortina(
+                        "Notificaciones" + if (avisos.isNotEmpty()) " · ${avisos.size}" else "", Icono.CAMPANA, esAvisos, Modifier.weight(1f),
+                    ) { Diptico.cambiarCortina("avisos") }
+                    PestanaCortina("Ajustes rápidos", Icono.AJUSTES, !esAvisos, Modifier.weight(1f)) { Diptico.cambiarCortina("ajustes") }
                 }
                 Spacer(Modifier.height(esc.d(10)))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Etiqueta("Notificaciones", p.tenue, 12f, Modifier.weight(1f))
-                    if (avisos.isNotEmpty()) {
-                        Box(Modifier.clip(RoundedCornerShape(50)).clickable { Avisos.descartarTodas() }.padding(horizontal = esc.d(8), vertical = esc.d(3))) {
-                            Texto("Borrar todas", 12.5f, color = Coral)
-                        }
-                    }
-                }
-                Spacer(Modifier.height(esc.d(4)))
-                if (!cl.nikalbazu.diptico.audio.Medios.tienePermiso(androidx.compose.ui.platform.LocalContext.current)) {
-                    Detalle("Para ver tus notificaciones aquí, activa el permiso en Menú › Consola.", 14f)
-                } else if (avisos.isEmpty()) {
-                    Detalle("No tienes notificaciones.", 14f)
-                }
-                val lista = rememberLazyListState()
-                LaunchedEffect(e.indice) { if (e.indice >= acciones.size) lista.animateScrollToItem((e.indice - acciones.size - 1).coerceAtLeast(0)) }
-                LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                    itemsIndexed(avisos, key = { _, a -> a.clave }) { k, a ->
-                        val activo = e.indice == acciones.size + k
-                        Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(if (activo) Uva else p.superficie.copy(alpha = 0.7f))
-                                .clickable { Diptico.abrirAviso(a) }.padding(esc.d(10)),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            IconoApp(a.paquete, 34f)
-                            Spacer(Modifier.width(esc.d(10)))
-                            Column(Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Texto(a.app, 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.weight(1f))
-                                    Texto(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(a.tiempo)), 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue)
-                                }
-                                if (a.titulo.isNotBlank()) Texto(a.titulo, 14.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
-                                if (a.texto.isNotBlank()) Texto(a.texto, 13f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.Bold, lineas = 2)
-                            }
-                        }
-                    }
+                androidx.compose.animation.AnimatedContent(
+                    targetState = esAvisos,
+                    transitionSpec = {
+                        val d = if (targetState) -1 else 1
+                        (fadeIn(tween(220)) + androidx.compose.animation.slideInHorizontally(tween(260)) { it / 6 * d }) togetherWith
+                            (fadeOut(tween(160)) + androidx.compose.animation.slideOutHorizontally(tween(200)) { -it / 6 * d })
+                    },
+                    modifier = Modifier.weight(1f),
+                    label = "cortina",
+                ) { avisosAqui ->
+                    if (avisosAqui) ListaAvisos(e, avisos) else GrillaAjustes(e, acciones)
                 }
                 Spacer(Modifier.height(esc.d(4)))
                 // La manija de la cortina
                 Box(Modifier.align(Alignment.CenterHorizontally).size(esc.d(46), esc.d(5)).clip(RoundedCornerShape(50)).background(p.tenue.copy(alpha = 0.5f)))
                 Spacer(Modifier.height(esc.d(4)))
-                Pistas("A" to "Abrir", "X" to "Descartar", "Y" to "Borrar todas", "B" to "Cerrar")
+                if (esAvisos) Pistas("A" to "Abrir", "X" to "Descartar", "Y" to "Borrar todas", "R1" to "Ajustes", "B" to "Cerrar")
+                else Pistas("A" to "Usar", "L1" to "Notificaciones", "B" to "Cerrar")
+            }
+        }
+    }
+}
+
+/** Una de las dos pestañas de la cortina. */
+@Composable
+private fun PestanaCortina(texto: String, icono: Icono, activa: Boolean, modifier: Modifier, alPulsar: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val fondo by animateColorAsState(if (activa) Uva else Color.Transparent, tween(220), label = "pestana")
+    Row(
+        modifier.clip(RoundedCornerShape(50)).background(fondo).clickable { alPulsar() }.padding(vertical = esc.d(8)),
+        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconoDiptico(icono, if (activa) SobreUva else p.tinta, 16f, acento = if (activa) SobreUva else Coral)
+        Spacer(Modifier.width(esc.d(6)))
+        Texto(texto, 13f, color = if (activa) SobreUva else p.tinta, lineas = 1)
+    }
+}
+
+/** Los ajustes rápidos en grilla: cada uno cae con su propio rebote, uno tras otro. */
+@Composable
+private fun GrillaAjustes(e: Estado, acciones: List<Opcion>) {
+    val esc = LocalEscala.current
+    val filas = acciones.chunked(Diptico.COLUMNAS_CENTRO)
+    val estado = rememberLazyListState()
+    LaunchedEffect(e.indice) { estado.animateScrollToItem((e.indice / Diptico.COLUMNAS_CENTRO - 1).coerceAtLeast(0)) }
+    LazyColumn(state = estado, verticalArrangement = Arrangement.spacedBy(esc.d(6)), modifier = Modifier.fillMaxSize()) {
+        itemsIndexed(filas) { f, fila ->
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                for (c in 0 until Diptico.COLUMNAS_CENTRO) {
+                    val i = f * Diptico.COLUMNAS_CENTRO + c
+                    val o = fila.getOrNull(c)
+                    if (o == null) { Spacer(Modifier.weight(1f)); continue }
+                    val rebote = remember { Animatable(0f) }
+                    LaunchedEffect(Unit) {
+                        kotlinx.coroutines.delay(60L + i * 25L)
+                        rebote.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 420f))
+                    }
+                    AccesoCentro(
+                        o, i == e.indice,
+                        Modifier.weight(1f).graphicsLayer {
+                            val r = rebote.value
+                            alpha = r.coerceIn(0f, 1f)
+                            translationY = (1f - r) * -40f * density
+                            scaleX = 0.8f + 0.2f * r; scaleY = 0.8f + 0.2f * r
+                        },
+                    ) { Diptico.elegirIndice(i) }
+                }
+            }
+        }
+    }
+}
+
+/** Tus notificaciones, a pantalla completa de la cortina. */
+@Composable
+private fun ListaAvisos(e: Estado, avisos: List<cl.nikalbazu.diptico.audio.Aviso>) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Column(Modifier.fillMaxSize()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Etiqueta(if (avisos.isEmpty()) "Notificaciones" else "${avisos.size} notificaciones", p.tenue, 12f, Modifier.weight(1f))
+            if (avisos.isNotEmpty()) {
+                Box(Modifier.clip(RoundedCornerShape(50)).clickable { Avisos.descartarTodas() }.padding(horizontal = esc.d(8), vertical = esc.d(3))) {
+                    Texto("Borrar todas", 12.5f, color = Coral)
+                }
+            }
+        }
+        Spacer(Modifier.height(esc.d(6)))
+        if (!cl.nikalbazu.diptico.audio.Medios.tienePermiso(androidx.compose.ui.platform.LocalContext.current)) {
+            Detalle("Para ver tus notificaciones aquí, activa el permiso en Menú › Consola.", 14f)
+            return
+        }
+        if (avisos.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconoDiptico(Icono.CAMPANA, p.tenue, 34f, acento = p.tenue)
+                    Spacer(Modifier.height(esc.d(8)))
+                    Detalle("Todo al día: no tienes notificaciones.", 14f)
+                }
+            }
+            return
+        }
+        val lista = rememberLazyListState()
+        LaunchedEffect(e.indice) { lista.animateScrollToItem((e.indice - 1).coerceAtLeast(0)) }
+        LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+            itemsIndexed(avisos, key = { _, a -> a.clave }) { k, a ->
+                val activo = e.indice == k
+                Row(
+                    Modifier.fillMaxWidth().animateItem().clip(RoundedCornerShape(esc.d(16))).background(if (activo) Uva else p.superficie.copy(alpha = 0.7f))
+                        .clickable { Diptico.abrirAviso(a) }.padding(esc.d(10)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconoApp(a.paquete, 34f)
+                    Spacer(Modifier.width(esc.d(10)))
+                    Column(Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Texto(a.app, 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.weight(1f))
+                            Texto(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(a.tiempo)), 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue)
+                        }
+                        if (a.titulo.isNotBlank()) Texto(a.titulo, 14.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
+                        if (a.texto.isNotBlank()) Texto(a.texto, 13f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.Bold, lineas = 2)
+                    }
+                }
             }
         }
     }

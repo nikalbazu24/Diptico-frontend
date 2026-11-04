@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -235,11 +236,11 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
     val esc = LocalEscala.current
     val fondo by animateColorAsState(if (activa) p.superficie else p.superficie.copy(alpha = 0.45f), label = "fila")
     Row(
-        Modifier.fillMaxWidth().height(esc.d(54)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
+        Modifier.fillMaxWidth().heightIn(min = esc.d(54)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
             .then(if (activa) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(16))) else Modifier)
             .clickable { alPulsar() }
             .graphicsLayer { alpha = if (o.apagada) 0.5f else 1f }
-            .padding(horizontal = esc.d(12)),
+            .padding(horizontal = esc.d(12), vertical = esc.d(6)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         o.icono?.let {
@@ -248,7 +249,10 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
             }
             Spacer(Modifier.width(esc.d(12)))
         }
-        Texto(o.titulo, 15.5f, lineas = 1, modifier = Modifier.weight(1f))
+        // El título nunca se corta: si es largo, usa dos líneas y una letra un poco más chica.
+        val largo = o.titulo.length > 20
+        Texto(o.titulo, if (largo) 14.5f else 15.5f, lineas = 2, interlineado = if (largo) 16.5f else 18f, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(esc.d(8)))
         when {
             esInterruptor(o) -> {
                 val si = o.valor == "Sí"
@@ -260,7 +264,7 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
             o.valor.isNotEmpty() -> Box(
                 Modifier.clip(RoundedCornerShape(50)).background(if (activa) color.copy(alpha = 0.22f) else p.fondo2.copy(alpha = 0.6f))
                     .padding(horizontal = esc.d(10), vertical = esc.d(4)),
-            ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = esc.d(if (conAyudaAngosta) 110f else 170f))) }
+            ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = esc.d(if (conAyudaAngosta || largo) 104f else 160f))) }
             else -> Texto("›", 20f, color = p.tenue)
         }
     }

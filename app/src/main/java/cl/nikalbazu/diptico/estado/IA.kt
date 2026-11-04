@@ -14,7 +14,7 @@ data class Llave(val proveedor: String, val clave: String)
  */
 object IA {
     /** Proveedores en la nube, en el orden en que se ofrecen. */
-    val PROVEEDORES = listOf("gemini", "openai", "claude")
+    val PROVEEDORES = listOf("gemini", "openai")
 
     fun nombre(p: String) = when (p) {
         "gemini" -> "Gemini"; "openai" -> "ChatGPT"; "claude" -> "Claude"; else -> p

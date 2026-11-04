@@ -53,6 +53,9 @@ Díptico is in **open beta**. It was built on an AYN Thor, and now it needs more
 
 **Also inside:**
 
+- 🕹️ **Fan games** (RPG Maker XP/VX/VX Ace, like Pokémon Essentials games) open straight away with [Essentia](https://github.com/Nikalbazu24/essentia).
+- 🔔 **Notifications and quick settings, apart**: swipe down from the top left for notifications, from the top right for quick settings.
+- ☁️ **Google Drive backup** of your settings, collections, playtime and notes, updated daily.
 - 🤖 **Bisa**, a built-in helper you can talk to: what to play, how to beat a part, or change a setting for you. Works offline, or with your own Gemini or ChatGPT key.
 - 🖼️ **Covers, art and logos** from libretro, SteamGridDB, ScreenScraper, IGDB, TheGamesDB and RAWG (you bring your own free accounts).
 - 🏆 **RetroAchievements** in each game's page.

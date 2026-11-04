@@ -1055,6 +1055,68 @@ class Capturas {
 
     @Test fun r12_recorrido() = foto("readme_12_tour", base().copy(idioma = "en", novedades = 2, recorrido = true), Rol.SUPERIOR)
 
+    // ---------- 1.0 beta.7 ----------
+
+    private val fanGames = listOf(
+        juego("pa", "rpgmaker", "Pokémon Añil").copy(archivo = "Pokemon Anil", esCarpeta = true),
+        juego("pz", "rpgmaker", "Pokémon Zeta").copy(archivo = "Pokemon Zeta", esCarpeta = true),
+        juego("ri", "rpgmaker", "Relatos de Invierno").copy(archivo = "Relatos.essentia"),
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t232_rpgmaker_estante() = foto("232_rpgmaker_estante", base().copy(juegos = juegos + fanGames, consolaSel = "rpgmaker", juegoSel = "rpgmaker/pa"), Rol.INFERIOR)
+
+    @Test fun t233_rpgmaker_arriba() = foto("233_rpgmaker_arriba", base().copy(juegos = juegos + fanGames, consolaSel = "rpgmaker", juegoSel = "rpgmaker/pa"), Rol.SUPERIOR)
+
+    private val dialogoBorrar = cl.nikalbazu.diptico.estado.Dialogo(
+        "desinstalar-1", "¿Desinstalar Bahía Neón?",
+        "Se borrará de tu consola y liberar 612 MB. También sus imágenes, notas y notas de voz de Díptico. Tus partidas guardadas del emulador se conservan.",
+        cl.nikalbazu.diptico.estado.Icono.BORRAR, lineas = listOf("Bahía Neón.cue", "Bahía Neón (Track 1).bin", "Bahía Neón (Track 2).bin"), si = "Seguir", no = "Cancelar", peligro = true,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t234_desinstalar_1() = foto("234_desinstalar_paso1", base().copy(dialogo = dialogoBorrar), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t235_desinstalar_2() = foto(
+        "235_desinstalar_mantener",
+        base().copy(dialogo = dialogoBorrar.copy(id = "desinstalar-2", titulo = "Última confirmación", texto = "Mantén A hasta que se llene la barra para borrar Bahía Neón. Esto no se puede deshacer.", lineas = emptyList(), si = "Borrar", mantener = true), dialogoMantener = 1L),
+        Rol.INFERIOR,
+    )
+
+    @Config(qualifiers = ABAJO)
+    @Test fun t236_reporte_falla() = foto(
+        "236_reporte_falla",
+        base().copy(dialogo = cl.nikalbazu.diptico.estado.Dialogo("falla", "Díptico se cerró de golpe", "La última vez Díptico se cerró solo. ¿Mandas el reporte? Se abre una página de GitHub con el informe listo (versión, equipo y el error, sin datos personales): solo cuenta qué estabas haciendo y envíalo.", cl.nikalbazu.diptico.estado.Icono.INFO, si = "Enviar reporte", no = "Ahora no")),
+        Rol.INFERIOR,
+    )
+
+    @Test fun t237_cortina_ajustes() = foto("237_cortina_ajustes", base().copy(panel = Panel.CENTRO, cortina = "ajustes", indice = 1), Rol.SUPERIOR)
+
+    @Test fun t238_cortina_avisos() = foto("238_cortina_notificaciones", base().copy(panel = Panel.CENTRO, cortina = "avisos"), Rol.SUPERIOR)
+
+    @Config(qualifiers = MUESTRA_ALTA)
+    @Test fun t239_menu_acerca() = foto(
+        "239_menu_acerca_respaldo", base().copy(panel = Panel.MENU, seccion = Seccion.SISTEMA, enOpciones = true, indice = 0, respaldoNombre = "Diptico-respaldo-2026-11-03.zip", respaldoUltimo = 1L),
+        Rol.SUPERIOR,
+    )
+
+    @Config(qualifiers = MUESTRA_ALTA)
+    @Test fun t240_menu_inicio() = foto("240_menu_inicio_al_abrir", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 0, arranque = "ultimo"), Rol.SUPERIOR)
+
+    @Test fun t241_novedades_b7() = foto("241_novedades_beta7", base().copy(novedades = 1, novedadesDesde = "1.0-beta.6"), Rol.SUPERIOR)
+
+    @Test fun t242_atajos() = foto(
+        "242_widgets_accesos_directos",
+        base().copy(inicio = "widgets", widgets = listOf(
+            cl.nikalbazu.diptico.estado.Widget("atajo-snes/1", 0, 0, 2, 2, variante = 0),
+            cl.nikalbazu.diptico.estado.Widget("atajo-gba/2", 2, 0, 2, 2, variante = 1),
+            cl.nikalbazu.diptico.estado.Widget("atajo-psx/3", 4, 0, 2, 2, variante = 2),
+            cl.nikalbazu.diptico.estado.Widget("reloj", 0, 2, 3, 2),
+        )),
+        Rol.SUPERIOR,
+    )
+
     @Test fun t95_tema_mis_colores() = foto(
         "95_interfaz_con_mis_colores", base(), Rol.SUPERIOR,
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),

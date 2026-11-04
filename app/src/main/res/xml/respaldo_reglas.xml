@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copia de seguridad de Android (hasta Android 11): solo los ajustes y las notas de voz.
+     Las imágenes descargadas y la IA local (1,6 GB) no van: se vuelven a bajar. -->
+<full-backup-content>
+    <include domain="sharedpref" path="diptico.xml" />
+    <include domain="file" path="notas/" />
+</full-backup-content>
