@@ -5,7 +5,7 @@
 **A dual-screen Android frontend for retro handhelds.**
 Top screen shows off your game. Bottom screen is where you pick it.
 
-[**⬇ Download the beta**](https://github.com/Nikalbazu24/diptico-frontend/releases/latest) · [**🎮 Become a tester**](https://github.com/Nikalbazu24/diptico-frontend/issues/new?template=2-tester.yml) · [**🐞 Report a bug**](https://github.com/Nikalbazu24/diptico-frontend/issues/new?template=1-bug.yml) · [Español](README.es.md)
+[**⬇ Download the beta**](https://github.com/Nikalbazu24/diptico-frontend/releases) · [**🎮 Become a tester**](https://github.com/Nikalbazu24/diptico-frontend/issues/new?template=2-tester.yml) · [**🐞 Report a bug**](https://github.com/Nikalbazu24/diptico-frontend/issues/new?template=1-bug.yml) · [Español](README.es.md)
 
 <img src="docs/img/hero.png" alt="Díptico on a dual-screen handheld: the game's art and logo on top, the shelf of games below" width="720">
 
@@ -66,7 +66,7 @@ Díptico is in **open beta**. It was built on an AYN Thor, and now it needs more
 
 ## 📥 Install
 
-1. Open [**Releases**](https://github.com/Nikalbazu24/diptico-frontend/releases/latest) on your device.
+1. Open [**Releases**](https://github.com/Nikalbazu24/diptico-frontend/releases) on your device.
 2. Download the APK that fits:
    - **Consoles** (AYN Thor, Odin, Retroid…): `Diptico-v1.0-beta.N.apk`
    - **Phones**: `Diptico-v1.0-beta.N-movil.apk`. It skips the notification access that makes Google Play Protect block the full version.
@@ -96,3 +96,4 @@ Kotlin + Jetpack Compose. Every push to `main` builds the APKs with GitHub Actio
 - Game history from Wikipedia.
 
 Made in Chile 🇨🇱 by [@Nikalbazu24](https://github.com/Nikalbazu24).
+

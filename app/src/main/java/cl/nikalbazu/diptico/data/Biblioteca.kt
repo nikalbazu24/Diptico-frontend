@@ -118,8 +118,7 @@ object Biblioteca {
                 }
             }
 
-            val nombres = hijos.filter { !it.esCarpeta }.map { it.nombre.lowercase() }
-            val hayIndices = nombres.any { it.endsWith(".cue") || it.endsWith(".m3u") }
+            val pistas = pistasReferenciadas(ctx, arbol, hijos)
 
             for (f in hijos) {
                 // Fan games de RPG Maker: la carpeta es un juego solo si trae Game.ini (o Game.exe / mkxp.json).
@@ -150,8 +149,8 @@ object Biblioteca {
                 }
                 val ext = f.nombre.substringAfterLast('.', "").lowercase()
                 if (ext !in consola.extensiones) continue
-                // Los .bin de un juego con .cue son pistas: se muestra solo el .cue.
-                if (hayIndices && (ext == "bin" || ext == "img") && "cue" in consola.extensiones) continue
+                // Solo se ocultan archivos que un índice de esta carpeta menciona por nombre.
+                if (ext in setOf("bin", "img") && f.nombre.lowercase(java.util.Locale.ROOT) in pistas) continue
                 if (f.nombre.startsWith(".")) continue
                 val base = f.nombre.substringBeforeLast('.')
                 juegos += Juego(
@@ -167,6 +166,20 @@ object Biblioteca {
             }
         }
         return sinDuplicados(juegos).sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
+    }
+
+    private fun pistasReferenciadas(ctx: Context, arbol: Uri, hijos: List<Doc>): Set<String> {
+        if (hijos.none { !it.esCarpeta && it.nombre.substringAfterLast('.', "").lowercase() in setOf("bin", "img") }) return emptySet()
+        return buildSet {
+            for (doc in hijos) {
+                val ext = doc.nombre.substringAfterLast('.', "").lowercase(java.util.Locale.ROOT)
+                if (doc.esCarpeta || ext !in setOf("cue", "m3u", "gdi")) continue
+                val uri = DocumentsContract.buildDocumentUriUsingTree(arbol, doc.id)
+                val texto = try { ctx.contentResolver.openInputStream(uri)?.use(IndicesJuego::leer) }
+                catch (_: Exception) { null } ?: continue
+                addAll(IndicesJuego.referencias(texto, ext).map { it.lowercase(java.util.Locale.ROOT) })
+            }
+        }
     }
 
     private val ARCHIVOS_RPGMAKER = setOf("game.ini", "game.exe", "mkxp.json")
@@ -293,3 +306,4 @@ object Biblioteca {
             .values.map { grupo -> grupo.minWith(compareBy<Juego>({ formato(it) }, { region(it.archivo) }, { it.archivo.length })) }
     }
 }
+

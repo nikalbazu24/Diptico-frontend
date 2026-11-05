@@ -694,7 +694,7 @@ object Diptico {
     private var crudos: List<Juego> = emptyList()
     private var medios: Map<String, MediosJuego> = emptyMap()
 
-    const val VERSION = "1.0 beta"
+    val VERSION: String = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.substringBefore("-beta.") + " beta"
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -1167,7 +1167,7 @@ object Diptico {
                 val n = withContext(Dispatchers.IO) {
                     try { app.contentResolver.openInputStream(uri)?.use { Respaldo.restaurar(app, it) } ?: -1 } catch (_: Exception) { -1 }
                 }
-                if (n < 0) { avisar("Ese archivo no es un respaldo de Díptico"); return@launch }
+                if (n < 0) { avisar("No pude validar o restaurar el respaldo de Díptico"); return@launch }
                 avisar("Respaldo recuperado: Díptico se reinicia")
                 delay(1500)
                 reiniciarDiptico()
@@ -1787,7 +1787,29 @@ object Diptico {
 
     // ---------- Jugar ----------
 
+    private var revisarLanzamiento: Job? = null
+
     fun jugar(pantalla: String? = null, conLupaLista: Boolean = false, conRetomaLista: Boolean = false) {
+        val juego = estado.value.seleccionado ?: return
+        if (revisarLanzamiento?.isActive == true) return
+        if (juego.uri.scheme != "content") {
+            jugarComprobado(pantalla, conLupaLista, conRetomaLista)
+            return
+        }
+        revisarLanzamiento = scope.launch {
+            val problema = withContext(Dispatchers.IO) { Lanzador.revisarArchivo(app, juego) }
+            if (estado.value.seleccionado?.clave != juego.clave) return@launch
+            if (problema == null) jugarComprobado(pantalla, conLupaLista, conRetomaLista)
+            else {
+                if (conLupaLista) cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
+                if (conRetomaLista) cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
+                mostrarDialogo(Dialogo("archivo-no-accesible", "No se pudo abrir ${juego.titulo}", problema,
+                    Icono.CARPETA, si = "Revisar carpetas", no = "Cerrar")) { abrirCarpetas() }
+            }
+        }
+    }
+
+    private fun jugarComprobado(pantalla: String?, conLupaLista: Boolean, conRetomaLista: Boolean) {
         val e = estado.value
         val juego = e.seleccionado ?: return
         val consola = Consolas.porId(juego.consolaId) ?: return
@@ -1808,7 +1830,11 @@ object Diptico {
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
         else Lanzador.lanzar(app, juego, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(juego))
         if (error != null) {
-            avisar(error)
+            if (conLupaLista) cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
+            if (conRetomaLista) cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
+            if (juego.uri.scheme == "app") avisar(error)
+            else mostrarDialogo(Dialogo("lanzamiento-fallido", "No se pudo abrir ${juego.titulo}", error,
+                Icono.EMULADOR, si = "Emuladores", no = "Cerrar")) { abrirMenu(Seccion.EMULADORES) }
             return
         }
         if (e.turbo) turboAlJugar(juego, displayId)
@@ -2803,13 +2829,10 @@ object Diptico {
             val ext = id.substringAfterLast('.', "").lowercase()
             if (ext !in setOf("cue", "m3u", "gdi")) continue
             val texto = try {
-                cr.openInputStream(DocumentsContract.buildDocumentUriUsingTree(arbol, id))?.use { it.readBytes().take(65_536).toByteArray().toString(Charsets.UTF_8) }
+                cr.openInputStream(DocumentsContract.buildDocumentUriUsingTree(arbol, id))
+                    ?.use(cl.nikalbazu.diptico.data.IndicesJuego::leer)
             } catch (_: Exception) { null } ?: continue
-            val nombres = when (ext) {
-                "cue" -> Regex("FILE\\s+\"([^\"]+)\"", RegexOption.IGNORE_CASE).findAll(texto).map { it.groupValues[1] }.toList()
-                "gdi" -> texto.lineSequence().drop(1).mapNotNull { l -> Regex("^\\s*\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+(\"[^\"]+\"|\\S+)").find(l)?.groupValues?.get(1)?.removeSurrounding("\"") }.toList()
-                else -> texto.lineSequence().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }.toList()
-            }
+            val nombres = cl.nikalbazu.diptico.data.IndicesJuego.referencias(texto, ext)
             for (n in nombres) {
                 // Solo archivos de la misma carpeta (o subcarpetas): nunca rutas hacia arriba.
                 if (n.contains("..") || n.startsWith("/")) continue
