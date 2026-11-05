@@ -703,6 +703,16 @@ object Diptico {
     private var descargaJob: Job? = null
     private var introInicio = 0L
     private var crudos: List<Juego> = emptyList()
+    private var accesosAndroid: Map<Uri, String> = emptyMap()
+
+    private fun esAccesoAndroid(j: Juego): Boolean =
+        j.uri.scheme != "app" && Consolas.porId(j.consolaId)?.comandos?.any { it.abreApp } == true
+
+    private suspend fun leerAccesosAndroid(juegos: List<Juego>): Map<Uri, String> = withContext(Dispatchers.IO) {
+        juegos.filter(::esAccesoAndroid).mapNotNull { j ->
+            Lanzador.paqueteDeAcceso(app, j.uri)?.let { j.uri to it }
+        }.toMap()
+    }
     private var medios: Map<String, MediosJuego> = emptyMap()
 
     val VERSION: String = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.substringBefore("-beta.") + " beta"
@@ -876,9 +886,14 @@ object Diptico {
         vigilarUniverso()
         aplicarTema()
         publicarJuegos()
+        vigilarAppsInstaladas()
         Medios.revisar(app)
         if (almacen.android == null) detectarAndroid(silencioso = true)
         if (carpeta != null) escanear()
+        else if (crudos.any(::esAccesoAndroid)) scope.launch {
+            accesosAndroid = leerAccesosAndroid(crudos)
+            publicarJuegos()
+        }
         // La música sigue al estado: suena con Díptico a la vista y sin juego abierto.
         scope.launch {
             estado.map { e ->
@@ -1364,6 +1379,7 @@ object Diptico {
                 }.distinctBy { it.clave }.sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
             }.takeIf { fallas < carpetas.size }
             if (fallas > 0) avisar(if (lista == null) "No pude leer tus carpetas de juegos. Elígelas otra vez." else "No pude leer $fallas de tus carpetas")
+            accesosAndroid = leerAccesosAndroid(lista ?: crudos)
             if (lista != null) {
                 crudos = lista
                 withContext(Dispatchers.IO) { almacen.guardarBiblioteca(lista) }
@@ -1372,6 +1388,7 @@ object Diptico {
                 bajarIconosFaltantes()
                 identificarNombres()
             } else {
+                publicarJuegos()
                 actualizar { it.copy(escaneando = false) }
             }
             terminarTrabajo("escaneo")
@@ -1379,14 +1396,41 @@ object Diptico {
     }
 
     /** Los ports elegidos, como juegos de la consola "Ports". */
-    private fun juegosApps(lista: List<String>, consola: String): List<Juego> = lista.mapNotNull { pkg ->
+    private fun juegosApps(lista: List<String>, consola: String): List<Juego> = lista.distinct().mapNotNull { pkg ->
+        if (!Lanzador.appDisponible(app, pkg)) return@mapNotNull null
         val nombre = Lanzador.nombreApp(app, pkg) ?: return@mapNotNull null
         val icono = Uri.parse("app://$pkg")
         Juego("$consola/$pkg", consola, nombre, pkg, icono, pkg, portada = icono)
     }.sortedBy { it.titulo.lowercase() }
 
-    internal fun todosCrudos(): List<Juego> =
-        crudos + juegosApps(estado.value.ports, Consolas.PORTS) + juegosApps(estado.value.android, Consolas.ANDROID) + juegosDePC()
+    internal fun todosCrudos(): List<Juego> {
+        val paquetes = mutableSetOf<String>()
+        val archivos = crudos.distinctBy { it.uri }.filter { j ->
+            if (!esAccesoAndroid(j)) true
+            else accesosAndroid[j.uri]?.let { Lanzador.appDisponible(app, it) && paquetes.add(it) } == true
+        }
+        val e = estado.value
+        val ports = juegosApps(e.ports.filterNot { it in paquetes }, Consolas.PORTS)
+        paquetes.addAll(ports.map { it.archivo })
+        val android = juegosApps(e.android.filterNot { it in paquetes }, Consolas.ANDROID)
+        return (archivos + ports + android + juegosDePC()).distinctBy { it.clave }
+    }
+
+    private fun vigilarAppsInstaladas() {
+        val filtro = android.content.IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addDataScheme("package")
+        }
+        androidx.core.content.ContextCompat.registerReceiver(app, object : android.content.BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == Intent.ACTION_PACKAGE_REMOVED && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+                publicarJuegos()
+                if (estado.value.panel == Panel.APPS) cargarApps()
+            }
+        }, filtro, androidx.core.content.ContextCompat.RECEIVER_EXPORTED)
+    }
 
     /** Junta lo escaneado, los ports y lo descargado, y lo muestra. */
     internal fun publicarJuegos() {
@@ -2282,6 +2326,7 @@ object Diptico {
     }
 
     fun abrirMenu(seccion: Seccion? = null) {
+        if (estado.value.panel != Panel.MENU) Sonidos.abrir()
         actualizar {
             it.copy(
                 panel = Panel.MENU, seccion = seccion ?: it.seccion,
@@ -7896,8 +7941,8 @@ object Diptico {
 
     fun abrirOpcionesApp(paquete: String) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = paquete, appsMenuIndice = 0, appsMoviendo = null)) }
     fun cerrarOpcionesApp() = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null)) }
-    fun opcionesApp(e: Estado = estado.value): List<Opcion> {
-        val pkg = e.appsMenu ?: return emptyList()
+    fun opcionesApp(e: Estado = estado.value, paquete: String? = e.appsMenu): List<Opcion> {
+        val pkg = paquete ?: return emptyList()
         return listOf(
             Opcion("Abrir", icono = Icono.JUGAR) { cerrarOpcionesApp(); abrirPaquete(pkg) },
             Opcion(if (pkg in e.appsFijadas) "Quitar de fijadas" else "Fijar app", icono = Icono.ESTRELLA) { alternarFijada(pkg); cerrarOpcionesApp() },
@@ -7928,8 +7973,12 @@ object Diptico {
         }
     }
     fun tocarApp(i: Int) {
-        if (estado.value.appsMoviendo != null) { moverAppA(i); cerrarOpcionesApp() }
-        else { actualizar { it.copy(indice = i) }; appsVisibles().getOrNull(i)?.let { abrirPaquete(it.paquete) } }
+        val e = estado.value
+        if (e.appsMoviendo != null) { moverAppA(i); cerrarOpcionesApp() }
+        else {
+            actualizar { it.copy(indice = i) }
+            if (e.unaPantalla || i == e.indice) appsVisibles().getOrNull(i)?.let { abrirPaquete(it.paquete) }
+        }
     }
 
     fun alternarClipRetoma() {
@@ -7990,20 +8039,24 @@ object Diptico {
         scope.launch {
             val lista = withContext(Dispatchers.IO) {
                 try {
-                    val pm = app.packageManager
-                    pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0).mapNotNull { r ->
-                        val paquete = r.activityInfo?.packageName ?: return@mapNotNull null
-                        if (paquete == app.packageName) return@mapNotNull null
-                        val info = r.activityInfo.applicationInfo
-                        @Suppress("DEPRECATION")
-                        val juego = info.category == android.content.pm.ApplicationInfo.CATEGORY_GAME || (info.flags and android.content.pm.ApplicationInfo.FLAG_IS_GAME) != 0
-                        App(paquete, r.loadLabel(pm)?.toString() ?: paquete, juego)
-                    }.distinctBy { it.paquete }.sortedBy { Busqueda.normalizar(it.nombre) }
+                    Lanzador.apps(app).sortedBy { Busqueda.normalizar(it.nombre) }
                 } catch (_: Exception) {
                     emptyList()
                 }
             }
-            actualizar { it.copy(appsTodas = lista, cargandoTodas = false, indice = it.indice.coerceIn(0, (lista.size - 1).coerceAtLeast(0))) }
+            actualizar { e ->
+                val anterior = appsVisibles(e).getOrNull(e.indice)?.paquete
+                val nuevo = e.copy(appsTodas = lista, cargandoTodas = false)
+                if (e.panel != Panel.APPS) nuevo else {
+                    val visibles = appsVisibles(nuevo)
+                    val indice = visibles.indexOfFirst { it.paquete == anterior }.takeIf { it >= 0 }
+                        ?: e.indice.coerceIn(0, visibles.lastIndex.coerceAtLeast(0))
+                    nuevo.copy(indice = indice, navegacion = e.navegacion.copy(
+                        appsMenu = e.appsMenu?.takeIf { p -> lista.any { it.paquete == p } },
+                        appsMoviendo = e.appsMoviendo?.takeIf { p -> lista.any { it.paquete == p } },
+                    ))
+                }
+            }
         }
     }
 

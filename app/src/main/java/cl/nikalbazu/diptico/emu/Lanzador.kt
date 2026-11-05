@@ -129,11 +129,21 @@ object Lanzador {
     }
 
     private fun leerTexto(ctx: Context, uri: Uri): String? = try {
-        ctx.contentResolver.openInputStream(uri)?.use { it.bufferedReader().readText() }
-            ?.lineSequence()?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
+        ctx.contentResolver.openInputStream(uri)?.use { stream ->
+            val lector = stream.bufferedReader()
+            val buffer = CharArray(4096)
+            val leidos = lector.read(buffer)
+            if (leidos <= 0) null else String(buffer, 0, leidos).lineSequence().map(String::trim).firstOrNull(String::isNotEmpty)
+        }
     } catch (e: Exception) {
         null
     }
+
+    internal fun paqueteDeAcceso(ctx: Context, uri: Uri): String? =
+        leerTexto(ctx, uri)?.removePrefix("\uFEFF")?.substringBefore('/')?.trim()?.takeIf { it.isNotEmpty() }
+
+    internal fun appDisponible(ctx: Context, paquete: String): Boolean =
+        ctx.packageManager.getLaunchIntentForPackage(paquete) != null
 
     /** Separa la orden en partes, respetando lo que va entre comillas. */
     private fun partes(linea: String): List<String> {
@@ -270,8 +280,7 @@ object Lanzador {
             when {
                 op != null && op.comando.abreApp -> {
                     // Ports y juegos de Android de ES-DE: el archivo trae adentro el nombre de la app.
-                    val texto = leerTexto(ctx, juego.uri) ?: return "El archivo ${juego.archivo} debe tener adentro el nombre de la app."
-                    val pkg = texto.substringBefore('/').trim()
+                    val pkg = paqueteDeAcceso(ctx, juego.uri) ?: return "El archivo ${juego.archivo} debe tener adentro el nombre de la app."
                     return lanzarApp(ctx, pkg, juego.titulo, displayId)
                 }
                 op != null -> construir(ctx, op, juego, consola, rom, raiz)

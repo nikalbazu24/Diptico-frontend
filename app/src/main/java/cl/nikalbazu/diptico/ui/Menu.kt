@@ -84,8 +84,15 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     conAyudaAngosta = conAyuda && !esc.angosta
+    val entrada = remember { androidx.compose.animation.core.Animatable(if (e.experiencia.movimiento) 0f else 1f) }
+    LaunchedEffect(e.experiencia.movimiento) {
+        if (e.experiencia.movimiento) entrada.animateTo(1f, tween(180)) else entrada.snapTo(1f)
+    }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
-        Row(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxSize().graphicsLayer {
+            alpha = entrada.value
+            translationY = esc.d(8).toPx() * (1f - entrada.value)
+        }) {
             // Con una sola pantalla la columna de secciones es más angosta, para dejar lugar a la vista previa.
             ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta || conAyuda) 156f else 196f)).fillMaxHeight())
             Box(Modifier.fillMaxHeight().width(esc.d(1)).background(p.linea))
