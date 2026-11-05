@@ -3572,6 +3572,7 @@ object Diptico {
     var exportarVisual: ((String) -> Unit)? = null
     var importarVisual: (() -> Unit)? = null
     private var imagenVisual: Pair<String, String>? = null
+    fun cancelarArchivoVisual() { imagenVisual = null }
 
     fun guardarExperiencia(v: Experiencia) {
         almacen.guardarTexto("experiencia", v.json(local = true).toString())
@@ -6114,6 +6115,7 @@ object Diptico {
     private fun pedirImagen(para: String) = pedirArchivoPara(para, "image/*")
 
     private fun pedirArchivoPara(para: String, tipo: String) {
+        imagenVisual = null
         archivoPara = para
         pedirArchivo?.invoke(tipo) ?: avisar("No pude abrir el selector de archivos")
     }

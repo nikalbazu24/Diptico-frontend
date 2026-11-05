@@ -75,7 +75,7 @@ abstract class BaseActivity : ComponentActivity() {
     }
 
     private val elegirArchivo = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) Diptico.archivoElegido(uri)
+        if (uri != null) Diptico.archivoElegido(uri) else Diptico.cancelarArchivoVisual()
     }
 
     // Dictado por voz: Android escucha y devuelve el texto (para Bisa y el teclado).

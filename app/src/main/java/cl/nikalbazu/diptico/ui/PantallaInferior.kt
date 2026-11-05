@@ -426,13 +426,16 @@ private fun EnJuego(e: Estado) {
     val seg = (ahora - s.inicio) / 1000
     val reloj = if (seg >= 3600) "${seg / 3600}:${((seg % 3600) / 60).toString().padStart(2, '0')}:${(seg % 60).toString().padStart(2, '0')}"
     else "${seg / 60}:${(seg % 60).toString().padStart(2, '0')}"
-    val color = juego?.let { colorDe(it.clave) } ?: Uva
+    val color = if (e.experiencia.universo && e.colorUniverso != 0L) Color(e.colorUniverso) else juego?.let { colorDe(it.clave) } ?: Uva
     val bateria = rememberBateria()
     val cargando = rememberCargando()
-    val t = rememberInfiniteTransition(label = "compa")
-    val flotar by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
-    val respirar by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(3400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respirar")
-    val brillo by t.animateFloat(0.18f, 0.42f, infiniteRepeatable(tween(4200), RepeatMode.Reverse), label = "brillo")
+    val (flotar, respirar, brillo) = if (e.despierta && e.experiencia.movimiento && Estilo.efectosCompletos) {
+        val t = rememberInfiniteTransition(label = "compa")
+        val f by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
+        val r by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(3400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respirar")
+        val b by t.animateFloat(0.18f, 0.42f, infiniteRepeatable(tween(4200), RepeatMode.Reverse), label = "brillo")
+        Triple(f, r, b)
+    } else Triple(0f, 1f, .24f)
 
     Box(
         Modifier.fillMaxSize().background(Color(0xFF07060C)).pointerInput(Unit) {
