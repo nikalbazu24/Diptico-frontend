@@ -128,8 +128,18 @@ object Teclas {
             }
             return true
         }
+        val start = KeyEvent.KEYCODE_BUTTON_START
+        if (abajo && ev.repeatCount == 0 && start in presionadas && !startLargo && atajosDisponibles(e)
+            && e.botonesExtra.any { it.conStart && it.tecla == code && code != start && it.accion != "nada" }) {
+            cancelarToque(start)
+            consumidas += start
+            consumidas += code
+            Diptico.botonExtra(code, conStart = true)
+            return true
+        }
+
         // Botones extra (L4, R4…): su acción, fuera de los juegos y del teclado.
-        if (!e.conTeclado && e.panel != Panel.CLAVE && e.panel != Panel.PASO && e.botonesExtra.any { it.tecla == code && it.tecla != 0 && it.accion != "nada" }) {
+        if (!e.conTeclado && e.panel != Panel.CLAVE && e.panel != Panel.PASO && e.botonesExtra.any { !it.conStart && it.tecla == code && it.tecla != 0 && it.accion != "nada" }) {
             if (arriba) Diptico.botonExtra(code)
             return true
         }
@@ -407,7 +417,7 @@ object Teclas {
                 // En Carpetas (una grilla) ↑ ↓ saltan de fila; en Sistemas todo avanza de a uno.
                 dir(code)?.let { (dx, dy) ->
                     if (e.vistaConsolas == "habitacion") { Diptico.moverHabitacion(if (dy != 0) dy * columnasHabitacion else dx); return true }
-                    Diptico.cambiarConsola(if (dy != 0 && e.vistaConsolas == "carpetas") dy * columnasCarpetas else if (dx + dy < 0) -1 else 1); return true }
+                    Diptico.cambiarConsola(if (dy != 0 && e.vistaConsolas in Diptico.VISTAS_CARPETAS) dy * columnasCarpetas else if (dx + dy < 0) -1 else 1); return true }
                 if ((code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) && ev.repeatCount == 0) {
                     if (e.vistaConsolas == "habitacion") Diptico.moverHabitacion(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1) else Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
                 }

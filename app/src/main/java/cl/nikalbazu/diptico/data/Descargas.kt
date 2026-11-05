@@ -67,6 +67,50 @@ object Descargas {
         }
     }
 
+    internal data class ResultadoSteam(val id: Int, val nombre: String)
+
+    internal fun buscarSteam(titulo: String): List<ResultadoSteam> {
+        val consulta = java.net.URLEncoder.encode(titulo, "UTF-8")
+        val datos = texto("https://store.steampowered.com/api/storesearch/?term=$consulta&l=spanish&cc=US")
+            ?: error("Steam no respondió.")
+        val items = org.json.JSONObject(datos).optJSONArray("items") ?: return emptyList()
+        return (0 until items.length()).mapNotNull { i ->
+            val it = items.optJSONObject(i) ?: return@mapNotNull null
+            val id = it.optInt("id")
+            val nombre = it.optString("name")
+            if (id > 0 && nombre.isNotBlank() && it.optString("type") == "app") ResultadoSteam(id, nombre) else null
+        }.take(10)
+    }
+
+    private fun candidatosSteam(juego: Juego, titulo: String, tipo: String): List<ImagenWeb> {
+        if (juego.consolaId !in setOf("steam", "windows", "pc")) return emptyList()
+        val directo = juego.clave.substringAfter("/pc-", "").toIntOrNull()?.takeIf { juego.consolaId == "steam" }
+        val id = directo ?: buscarSteam(titulo).firstOrNull {
+            cl.nikalbazu.diptico.estado.Busqueda.normalizar(it.nombre) == cl.nikalbazu.diptico.estado.Busqueda.normalizar(titulo)
+        }?.id ?: return emptyList()
+        val raiz = "https://cdn.cloudflare.steamstatic.com/steam/apps/$id"
+        val archivos = when (tipo) {
+            "portada" -> listOf("library_600x900.jpg", "header.jpg")
+            "logo" -> listOf("logo.png")
+            else -> listOf("library_hero.jpg", "page_bg_generated_v6b.jpg")
+        }
+        return archivos.mapNotNull { archivo ->
+            val url = "$raiz/$archivo"
+            val c = abrir(url)
+            val disponible = try {
+                c.requestMethod = "HEAD"
+                c.connectTimeout = 4000
+                c.readTimeout = 4000
+                c.responseCode in 200..299 && c.contentType?.startsWith("image/") == true
+            } catch (_: Exception) {
+                false
+            } finally {
+                c.disconnect()
+            }
+            if (disponible) ImagenWeb(url, url, "Steam", "Arte de Steam") else null
+        }
+    }
+
     /** Hay internet (probando con libretro). */
     fun hayInternet(): Boolean = try {
         val c = abrir("$LIBRETRO/")
@@ -406,6 +450,7 @@ object Descargas {
                 else -> lista += wiki.imagenes.filter { it.url != wiki.principal?.url && "logo" !in it.nombre.lowercase() }
             }
         }
+        lista += runCatching { candidatosSteam(juego, titulo, tipo) }.getOrDefault(emptyList())
         return lista.distinctBy { it.url }
     }
 

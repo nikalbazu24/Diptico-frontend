@@ -406,7 +406,11 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier) {
     val sel = ids.indexOf(e.consolaSel).coerceAtLeast(0)
     BoxWithConstraints(modifier) {
         val anchoU = maxWidth.value / esc.factor
-        val cols = when { anchoU > 620f -> 4; anchoU > 300f -> 3; else -> 2 }.also { cl.nikalbazu.diptico.estado.Teclas.columnasCarpetas = it }
+        val cols = when (e.vistaConsolas) {
+            "mosaico" -> if (anchoU > 620f) 5 else if (anchoU > 300f) 3 else 2
+            "vitrina" -> if (anchoU > 560f) 2 else 1
+            else -> if (anchoU > 620f) 4 else if (anchoU > 300f) 3 else 2
+        }.also { cl.nikalbazu.diptico.estado.Teclas.columnasCarpetas = it }
         val grilla = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
         LaunchedEffect(sel) { grilla.mostrar(sel) }
         Column(Modifier.fillMaxSize()) {
@@ -416,7 +420,11 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier) {
                 contentPadding = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10)),
                 verticalArrangement = Arrangement.spacedBy(esc.d(14)), horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
             ) {
-                items(ids.size, key = { ids[it] }) { k -> Carpeta(e, ids[k], k == sel) }
+                items(ids.size, key = { ids[it] }) { k ->
+                    val id = ids[k]
+                    if (e.vistaConsolas == "carpetas") CarpetaBiblioteca(e, id, k == sel)
+                    else CarpetaVisual(e, id, k == sel, amplia = e.vistaConsolas == "vitrina")
+                }
             }
             Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
                 Pistas("✥" to "Carpeta", "A" to "Abrir", "X" to "Personalizar", "Y" to "Al azar")
@@ -426,6 +434,43 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Carpeta(e: Estado, id: String, elegida: Boolean) {
-    CarpetaBiblioteca(e, id, elegida)
+private fun CarpetaVisual(e: Estado, id: String, elegida: Boolean, amplia: Boolean) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val consola = Consolas.porId(id)
+    val color = colorConsola(id)
+    val juegos = remember(e.juegos, e.datos, id) {
+        e.juegos.filter { (id == "todo" || it.consolaId == id) && e.datos[it.clave]?.oculto != true }
+    }
+    val portadas = remember(juegos, amplia) { juegos.sortedBy { it.portada == null }.take(if (amplia) 3 else 1) }
+    val forma = RoundedCornerShape(esc.d(16))
+    Column(
+        Modifier.fillMaxWidth().clip(forma).background(p.superficie)
+            .border(esc.d(if (elegida) 2f else 1f), if (elegida) color else p.linea, forma)
+            .combinedClickable(onLongClick = { if (consola != null) Diptico.abrirEditarConsola(id) }) {
+                Diptico.elegirConsola(id)
+                Diptico.entrarSistema()
+            },
+    ) {
+        Row(Modifier.fillMaxWidth().height(esc.d(if (amplia) 100f else 78f))) {
+            portadas.forEach { juego ->
+                Box(Modifier.weight(1f).fillMaxHeight()) {
+                    ArteJuego(juego, preferirArte = !amplia, maxLado = 192, modifier = Modifier.fillMaxSize())
+                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, color.copy(alpha = 0.28f)))))
+                }
+            }
+            if (portadas.isEmpty()) {
+                Box(Modifier.fillMaxSize().background(color.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                    IconoConsola(consola, 38f, p.fondo2)
+                }
+            }
+        }
+        Row(Modifier.padding(esc.d(8)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+            IconoConsola(consola, 22f, p.fondo2)
+            Column(Modifier.weight(1f)) {
+                Texto(nombreConsola(id), 14f, lineas = 1)
+                Detalle(if (juegos.size == 1) "1 juego" else "${juegos.size} juegos", 11f, lineas = 1)
+            }
+        }
+    }
 }

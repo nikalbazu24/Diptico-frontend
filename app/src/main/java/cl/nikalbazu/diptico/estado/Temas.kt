@@ -28,18 +28,19 @@ data class Tema(
     val fuente: String = "",
     val forma: String = "",
     val sonidos: String = "",
+    val musica: String = "",
 ) {
     fun json(): JSONObject = JSONObject()
         .put("id", id).put("nombre", nombre).put("acento", acento).put("acento2", acento2).put("acento3", acento3)
         .put("base", base).put("decor", decor).put("mensaje", mensaje).put("propio", propio)
-        .put("fondo", fondo).put("tinta", tinta).put("fuente", fuente).put("forma", forma).put("sonidos", sonidos)
+        .put("fondo", fondo).put("tinta", tinta).put("fuente", fuente).put("forma", forma).put("sonidos", sonidos).put("musica", musica)
 
     companion object {
         fun deJson(o: JSONObject) = Tema(
             o.getString("id"), o.getString("nombre"), o.getLong("acento"), o.getLong("acento2"), o.getLong("acento3"),
             o.optString("base", "auto"), o.optString("decor", "nada"), o.optString("mensaje", ""), o.optBoolean("propio", true),
             o.optLong("fondo", 0L), o.optLong("tinta", 0L),
-            o.optString("fuente", ""), o.optString("forma", ""), o.optString("sonidos", ""),
+            o.optString("fuente", ""), o.optString("forma", ""), o.optString("sonidos", ""), o.optString("musica", ""),
         )
     }
 }
@@ -64,6 +65,7 @@ object Temas {
 
     val incluidos = listOf(
         Tema("diptico", "Díptico", 0xFF6B4EFF, 0xFFFF7A59, 0xFFFFC93C),
+        Tema("diptico_vidrio", "Díptico Cristal", 0xFF8A78FA, 0xFFFF8A83, 0xFFACDCFF, forma = "cristal"),
         // Mundo de bloques: pasto, tierra y diamante; letra de píxeles, esquinas escalonadas, sonidos de madera y piano tranquilo.
         Tema(
             "bloques", "Mundo de bloques", 0xFF62B33F, 0xFFA0703F, 0xFF5CE1E6, "oscuro", "bloques",
@@ -224,44 +226,4 @@ object Temas {
             .distinctBy { it.first }
             .mapNotNull { (id, r) -> fiestas.firstOrNull { it.id == id }?.let { it to r.start } }
             .take(n)
-
-    // ---------- Temas creados con IA ----------
-
-    /**
-     * Pide a la IA un tema nuevo. [pedido] puede ser "Halloween en Japón" o vacío (elige la celebración más cercana del mundo).
-     * Usa la IA en la nube que la persona tenga conectada (Gemini o ChatGPT).
-     */
-    fun conIA(llave: Llave, pedido: String, hoy: LocalDate = LocalDate.now()): Tema {
-        val tarea = pedido.ifBlank {
-            "la celebración más importante del mundo que ocurra cerca de la fecha $hoy (piensa en todos los países, no solo en uno)"
-        }
-        val prompt = """
-            Diseña un tema de colores para Díptico, un launcher de videojuegos con fondo oscuro, inspirado en: $tarea.
-            Responde SOLO con un objeto JSON, sin texto extra, con estas claves:
-            "nombre" (máximo 24 caracteres, en español), "acento", "acento2", "acento3" (colores hex #RRGGBB vivos y que se lean bien sobre fondo oscuro),
-            "base" ("oscuro" o "claro"), "decor" (una de: ${DECORACIONES.joinToString(", ")}),
-            "mensaje" (un saludo corto en español, máximo 50 caracteres).
-        """.trimIndent()
-        val texto = IA.pedir(llave, prompt, 500)
-        run {
-            val j = IA.json(texto)
-            fun color(k: String, defecto: Long): Long = try {
-                0xFF000000 or j.getString(k).removePrefix("#").take(6).toLong(16)
-            } catch (e: Exception) {
-                defecto
-            }
-            val decor = j.optString("decor", "estrellas").let { if (it in DECORACIONES) it else "estrellas" }
-            return Tema(
-                id = "ia_${System.currentTimeMillis()}",
-                nombre = j.optString("nombre", "Tema IA").take(24),
-                acento = color("acento", 0xFF6B4EFF),
-                acento2 = color("acento2", 0xFFFF7A59),
-                acento3 = color("acento3", 0xFFFFC93C),
-                base = if (j.optString("base") == "claro") "claro" else "oscuro",
-                decor = decor,
-                mensaje = j.optString("mensaje", "").take(60),
-                propio = true,
-            )
-        }
-    }
 }

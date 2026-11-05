@@ -100,7 +100,7 @@ private fun PantallaUnicaContenido(e: Estado) {
         Box(Modifier.fillMaxSize()) { Habitacion(e, Modifier.fillMaxSize()); Paneles(e, conAyuda = true) }
         return
     }
-    if (e.vistaConsolas == "carpetas" && e.enSistemas) {
+    if (e.vistaConsolas in Diptico.VISTAS_CARPETAS && e.enSistemas) {
         Box(Modifier.fillMaxSize().background(p.fondo)) {
             Box(Modifier.fillMaxSize().difuminar(e)) { CarpetasConsolas(e, Modifier.fillMaxSize().padding(top = LocalEscala.current.d(12))) }
             Paneles(e, conAyuda = true)

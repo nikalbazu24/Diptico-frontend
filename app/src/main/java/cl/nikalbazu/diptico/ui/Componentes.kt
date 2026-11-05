@@ -178,6 +178,16 @@ fun Modifier.fondoBoton(color: Color): Modifier = if (Estilo.tema.forma == "pixe
     drawRect(Color.White.copy(alpha = 0.18f), size = androidx.compose.ui.geometry.Size(b, size.height))
     drawRect(Color.Black.copy(alpha = 0.3f), topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - b), size = androidx.compose.ui.geometry.Size(size.width, b))
     drawRect(Color.Black.copy(alpha = 0.22f), topLeft = androidx.compose.ui.geometry.Offset(size.width - b, 0f), size = androidx.compose.ui.geometry.Size(b, size.height))
+} else if (Estilo.tema.forma == "cristal") {
+    this.background(Brush.verticalGradient(listOf(
+        androidx.compose.ui.graphics.lerp(color, Color.White, 0.29f).copy(alpha = 0.87f),
+        color.copy(alpha = 0.72f),
+        androidx.compose.ui.graphics.lerp(color, Color.Black, 0.18f).copy(alpha = 0.86f),
+    ))).drawWithContent {
+        drawContent()
+        drawLine(Color.White.copy(alpha = 0.52f), androidx.compose.ui.geometry.Offset.Zero,
+            androidx.compose.ui.geometry.Offset(size.width, 0f), 2f * density)
+    }
 } else when (Estilo.efecto) {
     "degradado" -> this.background(
         Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(color, Color.White, 0.2f), color, androidx.compose.ui.graphics.lerp(color, Color.Black, 0.28f))),
@@ -487,26 +497,26 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
             modifier.size(esc.d(tam)).clip(CircleShape)
                 .background(Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(c.color, Color.White, 0.18f), androidx.compose.ui.graphics.lerp(c.color, Color.Black, 0.3f)))),
             contentAlignment = Alignment.Center,
-        ) { IconoMedio(c.medio, Color.White, c.color, tam = tam * 0.64f) }
+        ) { IconoHardware(c, Color.White, c.color, tam = tam * 0.64f) }
         dibujo == "neon" -> Box(
             modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(Color(0xFF0E0C16))
                 .border(esc.d(tam * 0.045f), c.color.copy(alpha = 0.9f), RoundedCornerShape(esc.d(tam * 0.28f))),
             contentAlignment = Alignment.Center,
         ) {
             Box(Modifier.size(esc.d(tam * 0.7f)).background(Brush.radialGradient(listOf(c.color.copy(alpha = 0.35f), Color.Transparent))))
-            IconoMedio(c.medio, androidx.compose.ui.graphics.lerp(c.color, Color.White, 0.35f), Color(0xFF0E0C16), tam = tam * 0.6f)
+            IconoHardware(c, androidx.compose.ui.graphics.lerp(c.color, Color.White, 0.35f), Color(0xFF0E0C16), tam = tam * 0.6f)
         }
         dibujo == "solido" -> Box(
             modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(c.color),
             contentAlignment = Alignment.Center,
-        ) { IconoMedio(c.medio, if (c.color.luminance() > 0.6f) Tinta else Color.White, c.color, tam = tam * 0.62f) }
+        ) { IconoHardware(c, if (c.color.luminance() > 0.6f) Tinta else Color.White, c.color, tam = tam * 0.62f) }
         dibujo == "contorno" -> Box(
             modifier.size(esc.d(tam)).clip(RoundedCornerShape(esc.d(tam * 0.28f))).background(c.color.copy(alpha = 0.14f))
                 .border(esc.d(tam * 0.06f), c.color, RoundedCornerShape(esc.d(tam * 0.28f))),
             contentAlignment = Alignment.Center,
-        ) { IconoMedio(c.medio, c.color, fondo, tam = tam * 0.62f) }
-        dibujo == "pixel" -> MedioPixel(c.medio, c.color, fondo, modifier, tam)
-        else -> IconoMedio(c.medio, c.color, fondo, modifier, tam)
+        ) { IconoHardware(c, c.color, fondo, tam = tam * 0.62f) }
+        dibujo == "pixel" -> ConsolaPixel(c, c.color, fondo, modifier, tam)
+        else -> IconoHardware(c, c.color, fondo, modifier, tam)
     }
 }
 
@@ -521,6 +531,22 @@ fun MedioPixel(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Mo
             androidx.compose.ui.unit.Density(1f), androidx.compose.ui.unit.LayoutDirection.Ltr,
             androidx.compose.ui.graphics.Canvas(bmp), androidx.compose.ui.geometry.Size(n.toFloat(), n.toFloat()),
         ) { dibujarMedio(medio, color, fondo) }
+        bmp
+    }
+    Image(img, null, modifier.size(esc.d(tam)), contentScale = ContentScale.Fit, filterQuality = androidx.compose.ui.graphics.FilterQuality.None)
+}
+
+/** El formato de la consola dibujado en píxeles grandes (estilo "Píxeles"). */
+@Composable
+private fun ConsolaPixel(consola: Consola, color: Color, fondo: Color, modifier: Modifier = Modifier, tam: Float = 44f) {
+    val esc = LocalEscala.current
+    val img = remember(consola.id, consola.medio, color, fondo) {
+        val n = 16
+        val bmp = androidx.compose.ui.graphics.ImageBitmap(n, n)
+        androidx.compose.ui.graphics.drawscope.CanvasDrawScope().draw(
+            androidx.compose.ui.unit.Density(1f), androidx.compose.ui.unit.LayoutDirection.Ltr,
+            androidx.compose.ui.graphics.Canvas(bmp), androidx.compose.ui.geometry.Size(n.toFloat(), n.toFloat()),
+        ) { dibujarHardware(consola, color, fondo) }
         bmp
     }
     Image(img, null, modifier.size(esc.d(tam)), contentScale = ContentScale.Fit, filterQuality = androidx.compose.ui.graphics.FilterQuality.None)

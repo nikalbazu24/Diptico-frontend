@@ -54,6 +54,7 @@ fun PanelGaleria(e: Estado) {
         "filtros" -> "Mostrar juegos" to Icono.BUSCAR
         "orden" -> "Orden de los juegos" to Icono.MENU
         "temas" -> "Temas" to Icono.PALETA
+        "tienda_temas" -> "Tienda de temas" to Icono.WEB
         "colores" -> "Mis colores" to Icono.PALETA
         "ia" -> "IA de Bisa" to Icono.CHISPA
         "cajas" -> "Forma de las cajas" to Icono.FORMA
@@ -83,6 +84,10 @@ fun PanelGaleria(e: Estado) {
                         ) { Texto(t, 13f, color = if (activa) SobreUva else p.tinta, lineas = 1) }
                     }
                 }
+            }
+            if (e.galeria == "tienda_temas") {
+                Spacer(Modifier.height(esc.d(6)))
+                Detalle("Abre un enlace de la comunidad. Toca un tema para instalarlo.", 12f, lineas = 2)
             }
             if (e.galeria == "colores") {
                 Spacer(Modifier.height(esc.d(6)))
@@ -120,7 +125,7 @@ fun PanelGaleria(e: Estado) {
                         "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
                         "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
                         "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
-                        "temas" -> TarjetaTema(it, activo) { Diptico.elegirIndice(i) }
+                        "temas", "tienda_temas" -> TarjetaTema(it, activo) { Diptico.elegirIndice(i) }
                         "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
                         "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
                         "colecciones" -> FilaCancion(it, activo, Icono.CARPETA, "Aquí ✓") { Diptico.elegirIndice(i) }
