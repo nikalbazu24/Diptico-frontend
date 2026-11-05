@@ -155,7 +155,7 @@ object Novedades {
         )),
         Version("navegacion-retoma-1", "Navegación y retoma", listOf(
             Pagina("Una barra, en su lugar", "La barra queda fija sobre la imagen del juego. Al pasar a Widgets sube, y reúne los accesos en un solo lugar.", Icono.APPS, 0xFF57DCC7),
-            Pagina("Tu cajón de apps", "Start + Y abre las apps. Mantén una app o pulsa X para moverla, fijarla, abrir sus opciones o pedir a Android que la desinstale. El atajo se cambia en Controles.", Icono.APPS, 0xFF73ABFF),
+            Pagina("Tu cajón de apps", "En Controles puedes elegir cómo abrir las apps. Mantén una app o pulsa X para moverla, fijarla, abrir sus opciones o pedir a Android que la desinstale. El atajo se cambia en Controles.", Icono.APPS, 0xFF73ABFF),
             Pagina("Widgets con dos dedos", "Abre los dedos para ver menos casillas y widgets más grandes; júntalos para ver más. Si hace falta espacio se agregan páginas, sin ocultar widgets.", Icono.FORMA, 0xFFFFB46A),
             Pagina("Elige la vista directamente", "R3 muestra tus vistas, con previa en la otra pantalla. Vista, filtro y orden quedan a mano en el estante; las opciones finas están agrupadas.", Icono.VISTA, 0xFFBCA4FF),
             Pagina("Retoma donde lo dejaste", "En Inicio eliges cuánto debe durar la pausa y puedes activar un clip opcional de los últimos 6 segundos, sin sonido. Android pide permiso. Con lupa o sin clip se usa la imagen del juego.", Icono.CONTINUAR, 0xFF57DCC7),
@@ -174,7 +174,7 @@ object Novedades {
         )),
         Version(ID, NOMBRE, listOf(
             Pagina("Bisa sabe dónde estás", "Te acompaña con acciones para el juego activo y su sistema. Consulta tu próximo paso y revisa la biblioteca sin configurar un motor. Con un motor puedes pedir pistas.", Icono.BISA, 0xFF57DCC7),
-            Pagina("Habla con un gesto", "En Inicio pulsa Start + X o toca a Bisa. Mantén su cara para dictar. En el chat puedes usar X para escribir o L1 para hablar.", Icono.MICROFONO, 0xFFBCA4FF),
+            Pagina("Habla con un gesto", "En Inicio pulsa Start dos veces o toca a Bisa. Start + R3 abre las apps. Puedes cambiar ambos atajos en Controles. Mantén su cara para dictar. En el chat puedes usar X para escribir o L1 para hablar.", Icono.MICROFONO, 0xFFBCA4FF),
             Pagina("Bisa durante una partida", "Con una pantalla libre tienes el chat y sus accesos. Cuando el juego usa toda la consola, usa la burbuja y sus acciones rápidas si Android le dio permiso.", Icono.PANTALLAS, 0xFF73ABFF),
         )),
     )

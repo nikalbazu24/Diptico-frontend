@@ -596,6 +596,7 @@ data class Estado(
     val esInicio: Boolean = true,
 ) {
     val atajoApps get() = navegacion.atajoApps
+    val atajoBisa get() = navegacion.atajoBisa
     val ordenApps get() = navegacion.ordenApps
     val appsMenu get() = navegacion.appsMenu
     val appsMenuIndice get() = navegacion.appsMenuIndice
@@ -720,8 +721,11 @@ object Diptico {
         crudos = almacen.biblioteca()
         val idioma = almacen.texto("idioma").ifEmpty { Idioma.delSistema() }
         Idioma.fijar(app, idioma)
+        val apps = AtajoInicio.leer(almacen.texto("atajoApps"), AtajoInicio.START_R3)
+        val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_DOBLE)
+            .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
         _estado.value = Estado(
-            navegacion = NavegacionEstado(atajoApps = almacen.texto("atajoApps", "start_y"), ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
+            navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
             listo = true,
             idioma = idioma,
             configurado = almacen.configurado && carpeta != null,
@@ -5234,12 +5238,28 @@ object Diptico {
     }
 
     private fun opcionesBotones(e: Estado): List<Opcion> = buildList {
-        add(Opcion("Centro de Bisa", "Start + X", Icono.BISA, "Abre Bisa desde Inicio. También puedes asignarla a un botón extra.") { abrirAsistente() })
-        add(Opcion("Abrir cajón de apps", when(e.atajoApps) { "l3_doble" -> "Doble L3"; "no" -> "Solo botón Apps"; else -> "Start + Y" }, Icono.APPS,
-            "Elige una combinación. También puedes asignar Apps a un botón físico en los botones extra de esta sección.") {
-            val l = listOf("start_y", "l3_doble", "no"); val v = l[(l.indexOf(estado.value.atajoApps) + 1).mod(l.size)]
-            almacen.guardarTexto("atajoApps", v); actualizar { it.copy(navegacion = it.navegacion.copy(atajoApps = v)) }
-        })
+        fun opcionAtajo(bisa: Boolean): Opcion {
+            val clave = if (bisa) "atajoBisa" else "atajoApps"
+            val titulo = if (bisa) "Atajo de Bisa" else "Atajo del cajón de apps"
+            val actual = if (bisa) e.atajoBisa else e.atajoApps
+            fun cambiar(delta: Int) {
+                val actualEstado = estado.value
+                val otro = if (bisa) actualEstado.atajoApps else actualEstado.atajoBisa
+                val ahora = if (bisa) actualEstado.atajoBisa else actualEstado.atajoApps
+                val opciones = AtajoInicio.entries.filter { it == AtajoInicio.NO || it.id != otro }
+                val i = opciones.indexOfFirst { it.id == ahora }
+                val nuevo = opciones[(i + delta).mod(opciones.size)]
+                almacen.guardarTexto(clave, nuevo.id)
+                actualizar { it.copy(navegacion = if (bisa) it.navegacion.copy(atajoBisa = nuevo.id)
+                    else it.navegacion.copy(atajoApps = nuevo.id)) }
+            }
+            return Opcion(titulo, AtajoInicio.leer(actual, AtajoInicio.NO).titulo,
+                if (bisa) Icono.BISA else Icono.APPS,
+                "Elige con A o ← →. Solo funciona en Inicio. La combinación asignada al otro acceso no se repite.",
+                menos = { cambiar(-1) }) { cambiar(1) }
+        }
+        add(opcionAtajo(true))
+        add(opcionAtajo(false))
         val modos = listOf("dividido", "invertido", "clasico")
         fun cambiarSticks(d: Int) {
             val v = modos[(modos.indexOf(estado.value.sticks).coerceAtLeast(0) + d).mod(modos.size)]

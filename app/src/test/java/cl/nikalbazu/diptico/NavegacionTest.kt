@@ -43,11 +43,11 @@ class NavegacionTest {
     }
     @Test fun acordeAbreCajonYNoAbreMenuAlSoltarStart() {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
-        Diptico.fijarParaPrueba(Estado(navegacion = NavegacionEstado(atajoApps = "start_y"), listo = true, configurado = true, intro = false))
+        Diptico.fijarParaPrueba(Estado(navegacion = NavegacionEstado(atajoApps = "start_r3"), listo = true, configurado = true, intro = false))
         Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_START))
-        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_Y))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_THUMBR))
         assertEquals(Panel.APPS, Diptico.estado.value.panel)
-        Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_Y))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_THUMBR))
         Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_START))
         assertEquals(Panel.APPS, Diptico.estado.value.panel)
     }
@@ -64,13 +64,50 @@ class NavegacionTest {
         assertEquals(61_000L, Diptico.estado.value.sesion!!.inicio)
     }
 
-    @Test fun startXAbreBisaSinActivarElMenuAlSoltar() {
+    private fun toque(tecla: Int, tiempo: Long) {
+        Teclas.manejar(KeyEvent(tiempo, tiempo, KeyEvent.ACTION_DOWN, tecla, 0))
+        Teclas.manejar(KeyEvent(tiempo, tiempo + 20, KeyEvent.ACTION_UP, tecla, 0))
+    }
+
+    @Test fun dobleStartAbreBisaSinActivarElMenu() {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false))
+        toque(KeyEvent.KEYCODE_BUTTON_START, 1000L)
+        assertEquals(Panel.NINGUNO, Diptico.estado.value.panel)
+        toque(KeyEvent.KEYCODE_BUTTON_START, 1120L)
+        assertEquals(Panel.ASISTENTE, Diptico.estado.value.panel)
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper())
+            .idleFor(java.time.Duration.ofMillis(350))
+        assertEquals(Panel.ASISTENTE, Diptico.estado.value.panel)
+    }
+
+    @Test fun unaPulsacionStartSigueAbriendoElMenu() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false))
+        toque(KeyEvent.KEYCODE_BUTTON_START, 1000L)
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper())
+            .idleFor(java.time.Duration.ofMillis(350))
+        assertEquals(Panel.MENU, Diptico.estado.value.panel)
+    }
+
+    @Test fun mantenerStartAbreElCentroDeControl() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false))
+        val start = KeyEvent.KEYCODE_BUTTON_START
+        Teclas.manejar(KeyEvent(1000L, 1000L, KeyEvent.ACTION_DOWN, start, 0))
+        Teclas.manejar(KeyEvent(1000L, 1600L, KeyEvent.ACTION_DOWN, start, 1))
+        Teclas.manejar(KeyEvent(1000L, 1620L, KeyEvent.ACTION_UP, start, 0))
+        assertEquals(Panel.CENTRO, Diptico.estado.value.panel)
+    }
+
+    @Test fun permiteCambiarBisaAStartSelectSinUsarBotonesPrincipales() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false,
+            navegacion = NavegacionEstado(atajoBisa = "start_select")))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT))
         Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_START))
-        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_X))
-        Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_X))
         Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_START))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_SELECT))
         assertEquals(Panel.ASISTENTE, Diptico.estado.value.panel)
     }
 
