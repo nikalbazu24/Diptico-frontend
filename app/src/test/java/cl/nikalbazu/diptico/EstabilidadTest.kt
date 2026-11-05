@@ -139,4 +139,14 @@ class EstabilidadTest {
         )
         assertEquals(perfil, cl.nikalbazu.diptico.estado.Experiencia.importar(perfil.json().toString()))
     }
+
+    @Test fun reportesNoCopianEnlacesRutasNiCredencialesComunes() {
+        val reporte = cl.nikalbazu.diptico.estado.Fallas.urlReporte(
+            "Exception: https://example.org/token-privado /storage/abc/partida.srm Authorization: Bearer valor-privado")
+        val contenido = Uri.parse(reporte).getQueryParameter("body").orEmpty()
+        assertFalse(contenido.contains("token-privado"))
+        assertFalse(contenido.contains("partida.srm"))
+        assertFalse(contenido.contains("valor-privado"))
+        assertTrue(contenido.contains("[credencial omitida]"))
+    }
 }

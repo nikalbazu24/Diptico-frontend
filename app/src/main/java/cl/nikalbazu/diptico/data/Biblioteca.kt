@@ -118,7 +118,9 @@ object Biblioteca {
                 }
             }
 
-            val pistas = pistasReferenciadas(ctx, arbol, hijos)
+            val indices = leerIndices(ctx, arbol, hijos)
+            val pistas = indices.values.flatten().mapTo(HashSet()) { it.lowercase(java.util.Locale.ROOT) }
+            val archivos = hijos.filterNot { it.esCarpeta }.groupBy { it.nombre.lowercase(java.util.Locale.ROOT) }
 
             for (f in hijos) {
                 // Fan games de RPG Maker: la carpeta es un juego solo si trae Game.ini (o Game.exe / mkxp.json).
@@ -153,6 +155,11 @@ object Biblioteca {
                 if (ext in setOf("bin", "img") && f.nombre.lowercase(java.util.Locale.ROOT) in pistas) continue
                 if (f.nombre.startsWith(".")) continue
                 val base = f.nombre.substringBeforeLast('.')
+                val discos = if (ext == "m3u") indices[f.id].orEmpty().mapNotNull { nombre ->
+                    val doc = archivos[nombre.lowercase(java.util.Locale.ROOT)]?.singleOrNull() ?: return@mapNotNull null
+                    if (doc.id == f.id || doc.nombre.substringAfterLast('.').lowercase() !in consola.extensiones) return@mapNotNull null
+                    VarianteJuego(doc.nombre, DocumentsContract.buildDocumentUriUsingTree(arbol, doc.id), doc.id, false)
+                } else emptyList()
                 juegos += Juego(
                     clave = consola.id + "/" + f.nombre,
                     consolaId = consola.id,
@@ -162,22 +169,24 @@ object Biblioteca {
                     docId = f.id,
                     portada = portadas[base.lowercase()],
                     arte = artes[base.lowercase()],
+                    variantes = discos,
                 )
             }
         }
         return sinDuplicados(juegos).sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
     }
 
-    private fun pistasReferenciadas(ctx: Context, arbol: Uri, hijos: List<Doc>): Set<String> {
-        if (hijos.none { !it.esCarpeta && it.nombre.substringAfterLast('.', "").lowercase() in setOf("bin", "img") }) return emptySet()
-        return buildSet {
+    private fun leerIndices(ctx: Context, arbol: Uri, hijos: List<Doc>): Map<String, List<String>> {
+        val tienePistas = hijos.any { !it.esCarpeta && it.nombre.substringAfterLast('.', "").lowercase() in setOf("bin", "img") }
+        val formatos = if (tienePistas) setOf("cue", "m3u", "gdi") else setOf("m3u")
+        return buildMap {
             for (doc in hijos) {
                 val ext = doc.nombre.substringAfterLast('.', "").lowercase(java.util.Locale.ROOT)
-                if (doc.esCarpeta || ext !in setOf("cue", "m3u", "gdi")) continue
+                if (doc.esCarpeta || ext !in formatos) continue
                 val uri = DocumentsContract.buildDocumentUriUsingTree(arbol, doc.id)
                 val texto = try { ctx.contentResolver.openInputStream(uri)?.use(IndicesJuego::leer) }
                 catch (_: Exception) { null } ?: continue
-                addAll(IndicesJuego.referencias(texto, ext).map { it.lowercase(java.util.Locale.ROOT) })
+                put(doc.id, IndicesJuego.referencias(texto, ext))
             }
         }
     }

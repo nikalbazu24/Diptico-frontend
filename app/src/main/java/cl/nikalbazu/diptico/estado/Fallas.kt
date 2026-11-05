@@ -20,12 +20,20 @@ object Fallas {
     private const val ERRORES = "errores-recientes.txt"
     const val REPO = "https://github.com/Nikalbazu24/diptico-frontend"
 
+    private val urlPrivada = Regex("""(?i)(?:https?|content|file)://[^\s<>"']+""")
+    private val rutasLocales = Regex("""(?:/storage/|/sdcard/|/data/user/|/data/data/)[^\s<>"']+""")
+    private val valorPrivado = Regex("""(?i)\b(?:authorization|api[_ -]?key|password|devpassword|token)\s*[:=]\s*(?:Bearer\s+)?[^\s,;&]+""")
+
+    private fun depurar(texto: String): String = valorPrivado.replace(
+        rutasLocales.replace(urlPrivada.replace(texto, "[enlace omitido]"), "[ruta omitida]"), "[credencial omitida]",
+    )
+
     /** Se instala al arrancar la app: anota la caída y deja que Android cierre como siempre. */
     fun instalar(ctx: Context) {
         val app = ctx.applicationContext
         val previo = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { hilo, error ->
-            try { File(app.filesDir, ARCHIVO).writeText(informe(app, "Díptico se cerró de golpe (hilo ${hilo.name})", error)) } catch (_: Throwable) {}
+            try { File(app.filesDir, ARCHIVO).writeText(depurar(informe(app, "Díptico se cerró de golpe (hilo ${hilo.name})", error))) } catch (_: Throwable) {}
             previo?.uncaughtException(hilo, error)
         }
     }
@@ -36,7 +44,7 @@ object Fallas {
             val f = File(ctx.filesDir, ERRORES)
             val linea = "${hora()} · ${error.javaClass.simpleName}: ${error.message?.take(160) ?: ""} @ ${error.stackTrace.firstOrNull { it.className.startsWith("cl.nikalbazu") } ?: error.stackTrace.firstOrNull()}"
             val previas = if (f.exists()) f.readLines().takeLast(19) else emptyList()
-            f.writeText((previas + linea).joinToString("\n"))
+            f.writeText(depurar((previas + linea).joinToString("\n")))
         } catch (_: Throwable) {}
     }
 
@@ -78,7 +86,8 @@ object Fallas {
     }
 
     /** Un reporte nuevo en GitHub, ya escrito: solo falta tocar «Submit». */
-    fun urlReporte(informe: String): String {
+    fun urlReporte(texto: String): String {
+        val informe = depurar(texto)
         // El título: la línea del error (por ejemplo «java.lang.NullPointerException: …»), o la primera del informe.
         val linea = informe.lineSequence().map { it.trim() }
             .firstOrNull { (it.contains("Exception") || it.contains("Error")) && !it.startsWith("at ") }
@@ -91,3 +100,4 @@ object Fallas {
     /** Para reportar un problema sin caída (Menú › Acerca de). */
     fun urlProblema(ctx: Context): String = urlReporte(informe(ctx, "Reporte de un problema", null))
 }
+

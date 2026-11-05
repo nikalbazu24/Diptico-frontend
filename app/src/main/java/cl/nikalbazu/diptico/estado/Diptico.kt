@@ -1288,19 +1288,22 @@ object Diptico {
     // ---------- Carpeta y biblioteca ----------
 
     fun escanear() {
+        if (estado.value.escaneando) return
         val carpetas = almacen.carpetas()
         if (carpetas.isEmpty()) return
         actualizar { it.copy(escaneando = true) }
         trabajo("escaneo", "Buscando tus juegos")
+        val anteriores = crudos.groupBy { raizDe(it) }
+        val media = almacen.media
         scope.launch {
             var fallas = 0
             val lista = withContext(Dispatchers.IO) {
                 carpetas.flatMap { c ->
                     try {
-                        Biblioteca.escanear(app, c.uri, almacen.media, c.consola)
+                        Biblioteca.escanear(app, c.uri, media, c.consola)
                     } catch (e: Exception) {
                         fallas++
-                        emptyList()
+                        anteriores[c.uri].orEmpty()
                     }
                 }.distinctBy { it.clave }.sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
             }.takeIf { fallas < carpetas.size }
@@ -2042,7 +2045,7 @@ object Diptico {
             val opciones = listOf(null to j.archivo) + j.variantes.groupBy { it.archivo }.values
                 .mapNotNull { it.singleOrNull() }.map { it.archivo to it.archivo }
             return opciones.mapIndexed { i, (archivo, nombre) ->
-                ItemGaleria("archivo-$i", nombre, if (archivo == null) "Archivo preferido" else "Versión alternativa", actual == archivo) {
+                ItemGaleria("archivo-$i", nombre, if (archivo == null) "Archivo preferido" else if (j.tipo == "m3u") "Disco o versión alternativa" else "Versión alternativa", actual == archivo) {
                     cambiarDatos(j.clave) { it.copy(archivoVariante = archivo) }
                     cerrarPanel()
                 }
@@ -4465,7 +4468,6 @@ object Diptico {
     private var claveParaAsistente = false
 
     fun escribirAlAsistente() {
-        if (motorEfectivo() == "ninguno") { abrirGaleria("ia"); avisar("Primero elige el cerebro de Bisa"); return }
         abrirTexto("asistente")
     }
 
