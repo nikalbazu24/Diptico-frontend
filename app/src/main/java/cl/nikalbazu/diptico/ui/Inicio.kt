@@ -139,7 +139,7 @@ private fun EncabezadoWidgets(e: Estado) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
             if (e.saludoInicio) {
                 Column(Modifier.weight(1f).padding(end = esc.d(8))) {
-                    val nombre = e.nombre.takeIf { it.isNotBlank() && maxWidth >= esc.d(650) }
+                    val nombre = e.nombre.takeIf { it.isNotBlank() && esc.ancho >= 650f }
                     Texto(if (nombre == null) saludo() else "${saludo()}, $nombre", 22f, lineas = 1)
                     val formato = if (esc.angosta) "dMMM" else "EEEEdMMMM"
                     val fecha = cl.nikalbazu.diptico.estado.Idioma.fecha(formato).replaceFirstChar { it.uppercase() }
