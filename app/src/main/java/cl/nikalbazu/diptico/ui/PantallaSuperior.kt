@@ -274,7 +274,9 @@ fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arrib
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val visible = true
-    Box(modifier.fillMaxWidth().padding(top = esc.d(if (arriba) 10 else 0), bottom = esc.d(if (arriba) 0 else 14), start = esc.d(12), end = esc.d(12)), contentAlignment = if (arriba) Alignment.TopEnd else Alignment.BottomCenter) {
+    val compacta = arriba && esc.angosta
+    val posicion = if (arriba) modifier else modifier.fillMaxWidth().padding(bottom = esc.d(14), start = esc.d(12), end = esc.d(12))
+    Box(posicion, contentAlignment = if (arriba) Alignment.TopEnd else Alignment.BottomCenter) {
         androidx.compose.animation.AnimatedVisibility(
             visible = visible,
             enter = fadeIn(tween(240)) + slideInVertically(androidx.compose.animation.core.spring(dampingRatio = 0.75f, stiffness = 420f)) { it / 2 },
@@ -298,13 +300,13 @@ fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arrib
                         if (!esc.angosta) AccionRapida("Y", "Opciones") { Diptico.abrirRapido() }
                         Box(Modifier.padding(horizontal = esc.d(4)).size(esc.d(1), esc.d(26)).background(p.linea))
                     }
-                    IconoBarra(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
-                    IconoBarra(Icono.APPS, "Apps") { Diptico.abrirApps() }
+                    IconoBarra(Icono.BUSCAR, "Buscar", compacta = compacta) { Diptico.abrirBuscar() }
+                    IconoBarra(Icono.APPS, "Apps", compacta = compacta) { Diptico.abrirApps() }
                     // Turbo: tocar libera memoria ahora; mantener lo enciende o apaga al jugar.
-                    IconoBarra(Icono.CHISPA, "Turbo", if (e.turbo) Color(0xFFFF5252) else null, alMantener = { Diptico.alternarTurbo() }) { Diptico.turboAhora() }
-                    if (e.inicio == "widgets") IconoBarra(Icono.EDITAR, "Editar") { Diptico.editarWidgets() }
-                    IconoBarra(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets") { Diptico.alternarInicio() }
-                    IconoBarra(Icono.MENU, "Menú") { Diptico.abrirMenu() }
+                    IconoBarra(Icono.CHISPA, "Turbo", if (e.turbo) Color(0xFFFF5252) else null, compacta = compacta, alMantener = { Diptico.alternarTurbo() }) { Diptico.turboAhora() }
+                    if (e.inicio == "widgets") IconoBarra(Icono.EDITAR, "Editar", compacta = compacta) { Diptico.editarWidgets() }
+                    IconoBarra(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets", compacta = compacta) { Diptico.alternarInicio() }
+                    IconoBarra(Icono.MENU, "Menú", compacta = compacta) { Diptico.abrirMenu() }
                     Box(
                         Modifier.size(esc.d(40)).clip(CircleShape).background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Uva, Coral)))
                             .combinedClickable(onClickLabel = "Abrir Bisa", onLongClickLabel = "Hablar con Bisa",
@@ -329,16 +331,16 @@ fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arrib
 /** Un acceso redondo de la barra flotante, con su nombre chiquito debajo. */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun IconoBarra(icono: Icono, texto: String, color: Color? = null, alMantener: (() -> Unit)? = null, accion: () -> Unit) {
+private fun IconoBarra(icono: Icono, texto: String, color: Color? = null, compacta: Boolean = false, alMantener: (() -> Unit)? = null, accion: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Column(
-        Modifier.clip(RoundedCornerShape(esc.d(14))).combinedClickable(onLongClick = alMantener) { accion() }
-            .padding(horizontal = esc.d(8), vertical = esc.d(2)),
+        Modifier.clip(RoundedCornerShape(esc.d(14))).combinedClickable(onClickLabel = texto, onLongClick = alMantener) { accion() }
+            .padding(horizontal = esc.d(if (compacta) 6 else 8), vertical = esc.d(if (compacta) 8 else 2)),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         IconoDiptico(icono, color ?: p.tinta, 19f, acento = color ?: Coral)
-        Texto(texto, 9.5f, color = color ?: p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
+        if (!compacta) Texto(texto, 9.5f, color = color ?: p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
     }
 }
 

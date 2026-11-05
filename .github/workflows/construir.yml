@@ -22,6 +22,8 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      DIPTICO_REPORTES_URL: ${{ vars.DIPTICO_REPORTES_URL }}
     outputs:
       numero: ${{ steps.paquete.outputs.numero }}
     steps:
