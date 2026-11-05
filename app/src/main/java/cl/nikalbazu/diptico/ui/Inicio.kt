@@ -145,10 +145,24 @@ private fun EncabezadoWidgets(e: Estado) {
                     Detalle(fecha + (e.fiesta?.let { " · ${it.nombre}" } ?: ""), 13f, lineas = 1)
                 }
             }
+            if (paginaEnCabecera(e, esc)) {
+                val p = LocalPaleta.current
+                val pagina = e.paginaInicio + 1
+                Box(
+                    Modifier.padding(end = esc.d(8)).clip(RoundedCornerShape(50))
+                        .background(p.superficie.copy(alpha = 0.8f))
+                        .semantics { contentDescription = "Página $pagina de ${e.paginas}. Ir a la siguiente página." }
+                        .clickable { Diptico.irAPagina((e.paginaInicio + 1) % e.paginas) }
+                        .padding(horizontal = esc.d(10), vertical = esc.d(7)),
+                ) { Texto("$pagina/${e.paginas}", 12f, color = p.tenue, lineas = 1, traducir = false) }
+            }
             if (e.sesion == null) BarraFlotante(e, null, Modifier.widthIn(max = anchoBarra), arriba = true)
         }
     }
 }
+
+private fun paginaEnCabecera(e: Estado, esc: Escala): Boolean =
+    e.paginas > 1 && e.saludoInicio && esc.ancho >= 650f && !e.editandoWidgets
 
 @Composable
 private fun PaginasWidgets(e: Estado, modifier: Modifier) {
@@ -191,7 +205,7 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
                 BotonPagina("›", "Página siguiente", e.paginaInicio < e.paginas - 1) { Diptico.cambiarPagina(1) }
                 BotonPagina("+", "Agregar página", e.paginas < 12) { Diptico.agregarPaginaWidgets() }
             }
-        } else if (e.paginas > 1) {
+        } else if (e.paginas > 1 && !paginaEnCabecera(e, esc)) {
             Row(Modifier.align(Alignment.CenterHorizontally).padding(top = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
                 for (k in 0 until e.paginas) {
                     val activa = k == e.paginaInicio

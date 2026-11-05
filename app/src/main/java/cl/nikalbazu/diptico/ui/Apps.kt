@@ -7,6 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -134,7 +137,7 @@ fun PanelApps(e: Estado) {
             }
             Spacer(Modifier.height(esc.d(6)))
             if (e.appsMoviendo != null) Row(Modifier.fillMaxWidth().clickable { Diptico.cerrarOpcionesApp() }.padding(esc.d(6))) { Texto("Moviendo app · toca su lugar · A/B listo", 12f) }
-            else Pistas("A" to "Abrir", "Mantén A" to "Opciones", "X" to "Opciones", "Y" to "Fijar", "B" to "Cerrar")
+            else Pistas("A" to "Abrir", "X" to "Opciones", "Y" to "Fijar", "B" to "Cerrar")
         }
         if (e.appsMenu != null) MenuApp(e)
     }
@@ -170,7 +173,7 @@ private fun CeldaApp(a: App, elegida: Boolean, fijada: Boolean, onLongClick: () 
 fun LecturaApps(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val a = remember(e) { Diptico.appsVisibles(e).getOrNull(e.indice) }
+    val a = remember(e.appsTodas, e.appsFijadas, e.appsPestana, e.ordenApps, e.indice) { Diptico.appsVisibles(e).getOrNull(e.indice) }
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         Box(Modifier.align(Alignment.CenterEnd).size(esc.d(520)).background(Brush.radialGradient(listOf(Cielo.copy(alpha = 0.22f), Color.Transparent))))
         BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
@@ -182,23 +185,40 @@ fun LecturaApps(e: Estado) {
             }
             return@Box
         }
-        Row(Modifier.align(Alignment.CenterStart).padding(horizontal = esc.d(48)), verticalAlignment = Alignment.CenterVertically) {
-            IconoApp(a.paquete, 120f)
-            Spacer(Modifier.width(esc.d(28)))
-            Column {
-                Etiqueta(if (a.esJuego) "Juego de Android" else "App", Coral, 12f)
-                Texto(a.nombre, 36f, lineas = 2, interlineado = 40f, traducir = false)
-                Detalle(a.paquete, 13f, lineas = 1)
-                Spacer(Modifier.height(esc.d(14)))
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                    Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Cielo).clickable { Diptico.abrirPaquete(a.paquete) }.padding(horizontal = esc.d(18), vertical = esc.d(8))) {
-                        Texto("A · Abrir", 15f, color = Color.White, lineas = 1)
-                    }
-                    Box(Modifier.clip(RoundedCornerShape(50)).background(p.superficie).clickable { Diptico.alternarFijada(a.paquete) }.padding(horizontal = esc.d(18), vertical = esc.d(8))) {
-                        Texto(if (a.paquete in e.appsFijadas) "Y · Soltar" else "Y · Fijar", 15f, lineas = 1)
+        Column(
+            Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = esc.d(24), vertical = esc.d(30))
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(esc.d(12)),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
+                IconoApp(a.paquete, 58f)
+                Column(Modifier.weight(1f)) {
+                    Etiqueta(if (a.esJuego) "Juego de Android" else "App seleccionada", Coral, 11f)
+                    Texto(a.nombre, 25f, lineas = 2, interlineado = 27f, traducir = false)
+                }
+            }
+            Diptico.opcionesApp(e, a.paquete).chunked(3).forEach { fila ->
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(esc.d(8)),
+                ) {
+                    fila.forEach { opcion ->
+                        val principal = opcion.icono == Icono.JUGAR
+                        val forma = RoundedCornerShape(esc.d(14))
+                        Row(
+                            Modifier.clip(forma).then(if (principal) Modifier.fondoBoton(Cielo) else Modifier.background(p.superficie))
+                                .clickable(onClick = opcion.accion).padding(horizontal = esc.d(12), vertical = esc.d(10)),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(esc.d(7)),
+                        ) {
+                            val tinta = if (principal) Color.White else p.tinta
+                            opcion.icono?.let { IconoDiptico(it, tinta, 16f) }
+                            Texto(opcion.titulo, 13f, color = tinta, lineas = 1)
+                        }
                     }
                 }
             }
+            if (e.appsMoviendo != null) Detalle("Toca el nuevo lugar de la app en el cajón o usa la cruceta.", 12f)
         }
     }
 }

@@ -238,7 +238,7 @@ object Teclas {
                     cl.nikalbazu.diptico.audio.Sonidos.interruptor(Diptico.esInterruptor(e) == false)
                 esA(code) -> cl.nikalbazu.diptico.audio.Sonidos.aceptar()
                 esB(code) -> cl.nikalbazu.diptico.audio.Sonidos.atras()
-                code == KeyEvent.KEYCODE_BUTTON_X || code == KeyEvent.KEYCODE_BUTTON_Y || code == KeyEvent.KEYCODE_BUTTON_START -> cl.nikalbazu.diptico.audio.Sonidos.abrir()
+                code == KeyEvent.KEYCODE_BUTTON_X || code == KeyEvent.KEYCODE_BUTTON_Y -> cl.nikalbazu.diptico.audio.Sonidos.abrir()
             }
         }
 
