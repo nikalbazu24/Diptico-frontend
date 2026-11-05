@@ -149,4 +149,25 @@ class EstabilidadTest {
         assertFalse(contenido.contains("valor-privado"))
         assertTrue(contenido.contains("[credencial omitida]"))
     }
+    @Test fun bisaLeeElJuegoActivoAunqueOtroEsteSeleccionado() {
+        val activo = Juego("rpgmaker/a", "rpgmaker", "Fan game", "A.essentia", Uri.parse("content://rom/a"), "a")
+        val otro = activo.copy(clave = "snes/b", consolaId = "snes", titulo = "Otro juego")
+        val e = cl.nikalbazu.diptico.estado.Estado(configurado = true, modoPantallas = "dos",
+            juegoSel = otro.clave, juegos = listOf(activo, otro),
+            sesion = cl.nikalbazu.diptico.estado.Sesion(activo.clave, 100L, 0, false),
+            datos = mapOf(activo.clave to cl.nikalbazu.diptico.data.DatosJuego(paso = "Ir al puente")))
+        val bisa = cl.nikalbazu.diptico.estado.CentroBisa
+        assertEquals(activo.clave, bisa.contexto(e).juego?.clave)
+        val respuesta = bisa.responder(e, "¿Dónde quedé?")!!
+        assertTrue("Ir al puente" in respuesta.texto)
+        assertTrue(respuesta.acciones.all { it.valor == activo.clave })
+        val ocupada = e.copy(sesion = e.sesion!!.copy(dosPantallas = true))
+        assertFalse(bisa.acciones(ocupada).any { it.tipo == "bisa_mapa" || it.tipo == "bisa_paso" })
+    }
+
+    @Test fun elModeloNoPuedeInventarAccesosInternosDeBisa() {
+        val mensaje = cl.nikalbazu.diptico.estado.Asistente.interpretar(
+            "Hola. [[bisa_pausa:psx/a|Pausar]] [[menu:BIBLIOTECA|Biblioteca]]")
+        assertEquals("menu", mensaje.acciones.single().tipo)
+    }
 }

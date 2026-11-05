@@ -10,7 +10,7 @@ R3 abre un selector con las vistas a la vista y previa. Galería, lista y carpet
 
 ## Uso en la consola
 
-- **Cajón:** Start + Y desde Díptico. En Menú › Controles se puede cambiar por doble L3; los botones extra también pueden asignarse a Apps. El atajo no intercepta los controles dentro de un juego.
+- **Atajos de Inicio:** Start + R3 abre el cajón y doble Start abre Bisa. En Menú › Controles puedes elegir otro atajo para cada acceso o desactivarlo. También puedes asignar un botón extra a Apps o Bisa. Los juegos conservan sus controles.
 - **Opciones de una app:** pulsación larga, mantener A o pulsar X. Para moverla, elige «Mover de lugar» y toca el destino, o usa la cruceta y termina con A. Android confirma cualquier desinstalación.
 - **Widgets:** junta dos dedos para tener más casillas; sepáralos para hacerlas más grandes. Si falta espacio, aparecen más páginas. El botón Editar de la barra sirve para reorganizarlos.
 - **Juegos:** R3 abre la selección de vistas. Vista, filtro y orden también se cambian con los tres controles sobre la biblioteca.
@@ -25,6 +25,6 @@ La reproducción usa TextureView en la pantalla libre y se cierra al tocar o tra
 
 ## Validación
 
-Pruebas de distribución sin pérdidas ni superposiciones, límites/recorte de paquetes del clip y acorde Start + Y. Capturas de barra, widgets, galería, lista, carpetas, selector, menú de app y retoma sin clip. La captura H.264, el cierre físico de la Thor y el rendimiento de Genshin requieren validación en el equipo: no quedan demostrados por las capturas ni por compilar.
+Pruebas de distribución sin pérdidas ni superposiciones, límites/recorte de paquetes del clip y atajos del cajón y de Bisa. Capturas de barra, widgets, galería, lista, carpetas, selector, menú de app y retoma sin clip. La captura H.264, el cierre físico de la Thor y el rendimiento de Genshin requieren validación en el equipo: no quedan demostrados por las capturas ni por compilar.
 
 El flujo de la rama terminó correctamente: 12 pruebas funcionales, compilación de las variantes consola y móvil y 284 capturas sin fallos. PR #6 integrado; publicación desde main en la ejecución 97.

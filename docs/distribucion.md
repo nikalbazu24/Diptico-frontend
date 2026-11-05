@@ -1,11 +1,44 @@
 # Distribución y migración de Díptico
 
-Las compilaciones de rama y de main son artefactos de prueba. La publicación requiere ejecutar manualmente «Construir APK» desde main con «publicar» y una clave privada de distribución. El flujo publica únicamente después de verificar los dos APK con la huella configurada.
+Las compilaciones de rama y de main son artefactos de prueba. Ejecuta «Construir APK» desde main con «preparar_firma» y una clave privada de distribución. El flujo verifica ambos APK con la huella configurada y los adjunta a un borrador de GitHub Releases.
 
 Configura en GitHub Actions los secretos `DIPTICO_KEYSTORE_BASE64`, `DIPTICO_STORE_PASSWORD`, `DIPTICO_KEY_ALIAS` y `DIPTICO_KEY_PASSWORD`. Configura `DIPTICO_CERT_SHA256` como variable con la huella SHA-256 del certificado, 64 caracteres hexadecimales en minúsculas sin separadores. Guarda la clave privada y su contraseña fuera del repositorio, con una copia de recuperación. Usa la misma firma en cada versión futura. La firma de pruebas no sirve para distribución.
 
-## Antes de publicar el primer APK firmado
+## Configuración inicial desde Windows
 
+Haz este paso una vez, en un PC con Java, PowerShell y GitHub CLI autenticado con una cuenta que pueda configurar el repositorio. Si Díptico ya tiene una firma privada, usa esa clave y omite la generación.
+
+```powershell
+$repo = "nikalbazu24/Diptico-frontend"
+$firmaDiptico = Join-Path $env:LOCALAPPDATA "DipticoFirma"
+New-Item -ItemType Directory -Force $firmaDiptico | Out-Null
+$claveDiptico = Join-Path $firmaDiptico "diptico.p12"
+if (-not (Test-Path $claveDiptico)) {
+    keytool -genkeypair -keystore $claveDiptico -storetype PKCS12 -alias diptico -keyalg RSA -keysize 3072 -validity 10000 -dname "CN=Diptico Release"
+    if ($LASTEXITCODE -ne 0) { throw "No se pudo crear la clave" }
+}
+$certDiptico = Join-Path $firmaDiptico "diptico.cer"
+keytool -exportcert -keystore $claveDiptico -alias diptico -file $certDiptico
+if ($LASTEXITCODE -ne 0) { throw "No se pudo obtener el certificado" }
+$huellaDiptico = (Get-FileHash -Algorithm SHA256 $certDiptico).Hash.ToLowerInvariant()
+$huellaDiptico
+```
+
+Comprueba los valores en **Settings → Secrets and variables → Actions** antes de cargar nada. Si ya hay una huella, debe coincidir. Si hay secretos de una instalación anterior, verifica primero de qué clave vienen.
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes($claveDiptico)) | gh secret set DIPTICO_KEYSTORE_BASE64 --repo $repo
+gh secret set DIPTICO_STORE_PASSWORD --repo $repo
+gh secret set DIPTICO_KEY_PASSWORD --repo $repo
+"diptico" | gh secret set DIPTICO_KEY_ALIAS --repo $repo
+gh variable set DIPTICO_CERT_SHA256 --body $huellaDiptico --repo $repo
+```
+
+GitHub CLI pide la contraseña en la terminal. En el PKCS12 generado arriba, usa la misma contraseña en ambos secretos. Ejecuta los comandos uno por uno y detente si falla alguno. Haz una copia privada del archivo `diptico.p12` y conserva su contraseña en un gestor. La huella y el certificado público sirven para verificar el APK. La clave y las contraseñas se mantienen fuera de Git y del chat.
+
+## Probar y publicar el mismo APK firmado
+
+- Descarga el APK firmado desde el borrador. Una vez validadas la migración y la partida, publica ese mismo borrador en GitHub Releases. Así se distribuye el archivo probado.
 - Con una instalación existente de beta 99, guarda un respaldo de Díptico en una carpeta compartida fuera de los datos de la app. Guarda por separado cualquier partida cuyo emulador dependa de permisos o carpetas privadas.
 - En un equipo de pruebas o emulador, verifica el ZIP y restaura una copia en una instalación con la firma nueva. Comprueba temas, widgets, notas de voz, colecciones y tiempos. Vuelve a seleccionar las carpetas de juegos y a conectar servicios opcionales con tu cuenta.
 - La nueva firma requiere una migración desde el APK anterior. Android puede rechazar la instalación encima. Desinstala la beta anterior solo después de verificar que tienes una copia restaurable y que los archivos necesarios están fuera de sus datos privados.

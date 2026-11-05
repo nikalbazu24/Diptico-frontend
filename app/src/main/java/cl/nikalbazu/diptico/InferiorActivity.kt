@@ -85,7 +85,10 @@ class InferiorActivity : BaseActivity() {
             if (lupa) window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
             else window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
         }
-        val atenuarJuego = !lupa && s != null && s.displayId != miDisplay() && !s.dosPantallas && !e.despierta && !e.intercambiar && e.panel != cl.nikalbazu.diptico.estado.Panel.ASISTENTE
+        val usandoBisa = e.panel == cl.nikalbazu.diptico.estado.Panel.ASISTENTE ||
+            (e.panel == cl.nikalbazu.diptico.estado.Panel.CLAVE && e.textoPara in setOf("asistente", "bisa_paso"))
+        val atenuarJuego = !lupa && s != null && s.displayId != miDisplay() && !s.dosPantallas &&
+            !e.despierta && !e.intercambiar && !usandoBisa
         val valor = when {
             !e.configurado -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
             e.unaPantalla -> 0.01f
@@ -100,4 +103,5 @@ class InferiorActivity : BaseActivity() {
         }
     }
 }
+
 

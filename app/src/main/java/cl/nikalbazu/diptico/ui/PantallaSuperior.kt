@@ -269,6 +269,7 @@ private fun AccionRapida(tecla: String, texto: String, accion: () -> Unit) {
  * píldora fija. En Widgets queda arriba a la derecha.
  */
 @Composable
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
@@ -306,7 +307,8 @@ fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arrib
                     IconoBarra(Icono.MENU, "Menú") { Diptico.abrirMenu() }
                     Box(
                         Modifier.size(esc.d(40)).clip(CircleShape).background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Uva, Coral)))
-                            .clickable { Diptico.abrirAsistente() },
+                            .combinedClickable(onClickLabel = "Abrir Bisa", onLongClickLabel = "Hablar con Bisa",
+                                onLongClick = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() },
                         contentAlignment = Alignment.Center,
                     ) { cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(30).value) }
                 }

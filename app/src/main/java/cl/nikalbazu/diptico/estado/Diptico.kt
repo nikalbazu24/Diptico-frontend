@@ -596,6 +596,7 @@ data class Estado(
     val esInicio: Boolean = true,
 ) {
     val atajoApps get() = navegacion.atajoApps
+    val atajoBisa get() = navegacion.atajoBisa
     val ordenApps get() = navegacion.ordenApps
     val appsMenu get() = navegacion.appsMenu
     val appsMenuIndice get() = navegacion.appsMenuIndice
@@ -720,8 +721,11 @@ object Diptico {
         crudos = almacen.biblioteca()
         val idioma = almacen.texto("idioma").ifEmpty { Idioma.delSistema() }
         Idioma.fijar(app, idioma)
+        val apps = AtajoInicio.leer(almacen.texto("atajoApps"), AtajoInicio.START_R3)
+        val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_DOBLE)
+            .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
         _estado.value = Estado(
-            navegacion = NavegacionEstado(atajoApps = almacen.texto("atajoApps", "start_y"), ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
+            navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
             listo = true,
             idioma = idioma,
             configurado = almacen.configurado && carpeta != null,
@@ -2133,22 +2137,13 @@ object Diptico {
 
     /** Deja a Bisa lista para ayudar con el juego en curso (en la pantalla libre o en la burbuja). */
     fun prepararAyuda() {
-        val e = estado.value
-        val s = e.sesion
-        val juego = s?.let { ses -> e.juegos.firstOrNull { it.clave == ses.clave } } ?: e.seleccionado
-        val titulo = juego?.titulo ?: "tu juego"
-        val r = juego?.let { Asistente.reintentos(it.clave) } ?: 0
-        val saludo = MensajeChat(
-            "ia",
-            if (r >= 2) "Veo que llevas varios intentos seguidos en $titulo. ¡Tranqui, nos pasa a todos! ¿Te doy una pista suave o prefieres la solución?"
-            else "¡Hola! Estoy aquí mientras juegas $titulo. Si algo te cuesta, dime en qué parte vas.",
-            listOf(
-                AccionChat("preguntar", "Estoy atascado en $titulo. Dame una pista suave.", "Dame una pista suave"),
-                AccionChat("preguntar", "En $titulo me matan una y otra vez en la misma parte. ¿Qué hago?", "Me matan siempre en lo mismo"),
-                AccionChat("preguntar", "Dame un buen truco o consejo para $titulo.", "Un truco para este juego"),
-            ),
-        )
-        actualizar { it.copy(panel = Panel.ASISTENTE, chat = if (it.chat.lastOrNull()?.texto == saludo.texto) it.chat else it.chat + saludo, indice = 1, despierta = true) }
+        val c = CentroBisa.contexto(estado.value)
+        val saludo = MensajeChat("ia", if (c.juego == null) "Estoy contigo. ¿En qué te ayudo?"
+            else "Estás en ${c.titulo}. Puedes consultar tu próximo paso, pedir una pista o revisar las opciones de este sistema.")
+        actualizar {
+            val chat = if (it.pensando || it.chat.lastOrNull()?.texto == saludo.texto) it.chat else it.chat.takeLast(38) + saludo
+            it.copy(panel = Panel.ASISTENTE, chat = chat, indice = 0, despierta = true)
+        }
     }
 
     fun burbujaExpandida(abierta: Boolean, alerta: Boolean) {
@@ -2336,7 +2331,7 @@ object Diptico {
             abrirGaleria("ia")
             return
         }
-        if (e.panel == Panel.CLAVE && (e.textoPara == "asistente" || e.textoPara.startsWith("ia_clave") && claveParaAsistente)) {
+        if (e.panel == Panel.CLAVE && (e.textoPara in setOf("asistente", "bisa_paso") || e.textoPara.startsWith("ia_clave") && claveParaAsistente)) {
             claveParaAsistente = false
             actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
             return
@@ -4476,35 +4471,32 @@ object Diptico {
     }
 
     /** Lo que se puede elegir con la cruceta en el asistente: escribir, los botones de la última respuesta o las sugerencias. */
-    fun elementosAsistente(): List<Opcion> {
-        val e = estado.value
-        // Hablar va primero: escribir en la consola cansa.
-        val lista = mutableListOf(
-            Opcion("Hablar", "voz", Icono.MICROFONO) { dictar("bisa") },
-            Opcion("Escribir", "texto", Icono.TEXTO) { escribirAlAsistente() },
-        )
+    fun elementosAsistente(e: Estado = estado.value): List<Opcion> = buildList {
+        add(Opcion("Hablar", "voz", Icono.MICROFONO) { hablarConBisa() })
+        add(Opcion("Escribir", "texto", Icono.TEXTO) { escribirAlAsistente() })
         val ultima = e.chat.lastOrNull()
-        if (ultima?.rol == "ia") ultima.acciones.forEach { a -> lista += Opcion(a.etiqueta, a.tipo, Icono.CHISPA) { ejecutarAccion(a) } }
-        if (!e.pensando && ultima?.rol == "ia") {
-            // Seguir la conversación con un toque.
-            val pregunta = e.chat.lastOrNull { it.rol == "yo" }?.texto.orEmpty()
-            lista += Opcion("Más simple", "sugerencia", Icono.CHISPA) { preguntar("Explícamelo más simple y corto.") }
-            lista += Opcion("Más detalles", "sugerencia", Icono.INFO) { preguntar("Dame más detalles, paso a paso.") }
-            if (pregunta.isNotBlank()) lista += Opcion("Búscalo en internet", "sugerencia", Icono.WEB) { preguntar("Busca en internet y respóndeme con datos actuales: $pregunta", forzarWeb = true) }
+        val acciones = if (ultima?.rol == "ia") ultima.acciones else emptyList()
+        (acciones + CentroBisa.acciones(e)).distinctBy { it.tipo to it.valor }.forEach { a ->
+            add(Opcion(a.etiqueta, a.tipo, Icono.CHISPA) { ejecutarAccion(a) })
         }
-        if (e.chat.isEmpty() || !e.pensando && ultima?.acciones.isNullOrEmpty()) {
-            val j = e.seleccionado
-            val propias = buildList {
-                if (j != null) {
-                    add("¿Cómo sigo en ${j.titulo}?")
-                    add("Un truco para ${j.titulo}")
-                }
-                addAll(Asistente.sugerencias)
+        if (!e.pensando && e.chat.any { it.rol == "yo" } && motorEfectivo(e) != "ninguno") {
+            add(Opcion("Más detalles", "sugerencia", Icono.INFO) { preguntar("Dame más detalles, paso a paso.") })
+            e.chat.lastOrNull { it.rol == "yo" }?.texto?.let { pregunta ->
+                add(Opcion("Búscalo en internet", "sugerencia", Icono.WEB) { preguntar(pregunta, forzarWeb = true) })
             }
-            val sug = if (e.chat.isEmpty()) propias.take(6) else propias.shuffled(java.util.Random(e.chat.size.toLong())).take(3)
-            sug.forEach { s -> lista += Opcion(s, "sugerencia", Icono.ASISTENTE) { preguntar(s) } }
         }
-        return lista
+    }
+
+    fun hablarConBisa() {
+        if (estado.value.panel != Panel.ASISTENTE) abrirAsistente()
+        dictar("bisa")
+    }
+
+    private fun respuestaBisa(mensaje: MensajeChat, pregunta: String? = null) {
+        actualizar {
+            val nuevo = if (pregunta == null) listOf(mensaje) else listOf(MensajeChat("yo", pregunta), mensaje)
+            it.copy(chat = it.chat.takeLast(38) + nuevo, indice = if (mensaje.acciones.isEmpty()) 0 else 2)
+        }
     }
 
     /** La clave guardada para una IA en la nube. */
@@ -4565,14 +4557,14 @@ object Diptico {
     fun preguntar(texto: String, forzarWeb: Boolean = false) {
         val e = estado.value
         if (e.pensando) return
-        if (!forzarWeb) AyudaLocal.responder(texto)?.let { respuesta ->
-            actualizar { it.copy(chat = it.chat + MensajeChat("yo", texto) + MensajeChat("ia", respuesta), indice = 0) }
-            return
+        if (!forzarWeb) {
+            val local = CentroBisa.responder(e, texto) ?: AyudaLocal.responder(texto)?.let { MensajeChat("ia", it) }
+            if (local != null) { respuestaBisa(local, texto); return }
         }
         val motor = motorEfectivo(e)
         if (motor == "ninguno" || (motor == "local" && !IALocal.listo(app))) {
-            abrirGaleria("ia")
-            avisar("Elige el cerebro de Bisa: la IA de tu consola (gratis, sin internet) o una en la nube como Gemini")
+            respuestaBisa(MensajeChat("ia", "Puedo ayudarte con tu biblioteca, tus notas y las funciones de Díptico. Para preguntas abiertas sobre guías o trucos, configura un motor.",
+                if (e.sesion == null) listOf(AccionChat("bisa_motor", "", "Configurar motor")) else emptyList()), texto)
             return
         }
         if (motor in IA.PROVEEDORES && claveDe(motor, e).isBlank()) {
@@ -4580,7 +4572,7 @@ object Diptico {
             avisar("Para usar ${nombreMotor(motor)} pega tu clave, o elige otra IA en Menú › Bisa.")
             return
         }
-        val chat = e.chat + MensajeChat("yo", texto)
+        val chat = e.chat.takeLast(38) + MensajeChat("yo", texto)
         // La respuesta aparece mientras se escribe (con la IA local).
         actualizar { it.copy(chat = chat, pensando = true, indice = 0) }
         scope.launch {
@@ -4593,7 +4585,7 @@ object Diptico {
                             actualizar { it.copy(pensandoQue = "Buscando en internet…") }
                             Web.comoContexto(Web.buscar(texto, estado.value.idioma)).also { actualizar { it.copy(pensandoQue = "Pensando…") } }
                         } else ""
-                        val sistema = Asistente.sistemaLocal(estado.value) + if (web.isNotBlank()) "\n\n$web" else ""
+                        val sistema = Asistente.sistemaLocal(e) + if (web.isNotBlank()) "\n\n$web" else ""
                         var ultimo = 0L
                         Result.success(
                             IALocal.responder(app, sistema, historia) { parcial ->
@@ -4606,7 +4598,7 @@ object Diptico {
                             },
                         )
                     } else {
-                        val sistema = Asistente.sistema(estado.value)
+                        val sistema = Asistente.sistema(e)
                         if (forzarWeb || estado.value.bisaWeb) actualizar { it.copy(pensandoQue = "Pensando y buscando…") }
                         Result.success(IA.conversar(Llave(motor, claveDe(motor)), sistema, historia, 1200, listos = true, buscarWeb = forzarWeb || estado.value.bisaWeb))
                     }
@@ -4638,17 +4630,68 @@ object Diptico {
         }
     }
 
-    /** Hace lo que propuso el asistente. */
+    private var pasoDeBisa: String? = null
+
+    /** Las acciones sensibles al juego comprueban de nuevo el contexto al pulsarlas. */
     fun ejecutarAccion(a: AccionChat) {
+        val e = estado.value
+        val c = CentroBisa.contexto(e)
+        if (e.pensando) return
+        if (c.jugando && a.tipo in setOf("jugar", "ver", "ficha", "tema", "vista", "buscar", "menu",
+                "bisa_biblioteca", "bisa_retomar", "bisa_sugerir", "bisa_logros", "bisa_motor", "bisa_apps")) {
+            avisar("Esta acción está disponible al volver al inicio")
+            return
+        }
         when (a.tipo) {
+            "bisa_biblioteca" -> abrirMenu(Seccion.BIBLIOTECA)
+            "bisa_motor" -> abrirGaleria("ia")
+            "bisa_apps" -> abrirApps()
+            "bisa_sugerir" -> respuestaBisa(CentroBisa.sugerir(e))
+            "bisa_retomar" -> ultimoJugado(e)?.takeUnless { e.datos[it.clave]?.oculto == true }
+                ?.let { jugarDesdeWidget(it.clave) } ?: avisar("Aún no hay una partida reciente")
+            "bisa_sistema" -> {
+                val ayuda = CentroBisa.ayudaSistema(e, a.valor) ?: return
+                val j = c.juego
+                val consola = c.consola
+                if (j == null || consola == null || consola.sinEmulador) respuestaBisa(ayuda)
+                else scope.launch {
+                    val elegido = withContext(Dispatchers.IO) {
+                        runCatching { Lanzador.elegida(app, consola,
+                            e.datos[j.clave]?.emulador ?: e.emuladores[consola.id], archivoParaJugar(j, e).tipo)?.nombre }.getOrNull()
+                    }
+                    val actual = estado.value
+                    if (CentroBisa.contexto(actual).juego?.clave == j.clave && !actual.pensando) {
+                        val detalle = elegido?.let { " Emulador seleccionado para abrirlo: $it." }
+                            ?: " No encontré un emulador reconocido para ese archivo."
+                        respuestaBisa(ayuda.copy(texto = ayuda.texto + detalle))
+                    }
+                }
+            }
+            "bisa_logros" -> if (c.juego?.clave == a.valor) abrirFichaDe(a.valor, 4)
+            "bisa_pausa" -> if (c.jugando && c.juego?.clave == a.valor) {
+                if (e.temporizadorFin > 0L) {
+                    val minutos = ((e.temporizadorFin - System.currentTimeMillis()).coerceAtLeast(0L) + 59_999) / 60_000
+                    respuestaBisa(MensajeChat("ia", "Tu aviso de pausa está activo. Faltan unos $minutos min."))
+                } else alternarTemporizador()
+            }
+            "bisa_paso", "bisa_mapa" -> if (c.juego?.clave == a.valor && (!c.jugando || c.pantallaLibre)) {
+                if (a.tipo == "bisa_mapa") abrirMapa(a.valor)
+                else {
+                    pasoDeBisa = a.valor
+                    abrirTexto("bisa_paso", e.datos[a.valor]?.paso.orEmpty())
+                }
+            }
             "preguntar" -> preguntar(a.valor)
             "pista" -> preguntar(if (a.valor == "solucion") "Dime la solución completa, paso a paso." else "Dame una pista más directa.")
             "jugar", "ver", "ficha" -> {
-                if (estado.value.juegos.none { it.clave == a.valor }) { avisar("No encontré ese juego"); return }
-                actualizar { it.copy(consolaSel = "todo", juegoSel = a.valor, panel = Panel.NINGUNO) }
-                when (a.tipo) { "jugar" -> jugar(); "ficha" -> abrirFicha() }
+                if (e.juegos.none { it.clave == a.valor } || e.datos[a.valor]?.oculto == true) { avisar("No encontré ese juego"); return }
+                if (a.tipo == "jugar") jugarDesdeWidget(a.valor)
+                else {
+                    actualizar { it.copy(consolaSel = "todo", juegoSel = a.valor, panel = Panel.NINGUNO) }
+                    if (a.tipo == "ficha") abrirFicha()
+                }
             }
-            "tema" -> if (todosLosTemas().any { it.id == a.valor }) { elegirTema(a.valor); avisar("Tema: ${todosLosTemas().first { it.id == a.valor }.nombre}") } else avisar("No encontré ese tema")
+            "tema" -> if (todosLosTemas().any { it.id == a.valor }) elegirTema(a.valor) else avisar("No encontré ese tema")
             "vista" -> if (a.valor in VISTAS) {
                 almacen.guardarTexto("vista", a.valor)
                 actualizar { it.copy(vista = a.valor, panel = Panel.NINGUNO) }
@@ -5195,11 +5238,28 @@ object Diptico {
     }
 
     private fun opcionesBotones(e: Estado): List<Opcion> = buildList {
-        add(Opcion("Abrir cajón de apps", when(e.atajoApps) { "l3_doble" -> "Doble L3"; "no" -> "Solo botón Apps"; else -> "Start + Y" }, Icono.APPS,
-            "Elige una combinación. También puedes asignar Apps a un botón físico en los botones extra de esta sección.") {
-            val l = listOf("start_y", "l3_doble", "no"); val v = l[(l.indexOf(estado.value.atajoApps) + 1).mod(l.size)]
-            almacen.guardarTexto("atajoApps", v); actualizar { it.copy(navegacion = it.navegacion.copy(atajoApps = v)) }
-        })
+        fun opcionAtajo(bisa: Boolean): Opcion {
+            val clave = if (bisa) "atajoBisa" else "atajoApps"
+            val titulo = if (bisa) "Atajo de Bisa" else "Atajo del cajón de apps"
+            val actual = if (bisa) e.atajoBisa else e.atajoApps
+            fun cambiar(delta: Int) {
+                val actualEstado = estado.value
+                val otro = if (bisa) actualEstado.atajoApps else actualEstado.atajoBisa
+                val ahora = if (bisa) actualEstado.atajoBisa else actualEstado.atajoApps
+                val opciones = AtajoInicio.entries.filter { it == AtajoInicio.NO || it.id != otro }
+                val i = opciones.indexOfFirst { it.id == ahora }
+                val nuevo = opciones[(i + delta).mod(opciones.size)]
+                almacen.guardarTexto(clave, nuevo.id)
+                actualizar { it.copy(navegacion = if (bisa) it.navegacion.copy(atajoBisa = nuevo.id)
+                    else it.navegacion.copy(atajoApps = nuevo.id)) }
+            }
+            return Opcion(titulo, AtajoInicio.leer(actual, AtajoInicio.NO).titulo,
+                if (bisa) Icono.BISA else Icono.APPS,
+                "Elige con A o ← →. Solo funciona en Inicio. La combinación asignada al otro acceso no se repite.",
+                menos = { cambiar(-1) }) { cambiar(1) }
+        }
+        add(opcionAtajo(true))
+        add(opcionAtajo(false))
         val modos = listOf("dividido", "invertido", "clasico")
         fun cambiarSticks(d: Int) {
             val v = modos[(modos.indexOf(estado.value.sticks).coerceAtLeast(0) + d).mod(modos.size)]
@@ -6356,6 +6416,19 @@ object Diptico {
             "pc_steam" -> {
                 actualizar { it.copy(panel = Panel.MENU, seccion = Seccion.BIBLIOTECA, enOpciones = true) }
                 buscarEnSteam(t)
+                return
+            }
+            "bisa_paso" -> {
+                val clave = pasoDeBisa
+                pasoDeBisa = null
+                actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
+                if (clave != null && CentroBisa.contexto(e).juego?.clave == clave) {
+                    val datos = estado.value.datos.toMutableMap()
+                    datos[clave] = (datos[clave] ?: DatosJuego()).copy(paso = t)
+                    almacen.guardarDatos(datos)
+                    actualizar { it.copy(datos = datos) }
+                    respuestaBisa(MensajeChat("ia", if (t.isBlank()) "Quité tu próximo paso." else "Guardé tu próximo paso: $t"))
+                }
                 return
             }
             "asistente" -> {

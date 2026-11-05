@@ -1195,6 +1195,15 @@ class Capturas {
         ), datos = e.datos.mapValues { it.value.copy(avance = "JUGANDO", sesiones = 16) }), Rol.SUPERIOR)
     }
 
+    @Config(qualifiers = ABAJO)
+    @Test fun centro_bisa_en_partida() {
+        val e = base()
+        foto("centro_bisa_en_partida", e.copy(panel = Panel.ASISTENTE, despierta = true,
+            sesion = Sesion("snes/1", System.currentTimeMillis() - 120_000, 0, false),
+            chat = listOf(cl.nikalbazu.diptico.estado.MensajeChat("ia", "Aquí está tu próximo paso y las opciones para este sistema."))),
+            Rol.INFERIOR, mi = 1)
+    }
+
 }
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"

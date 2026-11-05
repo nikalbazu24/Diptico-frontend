@@ -11,8 +11,8 @@ on:
       - ".github/workflows/limpiar-versiones.yml"
   workflow_dispatch:
     inputs:
-      publicar:
-        description: Publicar los APK con la firma privada
+      preparar_firma:
+        description: Crear un borrador con los APK firmados para probar en la consola
         type: boolean
         default: false
 
@@ -40,7 +40,7 @@ jobs:
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --no-daemon
 
       - name: Compilar y verificar firma de distribución
-        if: github.event_name == 'workflow_dispatch' && inputs.publicar && github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && inputs.preparar_firma && github.ref == 'refs/heads/main'
         env:
           FIRMA_BASE64: ${{ secrets.DIPTICO_KEYSTORE_BASE64 }}
           DIPTICO_STORE_PASSWORD: ${{ secrets.DIPTICO_STORE_PASSWORD }}
@@ -67,7 +67,7 @@ jobs:
           done
 
       - name: Compilar Díptico
-        if: "!(github.event_name == 'workflow_dispatch' && inputs.publicar && github.ref == 'refs/heads/main')"
+        if: "!(github.event_name == 'workflow_dispatch' && inputs.preparar_firma && github.ref == 'refs/heads/main')"
         run: |
           set -o pipefail
           gradle :app:assembleRelease --no-daemon 2>&1 | tee compilar.log
@@ -80,10 +80,10 @@ jobs:
       - name: Nombrar los APK
         id: paquete
         env:
-          PUBLICAR: ${{ github.event_name == 'workflow_dispatch' && inputs.publicar && github.ref == 'refs/heads/main' }}
+          FIRMAR: ${{ github.event_name == 'workflow_dispatch' && inputs.preparar_firma && github.ref == 'refs/heads/main' }}
         run: |
           base="1.0"
-          if [ "$PUBLICAR" = true ]; then base="1.1"; fi
+          if [ "$FIRMAR" = true ]; then base="1.1"; fi
           numero="$base-beta.$GITHUB_RUN_NUMBER"
           cp app/build/outputs/apk/completa/release/app-completa-release.apk "Diptico-v$numero.apk"
           cp app/build/outputs/apk/movil/release/app-movil-release.apk "Diptico-v$numero-movil.apk"
@@ -107,9 +107,9 @@ jobs:
             Capturas-*.zip
             app/build/reports/tests/
 
-  publicar:
+  preparar_borrador:
     needs: apk
-    if: github.event_name == 'workflow_dispatch' && inputs.publicar && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.preparar_firma && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -119,13 +119,14 @@ jobs:
           name: Diptico-APK
           path: distribucion
 
-      - name: Publicar APK con firma privada
+      - name: Preparar borrador con firma privada
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.apk.outputs.numero }}
           target_commitish: ${{ github.sha }}
           name: Díptico v${{ needs.apk.outputs.numero }}
           prerelease: true
+          draft: true
           fail_on_unmatched_files: true
           files: |
             distribucion/**/Diptico-v*.apk

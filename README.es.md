@@ -5,7 +5,7 @@ Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido
 ## Navegación y retoma
 
 - Barra fija: abajo sobre el arte del juego y arriba en Widgets, sin duplicar los accesos.
-- Cajón con Start + Y (o doble L3 configurable en Controles). Mantener una app / X abre mover, fijar, pantalla, ajustes y desinstalar con confirmación de Android.
+- Cajón con Start + R3. Puedes cambiar el atajo en Controles. Mantener una app / X abre mover, fijar, pantalla, ajustes y desinstalar con confirmación de Android.
 - Pellizco de widgets: cambia las casillas de la grilla, conserva los widgets visibles y agrega páginas si hacen falta.
 - Selección directa de vistas con R3, previa en la otra pantalla, tarjetas/carpetas/lista renovadas, filtro y orden accesibles.
 - Retoma tras una pausa configurable. En dos pantallas, clip opcional de hasta 6 segundos a baja resolución y sin audio. Requiere permiso de captura de Android y está desactivado por defecto. La lupa tiene prioridad. Tras bloquear la consola puede ser necesario preparar otro clip; hay un botón para hacerlo en la retoma y en Inicio. Sin clip se muestra la imagen del juego.

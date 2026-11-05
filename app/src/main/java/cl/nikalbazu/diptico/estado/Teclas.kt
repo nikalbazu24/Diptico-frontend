@@ -22,8 +22,68 @@ object Teclas {
     private val presionadas = mutableSetOf<Int>()
     private val consumidas = mutableSetOf<Int>()
     private val atajosHandler = Handler(Looper.getMainLooper())
-    private var toqueL3 = 0L
-    private var busquedaL3: Runnable? = null
+    private const val VENTANA_DOBLE = 300L
+    private data class ToquePendiente(val tiempo: Long, val tarea: Runnable)
+    private val toquesPendientes = mutableMapOf<Int, ToquePendiente>()
+
+    private fun cancelarToque(tecla: Int) {
+        toquesPendientes.remove(tecla)?.let { atajosHandler.removeCallbacks(it.tarea) }
+    }
+
+    private fun atajosDisponibles(e: Estado): Boolean =
+        e.configurado && e.sesion == null && !e.conTeclado && !e.intro && e.panel == Panel.NINGUNO &&
+            e.dialogo == null && e.novedades < 0 && !e.relojGrande && !e.editandoWidgets &&
+            !e.ordenando && e.bienvenida == 0L && e.donde == null && !e.quedaste && e.marcandoMapa == null
+
+    private fun atajo(ev: KeyEvent, e: Estado): Boolean {
+        if (!atajosDisponibles(e)) return false
+        val code = ev.keyCode
+        val inicio = KeyEvent.KEYCODE_BUTTON_START
+        val opciones = listOf(AtajoInicio.leer(e.atajoBisa, AtajoInicio.NO) to true,
+            AtajoInicio.leer(e.atajoApps, AtajoInicio.NO) to false)
+        fun abrir(bisa: Boolean) {
+            if (bisa) Diptico.abrirAsistente() else Diptico.abrirApps()
+        }
+        if (ev.action == KeyEvent.ACTION_DOWN && ev.repeatCount == 0) {
+            val combo = opciones.firstOrNull { (opcion, _) ->
+                val pareja = opcion.tecla
+                !opcion.doble && pareja != null &&
+                    ((code == pareja && inicio in presionadas && !startLargo) ||
+                        (code == inicio && pareja in presionadas &&
+                            !(pareja == KeyEvent.KEYCODE_BUTTON_SELECT && selectLargo)))
+            }
+            toquesPendientes.keys.toList().filter { it != code || combo != null }.forEach(::cancelarToque)
+            if (combo != null) {
+                consumidas += inicio
+                consumidas += checkNotNull(combo.first.tecla)
+                startLargo = false
+                selectLargo = false
+                abrir(combo.second)
+                return true
+            }
+        }
+        if (ev.action != KeyEvent.ACTION_UP || code == inicio && startLargo) return false
+        val doble = opciones.firstOrNull { (opcion, _) -> opcion.doble && opcion.tecla == code } ?: return false
+        val anterior = toquesPendientes[code]
+        cancelarToque(code)
+        if (anterior != null && ev.eventTime - anterior.tiempo in 0L..VENTANA_DOBLE) {
+            abrir(doble.second)
+            return true
+        }
+        val tarea = Runnable {
+            toquesPendientes.remove(code)
+            val actual = Diptico.estado.value
+            val id = if (doble.second) actual.atajoBisa else actual.atajoApps
+            if (atajosDisponibles(actual) && code !in presionadas && id == doble.first.id) when (code) {
+                inicio -> Diptico.abrirMenu()
+                KeyEvent.KEYCODE_BUTTON_THUMBL -> Diptico.abrirBuscar()
+                KeyEvent.KEYCODE_BUTTON_THUMBR -> Diptico.abrirGaleria("vistas_juegos")
+            }
+        }
+        toquesPendientes[code] = ToquePendiente(ev.eventTime, tarea)
+        atajosHandler.postDelayed(tarea, VENTANA_DOBLE)
+        return true
+    }
 
     private fun esA(code: Int) = code == KeyEvent.KEYCODE_BUTTON_A || code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
     private fun esB(code: Int) = code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE
@@ -119,26 +179,7 @@ object Teclas {
             if (arriba && (esA(code) || esB(code))) Diptico.cerrarOpcionesApp()
             return true
         }
-        // Atajos solo dentro de Díptico: no se interceptan los botones de un juego.
-        if (e.configurado && e.sesion == null && !e.conTeclado && e.panel == Panel.NINGUNO) {
-            if (e.atajoApps == "start_y" && abajo && code == KeyEvent.KEYCODE_BUTTON_Y && KeyEvent.KEYCODE_BUTTON_START in presionadas) {
-                consumidas += KeyEvent.KEYCODE_BUTTON_START; consumidas += KeyEvent.KEYCODE_BUTTON_Y
-                startLargo = false; Diptico.abrirApps(); return true
-            }
-            if (e.atajoApps == "l3_doble" && code == KeyEvent.KEYCODE_BUTTON_THUMBL) {
-                if (arriba) {
-                    val ahora = SystemClock.uptimeMillis()
-                    busquedaL3?.let { atajosHandler.removeCallbacks(it) }
-                    if (toqueL3 != 0L && ahora - toqueL3 <= 320L) { toqueL3 = 0L; Diptico.abrirApps() }
-                    else {
-                        toqueL3 = ahora
-                        val tarea = Runnable { toqueL3 = 0L; if (Diptico.estado.value.panel == Panel.NINGUNO && Diptico.estado.value.sesion == null && Diptico.estado.value.atajoApps == "l3_doble") Diptico.abrirBuscar() }
-                        busquedaL3 = tarea; atajosHandler.postDelayed(tarea, 320L)
-                    }
-                }
-                return true
-            }
-        }
+        if (atajo(ev, e)) return true
 
         // Bienvenida al encender: A sigue jugando, cualquier otro botón la cierra.
         if (e.bienvenida > 0L && !e.bienvenidaBreve && e.sesion == null) {
@@ -534,6 +575,7 @@ object Teclas {
                 KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) {
                     val d = if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1
                     when (e.panel) {
+                        Panel.ASISTENTE -> if (code == KeyEvent.KEYCODE_BUTTON_L1) Diptico.hablarConBisa()
                         Panel.FICHA -> Diptico.cambiarPestanaFicha(d)
                         Panel.BUSCAR -> Diptico.cambiarFiltro(d)
                         Panel.IMAGENES -> Diptico.cambiarFuenteImagen(d)
