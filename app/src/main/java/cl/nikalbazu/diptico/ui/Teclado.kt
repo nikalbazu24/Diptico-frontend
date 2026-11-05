@@ -85,6 +85,7 @@ fun TecladoDiptico(e: Estado) {
         e.panel == Panel.PASO -> if (e.pregunta) "¿Dónde quedaste?" else "Tu próximo paso"
         e.textoPara == "titulo" -> "Nombre del juego"
         e.textoPara == "notas" -> "Notas y trucos"
+        e.textoPara == "reporte_fallas" -> "Describe qué pasó"
         e.textoPara == "ia_pedido" -> "Pídele un tema a la IA"
         e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave" -> "Pega o escribe tu clave"
         e.textoPara == "ra_usuario" -> "Tu usuario de RetroAchievements"

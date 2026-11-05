@@ -7,6 +7,10 @@ plugins {
 val numero = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
 val rutaFirma = System.getenv("DIPTICO_KEYSTORE")
 val versionBase = if (rutaFirma.isNullOrBlank()) "1.0" else "1.1"
+val reportesUrl = providers.environmentVariable("DIPTICO_REPORTES_URL").orNull.orEmpty().trim()
+require(reportesUrl.isEmpty() || Regex("""https://script[.]google[.]com/macros/s/[A-Za-z0-9_-]+/exec""").matches(reportesUrl)) {
+    "DIPTICO_REPORTES_URL debe ser el enlace /exec de la aplicación web de Apps Script."
+}
 
 android {
     namespace = "cl.nikalbazu.diptico"
@@ -18,6 +22,7 @@ android {
         targetSdk = 34
         versionCode = numero
         versionName = "$versionBase-beta.$numero"
+        buildConfigField("String", "REPORTES_URL", "\"$reportesUrl\"")
         // La Thor (y casi todas las consolas Android) es arm64: así el APK no carga librerías que no usa.
         ndk { abiFilters += "arm64-v8a" }
     }

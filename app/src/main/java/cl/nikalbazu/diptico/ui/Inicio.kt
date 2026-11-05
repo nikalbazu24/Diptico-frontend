@@ -107,32 +107,45 @@ fun PantallaInicio(e: Estado) {
         }
         // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
         if (p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
-        if (!e.editandoWidgets && e.sesion == null) BarraFlotante(e, null, Modifier.align(Alignment.TopEnd), arriba = true)
-
-        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 72), bottom = esc.d(8))) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                Column(Modifier.weight(1f)) {
-                    if (e.editandoWidgets || e.saludoInicio) Texto(if (e.editandoWidgets) "Acomodando tu inicio" else saludo(), 24f, lineas = 1)
-                    if (!e.editandoWidgets && e.saludoInicio) Detalle( cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() } +
-                            (e.fiesta?.let { " · ${it.nombre}" } ?: ""),
-                        13.5f, lineas = 1,
-                    )
-                }
-                if (e.editandoWidgets) Box(
-                    Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
-                        .padding(horizontal = esc.d(14), vertical = esc.d(8)),
-                ) { Texto("Listo", 14f, color = SobreUva) }
-            }
-
+        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
             if (e.editandoWidgets) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Box(Modifier.weight(1f)) { Texto("Acomodando tu inicio", 24f, lineas = 1) }
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
+                            .padding(horizontal = esc.d(14), vertical = esc.d(8)),
+                    ) { Texto("Listo", 14f, color = SobreUva) }
+                }
                 Spacer(Modifier.height(esc.d(2)))
                 Detalle(
                     "Arrastra al borde para cambiar de página · estira desde la esquina",
                     12f, lineas = 1,
                 )
+                Spacer(Modifier.height(esc.d(10)))
+            } else if (e.saludoInicio || e.sesion == null) {
+                EncabezadoWidgets(e)
+                Spacer(Modifier.height(esc.d(8)))
             }
-            Spacer(Modifier.height(esc.d(10)))
             PaginasWidgets(e, Modifier.fillMaxWidth().weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun EncabezadoWidgets(e: Estado) {
+    val esc = LocalEscala.current
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val anchoBarra = if (e.saludoInicio) maxWidth * 0.66f else maxWidth
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            if (e.saludoInicio) {
+                Column(Modifier.weight(1f).padding(end = esc.d(8))) {
+                    Texto(saludo(), 22f, lineas = 1)
+                    val formato = if (esc.angosta) "dMMM" else "EEEEdMMMM"
+                    val fecha = cl.nikalbazu.diptico.estado.Idioma.fecha(formato).replaceFirstChar { it.uppercase() }
+                    Detalle(fecha + (e.fiesta?.let { " · ${it.nombre}" } ?: ""), 13f, lineas = 1)
+                }
+            }
+            if (e.sesion == null) BarraFlotante(e, null, Modifier.widthIn(max = anchoBarra), arriba = true)
         }
     }
 }

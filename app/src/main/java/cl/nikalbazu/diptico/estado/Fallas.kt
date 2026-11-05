@@ -1,8 +1,12 @@
 package cl.nikalbazu.diptico.estado
 
 import android.content.Context
-import android.net.Uri
 import android.os.Build
+import cl.nikalbazu.diptico.BuildConfig
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.UUID
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -12,13 +16,19 @@ import java.util.Locale
 
 /**
  * Reporte de fallas: si Díptico se cierra de golpe, guarda qué pasó; al abrirse de nuevo pregunta
- * si quieres mandarlo. El reporte llega como un aviso (issue) al repositorio de GitHub, donde
- * lo ve quien hace Díptico. No lleva datos personales: versión, equipo y el error.
+ * si quieres compartirlo. El diagnóstico se depura antes de guardarlo o enviarlo.
  */
 object Fallas {
     private const val ARCHIVO = "ultima-caida.txt"
     private const val ERRORES = "errores-recientes.txt"
-    const val REPO = "https://github.com/Nikalbazu24/diptico-frontend"
+    val configurado: Boolean get() = BuildConfig.REPORTES_URL.isNotBlank()
+
+    data class Reporte(
+        val detalle: String,
+        val caida: Boolean,
+        val nota: String = "",
+        val id: String = UUID.randomUUID().toString(),
+    )
 
     private val urlPrivada = Regex("""(?i)(?:https?|content|file)://[^\s<>"']+""")
     private val rutasLocales = Regex("""(?:/storage/|/sdcard/|/data/user/|/data/data/)[^\s<>"']+""")
@@ -85,19 +95,59 @@ object Fallas {
         } catch (_: Exception) {}
     }
 
-    /** Un reporte nuevo en GitHub, ya escrito: solo falta tocar «Submit». */
-    fun urlReporte(texto: String): String {
-        val informe = depurar(texto)
-        // El título: la línea del error (por ejemplo «java.lang.NullPointerException: …»), o la primera del informe.
-        val linea = informe.lineSequence().map { it.trim() }
-            .firstOrNull { (it.contains("Exception") || it.contains("Error")) && !it.startsWith("at ") }
-        val titulo = "Falla: " + (linea ?: informe.lineSequence().first()).take(90)
-        // Las direcciones muy largas fallan: el texto va recortado (lo importante está al principio).
-        val cuerpo = "**Qué estaba haciendo / What I was doing:**\n\n\n**Informe automático de Díptico:**\n```\n" + informe.take(3800) + "\n```"
-        return "$REPO/issues/new?labels=bug&title=${Uri.encode(titulo)}&body=${Uri.encode(cuerpo)}"
+    fun textoReporte(reporte: Reporte): String = buildString {
+        if (reporte.nota.isNotBlank()) {
+            appendLine("Qué pasó:")
+            appendLine(depurar(reporte.nota).take(1000))
+            appendLine()
+        }
+        append(depurar(reporte.detalle).take(6000))
     }
 
-    /** Para reportar un problema sin caída (Menú › Acerca de). */
-    fun urlProblema(ctx: Context): String = urlReporte(informe(ctx, "Reporte de un problema", null))
-}
+    internal fun datosReporte(reporte: Reporte): JSONObject = JSONObject()
+        .put("app", "diptico")
+        .put("id", reporte.id)
+        .put("tipo", if (reporte.caida) "caida" else "manual")
+        .put("texto", textoReporte(reporte))
 
+    /** Apps Script procesa el POST y devuelve el acuse desde un segundo host de Google. */
+    fun enviar(reporte: Reporte): Boolean {
+        if (!configurado) return false
+        return try {
+            val respuesta = solicitud(URL(BuildConfig.REPORTES_URL), datosReporte(reporte).toString())
+            val acuse = JSONObject(respuesta)
+            acuse.optBoolean("ok") && acuse.optString("id") == reporte.id
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun solicitud(url: URL, cuerpo: String? = null): String {
+        val c = url.openConnection() as HttpURLConnection
+        c.instanceFollowRedirects = false
+        c.connectTimeout = 10_000
+        c.readTimeout = 15_000
+        return try {
+            if (cuerpo != null) {
+                val bytes = cuerpo.toByteArray(Charsets.UTF_8)
+                c.requestMethod = "POST"
+                c.doOutput = true
+                c.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                c.setFixedLengthStreamingMode(bytes.size)
+                c.outputStream.use { it.write(bytes) }
+            }
+            when (c.responseCode) {
+                HttpURLConnection.HTTP_OK -> c.inputStream.bufferedReader().use { it.readText() }
+                HttpURLConnection.HTTP_MOVED_TEMP, HttpURLConnection.HTTP_SEE_OTHER -> {
+                    val destino = URL(c.getHeaderField("Location") ?: error("Falta el acuse"))
+                    check(cuerpo != null && destino.protocol == "https" && destino.host == "script.googleusercontent.com" &&
+                        destino.path == "/macros/echo" && destino.userInfo == null && destino.port in listOf(-1, 443))
+                    solicitud(destino)
+                }
+                else -> error("No se pudo confirmar el reporte")
+            }
+        } finally {
+            c.disconnect()
+        }
+    }
+}

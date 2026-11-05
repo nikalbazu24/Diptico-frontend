@@ -10,7 +10,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -21,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.data.Consolas
@@ -119,18 +117,6 @@ fun Habitacion(e: Estado, modifier: Modifier = Modifier) {
             Texto("$objeto     $objeto     $objeto", 16f, color = Color(0xFFB8CBE8), modifier = Modifier.align(Alignment.End))
         }
         Texto("✥ elegir · A entrar · X decorar · B volver", 10f, color = Color(0xFFCED8EF))
-    }
-}
-
-/** Una superficie explícita para el gesto: no intercepta el estante ni la cortina de Android. */
-@Composable
-fun EnviarFicha(e: Estado, modifier: Modifier = Modifier) {
-    var recorrido by remember { mutableFloatStateOf(0f) }
-    Box(modifier.clip(RoundedCornerShape(50)).background(LocalPaleta.current.superficie.copy(alpha = .94f))
-        .pointerInput(e.fichaFijada, e.juegoSel) {
-            detectVerticalDragGestures(onDragStart = { recorrido = 0f }, onVerticalDrag = { c, dy -> c.consume(); recorrido += dy }, onDragEnd = { if (recorrido < -32.dp.toPx()) Diptico.fijarFicha(); recorrido = 0f }, onDragCancel = { recorrido = 0f })
-        }.clickable { Diptico.fijarFicha() }.padding(horizontal = 14.dp, vertical = 8.dp)) {
-        Texto(if (e.fichaFijada == null) "↑ Enviar ficha" else "↓ Soltar ficha", 11f)
     }
 }
 

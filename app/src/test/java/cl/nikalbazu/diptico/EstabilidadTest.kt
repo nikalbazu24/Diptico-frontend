@@ -141,9 +141,17 @@ class EstabilidadTest {
     }
 
     @Test fun reportesNoCopianEnlacesRutasNiCredencialesComunes() {
-        val reporte = cl.nikalbazu.diptico.estado.Fallas.urlReporte(
-            "Exception: https://example.org/token-privado /storage/abc/partida.srm Authorization: Bearer valor-privado")
-        val contenido = Uri.parse(reporte).getQueryParameter("body").orEmpty()
+        val fallas = cl.nikalbazu.diptico.estado.Fallas
+        val borrador = cl.nikalbazu.diptico.estado.Fallas.Reporte(
+            "Exception: https://example.org/token-privado /storage/abc/partida.srm Authorization: Bearer valor-privado",
+            caida = true, nota = "Se cerró al volver a Inicio",
+        )
+        val reporte = fallas.datosReporte(borrador)
+        val contenido = reporte.getString("texto")
+        assertEquals("diptico", reporte.getString("app"))
+        assertEquals("caida", reporte.getString("tipo"))
+        assertEquals(borrador.id, reporte.getString("id"))
+        assertTrue(contenido.contains("Se cerró al volver a Inicio"))
         assertFalse(contenido.contains("token-privado"))
         assertFalse(contenido.contains("partida.srm"))
         assertFalse(contenido.contains("valor-privado"))

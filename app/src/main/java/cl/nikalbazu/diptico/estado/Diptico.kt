@@ -1079,14 +1079,66 @@ object Diptico {
             mostrarDialogo(
                 Dialogo(
                     "falla", "Díptico se cerró de golpe",
-                    "La última vez Díptico se cerró solo. ¿Mandas el reporte? Se abre una página de GitHub con el informe listo (versión, equipo y el error, sin datos personales): solo cuenta qué estabas haciendo y envíalo.",
-                    Icono.INFO, si = "Enviar reporte", no = "Ahora no",
+                    "La última vez Díptico se cerró solo. Puedes contar qué pasó y enviar el reporte al equipo de Díptico.",
+                    Icono.INFO, si = "Preparar reporte", no = "Ahora no",
                 ),
-                no = { Fallas.olvidar(app) },
-            ) {
-                Fallas.olvidar(app)
-                abrirWeb(Fallas.urlReporte(informe))
+            ) { prepararReporte(informe) }
+        }
+    }
+
+    private var reportePendiente: Fallas.Reporte? = null
+    private var enviandoReporte = false
+
+    private fun prepararReporte(caida: String? = null) {
+        if (enviandoReporte) { avisar("El reporte se está enviando"); return }
+        val detalle = caida ?: Fallas.informe(app, "Reporte de un problema", null)
+        val reporte = reportePendiente?.takeIf { it.caida == (caida != null) }
+            ?: Fallas.Reporte(detalle, caida != null)
+        reportePendiente = reporte
+        abrirTexto("reporte_fallas", reporte.nota)
+    }
+
+    private fun confirmarReporte(nota: String) {
+        val reporte = reportePendiente?.copy(nota = nota.take(1000)) ?: return
+        if (enviandoReporte) return
+        if (!reporte.caida && reporte.nota.isBlank()) { avisar("Escribe una descripción breve"); return }
+        reportePendiente = reporte
+        if (!Fallas.configurado) {
+            ofrecerCopiarReporte(reporte, "El envío directo aún no está configurado.")
+            return
+        }
+        mostrarDialogo(Dialogo(
+            "enviar_reporte", "¿Enviar el reporte a Díptico?",
+            "Se enviarán tu descripción, la versión, el equipo y el diagnóstico técnico al equipo de Díptico.",
+            Icono.INFO, si = "Enviar", no = "Volver",
+        )) {
+            enviandoReporte = true
+            avisar("Enviando el reporte…")
+            scope.launch {
+                try {
+                    if (withContext(Dispatchers.IO) { Fallas.enviar(reporte) }) {
+                        reportePendiente = null
+                        if (reporte.caida) Fallas.olvidar(app)
+                        if (estado.value.panel == Panel.CLAVE && estado.value.textoPara == "reporte_fallas") cerrarPanel()
+                        avisar("Reporte enviado · ${reporte.id.take(8)}")
+                    } else if (estado.value.panel == Panel.CLAVE && estado.value.textoPara == "reporte_fallas") {
+                        ofrecerCopiarReporte(reporte, "No se pudo confirmar el envío. Puedes volver y reintentar.")
+                    } else avisar("No se pudo confirmar el envío del reporte")
+                } finally {
+                    enviandoReporte = false
+                }
             }
+        }
+    }
+
+    private fun ofrecerCopiarReporte(reporte: Fallas.Reporte, motivo: String) {
+        mostrarDialogo(Dialogo(
+            "copiar_reporte", "Guardar el texto del reporte",
+            "$motivo Puedes copiar el diagnóstico y guardarlo para compartirlo después.",
+            Icono.INFO, si = "Copiar", no = "Volver",
+        )) {
+            portapapeles()?.setPrimaryClip(android.content.ClipData.newPlainText("Reporte de Díptico", Fallas.textoReporte(reporte)))
+            avisar("Reporte copiado")
         }
     }
 
@@ -3520,8 +3572,8 @@ object Diptico {
                 lista += opcionesActualizar(e)
                 lista += Opcion(
                     "Reportar un problema", icono = Icono.INFO,
-                    ayuda = "Abre GitHub con un informe listo (versión y equipo): cuenta qué pasó y envíalo. Lo lee quien hace Díptico.",
-                ) { cerrarPanel(); abrirWeb(Fallas.urlProblema(app)) }
+                    ayuda = "Describe qué pasó y revisa el envío del diagnóstico al equipo de Díptico.",
+                ) { prepararReporte() }
                 lista += Opcion("Ver las novedades de esta versión", icono = Icono.CHISPA, ayuda = "El tour corto de lo nuevo, otra vez.") { cerrarPanel(); actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = "") } }
                 lista += Opcion("Recorrido por Díptico", icono = Icono.TUTORIAL, ayuda = "El paseo de la primera vez por todas las opciones y botones.") { verRecorrido() }
                 lista += Opcion("Repetir el tutorial", icono = Icono.TUTORIAL, ayuda = "Vuelve a configurar todo paso a paso.") { reiniciarTutorial() }
@@ -3864,7 +3916,7 @@ object Diptico {
         add(Opcion("Fondo de los estantes", v.pared, Icono.PALETA) { guardarExperiencia(v.copy(pared = Experiencia.paredes[(Experiencia.paredes.indexOf(v.pared) + 1) % Experiencia.paredes.size])) })
         add(Opcion("Adornos de los estantes", v.adorno, Icono.ESTRELLA) { guardarExperiencia(v.copy(adorno = Experiencia.adornos[(Experiencia.adornos.indexOf(v.adorno) + 1) % Experiencia.adornos.size])) })
         add(Opcion("Editar composición del inicio", "Widgets y posiciones", Icono.EDITAR, "El estudio existente permite mover y redimensionar elementos, con vista previa en la otra pantalla.") { cerrarPanel(); editarWidgets() })
-        add(Opcion("Enviar ficha a la otra pantalla", if (e.fichaFijada == null) "Sin fijar" else "Fijada", Icono.INTERCAMBIAR, "En el estante, desliza la tarjeta «Enviar ficha» hacia arriba. La ficha queda arriba mientras recorres otros juegos abajo. Tócala para soltarla.") { fijarFicha() })
+        add(Opcion("Enviar ficha a la otra pantalla", if (e.fichaFijada == null) "Sin fijar" else "Fijada", Icono.INTERCAMBIAR, "Fija el juego elegido arriba mientras recorres otros títulos abajo. Vuelve a elegir esta opción para soltar la ficha.") { fijarFicha() })
         for (nombre in listOf("Jugar", "Explorar", "Ligero")) {
             add(Opcion("Plantilla $nombre", "Personalizable", Icono.PALETA) { plantillaVisual(nombre) })
         }
@@ -6391,6 +6443,7 @@ object Diptico {
         val e = estado.value
         val t = e.borrador.trim()
         when (e.textoPara) {
+            "reporte_fallas" -> { confirmarReporte(t); return }
             "titulo" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(titulo = t.ifEmpty { null }) } }
             "notas" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(notas = e.borrador) } }
             "buscar_ajuste" -> {

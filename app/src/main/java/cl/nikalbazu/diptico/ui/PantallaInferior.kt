@@ -112,7 +112,6 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Column(Modifier.fillMaxSize()) {
-                    if (!e.unaPantalla && !e.enSistemas) EnviarFicha(e, Modifier.align(Alignment.End).padding(end = esc.d(12), top = esc.d(4)))
                     val escalaEstante = if (esc.angosta) 1.08f else 1.18f
                     when (e.vistaConsolas) {
                         "lado", "rueda" -> Row(Modifier.fillMaxWidth().weight(1f)) {
@@ -775,6 +774,7 @@ internal fun PanelClave(e: Estado) {
                 "ra_clave" -> listOf(Icono.CLAVE, "Clave de RetroAchievements", "En retroachievements.org entra a Settings y copia tu \"Web API Key\". Solo se guarda en tu consola.", "Pega tu Web API Key")
                 "buscar_imagen" -> listOf(Icono.BUSCAR, "Buscar con otro nombre", "Escribe el nombre del juego como se conoce en inglés o su nombre completo.", "Ej: The Legend of Zelda")
                 "pc_steam" -> listOf(Icono.BUSCAR, "Agregar un juego de Steam", "Escribe su nombre como aparece en Steam. Lo abrirá GameNative o GameHub Lite.", "Ej: Hollow Knight")
+                "reporte_fallas" -> listOf(Icono.INFO, "Reportar un problema", "Cuéntanos qué pasó. El reporte incluye la versión, el modelo y el diagnóstico técnico. Se comparte al confirmar.", "Ej: la pantalla inferior se quedó en negro")
                 "bisa_paso" -> listOf(Icono.LAPIZ, "Mi próximo paso", "Bisa lo recuerda para este juego.", "Ej: volver al puente")
                 "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
                 "ia_pedido" -> listOf(Icono.CHISPA, "Crear tema con IA", "Escribe tu idea, como \"Halloween japonés\" o \"Navidad en la playa\". Si lo dejas vacío, la IA elige la fiesta del mundo más cercana a hoy.", "Ej: Año Nuevo Lunar con faroles")
@@ -820,12 +820,12 @@ internal fun PanelClave(e: Estado) {
                 }
             }
             val esClave = e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave" || (e.textoPara.startsWith("ras_") && e.textoPara != "ras_ssUsuario")
-            CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas") 130f else 60f)
+            CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas" || e.textoPara == "reporte_fallas") 130f else 60f)
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
                 val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; "ia_clave_gemini" -> e.claveGemini; "ia_clave_openai" -> e.claveOpenAI; else -> if (e.textoPara.startsWith("ras_")) Diptico.almacen.texto(e.textoPara) else "" }).isNotBlank()
                 BotonGrande(
-                    when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; e.textoPara == "asistente" -> "Preguntar"; else -> "Guardar" },
+                    when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; e.textoPara == "asistente" -> "Preguntar"; e.textoPara == "reporte_fallas" -> "Continuar"; else -> "Guardar" },
                     Uva, SobreUva, Modifier.weight(1.4f),
                 ) { Diptico.guardarClave() }
             }
