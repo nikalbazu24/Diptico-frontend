@@ -49,21 +49,53 @@ jobs:
           DIPTICO_CERT_SHA256: ${{ vars.DIPTICO_CERT_SHA256 }}
         run: |
           set -euo pipefail
-          test -n "$FIRMA_BASE64" && test -n "$DIPTICO_STORE_PASSWORD" && test -n "$DIPTICO_KEY_ALIAS" && test -n "$DIPTICO_KEY_PASSWORD"
-          [[ "$DIPTICO_CERT_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          if [[ -z "$FIRMA_BASE64" || -z "$DIPTICO_STORE_PASSWORD" || -z "$DIPTICO_KEY_ALIAS" || -z "$DIPTICO_KEY_PASSWORD" ]]; then
+            echo "::error::Falta al menos un secreto de firma en el repositorio."
+            exit 1
+          fi
+          if [[ ! "$DIPTICO_CERT_SHA256" =~ ^[a-f0-9]{64}$ ]]; then
+            echo "::error::DIPTICO_CERT_SHA256 debe contener 64 dígitos hexadecimales en minúsculas."
+            exit 1
+          fi
           umask 077
           DIPTICO_KEYSTORE="$(mktemp)"
           export DIPTICO_KEYSTORE
           trap 'rm -f "$DIPTICO_KEYSTORE"' EXIT
-          printf '%s' "$FIRMA_BASE64" | base64 --decode > "$DIPTICO_KEYSTORE"
+          if ! printf '%s' "$FIRMA_BASE64" | base64 --decode > "$DIPTICO_KEYSTORE"; then
+            echo "::error::DIPTICO_KEYSTORE_BASE64 no contiene un archivo en Base64 válido."
+            exit 1
+          fi
           unset FIRMA_BASE64
+          if ! huella_clave="$(keytool -exportcert -keystore "$DIPTICO_KEYSTORE" -storepass:env DIPTICO_STORE_PASSWORD -alias "$DIPTICO_KEY_ALIAS" | sha256sum | awk '{print $1}')"; then
+            echo "::error::No se pudo leer el certificado del almacén. Revisa el archivo, la contraseña y el alias."
+            exit 1
+          fi
+          if [[ "$huella_clave" != "$DIPTICO_CERT_SHA256" ]]; then
+            echo "::error::DIPTICO_CERT_SHA256 no coincide con el certificado de la clave cargada."
+            exit 1
+          fi
           gradle :app:assembleRelease --no-daemon
           apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n1)"
-          for apk in app/build/outputs/apk/*/release/*.apk; do
-            informe="$("$apksigner" verify --print-certs "$apk")"
-            if grep -qi 'certificate DN:.*Android Debug' <<< "$informe"; then exit 1; fi
-            certificado="$(awk '/Signer #1 certificate SHA-256 digest:/ { print $NF }' <<< "$informe")"
-            test "$certificado" = "$DIPTICO_CERT_SHA256"
+          if [[ ! -x "$apksigner" ]]; then
+            echo "::error::No se encontró apksigner en el SDK de Android."
+            exit 1
+          fi
+          for variante in completa movil; do
+            apk="app/build/outputs/apk/$variante/release/app-$variante-release.apk"
+            if ! informe="$("$apksigner" verify --print-certs "$apk")"; then
+              echo "::error::Android no pudo verificar la firma del APK $variante."
+              exit 1
+            fi
+            if grep -qi 'certificate DN:.*Android Debug' <<< "$informe"; then
+              echo "::error::El APK $variante tiene un certificado de depuración."
+              exit 1
+            fi
+            certificado="$(awk '/certificate SHA-256 digest:/ { print tolower($NF) }' <<< "$informe" | sort -u)"
+            if [[ "$certificado" != "$DIPTICO_CERT_SHA256" ]]; then
+              echo "::error::El certificado del APK $variante no coincide con la huella de distribución."
+              exit 1
+            fi
+            echo "Firma de distribución verificada para $variante."
           done
 
       - name: Compilar Díptico
