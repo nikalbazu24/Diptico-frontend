@@ -322,7 +322,7 @@ fun Continuacion(e: Estado) {
     }) {
         val clip = e.retomaVideo.takeIf { e.retomaVideoClave == s.clave && e.retomaVideoFecha >= e.retomaApagadaEn && it.isNotBlank() }
         if (clip != null) cl.nikalbazu.diptico.retoma.VideoRetoma(clip,
-            Modifier.fillMaxSize().blur(10.dp).graphicsLayer { alpha = .5f * t }, alFallar = { Diptico.actualizar { it.copy(retomaVideo = "") } })
+            Modifier.fillMaxSize().blur(10.dp).graphicsLayer { alpha = .5f * t }, alFallar = { Diptico.actualizar { it.copy(navegacion = it.navegacion.copy(retomaVideo = "")) } })
         else ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize().blur(18.dp).graphicsLayer { alpha = 0.3f * t })
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, p.fondo))))
         Column(

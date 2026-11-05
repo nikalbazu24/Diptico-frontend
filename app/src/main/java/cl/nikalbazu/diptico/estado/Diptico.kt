@@ -268,18 +268,7 @@ object Widgets {
 data class Descarga(val hechos: Int, val total: Int, val actual: String, val encontrados: Int)
 
 data class Estado(
-    val atajoApps: String = "start_y",
-    val ordenApps: List<String> = emptyList(),
-    val appsMenu: String? = null,
-    val appsMenuIndice: Int = 0,
-    val appsMoviendo: String? = null,
-    val estanteAvanzado: Boolean = false,
-    val clipRetoma: Boolean = false,
-    val esperaRetoma: Int = 30,
-    val retomaVideo: String = "",
-    val retomaVideoClave: String = "",
-    val retomaVideoFecha: Long = 0L,
-    val retomaApagadaEn: Long = 0L,
+    val navegacion: NavegacionEstado = NavegacionEstado(),
     val habitacionSel: Int = 0,
     val experiencia: Experiencia = Experiencia(),
     val perfilesVisuales: Map<String, Experiencia> = emptyMap(),
@@ -588,6 +577,19 @@ data class Estado(
     /** Díptico es la app de inicio de Android (el botón Inicio trae aquí). */
     val esInicio: Boolean = true,
 ) {
+    val atajoApps get() = navegacion.atajoApps
+    val ordenApps get() = navegacion.ordenApps
+    val appsMenu get() = navegacion.appsMenu
+    val appsMenuIndice get() = navegacion.appsMenuIndice
+    val appsMoviendo get() = navegacion.appsMoviendo
+    val estanteAvanzado get() = navegacion.estanteAvanzado
+    val clipRetoma get() = navegacion.clipRetoma
+    val esperaRetoma get() = navegacion.esperaRetoma
+    val retomaVideo get() = navegacion.retomaVideo
+    val retomaVideoClave get() = navegacion.retomaVideoClave
+    val retomaVideoFecha get() = navegacion.retomaVideoFecha
+    val retomaApagadaEn get() = navegacion.retomaApagadaEn
+
     /** Conectada a la tele (o forzado en los ajustes): se usa el perfil de sobremesa. */
     val sobremesa: Boolean
         get() = configurado && (sobremesaModo == "si" || (sobremesaModo == "auto" && teleConectada != null))
@@ -701,6 +703,7 @@ object Diptico {
         val idioma = almacen.texto("idioma").ifEmpty { Idioma.delSistema() }
         Idioma.fijar(app, idioma)
         _estado.value = Estado(
+            navegacion = NavegacionEstado(atajoApps = almacen.texto("atajoApps", "start_y"), ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
             listo = true,
             idioma = idioma,
             configurado = almacen.configurado && carpeta != null,
@@ -729,20 +732,16 @@ object Diptico {
             tema = almacen.texto("tema", "diptico"),
             temaFestivo = almacen.bool("temaFestivo", true),
             decoraciones = almacen.bool("decoraciones", true),
-            atajoApps = almacen.texto("atajoApps", "start_y"),
-            ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() },
-            clipRetoma = almacen.bool("clipRetoma", false),
-            esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30,
             experiencia = Experiencia.leer(almacen.texto("experiencia", "{}")),
             perfilesVisuales = Experiencia.perfiles(almacen.texto("perfilesVisuales", "{}")),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             // La clave de Claude ya no se usa: se borra de la consola (cada persona usa Gemini, ChatGPT o la IA local).
-            claveGemini = almacen.texto("claveGemini").also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
+                        claveGemini = almacen.texto("claveGemini").also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
             claveOpenAI = almacen.texto("claveOpenAI"),
             usuarioRA = almacen.texto("usuarioRA"),
             bisaWeb = almacen.bool("bisaWeb", true),
             // Claude ya no es una opción: quien la tenía elegida pasa a automático.
-            motorIA = almacen.texto("motorIA", "auto").let { if (it == "claude") "auto" else it },
+                        motorIA = almacen.texto("motorIA", "auto").let { if (it == "claude") "auto" else it },
             iaLocalLista = IALocal.listo(app),
             tamLogo = almacen.texto("tamLogo", "1").toFloatOrNull() ?: 1f,
             atenuacion = almacen.texto("atenuacion", "0.04").toFloatOrNull() ?: 0.04f,
@@ -946,6 +945,7 @@ object Diptico {
         val e = estado.value
         if (!e.configurado || e.intro) return
         if (e.sesion != null) {
+            if (estabaJugando && ausencia > 0L) actualizar { it.copy(sesion = it.sesion?.let { s -> s.copy(inicio = s.inicio + ausencia) }) }
             if (estabaJugando && ausencia >= e.esperaRetoma * 1000L) mostrarContinuacion()
             return
         }
@@ -1805,14 +1805,7 @@ object Diptico {
         }
         if (e.turbo) turboAlJugar(juego, displayId)
         actualizar {
-            it.copy(
-                sesion = Sesion(juego.clave, System.currentTimeMillis(), displayId, consola.dosPantallas),
-                retomaVideo = "", retomaVideoClave = "",
-                panel = Panel.NINGUNO,
-                despierta = false,
-                burbujaAbierta = false,
-                burbujaAlerta = false,
-            )
+            it.copy(navegacion = it.navegacion.copy(retomaVideo = "", retomaVideoClave = ""), sesion = Sesion(juego.clave, System.currentTimeMillis(), displayId, consola.dosPantallas), panel = Panel.NINGUNO, despierta = false, burbujaAbierta = false, burbujaAlerta = false)
         }
         // La pantalla del compañero queda encendida 5 segundos y después se atenúa.
         despertar()
@@ -5001,7 +4994,7 @@ object Diptico {
         add(Opcion("Abrir cajón de apps", when(e.atajoApps) { "l3_doble" -> "Doble L3"; "no" -> "Solo botón Apps"; else -> "Start + Y" }, Icono.APPS,
             "Elige una combinación. También puedes asignar Apps a un botón físico en los botones extra de esta sección.") {
             val l = listOf("start_y", "l3_doble", "no"); val v = l[(l.indexOf(estado.value.atajoApps) + 1).mod(l.size)]
-            almacen.guardarTexto("atajoApps", v); actualizar { it.copy(atajoApps = v) }
+            almacen.guardarTexto("atajoApps", v); actualizar { it.copy(navegacion = it.navegacion.copy(atajoApps = v)) }
         })
         val modos = listOf("dividido", "invertido", "clasico")
         fun cambiarSticks(d: Int) {
@@ -6530,7 +6523,7 @@ object Diptico {
             "Cuando ves todos tus juegos juntos: todas las cajas iguales (póster o cuadradas) para que se vea parejo, o cada consola con su forma.") { ciclarFormaTodos() }
         lista += Opcion("Imagen en todas las cajas", nombreImagenCaja(e.formas.values.firstOrNull()?.imagen ?: "portada"), Icono.PORTADA,
             "Portada, captura del juego o logo, para las cajas de todas tus consolas a la vez.") { imagenTodasLasCajas() }
-        val mas = Opcion(if (e.estanteAvanzado) "Ver menos opciones" else "Más opciones de cajas", icono = Icono.AJUSTES) { actualizar { it.copy(estanteAvanzado = !it.estanteAvanzado) } }
+        val mas = Opcion(if (e.estanteAvanzado) "Ver menos opciones" else "Más opciones de cajas", icono = Icono.AJUSTES) { actualizar { it.copy(navegacion = it.navegacion.copy(estanteAvanzado = !it.estanteAvanzado)) } }
         return (if (e.estanteAvanzado) lista else lista.take(7)) + mas
     }
 
@@ -7390,15 +7383,15 @@ object Diptico {
         avisar("Grilla $cols × $filas · ${r.paginas} páginas")
     }
 
-    fun abrirOpcionesApp(paquete: String) = actualizar { it.copy(appsMenu = paquete, appsMenuIndice = 0, appsMoviendo = null) }
-    fun cerrarOpcionesApp() = actualizar { it.copy(appsMenu = null, appsMoviendo = null) }
+    fun abrirOpcionesApp(paquete: String) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = paquete, appsMenuIndice = 0, appsMoviendo = null)) }
+    fun cerrarOpcionesApp() = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null)) }
     fun opcionesApp(e: Estado = estado.value): List<Opcion> {
         val pkg = e.appsMenu ?: return emptyList()
         return listOf(
             Opcion("Abrir", icono = Icono.JUGAR) { cerrarOpcionesApp(); abrirPaquete(pkg) },
             Opcion(if (pkg in e.appsFijadas) "Quitar de fijadas" else "Fijar app", icono = Icono.ESTRELLA) { alternarFijada(pkg); cerrarOpcionesApp() },
             Opcion("Mover de lugar", icono = Icono.INTERCAMBIAR, ayuda = "Elige otra casilla con el dedo o muévela con la cruceta; A termina.") {
-                actualizar { it.copy(appsMoviendo = pkg, appsMenu = null) }; avisar("Toca su nuevo lugar o usa la cruceta · A listo")
+                actualizar { it.copy(navegacion = it.navegacion.copy(appsMoviendo = pkg, appsMenu = null)) }; avisar("Toca su nuevo lugar o usa la cruceta · A listo")
             },
             Opcion("Abrir en otra pantalla", icono = Icono.PANTALLAS) { cerrarOpcionesApp(); elegirPantalla("app:$pkg") },
             Opcion("Opciones de Android", icono = Icono.AJUSTES) { cerrarOpcionesApp(); infoApp(pkg) },
@@ -7408,7 +7401,7 @@ object Diptico {
             },
         )
     }
-    fun moverMenuApp(d: Int) { val n = opcionesApp().size; if (n > 0) actualizar { it.copy(appsMenuIndice = (it.appsMenuIndice + d).mod(n)) } }
+    fun moverMenuApp(d: Int) { val n = opcionesApp().size; if (n > 0) actualizar { it.copy(navegacion = it.navegacion.copy(appsMenuIndice = (it.appsMenuIndice + d).mod(n))) } }
     fun aceptarMenuApp() { opcionesApp().getOrNull(estado.value.appsMenuIndice)?.accion?.invoke() }
     fun moverAppA(destino: Int) {
         val e = estado.value; val pkg = e.appsMoviendo ?: return
@@ -7420,30 +7413,30 @@ object Diptico {
             almacen.guardarTexto("appsFijadas", visibles.joinToString(",")); actualizar { it.copy(appsFijadas = visibles, indice = nuevo) }
         } else {
             val orden = visibles + e.ordenApps.filter { it !in visibles }
-            almacen.guardarTexto("ordenApps", orden.joinToString(",")); actualizar { it.copy(ordenApps = orden, indice = nuevo) }
+            almacen.guardarTexto("ordenApps", orden.joinToString(",")); actualizar { it.copy(navegacion = it.navegacion.copy(ordenApps = orden), indice = nuevo) }
         }
     }
     fun tocarApp(i: Int) {
         if (estado.value.appsMoviendo != null) { moverAppA(i); cerrarOpcionesApp() }
-        else { elegirIndice(i); appsVisibles().getOrNull(i)?.let { abrirPaquete(it.paquete) } }
+        else { actualizar { it.copy(indice = i) }; appsVisibles().getOrNull(i)?.let { abrirPaquete(it.paquete) } }
     }
 
     fun alternarClipRetoma() {
         val v = !estado.value.clipRetoma
-        almacen.guardarBool("clipRetoma", v); actualizar { it.copy(clipRetoma = v) }
-        if (!v) { cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app); actualizar { it.copy(retomaVideo = "", retomaVideoClave = "") } }
+        almacen.guardarBool("clipRetoma", v); actualizar { it.copy(navegacion = it.navegacion.copy(clipRetoma = v)) }
+        if (!v) { cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app); actualizar { it.copy(navegacion = it.navegacion.copy(retomaVideo = "", retomaVideoClave = "")) } }
     }
     fun cambiarEsperaRetoma() {
         val l = listOf(15, 30, 60, 300); val n = l[(l.indexOf(estado.value.esperaRetoma) + 1).mod(l.size)]
-        almacen.guardarTexto("esperaRetoma", n.toString()); actualizar { it.copy(esperaRetoma = n) }
+        almacen.guardarTexto("esperaRetoma", n.toString()); actualizar { it.copy(navegacion = it.navegacion.copy(esperaRetoma = n)) }
     }
     fun alSuspender() {
-        actualizar { it.copy(retomaApagadaEn = System.currentTimeMillis(), retomaVideo = "", retomaVideoClave = "") }
+        actualizar { it.copy(navegacion = it.navegacion.copy(retomaApagadaEn = System.currentTimeMillis(), retomaVideo = "", retomaVideoClave = "")) }
         cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
     }
     fun clipRetomaListo(clave: String, archivo: String) {
         if (!estado.value.clipRetoma || estado.value.sesion?.clave != clave) return
-        actualizar { it.copy(retomaVideo = archivo, retomaVideoClave = clave, retomaVideoFecha = System.currentTimeMillis()) }
+        actualizar { it.copy(navegacion = it.navegacion.copy(retomaVideo = archivo, retomaVideoClave = clave, retomaVideoFecha = System.currentTimeMillis())) }
     }
     fun pedirPermisoRetoma(luegoJugar: Boolean, pantalla: String? = null) {
         val e = estado.value
@@ -7454,15 +7447,20 @@ object Diptico {
             return
         }
         pantallaRetomaPendiente = pantalla
+        claveRetomaPendiente = if (luegoJugar) clave else null
         cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
         try { app.startActivity(Intent(app, cl.nikalbazu.diptico.lupa.PermisoLupaActivity::class.java)
             .putExtra("retoma", true).putExtra("clave", clave).putExtra("luegoJugar", luegoJugar).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         catch (_: Exception) { retomaPermisoTerminado(luegoJugar) }
     }
     private var pantallaRetomaPendiente: String? = null
+    private var claveRetomaPendiente: String? = null
     fun retomaPermisoTerminado(luegoJugar: Boolean) {
-        if (luegoJugar) jugar(pantallaRetomaPendiente, conRetomaLista = true)
-        pantallaRetomaPendiente = null
+        if (luegoJugar) {
+            claveRetomaPendiente?.let { elegirConsola("todo"); elegirJuego(it) }
+            jugar(pantallaRetomaPendiente, conRetomaLista = true)
+        }
+        pantallaRetomaPendiente = null; claveRetomaPendiente = null
     }
 
     // ---------- Cajón de apps: el resto de las apps de la consola ----------
@@ -7509,9 +7507,9 @@ object Diptico {
         }
     }
 
-    fun cambiarPestanaApps(d: Int) = actualizar { it.copy(appsMenu = null, appsMoviendo = null,appsPestana = (it.appsPestana + d).mod(PESTANAS_APPS.size), indice = 0) }
+    fun cambiarPestanaApps(d: Int) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null), appsPestana = (it.appsPestana + d).mod(PESTANAS_APPS.size), indice = 0) }
 
-    fun elegirPestanaApps(i: Int) = actualizar { it.copy(appsMenu = null, appsMoviendo = null,appsPestana = i, indice = 0) }
+    fun elegirPestanaApps(i: Int) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null), appsPestana = i, indice = 0) }
 
     /** Fija (o suelta) una app: las fijadas tienen su pestaña y su widget en el inicio. */
     fun alternarFijada(paquete: String) {

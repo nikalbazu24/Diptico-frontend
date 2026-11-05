@@ -1161,7 +1161,7 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun nav_selector_abajo() = foto("nav_selector_abajo", base().copy(panel = Panel.GALERIA, galeria = "vistas_juegos"), Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
-    @Test fun nav_menu_app() = foto("nav_menu_app", base().copy(panel = Panel.APPS, appsTodas = listOf(App("com.test.app", "Mi aplicación", false)), appsMenu = "com.test.app"), Rol.INFERIOR, mi = 1)
+    @Test fun nav_menu_app() = foto("nav_menu_app", base().copy(navegacion = base().navegacion.copy(appsMenu = "com.test.app"), panel = Panel.APPS, appsTodas = listOf(App("com.test.app", "Mi aplicación", false))), Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
     @Test fun nav_retoma_sin_clip() = foto("nav_retoma_sin_clip", base().copy(sesion = Sesion("snes/1", 1L, 0, false), continuacion = 1L), Rol.INFERIOR, mi = 1)
 

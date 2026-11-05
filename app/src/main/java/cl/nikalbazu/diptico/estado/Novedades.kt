@@ -124,7 +124,7 @@ object Novedades {
                 Icono.CHISPA, 0xFFFF7A59,
             ),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("1.0-beta.8", "1.0 beta.8", listOf(
             Pagina(
                 "Un inicio más despejado", "La barra de abajo ahora flota arriba y se esconde sola a los 5 segundos. Vuelve deslizando hacia arriba desde el borde de abajo, tocando o con B. Para dejarla fija: Menú › Inicio.",
                 Icono.APPS, 0xFF3BA8FF, "Desliza ↑ o B",
