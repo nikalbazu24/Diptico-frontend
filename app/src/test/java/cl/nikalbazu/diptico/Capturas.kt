@@ -1165,6 +1165,9 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun nav_retoma_sin_clip() = foto("nav_retoma_sin_clip", base().copy(sesion = Sesion("snes/1", 1L, 0, false), continuacion = 1L), Rol.INFERIOR, mi = 1)
 
+    @Config(qualifiers = ABAJO)
+    @Test fun nav_menu_app_desinstalar() = foto("nav_menu_app_desinstalar", base().copy(navegacion = cl.nikalbazu.diptico.estado.NavegacionEstado(appsMenu = "com.test.app", appsMenuIndice = 5), panel = Panel.APPS, appsTodas = listOf(App("com.test.app", "Mi aplicación", false))), Rol.INFERIOR, mi = 1)
+
 }
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"

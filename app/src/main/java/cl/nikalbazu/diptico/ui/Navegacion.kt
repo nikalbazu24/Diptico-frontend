@@ -38,6 +38,8 @@ fun MenuApp(e: Estado) {
     val p = LocalPaleta.current; val esc = LocalEscala.current
     val app = e.appsTodas.firstOrNull { it.paquete == e.appsMenu }
     val opciones = Diptico.opcionesApp(e)
+    val lista = androidx.compose.foundation.lazy.rememberLazyListState()
+    LaunchedEffect(e.appsMenuIndice) { lista.mostrar(e.appsMenuIndice) }
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .65f)).clickable { Diptico.cerrarOpcionesApp() }, contentAlignment = Alignment.Center) {
         Column(Modifier.padding(esc.d(16)).widthIn(max = esc.d(420)).fillMaxWidth().heightIn(max = esc.d(360))
             .clip(RoundedCornerShape(esc.d(24))).background(p.fondo2).sinCerrar().padding(esc.d(16))) {
@@ -47,7 +49,7 @@ fun MenuApp(e: Estado) {
                 Box(Modifier.clickable { Diptico.cerrarOpcionesApp() }.padding(esc.d(8))) { IconoDiptico(Icono.CERRAR, p.tinta, 18f) }
             }
             Spacer(Modifier.height(esc.d(10)))
-            LazyColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+            LazyColumn(Modifier.weight(1f, fill = false), state = lista, verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
                 itemsIndexed(opciones) { i, o ->
                     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14)))
                         .background(if (i == e.appsMenuIndice) Uva.copy(alpha = .25f) else p.superficie)

@@ -24,6 +24,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -286,7 +288,7 @@ fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arrib
                 Row(
                     Modifier.shadow(esc.d(14), RoundedCornerShape(50)).clip(RoundedCornerShape(50))
                         .background(p.fondo2.copy(alpha = 0.97f)).border(esc.d(1), Color.White.copy(alpha = 0.08f), RoundedCornerShape(50))
-                        .padding(horizontal = esc.d(6), vertical = esc.d(6)),
+                        .horizontalScroll(rememberScrollState()).padding(horizontal = esc.d(6), vertical = esc.d(6)),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(esc.d(4)),
                 ) {
