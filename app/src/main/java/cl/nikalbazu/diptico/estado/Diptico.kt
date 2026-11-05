@@ -268,6 +268,7 @@ object Widgets {
 data class Descarga(val hechos: Int, val total: Int, val actual: String, val encontrados: Int)
 
 data class Estado(
+    val habitacionSel: Int = 0,
     val experiencia: Experiencia = Experiencia(),
     val perfilesVisuales: Map<String, Experiencia> = emptyMap(),
     val colorUniverso: Long = 0L,
@@ -3608,6 +3609,28 @@ object Diptico {
         if (id !in estado.value.colecciones) return
         abrirWidgetTipo("coleccion-$id")
         actualizar { it.copy(coleccionVisual = id) }
+    }
+
+    fun objetosHabitacion(e: Estado = estado.value): List<String> = e.pestanas.map { "consola:$it" } +
+        e.colecciones.keys.map { "coleccion:$it" } +
+        e.juegos.filter { (e.datos[it.clave]?.tiempo ?: 0L) > 0L }.sortedByDescending { e.datos[it.clave]?.tiempo }.take(3).map { "juego:${it.clave}" }
+
+    fun moverHabitacion(delta: Int) {
+        val objetos = objetosHabitacion()
+        if (objetos.isEmpty()) return
+        val i = (estado.value.habitacionSel + delta).mod(objetos.size)
+        val id = objetos[i]
+        if (id.startsWith("consola:")) elegirConsola(id.removePrefix("consola:"))
+        actualizar { it.copy(habitacionSel = i) }
+    }
+
+    fun abrirObjetoHabitacion(id: String? = null) {
+        val objeto = id ?: objetosHabitacion().getOrNull(estado.value.habitacionSel) ?: return
+        when {
+            objeto.startsWith("consola:") -> { elegirConsola(objeto.removePrefix("consola:")); entrarSistema() }
+            objeto.startsWith("coleccion:") -> abrirColeccionVisual(objeto.removePrefix("coleccion:"))
+            objeto.startsWith("juego:") -> { elegirConsola("todo"); elegirJuego(objeto.removePrefix("juego:")); entrarSistema() }
+        }
     }
 
     fun fijarFicha() {

@@ -57,9 +57,6 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                     else -> PantallaInferior(e, miPantalla)
                 }
             }
-            if (rol == Rol.INFERIOR && !e.unaPantalla && e.panel == Panel.NINGUNO && e.sesion == null && !e.intro && e.novedades < 0) {
-                EnviarFicha(e, Modifier.align(androidx.compose.ui.Alignment.TopEnd))
-            }
             AnimatedVisibility(visible = centroAqui, enter = fadeIn(tween(160)), exit = fadeOut(tween(200))) { PanelCentro(e) }
             // Mientras juegas: Bisa se abre en la pantalla libre (la que no tiene el juego).
             val s = e.sesion

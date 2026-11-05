@@ -69,7 +69,7 @@ class Capturas {
         Diptico.fijarParaPrueba(e)
         Estilo.tema = tema ?: Temas.incluidos[0]
         Estilo.decoraciones = true
-        Estilo.efecto = e.efecto
+        Estilo.efecto = if (e.experiencia.vidrio) "vidrio" else e.efecto
         cl.nikalbazu.diptico.estado.Idioma.fijar(ApplicationProvider.getApplicationContext(), e.idioma)
         regla.mainClock.autoAdvance = false
         regla.setContent {

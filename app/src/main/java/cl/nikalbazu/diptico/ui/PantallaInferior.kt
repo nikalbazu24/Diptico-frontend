@@ -111,6 +111,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Column(Modifier.fillMaxSize()) {
+                    if (!e.unaPantalla && !e.enSistemas) EnviarFicha(e, Modifier.align(Alignment.End).padding(end = esc.d(12), top = esc.d(4)))
                     val escalaEstante = if (esc.angosta) 1.08f else 1.18f
                     when (e.vistaConsolas) {
                         "lado", "rueda" -> Row(Modifier.fillMaxWidth().weight(1f)) {
