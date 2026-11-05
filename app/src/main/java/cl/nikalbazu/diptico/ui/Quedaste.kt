@@ -178,13 +178,18 @@ fun MarcarMapa(e: Estado) {
 
 /** La imagen del mapa entera (sin recortar) y el pin donde quedaste. [editable]: tocar mueve el pin. */
 @Composable
-fun MapaConPin(m: MapaJuego, modifier: Modifier, editable: Boolean = false, maxLado: Int = 600) {
+fun MapaConPin(m: MapaJuego, modifier: Modifier, editable: Boolean = false, maxLado: Int = 600, animar: Boolean = true) {
     val esc = LocalEscala.current
     val img = rememberImagen(android.net.Uri.parse(m.uri), maxLado)
-    val pulso = rememberInfiniteTransition(label = "pin")
-    val anillo by pulso.animateFloat(0f, 1f, infiniteRepeatable(tween(1400)), label = "anillo")
+    val anillo = if (animar) {
+        val pulso = rememberInfiniteTransition(label = "pin")
+        pulso.animateFloat(0f, 1f, infiniteRepeatable(tween(1400)), label = "anillo").value
+    } else .3f
     BoxWithConstraints(modifier.clip(RoundedCornerShape(esc.d(14))).background(Color.Black.copy(alpha = 0.35f)), contentAlignment = Alignment.Center) {
-        if (img == null) { Girador(22f); return@BoxWithConstraints }
+        if (img == null) {
+            if (animar) Girador(22f) else Detalle("Mapa sin acceso", 13f, lineas = 1)
+            return@BoxWithConstraints
+        }
         // Dónde queda la imagen ajustada dentro del espacio (para poner el pin en el lugar justo).
         val ancho = maxWidth.value
         val alto = maxHeight.value
@@ -242,3 +247,4 @@ fun RecuerdosJuego(e: Estado, clave: String, mapaAlto: Float = 90f) {
         }
     }
 }
+

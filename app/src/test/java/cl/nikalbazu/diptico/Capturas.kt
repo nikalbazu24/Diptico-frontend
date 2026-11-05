@@ -1168,6 +1168,33 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun nav_menu_app_desinstalar() = foto("nav_menu_app_desinstalar", base().copy(navegacion = cl.nikalbazu.diptico.estado.NavegacionEstado(appsMenu = "com.test.app", appsMenuIndice = 5), panel = Panel.APPS, appsTodas = listOf(App("com.test.app", "Mi aplicación", false))), Rol.INFERIOR, mi = 1)
 
+    @Config(qualifiers = ABAJO)
+    @Test fun rc_mesa_bitacora() {
+        val e = base()
+        foto("rc_mesa_bitacora", e.copy(
+            sesion = Sesion("snes/1", System.currentTimeMillis() - 180_000, 0, false), despierta = true,
+            datos = e.datos.mapValues { it.value.copy(vistaPartida = "BITACORA") },
+        ), Rol.INFERIOR, mi = 1)
+    }
+
+    @Config(qualifiers = ABAJO)
+    @Test fun rc_mesa_herramientas() {
+        val e = base()
+        foto("rc_mesa_herramientas", e.copy(
+            sesion = Sesion("snes/1", System.currentTimeMillis() - 180_000, 0, false), despierta = true,
+            datos = e.datos.mapValues { it.value.copy(vistaPartida = "HERRAMIENTAS") },
+        ), Rol.INFERIOR, mi = 1)
+    }
+
+    @Test fun rc_widgets_partida() {
+        val e = base()
+        foto("rc_widgets_partida", e.copy(inicio = "widgets", widgets = listOf(
+            Widget("proximaPartida", 0, 0, 3, 2),
+            Widget("colaJuegos", 3, 0, 3, 2),
+            Widget("tengo20", 0, 2, 3, 1),
+        ), datos = e.datos.mapValues { it.value.copy(avance = "JUGANDO", sesiones = 16) }), Rol.SUPERIOR)
+    }
+
 }
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"

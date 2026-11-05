@@ -212,6 +212,9 @@ object Widgets {
         Widget("apps", 0, 0, 3, 1, false),
         Widget("temporizador", 0, 0, 2, 1, false), Widget("cronometro", 0, 0, 2, 1, false),
         Widget("buscar", 0, 0, 2, 1, false),
+        Widget("proximaPartida", 0, 0, 3, 2, false),
+        Widget("colaJuegos", 0, 0, 3, 2, false),
+        Widget("tengo20", 0, 0, 3, 1, false),
     )
 
     /** Para qué sirve cada widget (en el catálogo del estudio). */
@@ -229,6 +232,9 @@ object Widgets {
         "temporizador" -> "Cuenta atrás y aviso mientras juegas"
         "cronometro" -> "Mide una partida y pausa cuando quieras"
         "buscar" -> "Abre la búsqueda de juegos con un toque"
+        "proximaPartida" -> "Recuerda qué jugaste, tu próximo paso y tu mapa"
+        "colaJuegos" -> "Ordena los juegos que quieres empezar o terminar"
+        "tengo20" -> "Sugiere juegos que sueles jugar en sesiones breves"
         else -> "Tu imagen o GIF animado"
     }
 
@@ -240,6 +246,9 @@ object Widgets {
         "accesos" -> Icono.AJUSTES; "notificaciones" -> Icono.CAMPANA; "logros" -> Icono.TROFEO; "asistente" -> Icono.BISA; "apps" -> Icono.APPS
         "temporizador", "cronometro" -> Icono.RELOJ
         "buscar" -> Icono.BUSCAR
+        "proximaPartida" -> Icono.CONTINUAR
+        "colaJuegos" -> Icono.BIBLIOTECA
+        "tengo20" -> Icono.RELOJ
         else -> Icono.PORTADA
     }
 
@@ -268,6 +277,7 @@ object Widgets {
         "sugerencia" -> "¿Qué juego hoy?"; "accesos" -> "Accesos rápidos"; "notificaciones" -> "Notificaciones"
         "logros" -> "Logros (RetroAchievements)"; "asistente" -> "Asistente con IA"; "apps" -> "Apps"
         "temporizador" -> "Temporizador"; "cronometro" -> "Cronómetro"; "buscar" -> "Buscar juegos"
+        "proximaPartida" -> "Mi próxima partida"; "colaJuegos" -> "Cola de juegos"; "tengo20" -> "Tengo 20 minutos"
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -2719,6 +2729,16 @@ object Diptico {
                 ciclarEmuladorJuego(juego.clave, consola)
             }
         }
+        lista += Opcion("Estado en mi cola", AvanceJuego.leer(d?.avance).titulo, Icono.BIBLIOTECA,
+            "Marca pendiente, jugando o terminado para ordenar la cola.") { cambiarAvance(juego.clave) }
+        if (AvanceJuego.leer(d?.avance) in setOf(AvanceJuego.PENDIENTE, AvanceJuego.JUGANDO)) {
+            lista += Opcion("Priorizar en la cola", icono = Icono.ARRIBA) { priorizarJuego(juego.clave) }
+        }
+        if (!e.unaPantalla) lista += Opcion("Pantalla compañera", VistaPartida.leer(d?.vistaPartida ?: e.experiencia.vistaPartida).titulo,
+            Icono.PANTALLAS, "Elige portada, bitácora, herramientas o una vista ligera para este juego.") {
+            val actual = VistaPartida.leer(estado.value.datos[juego.clave]?.vistaPartida ?: estado.value.experiencia.vistaPartida)
+            elegirVistaPartida(juego.clave, VistaPartida.entries[(actual.ordinal + 1) % VistaPartida.entries.size])
+        }
         if (!e.unaPantalla) {
             lista += Opcion(
                 "Abre en",
@@ -2829,10 +2849,13 @@ object Diptico {
             val ext = id.substringAfterLast('.', "").lowercase()
             if (ext !in setOf("cue", "m3u", "gdi")) continue
             val texto = try {
-                cr.openInputStream(DocumentsContract.buildDocumentUriUsingTree(arbol, id))
-                    ?.use(cl.nikalbazu.diptico.data.IndicesJuego::leer)
+                cr.openInputStream(DocumentsContract.buildDocumentUriUsingTree(arbol, id))?.use { it.readBytes().take(65_536).toByteArray().toString(Charsets.UTF_8) }
             } catch (_: Exception) { null } ?: continue
-            val nombres = cl.nikalbazu.diptico.data.IndicesJuego.referencias(texto, ext)
+            val nombres = when (ext) {
+                "cue" -> Regex("FILE\\s+\"([^\"]+)\"", RegexOption.IGNORE_CASE).findAll(texto).map { it.groupValues[1] }.toList()
+                "gdi" -> texto.lineSequence().drop(1).mapNotNull { l -> Regex("^\\s*\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+(\"[^\"]+\"|\\S+)").find(l)?.groupValues?.get(1)?.removeSurrounding("\"") }.toList()
+                else -> texto.lineSequence().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }.toList()
+            }
             for (n in nombres) {
                 // Solo archivos de la misma carpeta (o subcarpetas): nunca rutas hacia arriba.
                 if (n.contains("..") || n.startsWith("/")) continue
@@ -3396,6 +3419,10 @@ object Diptico {
                 }
             }
             Seccion.BIBLIOTECA -> {
+                lista += Opcion("Importar lista de ES-DE", icono = Icono.DESCARGA,
+                    ayuda = "Elige gamelist.xml tras escanear tus juegos. Revisa los títulos y favoritos antes de importar.") {
+                    pedirArchivoPara("es-de", "*/*")
+                }
                 lista += Opcion(
                     "Volver a buscar juegos", if (e.escaneando) "Buscando…" else "${e.juegos.size} juegos", Icono.BUSCAR,
                     "Úsalo cuando agregues juegos nuevos a tu carpeta.",
@@ -3637,16 +3664,69 @@ object Diptico {
     }
 
     private fun capturarPerfil(): Experiencia = estado.value.let { e -> e.experiencia.copy(
-        posiciones = e.widgets.map { PosicionVisual(it.tipo, it.x, it.y, it.an, it.al, it.pagina, it.visible) },
+        posiciones = e.widgets.map { w -> PosicionVisual(w.tipo, w.x, w.y, w.an, w.al, w.pagina, w.visible,
+            w.estilo, w.color, w.radio, w.opacidad, w.variante, w.escala) },
         columnas = e.gridCols, filas = e.gridFilas, paginas = e.paginas,
+        inicioPerfil = e.inicio, vistaPerfil = e.vista, sistemasPerfil = e.vistaConsolas,
     ) }
 
     private fun aplicarPerfil(v: Experiencia) {
         guardarExperiencia(v.copy(posiciones = emptyList()))
         if (v.posiciones.isNotEmpty()) {
-            guardarGrilla(v.columnas, v.filas, v.paginas)
-            val l = estado.value.widgets.map { w -> v.posiciones.firstOrNull { it.tipo == w.tipo }?.let { p -> w.copy(x = p.x, y = p.y, an = p.an, al = p.al, pagina = p.pagina, visible = p.visible) } ?: w }
-            guardarWidgets(reacomodar(l, v.paginas))
+            val posiciones = v.posiciones.associateBy { it.tipo }
+            val widgets = estado.value.widgets.map { w ->
+                val p = posiciones[w.tipo] ?: return@map w
+                w.copy(x = p.x, y = p.y, an = p.an, al = p.al, pagina = p.pagina, visible = p.visible,
+                    estilo = p.estilo ?: w.estilo, color = p.color ?: w.color, radio = p.radio ?: w.radio,
+                    opacidad = p.opacidad ?: w.opacidad, variante = p.variante ?: w.variante, escala = p.escala ?: w.escala)
+            }
+            val cols = v.columnas.coerceIn(4, 8)
+            val filas = v.filas.coerceIn(3, 8)
+            val r = Rejilla.distribuir(widgets, cols, filas, v.paginas)
+            almacen.guardarTexto("gridCols", cols.toString())
+            almacen.guardarTexto("gridFilas", filas.toString())
+            almacen.guardarTexto("paginas", r.paginas.toString())
+            Widgets.COLUMNAS = cols
+            Widgets.FILAS = filas
+            guardarWidgets(r.widgets)
+            actualizar { it.copy(gridCols = cols, gridFilas = filas, paginas = r.paginas, paginaInicio = 0) }
+        }
+        v.inicioPerfil?.let { inicio ->
+            almacen.guardarTexto("inicio", inicio)
+            actualizar { it.copy(inicio = inicio) }
+        }
+        v.vistaPerfil?.let { vista ->
+            almacen.guardarTexto("vista", vista)
+            actualizar { it.copy(vista = vista) }
+        }
+        v.sistemasPerfil?.let { elegirVistaConsolas(it) }
+    }
+
+    private fun plantillaVisual(nombre: String) {
+        val e = estado.value
+        val elegidos = when (nombre) {
+            "Jugar" -> setOf("juego", "reloj", "proximaPartida", "tengo20")
+            "Explorar" -> setOf("buscar", "recientes", "colaJuegos", "favoritos")
+            else -> setOf("juego", "reloj")
+        }
+        val widgets = Widgets.porDefecto.map { w -> w.copy(visible = w.tipo in elegidos) }
+        val r = Rejilla.distribuir(widgets, 6, 4, 1)
+        val plantilla = e.experiencia.copy(
+            vidrio = nombre != "Ligero", movimiento = nombre != "Ligero",
+            posiciones = r.widgets.map { PosicionVisual(it.tipo, it.x, it.y, it.an, it.al, it.pagina, it.visible) },
+            columnas = 6, filas = 4, paginas = r.paginas, inicioPerfil = "widgets",
+            vistaPerfil = if (nombre == "Ligero") "lista" else "cuadricula",
+            sistemasPerfil = if (nombre == "Explorar") "carpetas" else "arriba",
+            vistaPartida = when (nombre) {
+                "Jugar" -> VistaPartida.BITACORA.name
+                "Ligero" -> VistaPartida.LIGERA.name
+                else -> VistaPartida.CLASICA.name
+            },
+        )
+        mostrarDialogo(Dialogo("plantilla-visual", "Aplicar $nombre", "Cambia la distribución del inicio y el estilo. Conserva las personalizaciones de cada juego.",
+            Icono.PALETA, si = "Aplicar", no = "Cancelar")) {
+            almacen.guardarTexto("perfilVisualAnterior", capturarPerfil().json(local = true).toString())
+            aplicarPerfil(plantilla)
         }
     }
 
@@ -3724,6 +3804,15 @@ object Diptico {
         add(Opcion("Adornos de los estantes", v.adorno, Icono.ESTRELLA) { guardarExperiencia(v.copy(adorno = Experiencia.adornos[(Experiencia.adornos.indexOf(v.adorno) + 1) % Experiencia.adornos.size])) })
         add(Opcion("Editar composición del inicio", "Widgets y posiciones", Icono.EDITAR, "El estudio existente permite mover y redimensionar elementos, con vista previa en la otra pantalla.") { cerrarPanel(); editarWidgets() })
         add(Opcion("Enviar ficha a la otra pantalla", if (e.fichaFijada == null) "Sin fijar" else "Fijada", Icono.INTERCAMBIAR, "En el estante, desliza la tarjeta «Enviar ficha» hacia arriba. La ficha queda arriba mientras recorres otros juegos abajo. Tócala para soltarla.") { fijarFicha() })
+        for (nombre in listOf("Jugar", "Explorar", "Ligero")) {
+            add(Opcion("Plantilla $nombre", "Personalizable", Icono.PALETA) { plantillaVisual(nombre) })
+        }
+        if (almacen.texto("perfilVisualAnterior").isNotBlank()) {
+            add(Opcion("Volver a mi distribución anterior", icono = Icono.CONTINUAR) {
+                aplicarPerfil(Experiencia.leer(almacen.texto("perfilVisualAnterior")))
+                almacen.guardarTexto("perfilVisualAnterior", "")
+            })
+        }
         for (n in 1..3) {
             val id = "Perfil $n"
             add(Opcion("Guardar $id", if (id in e.perfilesVisuales) "Reemplazar" else "Vacío", Icono.COPIAR) {
@@ -3733,7 +3822,7 @@ object Diptico {
             })
             if (id in e.perfilesVisuales) add(Opcion("Aplicar $id", icono = Icono.CHECK) { aplicarPerfil(e.perfilesVisuales.getValue(id)) })
         }
-        add(Opcion("Compartir perfil visual", "Archivo JSON", Icono.WEB, "Comparte solo colores y efectos. Las imágenes y música locales, las claves y tu biblioteca no se exportan.") { exportarVisual?.invoke(capturarPerfil().json().toString(2)) })
+        add(Opcion("Compartir perfil visual", "Archivo JSON", Icono.WEB, "Comparte la composición, el estilo de widgets y las vistas. Los archivos locales, las claves y la biblioteca quedan en tu equipo.") { exportarVisual?.invoke(capturarPerfil().json().toString(2)) })
         add(Opcion("Importar perfil visual", "Con vista previa y confirmación", Icono.DESCARGA) { importarVisual?.invoke() })
         e.colecciones.forEach { (id, c) ->
             val p = v.colecciones[id] ?: PresentacionColeccion()
@@ -5247,6 +5336,28 @@ object Diptico {
         }
     }
 
+    fun elegirVistaPartida(clave: String, vista: VistaPartida) {
+        val datos = estado.value.datos.toMutableMap()
+        datos[clave] = (datos[clave] ?: DatosJuego()).copy(vistaPartida = vista.name)
+        almacen.guardarDatos(datos)
+        actualizar { it.copy(datos = datos) }
+        if (estado.value.sesion != null) despertar()
+    }
+
+    fun cambiarAvance(clave: String) {
+        cambiarDatos(clave) { d ->
+            val actual = AvanceJuego.leer(d.avance)
+            val siguiente = AvanceJuego.entries[(actual.ordinal + 1) % AvanceJuego.entries.size]
+            d.copy(avance = siguiente.name, puestoCola = d.puestoCola ?: System.currentTimeMillis())
+        }
+    }
+
+    fun priorizarJuego(clave: String) {
+        val primero = estado.value.datos.values.mapNotNull { it.puestoCola }.minOrNull() ?: 0L
+        cambiarDatos(clave) { it.copy(puestoCola = (primero.coerceAtLeast(Long.MIN_VALUE + 1)) - 1) }
+        avisar("Juego al comienzo de la cola")
+    }
+
     private fun opcionesTemporizador(e: Estado) = listOf(
         Opcion("Temporizador", "${e.temporizadorMin} min", Icono.RELOJ, "Elige los minutos con ← →. Te aviso con un cartel aunque estés jugando.", menos = { cambiarTemporizador(-1) }) { cambiarTemporizador(1) },
         Opcion(if (e.temporizadorFin > 0L) "Detener el temporizador" else "Empezar el temporizador", icono = if (e.temporizadorFin > 0L) Icono.CERRAR else Icono.JUGAR, ayuda = "Un temporizador para avisarte cuando sea hora de dejar de jugar.") { alternarTemporizador() },
@@ -5265,6 +5376,15 @@ object Diptico {
             Opcion(j.titulo, (Consolas.porId(j.consolaId)?.nombre ?: "") + (d?.tiempo?.takeIf { it >= 60 }?.let { " · ${formatoTiempoCorto(it)}" } ?: ""), Icono.JUGAR, d?.paso.orEmpty()) { jugarDesdeWidget(j.clave) }
         }
         return when (w.tipo) {
+            "proximaPartida" -> ultimoJugado(e)?.let { j ->
+                juegosComo(listOf(j)) + Opcion("Ver o marcar el mapa", icono = Icono.MUNDO) { abrirMapa(j.clave) }
+            } ?: listOf(Opcion("Tu próxima partida aparecerá aquí", icono = Icono.INFO, apagada = true) {})
+            "colaJuegos" -> juegosComo(PlanPartida.cola(e)).ifEmpty {
+                listOf(Opcion("Agrega juegos desde Opciones del juego", icono = Icono.INFO, apagada = true) {})
+            }
+            "tengo20" -> juegosComo(PlanPartida.breves(e)).ifEmpty {
+                listOf(Opcion("Las sugerencias se basan en tus sesiones anteriores", icono = Icono.INFO, apagada = true) {})
+            }
             "temporizador" -> opcionesTemporizador(e)
             "cronometro" -> opcionesCronometro(e)
             "reloj" -> opcionesTemporizador(e) + opcionesCronometro(e) + listOf(
@@ -6238,7 +6358,48 @@ object Diptico {
         pedirArchivo?.invoke(tipo) ?: avisar("No pude abrir el selector de archivos")
     }
 
+    private fun importarListaEsDe(uri: Uri) {
+        val e = estado.value
+        scope.launch {
+            val previa = withContext(Dispatchers.IO) {
+                runCatching {
+                    val entradas = app.contentResolver.openInputStream(uri)?.use(cl.nikalbazu.diptico.data.ImportarEsDe::leer)
+                        ?: error("Archivo vacío")
+                    cl.nikalbazu.diptico.data.ImportarEsDe.comparar(entradas, e.juegos, e.datos)
+                }.getOrNull()
+            }
+            if (previa == null) { avisar("No pude leer el gamelist.xml de ES-DE"); return@launch }
+            if (previa.cambios.isEmpty()) {
+                avisar("Sin cambios · ${previa.sinCoincidencia} juegos sin coincidencia única")
+                return@launch
+            }
+            mostrarDialogo(Dialogo("importar-es-de", "Importar lista de ES-DE",
+                "${previa.cambios.size} juegos se pueden actualizar. Se omiten ${previa.sinCoincidencia} sin coincidencia única.",
+                Icono.DESCARGA, si = "Importar", no = "Cancelar",
+                lineas = previa.cambios.take(6).map { it.titulo ?: it.juego.titulo })) {
+                val actual = estado.value
+                val claves = actual.juegos.mapTo(HashSet()) { it.clave }
+                val datos = actual.datos.toMutableMap()
+                for (cambio in previa.cambios) {
+                    val clave = cambio.juego.clave
+                    if (clave !in claves) continue
+                    val previo = datos[clave] ?: DatosJuego()
+                    datos[clave] = previo.copy(titulo = previo.titulo ?: cambio.titulo, favorito = previo.favorito || cambio.favorito)
+                }
+                almacen.guardarDatos(datos)
+                actualizar { it.copy(datos = datos) }
+                publicarJuegos()
+                avisar("Lista de ES-DE importada")
+            }
+        }
+    }
+
     fun archivoElegido(uri: Uri) {
+        if (archivoPara == "es-de") {
+            archivoPara = ""
+            importarListaEsDe(uri)
+            return
+        }
         imagenVisual?.let { (id, tipo) ->
             imagenVisual = null
             try { app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) {}

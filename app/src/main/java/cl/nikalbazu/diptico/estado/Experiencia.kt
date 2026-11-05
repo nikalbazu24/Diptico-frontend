@@ -4,7 +4,21 @@ import org.json.JSONObject
 
 /** Perfiles visuales portables: nunca contienen claves, rutas, juegos ni datos personales. */
 data class PresentacionColeccion(val color: Long = 0xFF57DCC7, val fondo: String = "", val logo: String = "", val musica: String = "", val vista: String = "mosaico")
-data class PosicionVisual(val tipo: String, val x: Int, val y: Int, val an: Int, val al: Int, val pagina: Int, val visible: Boolean)
+data class PosicionVisual(
+    val tipo: String, val x: Int, val y: Int, val an: Int, val al: Int, val pagina: Int, val visible: Boolean,
+    val estilo: String? = null, val color: Long? = null, val radio: Int? = null,
+    val opacidad: Float? = null, val variante: Int? = null, val escala: Float? = null,
+) {
+    fun json(): JSONObject = JSONObject().put("tipo", tipo).put("x", x).put("y", y)
+        .put("an", an).put("al", al).put("pagina", pagina).put("visible", visible).apply {
+            estilo?.let { put("estilo", it) }
+            color?.let { put("color", it) }
+            radio?.let { put("radio", it) }
+            opacidad?.let { put("opacidad", it.toDouble()) }
+            variante?.let { put("variante", it) }
+            escala?.let { put("escala", it.toDouble()) }
+        }
+}
 data class Experiencia(
     val universo: Boolean = true,
     val vidrio: Boolean = true,
@@ -16,11 +30,22 @@ data class Experiencia(
     val columnas: Int = 6,
     val filas: Int = 4,
     val paginas: Int = 1,
+    val inicioPerfil: String? = null,
+    val vistaPerfil: String? = null,
+    val sistemasPerfil: String? = null,
+    val vistaPartida: String? = null,
 ) {
     fun json(local: Boolean = false): JSONObject = JSONObject().put("formato", "diptico-visual").put("version", 1)
         .put("universo", universo).put("vidrio", vidrio).put("movimiento", movimiento)
         .put("pared", pared).put("adorno", adorno).put("columnas", columnas).put("filas", filas).put("paginas", paginas).apply {
-            put("posiciones", org.json.JSONArray().apply { posiciones.filter { local || it.tipo in Widgets.porDefecto.map { w -> w.tipo } }.forEach { p -> put(JSONObject().put("tipo", p.tipo).put("x", p.x).put("y", p.y).put("an", p.an).put("al", p.al).put("pagina", p.pagina).put("visible", p.visible)) } })
+            inicioPerfil?.let { put("inicioPerfil", it) }
+            vistaPerfil?.let { put("vistaPerfil", it) }
+            sistemasPerfil?.let { put("sistemasPerfil", it) }
+            vistaPartida?.let { put("vistaPartida", it) }
+            val portables = Widgets.porDefecto.mapTo(HashSet()) { it.tipo }
+            put("posiciones", org.json.JSONArray().apply {
+                posiciones.filter { local || it.tipo in portables }.forEach { put(it.json()) }
+            })
             if (local) put("colecciones", JSONObject().apply { colecciones.forEach { (id, c) ->
                 put(id, JSONObject().put("color", c.color).put("fondo", c.fondo).put("logo", c.logo).put("musica", c.musica).put("vista", c.vista))
             } })
@@ -49,9 +74,23 @@ data class Experiencia(
                 val filas = o.optInt("filas", 4).coerceIn(3, 8)
                 val an = p.optInt("an", 1).coerceIn(1, cols)
                 val al = p.optInt("al", 1).coerceIn(1, filas)
-                PosicionVisual(p.getString("tipo").take(200), p.optInt("x").coerceIn(0, cols - an), p.optInt("y").coerceIn(0, filas - al), an, al, p.optInt("pagina").coerceIn(0, o.optInt("paginas", 1).coerceIn(1, 10) - 1), p.optBoolean("visible", true))
+                PosicionVisual(
+                    p.getString("tipo").take(200), p.optInt("x").coerceIn(0, cols - an),
+                    p.optInt("y").coerceIn(0, filas - al), an, al,
+                    p.optInt("pagina").coerceIn(0, o.optInt("paginas", 1).coerceIn(1, 256) - 1), p.optBoolean("visible", true),
+                    p.optString("estilo").takeIf { it in Widgets.ESTILOS },
+                    p.optLong("color").takeIf { p.has("color") },
+                    p.optInt("radio", -1).takeIf { it in 0..48 },
+                    p.optDouble("opacidad").takeIf { it in 0.1..1.0 }?.toFloat(),
+                    p.optInt("variante", -1).takeIf { it in 0..8 },
+                    p.optDouble("escala").takeIf { it in 0.5..2.0 }?.toFloat(),
+                )
             }.distinctBy { it.tipo } } ?: emptyList(),
-            o.optInt("columnas", 6).coerceIn(4, 8), o.optInt("filas", 4).coerceIn(3, 8), o.optInt("paginas", 1).coerceIn(1, 10),
+            o.optInt("columnas", 6).coerceIn(4, 8), o.optInt("filas", 4).coerceIn(3, 8), o.optInt("paginas", 1).coerceIn(1, 256),
+            o.optString("inicioPerfil").takeIf { it in setOf("heroe", "widgets") },
+            o.optString("vistaPerfil").takeIf { it in setOf("cuadricula", "lista", "carrusel", "abanico", "lomos", "estante") },
+            o.optString("sistemasPerfil").takeIf { it in setOf("lado", "rueda", "sistemas", "carpetas", "discos", "habitacion", "arriba") },
+            o.optString("vistaPartida").takeIf { valor -> VistaPartida.entries.any { it.name == valor } },
         )
         fun perfiles(texto: String): Map<String, Experiencia> = try {
             val o = JSONObject(texto)
@@ -59,3 +98,4 @@ data class Experiencia(
         } catch (_: Exception) { emptyMap() }
     }
 }
+

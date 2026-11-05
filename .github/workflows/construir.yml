@@ -60,7 +60,9 @@ jobs:
           gradle :app:assembleRelease --no-daemon
           apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n1)"
           for apk in app/build/outputs/apk/*/release/*.apk; do
-            certificado="$("$apksigner" verify --print-certs "$apk" | awk '/Signer #1 certificate SHA-256 digest:/ { print $NF }')"
+            informe="$("$apksigner" verify --print-certs "$apk")"
+            if grep -qi 'certificate DN:.*Android Debug' <<< "$informe"; then exit 1; fi
+            certificado="$(awk '/Signer #1 certificate SHA-256 digest:/ { print $NF }' <<< "$informe")"
             test "$certificado" = "$DIPTICO_CERT_SHA256"
           done
 
@@ -88,7 +90,6 @@ jobs:
           printf 'numero=%s\n' "$numero" >> "$GITHUB_OUTPUT"
 
       - name: Sacar fotos de las pantallas
-        continue-on-error: true
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.Capturas" --no-daemon
 
       - name: Juntar las fotos
@@ -122,6 +123,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.apk.outputs.numero }}
+          target_commitish: ${{ github.sha }}
           name: Díptico v${{ needs.apk.outputs.numero }}
           prerelease: true
           fail_on_unmatched_files: true

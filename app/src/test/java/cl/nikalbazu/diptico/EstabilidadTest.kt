@@ -97,4 +97,26 @@ class EstabilidadTest {
         val disco2 = disco1.copy(archivo = "Juego 0 (Disc 2).chd")
         assertEquals(5_002, Biblioteca.sinDuplicados(juegos + disco1 + disco2).size)
     }
+
+    @Test fun importacionSoloProponeCoincidenciasInequivocas() {
+        val j = Juego("psx/prueba", "psx", "Sin nombre", "prueba.chd", Uri.parse("content://rom/prueba"), "prueba")
+        val xml = """<gameList>
+            <game><path>./prueba.chd</path><name>Mi juego</name><favorite>true</favorite></game>
+            <game><path>./otro.chd</path><name>Otro</name></game>
+        </gameList>"""
+        val e = cl.nikalbazu.diptico.data.ImportarEsDe.leer(xml.byteInputStream())
+        val previa = cl.nikalbazu.diptico.data.ImportarEsDe.comparar(e, listOf(j), emptyMap())
+        assertEquals("Mi juego", previa.cambios.single().titulo)
+        assertTrue(previa.cambios.single().favorito)
+        assertEquals(1, previa.sinCoincidencia)
+        val ambiguo = cl.nikalbazu.diptico.data.ImportarEsDe.comparar(e, listOf(j, j.copy(clave = "saturn/prueba")), emptyMap())
+        assertTrue(ambiguo.cambios.isEmpty())
+        assertEquals(2, ambiguo.sinCoincidencia)
+    }
+
+    @Test fun personalizacionDePartidaYColaSobreviveAlReinicio() {
+        val d = cl.nikalbazu.diptico.data.DatosJuego(vistaPartida = "BITACORA", avance = "PENDIENTE", puestoCola = -1)
+        Almacen(ctx).guardarDatos(mapOf("psx/prueba" to d))
+        assertEquals(d, Almacen(ctx).datos().getValue("psx/prueba"))
+    }
 }

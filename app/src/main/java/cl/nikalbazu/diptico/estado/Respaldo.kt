@@ -26,7 +26,7 @@ object Respaldo {
     }
     private val soloEquipo = setOf(
         "respaldoUri", "respaldoUltimo", "respaldoNombre",
-        "carpeta", "carpetas", "media", "carpetaMusica", "actAvisada",
+        "carpeta", "carpetas", "media", "carpetaMusica", "biblioteca", "medios", "actAvisada",
     )
     private val tiposFijos = mapOf(
         "configurado" to "b", "oscuro" to "b", "intercambiar" to "b", "modoElegido" to "b",
@@ -170,6 +170,7 @@ object Respaldo {
         try {
             // El ZIP debe finalizar, pero AtomicFile conserva el control del descriptor hasta sincronizarlo.
             escribir(ctx, object : java.io.FilterOutputStream(salida) {
+                override fun write(b: ByteArray, off: Int, len: Int) = salida.write(b, off, len)
                 override fun close() = flush()
             })
             archivo.finishWrite(salida)
@@ -219,7 +220,8 @@ object Respaldo {
     }
 
     fun escribirEn(ctx: Context, uri: Uri): Boolean {
-        val temporal = File.createTempFile("respaldo-", ".zip", ctx.cacheDir)
+        val temporal = try { File.createTempFile("respaldo-", ".zip", ctx.cacheDir) }
+        catch (_: Exception) { return false }
         return try {
             temporal.outputStream().use { escribir(ctx, it) }
             val salida = try { ctx.contentResolver.openOutputStream(uri, "wt") }

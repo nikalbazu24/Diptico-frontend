@@ -387,6 +387,7 @@ private fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an
         w.tipo.startsWith("coleccion-") -> WidgetColeccion(e, w.tipo.removePrefix("coleccion-"), an, al)
         w.tipo.startsWith("imagen") -> WidgetImagen(w)
         w.tipo.startsWith("video") -> WidgetVideo(w, e.sesion == null)
+        w.tipo in planWidgets -> WidgetPlanPartida(e, w.tipo, an, al)
         an == 1 && w.tipo !in herramientasWidgets -> WidgetMini(e, w.tipo, al)
         else -> WidgetVista(e, w.tipo, an, al)
     }
@@ -402,6 +403,7 @@ private fun escalaAuto(w: cl.nikalbazu.diptico.estado.Widget): Float {
 }
 
 /** El widget que se está dibujando (su estilo, color, fondo y esquinas). */
+private val planWidgets = setOf("proximaPartida", "colaJuegos", "tengo20")
 private val herramientasWidgets = setOf("temporizador", "cronometro", "buscar")
 
 private val LocalWidget = androidx.compose.runtime.compositionLocalOf<cl.nikalbazu.diptico.estado.Widget?> { null }
@@ -440,6 +442,10 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
     // tam: 1 angosto, 2 mediano, 3 ancho. compacto: una sola fila de alto.
     val tam = when { an >= 4 -> 3; an >= 3 -> 2; else -> 1 }
     val compacto = al == 1
+    if (tipo in planWidgets) {
+        WidgetPlanPartida(e, tipo, an, al)
+        return
+    }
     if (tipo in herramientasWidgets) {
         WidgetHerramienta(e, tipo, an)
         return
@@ -964,6 +970,44 @@ private fun BotonCirculo(icono: Icono, grande: Boolean = false, invertido: Boole
                 icono, if (grande) SobreUva else p.tinta, tam * 0.5f,
                 modifier = Modifier.graphicsLayer { if (invertido) scaleX = -1f },
             )
+        }
+    }
+}
+
+@Composable
+private fun WidgetPlanPartida(e: Estado, tipo: String, an: Int, al: Int) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val juegos = remember(e.juegos, e.datos, tipo) {
+        when (tipo) {
+            "proximaPartida" -> listOfNotNull(Diptico.ultimoJugado(e))
+            "colaJuegos" -> cl.nikalbazu.diptico.estado.PlanPartida.cola(e)
+            else -> cl.nikalbazu.diptico.estado.PlanPartida.breves(e)
+        }
+    }
+    val primero = juegos.firstOrNull()
+    Tarjeta(alPulsar = { Diptico.abrirWidgetTipo(tipo) }) {
+        if (an == 1) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                IconoDiptico(Widgets.icono(tipo), Coral, 22f)
+            }
+        } else Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+            Etiqueta(Widgets.nombre(tipo), p.acentoTexto, 11f)
+            Texto(primero?.titulo ?: when (tipo) {
+                "proximaPartida" -> "Aún no tienes una sesión"
+                "colaJuegos" -> "Agrega un juego pendiente"
+                else -> "Aún faltan sesiones"
+            }, if (al >= 2) 18f else 13f, lineas = 1)
+            if (al >= 2 && primero != null) {
+                Spacer(Modifier.height(esc.d(4)))
+                val paso = e.datos[primero.clave]?.paso.orEmpty()
+                val mapa = e.mapas[primero.clave]
+                if (tipo == "proximaPartida") {
+                    Detalle(paso.ifBlank { "Anota dónde quedaste" }, 12f, lineas = 2)
+                    if (mapa != null) Detalle("Mapa guardado", 11f, lineas = 1)
+                } else Detalle(juegos.drop(1).take(2).joinToString(" · ") { it.titulo }
+                    .ifBlank { if (tipo == "tengo20") "Según tus sesiones anteriores" else "Un juego en la cola" }, 12f, lineas = 2)
+            }
         }
     }
 }

@@ -201,6 +201,9 @@ class Almacen(ctx: Context) {
                 oculto = d.optBoolean("oculto", false),
                 lupa = d.optBoolean("lupa", false),
                 zonaLupa = d.optString("zonaLupa", "").ifEmpty { null },
+                vistaPartida = d.optString("vistaPartida", "").ifEmpty { null },
+                avance = d.optString("avance", "").ifEmpty { null },
+                puestoCola = d.optLong("puestoCola").takeIf { d.has("puestoCola") },
             )
         }
         return salida
@@ -226,6 +229,9 @@ class Almacen(ctx: Context) {
             if (d.oculto) j.put("oculto", true)
             if (d.lupa) j.put("lupa", true)
             d.zonaLupa?.let { j.put("zonaLupa", it) }
+            d.vistaPartida?.let { j.put("vistaPartida", it) }
+            d.avance?.let { j.put("avance", it) }
+            d.puestoCola?.let { j.put("puestoCola", it) }
             o.put(k, j)
         }
         p.edit().putString("datos", o.toString()).apply()

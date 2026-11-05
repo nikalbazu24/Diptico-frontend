@@ -54,6 +54,9 @@ data class DatosJuego(
     val lupa: Boolean = false,
     /** Zona de la lupa: "x,y,ancho,alto" en fracciones de la pantalla. */
     val zonaLupa: String? = null,
+    val vistaPartida: String? = null,
+    val avance: String? = null,
+    val puestoCola: Long? = null,
 )
 
 /** Una carpeta de juegos elegida por la persona. [consola]: consola fija, o null para reconocerla sola. */
@@ -66,3 +69,4 @@ data class MediosJuego(
     val logo: String? = null,
     val titulo: String? = null,
 )
+
