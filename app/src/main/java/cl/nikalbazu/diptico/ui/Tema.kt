@@ -97,7 +97,7 @@ fun paletaDe(t: Tema, oscuroPersona: Boolean): Paleta {
         "claro" -> false
         else -> oscuroPersona
     }
-    if (t.id == "diptico" && t.fondo == 0L && t.tinta == 0L) return if (oscuro) PaletaOscura else PaletaClara
+    if (t.id == "diptico" && t.acento == Temas.incluidos[0].acento && t.fondo == 0L && t.tinta == 0L) return if (oscuro) PaletaOscura else PaletaClara
     val a = Color(t.acento)
     // Fondo y letras propios (Mi tema › Colores).
     if (t.fondo != 0L || t.tinta != 0L) {
@@ -252,3 +252,4 @@ fun Texto(
         style = if (sombra) TextStyle(shadow = Shadow(Color(0x88000000), Offset(0f, 2f), 12f)) else TextStyle.Default,
     )
 }
+
