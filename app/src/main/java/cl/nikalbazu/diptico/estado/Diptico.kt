@@ -4645,7 +4645,24 @@ object Diptico {
             "bisa_sugerir" -> respuestaBisa(CentroBisa.sugerir(e))
             "bisa_retomar" -> ultimoJugado(e)?.takeUnless { e.datos[it.clave]?.oculto == true }
                 ?.let { jugarDesdeWidget(it.clave) } ?: avisar("Aún no hay una partida reciente")
-            "bisa_sistema" -> CentroBisa.ayudaSistema(e, a.valor)?.let { respuestaBisa(it) }
+            "bisa_sistema" -> {
+                val ayuda = CentroBisa.ayudaSistema(e, a.valor) ?: return
+                val j = c.juego
+                val consola = c.consola
+                if (j == null || consola == null || consola.sinEmulador) respuestaBisa(ayuda)
+                else scope.launch {
+                    val elegido = withContext(Dispatchers.IO) {
+                        runCatching { Lanzador.elegida(app, consola,
+                            e.datos[j.clave]?.emulador ?: e.emuladores[consola.id], archivoParaJugar(j, e).tipo)?.nombre }.getOrNull()
+                    }
+                    val actual = estado.value
+                    if (CentroBisa.contexto(actual).juego?.clave == j.clave && !actual.pensando) {
+                        val detalle = elegido?.let { " Emulador seleccionado para abrirlo: $it." }
+                            ?: " No encontré un emulador reconocido para ese archivo."
+                        respuestaBisa(ayuda.copy(texto = ayuda.texto + detalle))
+                    }
+                }
+            }
             "bisa_logros" -> if (c.juego?.clave == a.valor) abrirFichaDe(a.valor, 4)
             "bisa_pausa" -> if (c.jugando && c.juego?.clave == a.valor) {
                 if (e.temporizadorFin > 0L) {
