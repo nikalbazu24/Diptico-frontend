@@ -38,7 +38,8 @@ object Actualizador {
     private const val CANAL = "actualizaciones"
     private const val AVISO = 4471
     private const val REVISION = 4472
-    private val patronBeta = Regex("""v?1[.]0-beta[.](\d+)""")
+    private val canalVersion = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.substringBefore("-beta.")
+    private val patronBeta = Regex(Regex.escape(canalVersion) + """-beta[.](\d+)""")
 
     /** Android reúne estas comprobaciones con otros trabajos cuando Díptico está cerrado. */
     fun programar(ctx: Context, activo: Boolean) {
@@ -77,7 +78,7 @@ object Actualizador {
             val r = lista.getJSONObject(k)
             if (r.optBoolean("draft")) continue
             val tag = r.optString("tag_name")
-            val n = patronBeta.matchEntire(tag)?.groupValues?.get(1)?.toIntOrNull() ?: continue
+            val n = patronBeta.matchEntire(tag.removePrefix("v"))?.groupValues?.get(1)?.toIntOrNull() ?: continue
             if (n <= actual || (mejor != null && n <= mejor.numero)) continue
             val assets = r.optJSONArray("assets") ?: continue
             for (a in 0 until assets.length()) {

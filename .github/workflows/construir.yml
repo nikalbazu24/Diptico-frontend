@@ -10,13 +10,20 @@ on:
       - ".github/ISSUE_TEMPLATE/**"
       - ".github/workflows/limpiar-versiones.yml"
   workflow_dispatch:
+    inputs:
+      publicar:
+        description: Publicar los APK con la firma privada
+        type: boolean
+        default: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   apk:
     runs-on: ubuntu-latest
+    outputs:
+      numero: ${{ steps.paquete.outputs.numero }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,9 +37,37 @@ jobs:
           gradle-version: "8.9"
 
       - name: Probar perfiles, navegación y editor
-        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --no-daemon
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --no-daemon
+
+      - name: Compilar y verificar firma de distribución
+        if: github.event_name == 'workflow_dispatch' && inputs.publicar && github.ref == 'refs/heads/main'
+        env:
+          FIRMA_BASE64: ${{ secrets.DIPTICO_KEYSTORE_BASE64 }}
+          DIPTICO_STORE_PASSWORD: ${{ secrets.DIPTICO_STORE_PASSWORD }}
+          DIPTICO_KEY_ALIAS: ${{ secrets.DIPTICO_KEY_ALIAS }}
+          DIPTICO_KEY_PASSWORD: ${{ secrets.DIPTICO_KEY_PASSWORD }}
+          DIPTICO_CERT_SHA256: ${{ vars.DIPTICO_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          test -n "$FIRMA_BASE64" && test -n "$DIPTICO_STORE_PASSWORD" && test -n "$DIPTICO_KEY_ALIAS" && test -n "$DIPTICO_KEY_PASSWORD"
+          [[ "$DIPTICO_CERT_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          umask 077
+          DIPTICO_KEYSTORE="$(mktemp)"
+          export DIPTICO_KEYSTORE
+          trap 'rm -f "$DIPTICO_KEYSTORE"' EXIT
+          printf '%s' "$FIRMA_BASE64" | base64 --decode > "$DIPTICO_KEYSTORE"
+          unset FIRMA_BASE64
+          gradle :app:assembleRelease --no-daemon
+          apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n1)"
+          for apk in app/build/outputs/apk/*/release/*.apk; do
+            informe="$("$apksigner" verify --print-certs "$apk")"
+            if grep -qi 'certificate DN:.*Android Debug' <<< "$informe"; then exit 1; fi
+            certificado="$(awk '/Signer #1 certificate SHA-256 digest:/ { print $NF }' <<< "$informe")"
+            test "$certificado" = "$DIPTICO_CERT_SHA256"
+          done
 
       - name: Compilar Díptico
+        if: "!(github.event_name == 'workflow_dispatch' && inputs.publicar && github.ref == 'refs/heads/main')"
         run: |
           set -o pipefail
           gradle :app:assembleRelease --no-daemon 2>&1 | tee compilar.log
@@ -43,12 +78,18 @@ jobs:
           grep -E "^e: |What went wrong" -A1 compilar.log | head -60 | while IFS= read -r l; do echo "::error::${l}"; done
 
       - name: Nombrar los APK
+        id: paquete
+        env:
+          PUBLICAR: ${{ github.event_name == 'workflow_dispatch' && inputs.publicar && github.ref == 'refs/heads/main' }}
         run: |
-          cp app/build/outputs/apk/completa/release/app-completa-release.apk "Diptico-v1.0-beta.${{ github.run_number }}.apk"
-          cp app/build/outputs/apk/movil/release/app-movil-release.apk "Diptico-v1.0-beta.${{ github.run_number }}-movil.apk"
+          base="1.0"
+          if [ "$PUBLICAR" = true ]; then base="1.1"; fi
+          numero="$base-beta.$GITHUB_RUN_NUMBER"
+          cp app/build/outputs/apk/completa/release/app-completa-release.apk "Diptico-v$numero.apk"
+          cp app/build/outputs/apk/movil/release/app-movil-release.apk "Diptico-v$numero-movil.apk"
+          printf 'numero=%s\n' "$numero" >> "$GITHUB_OUTPUT"
 
       - name: Sacar fotos de las pantallas
-        continue-on-error: true
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.Capturas" --no-daemon
 
       - name: Juntar las fotos
@@ -66,21 +107,32 @@ jobs:
             Capturas-*.zip
             app/build/reports/tests/
 
-      - name: Publicar versión para descargar
-        if: github.ref == 'refs/heads/main'
+  publicar:
+    needs: apk
+    if: github.event_name == 'workflow_dispatch' && inputs.publicar && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Diptico-APK
+          path: distribucion
+
+      - name: Publicar APK con firma privada
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0-beta.${{ github.run_number }}
-          name: Díptico v1.0-beta.${{ github.run_number }}
+          tag_name: v${{ needs.apk.outputs.numero }}
+          target_commitish: ${{ github.sha }}
+          name: Díptico v${{ needs.apk.outputs.numero }}
           prerelease: true
+          fail_on_unmatched_files: true
           files: |
-            Diptico-*.apk
-            Capturas-*.zip
+            distribucion/**/Diptico-v*.apk
           body: |
-            **English:** on a console (AYN Thor, Odin, Retroid…) install **Diptico-v1.0-beta.${{ github.run_number }}.apk**. On a phone, install **Diptico-v1.0-beta.${{ github.run_number }}-movil.apk** (Google Play Protect blocks the full version on phones). Found a bug? [Report it here](https://github.com/Nikalbazu24/diptico-frontend/issues/new/choose).
+            **Español.** Descarga el APK normal para consolas Android o el APK «-movil» para teléfonos.
+            Si vienes de una beta 1.0, exporta y verifica un respaldo de Díptico antes de migrar.
+            [Guía de migración y firma](https://github.com/nikalbazu24/Diptico-frontend/blob/main/docs/distribucion.md).
 
-            **Español:** descarga el archivo **Diptico-v1.0-beta.${{ github.run_number }}.apk** desde la Thor (o la consola) e instálalo.
-            En un teléfono usa **Diptico-v1.0-beta.${{ github.run_number }}-movil.apk** (Google Play Protect bloquea la versión completa en teléfonos).
-            Si Android lo pide, permite instalar apps desde el navegador.
-
-
+            **English.** Use the regular APK for Android handhelds and the «-movil» APK for phones.
+            If you use a 1.0 beta, export and verify your backup before migrating.

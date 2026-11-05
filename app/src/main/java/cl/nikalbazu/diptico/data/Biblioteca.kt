@@ -118,8 +118,9 @@ object Biblioteca {
                 }
             }
 
-            val nombres = hijos.filter { !it.esCarpeta }.map { it.nombre.lowercase() }
-            val hayIndices = nombres.any { it.endsWith(".cue") || it.endsWith(".m3u") }
+            val indices = leerIndices(ctx, arbol, hijos)
+            val pistas = indices.values.flatten().mapTo(HashSet()) { it.lowercase(java.util.Locale.ROOT) }
+            val archivos = hijos.filterNot { it.esCarpeta }.groupBy { it.nombre.lowercase(java.util.Locale.ROOT) }
 
             for (f in hijos) {
                 // Fan games de RPG Maker: la carpeta es un juego solo si trae Game.ini (o Game.exe / mkxp.json).
@@ -150,10 +151,15 @@ object Biblioteca {
                 }
                 val ext = f.nombre.substringAfterLast('.', "").lowercase()
                 if (ext !in consola.extensiones) continue
-                // Los .bin de un juego con .cue son pistas: se muestra solo el .cue.
-                if (hayIndices && (ext == "bin" || ext == "img") && "cue" in consola.extensiones) continue
+                // Solo se ocultan archivos que un índice de esta carpeta menciona por nombre.
+                if (ext in setOf("bin", "img") && f.nombre.lowercase(java.util.Locale.ROOT) in pistas) continue
                 if (f.nombre.startsWith(".")) continue
                 val base = f.nombre.substringBeforeLast('.')
+                val discos = if (ext == "m3u") indices[f.id].orEmpty().mapNotNull { nombre ->
+                    val doc = archivos[nombre.lowercase(java.util.Locale.ROOT)]?.singleOrNull() ?: return@mapNotNull null
+                    if (doc.id == f.id || doc.nombre.substringAfterLast('.').lowercase() !in consola.extensiones) return@mapNotNull null
+                    VarianteJuego(doc.nombre, DocumentsContract.buildDocumentUriUsingTree(arbol, doc.id), doc.id, false)
+                } else emptyList()
                 juegos += Juego(
                     clave = consola.id + "/" + f.nombre,
                     consolaId = consola.id,
@@ -163,10 +169,26 @@ object Biblioteca {
                     docId = f.id,
                     portada = portadas[base.lowercase()],
                     arte = artes[base.lowercase()],
+                    variantes = discos,
                 )
             }
         }
         return sinDuplicados(juegos).sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
+    }
+
+    private fun leerIndices(ctx: Context, arbol: Uri, hijos: List<Doc>): Map<String, List<String>> {
+        val tienePistas = hijos.any { !it.esCarpeta && it.nombre.substringAfterLast('.', "").lowercase() in setOf("bin", "img") }
+        val formatos = if (tienePistas) setOf("cue", "m3u", "gdi") else setOf("m3u")
+        return buildMap {
+            for (doc in hijos) {
+                val ext = doc.nombre.substringAfterLast('.', "").lowercase(java.util.Locale.ROOT)
+                if (doc.esCarpeta || ext !in formatos) continue
+                val uri = DocumentsContract.buildDocumentUriUsingTree(arbol, doc.id)
+                val texto = try { ctx.contentResolver.openInputStream(uri)?.use(IndicesJuego::leer) }
+                catch (_: Exception) { null } ?: continue
+                put(doc.id, IndicesJuego.referencias(texto, ext))
+            }
+        }
     }
 
     private val ARCHIVOS_RPGMAKER = setOf("game.ini", "game.exe", "mkxp.json")
@@ -273,6 +295,7 @@ object Biblioteca {
     }
 
     /** Formatos preferidos cuando hay varios archivos del mismo juego (menos es mejor). */
+    private val NUMERO_DISCO = Regex("""[\(\[ ](Disc|Disk|CD|Disco) ?(\d+)""", RegexOption.IGNORE_CASE)
     private val PREFERENCIA = listOf("m3u", "chd", "rvz", "cue", "iso", "xci", "nsp", "nsz", "cso", "pbp", "zip", "7z")
 
     /**
@@ -287,9 +310,14 @@ object Biblioteca {
             else -> 2
         }
         fun formato(j: Juego): Int = if (j.esCarpeta) 0 else PREFERENCIA.indexOf(j.tipo).let { if (it < 0) PREFERENCIA.size else it }
-        // Los discos de un mismo juego (Disc 1, Disc 2) no son duplicados.
-        fun disco(a: String) = Regex("[\\(\\[ ](Disc|Disk|CD|Disco) ?(\\d+)", RegexOption.IGNORE_CASE).find(a)?.groupValues?.get(2) ?: ""
-        return juegos.groupBy { j -> j.consolaId + "|" + Descargas.normalizar(j.titulo).ifEmpty { j.archivo } + "|" + disco(j.archivo) }
-            .values.map { grupo -> grupo.minWith(compareBy<Juego>({ formato(it) }, { region(it.archivo) }, { it.archivo.length })) }
+        fun disco(a: String) = NUMERO_DISCO.find(a)?.groupValues?.get(2).orEmpty()
+        return juegos.groupBy { j ->
+            j.consolaId + "|" + Descargas.normalizar(j.titulo).ifEmpty { j.archivo } + "|" + disco(j.archivo)
+        }.values.map { grupo ->
+            val preferido = grupo.minWith(compareBy<Juego>({ formato(it) }, { region(it.archivo) }, { it.archivo.length }))
+            val variantes = grupo.flatMap { j -> listOf(VarianteJuego(j.archivo, j.uri, j.docId, j.esCarpeta)) + j.variantes }
+                .distinctBy { it.uri }.filterNot { it.uri == preferido.uri }
+            preferido.copy(variantes = variantes)
+        }
     }
 }

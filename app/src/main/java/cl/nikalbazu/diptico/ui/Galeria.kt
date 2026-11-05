@@ -46,6 +46,9 @@ fun PanelGaleria(e: Estado) {
     val items = remember(e) { Diptico.itemsGaleria(e) }
     val pestanas = Diptico.pestanasGaleria(e.galeria)
     val (titulo, icono) = when (e.galeria) {
+        "capturas_juego", "captura_acciones" -> "Capturas del juego" to Icono.PORTADA
+        "variantes_juego" -> "Versión del juego" to Icono.FORMA
+        "copias_srm" -> "Copias de RetroArch" to Icono.COPIAR
         "vistas_juegos" -> "Cómo ver tus juegos" to Icono.VISTA
         "vistas_consolas" -> "Cómo ver tus consolas" to Icono.MANDO
         "filtros" -> "Mostrar juegos" to Icono.BUSCAR
@@ -108,7 +111,14 @@ fun PanelGaleria(e: Estado) {
                 itemsIndexed(items, key = { _, it -> it.id + it.nombre }) { i, it ->
                     val activo = i == e.indice
                     when (e.galeria) {
-                        "vistas_juegos", "vistas_consolas", "filtros", "orden" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
+                        "vistas_juegos", "vistas_consolas", "filtros", "orden", "variantes_juego" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
+                        "capturas_juego" -> {
+                            val uri = Diptico.imagenCaptura(e, it.id)
+                            if (uri == null) FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
+                            else MiniCaptura(it.nombre, uri, activo) { Diptico.elegirIndice(i) }
+                        }
+                        "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
+                        "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
                         "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
                         "temas" -> TarjetaTema(it, activo) { Diptico.elegirIndice(i) }
                         "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
@@ -238,6 +248,25 @@ private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, icono: Icono =
     }
 }
 
+@Composable
+private fun MiniCaptura(nombre: String, uri: android.net.Uri, activo: Boolean, alPulsar: () -> Unit) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val imagen = rememberImagen(uri, 192)
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14)))
+        .background(if (activo) Uva.copy(alpha = .25f) else p.superficie)
+        .clickable(onClick = alPulsar).padding(esc.d(8)),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        Box(Modifier.size(esc.d(74), esc.d(46)).clip(RoundedCornerShape(esc.d(8))).background(p.fondo),
+            contentAlignment = Alignment.Center) {
+            if (imagen != null) androidx.compose.foundation.Image(imagen, null, Modifier.fillMaxSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+            else IconoDiptico(Icono.PORTADA, p.tenue, 18f)
+        }
+        Texto(nombre, 14f, lineas = 1)
+    }
+}
+
 /** En la otra pantalla: cómo queda el tema elegido, en grande (o lo que suena). */
 @Composable
 fun VistaGaleria(e: Estado) {
@@ -246,6 +275,13 @@ fun VistaGaleria(e: Estado) {
     val it = remember(e) { Diptico.itemsGaleria(e).getOrNull(e.indice) }
     Box(Modifier.fillMaxSize().background(p.fondo).padding(esc.d(30)), contentAlignment = Alignment.Center) {
         when {
+            e.galeria in setOf("capturas_juego", "captura_acciones") -> {
+                val uri = it?.let { item -> Diptico.imagenCaptura(e, item.id) }
+                val imagen = rememberImagen(uri, 1000)
+                if (imagen != null) androidx.compose.foundation.Image(imagen, "Captura del juego", Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                else Texto("Elige una captura guardada", 24f, lineas = 2)
+            }
             e.galeria in setOf("vistas_juegos", "vistas_consolas") && it != null -> Column(Modifier.fillMaxSize()) {
                 Texto(it.nombre, 23f, lineas = 1); Detalle(it.detalle, 12f, lineas = 2); Spacer(Modifier.height(esc.d(12)))
                 MiniPantalla(472f, 411f, Modifier.weight(1f).fillMaxWidth()) {
@@ -253,7 +289,7 @@ fun VistaGaleria(e: Estado) {
                     PantallaInferior(ev, 1)
                 }
             }
-            e.galeria in setOf("filtros", "orden") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
+            e.galeria in setOf("filtros", "orden", "variantes_juego", "copias_srm") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
             e.galeria == "temas" && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(it.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))

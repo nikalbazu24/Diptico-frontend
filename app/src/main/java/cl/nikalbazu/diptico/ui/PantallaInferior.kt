@@ -94,6 +94,7 @@ import androidx.compose.animation.togetherWith
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
+import cl.nikalbazu.diptico.estado.VistaPartida
 import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.Panel
 import kotlinx.coroutines.delay
@@ -418,6 +419,7 @@ private fun EnJuego(e: Estado) {
         cl.nikalbazu.diptico.lupa.PanelLupa(e, s.clave)
         return
     }
+    val vista = VistaPartida.leer(e.datos[s.clave]?.vistaPartida ?: e.experiencia.vistaPartida)
     val juego = e.juegos.firstOrNull { it.clave == s.clave }
     val c = juego?.let { Consolas.porId(it.consolaId) }
     var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -433,7 +435,7 @@ private fun EnJuego(e: Estado) {
     val color = if (e.experiencia.universo && e.colorUniverso != 0L) Color(e.colorUniverso) else juego?.let { colorDe(it.clave) } ?: Uva
     val bateria = rememberBateria()
     val cargando = rememberCargando()
-    val (flotar, respirar, brillo) = if (e.despierta && e.experiencia.movimiento && Estilo.efectosCompletos) {
+    val (flotar, respirar, brillo) = if (vista == VistaPartida.CLASICA && e.despierta && e.experiencia.movimiento && Estilo.efectosCompletos) {
         val t = rememberInfiniteTransition(label = "compa")
         val f by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
         val r by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(3400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respirar")
@@ -447,7 +449,7 @@ private fun EnJuego(e: Estado) {
         },
     ) {
         // Brillo del color del juego que respira detrás del logo.
-        Box(
+        if (vista != VistaPartida.LIGERA) Box(
             Modifier.align(Alignment.Center).size(esc.d(420)).graphicsLayer { scaleX = respirar; scaleY = respirar }
                 .background(Brush.radialGradient(listOf(color.copy(alpha = brillo), Color.Transparent))),
         )
@@ -466,8 +468,11 @@ private fun EnJuego(e: Estado) {
                 Spacer(Modifier.width(esc.d(8)))
                 cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(32).value, Modifier.clickable { Diptico.prepararAyuda() })
             }
+            Spacer(Modifier.height(esc.d(7)))
+            FilaVistaPartida(vista, color) { Diptico.elegirVistaPartida(s.clave, it) }
+            Spacer(Modifier.height(esc.d(8)))
             // Logo del juego con movimiento; su tamaño se ajusta con − y + (o pellizcando).
-            Box(
+            if (vista == VistaPartida.CLASICA) Box(
                 Modifier.weight(1f).fillMaxWidth().pointerInput(Unit) {
                     detectTransformGestures { _, _, zoom, _ -> if (zoom != 1f) Diptico.cambiarTamLogo(zoom) }
                 },
@@ -498,11 +503,11 @@ private fun EnJuego(e: Estado) {
                     BotonRedondo("+") { Diptico.cambiarTamLogo(1.1f) }
                 }
             }
-            // Si suena música en otra app (Spotify, YouTube Music…), se controla desde aquí sin salir del juego.
-            MusicaEnJuego()
+            else MesaPartida(e, s.clave, vista, Modifier.weight(1f).fillMaxWidth())
+            if (vista == VistaPartida.CLASICA || vista == VistaPartida.HERRAMIENTAS) MusicaEnJuego()
             // Paso anotado, si hay.
             val paso = e.datos[s.clave]?.paso.orEmpty()
-            if (paso.isNotBlank()) {
+            if (vista == VistaPartida.CLASICA && paso.isNotBlank()) {
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14))).background(Color.White.copy(alpha = 0.06f)).padding(esc.d(10)),
                     verticalAlignment = Alignment.CenterVertically,

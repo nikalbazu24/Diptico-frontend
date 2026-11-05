@@ -7,7 +7,35 @@ import org.json.JSONObject
 
 /** Guarda las preferencias y la memoria de Díptico en el teléfono. */
 class Almacen(ctx: Context) {
+    companion object {
+        private val credencialesLocales = setOf(
+            "claveSgdb", "claveGemini", "claveOpenAI", "claveIa", "claveRA", "usuarioRA",
+            "ras_igdbId", "ras_igdbSecreto", "ras_ssUsuario", "ras_ssClave",
+            "ras_ssDevId", "ras_ssDevClave", "ras_rawg", "ras_tgdb",
+        )
+
+        internal fun esCredencial(clave: String) = clave in credencialesLocales || clave.startsWith("ras_")
+    }
+
     private val p = ctx.getSharedPreferences("diptico", Context.MODE_PRIVATE)
+    private val credenciales = ctx.getSharedPreferences("diptico_credenciales", Context.MODE_PRIVATE)
+
+    init {
+        val antiguas = if (credencialesLocales.any(p::contains)) p.all.filterKeys(::esCredencial) else emptyMap()
+        if (antiguas.isNotEmpty()) {
+            val destino = credenciales.edit()
+            for ((clave, valor) in antiguas) {
+                if (valor is String && !credenciales.contains(clave)) destino.putString(clave, valor)
+            }
+            if (destino.commit()) {
+                val origen = p.edit()
+                antiguas.keys.forEach(origen::remove)
+                origen.commit()
+            }
+        }
+    }
+
+    private fun preferencias(clave: String) = if (esCredencial(clave)) credenciales else p
 
     var carpeta: Uri?
         get() = p.getString("carpeta", null)?.let(Uri::parse)
@@ -70,8 +98,8 @@ class Almacen(ctx: Context) {
 
     /** Clave personal de SteamGridDB (opcional). */
     var claveSgdb: String
-        get() = p.getString("claveSgdb", "") ?: ""
-        set(v) = p.edit().putString("claveSgdb", v).apply()
+        get() = texto("claveSgdb")
+        set(v) = guardarTexto("claveSgdb", v)
 
     /** Usar los títulos de libretro en vez del nombre del archivo. */
     var titulosBonitos: Boolean
@@ -89,8 +117,8 @@ class Almacen(ctx: Context) {
         set(v) = p.edit().putString("android", v?.joinToString("\n")).apply()
 
     /** Texto guardado con un nombre (temas propios, widgets, íconos...), en JSON. */
-    fun texto(clave: String, defecto: String = ""): String = p.getString(clave, defecto) ?: defecto
-    fun guardarTexto(clave: String, valor: String) = p.edit().putString(clave, valor).apply()
+    fun texto(clave: String, defecto: String = ""): String = preferencias(clave).getString(clave, defecto) ?: defecto
+    fun guardarTexto(clave: String, valor: String) = preferencias(clave).edit().putString(clave, valor).apply()
     fun bool(clave: String, defecto: Boolean): Boolean = p.getBoolean(clave, defecto)
     fun guardarBool(clave: String, valor: Boolean) = p.edit().putBoolean(clave, valor).apply()
 
@@ -173,6 +201,13 @@ class Almacen(ctx: Context) {
                 oculto = d.optBoolean("oculto", false),
                 lupa = d.optBoolean("lupa", false),
                 zonaLupa = d.optString("zonaLupa", "").ifEmpty { null },
+                vistaPartida = d.optString("vistaPartida", "").ifEmpty { null },
+                avance = d.optString("avance", "").ifEmpty { null },
+                puestoCola = d.optLong("puestoCola").takeIf { d.has("puestoCola") },
+                archivoVariante = d.optString("archivoVariante", "").ifEmpty { null },
+                capturas = d.optJSONArray("capturas")?.let { a ->
+                    (0 until minOf(a.length(), 24)).mapNotNull { i -> a.optString(i).takeIf { it.startsWith("content://") } }
+                }.orEmpty(),
             )
         }
         return salida
@@ -198,6 +233,11 @@ class Almacen(ctx: Context) {
             if (d.oculto) j.put("oculto", true)
             if (d.lupa) j.put("lupa", true)
             d.zonaLupa?.let { j.put("zonaLupa", it) }
+            d.vistaPartida?.let { j.put("vistaPartida", it) }
+            d.avance?.let { j.put("avance", it) }
+            d.puestoCola?.let { j.put("puestoCola", it) }
+            d.archivoVariante?.let { j.put("archivoVariante", it) }
+            if (d.capturas.isNotEmpty()) j.put("capturas", JSONArray(d.capturas))
             o.put(k, j)
         }
         p.edit().putString("datos", o.toString()).apply()
@@ -218,6 +258,13 @@ class Almacen(ctx: Context) {
                 portada = o.optString("portada", "").takeIf { it.isNotEmpty() }?.let(Uri::parse),
                 arte = o.optString("arte", "").takeIf { it.isNotEmpty() }?.let(Uri::parse),
                 esCarpeta = o.optBoolean("carpeta", false),
+                variantes = o.optJSONArray("variantes")?.let { a ->
+                    (0 until a.length()).mapNotNull { i ->
+                        val v = a.optJSONObject(i) ?: return@mapNotNull null
+                        val ruta = v.optString("uri").ifBlank { return@mapNotNull null }
+                        VarianteJuego(v.optString("archivo"), Uri.parse(ruta), v.optString("doc"), v.optBoolean("carpeta"))
+                    }
+                }.orEmpty(),
             )
         }
         return salida
@@ -236,8 +283,13 @@ class Almacen(ctx: Context) {
             o.put("portada", j.portada?.toString() ?: "")
             o.put("arte", j.arte?.toString() ?: "")
             o.put("carpeta", j.esCarpeta)
+            if (j.variantes.isNotEmpty()) o.put("variantes", JSONArray().apply {
+                j.variantes.forEach { v -> put(JSONObject().put("archivo", v.archivo)
+                    .put("uri", v.uri.toString()).put("doc", v.docId).put("carpeta", v.esCarpeta)) }
+            })
             a.put(o)
         }
         p.edit().putString("biblioteca", a.toString()).apply()
     }
 }
+

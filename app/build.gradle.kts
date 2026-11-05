@@ -5,6 +5,8 @@ plugins {
 }
 
 val numero = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+val rutaFirma = System.getenv("DIPTICO_KEYSTORE")
+val versionBase = if (rutaFirma.isNullOrBlank()) "1.0" else "1.1"
 
 android {
     namespace = "cl.nikalbazu.diptico"
@@ -15,29 +17,26 @@ android {
         minSdk = 29
         targetSdk = 34
         versionCode = numero
-        versionName = "1.0-beta.$numero"
+        versionName = "$versionBase-beta.$numero"
         // La Thor (y casi todas las consolas Android) es arm64: así el APK no carga librerías que no usa.
         ndk { abiFilters += "arm64-v8a" }
     }
 
     signingConfigs {
-        getByName("debug") {
-            storeFile = file("diptico-debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+        if (!rutaFirma.isNullOrBlank()) create("publica") {
+            storeFile = file(rutaFirma)
+            storePassword = requireNotNull(System.getenv("DIPTICO_STORE_PASSWORD"))
+            keyAlias = requireNotNull(System.getenv("DIPTICO_KEY_ALIAS"))
+            keyPassword = requireNotNull(System.getenv("DIPTICO_KEY_PASSWORD"))
         }
     }
 
     buildTypes {
-        getByName("debug") {
-            signingConfig = signingConfigs.getByName("debug")
-        }
         getByName("release") {
             // Versión optimizada: Compose corre mucho más fluido que en la de depuración.
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("publica") ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -51,6 +50,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 
@@ -108,3 +108,4 @@ dependencies {
     testImplementation("io.github.takahirom.roborazzi:roborazzi-junit-rule:1.26.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+

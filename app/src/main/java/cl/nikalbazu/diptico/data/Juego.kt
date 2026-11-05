@@ -18,11 +18,15 @@ data class Juego(
     val logo: Uri? = null,
     /** El juego es una carpeta (PS3), no un archivo. */
     val esCarpeta: Boolean = false,
+    val variantes: List<VarianteJuego> = emptyList(),
 ) {
     /** Tipo para elegir emulador: la extensión del archivo o "carpeta". */
     val tipo: String
         get() = if (esCarpeta) "carpeta" else archivo.substringAfterLast('.', "").lowercase()
 }
+
+/** Archivos alternativos conservados en la ficha de un mismo juego. */
+data class VarianteJuego(val archivo: String, val uri: Uri, val docId: String, val esCarpeta: Boolean)
 
 /** Lo que Díptico recuerda de cada juego. */
 data class DatosJuego(
@@ -54,6 +58,11 @@ data class DatosJuego(
     val lupa: Boolean = false,
     /** Zona de la lupa: "x,y,ancho,alto" en fracciones de la pantalla. */
     val zonaLupa: String? = null,
+    val vistaPartida: String? = null,
+    val avance: String? = null,
+    val puestoCola: Long? = null,
+    val archivoVariante: String? = null,
+    val capturas: List<String> = emptyList(),
 )
 
 /** Una carpeta de juegos elegida por la persona. [consola]: consola fija, o null para reconocerla sola. */
@@ -66,3 +75,4 @@ data class MediosJuego(
     val logo: String? = null,
     val titulo: String? = null,
 )
+

@@ -212,6 +212,9 @@ object Widgets {
         Widget("apps", 0, 0, 3, 1, false),
         Widget("temporizador", 0, 0, 2, 1, false), Widget("cronometro", 0, 0, 2, 1, false),
         Widget("buscar", 0, 0, 2, 1, false),
+        Widget("proximaPartida", 0, 0, 3, 2, false),
+        Widget("colaJuegos", 0, 0, 3, 2, false),
+        Widget("tengo20", 0, 0, 3, 1, false),
     )
 
     /** Para qué sirve cada widget (en el catálogo del estudio). */
@@ -229,6 +232,9 @@ object Widgets {
         "temporizador" -> "Cuenta atrás y aviso mientras juegas"
         "cronometro" -> "Mide una partida y pausa cuando quieras"
         "buscar" -> "Abre la búsqueda de juegos con un toque"
+        "proximaPartida" -> "Recuerda qué jugaste, tu próximo paso y tu mapa"
+        "colaJuegos" -> "Ordena los juegos que quieres empezar o terminar"
+        "tengo20" -> "Sugiere juegos que sueles jugar en sesiones breves"
         else -> "Tu imagen o GIF animado"
     }
 
@@ -240,6 +246,9 @@ object Widgets {
         "accesos" -> Icono.AJUSTES; "notificaciones" -> Icono.CAMPANA; "logros" -> Icono.TROFEO; "asistente" -> Icono.BISA; "apps" -> Icono.APPS
         "temporizador", "cronometro" -> Icono.RELOJ
         "buscar" -> Icono.BUSCAR
+        "proximaPartida" -> Icono.CONTINUAR
+        "colaJuegos" -> Icono.BIBLIOTECA
+        "tengo20" -> Icono.RELOJ
         else -> Icono.PORTADA
     }
 
@@ -268,6 +277,7 @@ object Widgets {
         "sugerencia" -> "¿Qué juego hoy?"; "accesos" -> "Accesos rápidos"; "notificaciones" -> "Notificaciones"
         "logros" -> "Logros (RetroAchievements)"; "asistente" -> "Asistente con IA"; "apps" -> "Apps"
         "temporizador" -> "Temporizador"; "cronometro" -> "Cronómetro"; "buscar" -> "Buscar juegos"
+        "proximaPartida" -> "Mi próxima partida"; "colaJuegos" -> "Cola de juegos"; "tengo20" -> "Tengo 20 minutos"
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -694,7 +704,7 @@ object Diptico {
     private var crudos: List<Juego> = emptyList()
     private var medios: Map<String, MediosJuego> = emptyMap()
 
-    const val VERSION = "1.0 beta"
+    val VERSION: String = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.substringBefore("-beta.") + " beta"
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -1167,7 +1177,7 @@ object Diptico {
                 val n = withContext(Dispatchers.IO) {
                     try { app.contentResolver.openInputStream(uri)?.use { Respaldo.restaurar(app, it) } ?: -1 } catch (_: Exception) { -1 }
                 }
-                if (n < 0) { avisar("Ese archivo no es un respaldo de Díptico"); return@launch }
+                if (n < 0) { avisar("No pude validar o restaurar el respaldo de Díptico"); return@launch }
                 avisar("Respaldo recuperado: Díptico se reinicia")
                 delay(1500)
                 reiniciarDiptico()
@@ -1278,19 +1288,22 @@ object Diptico {
     // ---------- Carpeta y biblioteca ----------
 
     fun escanear() {
+        if (estado.value.escaneando) return
         val carpetas = almacen.carpetas()
         if (carpetas.isEmpty()) return
         actualizar { it.copy(escaneando = true) }
         trabajo("escaneo", "Buscando tus juegos")
+        val anteriores = crudos.groupBy { raizDe(it) }
+        val media = almacen.media
         scope.launch {
             var fallas = 0
             val lista = withContext(Dispatchers.IO) {
                 carpetas.flatMap { c ->
                     try {
-                        Biblioteca.escanear(app, c.uri, almacen.media, c.consola)
+                        Biblioteca.escanear(app, c.uri, media, c.consola)
                     } catch (e: Exception) {
                         fallas++
-                        emptyList()
+                        anteriores[c.uri].orEmpty()
                     }
                 }.distinctBy { it.clave }.sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
             }.takeIf { fallas < carpetas.size }
@@ -1787,7 +1800,38 @@ object Diptico {
 
     // ---------- Jugar ----------
 
+    private fun archivoParaJugar(juego: Juego, e: Estado): Juego {
+        val archivo = e.datos[juego.clave]?.archivoVariante ?: return juego
+        val variante = juego.variantes.singleOrNull { it.archivo == archivo } ?: return juego
+        return juego.copy(archivo = variante.archivo, uri = variante.uri, docId = variante.docId, esCarpeta = variante.esCarpeta)
+    }
+
+    private var revisarLanzamiento: Job? = null
+
     fun jugar(pantalla: String? = null, conLupaLista: Boolean = false, conRetomaLista: Boolean = false) {
+        val e = estado.value
+        val juego = e.seleccionado ?: return
+        if (revisarLanzamiento?.isActive == true) return
+        if (juego.uri.scheme != "content") {
+            jugarComprobado(pantalla, conLupaLista, conRetomaLista)
+            return
+        }
+        revisarLanzamiento = scope.launch {
+            val problema = withContext(Dispatchers.IO) { Lanzador.revisarArchivo(app, archivoParaJugar(juego, e)) }
+            val actual = estado.value
+            if (actual.seleccionado?.clave != juego.clave ||
+                actual.datos[juego.clave]?.archivoVariante != e.datos[juego.clave]?.archivoVariante) return@launch
+            if (problema == null) jugarComprobado(pantalla, conLupaLista, conRetomaLista)
+            else {
+                if (conLupaLista) cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
+                if (conRetomaLista) cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
+                mostrarDialogo(Dialogo("archivo-no-accesible", "No se pudo abrir ${juego.titulo}", problema,
+                    Icono.CARPETA, si = "Revisar carpetas", no = "Cerrar")) { abrirCarpetas() }
+            }
+        }
+    }
+
+    private fun jugarComprobado(pantalla: String?, conLupaLista: Boolean, conRetomaLista: Boolean) {
         val e = estado.value
         val juego = e.seleccionado ?: return
         val consola = Consolas.porId(juego.consolaId) ?: return
@@ -1806,9 +1850,16 @@ object Diptico {
         }
         val displayId = if (destino == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
-        else Lanzador.lanzar(app, juego, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(juego))
+        else {
+            val archivo = archivoParaJugar(juego, e)
+            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(archivo))
+        }
         if (error != null) {
-            avisar(error)
+            if (conLupaLista) cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
+            if (conRetomaLista) cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
+            if (juego.uri.scheme == "app") avisar(error)
+            else mostrarDialogo(Dialogo("lanzamiento-fallido", "No se pudo abrir ${juego.titulo}", error,
+                Icono.EMULADOR, si = "Emuladores", no = "Cerrar")) { abrirMenu(Seccion.EMULADORES) }
             return
         }
         if (e.turbo) turboAlJugar(juego, displayId)
@@ -1928,6 +1979,9 @@ object Diptico {
     }
 
     fun pestanasGaleria(tipo: String = estado.value.galeria): List<String> = if (tipo == "colecciones") listOf("Colecciones") else when (tipo) {
+        "variantes_juego" -> listOf("Archivos del juego")
+        "capturas_juego", "captura_acciones" -> listOf("Capturas guardadas")
+        "copias_srm" -> listOf("Copias de RetroArch")
         "filtros" -> listOf("Filtrar juegos")
         "orden" -> listOf("Ordenar juegos")
         "vistas_consolas" -> listOf("Tus consolas")
@@ -1957,6 +2011,46 @@ object Diptico {
 
     fun itemsGaleria(e: Estado = estado.value): List<ItemGaleria> {
         val actual = cl.nikalbazu.diptico.ui.Estilo.tema
+        if (e.galeria == "copias_srm") return opcionesCopiasPartida
+        if (e.galeria == "captura_acciones") {
+            val (clave, ruta) = capturaPara ?: return emptyList()
+            return listOf(
+                ItemGaleria("mapa", "Usar como mapa", "Marca el punto donde quedaste", false) {
+                    guardarMapas(estado.value.mapas + (clave to MapaJuego(ruta, .5f, .5f)))
+                    cerrarPanel()
+                    abrirMapa(clave)
+                },
+                ItemGaleria("compartir", "Compartir", "Abre el selector de Android", false) { compartirCaptura(ruta) },
+                ItemGaleria("quitar", "Quitar de la galería", "El archivo original se conserva", false) {
+                    cambiarDatos(clave) { it.copy(capturas = it.capturas - ruta) }
+                    abrirGaleria("capturas_juego")
+                },
+                ItemGaleria("volver", "Volver a capturas", "Mira las demás imágenes", false) { abrirGaleria("capturas_juego") },
+            )
+        }
+        if (e.galeria == "capturas_juego") {
+            val j = e.seleccionado ?: return emptyList()
+            val capturas = e.datos[j.clave]?.capturas.orEmpty()
+            return listOf(ItemGaleria("agregar", "Agregar captura", "Elige una imagen guardada en Android", false) {
+                pedirArchivoPara("captura:${j.clave}", "image/*")
+            }) + capturas.mapIndexed { i, ruta ->
+                ItemGaleria("captura-$i", "Captura ${i + 1}", "Compartir o usar como mapa", false) {
+                    accionesCaptura(j.clave, ruta)
+                }
+            }
+        }
+        if (e.galeria == "variantes_juego") {
+            val j = e.seleccionado ?: return emptyList()
+            val actual = e.datos[j.clave]?.archivoVariante
+            val opciones = listOf(null to j.archivo) + j.variantes.groupBy { it.archivo }.values
+                .mapNotNull { it.singleOrNull() }.map { it.archivo to it.archivo }
+            return opciones.mapIndexed { i, (archivo, nombre) ->
+                ItemGaleria("archivo-$i", nombre, if (archivo == null) "Archivo preferido" else if (j.tipo == "m3u") "Disco o versión alternativa" else "Versión alternativa", actual == archivo) {
+                    cambiarDatos(j.clave) { it.copy(archivoVariante = archivo) }
+                    cerrarPanel()
+                }
+            }
+        }
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
         if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
         if (e.galeria == "vistas_juegos") return listOf("cuadricula", "estante", "lista", "carrusel", "abanico", "lomos").map { v ->
@@ -2693,6 +2787,24 @@ object Diptico {
                 ciclarEmuladorJuego(juego.clave, consola)
             }
         }
+        if (consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
+            lista += Opcion("Copias de RetroArch", ".srm", Icono.COPIAR,
+                "Guarda o recupera una copia manual del archivo SRAM que selecciones.") { abrirCopiasPartida(juego.clave) }
+        }
+        lista += Opcion("Capturas del juego", d?.capturas?.size?.toString() ?: "0", Icono.PORTADA,
+            "Junta tus capturas guardadas para verlas, compartirlas o marcar un mapa.") { abrirGaleria("capturas_juego") }
+        if (juego.variantes.isNotEmpty()) lista += Opcion("Versión del juego", d?.archivoVariante ?: juego.archivo,
+            Icono.FORMA, "Elige otra región o formato. El emulador gestiona el guardado de cada archivo.") { abrirGaleria("variantes_juego") }
+        lista += Opcion("Estado en mi cola", AvanceJuego.leer(d?.avance).titulo, Icono.BIBLIOTECA,
+            "Marca pendiente, jugando o terminado para ordenar la cola.") { cambiarAvance(juego.clave) }
+        if (AvanceJuego.leer(d?.avance) in setOf(AvanceJuego.PENDIENTE, AvanceJuego.JUGANDO)) {
+            lista += Opcion("Priorizar en la cola", icono = Icono.ARRIBA) { priorizarJuego(juego.clave) }
+        }
+        if (!e.unaPantalla) lista += Opcion("Pantalla compañera", VistaPartida.leer(d?.vistaPartida ?: e.experiencia.vistaPartida).titulo,
+            Icono.PANTALLAS, "Elige portada, bitácora, herramientas o una vista ligera para este juego.") {
+            val actual = VistaPartida.leer(estado.value.datos[juego.clave]?.vistaPartida ?: estado.value.experiencia.vistaPartida)
+            elegirVistaPartida(juego.clave, VistaPartida.entries[(actual.ordinal + 1) % VistaPartida.entries.size])
+        }
         if (!e.unaPantalla) {
             lista += Opcion(
                 "Abre en",
@@ -3373,6 +3485,10 @@ object Diptico {
                 }
             }
             Seccion.BIBLIOTECA -> {
+                lista += Opcion("Importar lista de ES-DE", icono = Icono.DESCARGA,
+                    ayuda = "Elige gamelist.xml tras escanear tus juegos. Revisa los títulos y favoritos antes de importar.") {
+                    pedirArchivoPara("es-de", "*/*")
+                }
                 lista += Opcion(
                     "Volver a buscar juegos", if (e.escaneando) "Buscando…" else "${e.juegos.size} juegos", Icono.BUSCAR,
                     "Úsalo cuando agregues juegos nuevos a tu carpeta.",
@@ -3614,16 +3730,69 @@ object Diptico {
     }
 
     private fun capturarPerfil(): Experiencia = estado.value.let { e -> e.experiencia.copy(
-        posiciones = e.widgets.map { PosicionVisual(it.tipo, it.x, it.y, it.an, it.al, it.pagina, it.visible) },
+        posiciones = e.widgets.map { w -> PosicionVisual(w.tipo, w.x, w.y, w.an, w.al, w.pagina, w.visible,
+            w.estilo, w.color, w.radio, w.opacidad, w.variante, w.escala) },
         columnas = e.gridCols, filas = e.gridFilas, paginas = e.paginas,
+        inicioPerfil = e.inicio, vistaPerfil = e.vista, sistemasPerfil = e.vistaConsolas,
     ) }
 
     private fun aplicarPerfil(v: Experiencia) {
         guardarExperiencia(v.copy(posiciones = emptyList()))
         if (v.posiciones.isNotEmpty()) {
-            guardarGrilla(v.columnas, v.filas, v.paginas)
-            val l = estado.value.widgets.map { w -> v.posiciones.firstOrNull { it.tipo == w.tipo }?.let { p -> w.copy(x = p.x, y = p.y, an = p.an, al = p.al, pagina = p.pagina, visible = p.visible) } ?: w }
-            guardarWidgets(reacomodar(l, v.paginas))
+            val posiciones = v.posiciones.associateBy { it.tipo }
+            val widgets = estado.value.widgets.map { w ->
+                val p = posiciones[w.tipo] ?: return@map w
+                w.copy(x = p.x, y = p.y, an = p.an, al = p.al, pagina = p.pagina, visible = p.visible,
+                    estilo = p.estilo ?: w.estilo, color = p.color ?: w.color, radio = p.radio ?: w.radio,
+                    opacidad = p.opacidad ?: w.opacidad, variante = p.variante ?: w.variante, escala = p.escala ?: w.escala)
+            }
+            val cols = v.columnas.coerceIn(4, 8)
+            val filas = v.filas.coerceIn(3, 8)
+            val r = Rejilla.distribuir(widgets, cols, filas, v.paginas)
+            almacen.guardarTexto("gridCols", cols.toString())
+            almacen.guardarTexto("gridFilas", filas.toString())
+            almacen.guardarTexto("paginas", r.paginas.toString())
+            Widgets.COLUMNAS = cols
+            Widgets.FILAS = filas
+            guardarWidgets(r.widgets)
+            actualizar { it.copy(gridCols = cols, gridFilas = filas, paginas = r.paginas, paginaInicio = 0) }
+        }
+        v.inicioPerfil?.let { inicio ->
+            almacen.guardarTexto("inicio", inicio)
+            actualizar { it.copy(inicio = inicio) }
+        }
+        v.vistaPerfil?.let { vista ->
+            almacen.guardarTexto("vista", vista)
+            actualizar { it.copy(vista = vista) }
+        }
+        v.sistemasPerfil?.let { elegirVistaConsolas(it) }
+    }
+
+    private fun plantillaVisual(nombre: String) {
+        val e = estado.value
+        val elegidos = when (nombre) {
+            "Jugar" -> setOf("juego", "reloj", "proximaPartida", "tengo20")
+            "Explorar" -> setOf("buscar", "recientes", "colaJuegos", "favoritos")
+            else -> setOf("juego", "reloj")
+        }
+        val widgets = Widgets.porDefecto.map { w -> w.copy(visible = w.tipo in elegidos) }
+        val r = Rejilla.distribuir(widgets, 6, 4, 1)
+        val plantilla = e.experiencia.copy(
+            vidrio = nombre != "Ligero", movimiento = nombre != "Ligero",
+            posiciones = r.widgets.map { PosicionVisual(it.tipo, it.x, it.y, it.an, it.al, it.pagina, it.visible) },
+            columnas = 6, filas = 4, paginas = r.paginas, inicioPerfil = "widgets",
+            vistaPerfil = if (nombre == "Ligero") "lista" else "cuadricula",
+            sistemasPerfil = if (nombre == "Explorar") "carpetas" else "arriba",
+            vistaPartida = when (nombre) {
+                "Jugar" -> VistaPartida.BITACORA.name
+                "Ligero" -> VistaPartida.LIGERA.name
+                else -> VistaPartida.CLASICA.name
+            },
+        )
+        mostrarDialogo(Dialogo("plantilla-visual", "Aplicar $nombre", "Cambia la distribución del inicio y el estilo. Conserva las personalizaciones de cada juego.",
+            Icono.PALETA, si = "Aplicar", no = "Cancelar")) {
+            almacen.guardarTexto("perfilVisualAnterior", capturarPerfil().json(local = true).toString())
+            aplicarPerfil(plantilla)
         }
     }
 
@@ -3701,6 +3870,15 @@ object Diptico {
         add(Opcion("Adornos de los estantes", v.adorno, Icono.ESTRELLA) { guardarExperiencia(v.copy(adorno = Experiencia.adornos[(Experiencia.adornos.indexOf(v.adorno) + 1) % Experiencia.adornos.size])) })
         add(Opcion("Editar composición del inicio", "Widgets y posiciones", Icono.EDITAR, "El estudio existente permite mover y redimensionar elementos, con vista previa en la otra pantalla.") { cerrarPanel(); editarWidgets() })
         add(Opcion("Enviar ficha a la otra pantalla", if (e.fichaFijada == null) "Sin fijar" else "Fijada", Icono.INTERCAMBIAR, "En el estante, desliza la tarjeta «Enviar ficha» hacia arriba. La ficha queda arriba mientras recorres otros juegos abajo. Tócala para soltarla.") { fijarFicha() })
+        for (nombre in listOf("Jugar", "Explorar", "Ligero")) {
+            add(Opcion("Plantilla $nombre", "Personalizable", Icono.PALETA) { plantillaVisual(nombre) })
+        }
+        if (almacen.texto("perfilVisualAnterior").isNotBlank()) {
+            add(Opcion("Volver a mi distribución anterior", icono = Icono.CONTINUAR) {
+                aplicarPerfil(Experiencia.leer(almacen.texto("perfilVisualAnterior")))
+                almacen.guardarTexto("perfilVisualAnterior", "")
+            })
+        }
         for (n in 1..3) {
             val id = "Perfil $n"
             add(Opcion("Guardar $id", if (id in e.perfilesVisuales) "Reemplazar" else "Vacío", Icono.COPIAR) {
@@ -3710,7 +3888,7 @@ object Diptico {
             })
             if (id in e.perfilesVisuales) add(Opcion("Aplicar $id", icono = Icono.CHECK) { aplicarPerfil(e.perfilesVisuales.getValue(id)) })
         }
-        add(Opcion("Compartir perfil visual", "Archivo JSON", Icono.WEB, "Comparte solo colores y efectos. Las imágenes y música locales, las claves y tu biblioteca no se exportan.") { exportarVisual?.invoke(capturarPerfil().json().toString(2)) })
+        add(Opcion("Compartir perfil visual", "Archivo JSON", Icono.WEB, "Comparte la composición, el estilo de widgets y las vistas. Los archivos locales, las claves y la biblioteca quedan en tu equipo.") { exportarVisual?.invoke(capturarPerfil().json().toString(2)) })
         add(Opcion("Importar perfil visual", "Con vista previa y confirmación", Icono.DESCARGA) { importarVisual?.invoke() })
         e.colecciones.forEach { (id, c) ->
             val p = v.colecciones[id] ?: PresentacionColeccion()
@@ -4290,7 +4468,6 @@ object Diptico {
     private var claveParaAsistente = false
 
     fun escribirAlAsistente() {
-        if (motorEfectivo() == "ninguno") { abrirGaleria("ia"); avisar("Primero elige el cerebro de Bisa"); return }
         abrirTexto("asistente")
     }
 
@@ -4388,6 +4565,10 @@ object Diptico {
     fun preguntar(texto: String, forzarWeb: Boolean = false) {
         val e = estado.value
         if (e.pensando) return
+        if (!forzarWeb) AyudaLocal.responder(texto)?.let { respuesta ->
+            actualizar { it.copy(chat = it.chat + MensajeChat("yo", texto) + MensajeChat("ia", respuesta), indice = 0) }
+            return
+        }
         val motor = motorEfectivo(e)
         if (motor == "ninguno" || (motor == "local" && !IALocal.listo(app))) {
             abrirGaleria("ia")
@@ -5224,6 +5405,28 @@ object Diptico {
         }
     }
 
+    fun elegirVistaPartida(clave: String, vista: VistaPartida) {
+        val datos = estado.value.datos.toMutableMap()
+        datos[clave] = (datos[clave] ?: DatosJuego()).copy(vistaPartida = vista.name)
+        almacen.guardarDatos(datos)
+        actualizar { it.copy(datos = datos) }
+        if (estado.value.sesion != null) despertar()
+    }
+
+    fun cambiarAvance(clave: String) {
+        cambiarDatos(clave) { d ->
+            val actual = AvanceJuego.leer(d.avance)
+            val siguiente = AvanceJuego.entries[(actual.ordinal + 1) % AvanceJuego.entries.size]
+            d.copy(avance = siguiente.name, puestoCola = d.puestoCola ?: System.currentTimeMillis())
+        }
+    }
+
+    fun priorizarJuego(clave: String) {
+        val primero = estado.value.datos.values.mapNotNull { it.puestoCola }.minOrNull() ?: 0L
+        cambiarDatos(clave) { it.copy(puestoCola = (primero.coerceAtLeast(Long.MIN_VALUE + 1)) - 1) }
+        avisar("Juego al comienzo de la cola")
+    }
+
     private fun opcionesTemporizador(e: Estado) = listOf(
         Opcion("Temporizador", "${e.temporizadorMin} min", Icono.RELOJ, "Elige los minutos con ← →. Te aviso con un cartel aunque estés jugando.", menos = { cambiarTemporizador(-1) }) { cambiarTemporizador(1) },
         Opcion(if (e.temporizadorFin > 0L) "Detener el temporizador" else "Empezar el temporizador", icono = if (e.temporizadorFin > 0L) Icono.CERRAR else Icono.JUGAR, ayuda = "Un temporizador para avisarte cuando sea hora de dejar de jugar.") { alternarTemporizador() },
@@ -5242,6 +5445,15 @@ object Diptico {
             Opcion(j.titulo, (Consolas.porId(j.consolaId)?.nombre ?: "") + (d?.tiempo?.takeIf { it >= 60 }?.let { " · ${formatoTiempoCorto(it)}" } ?: ""), Icono.JUGAR, d?.paso.orEmpty()) { jugarDesdeWidget(j.clave) }
         }
         return when (w.tipo) {
+            "proximaPartida" -> ultimoJugado(e)?.let { j ->
+                juegosComo(listOf(j)) + Opcion("Ver o marcar el mapa", icono = Icono.MUNDO) { abrirMapa(j.clave) }
+            } ?: listOf(Opcion("Tu próxima partida aparecerá aquí", icono = Icono.INFO, apagada = true) {})
+            "colaJuegos" -> juegosComo(PlanPartida.cola(e)).ifEmpty {
+                listOf(Opcion("Agrega juegos desde Opciones del juego", icono = Icono.INFO, apagada = true) {})
+            }
+            "tengo20" -> juegosComo(PlanPartida.breves(e)).ifEmpty {
+                listOf(Opcion("Las sugerencias se basan en tus sesiones anteriores", icono = Icono.INFO, apagada = true) {})
+            }
             "temporizador" -> opcionesTemporizador(e)
             "cronometro" -> opcionesCronometro(e)
             "reloj" -> opcionesTemporizador(e) + opcionesCronometro(e) + listOf(
@@ -6215,7 +6427,144 @@ object Diptico {
         pedirArchivo?.invoke(tipo) ?: avisar("No pude abrir el selector de archivos")
     }
 
+    var pedirExportarPartida: ((String) -> Unit)? = null
+    private var copiaParaExportar: java.io.File? = null
+    private var opcionesCopiasPartida: List<ItemGaleria> = emptyList()
+
+    private fun abrirCopiasPartida(clave: String) {
+        val j = estado.value.juegos.firstOrNull { it.clave == clave } ?: return
+        scope.launch {
+            val copias = withContext(Dispatchers.IO) { cl.nikalbazu.diptico.data.CopiasPartida.listar(app, clave) }
+            opcionesCopiasPartida = listOf(ItemGaleria("copia-nueva", "Guardar copia .srm",
+                "Selecciona un guardado. Se conservan las últimas tres copias.", false) { pedirArchivoPara("partida-srm:$clave", "*/*") }) +
+                copias.mapIndexed { i, archivo ->
+                    val fecha = java.text.DateFormat.getDateTimeInstance().format(java.util.Date(archivo.lastModified()))
+                    ItemGaleria(archivo.name, "Recuperar copia ${i + 1}", fecha, false) {
+                        mostrarDialogo(Dialogo("exportar-srm", "¿Recuperar esta copia?",
+                            "Elige dónde guardar el archivo .srm recuperado. El guardado del emulador queda en su ubicación actual.",
+                            Icono.COPIAR, si = "Elegir destino", no = "Cancelar")) {
+                            copiaParaExportar = archivo
+                            val base = archivoParaJugar(j, estado.value).archivo.substringBeforeLast('.').replace('/', '_')
+                            pedirExportarPartida?.invoke("$base.srm")
+                        }
+                    }
+                }
+            abrirGaleria("copias_srm")
+        }
+    }
+
+    fun exportarPartidaElegida(uri: Uri?) {
+        val archivo = copiaParaExportar
+        copiaParaExportar = null
+        if (uri == null || archivo == null) return
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    requireNotNull(app.contentResolver.openOutputStream(uri, "wt")).use { salida ->
+                        archivo.inputStream().use { it.copyTo(salida) }
+                    }
+                }.isSuccess
+            }
+            avisar(if (ok) "Copia .srm recuperada" else "No pude guardar la copia")
+        }
+    }
+
+    private var capturaPara: Pair<String, String>? = null
+
+    fun imagenCaptura(e: Estado, id: String): Uri? {
+        if (e.galeria == "captura_acciones") return capturaPara?.second?.let(Uri::parse)
+        if (e.galeria != "capturas_juego") return null
+        val clave = e.seleccionado?.clave ?: return null
+        val i = id.removePrefix("captura-").toIntOrNull() ?: return null
+        return e.datos[clave]?.capturas?.getOrNull(i)?.let(Uri::parse)
+    }
+
+    private fun accionesCaptura(clave: String, ruta: String) {
+        capturaPara = clave to ruta
+        abrirGaleria("captura_acciones")
+    }
+
+    private fun compartirCaptura(ruta: String) {
+        val uri = Uri.parse(ruta)
+        val enviar = Intent(Intent.ACTION_SEND).setType("image/*")
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            .also { it.clipData = android.content.ClipData.newRawUri("Captura", uri) }
+        abrirIntent(Intent.createChooser(enviar, "Compartir captura"), "No pude compartir la captura")
+    }
+
+    private fun importarListaEsDe(uri: Uri) {
+        val e = estado.value
+        scope.launch {
+            val previa = withContext(Dispatchers.IO) {
+                runCatching {
+                    val entradas = app.contentResolver.openInputStream(uri)?.use(cl.nikalbazu.diptico.data.ImportarEsDe::leer)
+                        ?: error("Archivo vacío")
+                    cl.nikalbazu.diptico.data.ImportarEsDe.comparar(entradas, e.juegos, e.datos)
+                }.getOrNull()
+            }
+            if (previa == null) { avisar("No pude leer el gamelist.xml de ES-DE"); return@launch }
+            if (previa.cambios.isEmpty()) {
+                avisar("Sin cambios · ${previa.sinCoincidencia} juegos sin coincidencia única")
+                return@launch
+            }
+            mostrarDialogo(Dialogo("importar-es-de", "Importar lista de ES-DE",
+                "${previa.cambios.size} juegos se pueden actualizar. Se omiten ${previa.sinCoincidencia} sin coincidencia única.",
+                Icono.DESCARGA, si = "Importar", no = "Cancelar",
+                lineas = previa.cambios.take(6).map { it.titulo ?: it.juego.titulo })) {
+                val actual = estado.value
+                val claves = actual.juegos.mapTo(HashSet()) { it.clave }
+                val datos = actual.datos.toMutableMap()
+                for (cambio in previa.cambios) {
+                    val clave = cambio.juego.clave
+                    if (clave !in claves) continue
+                    val previo = datos[clave] ?: DatosJuego()
+                    datos[clave] = previo.copy(titulo = previo.titulo ?: cambio.titulo, favorito = previo.favorito || cambio.favorito)
+                }
+                almacen.guardarDatos(datos)
+                actualizar { it.copy(datos = datos) }
+                publicarJuegos()
+                avisar("Lista de ES-DE importada")
+            }
+        }
+    }
+
     fun archivoElegido(uri: Uri) {
+        if (archivoPara.startsWith("partida-srm:")) {
+            val clave = archivoPara.removePrefix("partida-srm:")
+            archivoPara = ""
+            scope.launch {
+                val ok = withContext(Dispatchers.IO) {
+                    runCatching { cl.nikalbazu.diptico.data.CopiasPartida.guardar(app, clave, uri) }.isSuccess
+                }
+                if (ok) {
+                    avisar("Copia .srm guardada")
+                    abrirCopiasPartida(clave)
+                } else avisar("Elige un guardado .srm legible de hasta 16 MB")
+            }
+            return
+        }
+        if (archivoPara.startsWith("captura:")) {
+            val clave = archivoPara.removePrefix("captura:")
+            archivoPara = ""
+            try {
+                require(uri.scheme == "content")
+                app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (_: Exception) { avisar("No pude conservar el acceso a esa captura"); return }
+            val datos = estado.value.datos.toMutableMap()
+            val d = datos[clave] ?: DatosJuego()
+            if (d.capturas.size >= 24 && uri.toString() !in d.capturas) { avisar("La galería admite 24 capturas por juego"); return }
+            datos[clave] = d.copy(capturas = (listOf(uri.toString()) + d.capturas).distinct())
+            almacen.guardarDatos(datos)
+            actualizar { it.copy(datos = datos) }
+            avisar("Captura agregada")
+            return
+        }
+        if (archivoPara == "es-de") {
+            archivoPara = ""
+            importarListaEsDe(uri)
+            return
+        }
         imagenVisual?.let { (id, tipo) ->
             imagenVisual = null
             try { app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) {}

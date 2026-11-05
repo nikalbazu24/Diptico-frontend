@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "editor-widgets-1"
-    const val NOMBRE = "Edición de widgets"
+    const val ID = "mesa-partida-1"
+    const val NOMBRE = "Tu partida, a tu manera"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -160,10 +160,17 @@ object Novedades {
             Pagina("Elige la vista directamente", "R3 muestra tus vistas, con previa en la otra pantalla. Vista, filtro y orden quedan a mano en el estante; las opciones finas están agrupadas.", Icono.VISTA, 0xFFBCA4FF),
             Pagina("Retoma donde lo dejaste", "En Inicio eliges cuánto debe durar la pausa y puedes activar un clip opcional de los últimos 6 segundos, sin sonido. Android pide permiso. Con lupa o sin clip se usa la imagen del juego.", Icono.CONTINUAR, 0xFF57DCC7),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("editor-widgets-1", "Edición de widgets", listOf(
             Pagina("Pasa widgets entre páginas", "En el editor, usa las flechas para cambiar de página o + para crear otra. Arrastra un widget hacia un borde y espera un instante para cruzar sin soltarlo.", Icono.APPS, 0xFF57DCC7),
             Pagina("Estira y mira el cambio", "El widget sigue tu dedo desde la manija de la esquina. Al soltar se ajusta a la grilla. Agrega Temporizador, Cronómetro o Buscar juegos desde el catálogo.", Icono.FORMA, 0xFFBCA4FF),
             Pagina("Avisos de actualización", "Díptico comprueba nuevas versiones al volver a la app y en segundo plano. Permite las notificaciones en Android para recibir el aviso.", Icono.CAMPANA, 0xFF73ABFF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Tu pantalla de partida", "Toca Portada, Bitácora, Herramientas o Ligera en la pantalla libre. La vista se recuerda para cada juego. Desde sus opciones también la puedes cambiar con el mando.", Icono.PANTALLAS, 0xFF57DCC7),
+            Pagina("Un inicio para cada momento", "En Estudio visual prueba Jugar, Explorar o Ligero. Puedes ajustar los widgets, guardar el perfil y volver a tu distribución anterior.", Icono.PALETA, 0xFFBCA4FF),
+            Pagina("Planea tu próxima partida", "Agrega Mi próxima partida, Cola de juegos o Tengo 20 minutos al inicio. Desde las opciones de un juego puedes marcarlo pendiente, jugando o terminado.", Icono.CONTINUAR, 0xFFFFB46A),
+            Pagina("Capturas y copias", "Desde las opciones del juego puedes abrir su galería, compartir una captura o usarla como mapa. En sistemas con RetroArch puedes guardar y exportar hasta tres copias .srm por juego.", Icono.PORTADA, 0xFFBCA4FF),
+            Pagina("Trae tu biblioteca", "En Biblioteca puedes importar títulos y favoritos de un gamelist.xml de ES-DE. Revisa las coincidencias antes de aplicar los cambios.", Icono.BIBLIOTECA, 0xFF73ABFF),
         )),
     )
 

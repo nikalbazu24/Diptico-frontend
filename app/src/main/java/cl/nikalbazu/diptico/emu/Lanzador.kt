@@ -25,7 +25,7 @@ object Pantallas {
         // La pantalla de abajo de la consola, nunca la tele (HDMI, USB-C, inalámbrica) si hay una conectada.
         val tele = Regex("hdmi|displayport|\\bdp\\b|external|externa|usb|\\btv\\b|wireless|cast|miracast", RegexOption.IGNORE_CASE)
         // La proyección de la lupa también aparece como pantalla, pero no es la pantalla física de abajo.
-        val otras = dm.displays.filter { it.displayId != Display.DEFAULT_DISPLAY && it.name != "Diptico-lupa" }
+        val otras = dm.displays.filter { it.displayId != Display.DEFAULT_DISPLAY && it.name !in setOf("Diptico-lupa", "Diptico-retoma") }
         // Solo se descarta por el nombre si hay más de una (por si la pantalla propia tuviera un nombre raro).
         val propias = if (otras.size >= 2) otras.filter { !tele.containsMatchIn(it.name ?: "") }.ifEmpty { otras.take(1) } else otras
         val presentacion = dm.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)
@@ -242,6 +242,20 @@ object Lanzador {
         return intent
     }
 
+    /** Verifica el documento sin leer la ROM. Algunos proveedores no exponen metadatos. */
+    fun revisarArchivo(ctx: Context, juego: Juego): String? = try {
+        ctx.contentResolver.query(juego.uri, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID), null, null, null)
+            ?.use { if (it.moveToFirst()) null else "El archivo no aparece. Comprueba la tarjeta SD y vuelve a escanear su carpeta." }
+    } catch (_: SecurityException) {
+        "Díptico perdió el permiso de lectura. Vuelve a elegir la carpeta donde está este juego."
+    } catch (_: java.io.FileNotFoundException) {
+        "El archivo no está disponible. Comprueba la tarjeta SD o si moviste el juego."
+    } catch (_: IllegalArgumentException) {
+        "La ubicación del juego ya no está disponible. Vuelve a elegir su carpeta."
+    } catch (_: Exception) {
+        null
+    }
+
     /**
      * Abre el juego. Devuelve null si salió bien, o un mensaje para mostrar si falló.
      * [raiz] es la carpeta de juegos elegida (para rutas y archivos vecinos).
@@ -364,3 +378,4 @@ object Lanzador {
         }
     }
 }
+
