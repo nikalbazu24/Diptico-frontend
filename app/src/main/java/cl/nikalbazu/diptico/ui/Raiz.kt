@@ -60,7 +60,10 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             AnimatedVisibility(visible = centroAqui, enter = fadeIn(tween(160)), exit = fadeOut(tween(200))) { PanelCentro(e) }
             // Mientras juegas: Bisa se abre en la pantalla libre (la que no tiene el juego).
             val s = e.sesion
-            if (s != null && e.panel == Panel.ASISTENTE && !s.dosPantallas && miPantalla != s.displayId) PanelAsistente(e)
+            val companeraLibre = s != null && !e.unaPantalla && !s.dosPantallas && miPantalla != s.displayId
+            if (companeraLibre && e.panel == Panel.ASISTENTE) PanelAsistente(e)
+            if (companeraLibre && rol == Rol.SUPERIOR && e.panel == Panel.CLAVE &&
+                e.textoPara in setOf("asistente", "bisa_paso")) PanelClave(e)
             AnimatedVisibility(
                 visible = e.relojGrande && rol != Rol.INFERIOR,
                 enter = fadeIn(tween(250)) + scaleIn(tween(320), initialScale = 0.9f),
@@ -68,7 +71,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             ) { RelojGrande(e) }
             // Teclado de Díptico: en la pantalla contraria a la del texto.
             AnimatedVisibility(
-                visible = e.conTeclado && (rol == Rol.SUPERIOR || rol == Rol.UNICA),
+                visible = e.conTeclado && if (s != null && e.textoPara in setOf("asistente", "bisa_paso") && e.panel == Panel.CLAVE)
+                    companeraLibre else (rol == Rol.SUPERIOR || rol == Rol.UNICA),
                 enter = fadeIn(tween(200)) + androidx.compose.animation.slideInVertically(tween(300)) { it / 3 },
                 exit = fadeOut(tween(160)),
             ) { TecladoDiptico(e) }
@@ -142,4 +146,5 @@ private fun Modifier.cortinaDesdeArriba(puede: () -> Boolean): Modifier = this.t
         }
     },
 )
+
 

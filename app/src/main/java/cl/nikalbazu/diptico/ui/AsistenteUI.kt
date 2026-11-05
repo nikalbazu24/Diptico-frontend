@@ -36,7 +36,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import cl.nikalbazu.diptico.estado.CentroBisa
 import cl.nikalbazu.diptico.estado.Diptico
+import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.MensajeChat
 
@@ -84,7 +86,8 @@ private fun Burbuja(m: MensajeChat) {
 fun PanelAsistente(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val elementos = remember(e) { Diptico.elementosAsistente() }
+    val elementos = remember(e) { Diptico.elementosAsistente(e) }
+    val contexto = remember(e.sesion, e.juegos, e.seleccionado, e.dosDisponibles, e.unaPantalla) { CentroBisa.contexto(e) }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Box(Modifier.align(Alignment.TopEnd).size(esc.d(320)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(8))) {
@@ -92,38 +95,47 @@ fun PanelAsistente(e: Estado) {
                 cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(42).value)
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Bisa", 20f, lineas = 1)
+                    Texto("Centro de Bisa", 20f, lineas = 1)
                     Detalle(
                         if (e.pensando) e.pensandoQue.ifBlank { "Pensando…" } else when (Diptico.motorEfectivo(e)) {
                             "local" -> "IA de tu consola"
                             "gemini" -> "Gemini"
                             "openai" -> "ChatGPT"
-                            else -> "Elige su IA en Menú › Bisa"
+                            else -> "Ayuda local"
                         },
                         12f, lineas = 1,
                     )
                 }
-                if (e.bisaWeb && Diptico.motorEfectivo(e) != "ninguno") {
-                    Row(
-                        Modifier.clip(RoundedCornerShape(50)).background(Color(0xFF2EC4A6).copy(alpha = 0.18f)).padding(horizontal = esc.d(9), vertical = esc.d(4)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        IconoDiptico(cl.nikalbazu.diptico.estado.Icono.WEB, Color(0xFF2EC4A6), 13f)
-                        Spacer(Modifier.width(esc.d(4)))
-                        Texto("Con internet", 11.5f, color = Color(0xFF2EC4A6), lineas = 1)
-                    }
-                }
+                Box(
+                    Modifier.size(esc.d(38)).clip(CircleShape).background(p.superficie)
+                        .clickable(onClickLabel = "Cerrar Bisa") { Diptico.cerrarPanel() },
+                    contentAlignment = Alignment.Center,
+                ) { IconoDiptico(Icono.CERRAR, p.tinta, 18f) }
             }
             Spacer(Modifier.height(esc.d(8)))
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14)))
+                    .background(Uva.copy(alpha = .14f)).padding(horizontal = esc.d(11), vertical = esc.d(7)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconoDiptico(if (contexto.jugando) Icono.MANDO else Icono.BIBLIOTECA, Coral, 15f)
+                Spacer(Modifier.width(esc.d(8)))
+                Column(Modifier.weight(1f)) {
+                    Detalle(if (contexto.jugando) "En partida" else "Contexto", 10.5f, lineas = 1)
+                    Texto(contexto.titulo, 13f, lineas = 1, traducir = false)
+                }
+                if (contexto.pantallaLibre) IconoDiptico(Icono.PANTALLAS, p.acentoTexto, 16f)
+            }
+            Spacer(Modifier.height(esc.d(7)))
             val lista = rememberLazyListState()
-            LaunchedEffect(e.chat.size, e.pensando) { if (e.chat.isNotEmpty()) lista.animateScrollToItem(e.chat.size) }
+            LaunchedEffect(e.chat.size, e.pensando) { if (e.chat.isNotEmpty()) lista.animateScrollToItem((e.chat.size - 1 + if (e.pensando) 1 else 0).coerceAtLeast(0)) }
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 if (e.chat.isEmpty()) item {
                     Column(Modifier.padding(vertical = esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
                         Texto("¡Hola! ¿En qué te ayudo?", 20f)
                         Detalle(
-                            if (Diptico.motorEfectivo(e) == "ninguno") "Para pensar necesito una IA: la de tu consola (gratis), Gemini o ChatGPT. Elige Escribir y te muestro las opciones."
-                            else "Háblame o toca una pregunta de abajo. Conozco tus juegos y puedo buscar en internet.",
+                            if (Diptico.motorEfectivo(e) == "ninguno") "Puedo encontrar tu próximo paso, recomendarte qué jugar y orientarte en Díptico. Elige una acción o pregúntame."
+                            else "Habla, escribe o elige una acción. Puedo ayudarte con el juego que ves en la tarjeta de contexto.",
                             13.5f,
                         )
                     }
@@ -170,7 +182,7 @@ fun PanelAsistente(e: Estado) {
                         Row(
                             Modifier.widthIn(max = esc.d(220)).clip(RoundedCornerShape(esc.d(14)))
                                 .then(if (activo) Modifier.fondoBoton(Uva) else Modifier.background(if (esAccion) Coral.copy(alpha = 0.18f) else p.superficie.copy(alpha = 0.8f)))
-                                .clickable { if (activo) o.accion() else { Diptico.elegirIndice(k + 2); o.accion() } }
+                                .clickable { Diptico.elegirIndice(k + 2) }
                                 .padding(horizontal = esc.d(11), vertical = esc.d(8)),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -182,7 +194,7 @@ fun PanelAsistente(e: Estado) {
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            Pistas("A" to "Elegir", "X" to "Escribir", "Y" to "Borrar chat", "B" to "Cerrar")
+            Pistas("A" to "Elegir", "X" to "Escribir", "L1" to "Hablar", "B" to "Cerrar")
         }
     }
 }
@@ -241,3 +253,4 @@ fun BotonBisa(modifier: Modifier = Modifier) {
         Texto("Bisa", 14f, lineas = 1)
     }
 }
+

@@ -54,7 +54,7 @@ class NavegacionTest {
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("editor-widgets-1").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("mesa-partida-1").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {
@@ -62,6 +62,16 @@ class NavegacionTest {
         Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false, bienvenidaModo = "no", sesion = Sesion("snes/a", 1000L, 0, false)))
         Diptico.alEncender(60_000L, true)
         assertEquals(61_000L, Diptico.estado.value.sesion!!.inicio)
+    }
+
+    @Test fun startXAbreBisaSinActivarElMenuAlSoltar() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_START))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_X))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_X))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_START))
+        assertEquals(Panel.ASISTENTE, Diptico.estado.value.panel)
     }
 
 }

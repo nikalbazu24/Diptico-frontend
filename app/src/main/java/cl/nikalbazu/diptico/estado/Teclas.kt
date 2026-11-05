@@ -121,6 +121,13 @@ object Teclas {
         }
         // Atajos solo dentro de Díptico: no se interceptan los botones de un juego.
         if (e.configurado && e.sesion == null && !e.conTeclado && e.panel == Panel.NINGUNO) {
+            if (abajo && code == KeyEvent.KEYCODE_BUTTON_X && KeyEvent.KEYCODE_BUTTON_START in presionadas) {
+                consumidas += KeyEvent.KEYCODE_BUTTON_START
+                consumidas += KeyEvent.KEYCODE_BUTTON_X
+                startLargo = false
+                Diptico.abrirAsistente()
+                return true
+            }
             if (e.atajoApps == "start_y" && abajo && code == KeyEvent.KEYCODE_BUTTON_Y && KeyEvent.KEYCODE_BUTTON_START in presionadas) {
                 consumidas += KeyEvent.KEYCODE_BUTTON_START; consumidas += KeyEvent.KEYCODE_BUTTON_Y
                 startLargo = false; Diptico.abrirApps(); return true
@@ -534,6 +541,7 @@ object Teclas {
                 KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) {
                     val d = if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1
                     when (e.panel) {
+                        Panel.ASISTENTE -> if (code == KeyEvent.KEYCODE_BUTTON_L1) Diptico.hablarConBisa()
                         Panel.FICHA -> Diptico.cambiarPestanaFicha(d)
                         Panel.BUSCAR -> Diptico.cambiarFiltro(d)
                         Panel.IMAGENES -> Diptico.cambiarFuenteImagen(d)

@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import cl.nikalbazu.diptico.estado.CentroBisa
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.ui.Coral
 import cl.nikalbazu.diptico.ui.Detalle
@@ -124,14 +125,10 @@ fun VentanaBisa(mover: (Float, Float) -> Unit, cerrar: () -> Unit) {
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            val botones = buildList {
-                ultima?.acciones?.forEach { a -> add(a.etiqueta to { Diptico.ejecutarAccion(a) }) }
-                if (isEmpty()) {
-                    add("Estoy atascado" to { Diptico.preguntar("Estoy atascado en ${juego?.titulo ?: "este juego"}. Dame una pista suave.") })
-                    add("Me matan siempre en lo mismo" to { Diptico.preguntar("En ${juego?.titulo ?: "este juego"} me matan una y otra vez en la misma parte. ¿Qué hago?") })
-                    add("Un truco para este juego" to { Diptico.preguntar("Dame un buen truco o consejo para ${juego?.titulo ?: "este juego"}.") })
-                }
-            }
+            val botones = (ultima?.acciones.orEmpty() + CentroBisa.acciones(e))
+                .distinctBy { it.tipo to it.valor }
+                .filter { it.tipo in setOf("bisa_sistema", "bisa_pausa", "preguntar", "pista") }
+                .map { a -> a.etiqueta to { Diptico.ejecutarAccion(a) } }
             Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
                 botones.take(3).forEach { (t, f) ->
                     Box(
@@ -148,3 +145,4 @@ fun VentanaBisa(mover: (Float, Float) -> Unit, cerrar: () -> Unit) {
         }
     }
 }
+

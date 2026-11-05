@@ -1319,7 +1319,7 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
                 if (!compacto && al >= 2) {
                     Spacer(Modifier.height(esc.d(7)))
                     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                        ChipBisa("Hablar") { Diptico.abrirAsistente() }
+                        ChipBisa("Hablar") { Diptico.hablarConBisa() }
                         // Los accesos que caben: uno en los angostos, dos en los medianos y tres en los anchos.
                         if (j != null && an >= 4) ChipBisa("Un truco") { Diptico.abrirAsistente(); Diptico.preguntar("Dame un buen truco o consejo para ${j.titulo}.") }
                         if (an >= 3) ChipBisa("¿Qué juego?") { Diptico.abrirAsistente(); Diptico.preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") }

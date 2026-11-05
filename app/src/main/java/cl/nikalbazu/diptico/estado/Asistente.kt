@@ -53,16 +53,18 @@ object Asistente {
     /** Instrucciones con lo que hay en la biblioteca, en pocas líneas. */
     fun sistema(e: Estado): String {
         val juegos = e.juegos.filter { e.datos[it.clave]?.oculto != true }
+        val porClave = juegos.associateBy { it.clave }
+        val c = CentroBisa.contexto(e)
         val jugados = e.datos.entries.filter { it.value.tiempo > 0 }
         val recientes = e.datos.entries.filter { it.value.ultimo > 1 }.sortedByDescending { it.value.ultimo }.take(6).map { it.key }
         val masJugados = jugados.sortedByDescending { it.value.tiempo }.take(6).map { it.key }
         val favoritos = e.datos.filter { it.value.favorito }.keys.take(10)
         // Lista de juegos: primero los conocidos (recientes, favoritos, más jugados), después el resto.
-        val prioridad = (listOfNotNull(e.seleccionado?.clave) + recientes + favoritos + masJugados).distinct()
+        val prioridad = (listOfNotNull(e.sesion?.clave, e.seleccionado?.clave) + recientes + favoritos + masJugados).distinct()
         val resto = juegos.map { it.clave }.filter { it !in prioridad }.shuffled(java.util.Random(juegos.size.toLong())).take(260)
-        indice = (prioridad + resto).filter { c -> juegos.any { it.clave == c } }
+        indice = (prioridad + resto).filter { c -> c in porClave }
         fun linea(i: Int, clave: String): String {
-            val j = juegos.first { it.clave == clave }
+            val j = porClave.getValue(clave)
             val d = e.datos[clave]
             val c = Consolas.porId(j.consolaId)?.nombre ?: j.consolaId
             val extra = buildString {
@@ -78,7 +80,7 @@ object Asistente {
         val temas = Diptico.todosLosTemas(e).take(40).joinToString(", ") { "${it.id}=${it.nombre}" }
         val idioma = Idioma.nombreParaIA(e.idioma)
         return """
-            Te llamas $NOMBRE y eres la asistente de Díptico, un launcher de juegos para la consola portátil de dos pantallas AYN Thor.
+            Te llamas $NOMBRE y eres la asistente de Díptico, un frontend para consolas Android de una y dos pantallas.
             Tu nombre viene de la bisagra que une las dos pantallas. Eres cercana, paciente, alegre y muy buena para los videojuegos.
             Responde SIEMPRE en $idioma, breve (2 a 7 oraciones), cálida y concreta. Nada de markdown pesado: texto simple, como mucho guiones.
             Hoy es ${SimpleDateFormat("EEEE d 'de' MMMM yyyy", java.util.Locale("es")).format(Date())}.
@@ -104,6 +106,7 @@ object Asistente {
             Propón como mucho 3 acciones y solo si ayudan. Nunca inventes números de juego: usa solo los de la lista.
             Si te preguntan por un juego que no está en la lista, puedes hablar de él pero di que no está en su biblioteca.
 
+            Contexto del equipo: ${if (c.pantallaLibre) "puede usar pantalla compañera" else "usa una pantalla disponible para Díptico"}. Sistema activo: ${c.consola?.bonito ?: "ninguno"}. Las funciones de emuladores, guardados y logros varían por sistema. No inventes compatibilidad ni teclas del emulador.
             Biblioteca: ${juegos.size} juegos. Por consola: $porConsola.
             Juego elegido ahora: ${e.seleccionado?.let { s -> "#${indice.indexOf(s.clave)} ${s.titulo} (${Consolas.porId(s.consolaId)?.nombre ?: s.consolaId}): ${dificultad(e, s.clave)}" } ?: "ninguno"}.
             ${e.sesion?.let { ses -> juegos.firstOrNull { it.clave == ses.clave }?.let { j -> "AHORA MISMO está jugando ${j.titulo} hace ${(System.currentTimeMillis() - ses.inicio) / 60000} minutos: ${dificultad(e, j.clave)}. Ayúdale con ESE juego." } } ?: ""}
@@ -119,12 +122,14 @@ object Asistente {
     /** Instrucciones cortas para la IA local (cabe poco en su memoria). */
     fun sistemaLocal(e: Estado): String {
         val juegos = e.juegos.filter { e.datos[it.clave]?.oculto != true }
+        val porClave = juegos.associateBy { it.clave }
+        val c = CentroBisa.contexto(e)
         val recientes = e.datos.entries.filter { it.value.ultimo > 1 }.sortedByDescending { it.value.ultimo }.take(4).map { it.key }
         val prioridad = (listOfNotNull(e.sesion?.clave, e.seleccionado?.clave) + recientes).distinct()
         val resto = juegos.map { it.clave }.filter { it !in prioridad }.shuffled(java.util.Random(juegos.size.toLong())).take(14)
-        indice = (prioridad + resto).filter { c -> juegos.any { it.clave == c } }
+        indice = (prioridad + resto).filter { c -> c in porClave }
         val lista = indice.mapIndexed { i, c ->
-            val j = juegos.first { it.clave == c }
+            val j = porClave.getValue(c)
             "#$i ${j.titulo} (${Consolas.porId(j.consolaId)?.nombre ?: j.consolaId})"
         }.joinToString("\n")
         val actual = (e.sesion?.clave ?: e.seleccionado?.clave)?.let { c -> juegos.firstOrNull { it.clave == c } }
@@ -134,6 +139,7 @@ object Asistente {
             No inventes datos: si no estás segura, dilo y sugiere qué buscar.
             Puedes agregar al final botones, uno por línea: [[jugar:#N|texto]] abre el juego N; [[ficha:#N|texto]] abre su ficha; [[pista:directa|Más directa]]; [[pista:solucion|Dime la solución]].
             ${actual?.let { "Juego actual: ${it.titulo}. ${dificultad(e, it.clave)}." } ?: ""}
+            Sistema activo: ${c.consola?.bonito ?: "ninguno"}. ${if (c.pantallaLibre) "Hay pantalla compañera." else "Usa los accesos disponibles en la pantalla actual."} No inventes atajos del emulador.
             Juegos de la persona:
             $lista
         """.trimIndent()
@@ -145,6 +151,7 @@ object Asistente {
     fun interpretar(respuesta: String): MensajeChat {
         val acciones = ACCION.findAll(respuesta).mapNotNull { m ->
             val (tipo, valor, etiqueta) = m.destructured
+            if (tipo !in setOf("jugar", "ver", "ficha", "tema", "vista", "buscar", "menu", "pista")) return@mapNotNull null
             val v = valor.trim()
             val real = if (tipo in setOf("jugar", "ver", "ficha")) {
                 val n = v.removePrefix("#").toIntOrNull() ?: return@mapNotNull null
@@ -156,3 +163,4 @@ object Asistente {
         return MensajeChat("ia", texto, acciones)
     }
 }
+

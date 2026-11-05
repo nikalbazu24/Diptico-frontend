@@ -758,7 +758,7 @@ private fun PanelPorts(e: Estado) {
 
 /** Pegar o escribir la clave de SteamGridDB. */
 @Composable
-private fun PanelClave(e: Estado) {
+internal fun PanelClave(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Velo {
@@ -775,6 +775,7 @@ private fun PanelClave(e: Estado) {
                 "ra_clave" -> listOf(Icono.CLAVE, "Clave de RetroAchievements", "En retroachievements.org entra a Settings y copia tu \"Web API Key\". Solo se guarda en tu consola.", "Pega tu Web API Key")
                 "buscar_imagen" -> listOf(Icono.BUSCAR, "Buscar con otro nombre", "Escribe el nombre del juego como se conoce en inglés o su nombre completo.", "Ej: The Legend of Zelda")
                 "pc_steam" -> listOf(Icono.BUSCAR, "Agregar un juego de Steam", "Escribe su nombre como aparece en Steam. Lo abrirá GameNative o GameHub Lite.", "Ej: Hollow Knight")
+                "bisa_paso" -> listOf(Icono.LAPIZ, "Mi próximo paso", "Bisa lo recuerda para este juego.", "Ej: volver al puente")
                 "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
                 "ia_pedido" -> listOf(Icono.CHISPA, "Crear tema con IA", "Escribe tu idea, como \"Halloween japonés\" o \"Navidad en la playa\". Si lo dejas vacío, la IA elige la fiesta del mundo más cercana a hoy.", "Ej: Año Nuevo Lunar con faroles")
                 "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")

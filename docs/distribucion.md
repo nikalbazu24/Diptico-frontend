@@ -1,11 +1,12 @@
 # Distribución y migración de Díptico
 
-Las compilaciones de rama y de main son artefactos de prueba. La publicación requiere ejecutar manualmente «Construir APK» desde main con «publicar» y una clave privada de distribución. El flujo publica únicamente después de verificar los dos APK con la huella configurada.
+Las compilaciones de rama y de main son artefactos de prueba. Ejecuta «Construir APK» desde main con «preparar_firma» y una clave privada de distribución. El flujo verifica ambos APK con la huella configurada y los adjunta a un borrador de GitHub Releases.
 
 Configura en GitHub Actions los secretos `DIPTICO_KEYSTORE_BASE64`, `DIPTICO_STORE_PASSWORD`, `DIPTICO_KEY_ALIAS` y `DIPTICO_KEY_PASSWORD`. Configura `DIPTICO_CERT_SHA256` como variable con la huella SHA-256 del certificado, 64 caracteres hexadecimales en minúsculas sin separadores. Guarda la clave privada y su contraseña fuera del repositorio, con una copia de recuperación. Usa la misma firma en cada versión futura. La firma de pruebas no sirve para distribución.
 
-## Antes de publicar el primer APK firmado
+## Probar y publicar el mismo APK firmado
 
+- Descarga el APK firmado desde el borrador. Una vez validadas la migración y la partida, publica ese mismo borrador en GitHub Releases. Así se distribuye el archivo probado.
 - Con una instalación existente de beta 99, guarda un respaldo de Díptico en una carpeta compartida fuera de los datos de la app. Guarda por separado cualquier partida cuyo emulador dependa de permisos o carpetas privadas.
 - En un equipo de pruebas o emulador, verifica el ZIP y restaura una copia en una instalación con la firma nueva. Comprueba temas, widgets, notas de voz, colecciones y tiempos. Vuelve a seleccionar las carpetas de juegos y a conectar servicios opcionales con tu cuenta.
 - La nueva firma requiere una migración desde el APK anterior. Android puede rechazar la instalación encima. Desinstala la beta anterior solo después de verificar que tienes una copia restaurable y que los archivos necesarios están fuera de sus datos privados.
