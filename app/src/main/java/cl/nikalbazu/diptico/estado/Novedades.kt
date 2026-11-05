@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "navegacion-retoma-1"
-    const val NOMBRE = "Navegación y retoma"
+    const val ID = "editor-widgets-1"
+    const val NOMBRE = "Edición de widgets"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -153,12 +153,17 @@ object Novedades {
             Pagina("Una ficha en la otra pantalla", "Desliza hacia arriba la tarjeta «Enviar ficha» del estante para dejar el juego fijado arriba mientras recorres otros títulos. Tócala para soltarlo.", Icono.PANTALLAS, 0xFFBCA4FF),
             Pagina("Actualizador más tranquilo", "La ayuda conserva su panel al cambiar el porcentaje de descarga y la pantalla inferior evita reaplicar opciones de ventana sin cambios.", Icono.DESCARGA, 0xFF57DCC7),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("navegacion-retoma-1", "Navegación y retoma", listOf(
             Pagina("Una barra, en su lugar", "La barra queda fija sobre la imagen del juego. Al pasar a Widgets sube, y reúne los accesos en un solo lugar.", Icono.APPS, 0xFF57DCC7),
             Pagina("Tu cajón de apps", "Start + Y abre las apps. Mantén una app o pulsa X para moverla, fijarla, abrir sus opciones o pedir a Android que la desinstale. El atajo se cambia en Controles.", Icono.APPS, 0xFF73ABFF),
             Pagina("Widgets con dos dedos", "Abre los dedos para ver menos casillas y widgets más grandes; júntalos para ver más. Si hace falta espacio se agregan páginas, sin ocultar widgets.", Icono.FORMA, 0xFFFFB46A),
             Pagina("Elige la vista directamente", "R3 muestra tus vistas, con previa en la otra pantalla. Vista, filtro y orden quedan a mano en el estante; las opciones finas están agrupadas.", Icono.VISTA, 0xFFBCA4FF),
             Pagina("Retoma donde lo dejaste", "En Inicio eliges cuánto debe durar la pausa y puedes activar un clip opcional de los últimos 6 segundos, sin sonido. Android pide permiso. Con lupa o sin clip se usa la imagen del juego.", Icono.CONTINUAR, 0xFF57DCC7),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Pasa widgets entre páginas", "En el editor, usa las flechas para cambiar de página o + para crear otra. Arrastra un widget hacia un borde y espera un instante para cruzar sin soltarlo.", Icono.APPS, 0xFF57DCC7),
+            Pagina("Estira y mira el cambio", "El widget sigue tu dedo desde la manija de la esquina. Al soltar se ajusta a la grilla. Agrega Temporizador, Cronómetro o Buscar juegos desde el catálogo.", Icono.FORMA, 0xFFBCA4FF),
+            Pagina("Avisos de actualización", "Díptico comprueba nuevas versiones al volver a la app y en segundo plano. Permite las notificaciones en Android para recibir el aviso.", Icono.CAMPANA, 0xFF73ABFF),
         )),
     )
 

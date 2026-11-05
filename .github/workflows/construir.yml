@@ -29,8 +29,8 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Probar perfiles y navegación
-        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --no-daemon
+      - name: Probar perfiles, navegación y editor
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --no-daemon
 
       - name: Compilar Díptico
         run: |

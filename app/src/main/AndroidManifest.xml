@@ -159,6 +159,12 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
+        <service
+            android:label="Revisión de actualizaciones de Díptico"
+            android:name=".estado.RevisionActualizaciones"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <!-- Respuesta de Android al instalar una actualización descargada desde Díptico. -->
         <receiver
             android:name=".estado.ReceptorInstalacion"

@@ -37,16 +37,6 @@ class MainActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Permiso para los avisos de Bisa mientras juegas (Android 13 o más nuevo). Se pide una sola vez.
-        if (android.os.Build.VERSION.SDK_INT >= 33 && Diptico.estado.value.configurado &&
-            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
-        ) {
-            val prefs = getSharedPreferences("diptico_permisos", MODE_PRIVATE)
-            if (!prefs.getBoolean("avisos_pedidos", false)) {
-                prefs.edit().putBoolean("avisos_pedidos", true).apply()
-                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 41)
-            }
-        }
         setContent {
             val e by Diptico.estado.collectAsState()
             val hayInferior = Pantallas.inferior(this) != null
@@ -73,6 +63,11 @@ class MainActivity : BaseActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
+                    Diptico.estado.map { it.configurado }.distinctUntilChanged().collect { configurado ->
+                        if (configurado) pedirPermisoAvisos()
+                    }
+                }
+                launch {
                     // Protector de pantalla: la pantalla principal también se atenúa.
                     Diptico.estado.map { it.protector }.distinctUntilChanged().collect { p ->
                         val lp = window.attributes
@@ -90,6 +85,16 @@ class MainActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
         if (Diptico.estado.value.modoPantallas != "una_libre") abrirPantallaInferior()
+    }
+
+    private fun pedirPermisoAvisos() {
+        if (android.os.Build.VERSION.SDK_INT < 33 ||
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
+        val prefs = getSharedPreferences("diptico_permisos", MODE_PRIVATE)
+        if (prefs.getBoolean("avisos_pedidos", false)) return
+        prefs.edit().putBoolean("avisos_pedidos", true).apply()
+        requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 41)
     }
 
     private fun abrirPantallaInferior() {
@@ -112,3 +117,4 @@ fun Modifier.margenPorcentaje(pct: Int): Modifier = if (pct <= 0) this else this
     val pl = medible.measure(c.copy(minWidth = 0, minHeight = 0, maxWidth = (c.maxWidth - 2 * px).coerceAtLeast(0), maxHeight = (c.maxHeight - 2 * py).coerceAtLeast(0)))
     layout(c.maxWidth, c.maxHeight) { pl.place(px, py) }
 }
+
