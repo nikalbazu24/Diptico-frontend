@@ -2,6 +2,15 @@
 
 Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido ocupa todo; abajo, eliges consola y juego en un estante con la forma real de cada caja.
 
+## Actualización Estudio visual
+
+- **Universo del juego:** colores de sus imágenes locales en ambas pantallas, sin capturar el juego.
+- **Habitación:** vista de consolas con colecciones y recuerdos, paredes y objetos elegibles.
+- **Colecciones propias:** color, fondo, logo, música y disposición desde Menú › Estudio visual.
+- **Ficha fijada:** desliza hacia arriba la tarjeta «Enviar ficha» para conservarla en la otra pantalla.
+- **Perfiles:** tres composiciones guardables, importación con confirmación y exportación JSON sin rutas ni claves. Los recursos locales de las colecciones se configuran en cada dispositivo.
+- **Correcciones:** transición de ayuda independiente del porcentaje de descarga; opciones de ventana idempotentes en la pantalla inferior.
+
 ## Qué trae la 1.0 beta.7
 
 - **Fan games con Essentia**: nueva consola **RPG Maker**. Los fan games de RPG Maker XP/VX/VX Ace (Pokémon Essentials y otros) se abren directo con [Essentia](https://github.com/Nikalbazu24/essentia). Pon cada juego en su carpeta (la que trae `Game.ini`) dentro de `rpgmaker` o `fangames`; también sirven los accesos `.essentia` que crea Essentia. El nombre sale del `Game.ini` y la pantalla de título del juego sirve de imagen grande.
@@ -252,3 +261,4 @@ Cada cambio en `main` hace que GitHub Actions compile el APK, saque fotos de tod
 - Las reglas para abrir cada emulador y la lista de consolas vienen de [ES-DE](https://es-de.org) (licencia MIT).
 - Portadas de [libretro-thumbnails](https://github.com/libretro-thumbnails) e íconos de consola de [retroarch-assets](https://github.com/libretro/retroarch-assets).
 - Historia de los juegos desde Wikipedia.
+

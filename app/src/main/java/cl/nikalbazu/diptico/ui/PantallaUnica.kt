@@ -61,6 +61,7 @@ fun PantallaUnica(e: Estado) {
 private fun PantallaUnicaContenido(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    if (e.panel == cl.nikalbazu.diptico.estado.Panel.WIDGET && e.coleccionVisual != null) { ColeccionUniverso(e); return }
     if (e.inicio == "widgets") {
         androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
             // En el estudio de widgets, el inicio completo se ve en miniatura a la izquierda (en vivo) y el panel a la derecha.
@@ -94,6 +95,10 @@ private fun PantallaUnicaContenido(e: Estado) {
             }
             Paneles(e, conAyuda = true)
         }
+        return
+    }
+    if (e.vistaConsolas == "habitacion" && e.enSistemas) {
+        Box(Modifier.fillMaxSize()) { Habitacion(e, Modifier.fillMaxSize()); Paneles(e, conAyuda = true) }
         return
     }
     if (e.vistaConsolas == "carpetas" && e.enSistemas) {
@@ -223,3 +228,4 @@ private fun InfoUnica(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {
         }
     }
 }
+

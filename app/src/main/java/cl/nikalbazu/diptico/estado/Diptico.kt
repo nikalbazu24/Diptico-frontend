@@ -60,6 +60,7 @@ enum class Icono {
  */
 enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val grupo: String = "") {
     ESENCIAL("Lo esencial", Icono.ESTRELLA, "Lo que más se cambia, todo junto. Y para buscar cualquier ajuste por su nombre.", "Empieza aquí"),
+    EXPERIENCIA("Estudio visual", Icono.CHISPA, "Universo del juego, habitación, colecciones y perfiles visuales compartibles.", "Tu Díptico"),
     TEMAS("Temas", Icono.PALETA, "Colores, temas de fiestas del mundo, tus propios colores y temas creados con IA.", "Cómo se ve"),
     APARIENCIA("Apariencia", Icono.TEMA, "Claro u oscuro, efecto de los botones, decoraciones, íconos de las consolas y la animación de entrada."),
     INICIO("Inicio", Icono.APPS, "La pantalla principal: el juego en grande o tu inicio con widgets, y la bienvenida al encender."),
@@ -267,6 +268,11 @@ object Widgets {
 data class Descarga(val hechos: Int, val total: Int, val actual: String, val encontrados: Int)
 
 data class Estado(
+    val experiencia: Experiencia = Experiencia(),
+    val perfilesVisuales: Map<String, Experiencia> = emptyMap(),
+    val colorUniverso: Long = 0L,
+    val coleccionVisual: String? = null,
+    val fichaFijada: String? = null,
     val listo: Boolean = false,
     val configurado: Boolean = false,
     val tieneCarpeta: Boolean = false,
@@ -710,6 +716,8 @@ object Diptico {
             tema = almacen.texto("tema", "diptico"),
             temaFestivo = almacen.bool("temaFestivo", true),
             decoraciones = almacen.bool("decoraciones", true),
+            experiencia = Experiencia.leer(almacen.texto("experiencia", "{}")),
+            perfilesVisuales = Experiencia.perfiles(almacen.texto("perfilesVisuales", "{}")),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             // La clave de Claude ya no se usa: se borra de la consola (cada persona usa Gemini, ChatGPT o la IA local).
             claveGemini = almacen.texto("claveGemini").also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
@@ -827,6 +835,7 @@ object Diptico {
                 }
             }
         }
+        vigilarUniverso()
         aplicarTema()
         publicarJuegos()
         Medios.revisar(app)
@@ -837,7 +846,7 @@ object Diptico {
             estado.map { e ->
                 // Si el juego elegido tiene su propia canción, suena esa.
                 val propia = if (e.configurado && e.panel != Panel.MENU) {
-                    e.seleccionado?.let { e.datos[it.clave]?.musica } ?: e.consolasPropias[e.consolaSel]?.musica
+                    e.coleccionVisual?.let { e.experiencia.colecciones[it]?.musica }?.takeIf { it.isNotBlank() } ?: e.seleccionado?.let { e.datos[it.clave]?.musica } ?: e.consolasPropias[e.consolaSel]?.musica
                 } else null
                 val pista = when {
                     propia != null -> "archivo:$propia"
@@ -2187,6 +2196,7 @@ object Diptico {
     }
 
     fun cerrarPanel() {
+        if (estado.value.coleccionVisual != null) actualizar { it.copy(coleccionVisual = null) }
         val e = estado.value
         cadenaRaspador = emptyList()
         if (e.panel == Panel.CLAVE && e.enlaceUrl != null) { Enlace.detener(); actualizar { it.copy(enlaceUrl = null) } }
@@ -2881,7 +2891,7 @@ object Diptico {
 
     /** Las secciones del modo simple: lo de todos los días. Las demás quedan a un toque en «Más ajustes». */
     val SECCIONES_SIMPLES = listOf(
-        Seccion.ESENCIAL, Seccion.TEMAS, Seccion.INICIO, Seccion.ESTANTE, Seccion.MUSICA,
+        Seccion.ESENCIAL, Seccion.EXPERIENCIA, Seccion.TEMAS, Seccion.INICIO, Seccion.ESTANTE, Seccion.MUSICA,
         Seccion.BIBLIOTECA, Seccion.EMULADORES, Seccion.ASISTENTE, Seccion.PANTALLAS, Seccion.SISTEMA,
     )
 
@@ -3014,6 +3024,7 @@ object Diptico {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
+            Seccion.EXPERIENCIA -> lista += opcionesExperiencia(e)
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
@@ -3557,6 +3568,108 @@ object Diptico {
 
     private fun escribirMapa(m: Map<String, String>): String = org.json.JSONObject(m as Map<*, *>).toString()
 
+    // ---------- Estudio visual: configuración y persistencia fuera de los componentes ----------
+    var exportarVisual: ((String) -> Unit)? = null
+    var importarVisual: (() -> Unit)? = null
+    private var imagenVisual: Pair<String, String>? = null
+
+    fun guardarExperiencia(v: Experiencia) {
+        almacen.guardarTexto("experiencia", v.json(local = true).toString())
+        actualizar { it.copy(experiencia = v) }
+        cl.nikalbazu.diptico.ui.Estilo.efecto = if (v.vidrio) "vidrio" else estado.value.efecto
+        aplicarTema()
+    }
+
+    private fun capturarPerfil(): Experiencia = estado.value.let { e -> e.experiencia.copy(
+        posiciones = e.widgets.map { PosicionVisual(it.tipo, it.x, it.y, it.an, it.al, it.pagina, it.visible) },
+        columnas = e.gridCols, filas = e.gridFilas, paginas = e.paginas,
+    ) }
+
+    private fun aplicarPerfil(v: Experiencia) {
+        guardarExperiencia(v.copy(posiciones = emptyList()))
+        if (v.posiciones.isNotEmpty()) {
+            guardarGrilla(v.columnas, v.filas, v.paginas)
+            val l = estado.value.widgets.map { w -> v.posiciones.firstOrNull { it.tipo == w.tipo }?.let { p -> w.copy(x = p.x, y = p.y, an = p.an, al = p.al, pagina = p.pagina, visible = p.visible) } ?: w }
+            guardarWidgets(reacomodar(l, v.paginas))
+        }
+    }
+
+    fun recibirPerfilVisual(texto: String) {
+        try {
+            val v = Experiencia.importar(texto)
+            mostrarDialogo(Dialogo("perfil_visual", "Importar perfil visual", "Universo: ${if (v.universo) "sí" else "no"} · Vidrio: ${if (v.vidrio) "sí" else "no"} · Habitación: ${v.pared}. Tus colecciones y juegos se conservan.", Icono.PALETA)) {
+                aplicarPerfil(v.copy(colecciones = estado.value.experiencia.colecciones))
+            }
+        } catch (_: Exception) { avisar("Ese archivo no es un perfil visual compatible") }
+    }
+
+    fun abrirColeccionVisual(id: String) {
+        if (id !in estado.value.colecciones) return
+        abrirWidgetTipo("coleccion-$id")
+        actualizar { it.copy(coleccionVisual = id) }
+    }
+
+    fun fijarFicha() {
+        val e = estado.value
+        if (e.unaPantalla || e.sesion != null) return
+        actualizar { it.copy(fichaFijada = if (it.fichaFijada != null) null else it.seleccionado?.clave) }
+    }
+
+    private fun vigilarUniverso() {
+        scope.launch {
+            estado.map { e ->
+                val c = e.coleccionVisual?.let { e.experiencia.colecciones[it] }
+                val j = e.sesion?.let { s -> e.juegos.firstOrNull { it.clave == s.clave } } ?: e.seleccionado
+                Triple(e.experiencia.universo, c?.color, j?.arte ?: j?.portada)
+            }.distinctUntilChanged().collect { (activo, coleccion, uri) ->
+                // Lectura pequeña y fuera del hilo de interfaz; jamás se captura la pantalla del juego.
+                val color = if (!activo) 0L else coleccion ?: withContext(Dispatchers.IO) {
+                    cl.nikalbazu.diptico.ui.ColorUniverso.leer(app, uri)
+                }
+                actualizar { it.copy(colorUniverso = color) }
+                aplicarTema()
+            }
+        }
+    }
+
+    private fun opcionesExperiencia(e: Estado): List<Opcion> = buildList {
+        val v = e.experiencia
+        add(Opcion("Universo del juego", if (v.universo) "Sí" else "No", Icono.MUNDO, "Colores tomados de la imagen del juego, compartidos por ambas pantallas. Sin imagen se conserva el tema.") { guardarExperiencia(v.copy(universo = !v.universo)) })
+        add(Opcion("Tarjetas de vidrio", if (v.vidrio) "Sí" else "No", Icono.TEMA, "Superficies translúcidas con bordes claros. No se desenfoca ni se captura el juego.") { guardarExperiencia(v.copy(vidrio = !v.vidrio)) })
+        add(Opcion("Movimiento ambiental", if (v.movimiento) "Suave" else "Reducido", Icono.ESTRELLA, "Apaga el movimiento ambiental y el zoom lento; en partida se mantiene estático.") {
+            guardarExperiencia(v.copy(movimiento = !v.movimiento))
+        })
+        add(Opcion("Biblioteca habitación", nombreVistaConsolas(e.vistaConsolas), Icono.BIBLIOTECA, "Un espacio con consolas, colecciones y recuerdos. Cruceta elige consola, A entra y B vuelve.") {
+            elegirVistaConsolas(if (e.vistaConsolas == "habitacion") "arriba" else "habitacion")
+        })
+        add(Opcion("Pared de la habitación", v.pared, Icono.PALETA) { guardarExperiencia(v.copy(pared = Experiencia.paredes[(Experiencia.paredes.indexOf(v.pared) + 1) % Experiencia.paredes.size])) })
+        add(Opcion("Objetos de la habitación", v.adorno, Icono.ESTRELLA) { guardarExperiencia(v.copy(adorno = Experiencia.adornos[(Experiencia.adornos.indexOf(v.adorno) + 1) % Experiencia.adornos.size])) })
+        add(Opcion("Editar composición del inicio", "Widgets y posiciones", Icono.EDITAR, "El estudio existente permite mover y redimensionar elementos, con vista previa en la otra pantalla.") { cerrarPanel(); editarWidgets() })
+        add(Opcion("Enviar ficha a la otra pantalla", if (e.fichaFijada == null) "Sin fijar" else "Fijada", Icono.INTERCAMBIAR, "En el estante, desliza la tarjeta «Enviar ficha» hacia arriba. La ficha queda arriba mientras recorres otros juegos abajo. Tócala para soltarla.") { fijarFicha() })
+        for (n in 1..3) {
+            val id = "Perfil $n"
+            add(Opcion("Guardar $id", if (id in e.perfilesVisuales) "Reemplazar" else "Vacío", Icono.COPIAR) {
+                val perfiles = estado.value.perfilesVisuales + (id to capturarPerfil())
+                almacen.guardarTexto("perfilesVisuales", org.json.JSONObject().apply { perfiles.forEach { (k, p) -> put(k, p.json(true)) } }.toString())
+                actualizar { it.copy(perfilesVisuales = perfiles) }; avisar("$id guardado")
+            })
+            if (id in e.perfilesVisuales) add(Opcion("Aplicar $id", icono = Icono.CHECK) { aplicarPerfil(e.perfilesVisuales.getValue(id)) })
+        }
+        add(Opcion("Compartir perfil visual", "Archivo JSON", Icono.WEB, "Comparte solo colores y efectos. Las imágenes y música locales, las claves y tu biblioteca no se exportan.") { exportarVisual?.invoke(capturarPerfil().json().toString(2)) })
+        add(Opcion("Importar perfil visual", "Con vista previa y confirmación", Icono.DESCARGA) { importarVisual?.invoke() })
+        e.colecciones.forEach { (id, c) ->
+            val p = v.colecciones[id] ?: PresentacionColeccion()
+            fun guardar(nuevo: PresentacionColeccion) = guardarExperiencia(estado.value.experiencia.let { it.copy(colecciones = it.colecciones + (id to nuevo)) })
+            add(Opcion("${c.nombre} · abrir", "Presentación", Icono.CARPETA) { abrirColeccionVisual(id) })
+            add(Opcion("${c.nombre} · color", "Cambiar", Icono.PALETA) { val l = Temas.MUESTRAS; guardar(p.copy(color = l[(l.indexOf(p.color) + 1).mod(l.size)])) })
+            add(Opcion("${c.nombre} · disposición", p.vista, Icono.VISTA) { guardar(p.copy(vista = if (p.vista == "mosaico") "galeria" else "mosaico")) })
+            listOf("fondo", "logo", "musica").forEach { tipo ->
+                add(Opcion("${c.nombre} · $tipo", "Elegir archivo", if (tipo == "musica") Icono.MUSICA else Icono.PORTADA) { imagenVisual = id to tipo; pedirArchivo?.invoke(if (tipo == "musica") "audio/*" else "image/*") })
+            }
+            add(Opcion("${c.nombre} · restaurar diseño", icono = Icono.CONTINUAR) { guardarExperiencia(v.copy(colecciones = v.colecciones - id)) })
+        }
+    }
+
     // ---------- Temas ----------
 
     fun todosLosTemas(e: Estado = estado.value): List<Tema> = Temas.incluidos + e.temasPropios
@@ -3568,9 +3681,11 @@ object Diptico {
         val elegido = todosLosTemas(e).firstOrNull { it.id == e.tema }
             ?: Temas.fiestas.firstOrNull { it.tema.id == e.tema }?.tema
             ?: Temas.incluidos[0]
-        val activo = fiesta?.tema ?: elegido
+        val baseVisual = fiesta?.tema ?: elegido
+        val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso, decor = "nada") else baseVisual
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
-        cl.nikalbazu.diptico.ui.Estilo.decoraciones = e.decoraciones
+        cl.nikalbazu.diptico.ui.Estilo.efecto = if (e.experiencia.vidrio) "vidrio" else e.efecto
+        cl.nikalbazu.diptico.ui.Estilo.decoraciones = e.decoraciones && e.experiencia.movimiento && e.sesion == null
         Sonidos.juego = activo.sonidos
         val pista = musicaDeTema(activo)
         if (fiesta?.id != e.fiesta?.id || pista != e.pistaTema) actualizar { it.copy(fiesta = fiesta, pistaTema = pista) }
@@ -6004,6 +6119,16 @@ object Diptico {
     }
 
     fun archivoElegido(uri: Uri) {
+        imagenVisual?.let { (id, tipo) ->
+            imagenVisual = null
+            try { app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) {}
+            val v = estado.value.experiencia
+            val c = v.colecciones[id] ?: PresentacionColeccion()
+            val nuevo = when (tipo) { "musica" -> c.copy(musica = uri.toString()); "logo" -> c.copy(logo = uri.toString()); else -> c.copy(fondo = uri.toString()) }
+            guardarExperiencia(v.copy(colecciones = v.colecciones + (id to nuevo)))
+            return
+        }
+
         if (archivoPara == "modeloIA") {
             archivoPara = ""
             trabajo("ialocal", "Copiando el modelo de IA")
@@ -6082,10 +6207,10 @@ object Diptico {
     private val VISTAS = listOf("estante", "carrusel", "abanico", "lomos", "cuadricula", "lista")
     fun nombreVista(v: String) = when (v) { "cuadricula" -> "Cuadrícula"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
 
-    val VISTAS_CONSOLAS = listOf("arriba", "lado", "rueda", "sistemas", "carpetas", "discos")
+    val VISTAS_CONSOLAS = listOf("arriba", "lado", "rueda", "sistemas", "carpetas", "discos", "habitacion")
     /** Vistas donde primero se elige la consola (en grande) y después se entra a sus juegos. */
-    val MODOS_ELEGIR = setOf("sistemas", "carpetas", "discos")
-    fun nombreVistaConsolas(v: String) = when (v) { "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"; "discos" -> "Discos"; else -> "Arriba" }
+    val MODOS_ELEGIR = setOf("sistemas", "carpetas", "discos", "habitacion")
+    fun nombreVistaConsolas(v: String) = when (v) { "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"; "discos" -> "Discos"; "habitacion" -> "Habitación"; else -> "Arriba" }
 
     /** Cambia cómo se ven las consolas (arriba, al costado, rueda o sistemas). */
     fun elegirVistaConsolas(v: String) {
@@ -6751,7 +6876,7 @@ object Diptico {
         // En la tele (enchufada) se puede con todos los efectos.
         val f = if (e0.sobremesa && e0.sobremesaEfectos) "alta" else fluidezEfectiva()
         cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = f != "ahorro"
-        cl.nikalbazu.diptico.ui.Estilo.efecto = estado.value.efecto
+        cl.nikalbazu.diptico.ui.Estilo.efecto = if (estado.value.experiencia.vidrio) "vidrio" else estado.value.efecto
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = estado.value.decoraciones && f != "ahorro"
     }
 
@@ -7435,3 +7560,4 @@ object Diptico {
         },
     )
 }
+

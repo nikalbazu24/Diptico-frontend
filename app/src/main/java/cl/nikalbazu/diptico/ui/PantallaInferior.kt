@@ -118,7 +118,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             Box(Modifier.padding(vertical = esc.d(14)).width(esc.d(1)).fillMaxHeight().background(p.linea))
                             VistaJuegos(e, Modifier.weight(1f).fillMaxHeight(), escalaEstante * 0.9f)
                         }
-                        "sistemas", "carpetas", "discos" -> AnimatedContent(
+                        "sistemas", "carpetas", "discos", "habitacion" -> AnimatedContent(
                             targetState = e.enSistemas,
                             transitionSpec = {
                                 (fadeIn(tween(260)) + scaleIn(tween(320), initialScale = if (targetState) 1.06f else 0.94f)) togetherWith fadeOut(tween(160))
@@ -126,6 +126,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             label = "sistemas", modifier = Modifier.fillMaxWidth().weight(1f),
                         ) { eligiendo ->
                             if (eligiendo) when (e.vistaConsolas) {
+                                "habitacion" -> Habitacion(e, Modifier.fillMaxSize())
                                 "carpetas" -> CarpetasConsolas(e, Modifier.fillMaxSize())
                                 "discos" -> DiscosConsolas(e, Modifier.fillMaxSize())
                                 else -> SistemasCarrusel(e, Modifier.fillMaxSize())
@@ -818,3 +819,4 @@ private fun PanelClave(e: Estado) {
         }
     }
 }
+

@@ -1547,7 +1547,7 @@ private fun WidgetColeccion(e: Estado, id: String, an: Int, al: Int) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val c = e.colecciones[id]
-    Tarjeta(alPulsar = { Diptico.abrirWidgetTipo("coleccion-$id") }) {
+    Tarjeta(alPulsar = { Diptico.abrirColeccionVisual(id) }) {
         if (c == null) { Detalle("Colección borrada", 12f); return@Tarjeta }
         val juegos = c.juegos.mapNotNull { k -> e.juegos.firstOrNull { it.clave == k } }
         Column(Modifier.fillMaxSize()) {
@@ -1579,3 +1579,4 @@ private fun WidgetColeccion(e: Estado, id: String, an: Int, al: Int) {
         }
     }
 }
+
