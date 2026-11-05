@@ -54,6 +54,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.PANTALLAS -> Color(0xFF6B4EFF)
     Seccion.INICIO -> Color(0xFF00ACC1)
     Seccion.ESTANTE -> Color(0xFFFF8A5B)
+    Seccion.EXPERIENCIA -> Color(0xFF57DCC7)
     Seccion.TEMAS -> Color(0xFFB388FF)
     Seccion.APARIENCIA -> Color(0xFFFF5D8F)
     Seccion.MUSICA -> Color(0xFFFF7A59)
@@ -303,7 +304,7 @@ fun AyudaMenu(e: Estado) {
         val angosta = esc.angosta
         if (!angosta) BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
         AnimatedContent(
-            targetState = Triple(s, o?.titulo, o?.valor),
+            targetState = s to (if (e.enOpciones) e.indice else -1),
             // Transición corta: así recorrer opciones con la cruceta se siente fluido.
             transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(90)) },
             label = "ayuda",
@@ -311,7 +312,10 @@ fun AyudaMenu(e: Estado) {
                 start = esc.d(if (angosta) 20 else 36), end = esc.d(if (angosta) 20 else 36),
                 top = esc.d(if (angosta) 18 else 60), bottom = esc.d(if (angosta) 46 else 54),
             ),
-        ) { (sec, titulo, valor) ->
+        ) { (sec, indice) ->
+            val opcion = if (sec == s && indice >= 0) opciones.getOrNull(indice) else null
+            val titulo = opcion?.titulo
+            val valor = opcion?.valor
             Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(0.9f).then(if (angosta) Modifier.fillMaxHeight() else Modifier), verticalArrangement = Arrangement.spacedBy(esc.d(if (angosta) 7 else 10))) {
                     Etiqueta("Menú · ${sec.titulo}", color, 13f)
@@ -540,3 +544,4 @@ fun PreviaMusica(e: Estado) {
         Detalle(if (!e.musica) "Música apagada" else pista?.estilo ?: "", 12f, lineas = 1)
     }
 }
+

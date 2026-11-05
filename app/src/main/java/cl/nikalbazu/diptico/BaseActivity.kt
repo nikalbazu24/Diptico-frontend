@@ -1,5 +1,10 @@
 package cl.nikalbazu.diptico
 
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
@@ -38,8 +43,39 @@ abstract class BaseActivity : ComponentActivity() {
         if (uri != null) Diptico.respaldoElegido(uri)
     }
 
+    private var perfilPorExportar: String? = null
+    private val exportarPerfil = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        val texto = perfilPorExportar
+        perfilPorExportar = null
+        if (uri != null && texto != null) lifecycleScope.launch {
+            val ok = withContext(Dispatchers.IO) { runCatching { contentResolver.openOutputStream(uri)?.use { it.write(texto.toByteArray(Charsets.UTF_8)) } ?: error("Sin acceso") }.isSuccess }
+            if (ok) {
+                try { startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).setType("application/json").putExtra(android.content.Intent.EXTRA_STREAM, uri).addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION), "Compartir perfil visual")) } catch (_: Exception) { Diptico.avisar("Perfil guardado") }
+            } else Diptico.avisar("No pude guardar el perfil")
+        }
+    }
+    private val importarPerfil = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) lifecycleScope.launch {
+            val texto = withContext(Dispatchers.IO) { runCatching {
+                contentResolver.openInputStream(uri)?.use { entrada ->
+                    val buffer = java.io.ByteArrayOutputStream()
+                    val bloque = ByteArray(4096)
+                    while (buffer.size() <= 32768) {
+                        val n = entrada.read(bloque, 0, minOf(bloque.size, 32769 - buffer.size()))
+                        if (n < 0) break
+                        buffer.write(bloque, 0, n)
+                    }
+                    val bytes = buffer.toByteArray()
+                    require(bytes.size <= 32768)
+                    String(bytes, Charsets.UTF_8)
+                }
+            }.getOrNull() }
+            if (texto != null) Diptico.recibirPerfilVisual(texto) else Diptico.avisar("No pude leer ese perfil visual")
+        }
+    }
+
     private val elegirArchivo = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) Diptico.archivoElegido(uri)
+        if (uri != null) Diptico.archivoElegido(uri) else Diptico.cancelarArchivoVisual()
     }
 
     // Dictado por voz: Android escucha y devuelve el texto (para Bisa y el teclado).
@@ -86,6 +122,8 @@ abstract class BaseActivity : ComponentActivity() {
                 Diptico.avisar("No pude abrir el selector de carpetas")
             }
         }
+        Diptico.exportarVisual = { texto -> perfilPorExportar = texto; exportarPerfil.launch("Diptico-perfil-visual.json") }
+        Diptico.importarVisual = { importarPerfil.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
         Diptico.pedirArchivo = { tipo ->
             try {
                 elegirArchivo.launch(arrayOf(tipo))
@@ -198,3 +236,4 @@ abstract class BaseActivity : ComponentActivity() {
         return super.dispatchKeyEvent(event)
     }
 }
+

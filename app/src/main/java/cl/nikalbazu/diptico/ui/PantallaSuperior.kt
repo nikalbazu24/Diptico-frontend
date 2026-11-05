@@ -68,6 +68,7 @@ fun PantallaSuperior(e: Estado) {
         else AyudaMenu(e)
         return
     }
+    if (e.panel == Panel.WIDGET && e.coleccionVisual != null) { ColeccionUniverso(e); return }
     if (e.panel == Panel.WIDGET) {
         // Lo que abre el widget aparece aquí arriba, junto al widget en grande; abajo sigue tu estante.
         if (!e.intercambiar) WidgetArriba(e) else LecturaWidget(e)
@@ -451,3 +452,4 @@ fun haceCuanto(ms: Long): String {
         else -> "Hace ${dias / 30} meses"
     }
 }
+

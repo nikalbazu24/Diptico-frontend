@@ -111,6 +111,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Column(Modifier.fillMaxSize()) {
+                    if (!e.unaPantalla && !e.enSistemas) EnviarFicha(e, Modifier.align(Alignment.End).padding(end = esc.d(12), top = esc.d(4)))
                     val escalaEstante = if (esc.angosta) 1.08f else 1.18f
                     when (e.vistaConsolas) {
                         "lado", "rueda" -> Row(Modifier.fillMaxWidth().weight(1f)) {
@@ -118,7 +119,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             Box(Modifier.padding(vertical = esc.d(14)).width(esc.d(1)).fillMaxHeight().background(p.linea))
                             VistaJuegos(e, Modifier.weight(1f).fillMaxHeight(), escalaEstante * 0.9f)
                         }
-                        "sistemas", "carpetas", "discos" -> AnimatedContent(
+                        "sistemas", "carpetas", "discos", "habitacion" -> AnimatedContent(
                             targetState = e.enSistemas,
                             transitionSpec = {
                                 (fadeIn(tween(260)) + scaleIn(tween(320), initialScale = if (targetState) 1.06f else 0.94f)) togetherWith fadeOut(tween(160))
@@ -126,6 +127,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             label = "sistemas", modifier = Modifier.fillMaxWidth().weight(1f),
                         ) { eligiendo ->
                             if (eligiendo) when (e.vistaConsolas) {
+                                "habitacion" -> Habitacion(e, Modifier.fillMaxSize())
                                 "carpetas" -> CarpetasConsolas(e, Modifier.fillMaxSize())
                                 "discos" -> DiscosConsolas(e, Modifier.fillMaxSize())
                                 else -> SistemasCarrusel(e, Modifier.fillMaxSize())
@@ -425,13 +427,16 @@ private fun EnJuego(e: Estado) {
     val seg = (ahora - s.inicio) / 1000
     val reloj = if (seg >= 3600) "${seg / 3600}:${((seg % 3600) / 60).toString().padStart(2, '0')}:${(seg % 60).toString().padStart(2, '0')}"
     else "${seg / 60}:${(seg % 60).toString().padStart(2, '0')}"
-    val color = juego?.let { colorDe(it.clave) } ?: Uva
+    val color = if (e.experiencia.universo && e.colorUniverso != 0L) Color(e.colorUniverso) else juego?.let { colorDe(it.clave) } ?: Uva
     val bateria = rememberBateria()
     val cargando = rememberCargando()
-    val t = rememberInfiniteTransition(label = "compa")
-    val flotar by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
-    val respirar by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(3400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respirar")
-    val brillo by t.animateFloat(0.18f, 0.42f, infiniteRepeatable(tween(4200), RepeatMode.Reverse), label = "brillo")
+    val (flotar, respirar, brillo) = if (e.despierta && e.experiencia.movimiento && Estilo.efectosCompletos) {
+        val t = rememberInfiniteTransition(label = "compa")
+        val f by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
+        val r by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(3400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respirar")
+        val b by t.animateFloat(0.18f, 0.42f, infiniteRepeatable(tween(4200), RepeatMode.Reverse), label = "brillo")
+        Triple(f, r, b)
+    } else Triple(0f, 1f, .24f)
 
     Box(
         Modifier.fillMaxSize().background(Color(0xFF07060C)).pointerInput(Unit) {
@@ -818,3 +823,4 @@ private fun PanelClave(e: Estado) {
         }
     }
 }
+

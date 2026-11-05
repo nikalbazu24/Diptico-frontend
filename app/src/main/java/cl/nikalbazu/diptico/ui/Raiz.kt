@@ -34,7 +34,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         LocalFormas provides remember(e.formas, e.formaTodos, e.consolaSel) { cl.nikalbazu.diptico.estado.Diptico.formasVisibles(e) },
         LocalHeroes provides (e.heroes to e.imagenHeroe),
         LocalEncuadres provides cl.nikalbazu.diptico.estado.Diptico.encuadresVisibles(e),
-        LocalZoomLento provides e.zoomLento,
+        LocalZoomLento provides (e.zoomLento && e.experiencia.movimiento && e.sesion == null),
         LocalTamJuegos provides e.tamJuegos,
     ) {
         // El centro de control vive siempre en la pantalla de arriba (la principal), aunque se intercambien.
@@ -51,7 +51,9 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 when {
                     !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
                     rol == Rol.UNICA -> PantallaUnica(e)
-                    rol == Rol.SUPERIOR -> PantallaSuperior(e)
+                    rol == Rol.SUPERIOR -> if (e.fichaFijada != null && e.panel == Panel.NINGUNO && e.sesion == null) {
+                        PantallaSuperior(e.copy(juegoSel = e.fichaFijada, consolaSel = "todo"))
+                    } else PantallaSuperior(e)
                     else -> PantallaInferior(e, miPantalla)
                 }
             }
@@ -140,3 +142,4 @@ private fun Modifier.cortinaDesdeArriba(puede: () -> Boolean): Modifier = this.t
         }
     },
 )
+

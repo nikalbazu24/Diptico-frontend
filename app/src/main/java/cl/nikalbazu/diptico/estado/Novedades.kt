@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "1.0-beta.8"
-    const val NOMBRE = "1.0 beta.8"
+    const val ID = "estudio-visual-1"
+    const val NOMBRE = "Estudio visual"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -146,6 +146,13 @@ object Novedades {
                 Icono.CHISPA, 0xFF2EC4A6,
             ),
         )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Tu Díptico, a tu manera", "Menú › Estudio visual: Universo del juego toma colores de tus imágenes; tarjetas de vidrio y movimiento ambiental a elección.", Icono.PALETA, 0xFF57DCC7),
+            Pagina("Tu habitación", "Consolas, colecciones y recuerdos en un espacio propio. Cambia la pared y los objetos en Estudio visual. Cruceta elige y A entra.", Icono.BIBLIOTECA, 0xFF8EAFFF),
+            Pagina("Colecciones con identidad", "Elige color, fondo, logo, música y disposición para cada colección. Comparte y guarda perfiles visuales con la composición de tus widgets.", Icono.CARPETA, 0xFFFFB46A),
+            Pagina("Una ficha en la otra pantalla", "Desliza hacia arriba la tarjeta «Enviar ficha» del estante para dejar el juego fijado arriba mientras recorres otros títulos. Tócala para soltarlo.", Icono.PANTALLAS, 0xFFBCA4FF),
+            Pagina("Actualizador más tranquilo", "La ayuda conserva su panel al cambiar el porcentaje de descarga y la pantalla inferior evita reaplicar opciones de ventana sin cambios.", Icono.DESCARGA, 0xFF57DCC7),
+        )),
     )
 
     /**
@@ -223,3 +230,4 @@ object Novedades {
         ),
     )
 }
+
