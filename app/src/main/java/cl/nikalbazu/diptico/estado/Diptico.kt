@@ -3438,14 +3438,16 @@ object Diptico {
             Seccion.APARIENCIA -> {
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
-                    "Efecto de los botones", nombreEfecto(e.efecto), Icono.ESTRELLA,
+                    "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
                     "Liso, degradado, con un brillo que pasa, o de vidrio. Se ve en el botón Jugar, el menú y las opciones elegidas.",
                 ) {
                     val l = listOf("liso", "degradado", "brillo", "vidrio")
-                    val v = l[(l.indexOf(estado.value.efecto) + 1).mod(l.size)]
+                    val experiencia = estado.value.experiencia
+                    val actual = if (experiencia.vidrio) "vidrio" else estado.value.efecto
+                    val v = l[(l.indexOf(actual) + 1).mod(l.size)]
                     almacen.guardarTexto("efecto", v)
                     actualizar { it.copy(efecto = v) }
-                    cl.nikalbazu.diptico.ui.Estilo.efecto = v
+                    if (experiencia.vidrio) guardarExperiencia(experiencia.copy(vidrio = false)) else aplicarTema()
                 }
                 lista += Opcion(
                     "Fluidez", nombreFluidez(e.fluidez) + if (e.fluidez == "auto") " (${nombreFluidez(e.fluidezDetectada).lowercase()})" else "", Icono.CHISPA,
@@ -3982,7 +3984,6 @@ object Diptico {
     private fun opcionesExperiencia(e: Estado): List<Opcion> = buildList {
         val v = e.experiencia
         add(Opcion("Colores del juego · Universo", if (v.universo) "Sí" else "No", Icono.MUNDO, "Colores tomados de la imagen del juego, compartidos por ambas pantallas. Sin imagen se conserva el tema.") { guardarExperiencia(v.copy(universo = !v.universo)) })
-        add(Opcion("Tarjetas de vidrio", if (v.vidrio) "Sí" else "No", Icono.TEMA, "Superficies translúcidas con bordes claros. No se desenfoca ni se captura el juego.") { guardarExperiencia(v.copy(vidrio = !v.vidrio)) })
         add(Opcion("Movimiento ambiental", if (v.movimiento) "Suave" else "Reducido", Icono.ESTRELLA, "Apaga el movimiento ambiental y el zoom lento; en partida se mantiene estático.") {
             guardarExperiencia(v.copy(movimiento = !v.movimiento))
         })

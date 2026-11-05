@@ -382,7 +382,7 @@ fun DrawScope.dibujarBisa(k: Float, c: Color, a: Color, parpadeo: Float = 1f, mi
     }
     drawPath(Path().apply {
         moveTo(10.7f * k, 14.1f * k)
-        quadraticTo(12f * k, 15.7f * k, 13.3f * k, 14.1f * k)
+        quadraticBezierTo(12f * k, 15.7f * k, 13.3f * k, 14.1f * k)
     }, menta, style = Stroke(0.65f * k, cap = StrokeCap.Round))
     drawLine(noche, p(5.6f, 19.8f), p(8f, 19.8f), 0.8f * k, StrokeCap.Round)
     drawLine(noche, p(6.8f, 18.7f), p(6.8f, 20.9f), 0.8f * k, StrokeCap.Round)

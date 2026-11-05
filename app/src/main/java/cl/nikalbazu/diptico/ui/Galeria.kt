@@ -295,11 +295,17 @@ fun VistaGaleria(e: Estado) {
                 }
             }
             e.galeria in setOf("filtros", "orden", "variantes_juego", "copias_srm") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
-            e.galeria == "temas" && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            e.galeria in setOf("temas", "tienda_temas") && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(it.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))
                 Texto(it.nombre, 26f, lineas = 1)
                 if (it.detalle.isNotBlank()) Detalle(it.detalle, 15f, lineas = 1)
+            }
+            e.galeria == "tienda_temas" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconoDiptico(Icono.PALETA, Uva, 38f)
+                Spacer(Modifier.height(esc.d(8)))
+                Texto("Temas de la comunidad", 24f)
+                Detalle("Aquí verás el tema antes de instalarlo.", 14f, lineas = 2)
             }
             e.galeria == "ia" && it != null -> ExplicaIA(it.id)
             e.galeria == "colores" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {

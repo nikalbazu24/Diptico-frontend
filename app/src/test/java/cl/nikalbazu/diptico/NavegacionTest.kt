@@ -51,10 +51,28 @@ class NavegacionTest {
         Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_START))
         assertEquals(Panel.APPS, Diptico.estado.value.panel)
     }
+    @Test fun atajoAprendidoConStartNoActivaElBotonSolo() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        val start = KeyEvent.KEYCODE_BUTTON_START
+        val extra = KeyEvent.KEYCODE_BUTTON_12
+        Diptico.fijarParaPrueba(Estado(
+            listo = true, configurado = true, intro = false,
+            botonesExtra = listOf(BotonExtra("Extra", extra, "apps", conStart = true)),
+        ))
+        toque(extra, 1000L)
+        assertEquals(Panel.NINGUNO, Diptico.estado.value.panel)
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, start))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, extra))
+        assertEquals(Panel.APPS, Diptico.estado.value.panel)
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, start))
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_UP, extra))
+        assertEquals(Panel.APPS, Diptico.estado.value.panel)
+    }
+
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("mesa-partida-1").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("centro-bisa-1").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {
