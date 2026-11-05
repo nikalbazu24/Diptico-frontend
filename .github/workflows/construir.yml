@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DIPTICO_REPORTES_URL: ${{ vars.DIPTICO_REPORTES_URL }}
+      FIRMAR: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.preparar_firma) }}
     outputs:
       numero: ${{ steps.paquete.outputs.numero }}
     steps:
@@ -42,7 +43,7 @@ jobs:
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --no-daemon
 
       - name: Compilar y verificar firma de distribución
-        if: github.event_name == 'workflow_dispatch' && inputs.preparar_firma && github.ref == 'refs/heads/main'
+        if: env.FIRMAR == 'true'
         env:
           FIRMA_BASE64: ${{ secrets.DIPTICO_KEYSTORE_BASE64 }}
           DIPTICO_STORE_PASSWORD: ${{ secrets.DIPTICO_STORE_PASSWORD }}
@@ -101,7 +102,7 @@ jobs:
           done
 
       - name: Compilar Díptico
-        if: "!(github.event_name == 'workflow_dispatch' && inputs.preparar_firma && github.ref == 'refs/heads/main')"
+        if: env.FIRMAR != 'true'
         run: |
           set -o pipefail
           gradle :app:assembleRelease --no-daemon 2>&1 | tee compilar.log
@@ -113,8 +114,6 @@ jobs:
 
       - name: Nombrar los APK
         id: paquete
-        env:
-          FIRMAR: ${{ github.event_name == 'workflow_dispatch' && inputs.preparar_firma && github.ref == 'refs/heads/main' }}
         run: |
           base="1.0"
           if [ "$FIRMAR" = true ]; then base="1.1"; fi
@@ -141,9 +140,9 @@ jobs:
             Capturas-*.zip
             app/build/reports/tests/
 
-  preparar_borrador:
+  distribuir_beta:
     needs: apk
-    if: github.event_name == 'workflow_dispatch' && inputs.preparar_firma && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.preparar_firma)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -153,17 +152,18 @@ jobs:
           name: Diptico-APK
           path: distribucion
 
-      - name: Preparar borrador con firma privada
+      - name: Publicar beta o guardar borrador manual
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.apk.outputs.numero }}
           target_commitish: ${{ github.sha }}
           name: Díptico v${{ needs.apk.outputs.numero }}
           prerelease: true
-          draft: true
+          draft: ${{ github.event_name != 'push' }}
           fail_on_unmatched_files: true
           files: |
-            distribucion/**/Diptico-v*.apk
+            distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}.apk
+            distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}-movil.apk
           body: |
             **Español.** Descarga el APK normal para consolas Android o el APK «-movil» para teléfonos.
             Si vienes de una beta 1.0, exporta y verifica un respaldo de Díptico antes de migrar.
