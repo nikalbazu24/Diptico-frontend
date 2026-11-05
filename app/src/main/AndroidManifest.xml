@@ -135,6 +135,8 @@
                 android:value="Asistente de juegos que se muestra como burbuja flotante mientras la persona juega" />
         </service>
 
+        <service android:name=".retoma.RetomaServicio" android:exported="false" android:foregroundServiceType="mediaProjection" />
+
         <!-- Lupa: copia la pantalla de arriba para ampliar una parte en la de abajo. -->
         <service
             android:name=".lupa.LupaServicio"
@@ -173,3 +175,4 @@
         </service>
     </application>
 </manifest>
+

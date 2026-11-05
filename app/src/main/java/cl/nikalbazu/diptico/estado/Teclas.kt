@@ -19,6 +19,11 @@ object Teclas {
     private var selectLargo = false
     private var startLargo = false
     private var bLargo = false
+    private val presionadas = mutableSetOf<Int>()
+    private val consumidas = mutableSetOf<Int>()
+    private val atajosHandler = Handler(Looper.getMainLooper())
+    private var toqueL3 = 0L
+    private var busquedaL3: Runnable? = null
 
     private fun esA(code: Int) = code == KeyEvent.KEYCODE_BUTTON_A || code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
     private fun esB(code: Int) = code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE
@@ -49,6 +54,8 @@ object Teclas {
         val e = Diptico.estado.value
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
+        if (abajo) presionadas += code else if (arriba) presionadas -= code
+        if (code in consumidas) { if (arriba) consumidas -= code; return true }
 
         // Aprendiendo un botón extra: el primero que se apriete (que no sea A, B ni la cruceta) queda guardado.
         if (e.aprendiendoBoton >= 0) {
@@ -99,6 +106,38 @@ object Teclas {
                 esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.cerrarNovedades()
             }
             return true
+        }
+
+        if (e.panel == Panel.APPS && e.appsMenu != null) {
+            if (abajo) dir(code)?.let { (_, dy) -> Diptico.moverMenuApp(if (dy != 0) dy else if (code == KeyEvent.KEYCODE_DPAD_LEFT) -1 else 1) }
+            if (arriba && esA(code)) { if (aLargo) aLargo = false else Diptico.aceptarMenuApp() }
+            else if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BUTTON_X)) Diptico.cerrarOpcionesApp()
+            return true
+        }
+        if (e.panel == Panel.APPS && e.appsMoviendo != null) {
+            if (abajo) dir(code)?.let { (dx, dy) -> Diptico.moverAppA(e.indice + if (dy != 0) dy * columnasApps else dx) }
+            if (arriba && (esA(code) || esB(code))) Diptico.cerrarOpcionesApp()
+            return true
+        }
+        // Atajos solo dentro de Díptico: no se interceptan los botones de un juego.
+        if (e.configurado && e.sesion == null && !e.conTeclado && e.panel == Panel.NINGUNO) {
+            if (e.atajoApps == "start_y" && abajo && code == KeyEvent.KEYCODE_BUTTON_Y && KeyEvent.KEYCODE_BUTTON_START in presionadas) {
+                consumidas += KeyEvent.KEYCODE_BUTTON_START; consumidas += KeyEvent.KEYCODE_BUTTON_Y
+                startLargo = false; Diptico.abrirApps(); return true
+            }
+            if (e.atajoApps == "l3_doble" && code == KeyEvent.KEYCODE_BUTTON_THUMBL) {
+                if (arriba) {
+                    val ahora = SystemClock.uptimeMillis()
+                    busquedaL3?.let { atajosHandler.removeCallbacks(it) }
+                    if (toqueL3 != 0L && ahora - toqueL3 <= 320L) { toqueL3 = 0L; Diptico.abrirApps() }
+                    else {
+                        toqueL3 = ahora
+                        val tarea = Runnable { toqueL3 = 0L; if (Diptico.estado.value.panel == Panel.NINGUNO && Diptico.estado.value.sesion == null && Diptico.estado.value.atajoApps == "l3_doble") Diptico.abrirBuscar() }
+                        busquedaL3 = tarea; atajosHandler.postDelayed(tarea, 320L)
+                    }
+                }
+                return true
+            }
         }
 
         // Bienvenida al encender: A sigue jugando, cualquier otro botón la cierra.
@@ -430,7 +469,7 @@ object Teclas {
                     return true
                 }
                 KeyEvent.KEYCODE_BUTTON_THUMBL -> { if (!hayPanel) Diptico.abrirBuscar(); return true }
-                KeyEvent.KEYCODE_BUTTON_THUMBR -> { if (!hayPanel) Diptico.cambiarVista(); return true }
+                KeyEvent.KEYCODE_BUTTON_THUMBR -> { if (!hayPanel) Diptico.abrirGaleria("vistas_juegos"); return true }
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
                 KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> return true
             }
@@ -512,7 +551,7 @@ object Teclas {
                     if (esA(code) && e.panel == Panel.APPS) {
                         if (ev.repeatCount == 0) aLargo = false
                         else if (!aLargo && ev.eventTime - ev.downTime > 550) {
-                            Diptico.appsVisibles(e).getOrNull(e.indice)?.let { aLargo = true; Diptico.elegirPantalla("app:${it.paquete}") }
+                            Diptico.appsVisibles(e).getOrNull(e.indice)?.let { aLargo = true; Diptico.abrirOpcionesApp(it.paquete) }
                         }
                     }
                     return esA(code) || esB(code) || code in botonesControl
@@ -532,7 +571,7 @@ object Teclas {
                     Panel.CENTRO -> Diptico.descartarAvisoSel()
                     Panel.ASISTENTE -> Diptico.escribirAlAsistente()
                     Panel.BUSCAR -> if (e.tecladoPropio) Diptico.abrirTexto("buscar_juego", e.busqueda) else Diptico.limpiarBusqueda()
-                    Panel.APPS -> Diptico.appsVisibles(e).getOrNull(e.indice)?.let { Diptico.infoApp(it.paquete) }
+                    Panel.APPS -> Diptico.appsVisibles(e).getOrNull(e.indice)?.let { Diptico.abrirOpcionesApp(it.paquete) }
                     else -> Unit
                 }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> when (e.panel) {
@@ -773,4 +812,5 @@ object Teclas {
 
     private var dirHat: Int? = null
 }
+
 

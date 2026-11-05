@@ -46,6 +46,10 @@ fun PanelGaleria(e: Estado) {
     val items = remember(e) { Diptico.itemsGaleria(e) }
     val pestanas = Diptico.pestanasGaleria(e.galeria)
     val (titulo, icono) = when (e.galeria) {
+        "vistas_juegos" -> "Cómo ver tus juegos" to Icono.VISTA
+        "vistas_consolas" -> "Cómo ver tus consolas" to Icono.MANDO
+        "filtros" -> "Mostrar juegos" to Icono.BUSCAR
+        "orden" -> "Orden de los juegos" to Icono.MENU
         "temas" -> "Temas" to Icono.PALETA
         "colores" -> "Mis colores" to Icono.PALETA
         "ia" -> "IA de Bisa" to Icono.CHISPA
@@ -104,6 +108,7 @@ fun PanelGaleria(e: Estado) {
                 itemsIndexed(items, key = { _, it -> it.id + it.nombre }) { i, it ->
                     val activo = i == e.indice
                     when (e.galeria) {
+                        "vistas_juegos", "vistas_consolas", "filtros", "orden" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
                         "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
                         "temas" -> TarjetaTema(it, activo) { Diptico.elegirIndice(i) }
                         "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
@@ -241,6 +246,14 @@ fun VistaGaleria(e: Estado) {
     val it = remember(e) { Diptico.itemsGaleria(e).getOrNull(e.indice) }
     Box(Modifier.fillMaxSize().background(p.fondo).padding(esc.d(30)), contentAlignment = Alignment.Center) {
         when {
+            e.galeria in setOf("vistas_juegos", "vistas_consolas") && it != null -> Column(Modifier.fillMaxSize()) {
+                Texto(it.nombre, 23f, lineas = 1); Detalle(it.detalle, 12f, lineas = 2); Spacer(Modifier.height(esc.d(12)))
+                MiniPantalla(472f, 411f, Modifier.weight(1f).fillMaxWidth()) {
+                    val ev = e.copy(panel = cl.nikalbazu.diptico.estado.Panel.NINGUNO, vista = if (e.galeria == "vistas_juegos") it.id else e.vista, vistaConsolas = if (e.galeria == "vistas_consolas") it.id else e.vistaConsolas, enSistemas = e.galeria == "vistas_consolas" && it.id in Diptico.MODOS_ELEGIR)
+                    PantallaInferior(ev, 1)
+                }
+            }
+            e.galeria in setOf("filtros", "orden") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
             e.galeria == "temas" && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(it.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))
@@ -360,3 +373,4 @@ private fun TarjetaCaja(e: Estado, it: Diptico.ItemGaleria, activo: Boolean, alP
         }
     }
 }
+

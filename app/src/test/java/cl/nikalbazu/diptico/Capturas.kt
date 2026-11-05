@@ -1149,10 +1149,27 @@ class Capturas {
 
     @Test fun visual_coleccion_arriba() = foto("visual_coleccion_arriba", base().copy(panel = Panel.WIDGET, coleccionVisual = "muestra", colecciones = mapOf("muestra" to cl.nikalbazu.diptico.estado.Coleccion("Aventuras", juegos.map { it.clave }))), Rol.SUPERIOR)
 
+    @Test fun nav_barra_heroe() = foto("nav_barra_heroe", base().copy(barra = false), Rol.SUPERIOR)
+    @Test fun nav_barra_widgets() = foto("nav_barra_widgets", base().copy(inicio = "widgets", barra = false), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun nav_galeria_abajo() = foto("nav_galeria_abajo", base().copy(vista = "cuadricula"), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun nav_lista_abajo() = foto("nav_lista_abajo", base().copy(vista = "lista"), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun nav_carpetas_abajo() = foto("nav_carpetas_abajo", base().copy(vistaConsolas = "carpetas", enSistemas = true), Rol.INFERIOR, mi = 1)
+    @Test fun nav_selector_arriba() = foto("nav_selector_arriba", base().copy(panel = Panel.GALERIA, galeria = "vistas_juegos"), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun nav_selector_abajo() = foto("nav_selector_abajo", base().copy(panel = Panel.GALERIA, galeria = "vistas_juegos"), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun nav_menu_app() = foto("nav_menu_app", base().copy(panel = Panel.APPS, appsTodas = listOf(App("com.test.app", "Mi aplicación", false)), appsMenu = "com.test.app"), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun nav_retoma_sin_clip() = foto("nav_retoma_sin_clip", base().copy(sesion = Sesion("snes/1", 1L, 0, false), continuacion = 1L), Rol.INFERIOR, mi = 1)
+
 }
 
 const val ARRIBA = "w731dp-h411dp-land-420dpi"
 const val ABAJO = "w472dp-h411dp-land-420dpi"
 const val MUESTRA = "w1600dp-h1100dp-land-160dpi"
 const val MUESTRA_ALTA = "w1600dp-h2600dp-port-160dpi"
+
 

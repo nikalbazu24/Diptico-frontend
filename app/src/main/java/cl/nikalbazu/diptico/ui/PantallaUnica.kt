@@ -90,7 +90,6 @@ private fun PantallaUnicaContenido(e: Estado) {
             } else {
                 Box(Modifier.fillMaxSize().difuminar(e)) {
                     PantallaInicio(e)
-                    RecordatorioWidgets(e, Modifier.align(Alignment.BottomCenter))
                 }
             }
             Paneles(e, conAyuda = true)
@@ -228,4 +227,5 @@ private fun InfoUnica(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {
         }
     }
 }
+
 

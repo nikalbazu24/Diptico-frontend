@@ -114,8 +114,6 @@ fun PantallaSuperior(e: Estado) {
     ) { widgets ->
         if (widgets) Box(Modifier.fillMaxSize()) {
             PantallaInicio(e)
-            RecordatorioWidgets(e, Modifier.align(Alignment.TopCenter).padding(top = LocalEscala.current.d(64)))
-            if (!e.editandoWidgets && e.sesion == null) BarraFlotante(e, null, Modifier.align(Alignment.BottomCenter))
         } else Caratulas(e)
     }
 }
@@ -270,11 +268,11 @@ private fun AccionRapida(tecla: String, texto: String, accion: () -> Unit) {
  * el borde de abajo, tocando la pantalla o con B. Escondida, solo queda una manija discreta.
  */
 @Composable
-fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier) {
+fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val visible = e.barra || e.barraFija
-    Box(modifier.fillMaxWidth().padding(bottom = esc.d(14), start = esc.d(16), end = esc.d(16)), contentAlignment = Alignment.BottomCenter) {
+    val visible = true
+    Box(modifier.fillMaxWidth().padding(top = esc.d(if (arriba) 10 else 0), bottom = esc.d(if (arriba) 0 else 14), start = esc.d(12), end = esc.d(12)), contentAlignment = if (arriba) Alignment.TopCenter else Alignment.BottomCenter) {
         androidx.compose.animation.AnimatedVisibility(
             visible = visible,
             enter = fadeIn(tween(240)) + slideInVertically(androidx.compose.animation.core.spring(dampingRatio = 0.75f, stiffness = 420f)) { it / 2 },
@@ -302,6 +300,7 @@ fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier) {
                     IconoBarra(Icono.APPS, "Apps") { Diptico.abrirApps() }
                     // Turbo: tocar libera memoria ahora; mantener lo enciende o apaga al jugar.
                     IconoBarra(Icono.CHISPA, "Turbo", if (e.turbo) Color(0xFFFF5252) else null, alMantener = { Diptico.alternarTurbo() }) { Diptico.turboAhora() }
+                    if (e.inicio == "widgets") IconoBarra(Icono.EDITAR, "Editar") { Diptico.editarWidgets() }
                     IconoBarra(if (e.inicio == "widgets") Icono.PORTADA else Icono.EDITAR, if (e.inicio == "widgets") "Carátulas" else "Widgets") { Diptico.alternarInicio() }
                     IconoBarra(Icono.MENU, "Menú") { Diptico.abrirMenu() }
                     Box(
@@ -452,4 +451,5 @@ fun haceCuanto(ms: Long): String {
         else -> "Hace ${dias / 30} meses"
     }
 }
+
 

@@ -221,11 +221,13 @@ fun Modifier.difuminar(e: Estado): Modifier =
 fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
     val esc = LocalEscala.current
     val t = LocalTamJuegos.current
+    Column(modifier) {
+        ControlesBiblioteca(e)
     AnimatedContent(
         targetState = e.vista,
         transitionSpec = { (fadeIn(tween(260)) + scaleIn(tween(300), initialScale = 0.96f)) togetherWith fadeOut(tween(160)) },
         label = "vista",
-        modifier = modifier.pellizco(),
+        modifier = Modifier.fillMaxWidth().weight(1f).pellizco(),
     ) { vista ->
         when (vista) {
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
@@ -240,6 +242,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
                 Spacer(Modifier.height(esc.d(8)))
             }
         }
+    }
     }
 }
 
@@ -823,4 +826,5 @@ private fun PanelClave(e: Estado) {
         }
     }
 }
+
 

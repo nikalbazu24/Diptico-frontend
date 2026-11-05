@@ -77,32 +77,7 @@ import java.util.Locale
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Celda(j: Juego, elegido: Boolean, anchoCelda: Float, altoCelda: Float, conTitulo: Boolean = true, alElegir: () -> Unit) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val c = Consolas.porId(j.consolaId) ?: return
-    val base = cajaDe(c)
-    val k = minOf(anchoCelda / base.ancho, altoCelda / base.alto)
-    val tam by animateFloatAsState(if (elegido) 1.07f else 1f, spring(dampingRatio = 0.55f), label = "celda")
-    val color = colorDe(j.clave)
-    Column(
-        Modifier.width(esc.d(anchoCelda)).combinedClickable(
-            interactionSource = null, indication = null,
-            onLongClick = { Diptico.elegirJuego(j.clave); Diptico.elegirPantalla("juego") },
-        ) { alElegir() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(Modifier.size(esc.d(anchoCelda), esc.d(altoCelda)), contentAlignment = Alignment.BottomCenter) {
-            val forma = RoundedCornerShape(esc.d(base.radio * k))
-            Box(
-                Modifier.graphicsLayer { scaleX = tam; scaleY = tam }
-                    .then(if (elegido) Modifier.shadow(esc.d(14), forma, ambientColor = color, spotColor = color).border(esc.d(3), if (p == PaletaOscura) Color.White else Uva, forma) else Modifier),
-            ) { CajaJuego(j, c, escala = k, vivo = elegido) }
-        }
-        if (conTitulo) {
-            Spacer(Modifier.height(esc.d(6)))
-            Texto(j.titulo, 12.5f, color = if (elegido) p.tinta else p.tenue, lineas = 2, interlineado = 14f, alinear = androidx.compose.ui.text.style.TextAlign.Center)
-        }
-    }
+    TarjetaCaratula(j, elegido, anchoCelda, altoCelda, conTitulo, alElegir)
 }
 
 /** Todos los juegos en una cuadrícula de carátulas. */
@@ -118,7 +93,7 @@ fun Cuadricula(e: Estado, modifier: Modifier = Modifier) {
         val cols = ((anchoUnidades - 24f) / (anchoCelda + 12f)).toInt().coerceAtLeast(2)
         SideEffect { Teclas.columnasCuadricula = cols }
         val estado = rememberLazyGridState()
-        LaunchedEffect(e.indiceSel, lista.size) { if (lista.isNotEmpty()) estado.animateScrollToItem((e.indiceSel - cols).coerceAtLeast(0)) }
+        LaunchedEffect(e.indiceSel, lista.size) { if (lista.isNotEmpty()) estado.mostrar(e.indiceSel) }
         if (lista.isEmpty()) VacioEstante(e)
         LazyVerticalGrid(
             columns = GridCells.Fixed(cols),
@@ -149,7 +124,7 @@ fun ListaJuegos(e: Estado, modifier: Modifier = Modifier) {
     val lista = e.visibles
     val estado = rememberLazyListState()
     SideEffect { Teclas.columnasCuadricula = 1 }
-    LaunchedEffect(e.indiceSel, lista.size) { if (lista.isNotEmpty()) estado.animateScrollToItem((e.indiceSel - 2).coerceAtLeast(0)) }
+    LaunchedEffect(e.indiceSel, lista.size) { if (lista.isNotEmpty()) estado.mostrar(e.indiceSel) }
     Box(modifier) {
         if (lista.isEmpty()) VacioEstante(e)
         LazyColumn(
@@ -158,33 +133,7 @@ fun ListaJuegos(e: Estado, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(esc.d(6)),
         ) {
             itemsIndexed(lista, key = { _, j -> j.clave }) { i, j ->
-                val elegido = i == e.indiceSel
-                val fondo by animateColorAsState(if (elegido) Uva else p.superficie.copy(alpha = 0.55f), label = "fila")
-                val c = Consolas.porId(j.consolaId)
-                val d = e.datos[j.clave]
-                Row(
-                    Modifier.fillMaxWidth().height(esc.d(58f * t)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
-                        .combinedClickable(
-                            interactionSource = null, indication = null,
-                            onLongClick = { Diptico.elegirJuego(j.clave); Diptico.elegirPantalla("juego") },
-                        ) { if (elegido) Diptico.jugar() else Diptico.elegirJuego(j.clave) }
-                        .padding(horizontal = esc.d(8)),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (c != null) {
-                        val base = cajaDe(c)
-                        CajaJuego(j, c, escala = minOf(44f * t / base.alto, 70f / base.ancho))
-                    }
-                    Spacer(Modifier.width(esc.d(12)))
-                    Column(Modifier.weight(1f)) {
-                        Texto(j.titulo, 16f, color = if (elegido) SobreUva else p.tinta, lineas = 1)
-                        Texto(
-                            listOfNotNull(c?.nombre, d?.tiempo?.takeIf { it > 0 }?.let { formatoTiempo(it) }).joinToString(" · "),
-                            12.5f, color = if (elegido) SobreUva.copy(alpha = 0.85f) else p.tenue, familia = Nunito, peso = FontWeight.Bold, lineas = 1,
-                        )
-                    }
-                    if (d?.favorito == true) IconoDiptico(Icono.CORAZON, if (elegido) SobreUva else Coral, 16f, acento = if (elegido) SobreUva else Coral)
-                }
+                FilaBiblioteca(e, j, i == e.indiceSel)
             }
         }
     }
@@ -679,3 +628,4 @@ fun PanelCarpetas(e: Estado) {
         }
     }
 }
+
