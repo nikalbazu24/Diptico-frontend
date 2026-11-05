@@ -427,50 +427,5 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier) {
 
 @Composable
 private fun Carpeta(e: Estado, id: String, elegida: Boolean) {
-    val esc = LocalEscala.current
-    val color = colorConsola(id)
-    val juegos = remember(e.juegos, id) { (if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id }).take(3) }
-    val sube by animateFloatAsState(if (elegida) 1f else 0f, spring(dampingRatio = 0.55f, stiffness = 420f), label = "carpeta")
-    Box(
-        Modifier.fillMaxWidth().height(esc.d(124)).graphicsLayer { translationY = -sube * 6f * density; scaleX = 1f + 0.04f * sube; scaleY = 1f + 0.04f * sube }
-            .zIndex(if (elegida) 2f else 1f)
-            .clickable { if (elegida) Diptico.entrarSistema() else Diptico.elegirConsola(id) },
-    ) {
-        // La pestaña de la carpeta (atrás, arriba a la izquierda).
-        Box(
-            Modifier.padding(start = esc.d(10)).size(esc.d(54), esc.d(18))
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(topStart = esc.d(8), topEnd = esc.d(8)))
-                .background(lerp(color, Color.Black, 0.25f)),
-        )
-        // Las portadas que se asoman: más abiertas en la elegida.
-        juegos.forEachIndexed { i, j ->
-            val giro = (i - 1) * (6f + 8f * sube)
-            Box(
-                Modifier.align(Alignment.TopCenter).offset(x = esc.d((i - 1) * (20f + 10f * sube)), y = esc.d(10f - 6f * sube))
-                    .graphicsLayer { rotationZ = giro }
-                    .size(esc.d(46), esc.d(64)).clip(androidx.compose.foundation.shape.RoundedCornerShape(esc.d(6)))
-                    .background(Color.Black.copy(alpha = 0.2f)),
-            ) { ArteJuego(j, preferirArte = false, maxLado = 160, modifier = Modifier.fillMaxSize()) }
-        }
-        // El frente de la carpeta.
-        Column(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(esc.d(78))
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(topStart = esc.d(6), topEnd = esc.d(14), bottomStart = esc.d(14), bottomEnd = esc.d(14)))
-                .background(Brush.verticalGradient(listOf(lerp(color, Color.White, 0.12f), lerp(color, Color.Black, 0.3f))))
-                .then(if (elegida) Modifier.border(esc.d(2.5f), Color.White, androidx.compose.foundation.shape.RoundedCornerShape(topStart = esc.d(6), topEnd = esc.d(14), bottomStart = esc.d(14), bottomEnd = esc.d(14))) else Modifier)
-                .padding(horizontal = esc.d(10), vertical = esc.d(8)),
-            verticalArrangement = Arrangement.Bottom,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(esc.d(28)).clip(CircleShape).background(Color.Black.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
-                    IconoConsola(Consolas.porId(id), 20f, Color.Transparent)
-                }
-                Spacer(Modifier.width(esc.d(8)))
-                Column(Modifier.weight(1f)) {
-                    Texto(nombreConsola(id), 14.5f, color = Color.White, lineas = 1, sombra = true)
-                    Detalle(juegosTexto(cuantos(e, id)), 11f, color = Color.White.copy(alpha = 0.85f), lineas = 1)
-                }
-            }
-        }
-    }
+    CarpetaBiblioteca(e, id, elegida)
 }

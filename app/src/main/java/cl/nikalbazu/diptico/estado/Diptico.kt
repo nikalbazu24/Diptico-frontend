@@ -268,6 +268,7 @@ object Widgets {
 data class Descarga(val hechos: Int, val total: Int, val actual: String, val encontrados: Int)
 
 data class Estado(
+    val navegacion: NavegacionEstado = NavegacionEstado(),
     val habitacionSel: Int = 0,
     val experiencia: Experiencia = Experiencia(),
     val perfilesVisuales: Map<String, Experiencia> = emptyMap(),
@@ -455,7 +456,7 @@ data class Estado(
     val turbo: Boolean = true,
     /** La barra flotante del inicio (arriba) está a la vista; se esconde sola salvo que [barraFija]. */
     val barra: Boolean = true,
-    val barraFija: Boolean = false,
+    val barraFija: Boolean = true,
     /** Menú de ajustes simple: solo las secciones de siempre; las avanzadas viven en «Más ajustes». */
     val menuSimple: Boolean = true,
     val turboCerrarApps: Boolean = true,
@@ -576,6 +577,19 @@ data class Estado(
     /** Díptico es la app de inicio de Android (el botón Inicio trae aquí). */
     val esInicio: Boolean = true,
 ) {
+    val atajoApps get() = navegacion.atajoApps
+    val ordenApps get() = navegacion.ordenApps
+    val appsMenu get() = navegacion.appsMenu
+    val appsMenuIndice get() = navegacion.appsMenuIndice
+    val appsMoviendo get() = navegacion.appsMoviendo
+    val estanteAvanzado get() = navegacion.estanteAvanzado
+    val clipRetoma get() = navegacion.clipRetoma
+    val esperaRetoma get() = navegacion.esperaRetoma
+    val retomaVideo get() = navegacion.retomaVideo
+    val retomaVideoClave get() = navegacion.retomaVideoClave
+    val retomaVideoFecha get() = navegacion.retomaVideoFecha
+    val retomaApagadaEn get() = navegacion.retomaApagadaEn
+
     /** Conectada a la tele (o forzado en los ajustes): se usa el perfil de sobremesa. */
     val sobremesa: Boolean
         get() = configurado && (sobremesaModo == "si" || (sobremesaModo == "auto" && teleConectada != null))
@@ -689,6 +703,7 @@ object Diptico {
         val idioma = almacen.texto("idioma").ifEmpty { Idioma.delSistema() }
         Idioma.fijar(app, idioma)
         _estado.value = Estado(
+            navegacion = NavegacionEstado(atajoApps = almacen.texto("atajoApps", "start_y"), ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
             listo = true,
             idioma = idioma,
             configurado = almacen.configurado && carpeta != null,
@@ -721,12 +736,12 @@ object Diptico {
             perfilesVisuales = Experiencia.perfiles(almacen.texto("perfilesVisuales", "{}")),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             // La clave de Claude ya no se usa: se borra de la consola (cada persona usa Gemini, ChatGPT o la IA local).
-            claveGemini = almacen.texto("claveGemini").also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
+                        claveGemini = almacen.texto("claveGemini").also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
             claveOpenAI = almacen.texto("claveOpenAI"),
             usuarioRA = almacen.texto("usuarioRA"),
             bisaWeb = almacen.bool("bisaWeb", true),
             // Claude ya no es una opción: quien la tenía elegida pasa a automático.
-            motorIA = almacen.texto("motorIA", "auto").let { if (it == "claude") "auto" else it },
+                        motorIA = almacen.texto("motorIA", "auto").let { if (it == "claude") "auto" else it },
             iaLocalLista = IALocal.listo(app),
             tamLogo = almacen.texto("tamLogo", "1").toFloatOrNull() ?: 1f,
             atenuacion = almacen.texto("atenuacion", "0.04").toFloatOrNull() ?: 0.04f,
@@ -754,7 +769,7 @@ object Diptico {
             paqueteSonidos = almacen.texto("paqueteSonidos", "tema"),
             pausaCada = almacen.texto("pausaCada", "0").toIntOrNull() ?: 0,
             turbo = almacen.bool("turbo", true),
-            barraFija = almacen.bool("barraFija", false),
+            barraFija = true,
             menuSimple = almacen.bool("menuSimple", true),
             turboCerrarApps = almacen.bool("turboCerrarApps", true),
             turboNoMolestar = almacen.bool("turboNoMolestar", false),
@@ -884,14 +899,7 @@ object Diptico {
     const val BARRA_MS = 5_000L
 
     /** Saca la barra flotante del inicio y la vuelve a esconder a los 5 segundos sin tocar nada. */
-    fun mostrarBarra() {
-        if (!estado.value.barra) actualizar { it.copy(barra = true) }
-        trabajoBarra?.cancel()
-        trabajoBarra = scope.launch {
-            delay(BARRA_MS)
-            if (!estado.value.barraFija) actualizar { it.copy(barra = false) }
-        }
-    }
+    fun mostrarBarra() { if (!estado.value.barra) actualizar { it.copy(barra = true) } }
 
     fun cambiarBarraFija(v: Boolean) {
         almacen.guardarBool("barraFija", v)
@@ -937,7 +945,8 @@ object Diptico {
         val e = estado.value
         if (!e.configurado || e.intro) return
         if (e.sesion != null) {
-            if (estabaJugando && ausencia > 8_000) mostrarContinuacion()
+            if (estabaJugando && ausencia > 0L) actualizar { it.copy(sesion = it.sesion?.let { s -> s.copy(inicio = s.inicio + ausencia) }) }
+            if (estabaJugando && ausencia >= e.esperaRetoma * 1000L) mostrarContinuacion()
             return
         }
         // Solo si al apagarla estabas en Díptico (no en otra app).
@@ -1770,7 +1779,7 @@ object Diptico {
 
     // ---------- Jugar ----------
 
-    fun jugar(pantalla: String? = null, conLupaLista: Boolean = false) {
+    fun jugar(pantalla: String? = null, conLupaLista: Boolean = false, conRetomaLista: Boolean = false) {
         val e = estado.value
         val juego = e.seleccionado ?: return
         val consola = Consolas.porId(juego.consolaId) ?: return
@@ -1784,6 +1793,9 @@ object Diptico {
             pedirPermisoLupa(luegoJugar = true)
             return
         }
+        if (!conRetomaLista && e.clipRetoma && !e.unaPantalla && e.datos[juego.clave]?.lupa != true && destino == "arriba" && !consola.dosPantallas) {
+            pedirPermisoRetoma(true, pantalla); return
+        }
         val displayId = if (destino == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
         else Lanzador.lanzar(app, juego, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(juego))
@@ -1793,13 +1805,7 @@ object Diptico {
         }
         if (e.turbo) turboAlJugar(juego, displayId)
         actualizar {
-            it.copy(
-                sesion = Sesion(juego.clave, System.currentTimeMillis(), displayId, consola.dosPantallas),
-                panel = Panel.NINGUNO,
-                despierta = false,
-                burbujaAbierta = false,
-                burbujaAlerta = false,
-            )
+            it.copy(navegacion = it.navegacion.copy(retomaVideo = "", retomaVideoClave = ""), sesion = Sesion(juego.clave, System.currentTimeMillis(), displayId, consola.dosPantallas), panel = Panel.NINGUNO, despierta = false, burbujaAbierta = false, burbujaAlerta = false)
         }
         // La pantalla del compañero queda encendida 5 segundos y después se atenúa.
         despertar()
@@ -1819,6 +1825,7 @@ object Diptico {
     fun pedirPermisoLupa(luegoJugar: Boolean) {
         try {
             // Mientras juegas, el permiso se pide en la pantalla de abajo: así no tapa ni pausa el juego de arriba.
+            cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
             val i = Intent(app, cl.nikalbazu.diptico.lupa.PermisoLupaActivity::class.java)
                 .putExtra("luegoJugar", luegoJugar).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             val abajo = Pantallas.inferior(app)
@@ -1876,7 +1883,8 @@ object Diptico {
             if (estado.value.sesion != null && !cl.nikalbazu.diptico.lupa.LupaServicio.activa) pedirPermisoLupa(false)
             avisar("Lupa encendida: al jugar, la pantalla de abajo amplía una parte de la de arriba")
         } else {
-            cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
+            cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
+        cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
             avisar("Lupa apagada")
         }
     }
@@ -1912,6 +1920,10 @@ object Diptico {
     }
 
     fun pestanasGaleria(tipo: String = estado.value.galeria): List<String> = if (tipo == "colecciones") listOf("Colecciones") else when (tipo) {
+        "filtros" -> listOf("Filtrar juegos")
+        "orden" -> listOf("Ordenar juegos")
+        "vistas_consolas" -> listOf("Tus consolas")
+        "vistas_juegos" -> listOf("Tus juegos")
         "temas" -> listOf("Colores", "Fiestas del mundo", "Tus temas")
         "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
         "ia" -> listOf("El cerebro de Bisa")
@@ -1937,6 +1949,15 @@ object Diptico {
 
     fun itemsGaleria(e: Estado = estado.value): List<ItemGaleria> {
         val actual = cl.nikalbazu.diptico.ui.Estilo.tema
+        if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
+        if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
+        if (e.galeria == "vistas_juegos") return listOf("cuadricula", "estante", "lista", "carrusel", "abanico", "lomos").map { v ->
+            val detalle = when(v) { "cuadricula" -> "Todas las portadas a la vista"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
+            ItemGaleria(v, nombreVista(v), detalle, e.vista == v) { almacen.guardarTexto("vista", v); actualizar { it.copy(vista = v) }; cerrarPanel() }
+        }
+        if (e.galeria == "vistas_consolas") return listOf("carpetas", "arriba", "sistemas", "lado", "rueda", "discos", "habitacion").map { v ->
+            ItemGaleria(v, nombreVistaConsolas(v), if(v == "habitacion") "Biblioteca con estantes y recuerdos; decora en Estudio visual" else "Vista previa en la otra pantalla", e.vistaConsolas == v) { elegirVistaConsolas(v); cerrarPanel() }
+        }
         if (e.galeria == "colecciones") {
             val j = e.seleccionado
             return e.colecciones.map { (id, c) ->
@@ -2048,6 +2069,7 @@ object Diptico {
         Asistente.intentos += Triple(s.clave, s.inicio, System.currentTimeMillis())
         if (Asistente.intentos.size > 40) Asistente.intentos.removeAt(0)
         cl.nikalbazu.diptico.bisa.BurbujaBisa.detener(app)
+        cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
         cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
         val datos = estado.value.datos.toMutableMap()
         val d = datos[s.clave] ?: DatosJuego()
@@ -2197,6 +2219,7 @@ object Diptico {
     }
 
     fun cerrarPanel() {
+        if (estado.value.appsMenu != null || estado.value.appsMoviendo != null) { cerrarOpcionesApp(); return }
         if (estado.value.coleccionVisual != null) actualizar { it.copy(coleccionVisual = null) }
         val e = estado.value
         cadenaRaspador = emptyList()
@@ -3658,16 +3681,16 @@ object Diptico {
 
     private fun opcionesExperiencia(e: Estado): List<Opcion> = buildList {
         val v = e.experiencia
-        add(Opcion("Universo del juego", if (v.universo) "Sí" else "No", Icono.MUNDO, "Colores tomados de la imagen del juego, compartidos por ambas pantallas. Sin imagen se conserva el tema.") { guardarExperiencia(v.copy(universo = !v.universo)) })
+        add(Opcion("Colores del juego · Universo", if (v.universo) "Sí" else "No", Icono.MUNDO, "Colores tomados de la imagen del juego, compartidos por ambas pantallas. Sin imagen se conserva el tema.") { guardarExperiencia(v.copy(universo = !v.universo)) })
         add(Opcion("Tarjetas de vidrio", if (v.vidrio) "Sí" else "No", Icono.TEMA, "Superficies translúcidas con bordes claros. No se desenfoca ni se captura el juego.") { guardarExperiencia(v.copy(vidrio = !v.vidrio)) })
         add(Opcion("Movimiento ambiental", if (v.movimiento) "Suave" else "Reducido", Icono.ESTRELLA, "Apaga el movimiento ambiental y el zoom lento; en partida se mantiene estático.") {
             guardarExperiencia(v.copy(movimiento = !v.movimiento))
         })
-        add(Opcion("Biblioteca habitación", nombreVistaConsolas(e.vistaConsolas), Icono.BIBLIOTECA, "Un espacio con consolas, colecciones y recuerdos. Cruceta elige consola, A entra y B vuelve.") {
+        add(Opcion("Biblioteca con estantes", nombreVistaConsolas(e.vistaConsolas), Icono.BIBLIOTECA, "Un espacio con consolas, colecciones y recuerdos. Cruceta elige consola, A entra y B vuelve.") {
             elegirVistaConsolas(if (e.vistaConsolas == "habitacion") "arriba" else "habitacion")
         })
-        add(Opcion("Pared de la habitación", v.pared, Icono.PALETA) { guardarExperiencia(v.copy(pared = Experiencia.paredes[(Experiencia.paredes.indexOf(v.pared) + 1) % Experiencia.paredes.size])) })
-        add(Opcion("Objetos de la habitación", v.adorno, Icono.ESTRELLA) { guardarExperiencia(v.copy(adorno = Experiencia.adornos[(Experiencia.adornos.indexOf(v.adorno) + 1) % Experiencia.adornos.size])) })
+        add(Opcion("Fondo de los estantes", v.pared, Icono.PALETA) { guardarExperiencia(v.copy(pared = Experiencia.paredes[(Experiencia.paredes.indexOf(v.pared) + 1) % Experiencia.paredes.size])) })
+        add(Opcion("Adornos de los estantes", v.adorno, Icono.ESTRELLA) { guardarExperiencia(v.copy(adorno = Experiencia.adornos[(Experiencia.adornos.indexOf(v.adorno) + 1) % Experiencia.adornos.size])) })
         add(Opcion("Editar composición del inicio", "Widgets y posiciones", Icono.EDITAR, "El estudio existente permite mover y redimensionar elementos, con vista previa en la otra pantalla.") { cerrarPanel(); editarWidgets() })
         add(Opcion("Enviar ficha a la otra pantalla", if (e.fichaFijada == null) "Sin fijar" else "Fijada", Icono.INTERCAMBIAR, "En el estante, desliza la tarjeta «Enviar ficha» hacia arriba. La ficha queda arriba mientras recorres otros juegos abajo. Tócala para soltarla.") { fijarFicha() })
         for (n in 1..3) {
@@ -3893,6 +3916,9 @@ object Diptico {
     // ---------- Inicio personalizado ----------
 
     private fun opcionesInicio(e: Estado): List<Opcion> = listOf(
+        Opcion("Clip al retomar", if (e.clipRetoma) "Activado" else "Desactivado", Icono.CONTINUAR, "En dos pantallas: pide el permiso de grabación de Android al abrir un juego y guarda solo los últimos 6 segundos, sin audio. La lupa tiene prioridad. Puede afectar al rendimiento; se desactiva aquí.") { alternarClipRetoma() },
+        Opcion("Preparar clip de esta partida", "Pedir permiso de Android", Icono.CONTINUAR, "Después de bloquear la consola Android puede finalizar la captura. Este botón prepara una nueva para la siguiente retoma.", apagada = e.sesion == null || !e.clipRetoma) { pedirPermisoRetoma(false) },
+        Opcion("Retomar después de", "${e.esperaRetoma} segundos", Icono.RELOJ, "Tiempo mínimo con la pantalla apagada para mostrar el recordatorio al abrir la consola.") { cambiarEsperaRetoma() },
         Opcion(
             "Al abrir Díptico", nombreArranque(e.arranque), Icono.INTRO,
             "Con qué parte Díptico cada vez que se abre: como lo dejaste, las carátulas, tus widgets, tus consolas o directo en tu último juego.",
@@ -3912,9 +3938,9 @@ object Diptico {
             } catch (_: Exception) { avisar("No pude abrir el permiso") }
         },
         Opcion(
-            "Barra de accesos", if (e.barraFija) "Siempre visible" else "Se esconde sola", Icono.APPS,
-            "La barra flotante de la pantalla de arriba (jugar, ficha, buscar, apps, turbo, menú y Bisa). Se esconde sola a los 5 segundos para que luzca el juego; vuelve deslizando hacia arriba desde el borde de abajo, tocando la pantalla o con B.",
-        ) { cambiarBarraFija(!estado.value.barraFija) },
+            "Barra de accesos", "Fija · arriba en Widgets", Icono.APPS,
+            "En la imagen del juego queda abajo; al pasar a Widgets sube y reúne los accesos en un solo lugar."
+        ) { avisar("La barra está siempre disponible") },
         Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Para que Bisa te salude por tu nombre.") { abrirTexto("nombre", estado.value.nombre) },
         Opcion("Preguntar dónde quedaste", if (e.preguntarQuedaste) "Sí" else "No", Icono.LAPIZ,
             "Al terminar de jugar, una tarjeta para anotar dónde quedaste: escribiendo, con una nota de voz o marcando en el mapa del juego. Siempre se puede pasar de largo.") {
@@ -4965,6 +4991,11 @@ object Diptico {
     }
 
     private fun opcionesBotones(e: Estado): List<Opcion> = buildList {
+        add(Opcion("Abrir cajón de apps", when(e.atajoApps) { "l3_doble" -> "Doble L3"; "no" -> "Solo botón Apps"; else -> "Start + Y" }, Icono.APPS,
+            "Elige una combinación. También puedes asignar Apps a un botón físico en los botones extra de esta sección.") {
+            val l = listOf("start_y", "l3_doble", "no"); val v = l[(l.indexOf(estado.value.atajoApps) + 1).mod(l.size)]
+            almacen.guardarTexto("atajoApps", v); actualizar { it.copy(navegacion = it.navegacion.copy(atajoApps = v)) }
+        })
         val modos = listOf("dividido", "invertido", "clasico")
         fun cambiarSticks(d: Int) {
             val v = modos[(modos.indexOf(estado.value.sticks).coerceAtLeast(0) + d).mod(modos.size)]
@@ -6230,12 +6261,12 @@ object Diptico {
     // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
 
     private val VISTAS = listOf("estante", "carrusel", "abanico", "lomos", "cuadricula", "lista")
-    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Cuadrícula"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
+    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Galería"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
 
     val VISTAS_CONSOLAS = listOf("arriba", "lado", "rueda", "sistemas", "carpetas", "discos", "habitacion")
     /** Vistas donde primero se elige la consola (en grande) y después se entra a sus juegos. */
     val MODOS_ELEGIR = setOf("sistemas", "carpetas", "discos", "habitacion")
-    fun nombreVistaConsolas(v: String) = when (v) { "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"; "discos" -> "Discos"; "habitacion" -> "Habitación"; else -> "Arriba" }
+    fun nombreVistaConsolas(v: String) = when (v) { "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"; "discos" -> "Discos"; "habitacion" -> "Estantes y recuerdos"; else -> "Arriba" }
 
     /** Cambia cómo se ven las consolas (arriba, al costado, rueda o sistemas). */
     fun elegirVistaConsolas(v: String) {
@@ -6470,11 +6501,11 @@ object Diptico {
         val c = Consolas.porId(e.consolaSel)
         val lista = mutableListOf(
             Opcion(
-                "Consolas", nombreVistaConsolas(e.vistaConsolas), Icono.MANDO,
+                "Vista de consolas", nombreVistaConsolas(e.vistaConsolas), Icono.MANDO,
                 "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande), Carpetas (cada consola como una carpeta con sus portadas asomándose) o Discos (cada consola es un vinilo en su funda, y la elegida saca su disco girando). En Sistemas, Carpetas y Discos primero eliges la consola y después entras a sus juegos.",
                 menos = { cambiarVistaConsolas(-1) },
-            ) { cambiarVistaConsolas(1) },
-            Opcion("Juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, abanico (como cartas abiertas en la mano: la elegida sube al centro), lomos (como una repisa de libros: el elegido se abre), cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { cambiarVista() },
+            ) { abrirGaleria("vistas_consolas") },
+            Opcion("Vista de juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, abanico (como cartas abiertas en la mano: la elegida sube al centro), lomos (como una repisa de libros: el elegido se abre), cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { abrirGaleria("vistas_juegos") },
             Opcion("Forma de las cajas", nombreForma(e.formas[consolaParaCajas()]?.forma ?: "original"), Icono.FORMA,
                 "Elige cómo se ven las cajas (cuadrada, póster, horizontal, disco, cartucho o tarjeta) viendo tus portadas en cada forma. Para una consola o para todas.") { abrirCajas() },
             Opcion("Tamaño de los juegos", nombreTamJuegos(e.tamJuegos), Icono.FORMA, "Más chico para ver más juegos, o más grande para verlos mejor.") { cambiarTamJuegos(if (e.tamJuegos >= 1.39f) -3 else 1) },
@@ -6492,7 +6523,8 @@ object Diptico {
             "Cuando ves todos tus juegos juntos: todas las cajas iguales (póster o cuadradas) para que se vea parejo, o cada consola con su forma.") { ciclarFormaTodos() }
         lista += Opcion("Imagen en todas las cajas", nombreImagenCaja(e.formas.values.firstOrNull()?.imagen ?: "portada"), Icono.PORTADA,
             "Portada, captura del juego o logo, para las cajas de todas tus consolas a la vez.") { imagenTodasLasCajas() }
-        return lista
+        val mas = Opcion(if (e.estanteAvanzado) "Ver menos opciones" else "Más opciones de cajas", icono = Icono.AJUSTES) { actualizar { it.copy(navegacion = it.navegacion.copy(estanteAvanzado = !it.estanteAvanzado)) } }
+        return (if (e.estanteAvanzado) lista else lista.take(7)) + mas
     }
 
     // ---------- Tamaño de cada pantalla ----------
@@ -7337,6 +7369,100 @@ object Diptico {
         if (e.panel == Panel.EDITAR_CONSOLA) opcionesEditarConsola().getOrNull(e.indice)?.let { o -> (o.menos ?: o.accion).invoke() }
     }
 
+    // ---------- Navegación directa, cajón y retoma ----------
+    fun cambiarDensidadWidgets(agrandar: Boolean) {
+        val e = estado.value
+        val cols = (e.gridCols + if (agrandar) -1 else 1).coerceIn(4, 8)
+        val filas = (e.gridFilas + if (agrandar) -1 else 1).coerceIn(3, 8)
+        if (cols == e.gridCols && filas == e.gridFilas) return
+        val r = Rejilla.distribuir(e.widgets, cols, filas, e.paginas)
+        almacen.guardarTexto("gridCols", cols.toString()); almacen.guardarTexto("gridFilas", filas.toString())
+        almacen.guardarTexto("paginas", r.paginas.toString()); almacen.guardarTexto("widgets", escribirWidgets(r.widgets))
+        Widgets.COLUMNAS = cols; Widgets.FILAS = filas
+        actualizar { it.copy(gridCols = cols, gridFilas = filas, paginas = r.paginas, widgets = r.widgets, estudioMover = false) }
+        avisar("Grilla $cols × $filas · ${r.paginas} páginas")
+    }
+
+    fun abrirOpcionesApp(paquete: String) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = paquete, appsMenuIndice = 0, appsMoviendo = null)) }
+    fun cerrarOpcionesApp() = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null)) }
+    fun opcionesApp(e: Estado = estado.value): List<Opcion> {
+        val pkg = e.appsMenu ?: return emptyList()
+        return listOf(
+            Opcion("Abrir", icono = Icono.JUGAR) { cerrarOpcionesApp(); abrirPaquete(pkg) },
+            Opcion(if (pkg in e.appsFijadas) "Quitar de fijadas" else "Fijar app", icono = Icono.ESTRELLA) { alternarFijada(pkg); cerrarOpcionesApp() },
+            Opcion("Mover de lugar", icono = Icono.INTERCAMBIAR, ayuda = "Elige otra casilla con el dedo o muévela con la cruceta; A termina.") {
+                actualizar { it.copy(navegacion = it.navegacion.copy(appsMoviendo = pkg, appsMenu = null)) }; avisar("Toca su nuevo lugar o usa la cruceta · A listo")
+            },
+            Opcion("Abrir en otra pantalla", icono = Icono.PANTALLAS) { cerrarOpcionesApp(); elegirPantalla("app:$pkg") },
+            Opcion("Opciones de Android", icono = Icono.AJUSTES) { cerrarOpcionesApp(); infoApp(pkg) },
+            Opcion("Desinstalar", icono = Icono.BORRAR, ayuda = "Android te pedirá confirmar. Algunas apps del sistema no se pueden desinstalar.") {
+                cerrarOpcionesApp()
+                abrirIntent(Intent(Intent.ACTION_DELETE, Uri.parse("package:$pkg")), "Android no permite desinstalar esta app")
+            },
+        )
+    }
+    fun moverMenuApp(d: Int) { val n = opcionesApp().size; if (n > 0) actualizar { it.copy(navegacion = it.navegacion.copy(appsMenuIndice = (it.appsMenuIndice + d).mod(n))) } }
+    fun aceptarMenuApp() { opcionesApp().getOrNull(estado.value.appsMenuIndice)?.accion?.invoke() }
+    fun moverAppA(destino: Int) {
+        val e = estado.value; val pkg = e.appsMoviendo ?: return
+        val visibles = appsVisibles(e).map { it.paquete }.toMutableList()
+        val actual = visibles.indexOf(pkg); if (actual < 0 || visibles.isEmpty()) return
+        val nuevo = destino.coerceIn(0, visibles.lastIndex)
+        visibles.removeAt(actual); visibles.add(nuevo, pkg)
+        if (e.appsPestana == 1) {
+            almacen.guardarTexto("appsFijadas", visibles.joinToString(",")); actualizar { it.copy(appsFijadas = visibles, indice = nuevo) }
+        } else {
+            val orden = visibles + e.ordenApps.filter { it !in visibles }
+            almacen.guardarTexto("ordenApps", orden.joinToString(",")); actualizar { it.copy(navegacion = it.navegacion.copy(ordenApps = orden), indice = nuevo) }
+        }
+    }
+    fun tocarApp(i: Int) {
+        if (estado.value.appsMoviendo != null) { moverAppA(i); cerrarOpcionesApp() }
+        else { actualizar { it.copy(indice = i) }; appsVisibles().getOrNull(i)?.let { abrirPaquete(it.paquete) } }
+    }
+
+    fun alternarClipRetoma() {
+        val v = !estado.value.clipRetoma
+        almacen.guardarBool("clipRetoma", v); actualizar { it.copy(navegacion = it.navegacion.copy(clipRetoma = v)) }
+        if (!v) { cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app); actualizar { it.copy(navegacion = it.navegacion.copy(retomaVideo = "", retomaVideoClave = "")) } }
+    }
+    fun cambiarEsperaRetoma() {
+        val l = listOf(15, 30, 60, 300); val n = l[(l.indexOf(estado.value.esperaRetoma) + 1).mod(l.size)]
+        almacen.guardarTexto("esperaRetoma", n.toString()); actualizar { it.copy(navegacion = it.navegacion.copy(esperaRetoma = n)) }
+    }
+    fun alSuspender() {
+        actualizar { it.copy(navegacion = it.navegacion.copy(retomaApagadaEn = System.currentTimeMillis(), retomaVideo = "", retomaVideoClave = "")) }
+        cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
+    }
+    fun clipRetomaListo(clave: String, archivo: String) {
+        if (!estado.value.clipRetoma || estado.value.sesion?.clave != clave) return
+        actualizar { it.copy(navegacion = it.navegacion.copy(retomaVideo = archivo, retomaVideoClave = clave, retomaVideoFecha = System.currentTimeMillis())) }
+    }
+    fun pedirPermisoRetoma(luegoJugar: Boolean, pantalla: String? = null) {
+        val e = estado.value
+        val clave = (if (luegoJugar) e.seleccionado?.clave else e.sesion?.clave) ?: return
+        if (e.datos[clave]?.lupa == true || cl.nikalbazu.diptico.lupa.LupaServicio.activa) {
+            avisar("La lupa tiene prioridad: la retoma usará la imagen del juego")
+            if (luegoJugar) jugar(pantalla, conRetomaLista = true)
+            return
+        }
+        pantallaRetomaPendiente = pantalla
+        claveRetomaPendiente = if (luegoJugar) clave else null
+        cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
+        try { app.startActivity(Intent(app, cl.nikalbazu.diptico.lupa.PermisoLupaActivity::class.java)
+            .putExtra("retoma", true).putExtra("clave", clave).putExtra("luegoJugar", luegoJugar).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        catch (_: Exception) { retomaPermisoTerminado(luegoJugar) }
+    }
+    private var pantallaRetomaPendiente: String? = null
+    private var claveRetomaPendiente: String? = null
+    fun retomaPermisoTerminado(luegoJugar: Boolean) {
+        if (luegoJugar) {
+            claveRetomaPendiente?.let { elegirConsola("todo"); elegirJuego(it) }
+            jugar(pantallaRetomaPendiente, conRetomaLista = true)
+        }
+        pantallaRetomaPendiente = null; claveRetomaPendiente = null
+    }
+
     // ---------- Cajón de apps: el resto de las apps de la consola ----------
 
     val PESTANAS_APPS = listOf("Todas", "Fijadas", "Juegos")
@@ -7344,7 +7470,7 @@ object Diptico {
     /** Abre el cajón con todas las apps de la consola (las carga la primera vez, sin trabar nada). */
     fun abrirApps() {
         actualizar { it.copy(panel = Panel.APPS, indice = 0, appsPestana = if (it.appsFijadas.isNotEmpty()) 1 else 0) }
-        if (estado.value.appsTodas.isEmpty()) cargarApps()
+        cargarApps()
     }
 
     fun cargarApps() {
@@ -7366,20 +7492,24 @@ object Diptico {
                     emptyList()
                 }
             }
-            actualizar { it.copy(appsTodas = lista, cargandoTodas = false) }
+            actualizar { it.copy(appsTodas = lista, cargandoTodas = false, indice = it.indice.coerceIn(0, (lista.size - 1).coerceAtLeast(0))) }
         }
     }
 
     /** Las apps de la pestaña elegida. */
-    fun appsVisibles(e: Estado = estado.value): List<App> = when (e.appsPestana) {
-        1 -> e.appsFijadas.mapNotNull { p -> e.appsTodas.firstOrNull { it.paquete == p } }
-        2 -> e.appsTodas.filter { it.esJuego }
-        else -> e.appsTodas
+    fun appsVisibles(e: Estado = estado.value): List<App> {
+        val orden = e.ordenApps.withIndex().associate { it.value to it.index }
+        val apps = e.appsTodas.withIndex().sortedBy { orden[it.value.paquete] ?: (e.ordenApps.size + it.index) }.map { it.value }
+        return when (e.appsPestana) {
+            1 -> e.appsFijadas.mapNotNull { p -> e.appsTodas.firstOrNull { it.paquete == p } }
+            2 -> apps.filter { it.esJuego }
+            else -> apps
+        }
     }
 
-    fun cambiarPestanaApps(d: Int) = actualizar { it.copy(appsPestana = (it.appsPestana + d).mod(PESTANAS_APPS.size), indice = 0) }
+    fun cambiarPestanaApps(d: Int) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null), appsPestana = (it.appsPestana + d).mod(PESTANAS_APPS.size), indice = 0) }
 
-    fun elegirPestanaApps(i: Int) = actualizar { it.copy(appsPestana = i, indice = 0) }
+    fun elegirPestanaApps(i: Int) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null), appsPestana = i, indice = 0) }
 
     /** Fija (o suelta) una app: las fijadas tienen su pestaña y su widget en el inicio. */
     fun alternarFijada(paquete: String) {
@@ -7585,4 +7715,5 @@ object Diptico {
         },
     )
 }
+
 

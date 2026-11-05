@@ -320,17 +320,20 @@ fun Continuacion(e: Estado) {
     Box(Modifier.fillMaxSize().background(p.fondo).clickable(interactionSource = null, indication = null) {
         Diptico.actualizar { it.copy(continuacion = 0L) }
     }) {
-        ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.22f * t })
+        val clip = e.retomaVideo.takeIf { e.retomaVideoClave == s.clave && e.retomaVideoFecha >= e.retomaApagadaEn && it.isNotBlank() }
+        if (clip != null) cl.nikalbazu.diptico.retoma.VideoRetoma(clip,
+            Modifier.fillMaxSize().blur(10.dp).graphicsLayer { alpha = .5f * t }, alFallar = { Diptico.actualizar { it.copy(navegacion = it.navegacion.copy(retomaVideo = "")) } })
+        else ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize().blur(18.dp).graphicsLayer { alpha = 0.3f * t })
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, p.fondo))))
         Column(
             Modifier.align(Alignment.Center).padding(esc.d(24)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Etiqueta("Sigues jugando", Coral, 12f, Modifier.entra(t, 0f))
+            Etiqueta("Retoma donde lo dejaste", Coral, 12f, Modifier.entra(t, 0f))
             Spacer(Modifier.height(esc.d(10)))
-            if (c != null) Box(Modifier.entra(t, 0.08f)) { CajaJuego(j, c, escala = minOf(120f / cajaDe(c).alto, 1f)) }
+            if (clip == null && c != null) Box(Modifier.entra(t, 0.08f)) { CajaJuego(j, c, escala = minOf(120f / cajaDe(c).alto, 1f)) }
             Spacer(Modifier.height(esc.d(12)))
-            Texto(j.titulo, 22f, lineas = 2, alinear = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.entra(t, 0.16f))
+            Texto(j.titulo, 26f, lineas = 2, alinear = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.entra(t, 0.16f))
             Detalle(if (minutos > 0) "Llevas $minutos min en esta partida" else "Recién empezaste esta partida", 13.5f, lineas = 1, modifier = Modifier.entra(t, 0.22f))
             if (paso.isNotBlank()) {
                 Spacer(Modifier.height(esc.d(12)))
@@ -342,6 +345,12 @@ fun Continuacion(e: Estado) {
                     Spacer(Modifier.width(esc.d(8)))
                     Texto(paso, 14f, lineas = 2)
                 }
+            }
+            Spacer(Modifier.height(esc.d(12)))
+            Detalle(if (clip != null) "Tus últimos segundos · sin sonido · toca para seguir" else "Toca para seguir jugando", 12f, lineas = 1)
+            if (e.clipRetoma && e.datos[s.clave]?.lupa != true) {
+                Spacer(Modifier.height(esc.d(8)))
+                Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.actualizar { it.copy(continuacion = 0L) }; Diptico.pedirPermisoRetoma(false) }.padding(horizontal = esc.d(14), vertical = esc.d(8))) { Texto("Preparar el próximo clip", 12f, color = SobreUva) }
             }
             if (s.clave in e.notasVoz || e.mapas.containsKey(s.clave)) {
                 Spacer(Modifier.height(esc.d(12)))
@@ -409,3 +418,4 @@ private fun LucesFlotantes(t: Float) {
         drawCircle(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent), center = Offset(w * (0.5f + a * 0.15f), h * (0.55f - b * 0.15f)), radius = h * 0.35f), h * 0.35f, Offset(w * (0.5f + a * 0.15f), h * (0.55f - b * 0.15f)))
     }
 }
+

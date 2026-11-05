@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- Actualizaciones desde la misma app (Android pide confirmar cada instalación) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <!-- Notas de voz: "¿dónde quedaste?" dicho en voz alta -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
@@ -135,6 +136,8 @@
                 android:value="Asistente de juegos que se muestra como burbuja flotante mientras la persona juega" />
         </service>
 
+        <service android:name=".retoma.RetomaServicio" android:exported="false" android:foregroundServiceType="mediaProjection" />
+
         <!-- Lupa: copia la pantalla de arriba para ampliar una parte en la de abajo. -->
         <service
             android:name=".lupa.LupaServicio"
@@ -173,3 +176,4 @@
         </service>
     </application>
 </manifest>
+

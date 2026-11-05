@@ -163,6 +163,7 @@ abstract class BaseActivity : ComponentActivity() {
         aplicarRefresco()
         Medios.revisar(this)
         Diptico.alVolver(miDisplay())
+        if (Diptico.estado.value.panel == cl.nikalbazu.diptico.estado.Panel.APPS) Diptico.cargarApps()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -236,4 +237,5 @@ abstract class BaseActivity : ComponentActivity() {
         return super.dispatchKeyEvent(event)
     }
 }
+
 

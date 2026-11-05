@@ -112,9 +112,9 @@ fun PantallaInicio(e: Estado) {
         }
         // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
         if (p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
-        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 20f, trabajos = e.trabajos)
+        if (!e.editandoWidgets && e.sesion == null) BarraFlotante(e, null, Modifier.align(Alignment.TopCenter), arriba = true)
 
-        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(48), bottom = esc.d(8))) {
+        Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 72), bottom = esc.d(8))) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f)) {
                     if (e.editandoWidgets || e.saludoInicio) Texto(if (e.editandoWidgets) "Acomodando tu inicio" else saludo(), 24f, lineas = 1)
@@ -123,25 +123,12 @@ fun PantallaInicio(e: Estado) {
                         13.5f, lineas = 1,
                     )
                 }
-                if (!e.editandoWidgets) {
-                    BotonBisa(Modifier.padding(end = esc.d(10)))
-                }
-                if (!e.editandoWidgets) {
-                    if (e.widgetFoco >= 0) {
-                        Pista("A", "Abrir")
-                        Spacer(Modifier.width(esc.d(8)))
-                        Pista("B", "Salir")
-                    } else Pista(if (e.unaPantalla) "✥" else "↑", "Widgets")
-                    Spacer(Modifier.width(esc.d(10)))
-                    Pista("Select", "Carátulas")
-                    Spacer(Modifier.width(esc.d(10)))
-                }
-                Box(
-                    Modifier.clip(RoundedCornerShape(50)).background(if (e.editandoWidgets) Uva else p.superficie.copy(alpha = 0.85f))
-                        .clickable { if (e.editandoWidgets) Diptico.terminarEdicion() else Diptico.editarWidgets() }
-                        .padding(horizontal = esc.d(12), vertical = esc.d(6)),
-                ) { Texto(if (e.editandoWidgets) "Listo" else "Editar", 13.5f, color = if (e.editandoWidgets) SobreUva else p.tinta) }
+                if (e.editandoWidgets) Box(
+                    Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
+                        .padding(horizontal = esc.d(14), vertical = esc.d(8)),
+                ) { Texto("Listo", 14f, color = SobreUva) }
             }
+
             if (e.editandoWidgets) {
                 Spacer(Modifier.height(esc.d(2)))
                 Detalle(
@@ -156,7 +143,7 @@ fun PantallaInicio(e: Estado) {
             LaunchedEffect(e.paginaInicio) { if (pager.currentPage != e.paginaInicio) pager.animateScrollToPage(e.paginaInicio) }
             LaunchedEffect(pager.settledPage) { if (pager.settledPage != Diptico.estado.value.paginaInicio) Diptico.irAPagina(pager.settledPage) }
             androidx.compose.foundation.pager.HorizontalPager(
-                state = pager, modifier = Modifier.fillMaxWidth().weight(1f),
+                state = pager, modifier = Modifier.fillMaxWidth().weight(1f).pellizcoWidgets(),
                 userScrollEnabled = !e.editandoWidgets, pageSpacing = esc.d(20), beyondViewportPageCount = 0,
             ) { pagina -> Grilla(e, pagina, Modifier.fillMaxSize()) }
             if (e.paginas > 1) {
@@ -187,7 +174,7 @@ private fun Grilla(e: Estado, pagina: Int, modifier0: Modifier) {
     BoxWithConstraints(modifier) {
         val hueco = e.huecoInicio.toFloat()
         val anchoU = maxWidth.value / esc.factor
-        val visibles = minOf(Widgets.FILAS, 4)
+        val visibles = Widgets.FILAS
         val altoU = maxHeight.value / esc.factor
         val celdaAn = (anchoU - hueco * (Widgets.COLUMNAS - 1)) / Widgets.COLUMNAS
         val celdaAl = (altoU - hueco * (visibles - 1)) / visibles
@@ -1579,4 +1566,5 @@ private fun WidgetColeccion(e: Estado, id: String, an: Int, al: Int) {
         }
     }
 }
+
 

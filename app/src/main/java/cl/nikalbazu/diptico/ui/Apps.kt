@@ -73,7 +73,7 @@ fun IconoApp(paquete: String, tam: Float, modifier: Modifier = Modifier) {
 fun PanelApps(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val apps = remember(e.appsTodas, e.appsFijadas, e.appsPestana) { Diptico.appsVisibles(e) }
+    val apps = remember(e.appsTodas, e.appsFijadas, e.appsPestana, e.ordenApps) { Diptico.appsVisibles(e) }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Box(Modifier.fillMaxWidth().height(esc.d(160)).background(Brush.verticalGradient(listOf(Cielo.copy(alpha = 0.16f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
@@ -126,15 +126,17 @@ fun PanelApps(e: Estado) {
                     verticalArrangement = Arrangement.spacedBy(esc.d(8)), horizontalArrangement = Arrangement.spacedBy(esc.d(6)),
                 ) {
                     itemsIndexed(apps, key = { _, a -> a.paquete }) { i, a ->
-                        CeldaApp(a, i == e.indice, a.paquete in e.appsFijadas, onLongClick = { Diptico.elegirPantalla("app:${a.paquete}") }) {
-                            if (i == e.indice) Diptico.abrirPaquete(a.paquete) else Diptico.elegirIndice(i)
+                        CeldaApp(a, i == e.indice, a.paquete in e.appsFijadas, onLongClick = { Diptico.actualizar { it.copy(indice = i) }; Diptico.abrirOpcionesApp(a.paquete) }) {
+                            Diptico.tocarApp(i)
                         }
                     }
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            Pistas("A" to "Abrir", "Y" to "Fijar", "X" to "Información", "L1 R1" to "Pestaña", "B" to "Cerrar")
+            if (e.appsMoviendo != null) Row(Modifier.fillMaxWidth().clickable { Diptico.cerrarOpcionesApp() }.padding(esc.d(6))) { Texto("Moviendo app · toca su lugar · A/B listo", 12f) }
+            else Pistas("A" to "Abrir", "Mantén A" to "Opciones", "X" to "Opciones", "Y" to "Fijar", "B" to "Cerrar")
         }
+        if (e.appsMenu != null) MenuApp(e)
     }
 }
 
@@ -222,3 +224,4 @@ fun WidgetApps(e: Estado, columnas: Int) {
         }
     }
 }
+

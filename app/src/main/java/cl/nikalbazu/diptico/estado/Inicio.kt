@@ -69,6 +69,7 @@ object Inicio {
                     Intent.ACTION_SCREEN_OFF -> {
                         apagadaDesde = SystemClock.elapsedRealtime()
                         jugandoAlApagar = Diptico.estado.value.sesion != null
+                        Diptico.alSuspender()
                         esperandoDesbloqueo = false
                     }
                     Intent.ACTION_SCREEN_ON -> {
@@ -99,3 +100,4 @@ object Inicio {
         Diptico.alEncender(ausencia, jugandoAlApagar)
     }
 }
+
