@@ -39,6 +39,9 @@ abstract class BaseActivity : ComponentActivity() {
     private val crearRespaldo = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         if (uri != null) Diptico.respaldoCreado(uri)
     }
+    private val exportarPartida = registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        Diptico.exportarPartidaElegida(uri)
+    }
     private val traerRespaldo = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) Diptico.respaldoElegido(uri)
     }
@@ -134,6 +137,9 @@ abstract class BaseActivity : ComponentActivity() {
         }
         Diptico.pedirCrearRespaldo = { nombre ->
             try { crearRespaldo.launch(nombre) } catch (_: Exception) { Diptico.avisar("No pude abrir el selector de archivos") }
+        }
+        Diptico.pedirExportarPartida = { nombre ->
+            try { exportarPartida.launch(nombre) } catch (_: Exception) { Diptico.avisar("No pude abrir el selector de archivos") }
         }
         Diptico.pedirTraerRespaldo = {
             try { traerRespaldo.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) } catch (_: Exception) { Diptico.avisar("No pude abrir el selector de archivos") }

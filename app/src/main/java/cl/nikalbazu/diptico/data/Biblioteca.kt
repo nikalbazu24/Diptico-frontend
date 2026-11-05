@@ -286,6 +286,7 @@ object Biblioteca {
     }
 
     /** Formatos preferidos cuando hay varios archivos del mismo juego (menos es mejor). */
+    private val NUMERO_DISCO = Regex("""[\(\[ ](Disc|Disk|CD|Disco) ?(\d+)""", RegexOption.IGNORE_CASE)
     private val PREFERENCIA = listOf("m3u", "chd", "rvz", "cue", "iso", "xci", "nsp", "nsz", "cso", "pbp", "zip", "7z")
 
     /**
@@ -300,10 +301,14 @@ object Biblioteca {
             else -> 2
         }
         fun formato(j: Juego): Int = if (j.esCarpeta) 0 else PREFERENCIA.indexOf(j.tipo).let { if (it < 0) PREFERENCIA.size else it }
-        // Los discos de un mismo juego (Disc 1, Disc 2) no son duplicados.
-        fun disco(a: String) = Regex("[\\(\\[ ](Disc|Disk|CD|Disco) ?(\\d+)", RegexOption.IGNORE_CASE).find(a)?.groupValues?.get(2) ?: ""
-        return juegos.groupBy { j -> j.consolaId + "|" + Descargas.normalizar(j.titulo).ifEmpty { j.archivo } + "|" + disco(j.archivo) }
-            .values.map { grupo -> grupo.minWith(compareBy<Juego>({ formato(it) }, { region(it.archivo) }, { it.archivo.length })) }
+        fun disco(a: String) = NUMERO_DISCO.find(a)?.groupValues?.get(2).orEmpty()
+        return juegos.groupBy { j ->
+            j.consolaId + "|" + Descargas.normalizar(j.titulo).ifEmpty { j.archivo } + "|" + disco(j.archivo)
+        }.values.map { grupo ->
+            val preferido = grupo.minWith(compareBy<Juego>({ formato(it) }, { region(it.archivo) }, { it.archivo.length }))
+            val variantes = grupo.flatMap { j -> listOf(VarianteJuego(j.archivo, j.uri, j.docId, j.esCarpeta)) + j.variantes }
+                .distinctBy { it.uri }.filterNot { it.uri == preferido.uri }
+            preferido.copy(variantes = variantes)
+        }
     }
 }
-

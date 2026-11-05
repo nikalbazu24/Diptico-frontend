@@ -204,6 +204,10 @@ class Almacen(ctx: Context) {
                 vistaPartida = d.optString("vistaPartida", "").ifEmpty { null },
                 avance = d.optString("avance", "").ifEmpty { null },
                 puestoCola = d.optLong("puestoCola").takeIf { d.has("puestoCola") },
+                archivoVariante = d.optString("archivoVariante", "").ifEmpty { null },
+                capturas = d.optJSONArray("capturas")?.let { a ->
+                    (0 until minOf(a.length(), 24)).mapNotNull { i -> a.optString(i).takeIf { it.startsWith("content://") } }
+                }.orEmpty(),
             )
         }
         return salida
@@ -232,6 +236,8 @@ class Almacen(ctx: Context) {
             d.vistaPartida?.let { j.put("vistaPartida", it) }
             d.avance?.let { j.put("avance", it) }
             d.puestoCola?.let { j.put("puestoCola", it) }
+            d.archivoVariante?.let { j.put("archivoVariante", it) }
+            if (d.capturas.isNotEmpty()) j.put("capturas", JSONArray(d.capturas))
             o.put(k, j)
         }
         p.edit().putString("datos", o.toString()).apply()
@@ -252,6 +258,13 @@ class Almacen(ctx: Context) {
                 portada = o.optString("portada", "").takeIf { it.isNotEmpty() }?.let(Uri::parse),
                 arte = o.optString("arte", "").takeIf { it.isNotEmpty() }?.let(Uri::parse),
                 esCarpeta = o.optBoolean("carpeta", false),
+                variantes = o.optJSONArray("variantes")?.let { a ->
+                    (0 until a.length()).mapNotNull { i ->
+                        val v = a.optJSONObject(i) ?: return@mapNotNull null
+                        val ruta = v.optString("uri").ifBlank { return@mapNotNull null }
+                        VarianteJuego(v.optString("archivo"), Uri.parse(ruta), v.optString("doc"), v.optBoolean("carpeta"))
+                    }
+                }.orEmpty(),
             )
         }
         return salida
@@ -270,6 +283,10 @@ class Almacen(ctx: Context) {
             o.put("portada", j.portada?.toString() ?: "")
             o.put("arte", j.arte?.toString() ?: "")
             o.put("carpeta", j.esCarpeta)
+            if (j.variantes.isNotEmpty()) o.put("variantes", JSONArray().apply {
+                j.variantes.forEach { v -> put(JSONObject().put("archivo", v.archivo)
+                    .put("uri", v.uri.toString()).put("doc", v.docId).put("carpeta", v.esCarpeta)) }
+            })
             a.put(o)
         }
         p.edit().putString("biblioteca", a.toString()).apply()

@@ -119,4 +119,24 @@ class EstabilidadTest {
         Almacen(ctx).guardarDatos(mapOf("psx/prueba" to d))
         assertEquals(d, Almacen(ctx).datos().getValue("psx/prueba"))
     }
+
+    @Test fun bibliotecaNoPierdeVariantesAlGuardarLaCache() {
+        val usa = Juego("psx/game", "psx", "Game", "Game (USA).chd", Uri.parse("content://rom/usa"), "usa")
+        val eu = usa.copy(clave = "psx/game-eu", archivo = "Game (Europe).chd", uri = Uri.parse("content://rom/eu"), docId = "eu")
+        val reunidos = Biblioteca.sinDuplicados(listOf(eu, usa))
+        assertEquals(usa.archivo, reunidos.single().archivo)
+        assertEquals(eu.archivo, reunidos.single().variantes.single().archivo)
+        val almacen = Almacen(ctx)
+        almacen.guardarBiblioteca(reunidos)
+        assertEquals(reunidos, almacen.biblioteca())
+    }
+
+    @Test fun perfilConservaWidgetsTransparentesYModoPartida() {
+        val perfil = cl.nikalbazu.diptico.estado.Experiencia(
+            vistaPartida = "BITACORA",
+            posiciones = listOf(cl.nikalbazu.diptico.estado.PosicionVisual("juego", 0, 0, 4, 2, 0, true,
+                estilo = "sinfondo", opacidad = 0f, escala = 1.3f)),
+        )
+        assertEquals(perfil, cl.nikalbazu.diptico.estado.Experiencia.importar(perfil.json().toString()))
+    }
 }

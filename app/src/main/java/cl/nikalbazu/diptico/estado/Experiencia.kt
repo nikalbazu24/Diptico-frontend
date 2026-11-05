@@ -81,7 +81,7 @@ data class Experiencia(
                     p.optString("estilo").takeIf { it in Widgets.ESTILOS },
                     p.optLong("color").takeIf { p.has("color") },
                     p.optInt("radio", -1).takeIf { it in 0..48 },
-                    p.optDouble("opacidad").takeIf { it in 0.1..1.0 }?.toFloat(),
+                    p.optDouble("opacidad").takeIf { it in 0.0..1.0 }?.toFloat(),
                     p.optInt("variante", -1).takeIf { it in 0..8 },
                     p.optDouble("escala").takeIf { it in 0.5..2.0 }?.toFloat(),
                 )

@@ -1797,18 +1797,27 @@ object Diptico {
 
     // ---------- Jugar ----------
 
+    private fun archivoParaJugar(juego: Juego, e: Estado): Juego {
+        val archivo = e.datos[juego.clave]?.archivoVariante ?: return juego
+        val variante = juego.variantes.singleOrNull { it.archivo == archivo } ?: return juego
+        return juego.copy(archivo = variante.archivo, uri = variante.uri, docId = variante.docId, esCarpeta = variante.esCarpeta)
+    }
+
     private var revisarLanzamiento: Job? = null
 
     fun jugar(pantalla: String? = null, conLupaLista: Boolean = false, conRetomaLista: Boolean = false) {
-        val juego = estado.value.seleccionado ?: return
+        val e = estado.value
+        val juego = e.seleccionado ?: return
         if (revisarLanzamiento?.isActive == true) return
         if (juego.uri.scheme != "content") {
             jugarComprobado(pantalla, conLupaLista, conRetomaLista)
             return
         }
         revisarLanzamiento = scope.launch {
-            val problema = withContext(Dispatchers.IO) { Lanzador.revisarArchivo(app, juego) }
-            if (estado.value.seleccionado?.clave != juego.clave) return@launch
+            val problema = withContext(Dispatchers.IO) { Lanzador.revisarArchivo(app, archivoParaJugar(juego, e)) }
+            val actual = estado.value
+            if (actual.seleccionado?.clave != juego.clave ||
+                actual.datos[juego.clave]?.archivoVariante != e.datos[juego.clave]?.archivoVariante) return@launch
             if (problema == null) jugarComprobado(pantalla, conLupaLista, conRetomaLista)
             else {
                 if (conLupaLista) cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
@@ -1838,7 +1847,10 @@ object Diptico {
         }
         val displayId = if (destino == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
-        else Lanzador.lanzar(app, juego, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(juego))
+        else {
+            val archivo = archivoParaJugar(juego, e)
+            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(archivo))
+        }
         if (error != null) {
             if (conLupaLista) cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
             if (conRetomaLista) cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
@@ -1964,6 +1976,9 @@ object Diptico {
     }
 
     fun pestanasGaleria(tipo: String = estado.value.galeria): List<String> = if (tipo == "colecciones") listOf("Colecciones") else when (tipo) {
+        "variantes_juego" -> listOf("Archivos del juego")
+        "capturas_juego", "captura_acciones" -> listOf("Capturas guardadas")
+        "copias_srm" -> listOf("Copias de RetroArch")
         "filtros" -> listOf("Filtrar juegos")
         "orden" -> listOf("Ordenar juegos")
         "vistas_consolas" -> listOf("Tus consolas")
@@ -1993,6 +2008,46 @@ object Diptico {
 
     fun itemsGaleria(e: Estado = estado.value): List<ItemGaleria> {
         val actual = cl.nikalbazu.diptico.ui.Estilo.tema
+        if (e.galeria == "copias_srm") return opcionesCopiasPartida
+        if (e.galeria == "captura_acciones") {
+            val (clave, ruta) = capturaPara ?: return emptyList()
+            return listOf(
+                ItemGaleria("mapa", "Usar como mapa", "Marca el punto donde quedaste", false) {
+                    guardarMapas(estado.value.mapas + (clave to MapaJuego(ruta, .5f, .5f)))
+                    cerrarPanel()
+                    abrirMapa(clave)
+                },
+                ItemGaleria("compartir", "Compartir", "Abre el selector de Android", false) { compartirCaptura(ruta) },
+                ItemGaleria("quitar", "Quitar de la galería", "El archivo original se conserva", false) {
+                    cambiarDatos(clave) { it.copy(capturas = it.capturas - ruta) }
+                    abrirGaleria("capturas_juego")
+                },
+                ItemGaleria("volver", "Volver a capturas", "Mira las demás imágenes", false) { abrirGaleria("capturas_juego") },
+            )
+        }
+        if (e.galeria == "capturas_juego") {
+            val j = e.seleccionado ?: return emptyList()
+            val capturas = e.datos[j.clave]?.capturas.orEmpty()
+            return listOf(ItemGaleria("agregar", "Agregar captura", "Elige una imagen guardada en Android", false) {
+                pedirArchivoPara("captura:${j.clave}", "image/*")
+            }) + capturas.mapIndexed { i, ruta ->
+                ItemGaleria("captura-$i", "Captura ${i + 1}", "Compartir o usar como mapa", false) {
+                    accionesCaptura(j.clave, ruta)
+                }
+            }
+        }
+        if (e.galeria == "variantes_juego") {
+            val j = e.seleccionado ?: return emptyList()
+            val actual = e.datos[j.clave]?.archivoVariante
+            val opciones = listOf(null to j.archivo) + j.variantes.groupBy { it.archivo }.values
+                .mapNotNull { it.singleOrNull() }.map { it.archivo to it.archivo }
+            return opciones.mapIndexed { i, (archivo, nombre) ->
+                ItemGaleria("archivo-$i", nombre, if (archivo == null) "Archivo preferido" else "Versión alternativa", actual == archivo) {
+                    cambiarDatos(j.clave) { it.copy(archivoVariante = archivo) }
+                    cerrarPanel()
+                }
+            }
+        }
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
         if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
         if (e.galeria == "vistas_juegos") return listOf("cuadricula", "estante", "lista", "carrusel", "abanico", "lomos").map { v ->
@@ -2729,6 +2784,14 @@ object Diptico {
                 ciclarEmuladorJuego(juego.clave, consola)
             }
         }
+        if (consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
+            lista += Opcion("Copias de RetroArch", ".srm", Icono.COPIAR,
+                "Guarda o recupera una copia manual del archivo SRAM que selecciones.") { abrirCopiasPartida(juego.clave) }
+        }
+        lista += Opcion("Capturas del juego", d?.capturas?.size?.toString() ?: "0", Icono.PORTADA,
+            "Junta tus capturas guardadas para verlas, compartirlas o marcar un mapa.") { abrirGaleria("capturas_juego") }
+        if (juego.variantes.isNotEmpty()) lista += Opcion("Versión del juego", d?.archivoVariante ?: juego.archivo,
+            Icono.FORMA, "Elige otra región o formato. El emulador gestiona el guardado de cada archivo.") { abrirGaleria("variantes_juego") }
         lista += Opcion("Estado en mi cola", AvanceJuego.leer(d?.avance).titulo, Icono.BIBLIOTECA,
             "Marca pendiente, jugando o terminado para ordenar la cola.") { cambiarAvance(juego.clave) }
         if (AvanceJuego.leer(d?.avance) in setOf(AvanceJuego.PENDIENTE, AvanceJuego.JUGANDO)) {
@@ -4500,6 +4563,10 @@ object Diptico {
     fun preguntar(texto: String, forzarWeb: Boolean = false) {
         val e = estado.value
         if (e.pensando) return
+        if (!forzarWeb) AyudaLocal.responder(texto)?.let { respuesta ->
+            actualizar { it.copy(chat = it.chat + MensajeChat("yo", texto) + MensajeChat("ia", respuesta), indice = 0) }
+            return
+        }
         val motor = motorEfectivo(e)
         if (motor == "ninguno" || (motor == "local" && !IALocal.listo(app))) {
             abrirGaleria("ia")
@@ -6358,6 +6425,72 @@ object Diptico {
         pedirArchivo?.invoke(tipo) ?: avisar("No pude abrir el selector de archivos")
     }
 
+    var pedirExportarPartida: ((String) -> Unit)? = null
+    private var copiaParaExportar: java.io.File? = null
+    private var opcionesCopiasPartida: List<ItemGaleria> = emptyList()
+
+    private fun abrirCopiasPartida(clave: String) {
+        val j = estado.value.juegos.firstOrNull { it.clave == clave } ?: return
+        scope.launch {
+            val copias = withContext(Dispatchers.IO) { cl.nikalbazu.diptico.data.CopiasPartida.listar(app, clave) }
+            opcionesCopiasPartida = listOf(ItemGaleria("copia-nueva", "Guardar copia .srm",
+                "Selecciona un guardado. Se conservan las últimas tres copias.", false) { pedirArchivoPara("partida-srm:$clave", "*/*") }) +
+                copias.mapIndexed { i, archivo ->
+                    val fecha = java.text.DateFormat.getDateTimeInstance().format(java.util.Date(archivo.lastModified()))
+                    ItemGaleria(archivo.name, "Recuperar copia ${i + 1}", fecha, false) {
+                        mostrarDialogo(Dialogo("exportar-srm", "¿Recuperar esta copia?",
+                            "Elige dónde guardar el archivo .srm recuperado. El guardado del emulador queda en su ubicación actual.",
+                            Icono.COPIAR, si = "Elegir destino", no = "Cancelar")) {
+                            copiaParaExportar = archivo
+                            val base = archivoParaJugar(j, estado.value).archivo.substringBeforeLast('.').replace('/', '_')
+                            pedirExportarPartida?.invoke("$base.srm")
+                        }
+                    }
+                }
+            abrirGaleria("copias_srm")
+        }
+    }
+
+    fun exportarPartidaElegida(uri: Uri?) {
+        val archivo = copiaParaExportar
+        copiaParaExportar = null
+        if (uri == null || archivo == null) return
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    requireNotNull(app.contentResolver.openOutputStream(uri, "wt")).use { salida ->
+                        archivo.inputStream().use { it.copyTo(salida) }
+                    }
+                }.isSuccess
+            }
+            avisar(if (ok) "Copia .srm recuperada" else "No pude guardar la copia")
+        }
+    }
+
+    private var capturaPara: Pair<String, String>? = null
+
+    fun imagenCaptura(e: Estado, id: String): Uri? {
+        if (e.galeria == "captura_acciones") return capturaPara?.second?.let(Uri::parse)
+        if (e.galeria != "capturas_juego") return null
+        val clave = e.seleccionado?.clave ?: return null
+        val i = id.removePrefix("captura-").toIntOrNull() ?: return null
+        return e.datos[clave]?.capturas?.getOrNull(i)?.let(Uri::parse)
+    }
+
+    private fun accionesCaptura(clave: String, ruta: String) {
+        capturaPara = clave to ruta
+        abrirGaleria("captura_acciones")
+    }
+
+    private fun compartirCaptura(ruta: String) {
+        val uri = Uri.parse(ruta)
+        val enviar = Intent(Intent.ACTION_SEND).setType("image/*")
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            .also { it.clipData = android.content.ClipData.newRawUri("Captura", uri) }
+        abrirIntent(Intent.createChooser(enviar, "Compartir captura"), "No pude compartir la captura")
+    }
+
     private fun importarListaEsDe(uri: Uri) {
         val e = estado.value
         scope.launch {
@@ -6395,6 +6528,36 @@ object Diptico {
     }
 
     fun archivoElegido(uri: Uri) {
+        if (archivoPara.startsWith("partida-srm:")) {
+            val clave = archivoPara.removePrefix("partida-srm:")
+            archivoPara = ""
+            scope.launch {
+                val ok = withContext(Dispatchers.IO) {
+                    runCatching { cl.nikalbazu.diptico.data.CopiasPartida.guardar(app, clave, uri) }.isSuccess
+                }
+                if (ok) {
+                    avisar("Copia .srm guardada")
+                    abrirCopiasPartida(clave)
+                } else avisar("Elige un guardado .srm legible de hasta 16 MB")
+            }
+            return
+        }
+        if (archivoPara.startsWith("captura:")) {
+            val clave = archivoPara.removePrefix("captura:")
+            archivoPara = ""
+            try {
+                require(uri.scheme == "content")
+                app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (_: Exception) { avisar("No pude conservar el acceso a esa captura"); return }
+            val datos = estado.value.datos.toMutableMap()
+            val d = datos[clave] ?: DatosJuego()
+            if (d.capturas.size >= 24 && uri.toString() !in d.capturas) { avisar("La galería admite 24 capturas por juego"); return }
+            datos[clave] = d.copy(capturas = (listOf(uri.toString()) + d.capturas).distinct())
+            almacen.guardarDatos(datos)
+            actualizar { it.copy(datos = datos) }
+            avisar("Captura agregada")
+            return
+        }
         if (archivoPara == "es-de") {
             archivoPara = ""
             importarListaEsDe(uri)
