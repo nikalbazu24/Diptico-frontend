@@ -111,6 +111,7 @@ abstract class BaseActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        Diptico.revisarActualizacionAlVolver()
         Diptico.pedirCarpeta = { tipo ->
             try {
                 when (tipo) {

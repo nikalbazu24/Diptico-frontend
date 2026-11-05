@@ -3,13 +3,24 @@ package cl.nikalbazu.diptico.estado
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.job.JobInfo
+import android.app.job.JobParameters
+import android.app.job.JobScheduler
+import android.app.job.JobService
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import cl.nikalbazu.diptico.data.Almacen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import java.io.File
 import java.net.HttpURLConnection
@@ -26,6 +37,23 @@ object Actualizador {
     private const val REPO = "Nikalbazu24/diptico-frontend"
     private const val CANAL = "actualizaciones"
     private const val AVISO = 4471
+    private const val REVISION = 4472
+    private val patronBeta = Regex("""v?1[.]0-beta[.](\d+)""")
+
+    /** Android reúne estas comprobaciones con otros trabajos cuando Díptico está cerrado. */
+    fun programar(ctx: Context, activo: Boolean) {
+        val scheduler = ctx.getSystemService(JobScheduler::class.java) ?: return
+        if (!activo) {
+            scheduler.cancel(REVISION)
+            return
+        }
+        if (scheduler.getPendingJob(REVISION) != null) return
+        val trabajo = JobInfo.Builder(REVISION, ComponentName(ctx, RevisionActualizaciones::class.java))
+            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+            .setPeriodic(JobInfo.getMinPeriodMillis())
+            .build()
+        scheduler.schedule(trabajo)
+    }
 
     /** Número de esta versión (el mismo de "beta.N"). */
     fun numeroActual(ctx: Context): Int = try {
@@ -43,22 +71,24 @@ object Actualizador {
         val texto = try { c.inputStream.bufferedReader().use { it.readText() } } finally { c.disconnect() }
         val lista = JSONArray(texto)
         val actual = numeroActual(ctx)
+        val movil = esMovil(ctx)
         var mejor: VersionNueva? = null
         for (k in 0 until lista.length()) {
             val r = lista.getJSONObject(k)
             if (r.optBoolean("draft")) continue
             val tag = r.optString("tag_name")
-            val n = Regex("(\\d+)$").find(tag)?.groupValues?.get(1)?.toIntOrNull() ?: continue
+            val n = patronBeta.matchEntire(tag)?.groupValues?.get(1)?.toIntOrNull() ?: continue
             if (n <= actual || (mejor != null && n <= mejor.numero)) continue
             val assets = r.optJSONArray("assets") ?: continue
-            val movil = esMovil(ctx)
             for (a in 0 until assets.length()) {
                 val o = assets.getJSONObject(a)
                 val archivoApk = o.optString("name")
                 // Cada versión baja su mismo tipo: la de consolas o la de teléfonos ("-movil").
-                if (archivoApk.endsWith(".apk") && archivoApk.contains("-movil") == movil) {
+                val url = o.optString("browser_download_url")
+                if (o.optString("state") == "uploaded" && url.isNotBlank() &&
+                    archivoApk.endsWith(".apk") && archivoApk.contains("-movil") == movil) {
                     mejor = VersionNueva(
-                        n, tag.removePrefix("v"), o.optString("browser_download_url"), o.optLong("size"),
+                        n, tag.removePrefix("v"), url, o.optLong("size"),
                         r.optString("body").lineSequence().map { it.trim() }.filter { it.isNotBlank() }.take(4).joinToString("\n"),
                     )
                     break
@@ -148,11 +178,27 @@ object Actualizador {
         }
     }
 
-    /** Notificación de Android: "Hay una versión nueva". Tocarla abre Díptico en la actualización. */
-    fun notificar(ctx: Context, v: VersionNueva) {
-        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+    fun permiteAvisos(ctx: Context): Boolean {
+        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return false
+        return nm.areNotificationsEnabled() &&
+            nm.getNotificationChannel(CANAL)?.importance != NotificationManager.IMPORTANCE_NONE
+    }
+
+    /** Comparte el aviso entre la revisión manual, al abrir y el trabajo en segundo plano. */
+    @Synchronized
+    fun avisarSiNueva(ctx: Context, v: VersionNueva): Boolean {
+        val almacen = Almacen(ctx)
+        if (!almacen.bool("actualizarSolo", true) || !permiteAvisos(ctx) ||
+            almacen.texto("actAvisada") == v.nombre || v.numero <= numeroActual(ctx)) return false
+        if (!notificar(ctx, v)) return false
+        almacen.guardarTexto("actAvisada", v.nombre)
+        return true
+    }
+
+    private fun notificar(ctx: Context, v: VersionNueva): Boolean {
+        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return false
         nm.createNotificationChannel(NotificationChannel(CANAL, "Actualizaciones de Díptico", NotificationManager.IMPORTANCE_DEFAULT))
-        val abrir = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.putExtra("actualizar", true) ?: return
+        val abrir = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.putExtra("actualizar", true) ?: return false
         val pend = PendingIntent.getActivity(ctx, AVISO, abrir, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val n = android.app.Notification.Builder(ctx, CANAL)
             .setSmallIcon(cl.nikalbazu.diptico.R.mipmap.ic_launcher)
@@ -161,7 +207,34 @@ object Actualizador {
             .setContentIntent(pend)
             .setAutoCancel(true)
             .build()
-        try { nm.notify(AVISO, n) } catch (_: Exception) {}
+        return try {
+            nm.notify(AVISO, n)
+            true
+        } catch (_: SecurityException) {
+            false
+        }
+    }
+}
+
+/** Consulta GitHub sin iniciar la biblioteca ni cargar las pantallas de Díptico. */
+class RevisionActualizaciones : JobService() {
+    private var revision: Job? = null
+
+    override fun onStartJob(params: JobParameters): Boolean {
+        val ctx = applicationContext
+        if (!Almacen(ctx).bool("actualizarSolo", true) || !Actualizador.permiteAvisos(ctx)) return false
+        revision = CoroutineScope(Dispatchers.Main).launch {
+            val version = withContext(Dispatchers.IO) { runCatching { Actualizador.buscar(ctx) }.getOrNull() }
+            if (version != null) Actualizador.avisarSiNueva(ctx, version)
+            jobFinished(params, false)
+        }
+        return true
+    }
+
+    override fun onStopJob(params: JobParameters): Boolean {
+        revision?.cancel()
+        revision = null
+        return true
     }
 }
 
@@ -179,3 +252,4 @@ class ReceptorInstalacion : BroadcastReceiver() {
         }
     }
 }
+

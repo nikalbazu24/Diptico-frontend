@@ -266,15 +266,14 @@ private fun AccionRapida(tecla: String, texto: String, accion: () -> Unit) {
 
 /**
  * La barra flotante del inicio: jugar, ficha y opciones del juego, buscar, apps, turbo, menú y Bisa, en una sola
- * píldora. Se esconde sola a los 5 segundos (o queda fija, en Menú › Inicio) y vuelve deslizando hacia arriba desde
- * el borde de abajo, tocando la pantalla o con B. Escondida, solo queda una manija discreta.
+ * píldora fija. En Widgets queda arriba a la derecha.
  */
 @Composable
 fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val visible = true
-    Box(modifier.fillMaxWidth().padding(top = esc.d(if (arriba) 10 else 0), bottom = esc.d(if (arriba) 0 else 14), start = esc.d(12), end = esc.d(12)), contentAlignment = if (arriba) Alignment.TopCenter else Alignment.BottomCenter) {
+    Box(modifier.fillMaxWidth().padding(top = esc.d(if (arriba) 10 else 0), bottom = esc.d(if (arriba) 0 else 14), start = esc.d(12), end = esc.d(12)), contentAlignment = if (arriba) Alignment.TopEnd else Alignment.BottomCenter) {
         androidx.compose.animation.AnimatedVisibility(
             visible = visible,
             enter = fadeIn(tween(240)) + slideInVertically(androidx.compose.animation.core.spring(dampingRatio = 0.75f, stiffness = 420f)) { it / 2 },

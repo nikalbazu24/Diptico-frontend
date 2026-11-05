@@ -766,11 +766,11 @@ object Teclas {
         val deWidgets = when (modo) { "invertido" -> izquierdo; "clasico" -> false; else -> !izquierdo }
         val deJuegos = when (modo) { "invertido" -> !izquierdo; "clasico" -> false; else -> izquierdo }
         val libre = e.sesion == null && !e.conTeclado && e.configurado && !e.intro && e.bienvenida == 0L
-        // Editor de widgets: un stick desliza para ver todo, el otro elige como la cruceta.
+        // Editor de widgets: el stick de widgets cambia de página o elige en vertical.
         if (libre && e.editandoWidgets && (e.panel == Panel.NINGUNO || e.panel == Panel.ESTUDIO) && e.burbuja == null) {
             val desliza = if (modo == "clasico") !izquierdo else deWidgets
             if (desliza) {
-                if (dy != 0) Diptico.desplazarInicio(dy) else if (!repetido) Diptico.cambiarPagina(dx)
+                if (dy != 0) Diptico.elegirWidgetDir(0, dy) else if (!repetido) Diptico.cambiarPagina(dx)
                 return
             }
             if (e.panel == Panel.NINGUNO || e.estudioZona == "grilla") { pulsar(d, 0); return }

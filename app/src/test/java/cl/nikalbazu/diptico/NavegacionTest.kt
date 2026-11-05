@@ -54,7 +54,7 @@ class NavegacionTest {
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("estudio-visual-1").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("navegacion-retoma-1").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

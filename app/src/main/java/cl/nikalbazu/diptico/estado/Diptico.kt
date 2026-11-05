@@ -210,6 +210,8 @@ object Widgets {
         Widget("accesos", 0, 0, 3, 1, false), Widget("notificaciones", 0, 0, 3, 2, false),
         Widget("logros", 0, 0, 3, 2, false), Widget("asistente", 0, 0, 3, 1, false),
         Widget("apps", 0, 0, 3, 1, false),
+        Widget("temporizador", 0, 0, 2, 1, false), Widget("cronometro", 0, 0, 2, 1, false),
+        Widget("buscar", 0, 0, 2, 1, false),
     )
 
     /** Para qué sirve cada widget (en el catálogo del estudio). */
@@ -224,6 +226,9 @@ object Widgets {
         "notificaciones" -> "Lo último que llegó a tu consola"; "logros" -> "Tus logros de RetroAchievements"
         "asistente" -> "Un acceso directo para hablar con Bisa"
         "apps" -> "Tus apps fijadas y el cajón con todas"
+        "temporizador" -> "Cuenta atrás y aviso mientras juegas"
+        "cronometro" -> "Mide una partida y pausa cuando quieras"
+        "buscar" -> "Abre la búsqueda de juegos con un toque"
         else -> "Tu imagen o GIF animado"
     }
 
@@ -233,6 +238,8 @@ object Widgets {
         "fiesta" -> Icono.MUNDO; "tiempo" -> Icono.RELOJ; "bateria" -> Icono.BATERIA; "consolas" -> Icono.BIBLIOTECA
         "favoritos" -> Icono.CORAZON; "frase" -> Icono.CHISPA; "estadisticas" -> Icono.TROFEO; "sugerencia" -> Icono.DADO
         "accesos" -> Icono.AJUSTES; "notificaciones" -> Icono.CAMPANA; "logros" -> Icono.TROFEO; "asistente" -> Icono.BISA; "apps" -> Icono.APPS
+        "temporizador", "cronometro" -> Icono.RELOJ
+        "buscar" -> Icono.BUSCAR
         else -> Icono.PORTADA
     }
 
@@ -260,6 +267,7 @@ object Widgets {
         "favoritos" -> "Favoritos"; "frase" -> "Saludo del día"; "estadisticas" -> "Estadísticas"
         "sugerencia" -> "¿Qué juego hoy?"; "accesos" -> "Accesos rápidos"; "notificaciones" -> "Notificaciones"
         "logros" -> "Logros (RetroAchievements)"; "asistente" -> "Asistente con IA"; "apps" -> "Apps"
+        "temporizador" -> "Temporizador"; "cronometro" -> "Cronómetro"; "buscar" -> "Buscar juegos"
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -4006,7 +4014,7 @@ object Diptico {
     /** Entra al modo de acomodar widgets (en la pantalla del inicio). */
     fun editarWidgets() {
         almacen.guardarTexto("inicio", "widgets")
-        val primero = estado.value.widgets.indexOfFirst { it.visible }.coerceAtLeast(0)
+        val primero = widgetsDePagina().firstOrNull() ?: -1
         actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.ESTUDIO, estudioPestana = 0, estudioMover = false, indice = 0, widgetFoco = -1, estudioZona = "grilla", burbuja = null) }
     }
 
@@ -4076,17 +4084,32 @@ object Diptico {
         estado.value.widgets.getOrNull(e.widgetSel)?.let { w -> if (w.pagina != e.paginaInicio) actualizar { it.copy(paginaInicio = w.pagina) } }
     }
 
-    /** Para arrastrar con el dedo: deja el widget en la celda indicada. */
-    fun ponerWidget(i: Int, x: Int, y: Int) {
-        cambiarWidget(i) { w ->
-            val c = encajar(w.copy(x = x, y = y))
-            if (!choca(c, i)) c
-            else {
-                val l = empujando(i, c)
-                if (l != null) { pendienteEmpuje = l; c } else { avisar("No hay espacio para correr los otros widgets"); w }
-            }
+    /** Un solo cambio de estado para mover o estirar y reubicar a los vecinos. */
+    private fun ubicarWidget(i: Int, destino: Widget): Boolean {
+        val e = estado.value
+        val antes = e.widgets.getOrNull(i) ?: return false
+        val c = encajar(destino)
+        if (c == antes) return true
+        val nueva = empujando(i, c) ?: return false
+        almacen.guardarTexto("widgets", escribirWidgets(nueva))
+        actualizar { it.copy(widgets = nueva, widgetSel = i, paginaInicio = c.pagina) }
+        return true
+    }
+
+    fun ponerWidget(i: Int, x: Int, y: Int, pagina: Int) {
+        val e = estado.value
+        val w = e.widgets.getOrNull(i)?.takeIf { it.visible } ?: return
+        val destino = encajar(w.copy(x = x, y = y, pagina = pagina.coerceIn(0, e.paginas - 1)))
+        if (ubicarWidget(i, destino)) return
+        // Si el punto de caída está ocupado, busca el hueco más cercano de la página destino.
+        if (destino.pagina != w.pagina) {
+            val libre = (0..Widgets.FILAS - w.al).asSequence().flatMap { fila ->
+                (0..Widgets.COLUMNAS - w.an).asSequence().map { columna -> destino.copy(x = columna, y = fila) }
+            }.filterNot { choca(it, i, e.widgets) }
+                .minByOrNull { kotlin.math.abs(it.x - destino.x) + kotlin.math.abs(it.y - destino.y) }
+            if (libre != null && ubicarWidget(i, libre)) return
         }
-        aplicarEmpuje()
+        avisar("No hay espacio. El widget sigue en su lugar.")
     }
 
     /** Los widgets corridos por el último movimiento (se aplican después de mover el elegido). */
@@ -5091,6 +5114,7 @@ object Diptico {
             "paso" -> { abrirQuedaste(); return }
             "accesos" -> { abrirCentro(); return }
             "apps" -> { abrirApps(); return }
+            "buscar" -> { abrirBuscar(); return }
         }
         // Acceso directo: juega al tiro.
         if (w.tipo.startsWith("atajo-")) {
@@ -5200,6 +5224,16 @@ object Diptico {
         }
     }
 
+    private fun opcionesTemporizador(e: Estado) = listOf(
+        Opcion("Temporizador", "${e.temporizadorMin} min", Icono.RELOJ, "Elige los minutos con ← →. Te aviso con un cartel aunque estés jugando.", menos = { cambiarTemporizador(-1) }) { cambiarTemporizador(1) },
+        Opcion(if (e.temporizadorFin > 0L) "Detener el temporizador" else "Empezar el temporizador", icono = if (e.temporizadorFin > 0L) Icono.CERRAR else Icono.JUGAR, ayuda = "Un temporizador para avisarte cuando sea hora de dejar de jugar.") { alternarTemporizador() },
+    )
+
+    private fun opcionesCronometro(e: Estado) = listOf(
+        Opcion(if (e.cronoInicio > 0L) "Pausar el cronómetro" else if (e.cronoAcumulado > 0L) "Seguir el cronómetro" else "Empezar el cronómetro", icono = Icono.RELOJ, ayuda = "Para medir una partida, un speedrun o lo que quieras.") { alternarCrono() },
+        Opcion("Reiniciar el cronómetro", icono = Icono.BORRAR, apagada = e.cronoInicio == 0L && e.cronoAcumulado == 0L, ayuda = "Vuelve el cronómetro a cero.") { reiniciarCrono() },
+    )
+
     /** Lo que se puede hacer dentro de cada widget abierto (la lista del panel). */
     fun opcionesWidget(e: Estado = estado.value): List<Opcion> {
         val w = e.widgets.getOrNull(e.widgetAbierto) ?: return emptyList()
@@ -5208,11 +5242,9 @@ object Diptico {
             Opcion(j.titulo, (Consolas.porId(j.consolaId)?.nombre ?: "") + (d?.tiempo?.takeIf { it >= 60 }?.let { " · ${formatoTiempoCorto(it)}" } ?: ""), Icono.JUGAR, d?.paso.orEmpty()) { jugarDesdeWidget(j.clave) }
         }
         return when (w.tipo) {
-            "reloj" -> listOf(
-                Opcion("Temporizador", "${e.temporizadorMin} min", Icono.RELOJ, "Elige los minutos con ← →. Te aviso con un cartel aunque estés jugando.", menos = { cambiarTemporizador(-1) }) { cambiarTemporizador(1) },
-                Opcion(if (e.temporizadorFin > 0L) "Detener el temporizador" else "Empezar el temporizador", icono = if (e.temporizadorFin > 0L) Icono.CERRAR else Icono.JUGAR, ayuda = "Un temporizador para avisarte cuando sea hora de dejar de jugar.") { alternarTemporizador() },
-                Opcion(if (e.cronoInicio > 0L) "Pausar el cronómetro" else if (e.cronoAcumulado > 0L) "Seguir el cronómetro" else "Empezar el cronómetro", icono = Icono.RELOJ, ayuda = "Para medir una partida, un speedrun o lo que quieras.") { alternarCrono() },
-                Opcion("Reiniciar el cronómetro", icono = Icono.BORRAR, apagada = e.cronoInicio == 0L && e.cronoAcumulado == 0L, ayuda = "Vuelve el cronómetro a cero.") { reiniciarCrono() },
+            "temporizador" -> opcionesTemporizador(e)
+            "cronometro" -> opcionesCronometro(e)
+            "reloj" -> opcionesTemporizador(e) + opcionesCronometro(e) + listOf(
                 Opcion("Recordarme una pausa al jugar", if (e.pausaCada == 0) "No" else "Cada ${e.pausaCada} min", Icono.CORAZON, "Un cartel amable mientras juegas para descansar la vista y estirarte.", menos = { cambiarPausa(-1) }) { cambiarPausa(1) },
                 Opcion("Reloj a pantalla completa", icono = Icono.RELOJ, ayuda = "Muestra la hora en grande en la pantalla de arriba.") { cerrarPanel(); alternarReloj() },
             )
@@ -5683,10 +5715,6 @@ object Diptico {
 
     fun nombreSticks(m: String) = when (m) { "invertido" -> "Izquierdo widgets · derecho juegos"; "clasico" -> "Clásico (izquierdo = cruceta)"; else -> "Izquierdo juegos · derecho widgets" }
 
-    /** Para que el inicio se deslice con el stick en el editor de widgets (+1 baja, -1 sube). */
-    val desplazamientos = kotlinx.coroutines.flow.MutableSharedFlow<Int>(extraBufferCapacity = 8)
-    fun desplazarInicio(d: Int) { desplazamientos.tryEmit(d) }
-
     // ---------- ¿En qué pantalla lo abro? (mantener A sobre un juego o una app) ----------
 
     fun puedeElegirPantalla(e: Estado = estado.value) = !e.unaPantalla && Pantallas.inferior(app) != null
@@ -5749,33 +5777,44 @@ object Diptico {
 
     // ---------- Actualizaciones desde la app ----------
 
+    private var ultimaConsultaAct: Long? = null
+
     private fun vigilarActualizaciones() {
+        Actualizador.programar(app, estado.value.actualizarSolo)
         scope.launch {
-            delay(25_000)
             while (true) {
-                if (estado.value.actualizarSolo) buscarActualizacion(silencioso = true)
-                delay(6 * 3600_000L)
+                delay(5 * 60_000L)
+                if (estado.value.aLaVista > 0) revisarActualizacionAlVolver()
             }
+        }
+    }
+
+    fun revisarActualizacionAlVolver() {
+        if (!estado.value.listo || !estado.value.actualizarSolo) return
+        val ultima = ultimaConsultaAct
+        if (ultima == null || android.os.SystemClock.elapsedRealtime() - ultima >= 60_000L) {
+            buscarActualizacion(silencioso = true)
+        } else {
+            estado.value.actualizacion?.let { Actualizador.avisarSiNueva(app, it) }
         }
     }
 
     fun buscarActualizacion(silencioso: Boolean = false) {
         if (estado.value.buscandoAct) return
+        ultimaConsultaAct = android.os.SystemClock.elapsedRealtime()
         actualizar { it.copy(buscandoAct = true) }
         if (!silencioso) avisar("Buscando una versión nueva…")
         scope.launch {
-            val v = withContext(Dispatchers.IO) { try { Actualizador.buscar(app) } catch (_: Exception) { null } }
+            val resultado = withContext(Dispatchers.IO) { runCatching { Actualizador.buscar(app) } }
+            val v = resultado.getOrNull()
+            val nuevaParaLaApp = v != null && v.numero != estado.value.actualizacion?.numero
             actualizar { it.copy(buscandoAct = false, actualizacion = v ?: it.actualizacion) }
             when {
                 v != null -> {
-                    // Se avisa una sola vez por versión (en la notificación de Android y aquí).
-                    if (almacen.texto("actAvisada") != v.nombre) {
-                        almacen.guardarTexto("actAvisada", v.nombre)
-                        Actualizador.notificar(app, v)
-                        Sonidos.aviso()
-                    }
-                    avisar("¡Díptico ${v.nombre} ya está disponible! Menú › Acerca de")
+                    if (Actualizador.avisarSiNueva(app, v)) Sonidos.aviso()
+                    if (nuevaParaLaApp || !silencioso) avisar("¡Díptico ${v.nombre} ya está disponible! Menú › Acerca de")
                 }
+                !silencioso && resultado.isFailure -> avisar("No pude consultar GitHub. Revisa tu conexión.")
                 !silencioso -> avisar("Ya tienes la versión más nueva")
             }
         }
@@ -5825,10 +5864,12 @@ object Diptico {
         } else add(Opcion("Buscar actualizaciones", if (e.buscandoAct) "Buscando…" else "Versión ${Actualizador.numeroActual(app)}", Icono.DESCARGA,
             "Mira si hay una versión más nueva de Díptico en GitHub.") { buscarActualizacion() })
         add(Opcion("Avisarme de versiones nuevas", if (e.actualizarSolo) "Sí" else "No", Icono.CAMPANA,
-            "Díptico revisa cada algunas horas y te avisa con una notificación cuando sale una versión nueva.") {
+            "Revisa al volver a Díptico y en segundo plano. Android decide cuándo corre la revisión y debe permitir las notificaciones.") {
             val n = !estado.value.actualizarSolo
             almacen.guardarBool("actualizarSolo", n)
             actualizar { it.copy(actualizarSolo = n) }
+            Actualizador.programar(app, n)
+            if (n) revisarActualizacionAlVolver()
         })
     }
 
@@ -7156,17 +7197,12 @@ object Diptico {
         }
     }
 
-    /** Estirar con el dedo (la manija de la esquina): ancho y alto nuevos, corriendo a los que estorben. */
+    /** Guarda la vista previa del tamaño al soltar la manija. */
     fun redimensionarWidget(i: Int, an: Int, al: Int) {
-        val e = estado.value
-        val w = e.widgets.getOrNull(i) ?: return
-        val c = w.copy(an = an.coerceIn(1, Widgets.COLUMNAS - w.x), al = al.coerceIn(1, Widgets.FILAS - w.y))
-        if (c.an == w.an && c.al == w.al) return
-        if (!choca(c, i)) { cambiarWidget(i) { c }; guardarWidgets(estado.value.widgets); return }
-        actualizar { it.copy(widgetSel = i) }
-        val l = empujando(i, c)
-        if (l != null) { guardarWidgets(l.mapIndexed { k, x -> if (k == i) c else x }); Sonidos.soltar() }
-        else avisar("No hay espacio para estirarlo tanto")
+        val w = estado.value.widgets.getOrNull(i)?.takeIf { it.visible } ?: return
+        val c = w.copy(an = an.coerceIn(1, (Widgets.COLUMNAS - w.x).coerceAtLeast(1)),
+            al = al.coerceIn(1, (Widgets.FILAS - w.y).coerceAtLeast(1)))
+        if (!ubicarWidget(i, c)) avisar("No hay espacio para estirarlo tanto")
     }
 
     fun abrirCatalogoWidgets() {
@@ -7653,14 +7689,7 @@ object Diptico {
         val w = e.widgets.getOrNull(i) ?: return
         val p = (w.pagina + d).coerceIn(0, e.paginas - 1)
         if (p == w.pagina) { avisar("Agrega páginas en la pestaña Página"); return }
-        val c = w.copy(pagina = p)
-        if (choca(c, i)) {
-            val l = reacomodar(e.widgets.toMutableList().also { it[i] = c.copy(x = 0, y = 0) }, e.paginas)
-            actualizar { it.copy(widgets = l, paginaInicio = p) }
-        } else {
-            cambiarWidget(i) { c }
-            actualizar { it.copy(paginaInicio = p) }
-        }
+        ponerWidget(i, w.x, w.y, p)
     }
 
     private fun cambiarHueco(d: Int) {
@@ -7690,17 +7719,32 @@ object Diptico {
     }
 
     /** L2/R2 o deslizar: otra página del inicio. */
-    fun cambiarPagina(delta: Int) {
+    fun cambiarPagina(delta: Int) = irAPagina(estado.value.paginaInicio + delta)
+
+    fun irAPagina(p: Int) {
         val e = estado.value
-        val p = (e.paginaInicio + delta).coerceIn(0, e.paginas - 1)
-        if (p != e.paginaInicio) actualizar { it.copy(paginaInicio = p) }
+        val pagina = p.coerceIn(0, e.paginas - 1)
+        if (pagina == e.paginaInicio) return
+        actualizar {
+            if (!it.editandoWidgets) it.copy(paginaInicio = pagina)
+            else it.copy(
+                paginaInicio = pagina, burbuja = null, estudioMover = false,
+                widgetSel = it.widgets.indexOfFirst { w -> w.visible && w.pagina == pagina },
+            )
+        }
     }
 
-    fun irAPagina(p: Int) = actualizar { it.copy(paginaInicio = p.coerceIn(0, it.paginas - 1)) }
+    fun agregarPaginaWidgets() {
+        val e = estado.value
+        if (!e.editandoWidgets || e.paginas >= 12) return
+        val paginas = e.paginas + 1
+        almacen.guardarTexto("paginas", paginas.toString())
+        actualizar { it.copy(paginas = paginas, paginaInicio = paginas - 1, widgetSel = -1, estudioMover = false, burbuja = null) }
+    }
 
     private fun opcionesGrilla(e: Estado): List<Opcion> = listOf(
         Opcion("Columnas de la grilla", "${e.gridCols}", Icono.APPS, "Cuántas columnas tiene tu inicio (de 3 a 10).") { ciclarGrilla(true) },
-        Opcion("Filas de la grilla", "${e.gridFilas}", Icono.APPS, "De 2 a 8 filas. Con más de 4, el inicio se desplaza hacia abajo.") { ciclarGrilla(false) },
+        Opcion("Filas de la grilla", "${e.gridFilas}", Icono.APPS, "De 2 a 8 filas. Cuantas más filas, más pequeñas son las casillas.") { ciclarGrilla(false) },
         Opcion("Páginas", "${e.paginas}", Icono.VISTA, "Desliza a los lados con el dedo o con L2 y R2 para cambiar de página.") { ciclarPaginas() },
         Opcion("Agregar imagen o GIF", icono = Icono.PORTADA, ayuda = "Elige una imagen o un GIF animado de tu consola; aparece como widget en la página actual.") {
             pedirArchivoPara("widgetImagen", "image/*")
