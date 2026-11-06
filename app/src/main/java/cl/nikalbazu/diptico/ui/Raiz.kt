@@ -42,6 +42,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         val arribaFisica = miPantalla == android.view.Display.DEFAULT_DISPLAY &&
             (rol == Rol.UNICA || rol == (if (e.intercambiar) Rol.INFERIOR else Rol.SUPERIOR))
         val centroAqui = e.panel == Panel.CENTRO && arribaFisica
+        val tienda = e.panel == Panel.GALERIA && e.galeria == "tienda_temas"
         // Desenfoque detrás de lo que se abre encima: el centro de control, la bienvenida, el reloj grande o la continuación.
         val encima = centroAqui || e.dialogo != null || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
         val desenfoque by animateDpAsState(if (encima && Estilo.efectosCompletos) 18.dp else 0.dp, tween(300), label = "desenfoque")
@@ -58,6 +59,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
                 when {
                     !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
+                    tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e)
+                    tienda -> ControlesTiendaTemas(e)
                     rol == Rol.UNICA -> PantallaUnica(e)
                     rol == Rol.SUPERIOR -> if (e.fichaFijada != null && e.panel == Panel.NINGUNO && e.sesion == null) {
                         PantallaSuperior(e.copy(juegoSel = e.fichaFijada, consolaSel = "todo"))
@@ -111,7 +114,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.94f), exit = fadeOut(tween(400)),
             ) { Continuacion(e) }
             // Ventana de pregunta (reporte de fallas, desinstalar…): en la pantalla del estante, encima de todo.
-            if (delEstante && e.dialogo != null) VentanaDialogo(e)
+            if ((if (tienda) !arribaFisica || rol == Rol.UNICA else delEstante) && e.dialogo != null) VentanaDialogo(e)
             // En modo una pantalla, la de abajo no muestra la animación.
             val sinIntro = rol == Rol.INFERIOR && rolIntro == Rol.INFERIOR && e.unaPantalla
             if (e.intro && !sinIntro) Intro(rolIntro)

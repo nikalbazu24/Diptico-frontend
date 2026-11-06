@@ -98,10 +98,59 @@ class NavegacionTest {
         assertEquals(1, Diptico.itemsGaleria(e.copy(galeriaPestana = 1)).size)
     }
 
+    @Test fun mezclarTemaConservaLasEleccionesDeCadaPestana() {
+        val base = Temas.iniciales.first().copy(id = "mio", propio = true)
+        val archivoMusical = "com_0123456789abcdef01234567.ogg"
+        val fuente = base.copy(id = "com_0123456789abcdef01234567", fuente = "serif", sonidos = "retro",
+            tonoSonidos = -3, musica = archivoMusical, pistaBase = "sakura")
+        val conLetra = ComponenteTema.TIPOGRAFIA.combinar(base, fuente)
+        val conEfectos = ComponenteTema.EFECTOS.combinar(conLetra, fuente)
+        val mezcla = ComponenteTema.MUSICA.combinar(conEfectos, fuente)
+        assertEquals(base.copy(fuente = "serif", sonidos = "retro", tonoSonidos = -3,
+            musica = archivoMusical, pistaBase = "sakura"), mezcla)
+        assertEquals(mezcla, Tema.deJson(mezcla.json()))
+        assertEquals(0, Tema.deJson(base.json().apply { remove("tonoSonidos") }).tonoSonidos)
+    }
+
+    @Test fun carpetaTodoSePersonalizaConElMandoEnLasTresVistas() {
+        for (vista in Diptico.VISTAS_CARPETAS) {
+            Diptico.fijarParaPrueba(Estado(configurado = true, intro = false, vistaConsolas = vista,
+                enSistemas = true, consolaSel = "todo"))
+            toque(KeyEvent.KEYCODE_BUTTON_X, 1000L)
+            assertEquals(Panel.EDITAR_CONSOLA, Diptico.estado.value.panel)
+            assertEquals("todo", Diptico.estado.value.consolaEditando)
+            assertEquals(listOf("Portada de carpeta"), Diptico.opcionesEditarConsola().map { it.titulo })
+        }
+    }
+
+    @Test fun tiendaLocalConservaLosRecursosDeLosVeinticuatroTemas() {
+        val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val temas = TiendaTemas.incluidos(ctx)
+        assertEquals(24, temas.size)
+        assertEquals(24, temas.mapNotNull { it.pistaLocal }.toSet().size)
+        assertTrue(temas.all { it.tema.descripcion.isNotBlank() && it.categoria.isNotBlank() &&
+            it.tema.fuente.isNotBlank() && it.tema.decor != "nada" })
+        val chile = temas.single { it.tema.nombre == "Chile" }
+        assertEquals("chupallas", chile.tema.decor)
+        val instalado = TiendaTemas.instalar(ctx, chile.copy(audio = null))
+        assertNotNull(TiendaTemas.pista(ctx, instalado))
+        assertNotNull(TiendaTemas.pista(ctx, ComponenteTema.MUSICA.combinar(Temas.iniciales.first().copy(id = "mio"), instalado)))
+        val paisajes = Estado(galeria = "tienda_temas", catalogoTemas = temas, galeriaPestana = 1)
+        assertEquals(temas.count { it.categoria == "Paisajes" }, Diptico.itemsGaleria(paisajes).size)
+    }
+
+    @Test fun adornosPorDefectoConservanLasFechasDelCalendario() {
+        val fiestas = Temas.fiestas.associateBy { it.tema.id }
+        for (grupo in Temas.adornosFestivos) {
+            assertTrue(fiestas.getValue(grupo.temaId).tema.decor in grupo.opciones)
+            assertTrue(grupo.opciones.all { it in Temas.DECORACIONES })
+        }
+    }
+
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("cristal-editor-3").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("temas-web-4").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

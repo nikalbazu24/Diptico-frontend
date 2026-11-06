@@ -39,19 +39,20 @@ import cl.nikalbazu.diptico.estado.Estado
 fun PanelEditarConsola(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val c = Consolas.porId(e.consolaEditando) ?: return
-    val opciones = remember(e) { Diptico.opcionesEditarConsola() }
+    val c = Consolas.porId(e.consolaEditando)
+    val color = c?.color ?: Uva
+    val opciones = remember(e) { Diptico.opcionesEditarConsola(e) }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         // Un poco del color (o la imagen) de la consola de fondo.
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(c.color.copy(alpha = 0.3f), Color.Transparent))))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(color.copy(alpha = 0.3f), Color.Transparent))))
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(1f).padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconoConsola(c, 34f, p.fondo2)
                     Spacer(Modifier.width(esc.d(10)))
                     Column(Modifier.weight(1f)) {
-                        Etiqueta("Personalizar consola", Coral, 10.5f)
-                        Texto(c.bonito, 19f, lineas = 1)
+                        Etiqueta(if (c == null) "Personalizar carpeta" else "Personalizar consola", Coral, 10.5f)
+                        Texto(c?.bonito ?: "Todo", 19f, lineas = 1)
                     }
                     Box(
                         Modifier.size(esc.d(34)).clip(CircleShape).background(p.superficie).clickable { Diptico.cerrarPanel() },
@@ -75,7 +76,7 @@ fun PanelEditarConsola(e: Estado) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             o.icono?.let {
-                                Box(Modifier.size(esc.d(30)).clip(CircleShape).background(c.color.copy(alpha = 0.25f)), contentAlignment = Alignment.Center) {
+                                Box(Modifier.size(esc.d(30)).clip(CircleShape).background(color.copy(alpha = 0.25f)), contentAlignment = Alignment.Center) {
                                     IconoDiptico(it, p.tinta, 16f, acento = Coral)
                                 }
                                 Spacer(Modifier.width(esc.d(10)))
@@ -87,7 +88,7 @@ fun PanelEditarConsola(e: Estado) {
                                 }
                                 if (o.titulo == "Color") {
                                     Spacer(Modifier.width(esc.d(6)))
-                                    Box(Modifier.size(esc.d(20)).clip(CircleShape).background(c.color).border(esc.d(1.5f), Color.White.copy(alpha = 0.6f), CircleShape))
+                                    Box(Modifier.size(esc.d(20)).clip(CircleShape).background(color).border(esc.d(1.5f), Color.White.copy(alpha = 0.6f), CircleShape))
                                 }
                                 Box(Modifier.widthIn(min = esc.d(64)).padding(horizontal = esc.d(6)), contentAlignment = Alignment.Center) {
                                     Texto(o.valor, 12f, color = p.acentoTexto, lineas = 1)
@@ -110,9 +111,25 @@ fun PanelEditarConsola(e: Estado) {
             // Con una sola pantalla, la vista previa va al lado.
             if (e.unaPantalla && !esc.angosta) {
                 Box(Modifier.weight(0.9f).padding(end = esc.d(12), top = esc.d(14), bottom = esc.d(14))) {
-                    MiniPantalla(711f, 400f, Modifier.fillMaxSize()) { VistaSistema(e.copy(consolaSel = c.id, panel = cl.nikalbazu.diptico.estado.Panel.NINGUNO)) }
+                    MiniPantalla(711f, 400f, Modifier.fillMaxSize()) { PreviaConsolaEditada(e) }
                 }
             }
         }
+    }
+}
+
+@Composable
+internal fun PreviaConsolaEditada(e: Estado) {
+    val id = e.consolaEditando
+    val opcion = Diptico.opcionesEditarConsola(e).getOrNull(e.indice)?.titulo
+    if (id == "todo" || opcion == "Portada de carpeta" || opcion == "Restaurar portada de carpeta") {
+        val esc = LocalEscala.current
+        Box(Modifier.fillMaxSize().padding(esc.d(20)), contentAlignment = Alignment.Center) {
+            PortadaCarpeta(e, id, Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(20)))) {
+                IconoConsola(Consolas.porId(id), 64f, LocalPaleta.current.fondo2)
+            }
+        }
+    } else {
+        VistaSistema(e.copy(consolaSel = id, panel = cl.nikalbazu.diptico.estado.Panel.NINGUNO))
     }
 }

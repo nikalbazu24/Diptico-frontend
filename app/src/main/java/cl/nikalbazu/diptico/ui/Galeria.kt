@@ -3,7 +3,6 @@ package cl.nikalbazu.diptico.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,11 +16,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed as itemsFila
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +56,9 @@ fun PanelGaleria(e: Estado) {
         "orden" -> "Orden de los juegos" to Icono.MENU
         "temas" -> "Temas" to Icono.PALETA
         "importar_temas" -> "Temas del archivo" to Icono.DESCARGA
+        "mezclar_tema" -> "Mezclar mi tema" to Icono.PALETA
+        "tienda_temas" -> "Tienda de temas" to Icono.PALETA
+        "adornos_festivos" -> "Adornos festivos" to Icono.ESTRELLA
         "colores" -> "Mis colores" to Icono.PALETA
         "ia" -> "IA de Bisa" to Icono.CHISPA
         "cajas" -> "Forma de las cajas" to Icono.FORMA
@@ -67,6 +71,10 @@ fun PanelGaleria(e: Estado) {
                 IconoDiptico(icono, p.tinta, 22f, acento = Coral)
                 Spacer(Modifier.width(esc.d(10)))
                 Texto(titulo, 20f, lineas = 1, modifier = Modifier.weight(1f))
+                if (e.galeria == "tienda_temas") {
+                    AccionTienda("Aportar un tema") { Diptico.abrirAportesTemas() }
+                    Spacer(Modifier.width(esc.d(8)))
+                }
                 Box(
                     Modifier.size(esc.d(34)).clip(CircleShape).background(p.superficie).clickable { Diptico.cerrarPanel() },
                     contentAlignment = Alignment.Center,
@@ -74,8 +82,12 @@ fun PanelGaleria(e: Estado) {
             }
             if (pestanas.size > 1) {
                 Spacer(Modifier.height(esc.d(8)))
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                    pestanas.forEachIndexed { i, t ->
+                val filaPestanas = rememberLazyListState()
+                LaunchedEffect(e.galeriaPestana, pestanas.size) {
+                    if (e.galeriaPestana in pestanas.indices) filaPestanas.mostrar(e.galeriaPestana)
+                }
+                LazyRow(state = filaPestanas, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    itemsFila(pestanas) { i, t ->
                         val activa = i == e.galeriaPestana
                         Box(
                             Modifier.clip(RoundedCornerShape(50)).then(if (activa) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie))
@@ -84,6 +96,14 @@ fun PanelGaleria(e: Estado) {
                         ) { Texto(t, 13f, color = if (activa) SobreUva else p.tinta, lineas = 1) }
                     }
                 }
+            }
+            if (e.galeria == "tienda_temas") {
+                Spacer(Modifier.height(esc.d(6)))
+                Detalle("Explora 24 temas e instálalos aquí mismo.", 12f, lineas = 2)
+            }
+            if (e.galeria == "mezclar_tema") {
+                Spacer(Modifier.height(esc.d(6)))
+                Detalle("Elige un tema para tomar el elemento de esta pestaña. Tus otras elecciones se conservan.", 12f, lineas = 2)
             }
             if (e.galeria == "colores") {
                 Spacer(Modifier.height(esc.d(6)))
@@ -96,7 +116,7 @@ fun PanelGaleria(e: Estado) {
             Spacer(Modifier.height(esc.d(10)))
             val cols = when (e.galeria) {
                 "colores" -> if (esc.angosta) 8 else 12
-                "temas", "importar_temas" -> if (esc.angosta) 2 else 3
+                "temas", "importar_temas", "mezclar_tema", "tienda_temas", "adornos_festivos" -> if (esc.angosta) 2 else 3
                 "cajas" -> if (esc.angosta) 3 else 4
                 else -> 1
             }
@@ -121,7 +141,7 @@ fun PanelGaleria(e: Estado) {
                         "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
                         "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
                         "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
-                        "temas", "importar_temas" -> TarjetaTema(it, activo, e.oscuro) { Diptico.elegirIndice(i) }
+                        "temas", "importar_temas", "mezclar_tema", "tienda_temas", "adornos_festivos" -> TarjetaTema(it, activo, e.oscuro) { Diptico.elegirIndice(i) }
                         "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
                         "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
                         "colecciones" -> FilaCancion(it, activo, Icono.CARPETA, "Aquí ✓") { Diptico.elegirIndice(i) }
@@ -139,6 +159,64 @@ fun PanelGaleria(e: Estado) {
             )
         }
     }
+}
+
+/** En la pantalla táctil se puede recorrer e instalar desde la vista previa. */
+@Composable
+internal fun ControlesTiendaTemas(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val entrada = Diptico.temaEnTienda(e)
+    val instalado = entrada != null && e.temasPropios.any { it.id == entrada.tema.id }
+    val instalando = e.trabajos.any { it.id == "instalar_tema" }
+    Column(
+        Modifier.fillMaxSize().background(p.fondo2).padding(esc.d(15)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(8)),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AccionTienda("‹") { Diptico.cambiarPestanaGaleria(-1) }
+            Texto(Diptico.pestanasGaleria("tienda_temas")[e.galeriaPestana], 15f,
+                modifier = Modifier.weight(1f).padding(horizontal = esc.d(8)), lineas = 1)
+            AccionTienda("›") { Diptico.cambiarPestanaGaleria(1) }
+            Spacer(Modifier.width(esc.d(8)))
+            AccionTienda("Volver") { Diptico.cerrarPanel() }
+        }
+        if (entrada != null) {
+            Box(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(esc.d(16)))) {
+                PreviaTema(entrada.tema, e.oscuro)
+            }
+            Texto(entrada.tema.nombre, 18f, lineas = 1)
+            Detalle(entrada.tema.descripcion, 12f, lineas = 3)
+            if (entrada.tituloPista.isNotBlank()) Detalle("♫ " + entrada.tituloPista, 11f, lineas = 1)
+        } else Spacer(Modifier.weight(1f))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(7))) {
+            AccionTienda("←") { Diptico.moverIndice(-1) }
+            AccionTienda("→") { Diptico.moverIndice(1) }
+            Spacer(Modifier.weight(1f))
+            if (entrada != null) {
+                AccionTienda(if (instalando) "Instalando…" else if (instalado) "Usar tema" else "Instalar",
+                    principal = true, habilitada = !instalando) { Diptico.aceptar() }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccionTienda(
+    etiqueta: String,
+    principal: Boolean = false,
+    habilitada: Boolean = true,
+    accion: () -> Unit,
+) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Box(
+        Modifier.clip(RoundedCornerShape(esc.d(10)))
+            .background(if (principal && habilitada) Uva else p.superficie)
+            .clickable(enabled = habilitada, onClick = accion)
+            .padding(horizontal = esc.d(10), vertical = esc.d(7)),
+        contentAlignment = Alignment.Center,
+    ) { Texto(etiqueta, 12f, color = if (principal && habilitada) SobreUva else p.tinta, lineas = 1) }
 }
 
 @Composable
@@ -291,7 +369,7 @@ fun VistaGaleria(e: Estado) {
                 }
             }
             e.galeria in setOf("filtros", "orden", "variantes_juego", "copias_srm") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
-            e.galeria in setOf("temas", "importar_temas") && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            e.galeria in setOf("temas", "importar_temas", "mezclar_tema", "tienda_temas", "adornos_festivos") && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(it.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))
                 Texto(it.nombre, 26f, lineas = 1)

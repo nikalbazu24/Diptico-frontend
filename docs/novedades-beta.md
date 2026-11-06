@@ -1,3 +1,5 @@
-- **Agregado** Catálogo web separado con 24 temas descargables y una explicación de cada diseño.
-- **Actualizado** Cinco temas iniciales e importación de archivos JSON o enlaces para los demás.
-- **Corregido** La barra superior reúne Entrar, Otra consola y los accesos generales sin superponerlos.
+- **Tienda integrada**. Explora e instala 24 temas completos sin conexión desde Díptico. En equipos de dos pantallas el catálogo abre arriba y la vista previa con controles queda abajo.
+- **Mi tema**. Combina por separado colores, fondos, tipografías, formas, adornos, efectos y música de tus temas instalados.
+- **Biblioteca**. El widget Juego elegido recorre títulos de la carpeta enfocada. Pulsa X o mantén una carpeta para cambiar su portada en Carpetas, Mosaico y Vitrina, incluida Todo.
+- **Calendario**. Conserva los temas por fechas. Elige muérdago, campanas o nieve para Navidad y chupallas, volantines o confeti para Fiestas Patrias.
+- **Aportes**. El editor web genera el JSON de un tema propio y guía su envío a la comunidad.

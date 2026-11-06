@@ -33,12 +33,13 @@ data class Tema(
     val trama: String = "",
     val acabado: String = "",
     val pistaBase: String = "",
+    val tonoSonidos: Int = 0,
 ) {
     fun json(): JSONObject = JSONObject()
         .put("id", id).put("nombre", nombre).put("acento", acento).put("acento2", acento2).put("acento3", acento3)
         .put("base", base).put("decor", decor).put("mensaje", mensaje).put("propio", propio)
         .put("fondo", fondo).put("tinta", tinta).put("fuente", fuente).put("forma", forma).put("sonidos", sonidos).put("musica", musica).put("descripcion", descripcion)
-        .put("trama", trama).put("acabado", acabado).put("pistaBase", pistaBase)
+        .put("trama", trama).put("acabado", acabado).put("pistaBase", pistaBase).put("tonoSonidos", tonoSonidos)
 
     companion object {
         fun deJson(o: JSONObject) = Tema(
@@ -47,6 +48,7 @@ data class Tema(
             o.optLong("fondo", 0L), o.optLong("tinta", 0L),
             o.optString("fuente", ""), o.optString("forma", ""), o.optString("sonidos", ""), o.optString("musica", ""),
             o.optString("descripcion"), o.optString("trama"), o.optString("acabado"), o.optString("pistaBase"),
+            o.optInt("tonoSonidos").coerceIn(-6, 6),
         )
     }
 }
@@ -55,15 +57,26 @@ data class Tema(
 data class Fiesta(val id: String, val nombre: String, val donde: String, val tema: Tema, val paises: Set<String> = emptySet())
 
 object Temas {
+    val FUENTES = setOf("", "pixel", "sans", "serif", "mono")
     val FORMAS = setOf("", "pixel", "cristal", "recta", "bisel", "capsula")
     val TRAMAS = setOf("cielo", "ondas", "puntos", "barrido", "diagonal", "lcd", "reticula", "papel", "rombos")
     val ACABADOS = setOf("liso", "degradado", "brillo", "vidrio")
-    val DECORACIONES = listOf("nada", "nieve", "hojas", "murcielagos", "petalos", "confeti", "corazones", "estrellas", "faroles", "burbujas", "fuegos", "bloques")
+    val DECORACIONES = listOf("nada", "nieve", "hojas", "murcielagos", "petalos", "confeti", "corazones",
+        "estrellas", "faroles", "burbujas", "fuegos", "bloques", "muerdago", "campanas", "chupallas", "volantines")
+
+    data class AdornosFestivos(val titulo: String, val temaId: String, val opciones: List<String>)
+
+    val adornosFestivos = listOf(
+        AdornosFestivos("Navidad", "fiesta_navidad", listOf("muerdago", "campanas", "nieve", "nada")),
+        AdornosFestivos("Fiestas Patrias", "fiesta_fiestaspatrias", listOf("chupallas", "volantines", "confeti", "nada")),
+    )
 
     fun nombreDecor(d: String) = when (d) {
         "nieve" -> "Nieve"; "hojas" -> "Hojas"; "murcielagos" -> "Murciélagos"; "petalos" -> "Pétalos"
         "confeti" -> "Confeti"; "corazones" -> "Corazones"; "estrellas" -> "Estrellas"; "faroles" -> "Faroles"
-        "burbujas" -> "Burbujas"; "fuegos" -> "Fuegos artificiales"; "bloques" -> "Bloques que caen"; else -> "Sin decoración"
+        "burbujas" -> "Burbujas"; "fuegos" -> "Fuegos artificiales"; "bloques" -> "Bloques que caen"
+        "muerdago" -> "Muérdago"; "campanas" -> "Campanas"; "chupallas" -> "Chupallas"; "volantines" -> "Volantines"
+        else -> "Sin decoración"
     }
 
     /** Colores para armar temas propios. */
@@ -141,7 +154,7 @@ object Temas {
         f("orgullo", "Mes del Orgullo", "Todo el mundo", 0xFFFF2E97, 0xFF3BA8FF, 0xFFFFE600, "confeti", "Mes del Orgullo"),
         f("andino", "We Tripantu e Inti Raymi", "Chile, Perú y Bolivia", 0xFFFFB020, 0xFFE63946, 0xFF3BA8FF, "estrellas", "¡Feliz año nuevo de los pueblos originarios!", "oscuro"),
         f("gamer", "Día del Gamer", "Latinoamérica", 0xFF00E5FF, 0xFFFF2E97, 0xFFFFE600, "estrellas", "¡Feliz Día del Gamer!", "oscuro"),
-        f("fiestaspatrias", "Fiestas Patrias", "Chile", 0xFFD52B1E, 0xFF0039A6, 0xFFFFFFFF, "confeti", "¡Felices Fiestas Patrias!", paises = setOf("CL")),
+        f("fiestaspatrias", "Fiestas Patrias", "Chile", 0xFFD52B1E, 0xFF0039A6, 0xFFFFFFFF, "chupallas", "¡Felices Fiestas Patrias!", paises = setOf("CL")),
         f("independencia", "Fiestas de Independencia", "México y Centroamérica", 0xFF006847, 0xFFCE1126, 0xFFFFFFFF, "confeti", "¡Viva la independencia!"),
         f("oktoberfest", "Oktoberfest", "Alemania", 0xFFF59E0B, 0xFF3BA8FF, 0xFFFFFFFF, "burbujas", "¡Prost!"),
         f("diwali", "Diwali", "India y el mundo", 0xFFF97316, 0xFFFFC93C, 0xFFE63946, "faroles", "¡Feliz Diwali, fiesta de las luces!", "oscuro"),
@@ -149,7 +162,7 @@ object Temas {
         f("muertos", "Día de Muertos", "México y Latinoamérica", 0xFFFF9F1C, 0xFFFF5D8F, 0xFF8E6CF0, "petalos", "Día de Muertos", "oscuro"),
         f("gracias", "Acción de Gracias", "Estados Unidos y Canadá", 0xFFD97706, 0xFF92400E, 0xFFFFC93C, "hojas", "¡Feliz Día de Acción de Gracias!"),
         f("janucá", "Janucá", "Comunidades judías", 0xFF3B82F6, 0xFF94A3B8, 0xFFFFC93C, "estrellas", "¡Jag Janucá Sameaj!", "oscuro"),
-        f("navidad", "Navidad", "Todo el mundo", 0xFFE63946, 0xFF2A9D8F, 0xFFFFC93C, "nieve", "¡Feliz Navidad!", "oscuro"),
+        f("navidad", "Navidad", "Todo el mundo", 0xFFE63946, 0xFF2A9D8F, 0xFFFFC93C, "muerdago", "¡Feliz Navidad!", "oscuro"),
         // Calendario de Chile
         f("trabajador", "Día del Trabajador", "Chile y el mundo", 0xFFE63946, 0xFFFFC93C, 0xFF3BA8FF, "confeti", "¡Feliz Día del Trabajador!"),
         f("glorias", "Glorias Navales", "Chile", 0xFF0B3D91, 0xFFFFFFFF, 0xFFD52B1E, "burbujas", "21 de mayo · Glorias Navales", "oscuro", setOf("CL")),

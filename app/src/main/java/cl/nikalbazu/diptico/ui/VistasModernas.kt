@@ -1,18 +1,21 @@
 @file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.*
@@ -65,7 +68,7 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(20)))
         .background(Brush.verticalGradient(listOf(color.copy(alpha = .22f), p.superficie)))
         .border(esc.d(if (elegida) 2.5f else 1f), if (elegida) color else p.linea, RoundedCornerShape(esc.d(20)))
-        .combinedClickable(onLongClick = { if (id != "todo") Diptico.abrirEditarConsola(id) }) { if (elegida) Diptico.entrarSistema() else Diptico.elegirConsola(id) }
+        .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { if (elegida) Diptico.entrarSistema() else Diptico.elegirConsola(id) }
         .padding(esc.d(10))) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconoConsola(c, 22f, p.fondo)
@@ -74,7 +77,13 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean) {
         }
         Spacer(Modifier.height(esc.d(10)))
         Row(Modifier.fillMaxWidth().height(esc.d(70)), horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
-            juegos.take(3).forEach { j -> Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(esc.d(6)))) { ArteJuego(j, false, 180, Modifier.fillMaxSize()) } }
+            PortadaCarpeta(e, id, Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(6)))) {
+                juegos.take(3).forEach { j ->
+                    Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(esc.d(6)))) {
+                        ArteJuego(j, false, 180, Modifier.fillMaxSize())
+                    }
+                }
+            }
         }
         Spacer(Modifier.height(esc.d(9)))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -82,6 +91,14 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean) {
             Texto(if (elegida) "A · Abrir" else "Explorar", 10.5f, color = if (elegida) p.acentoTexto else p.tenue, lineas = 1)
         }
     }
+}
+
+@Composable
+internal fun PortadaCarpeta(e: Estado, id: String, modifier: Modifier, original: @Composable () -> Unit) {
+    val ruta = e.consolasPropias[id]?.portadaCarpeta
+    val portada = key(ruta) { rememberImagen(ruta?.let(android.net.Uri::parse), 512) }
+    if (portada == null) original()
+    else Image(portada, contentDescription = null, modifier = modifier, contentScale = ContentScale.Crop)
 }
 
 @Composable

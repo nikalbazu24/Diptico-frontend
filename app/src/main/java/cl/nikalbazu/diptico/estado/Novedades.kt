@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "temas-web-4"
-    const val NOMBRE = "Temas fuera de Díptico"
+    const val ID = "tienda-integrada-5"
+    const val NOMBRE = "Tienda integrada y biblioteca personal"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -194,10 +194,16 @@ object Novedades {
             Pagina("Corregido · Navegación por carpetas", "La cruceta y el joystick suben de fila en Carpetas, Mosaico y Vitrina. El editor de widgets ocupa el espacio completo, sin el marco del modo anterior.", Icono.MANDO, 0xFFA8B2D2),
             Pagina("Retirado · Habitación", "La vista Habitación sale de la biblioteca. Si la usabas, Díptico abre tus consolas en Carpetas.", Icono.CARPETA, 0xFFDBB386),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("temas-web-4", "Temas fuera de Díptico", listOf(
             Pagina("Agregado · Catálogo web", "Hay 24 temas descargables fuera de Díptico. Cada uno explica su intención y muestra sus formas y texturas.", Icono.WEB, 0xFFBCA4FF),
             Pagina("Actualizado · Cinco temas incluidos", "Los demás estilos se instalan desde un JSON o enlace. Ajustes › Temas › Mis temas reúne tus descargas.", Icono.PALETA, 0xFF77BDB8),
             Pagina("Corregido · Accesos al elegir consola", "Entrar y Otra consola comparten la franja con Buscar, Apps y el resto de accesos. Así tienen espacio propio.", Icono.AJUSTES, 0xFFDBB386),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Tienda dentro de Díptico", "Explora e instala 24 temas en Ajustes › Temas › Tienda de temas. En dos pantallas, el catálogo se abre arriba y puedes recorrerlo desde abajo.", Icono.PALETA, 0xFFBCA4FF),
+            Pagina("Combina tus temas", "En Mezclar mi tema elige de dónde vienen los colores, la tipografía, las formas, el fondo, la decoración, los efectos y la música.", Icono.EDITAR, 0xFF77BDB8),
+            Pagina("Portadas y juegos que se lucen", "Pulsa X o mantén una carpeta para elegir su portada. Mientras recorres Carpetas, Mosaico o Vitrina, el widget Juego elegido muestra títulos de la carpeta enfocada.", Icono.CARPETA, 0xFFDBB386),
+            Pagina("Navidad y Fiestas Patrias", "Adornos festivos deja elegir muérdago, campanas, chupallas o volantines. Los temas de las fechas especiales siguen su calendario.", Icono.ESTRELLA, 0xFFFFB46A),
         )),
     )
 

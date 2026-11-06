@@ -448,21 +448,22 @@ private fun CarpetaVisual(e: Estado, id: String, elegida: Boolean, amplia: Boole
     Column(
         Modifier.fillMaxWidth().clip(forma).background(p.superficie)
             .border(esc.d(if (elegida) 2f else 1f), if (elegida) color else p.linea, forma)
-            .combinedClickable(onLongClick = { if (consola != null) Diptico.abrirEditarConsola(id) }) {
-                Diptico.elegirConsola(id)
-                Diptico.entrarSistema()
+            .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) {
+                if (elegida) Diptico.entrarSistema() else Diptico.elegirConsola(id)
             },
     ) {
         Row(Modifier.fillMaxWidth().height(esc.d(if (amplia) 100f else 78f))) {
-            portadas.forEach { juego ->
-                Box(Modifier.weight(1f).fillMaxHeight()) {
-                    ArteJuego(juego, preferirArte = !amplia, maxLado = 192, modifier = Modifier.fillMaxSize())
-                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, color.copy(alpha = 0.28f)))))
+            PortadaCarpeta(e, id, Modifier.fillMaxSize()) {
+                portadas.forEach { juego ->
+                    Box(Modifier.weight(1f).fillMaxHeight()) {
+                        ArteJuego(juego, preferirArte = !amplia, maxLado = 192, modifier = Modifier.fillMaxSize())
+                        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, color.copy(alpha = 0.28f)))))
+                    }
                 }
-            }
-            if (portadas.isEmpty()) {
-                Box(Modifier.fillMaxSize().background(color.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
-                    IconoConsola(consola, 38f, p.fondo2)
+                if (portadas.isEmpty()) {
+                    Box(Modifier.fillMaxSize().background(color.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                        IconoConsola(consola, 38f, p.fondo2)
+                    }
                 }
             }
         }

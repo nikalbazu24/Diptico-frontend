@@ -69,9 +69,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import cl.nikalbazu.diptico.audio.Medios
 import cl.nikalbazu.diptico.data.Consolas
+import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
+import cl.nikalbazu.diptico.estado.Panel
 import cl.nikalbazu.diptico.estado.Temas
 import cl.nikalbazu.diptico.estado.Widget
 import cl.nikalbazu.diptico.estado.Widgets
@@ -418,6 +420,23 @@ private fun BurbujaAgregar(e: Estado, celda: Pair<Int, Int>, celdaAn: Float, cel
     }
 }
 
+/** Mientras se recorren las carpetas, la vitrina cambia sin mover la selección real de la biblioteca. */
+@Composable
+private fun juegoDelWidget(e: Estado): Juego? {
+    if (!e.eligiendoConsola || e.vistaConsolas !in Diptico.VISTAS_CARPETAS ||
+        e.editandoWidgets || e.panel != Panel.NINGUNO || e.sesion != null) return e.seleccionado
+    val juegos = e.visibles
+    if (juegos.size < 2) return juegos.firstOrNull()
+    var indice by remember(e.consolaSel, juegos) { mutableStateOf(e.indiceSel) }
+    LaunchedEffect(e.consolaSel, juegos) {
+        while (true) {
+            kotlinx.coroutines.delay(6000)
+            indice = (indice + 1) % juegos.size
+        }
+    }
+    return juegos[indice]
+}
+
 /** El contenido de cada widget según su tipo y su tamaño (1×1, angosto, una fila o grande). */
 @Composable
 private fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an: Int, al: Int) {
@@ -496,13 +515,13 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
     val variante = LocalWidget.current?.variante ?: 0
     when (tipo) {
         "juego" -> {
-            val j = e.seleccionado
+            val j = juegoDelWidget(e)
             if ((variante == 1 || an <= 2) && j != null) {
                 // Arte de fondo (también en los widgets angostos, donde la caja y el título no caben lado a lado): la imagen del juego llena el widget y el título va encima.
                 val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
                 Box(
                     Modifier.fillMaxSize().clip(forma).background(p.superficie)
-                        .combinedClickable(onClick = { Diptico.jugar() }, onLongClick = { Diptico.editarWidgets() }),
+                        .combinedClickable(onClick = { Diptico.jugarJuegoMostrado(j.clave) }, onLongClick = { Diptico.editarWidgets() }),
                 ) {
                     ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize())
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
@@ -517,7 +536,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
                 return
             }
-            Tarjeta(alPulsar = { Diptico.jugar() }) {
+            Tarjeta(alPulsar = { Diptico.jugarJuegoMostrado(j?.clave) }) {
                 if (j == null) {
                     Detalle("Elige un juego en el estante", 15f)
                 } else {
@@ -1084,7 +1103,7 @@ private fun WidgetHerramienta(e: Estado, tipo: String, an: Int) {
 private fun WidgetCompacto(e: Estado, tipo: String) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val j = e.seleccionado
+    val j = if (tipo == "juego") juegoDelWidget(e) else e.seleccionado
     val (icono, titulo, valor) = when (tipo) {
         "juego" -> Triple(Icono.JUGAR, j?.titulo ?: "Elige un juego", "A · ¡Jugar!")
         "paso" -> Triple(Icono.LAPIZ, "Tu próximo paso", j?.let { e.datos[it.clave]?.paso }.orEmpty().ifEmpty { "Sin anotar" })
@@ -1095,7 +1114,7 @@ private fun WidgetCompacto(e: Estado, tipo: String) {
         "favoritos" -> Triple(Icono.CORAZON, "Favoritos", "${e.datos.values.count { it.favorito }} juegos")
         else -> Triple(Icono.ESTRELLA, Widgets.nombre(tipo), "")
     }
-    Tarjeta(alPulsar = { if (tipo == "juego") Diptico.jugar() else if (tipo == "paso") Diptico.abrirPaso() }) {
+    Tarjeta(alPulsar = { if (tipo == "juego") Diptico.jugarJuegoMostrado(j?.clave) else if (tipo == "paso") Diptico.abrirPaso() }) {
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(esc.d(34)).clip(CircleShape).background(Uva.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
                 IconoDiptico(icono, p.tinta, 18f, acento = Coral)
@@ -1225,7 +1244,7 @@ internal fun WidgetVideo(w: cl.nikalbazu.diptico.estado.Widget, activo: Boolean)
 private fun WidgetMini(e: Estado, tipo: String, al: Int) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val j = e.seleccionado
+    val j = if (tipo == "juego") juegoDelWidget(e) else null
     val m by cl.nikalbazu.diptico.audio.Medios.sonando.collectAsState()
     val avisos by cl.nikalbazu.diptico.audio.Avisos.lista.collectAsState()
     val bateria = rememberBateria()
@@ -1249,7 +1268,7 @@ private fun WidgetMini(e: Estado, tipo: String, al: Int) {
     }
     if (portada != null) {
         val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
-        Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { if (tipo == "juego") Diptico.jugar() else Diptico.abrirWidgetTipo(tipo) }, onLongClick = { Diptico.editarWidgets() })) {
+        Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { if (tipo == "juego") Diptico.jugarJuegoMostrado(portada.clave) else Diptico.abrirWidgetTipo(tipo) }, onLongClick = { Diptico.editarWidgets() })) {
             ArteJuego(portada, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize())
             if (tipo != "juego") Box(Modifier.align(Alignment.TopEnd).padding(esc.d(5)).size(esc.d(22)).clip(CircleShape).background(Color.Black.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
                 IconoDiptico(Widgets.icono(tipo), Color.White, 12f)

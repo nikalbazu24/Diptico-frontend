@@ -390,15 +390,17 @@ fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
     val a = Color(t.acento)
     val a2 = Color(t.acento2)
     val a3 = Color(t.acento3)
+    val fuente = fuenteTema(t.fuente)
     Box(Modifier.fillMaxSize().background(pal.fondo)) {
         androidx.compose.runtime.CompositionLocalProvider(LocalPaleta provides pal) { TramaTema(t) }
+        if (t.decor != "nada") Decoracion(t, animada = false)
         if (t.trama.isBlank()) Box(Modifier.align(Alignment.TopEnd).size(esc.d(160)).background(Brush.radialGradient(listOf(a.copy(alpha = 0.23f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(esc.d(12)), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(esc.d(14)).clip(CircleShape).background(a))
                 Spacer(Modifier.width(esc.d(6)))
-                Texto(t.nombre, 13f, color = pal.tinta, lineas = 1, modifier = Modifier.weight(1f))
-                Texto("12:30", 11f, color = pal.tenue)
+                Texto(t.nombre, 13f, color = pal.tinta, lineas = 1, modifier = Modifier.weight(1f), familia = fuente)
+                Texto("12:30", 11f, color = pal.tenue, familia = fuente)
             }
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.Bottom) {
                 listOf(a, a2, a3, a.copy(alpha = 0.6f)).forEachIndexed { i, c ->
@@ -414,7 +416,7 @@ fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
                     Modifier.clip(formaTema(null, 50, androidx.compose.foundation.shape.RoundedCornerShape(50), t.forma))
                         .background(if (t.acabado == "liso") Brush.linearGradient(listOf(a, a)) else Brush.linearGradient(listOf(a, a2)))
                         .padding(horizontal = esc.d(12), vertical = esc.d(5)),
-                ) { Texto("▶ Jugar", 11.5f, color = if (a.luminance() > 0.55f) Tinta else Color.White) }
+                ) { Texto("▶ Jugar", 11.5f, color = if (a.luminance() > 0.55f) Tinta else Color.White, familia = fuente) }
                 Spacer(Modifier.width(esc.d(8)))
                 Box(Modifier.weight(1f).height(esc.d(8)).clip(RoundedCornerShape(50)).background(pal.superficie))
             }
