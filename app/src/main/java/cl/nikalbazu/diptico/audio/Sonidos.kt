@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.SystemClock
+import kotlin.math.pow
 
 /** Sonidos cortos al moverte, elegir, volver y abrir juegos. Se pueden apagar en Menú › Música. */
 object Sonidos {
@@ -20,6 +21,9 @@ object Sonidos {
     /** Juego de sonidos del tema ("" = los normales, "bloques" = madera y pops). */
     @Volatile
     var juego = ""
+
+    @Volatile
+    var semitonos = 0
 
     /** Juego elegido en los ajustes: "tema" (el del tema), "clasico", "bloques", "retro" o "burbuja". */
     @Volatile
@@ -52,7 +56,8 @@ object Sonidos {
     private fun tocar(nombre: String, tono: Float = 1f): Int {
         if (!activo) return 0
         val id = ids[prefijo() + nombre] ?: ids[nombre] ?: return 0
-        return pool?.play(id, volumen, volumen, 1, 0, tono) ?: 0
+        val velocidad = if (paquete == "tema") tono * 2f.pow(semitonos / 12f) else tono
+        return pool?.play(id, volumen, volumen, 1, 0, velocidad) ?: 0
     }
 
     fun mover() {

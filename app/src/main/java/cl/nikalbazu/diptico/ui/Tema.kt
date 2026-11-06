@@ -179,9 +179,16 @@ val Pixel = FontFamily(
     Font(R.font.tiny5, FontWeight.ExtraBold),
 )
 
-/** Las letras de Díptico. Si el tema trae letra propia (píxeles), todas cambian solas. */
-val Fredoka: FontFamily get() = if (Estilo.tema.fuente == "pixel") Pixel else FredokaBase
-val Nunito: FontFamily get() = if (Estilo.tema.fuente == "pixel") Pixel else NunitoBase
+internal fun fuenteTema(tipo: String, base: FontFamily = FredokaBase): FontFamily = when (tipo) {
+    "pixel" -> Pixel
+    "sans" -> FontFamily.SansSerif
+    "serif" -> FontFamily.Serif
+    "mono" -> FontFamily.Monospace
+    else -> base
+}
+
+val Fredoka: FontFamily get() = fuenteTema(Estilo.tema.fuente, FredokaBase)
+val Nunito: FontFamily get() = fuenteTema(Estilo.tema.fuente, NunitoBase)
 
 /** Alto del lienzo de diseño, en unidades. Toda pantalla mide 400 de alto; el ancho depende de su forma. */
 const val ALTO_DISENO = 400f

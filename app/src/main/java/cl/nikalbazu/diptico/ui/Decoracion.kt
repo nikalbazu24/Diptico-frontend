@@ -33,9 +33,10 @@ private data class Particula(val x: Float, val y: Float, val v: Float, val t: Fl
  * Es suave y transparente, para no tapar nada; los toques pasan de largo.
  */
 @Composable
-fun Decoracion(tema: Tema) {
+fun Decoracion(tema: Tema, animada: Boolean = true) {
     var tiempo by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(tema.decor) {
+    LaunchedEffect(tema.decor, animada) {
+        if (!animada) return@LaunchedEffect
         val inicio = withFrameMillis { it }
         while (true) {
             withFrameMillis { tiempo = (it - inicio) / 1000f }
@@ -43,7 +44,7 @@ fun Decoracion(tema: Tema) {
     }
     val particulas = remember(tema.decor) {
         val r = Random(tema.decor.hashCode())
-        val n = when (tema.decor) { "estrellas" -> 26; "bloques" -> 16; "fuegos" -> 5; "faroles" -> 9; "murcielagos" -> 7; else -> 18 }
+        val n = when (tema.decor) { "muerdago", "campanas", "chupallas", "volantines" -> 11; "estrellas" -> 26; "bloques" -> 16; "fuegos" -> 5; "faroles" -> 9; "murcielagos" -> 7; else -> 18 }
         List(n) { Particula(r.nextFloat(), r.nextFloat(), 0.4f + r.nextFloat() * 0.8f, 0.6f + r.nextFloat() * 0.8f, r.nextFloat() * 6.28f, r.nextInt(3)) }
     }
     val colores = listOf(Color(tema.acento), Color(tema.acento2), Color(tema.acento3))
@@ -52,6 +53,16 @@ fun Decoracion(tema: Tema) {
         for (p in particulas) {
             val c = colores[p.color]
             when (tema.decor) {
+                "muerdago", "campanas", "chupallas", "volantines" -> {
+                    val y = ((p.y + tiempo * 0.023f * p.v) % 1.08f) - 0.04f
+                    val x = p.x + sin(tiempo * 0.55f + p.fase) * 0.023f
+                    val r = (if (animada) 12f * u else size.minDimension * 0.037f) * p.t
+                    translate(x * size.width, y * size.height) {
+                        rotate(sin(tiempo * 0.65f + p.fase) * 18f, pivot = Offset.Zero) {
+                            adornoFestivo(tema.decor, r, p.color)
+                        }
+                    }
+                }
                 "nieve" -> {
                     val y = ((p.y + tiempo * 0.05f * p.v) % 1.1f) - 0.05f
                     val x = p.x + sin(tiempo * 0.8f + p.fase) * 0.02f
@@ -184,4 +195,54 @@ private fun DrawScope.murcielago(c: Offset, r: Float, aleteo: Float, color: Colo
         close()
     }
     drawPath(p, color)
+}
+
+private fun DrawScope.adornoFestivo(decor: String, r: Float, indice: Int) {
+    when (decor) {
+        "muerdago" -> {
+            val hoja = Color(0xFF54B774).copy(alpha = 0.76f)
+            for (angulo in listOf(-37f, 37f)) rotate(angulo, pivot = Offset.Zero) {
+                drawOval(hoja, Offset(-r * .3f, -r), Size(r * .6f, r * 1.3f))
+            }
+            val baya = Color(0xFFD84954).copy(alpha = 0.9f)
+            drawCircle(baya, r * .19f, Offset(-r * .21f, r * .24f))
+            drawCircle(baya, r * .19f, Offset(r * .21f, r * .24f))
+            drawCircle(baya, r * .19f, Offset(0f, r * .51f))
+        }
+        "campanas" -> {
+            val dorado = Color(0xFFFFC85A).copy(alpha = 0.74f)
+            drawPath(Path().apply {
+                moveTo(-r * .85f, r * .35f)
+                quadraticBezierTo(-r * .52f, 0f, -r * .52f, -r * .42f)
+                quadraticBezierTo(0f, -r * 1.25f, r * .52f, -r * .42f)
+                quadraticBezierTo(r * .52f, 0f, r * .85f, r * .35f)
+                close()
+            }, dorado)
+            drawCircle(dorado, r * .19f, Offset(0f, r * .54f))
+        }
+        "chupallas" -> {
+            val paja = Color(0xFFE9C487).copy(alpha = 0.82f)
+            drawRoundRect(paja, Offset(-r * .57f, -r * .65f), Size(r * 1.14f, r * .83f), CornerRadius(r * .21f))
+            drawRect(Color(0xFF92562F).copy(alpha = 0.8f), Offset(-r * .57f, -r * .18f), Size(r * 1.14f, r * .19f))
+            drawOval(paja, Offset(-r, -r * .02f), Size(r * 2f, r * .42f))
+        }
+        "volantines" -> {
+            val color = when (indice) {
+                0 -> Color(0xFFE34352)
+                1 -> Color(0xFF5484D5)
+                else -> Color(0xFFF5F3EF)
+            }.copy(alpha = 0.76f)
+            drawPath(Path().apply {
+                moveTo(0f, -r)
+                lineTo(r * .68f, -r * .23f)
+                lineTo(0f, r * .68f)
+                lineTo(-r * .68f, -r * .23f)
+                close()
+            }, color)
+            drawPath(Path().apply {
+                moveTo(0f, r * .68f)
+                quadraticBezierTo(-r * .45f, r, r * .18f, r * 1.34f)
+            }, color, style = Stroke(r * .09f))
+        }
+    }
 }

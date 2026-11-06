@@ -89,7 +89,7 @@ fun PantallaSuperior(e: Estado) {
         return
     }
     if (e.panel == Panel.EDITAR_CONSOLA) {
-        VistaSistema(e.copy(consolaSel = e.consolaEditando))
+        PreviaConsolaEditada(e)
         return
     }
     if (e.panel == Panel.GALERIA) {
