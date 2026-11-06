@@ -174,7 +174,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
         targetState = e.panel,
         transitionSpec = {
             val completo = targetState in setOf(Panel.MENU, Panel.ENCUADRE, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
-            val entra = if (targetState == Panel.MENU) {
+            val entra = if (targetState == Panel.MENU || targetState == Panel.ESTUDIO) {
                 fadeIn(tween(100), initialAlpha = 0.88f)
             } else if (completo) {
                 fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }

@@ -390,7 +390,7 @@ object Teclas {
         }
 
         // Inicio con widgets: ↑ desde el estante entra a los widgets; ahí la cruceta salta entre ellos, A abre y B vuelve.
-        if (!hayPanel && e.sesion == null && e.inicio == "widgets" && !e.editandoWidgets) {
+        if (!hayPanel && e.sesion == null && e.inicio == "widgets" && !e.editandoWidgets && !e.eligiendoConsola) {
             if (e.widgetFoco >= 0) {
                 if (abajo) {
                     dir(code)?.let { (dx, dy) -> Diptico.moverFocoWidget(dx, dy); return true }
@@ -404,7 +404,7 @@ object Teclas {
                     esB(code) -> { Diptico.salirWidgets(); return true }
                     code in cruceta -> return true
                 }
-            } else if (abajo && ((e.unaPantalla && code in cruceta) || (code == KeyEvent.KEYCODE_DPAD_UP && e.vistaConsolas !in setOf("lado", "rueda", "sistemas", "carpetas", "discos") &&
+            } else if (abajo && ((e.unaPantalla && code in cruceta) || (code == KeyEvent.KEYCODE_DPAD_UP && e.vistaConsolas !in Diptico.MODOS_ELEGIR && e.vistaConsolas !in setOf("lado", "rueda") &&
                     ((e.vista != "cuadricula" && e.vista != "lista") || e.indiceSel < columnasEstante(e))))
             ) {
                 if (Diptico.entrarWidgets()) return true
@@ -412,11 +412,15 @@ object Teclas {
         }
 
         // Modo Sistemas, eligiendo consola: la cruceta y L1/R1 cambian de consola, A entra, Y elige un juego al azar.
-        if (!hayPanel && e.sesion == null && e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas) {
+        if (!hayPanel && e.sesion == null && e.eligiendoConsola) {
             if (abajo) {
                 // En Carpetas (una grilla) ↑ ↓ saltan de fila; en Sistemas todo avanza de a uno.
                 dir(code)?.let { (dx, dy) ->
-                    Diptico.cambiarConsola(if (dy != 0 && e.vistaConsolas in Diptico.VISTAS_CARPETAS) dy * columnasCarpetas else if (dx + dy < 0) -1 else 1); return true }
+                    if (dy != 0 && e.vistaConsolas in Diptico.VISTAS_CARPETAS) {
+                        Diptico.subirOBajarCarpetas(dy, columnasCarpetas)
+                    } else Diptico.cambiarConsola(if (dx + dy < 0) -1 else 1)
+                    return true
+                }
                 if ((code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) && ev.repeatCount == 0) {
                     Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
                 }
@@ -657,6 +661,10 @@ object Teclas {
         val code = ev.keyCode
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
+        if (arriba && esA(code) && aLargoEstudio) {
+            aLargoEstudio = false
+            return true
+        }
         // Burbuja para agregar: la cruceta elige, A agrega, B cierra.
         if (e.burbuja != null) {
             if (abajo) dir(code)?.let { (dx, dy) -> Diptico.moverBurbuja(if (dy != 0) dy * 3 else dx); return true }
@@ -825,8 +833,11 @@ object Teclas {
             }
             if (e.panel == Panel.NINGUNO || e.estudioZona == "grilla") { pulsar(d, 0); return }
         }
-        val enInicio = libre && e.inicio == "widgets" && e.panel == Panel.NINGUNO && !e.editandoWidgets && !e.ordenando &&
-            !(e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas)
+        if (libre && e.panel == Panel.NINGUNO && e.eligiendoConsola && !e.editandoWidgets) {
+            pulsar(d, 0)
+            return
+        }
+        val enInicio = libre && e.inicio == "widgets" && e.panel == Panel.NINGUNO && !e.editandoWidgets && !e.ordenando
         if (enInicio && deWidgets) {
             if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
             return

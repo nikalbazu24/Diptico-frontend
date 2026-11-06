@@ -69,6 +69,26 @@ class NavegacionTest {
         assertEquals(Panel.APPS, Diptico.estado.value.panel)
     }
 
+    @Test fun arribaRecorreMosaicoAunqueElInicioMuestreWidgets() {
+        val juegos = listOf("snes", "gba", "psx", "nds").map { id ->
+            cl.nikalbazu.diptico.data.Juego("$id/juego", id, "Juego", "juego.zip", android.net.Uri.parse("content://prueba/$id"), id)
+        }
+        val e = Estado(configurado = true, inicio = "widgets", modoPantallas = "dos", dosDisponibles = true,
+            intro = false, vistaConsolas = "mosaico", enSistemas = true, juegos = juegos)
+        val columnasPrevias = Teclas.columnasCarpetas
+        try {
+            Teclas.columnasCarpetas = 2
+            Diptico.fijarParaPrueba(e.copy(consolaSel = e.pestanas[3]))
+            toque(KeyEvent.KEYCODE_DPAD_UP, 1000L)
+            assertEquals(e.pestanas[1], Diptico.estado.value.consolaSel)
+            toque(KeyEvent.KEYCODE_DPAD_UP, 1200L)
+            assertEquals(e.pestanas[1], Diptico.estado.value.consolaSel)
+            assertEquals(-1, Diptico.estado.value.widgetFoco)
+        } finally {
+            Teclas.columnasCarpetas = columnasPrevias
+        }
+    }
+
     @Test fun tiendaTieneTemasDisponiblesSinEnlace() {
         val galeria = Estado(galeria = "temas", galeriaPestana = 3)
         assertEquals("Tienda", Diptico.pestanasGaleria("temas")[3])

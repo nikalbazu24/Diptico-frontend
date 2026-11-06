@@ -1,4 +1,4 @@
 - **Agregado** Suelta un widget en la zona Quitar widget y explora temas instalables desde la tienda.
-- **Corregido** En dos pantallas, el lienzo de widgets queda libre y el catálogo aparece abajo.
+- **Corregido** En dos pantallas, el lienzo de widgets queda libre y el catálogo aparece abajo. El editor abre sin marco y subir con el joystick recorre las carpetas.
 - **Actualizado** Díptico Cristal usa tonos neutros y la barra se integra con las carátulas y el encabezado de widgets.
 - **Retirado** La vista Habitación pasa a Carpetas si la tenías guardada.

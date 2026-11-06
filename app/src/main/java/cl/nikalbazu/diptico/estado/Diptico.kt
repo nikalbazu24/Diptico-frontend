@@ -617,6 +617,9 @@ data class Estado(
     val unaPantalla: Boolean
         get() = !configurado || modoPantallas != "dos" || !dosDisponibles || (sobremesa && sobremesaUna)
 
+    val eligiendoConsola: Boolean
+        get() = enSistemas && vistaConsolas in Diptico.MODOS_ELEGIR && (!unaPantalla || inicio != "widgets")
+
     /** Se está escribiendo con el teclado de Díptico (en la pantalla contraria a la del texto). */
     val conTeclado: Boolean
         get() = tecladoPropio && (panel == Panel.PASO || panel == Panel.CLAVE)
@@ -1886,7 +1889,16 @@ object Diptico {
         val tabs = e.pestanas
         if (tabs.isEmpty()) return
         val i = tabs.indexOf(e.consolaSel).coerceAtLeast(0)
-        elegirConsola(tabs[(i + delta + tabs.size) % tabs.size])
+        elegirConsola(tabs[(i + delta).mod(tabs.size)])
+    }
+
+    fun subirOBajarCarpetas(filas: Int, columnas: Int) {
+        val e = estado.value
+        val carpetas = e.pestanas
+        val i = carpetas.indexOf(e.consolaSel).coerceAtLeast(0)
+        val inicioFila = (i / columnas + filas) * columnas
+        if (inicioFila !in carpetas.indices) return
+        elegirConsola(carpetas[(inicioFila + i % columnas).coerceAtMost(carpetas.lastIndex)])
     }
 
     fun elegirConsola(id: String) {
@@ -5438,7 +5450,7 @@ object Diptico {
     /** Entra a los widgets con la cruceta (desde el estante, con ↑): el foco va al de más abajo a la izquierda. */
     fun entrarWidgets(): Boolean {
         val e = estado.value
-        if (e.inicio != "widgets" || e.editandoWidgets) return false
+        if (e.inicio != "widgets" || e.editandoWidgets || e.eligiendoConsola) return false
         val l = widgetsDePagina(e)
         if (l.isEmpty()) return false
         val i = l.maxWithOrNull(compareBy<Int>({ e.widgets[it].y + e.widgets[it].al }, { -e.widgets[it].x })) ?: return false
@@ -6893,7 +6905,7 @@ object Diptico {
     fun elegirVistaConsolas(v: String) {
         val vista = vistaConsolasCompatible(v)
         almacen.guardarTexto("vistaConsolas", vista)
-        actualizar { it.copy(vistaConsolas = vista, enSistemas = vista in MODOS_ELEGIR) }
+        actualizar { it.copy(vistaConsolas = vista, enSistemas = vista in MODOS_ELEGIR, widgetFoco = -1) }
         avisar("Consolas: ${nombreVistaConsolas(vista)}")
     }
 
@@ -6907,7 +6919,7 @@ object Diptico {
 
     /** Modo sistemas: vuelve al carrusel de consolas. */
     fun volverASistemas() {
-        if (estado.value.vistaConsolas in MODOS_ELEGIR) actualizar { it.copy(enSistemas = true) }
+        if (estado.value.vistaConsolas in MODOS_ELEGIR) actualizar { it.copy(enSistemas = true, widgetFoco = -1) }
     }
 
     /** R3 o el botón Vista: estante, cuadrícula o lista. */
@@ -7905,7 +7917,7 @@ object Diptico {
                 Widgets.icono(w.tipo), ayuda = Widgets.descripcion(w.tipo), extra = w.tipo,
             ) {
                 if (w.visible) {
-                    actualizar { it.copy(widgetSel = k, estudioPestana = 0, indice = 0, paginaInicio = w.pagina) }
+                    actualizar { it.copy(widgetSel = k, estudioPestana = 0, indice = 0, paginaInicio = w.pagina, celdaCatalogo = null) }
                 } else if (e.celdaCatalogo != null) {
                     val (columna, fila) = e.celdaCatalogo
                     actualizar { it.copy(celdaCatalogo = null) }

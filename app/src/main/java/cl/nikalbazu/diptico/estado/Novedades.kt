@@ -191,6 +191,7 @@ object Novedades {
             Pagina("Corregido · Edición en dos pantallas", "Arriba queda la cuadrícula y abajo el catálogo. Mantén una celda o pulsa Y en la cuadrícula para agregar en ese lugar.", Icono.EDITAR, 0xFF8F89DF),
             Pagina("Actualizado · Cristal y accesos", "Cristal usa tonos neutros, con desenfoque suave. Los accesos se alinean con el fondo del juego y con el encabezado de widgets.", Icono.PALETA, 0xFFA8B2D2),
             Pagina("Agregado · Tienda visible", "Abre Ajustes › Temas › Tienda de temas. Ya hay temas para previsualizar e instalar, y puedes importar más por enlace.", Icono.WEB, 0xFF77BDB8),
+            Pagina("Corregido · Navegación por carpetas", "La cruceta y el joystick suben de fila en Carpetas, Mosaico y Vitrina. El editor de widgets ocupa el espacio completo, sin el marco del modo anterior.", Icono.MANDO, 0xFFA8B2D2),
             Pagina("Retirado · Habitación", "La vista Habitación sale de la biblioteca. Si la usabas, Díptico abre tus consolas en Carpetas.", Icono.CARPETA, 0xFFDBB386),
         )),
     )

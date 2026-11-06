@@ -11,7 +11,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.border
-import androidx.compose.ui.layout.layout
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -44,6 +43,10 @@ import cl.nikalbazu.diptico.estado.Icono
  */
 @Composable
 fun PantallaUnica(e: Estado) {
+    if (e.editandoWidgets) {
+        PantallaUnicaContenido(e)
+        return
+    }
     // Carátulas ↔ widgets con transición suave, igual que con dos pantallas.
     androidx.compose.animation.AnimatedContent(
         targetState = e.inicio == "widgets",
@@ -63,29 +66,11 @@ private fun PantallaUnicaContenido(e: Estado) {
     val esc = LocalEscala.current
     if (e.panel == cl.nikalbazu.diptico.estado.Panel.WIDGET && e.coleccionVisual != null) { ColeccionUniverso(e); return }
     if (e.inicio == "widgets") {
-        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
-            // En el estudio de widgets, el inicio completo se ve en miniatura a la izquierda (en vivo) y el panel a la derecha.
-            val estudio = e.panel == cl.nikalbazu.diptico.estado.Panel.ESTUDIO && !esc.angosta
-            if (estudio) {
-                val anchoPx = constraints.maxWidth
-                val altoPx = constraints.maxHeight
-                val escala = 0.46f
-                Column(
-                    Modifier.fillMaxHeight().fillMaxWidth(0.5f).background(p.fondo2),
-                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-                ) {
-                    Etiqueta("Vista previa en vivo", p.tenue, 11f)
-                    Spacer(Modifier.height(esc.d(8)))
-                    Box(
-                        Modifier.layout { medible, _ ->
-                            val pl = medible.measure(androidx.compose.ui.unit.Constraints.fixed(anchoPx, altoPx))
-                            layout((anchoPx * escala).toInt(), (altoPx * escala).toInt()) {
-                                pl.placeWithLayer(0, 0) { scaleX = escala; scaleY = escala; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f) }
-                            }
-                        }.clip(RoundedCornerShape(esc.d(14))).border(esc.d(2), p.linea, RoundedCornerShape(esc.d(14))),
-                    ) { PantallaInicio(e) }
-                    Spacer(Modifier.height(esc.d(8)))
-                    Detalle("Toca un widget para elegirlo, o arrástralo", 11.5f, lineas = 1)
+        Box(Modifier.fillMaxSize()) {
+            val dividido = e.panel == cl.nikalbazu.diptico.estado.Panel.ESTUDIO && !esc.angosta
+            if (dividido) {
+                Lienzo(e.oscuro, Modifier.fillMaxWidth(0.5f).fillMaxHeight(), e.tamTexto) {
+                    PantallaInicio(e)
                 }
             } else {
                 Box(Modifier.fillMaxSize().difuminar(e)) {

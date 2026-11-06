@@ -100,6 +100,10 @@ fun PantallaSuperior(e: Estado) {
         LecturaAsistente(e)
         return
     }
+    if (e.editandoWidgets) {
+        PantallaInicio(e)
+        return
+    }
     // Carátulas ↔ widgets con una transición suave (y un recordatorio discreto al llegar a los widgets).
     AnimatedContent(
         targetState = e.inicio == "widgets",

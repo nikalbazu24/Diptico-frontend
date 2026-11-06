@@ -50,10 +50,8 @@ fun PanelEstudio(e: Estado) {
     val controles = remember(e) { Diptico.controlesEstudio(e) }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
         Column(
-            (if (lateral) Modifier.fillMaxHeight().fillMaxWidth(if (esc.angosta) 1f else 0.5f).padding(esc.d(10))
-                .clip(RoundedCornerShape(esc.d(22))).background(p.fondo2.copy(alpha = 0.97f))
-                .border(esc.d(1), p.linea, RoundedCornerShape(esc.d(22)))
-            else Modifier.fillMaxSize().background(p.fondo2))
+            (if (lateral && !esc.angosta) Modifier.fillMaxHeight().fillMaxWidth(0.5f)
+            else Modifier.fillMaxSize()).background(p.fondo2.copy(alpha = 1f))
                 .sinCerrar().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10)),
         ) {
             // El estado de la página y el botón de salida se mantienen visibles durante toda la edición.
