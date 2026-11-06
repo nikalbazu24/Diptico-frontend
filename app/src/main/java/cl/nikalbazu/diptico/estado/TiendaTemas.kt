@@ -18,12 +18,13 @@ data class TemaComunidad(
 )
 
 internal object TiendaTemas {
+    const val TOTAL_OFICIAL = 30
     const val WEB_APORTES = "https://diptico-temas.nickalbazu.chatgpt.site"
     private const val LIMITE_CATALOGO = 256 * 1024
     private const val LIMITE_AUDIO = 16 * 1024 * 1024
     private val adornosOficiales = mapOf(
         "chile" to "chupallas", "arcade" to "estrellas", "atardecer" to "petalos", "portatil" to "bloques",
-        "cyber" to "fuegos", "menta" to "hojas", "monocromo" to "estrellas", "tinta" to "hojas",
+        "cyber" to "fuegos", "menta" to "hojas", "monocromo" to "nada", "tinta" to "nada",
         "brisamar" to "burbujas", "retro80" to "confeti", "ascua" to "fuegos",
     )
     private val nombreArchivo = Regex("com_[0-9a-f]{24}\\.(mp3|ogg|m4a|wav)")
@@ -118,7 +119,7 @@ internal object TiendaTemas {
                         ?: original.decor.takeIf { it in Temas.DECORACIONES } ?: "nada",
                     forma = original.forma.takeIf { it in Temas.FORMAS }.orEmpty(),
                     fuente = original.fuente.takeIf { it in Temas.FUENTES }.orEmpty(),
-                    sonidos = original.sonidos.takeIf { it in setOf("bloques", "retro", "burbuja") }.orEmpty(),
+                    sonidos = original.sonidos.takeIf { it in cl.nikalbazu.diptico.audio.Sonidos.JUEGOS_DE_TEMA }.orEmpty(),
                     mensaje = original.mensaje.take(80),
                     descripcion = original.descripcion.trim().take(320),
                     trama = original.trama.takeIf { it in Temas.TRAMAS }.orEmpty(),

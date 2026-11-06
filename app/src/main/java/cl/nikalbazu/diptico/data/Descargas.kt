@@ -456,11 +456,11 @@ object Descargas {
 
     /**
      * Opciones de internet para las imágenes de una consola: SteamGridDB (por su nombre), Wikipedia (fotos de la consola)
-     * y, para el ícono, los paquetes de RetroArch. [tipo]: "c_hero", "c_logo" o "c_icono".
+     * y, para el ícono, los paquetes de RetroArch. [tipo]: "c_hero", "c_logo", "c_icono" o "c_portada".
      */
     fun candidatosConsola(consola: Consola, tipo: String, nombre: String, claveSgdb: String, wiki: FichaInfo?): List<ImagenWeb> {
         val lista = ArrayList<ImagenWeb>()
-        if (tipo == "c_icono") {
+        if (tipo == "c_icono" || tipo == "c_portada") {
             consola.icono?.let { ic ->
                 for (p in PAQUETES) {
                     val u = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/${p.id}/png/${codificar(ic)}.png"
@@ -473,6 +473,8 @@ object Descargas {
             if (id != null) lista += when (tipo) {
                 "c_logo" -> urlsSgdb("/logos/game/$id", claveSgdb)
                 "c_icono" -> urlsSgdb("/icons/game/$id", claveSgdb)
+                "c_portada" -> urlsSgdb("/icons/game/$id", claveSgdb) +
+                    urlsSgdb("/grids/game/$id?dimensions=512x512,1024x1024", claveSgdb, 12)
                 else -> urlsSgdb("/heroes/game/$id", claveSgdb)
             }
         }

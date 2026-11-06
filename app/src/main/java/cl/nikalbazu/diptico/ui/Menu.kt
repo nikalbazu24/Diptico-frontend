@@ -55,6 +55,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.INICIO -> Color(0xFF00ACC1)
     Seccion.ESTANTE -> Color(0xFFFF8A5B)
     Seccion.TEMAS -> Color(0xFFB388FF)
+    Seccion.DECORACIONES -> Color(0xFFF4AB61)
     Seccion.APARIENCIA -> Color(0xFFFF5D8F)
     Seccion.MUSICA -> Color(0xFFFF7A59)
     Seccion.EMULADORES -> Color(0xFF3BA8FF)
@@ -355,7 +356,7 @@ fun AyudaMenu(e: Estado) {
 
 // ---------- Vistas previas del menú ----------
 
-private fun tienePrevia(s: Seccion) = s in setOf(Seccion.TEMAS, Seccion.ESTANTE, Seccion.APARIENCIA, Seccion.INICIO, Seccion.MUSICA)
+private fun tienePrevia(s: Seccion) = s in setOf(Seccion.TEMAS, Seccion.DECORACIONES, Seccion.ESTANTE, Seccion.APARIENCIA, Seccion.INICIO, Seccion.MUSICA)
 
 /** Cómo se vería lo que estás eligiendo: el tema, el estante, los botones, tu inicio o la música. */
 @Composable

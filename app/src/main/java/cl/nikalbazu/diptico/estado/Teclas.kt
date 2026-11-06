@@ -411,6 +411,12 @@ object Teclas {
             }
         }
 
+        if (arriba && !hayPanel && e.sesion == null && e.filtro == "ocultos" && esB(code)) {
+            if (!bLargo) Diptico.salirDeOcultos()
+            bLargo = false
+            return true
+        }
+
         // Modo Sistemas, eligiendo consola: la cruceta y L1/R1 cambian de consola, A entra, Y elige un juego al azar.
         if (!hayPanel && e.sesion == null && e.eligiendoConsola) {
             if (abajo) {

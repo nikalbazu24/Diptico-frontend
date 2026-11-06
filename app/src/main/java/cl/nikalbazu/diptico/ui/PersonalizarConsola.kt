@@ -122,7 +122,7 @@ fun PanelEditarConsola(e: Estado) {
 internal fun PreviaConsolaEditada(e: Estado) {
     val id = e.consolaEditando
     val opcion = Diptico.opcionesEditarConsola(e).getOrNull(e.indice)?.titulo
-    if (id == "todo" || opcion == "Portada de carpeta" || opcion == "Restaurar portada de carpeta") {
+    if (id == "todo" || opcion == "Imagen del ícono de carpeta" || opcion == "Restaurar portada de carpeta") {
         val esc = LocalEscala.current
         Box(Modifier.fillMaxSize().padding(esc.d(20)), contentAlignment = Alignment.Center) {
             PortadaCarpeta(e, id, Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(20)))) {

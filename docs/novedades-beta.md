@@ -1,5 +1,4 @@
-- **Tienda integrada**. Explora e instala 24 temas completos sin conexión desde Díptico. En equipos de dos pantallas el catálogo abre arriba y la vista previa con controles queda abajo.
-- **Mi tema**. Combina por separado colores, fondos, tipografías, formas, adornos, efectos y música de tus temas instalados.
-- **Biblioteca**. El widget Juego elegido recorre títulos de la carpeta enfocada. Pulsa X o mantén una carpeta para cambiar su portada en Carpetas, Mosaico y Vitrina, incluida Todo.
-- **Calendario**. Conserva los temas por fechas. Elige muérdago, campanas o nieve para Navidad y chupallas, volantines o confeti para Fiestas Patrias.
-- **Aportes**. El editor web genera el JSON de un tema propio y guía su envío a la comunidad.
+- **Biblioteca**. Sal de Ocultos con B o con el botón visible para recuperar tu selección anterior.
+- **Carpetas**. La cuadrícula muestra íconos de consola. Ábrelos en una ventana con fondo desenfocado o a pantalla completa y elige el arte desde los proveedores de imágenes o tus archivos.
+- **Tienda de temas**. Seis diseños inspirados en videojuegos con música, efectos y adornos originales. La tienda suma 30 temas que se instalan sin conexión.
+- **Decoraciones**. Cada tema tiene su propio desplegable de estilo e intensidad. Incluye los temas instalados, los de la tienda y el calendario.

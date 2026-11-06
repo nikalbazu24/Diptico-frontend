@@ -113,6 +113,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                     if (tema != null) Marco { PreviaTema(tema, e.oscuro) }
                     else MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
                 }
+                Seccion.DECORACIONES -> Marco { PreviaTema(Estilo.tema, e.oscuro) }
                 Seccion.APARIENCIA -> when {
                     t.startsWith("Efecto") || t == "Modo" -> Marco { PreviaBotonesGrande(e) }
                     t.contains("cono") -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(vistaConsolas = "arriba"), 1) }

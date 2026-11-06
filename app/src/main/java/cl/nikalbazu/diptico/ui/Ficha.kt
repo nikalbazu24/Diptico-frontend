@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -345,8 +346,12 @@ fun PanelImagenes(e: Estado) {
             }
             Spacer(Modifier.height(esc.d(8)))
             // Pestañas de fuentes (L1/R1), con cuántas opciones trae cada una.
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                Diptico.fuentesImagen(e).forEach { f ->
+            val fuentes = Diptico.fuentesImagen(e)
+            val filaFuentes = rememberLazyListState()
+            LaunchedEffect(e.fuenteImagen, fuentes) { filaFuentes.mostrar(fuentes.indexOf(e.fuenteImagen)) }
+            LazyRow(state = filaFuentes, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                items(fuentes.size) { i ->
+                    val f = fuentes[i]
                     val n = if (f == "todas") e.candidatos.size else e.candidatos.count { it.fuente == f }
                     val activa = f == e.fuenteImagen
                     Box(
@@ -361,19 +366,19 @@ fun PanelImagenes(e: Estado) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Girador(18f)
                     Spacer(Modifier.width(esc.d(8)))
-                    Detalle(if (e.candidatoPara.startsWith("c_")) "Buscando en RetroArch, SteamGridDB y Wikipedia…" else "Buscando en libretro, SteamGridDB y Wikipedia…", 13f, lineas = 1)
+                    Detalle("Buscando en las fuentes disponibles…", 13f, lineas = 1)
                 }
                 Spacer(Modifier.height(esc.d(6)))
             } else if (e.candidatos.isEmpty()) {
                 Detalle("No encontré opciones con ese nombre. Prueba \"Otro nombre\" o elige una de tus imágenes.", 13f, lineas = 2)
                 Spacer(Modifier.height(esc.d(6)))
             }
-            val cols = when (e.candidatoPara) { "portada", "c_icono" -> if (esc.angosta) 4 else 6; "logo", "c_logo" -> 3; else -> if (esc.angosta) 2 else 3 }
+            val cols = when (e.candidatoPara) { "portada", "c_icono", "c_portada" -> if (esc.angosta) 4 else 6; "logo", "c_logo" -> 3; else -> if (esc.angosta) 2 else 3 }
             SideEffect { cl.nikalbazu.diptico.estado.Teclas.columnasImagenes = cols }
             val grilla = rememberLazyGridState()
             LaunchedEffect(e.indice) { if (lista.isNotEmpty()) grilla.mostrar(e.indice.coerceIn(0, lista.size - 1)) }
-            val proporcion = when (e.candidatoPara) { "portada" -> 0.68f; "c_icono" -> 1f; "logo", "c_logo" -> 2f; else -> 2.6f }
-            val ajustar = e.candidatoPara == "logo" || e.candidatoPara == "c_logo" || e.candidatoPara == "c_icono"
+            val proporcion = when (e.candidatoPara) { "portada" -> 0.68f; "c_icono", "c_portada" -> 1f; "logo", "c_logo" -> 2f; else -> 2.6f }
+            val ajustar = e.candidatoPara in setOf("logo", "c_logo", "c_icono", "c_portada")
             LazyVerticalGrid(
                 columns = GridCells.Fixed(cols), state = grilla, modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(8)), verticalArrangement = Arrangement.spacedBy(esc.d(8)),

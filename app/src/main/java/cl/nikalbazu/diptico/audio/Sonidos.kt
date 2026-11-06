@@ -9,6 +9,10 @@ import kotlin.math.pow
 /** Sonidos cortos al moverte, elegir, volver y abrir juegos. Se pueden apagar en Menú › Música. */
 object Sonidos {
     private var pool: SoundPool? = null
+    private var recursos: Context? = null
+    private val cargados = HashSet<String>()
+    private val tematicos = setOf("tuberias", "ruta_monstruos", "reliquias", "estacion_orbital", "sueno_estelar", "pista_turbo")
+    val JUEGOS_DE_TEMA = setOf("bloques", "retro", "burbuja") + tematicos
     private val ids = HashMap<String, Int>()
     private var ultimoMover = 0L
 
@@ -20,10 +24,10 @@ object Sonidos {
 
     /** Juego de sonidos del tema ("" = los normales, "bloques" = madera y pops). */
     @Volatile
-    var juego = ""
+    private var juego = ""
 
     @Volatile
-    var semitonos = 0
+    private var semitonos = 0
 
     /** Juego elegido en los ajustes: "tema" (el del tema), "clasico", "bloques", "retro" o "burbuja". */
     @Volatile
@@ -32,7 +36,7 @@ object Sonidos {
     val PAQUETES = listOf("tema", "clasico", "bloques", "retro", "burbuja")
 
     private fun prefijo(): String = when (if (paquete == "tema") juego else paquete) {
-        "bloques" -> "b_"; "retro" -> "r_"; "burbuja" -> "u_"; else -> ""
+        "bloques" -> "b_"; "retro" -> "r_"; "burbuja" -> "u_"; else -> if (paquete == "tema" && juego in tematicos) "${juego}_" else ""
     }
 
     fun iniciar(ctx: Context) {
@@ -41,14 +45,27 @@ object Sonidos {
             .setMaxStreams(6)
             .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
             .build()
-        val app = ctx.applicationContext
-        // Todos los juegos tienen los mismos nombres: "" clásicos, "b_" bloques, "r_" retro, "u_" burbuja.
-        val nombres = listOf("mover", "consola", "aceptar", "atras", "abrir", "jugar", "borde", "pagina", "deslizar", "tecla", "si", "no", "levantar", "soltar", "aviso")
-        for (pre in listOf("", "b_", "r_", "u_")) for (n in nombres) {
-            val r = app.resources.getIdentifier("sfx_$pre$n", "raw", app.packageName)
-            if (r != 0) ids["$pre$n"] = p.load(app, r, 1)
-        }
+        recursos = ctx.applicationContext
         pool = p
+        val nombres = listOf("mover", "consola", "aceptar", "atras", "abrir", "jugar", "borde", "pagina", "deslizar", "tecla", "si", "no", "levantar", "soltar", "aviso")
+        for (prefijo in listOf("", "b_", "r_", "u_")) cargar(prefijo, nombres)
+    }
+
+    fun cambiarJuego(nombre: String, tono: Int) {
+        juego = nombre
+        semitonos = tono
+        if (nombre in tematicos) cargar("${nombre}_", listOf("mover", "aceptar", "atras", "jugar"))
+    }
+
+    private fun cargar(prefijo: String, nombres: List<String>) {
+        val app = recursos ?: return
+        val sonido = pool ?: return
+        if (!cargados.add(prefijo)) return
+        for (nombre in nombres) {
+            val clave = "$prefijo$nombre"
+            val id = app.resources.getIdentifier("sfx_$clave", "raw", app.packageName)
+            if (id != 0) ids[clave] = sonido.load(app, id, 1)
+        }
     }
 
     private var flujoMover = 0

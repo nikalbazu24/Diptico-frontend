@@ -60,8 +60,9 @@ enum class Icono {
  */
 enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val grupo: String = "") {
     ESENCIAL("Lo esencial", Icono.ESTRELLA, "Lo que más se cambia, todo junto. Y para buscar cualquier ajuste por su nombre.", "Empieza aquí"),
-    TEMAS("Temas", Icono.PALETA, "Colores, temas de fiestas del mundo, tus propios colores y temas creados con IA.", "Cómo se ve"),
-    APARIENCIA("Apariencia", Icono.TEMA, "Claro u oscuro, efecto de los botones, decoraciones, íconos de las consolas y la animación de entrada."),
+    TEMAS("Temas", Icono.PALETA, "La tienda, los temas del calendario y tus mezclas.", "Cómo se ve"),
+    DECORACIONES("Decoraciones", Icono.ESTRELLA, "Elige el adorno y la cantidad de elementos animados de cada tema."),
+    APARIENCIA("Apariencia", Icono.TEMA, "Claro u oscuro, efecto de los botones, íconos de las consolas y la animación de entrada."),
     INICIO("Inicio", Icono.APPS, "La pantalla principal: el juego en grande o tu inicio con widgets, y la bienvenida al encender."),
     ESTANTE("Estante", Icono.VISTA, "Cómo se ven tus consolas y tus juegos: vistas, tamaño, filtros y orden."),
     MUSICA("Música", Icono.MUSICA, "La música de fondo y los sonidos. Se calla sola al abrir un juego o si pones Spotify o YouTube Music."),
@@ -84,6 +85,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
 
 /** Un juego abierto ahora mismo. */
 data class Sesion(val clave: String, val inicio: Long, val displayId: Int, val dosPantallas: Boolean)
+
+data class BibliotecaAntesDeOcultos(val filtro: String, val busqueda: String, val consola: String, val juego: String?)
 
 data class Opcion(
     val titulo: String,
@@ -344,6 +347,8 @@ data class Estado(
     val decoraciones: Boolean = true,
     val temasPropios: List<Tema> = emptyList(),
     val adornosPorTema: Map<String, String> = emptyMap(),
+    val intensidadPorTema: Map<String, String> = emptyMap(),
+    val decoracionAbierta: String? = null,
     /** Claves de otras IA en la nube: Gemini (Google) y ChatGPT (OpenAI). */
     val claveGemini: String = "",
     val claveOpenAI: String = "",
@@ -428,11 +433,13 @@ data class Estado(
     val consolaEditando: String = "",
     /** Cómo se ven las consolas: "arriba" (pestañas), "lado" (columna), "rueda" (dial) o "sistemas" (carrusel y luego juegos). */
     val vistaConsolas: String = "arriba",
+    val modoCarpeta: String = "ventana",
     /** En modo sistemas: true mientras se elige la consola (antes de entrar a sus juegos). */
     val enSistemas: Boolean = false,
     val tamJuegos: Float = 1f,
     /** "todos", "favoritos", "recientes", "mas" (más jugados) o "sinjugar". */
     val filtro: String = "todos",
+    val antesDeOcultos: BibliotecaAntesDeOcultos? = null,
     /** "az", "recientes" o "tiempo". */
     val orden: String = "az",
     /** Tu orden de las consolas y, por consola ("todo" = todos), tu orden de los juegos. */
@@ -622,28 +629,30 @@ data class Estado(
     val eligiendoConsola: Boolean
         get() = enSistemas && vistaConsolas in Diptico.MODOS_ELEGIR && (!unaPantalla || inicio != "widgets")
 
+    val carpetaEnVentana: Boolean
+        get() = vistaConsolas == "carpetas" && !enSistemas && modoCarpeta != "completa" && sesion == null
+
     /** Se está escribiendo con el teclado de Díptico (en la pantalla contraria a la del texto). */
     val conTeclado: Boolean
         get() = tecladoPropio && (panel == Panel.PASO || panel == Panel.CLAVE)
 
-    val consolasConJuegos: List<Consola>
-        get() {
-            val l = Consolas.todas.filter { c -> juegos.any { it.consolaId == c.id } }
-            if (ordenConsolas.isEmpty()) return l
-            // Tu orden primero; las que no ordenaste quedan después, en su orden de siempre.
-            return l.withIndex().sortedBy { (k, c) -> ordenConsolas.indexOf(c.id).let { if (it < 0) 10_000 + k else it } }.map { it.value }
-        }
+    val juegosPorConsola: Map<String, List<Juego>> by lazy { IndiceBiblioteca.agrupar(juegos) }
+
+    val consolasConJuegos: List<Consola> by lazy {
+        val lista = Consolas.todas.filter { it.id in juegosPorConsola }
+        val orden = ordenConsolas.withIndex().associate { (i, id) -> id to i }
+        if (orden.isEmpty()) lista else lista.sortedBy { orden[it.id] ?: Int.MAX_VALUE }
+    }
 
     /** Consolas que usan emulador (todas menos Ports). */
     val consolasEmu: List<Consola>
         get() = consolasConJuegos.filter { !it.sinEmulador }
 
-    val pestanas: List<String>
-        get() = listOf("todo") + consolasConJuegos.map { it.id }
+    val pestanas: List<String> by lazy { listOf("todo") + consolasConJuegos.map { it.id } }
 
     /** Los juegos del estante: consola elegida, filtro, búsqueda y orden. Se calcula una vez por estado. */
     val visibles: List<Juego> by lazy {
-        var l = if (consolaSel == "todo") juegos else juegos.filter { it.consolaId == consolaSel }
+        var l = if (consolaSel == "todo") juegos else juegosPorConsola[consolaSel].orEmpty()
         fun d(j: Juego) = datos[j.clave]
         l = when (filtro) {
             "ocultos" -> l.filter { d(it)?.oculto == true }
@@ -683,6 +692,15 @@ data class Estado(
 
     val sinPortada: Int
         get() = juegos.count { it.portada == null }
+}
+
+private object IndiceBiblioteca {
+    @Volatile private var ultimo: Pair<List<Juego>, Map<String, List<Juego>>>? = null
+
+    fun agrupar(juegos: List<Juego>): Map<String, List<Juego>> {
+        ultimo?.let { (lista, indice) -> if (lista === juegos) return indice }
+        return juegos.groupBy { it.consolaId }.also { ultimo = juegos to it }
+    }
 }
 
 /** Para buscar sin importar tildes ni mayúsculas. */
@@ -772,10 +790,12 @@ object Diptico {
             tema = almacen.texto("tema", "diptico"),
             temaFestivo = almacen.bool("temaFestivo", true),
             decoraciones = almacen.bool("decoraciones", true),
+            modoCarpeta = almacen.texto("modoCarpeta", "ventana"),
             experiencia = Experiencia.leer(almacen.texto("experiencia", "{}")),
             perfilesVisuales = Experiencia.perfiles(almacen.texto("perfilesVisuales", "{}")),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             adornosPorTema = leerMapa(almacen.texto("adornosPorTema", "{}")),
+            intensidadPorTema = leerMapa(almacen.texto("intensidadPorTema", "{}")),
             // La clave de Claude ya no se usa: se borra de la consola (cada persona usa Gemini, ChatGPT o la IA local).
                         claveGemini = almacen.texto("claveGemini").also { if (almacen.texto("claveIa").isNotEmpty()) almacen.guardarTexto("claveIa", "") },
             claveOpenAI = almacen.texto("claveOpenAI"),
@@ -1906,7 +1926,7 @@ object Diptico {
 
     fun elegirConsola(id: String) {
         actualizar { e ->
-            val vis = if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id }
+            val vis = if (id == "todo") e.juegos else e.juegosPorConsola[id].orEmpty()
             val sel = vis.firstOrNull { it.clave == e.juegoSel } ?: vis.firstOrNull()
             e.copy(consolaSel = id, juegoSel = sel?.clave)
         }
@@ -2110,10 +2130,19 @@ object Diptico {
         return true
     }
 
-    private val categoriasTienda = listOf("Todos", "Paisajes", "Fantasía", "Retro", "Calma")
+    private val categoriasTienda = listOf("Todos", "Videojuegos", "Paisajes", "Fantasía", "Retro", "Calma")
+    private var catalogoOficial: List<TemaComunidad>? = null
+
+    private fun cargarCatalogoOficial(): List<TemaComunidad> =
+        catalogoOficial ?: TiendaTemas.incluidos(app).also { catalogoOficial = it }
+
+    fun abrirDecoraciones() {
+        if (::app.isInitialized) runCatching { cargarCatalogoOficial() }
+        abrirGaleria("decoraciones")
+    }
 
     fun abrirTiendaTemas() {
-        runCatching { TiendaTemas.incluidos(app) }
+        runCatching { cargarCatalogoOficial() }
             .onSuccess { temas ->
                 val oficiales = temas.associateBy { it.tema.id }
                 val previos = estado.value.temasPropios
@@ -2142,7 +2171,7 @@ object Diptico {
 
     fun abrirGaleria(tipo: String, pestana: Int = 0) {
         if (estado.value.panel != Panel.GALERIA) galeriaDesde = regresoActual()
-        actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = pestana, indice = 0) }
+        actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = pestana, indice = 0, decoracionAbierta = null) }
         val i = itemsGaleria().indexOfFirst { it.enUso }
         if (i > 0) actualizar { it.copy(indice = i) }
     }
@@ -2158,7 +2187,7 @@ object Diptico {
         "temas" -> listOf("Incluidos", "Mis temas")
         "importar_temas" -> listOf("Importar temas")
         "tienda_temas" -> categoriasTienda
-        "adornos_festivos" -> Temas.adornosFestivos.map { it.titulo } + "Tema base"
+        "decoraciones" -> listOf("Instalados", "Tienda de temas", "Calendario")
         "mezclar_tema" -> ComponenteTema.entries.map { it.titulo }
         "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
         "ia" -> listOf("El cerebro de Bisa")
@@ -2168,7 +2197,7 @@ object Diptico {
 
     fun cambiarPestanaGaleria(d: Int) {
         val n = pestanasGaleria().size
-        actualizar { it.copy(galeriaPestana = (it.galeriaPestana + d).mod(n), indice = 0) }
+        actualizar { it.copy(galeriaPestana = (it.galeriaPestana + d).mod(n), indice = 0, decoracionAbierta = null) }
         val i = itemsGaleria().indexOfFirst { it.enUso }
         if (i > 0) actualizar { it.copy(indice = i) }
     }
@@ -2234,6 +2263,7 @@ object Diptico {
             val detalle = when (v) {
                 "mosaico" -> "Más consolas a la vista, con una portada y el total de juegos"
                 "vitrina" -> "Carpetas anchas con tres portadas"
+                "carpetas" -> "Íconos de consola que abren una ventana con sus juegos"
                 else -> "Vista previa en la otra pantalla"
             }
             ItemGaleria(v, nombreVistaConsolas(v), detalle, e.vistaConsolas == v) { elegirVistaConsolas(v); cerrarPanel() }
@@ -2260,6 +2290,7 @@ object Diptico {
                 todosLosTemas(e).filterNot { it.id == "mio" }.map { fuente ->
                     val previa = componente.combinar(mio, conAdorno(e, fuente))
                     ItemGaleria(fuente.id, fuente.nombre, fuente.descripcion, previa == mio, previa) {
+                        if (componente == ComponenteTema.DECORACION) guardarDecoracion("mio", null, null)
                         editarMiTema { componente.combinar(it, conAdorno(estado.value, fuente)) }
                     }
                 }
@@ -2273,23 +2304,7 @@ object Diptico {
                     else confirmarTemaImportado(entrada)
                 }
             }
-            "adornos_festivos" -> {
-                val grupo = Temas.adornosFestivos.getOrNull(e.galeriaPestana)
-                val tema = if (grupo != null) Temas.fiestas.first { it.tema.id == grupo.temaId }.tema
-                else todosLosTemas(e).firstOrNull { it.id == e.tema } ?: Temas.iniciales.first()
-                val activo = e.adornosPorTema[tema.id] ?: tema.decor
-                (grupo?.opciones ?: Temas.DECORACIONES).map { decor ->
-                    ItemGaleria(decor, Temas.nombreDecor(decor), "", activo == decor, tema.copy(decor = decor)) {
-                        if (tema.id == "mio") editarMiTema { it.copy(decor = decor) }
-                        else {
-                            val cambios = estado.value.adornosPorTema + (tema.id to decor)
-                            almacen.guardarTexto("adornosPorTema", escribirMapa(cambios))
-                            actualizar { it.copy(adornosPorTema = cambios) }
-                            aplicarTema()
-                        }
-                    }
-                }
-            }
+            "decoraciones" -> itemsDecoraciones(e)
             "importar_temas" -> e.catalogoTemas.map { entrada ->
                 val t = entrada.tema
                 ItemGaleria(t.id, t.nombre, t.descripcion.ifBlank { entrada.autor }, false, t) { confirmarTemaImportado(entrada) }
@@ -2588,8 +2603,9 @@ object Diptico {
             return
         }
         if (e.panel == Panel.IMAGENES) {
+            busquedaImagenes?.cancel()
             if (e.candidatoPara.startsWith("c_")) {
-                val i = opcionesEditarConsola().indexOfFirst { it.titulo == when (e.candidatoPara) { "c_icono" -> "Ícono"; "c_logo" -> "Logo"; else -> "Imagen grande (hero)" } }
+                val i = opcionesEditarConsola().indexOfFirst { it.titulo == when (e.candidatoPara) { "c_icono" -> "Ícono"; "c_portada" -> "Imagen del ícono de carpeta"; "c_logo" -> "Logo"; else -> "Imagen grande (hero)" } }
                 actualizar { it.copy(panel = Panel.EDITAR_CONSOLA, indice = i.coerceAtLeast(0), candidatoPara = "") }
                 return
             }
@@ -2601,10 +2617,19 @@ object Diptico {
             return
         }
         if (e.panel == Panel.GALERIA) {
+            if (e.galeria == "decoraciones" && e.decoracionAbierta != null) {
+                val indiceTema = temasDecoracion(e).indexOfFirst { it.id == e.decoracionAbierta }.coerceAtLeast(0)
+                actualizar { it.copy(decoracionAbierta = null, indice = indiceTema) }
+                return
+            }
             // Se vuelve a donde se abrió (la ficha del juego, la ventana, la consola o la misma sección del menú).
             if (volverA(galeriaDesde.also { galeriaDesde = null })) return
             val sec = when (e.galeria) { "musica" -> Seccion.MUSICA; "ia" -> Seccion.ASISTENTE; else -> Seccion.TEMAS }
             actualizar { it.copy(panel = Panel.MENU, seccion = sec, enOpciones = true, indice = 0) }
+            return
+        }
+        if (e.panel == Panel.BUSCAR && e.filtro == "ocultos") {
+            salirDeOcultos(cerrarBusqueda = true)
             return
         }
         if (e.panel == Panel.CARPETAS && e.consolaPara >= 0) {
@@ -3244,7 +3269,7 @@ object Diptico {
 
     /** Las secciones del modo simple: lo de todos los días. Las demás quedan a un toque en «Más ajustes». */
     val SECCIONES_SIMPLES = listOf(
-        Seccion.ESENCIAL, Seccion.TEMAS, Seccion.INICIO, Seccion.ESTANTE, Seccion.MUSICA,
+        Seccion.ESENCIAL, Seccion.TEMAS, Seccion.DECORACIONES, Seccion.INICIO, Seccion.ESTANTE, Seccion.MUSICA,
         Seccion.BIBLIOTECA, Seccion.EMULADORES, Seccion.ASISTENTE, Seccion.PANTALLAS, Seccion.SISTEMA,
     )
 
@@ -3317,7 +3342,7 @@ object Diptico {
         Seccion.APARIENCIA -> when {
             t == "Modo" || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
             t.contains("protector", true) -> "Protector de pantalla"
-            t.startsWith("Zoom") || t == "Decoraciones" || t.contains("nimación") -> "Detalles"
+            t.startsWith("Zoom") || t.contains("nimación") -> "Detalles"
             else -> "Íconos de las consolas"
         }
         Seccion.MUSICA -> if (t.startsWith("Sonidos") || t.startsWith("Juego de sonidos")) "Sonidos" else "Música de fondo"
@@ -3467,6 +3492,17 @@ object Diptico {
             }
             Seccion.INICIO -> lista += opcionesInicio(e)
             Seccion.TEMAS -> lista += opcionesTemas(e)
+            Seccion.DECORACIONES -> {
+                lista += Opcion("Configurar por tema", icono = Icono.PALETA,
+                    ayuda = "Despliega un tema para elegir su adorno y la intensidad.") { abrirDecoraciones() }
+                lista += Opcion("Animar decoraciones", if (e.decoraciones) "Sí" else "No", Icono.ESTRELLA,
+                    ayuda = "Enciende o apaga los adornos animados de todos los temas.") {
+                    val activar = !estado.value.decoraciones
+                    almacen.guardarBool("decoraciones", activar)
+                    actualizar { it.copy(decoraciones = activar) }
+                    aplicarTema()
+                }
+            }
             Seccion.LOGROS -> lista += opcionesLogros(e)
             Seccion.ESENCIAL -> lista += opcionesEsenciales(e)
             Seccion.MAS -> lista += opcionesMas(e)
@@ -3565,15 +3601,6 @@ object Diptico {
                     val v = !estado.value.zoomLento
                     almacen.guardarBool("zoomLento", v)
                     actualizar { it.copy(zoomLento = v) }
-                }
-                lista += Opcion(
-                    "Decoraciones", if (e.decoraciones) "Sí" else "No", Icono.ESTRELLA,
-                    "Nieve en Navidad, murciélagos en Halloween, pétalos en primavera… según el tema.",
-                ) {
-                    val v = !estado.value.decoraciones
-                    almacen.guardarBool("decoraciones", v)
-                    actualizar { it.copy(decoraciones = v) }
-                    aplicarTema()
                 }
                 lista += opcionesIconos(e)
                 lista += Opcion(
@@ -3712,7 +3739,7 @@ object Diptico {
                 lista += Opcion(
                     "Juegos ocultos", if (ocultos == 0) "Ninguno" else "$ocultos", Icono.OCULTAR,
                     "Los juegos que ocultaste desde sus opciones (Y). Desde aquí los ves y los vuelves a mostrar.",
-                ) { actualizar { it.copy(panel = Panel.BUSCAR, filtro = "ocultos", busqueda = "", indice = 0) } }
+                ) { abrirJuegosOcultos() }
                 lista += Opcion(
                     "Carpetas de juegos", "${almacen.carpetas().size} carpetas", Icono.CARPETA,
                     "Agrega todas las que quieras (memoria interna, SD…). Si una carpeta no tiene el nombre de una consola, le eliges la consola.",
@@ -4098,8 +4125,57 @@ object Diptico {
     fun todosLosTemas(e: Estado = estado.value): List<Tema> = Temas.iniciales + temasPersonales(e)
 
     private fun conAdorno(e: Estado, tema: Tema): Tema {
-        val decor = e.adornosPorTema[tema.id]
-        return if (decor != null && decor in Temas.DECORACIONES) tema.copy(decor = decor) else tema
+        val decor = e.adornosPorTema[tema.id]?.takeIf { it in Temas.DECORACIONES } ?: tema.decor
+        val intensidad = e.intensidadPorTema[tema.id]?.toIntOrNull()?.takeIf { it in 1..3 } ?: tema.intensidadDecoracion
+        return if (decor == tema.decor && intensidad == tema.intensidadDecoracion) tema
+        else tema.copy(decor = decor, intensidadDecoracion = intensidad)
+    }
+
+    private fun temasDecoracion(e: Estado): List<Tema> = when (e.galeriaPestana) {
+        1 -> catalogoOficial.orEmpty().map { it.tema }
+        2 -> Temas.fiestas.map { it.tema }
+        else -> todosLosTemas(e)
+    }
+
+    private fun itemsDecoraciones(e: Estado): List<ItemGaleria> = buildList {
+        temasDecoracion(e).forEachIndexed { i, tema ->
+            val abierto = e.decoracionAbierta == tema.id
+            val activo = conAdorno(e, tema)
+            val detalle = if (activo.decor == "nada") Temas.nombreDecor(activo.decor)
+            else "${Temas.nombreDecor(activo.decor)} · ${Temas.intensidadNombre(activo.intensidadDecoracion)}"
+            add(ItemGaleria("decor-tema:${tema.id}", tema.nombre, detalle, abierto, activo) {
+                actualizar { it.copy(decoracionAbierta = if (abierto) null else tema.id, indice = i) }
+            })
+            if (abierto) {
+                val estilos = (Temas.decoracionesPara(tema) + activo.decor).distinct()
+                estilos.forEach { decor ->
+                    add(ItemGaleria("decor-tipo:$decor", Temas.nombreDecor(decor), "Tipo de decoración",
+                        activo.decor == decor, activo.copy(decor = decor)) {
+                        guardarDecoracion(tema.id, decor, e.intensidadPorTema[tema.id]?.toIntOrNull())
+                    })
+                }
+                for (nivel in 1..3) {
+                    add(ItemGaleria("decor-intensidad:$nivel", Temas.intensidadNombre(nivel), "Intensidad",
+                        activo.intensidadDecoracion == nivel, activo.copy(intensidadDecoracion = nivel)) {
+                        guardarDecoracion(tema.id, e.adornosPorTema[tema.id], nivel)
+                    })
+                }
+                add(ItemGaleria("decor-restaurar", "Restaurar decoración", "Valores originales del tema", false, tema) {
+                    guardarDecoracion(tema.id, null, null)
+                })
+            }
+        }
+    }
+
+    private fun guardarDecoracion(id: String, decor: String?, nivel: Int?) {
+        val e = estado.value
+        val estilos = if (decor == null) e.adornosPorTema - id else e.adornosPorTema + (id to decor)
+        val intensidades = if (nivel == null) e.intensidadPorTema - id else e.intensidadPorTema + (id to nivel.toString())
+        if (estilos == e.adornosPorTema && intensidades == e.intensidadPorTema) return
+        almacen.guardarTexto("adornosPorTema", escribirMapa(estilos))
+        almacen.guardarTexto("intensidadPorTema", escribirMapa(intensidades))
+        actualizar { it.copy(adornosPorTema = estilos, intensidadPorTema = intensidades) }
+        aplicarTema()
     }
 
     /** Aplica el tema elegido, o el de la fiesta de hoy si está activado. */
@@ -4114,8 +4190,7 @@ object Diptico {
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
         cl.nikalbazu.diptico.ui.Estilo.efecto = activo.acabado.ifBlank { if (e.experiencia.vidrio) "vidrio" else e.efecto }
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = e.decoraciones && e.experiencia.movimiento && e.sesion == null
-        Sonidos.juego = activo.sonidos
-        Sonidos.semitonos = activo.tonoSonidos
+        Sonidos.cambiarJuego(activo.sonidos, activo.tonoSonidos)
         val pista = musicaDeTema(activo)
         if (fiesta?.id != e.fiesta?.id || pista != e.pistaTema) actualizar { it.copy(fiesta = fiesta, pistaTema = pista) }
     }
@@ -4224,14 +4299,12 @@ object Diptico {
                 "Elige tú el color principal, el secundario, los detalles, el fondo y las letras de todo Díptico.",
             ) { abrirGaleria("colores") },
         )
-        lista.add(0, Opcion("Tienda de temas", "24 temas", Icono.PALETA,
+        lista.add(0, Opcion("Tienda de temas", "${TiendaTemas.TOTAL_OFICIAL} temas", Icono.PALETA,
             "Explora e instala temas dentro de Díptico.") { abrirTiendaTemas() })
         lista.add(3, Opcion("Importar tema", "Archivo JSON", Icono.DESCARGA,
             "Selecciona un tema que hayas descargado.") { pedirArchivoPara("temaJson", "*/*") })
         lista.add(4, Opcion("Importar por enlace", "Tema o catálogo", Icono.WEB,
             "Pega el enlace HTTPS directo al archivo JSON.") { abrirTexto("tema_enlace") })
-        lista += Opcion("Adornos festivos", "Navidad y Chile", Icono.ESTRELLA,
-            "Elige adornos para el tema base, Navidad y Fiestas Patrias.") { abrirGaleria("adornos_festivos") }
         lista += Opcion("Aportar un tema", "Abre el editor web", Icono.WEB,
             "Crea el archivo de un tema y aprende cómo compartirlo con la comunidad.") { abrirAportesTemas() }
         lista.add(2, Opcion("Mezclar mi tema", "Temas instalados", Icono.PALETA,
@@ -4239,9 +4312,6 @@ object Diptico {
         val mio = e.temasPropios.firstOrNull { it.id == "mio" }
         lista += Opcion("Mi tema · fondo", when (mio?.base) { "oscuro" -> "Oscuro"; "claro" -> "Claro"; "oled" -> "Negro puro"; else -> "Según el modo" }, Icono.TEMA, ayuda = "El fondo de tu tema propio: oscuro, claro, negro puro (ideal para OLED) o según el modo.") {
             editarMiTema { it.copy(base = when (it.base) { "auto" -> "oscuro"; "oscuro" -> "oled"; "oled" -> "claro"; else -> "auto" }) }
-        }
-        lista += Opcion("Mi tema · decoración", Temas.nombreDecor(mio?.decor ?: "nada"), Icono.ESTRELLA, ayuda = "Un adorno suave sobre el fondo de tu tema propio.") {
-            editarMiTema { t -> t.copy(decor = Temas.DECORACIONES[(Temas.DECORACIONES.indexOf(t.decor) + 1).mod(Temas.DECORACIONES.size)]) }
         }
         return lista
     }
@@ -6470,19 +6540,23 @@ object Diptico {
 
     // ---------- Elegir una imagen de internet ----------
 
-    fun nombreCandidato(t: String) = when (t) { "arte", "c_hero" -> "imagen grande"; "logo", "c_logo" -> "logo"; "c_icono" -> "ícono"; else -> "portada" }
+    fun nombreCandidato(t: String) = when (t) { "arte", "c_hero" -> "imagen grande"; "logo", "c_logo" -> "logo"; "c_icono", "c_portada" -> "ícono"; else -> "portada" }
 
     /** Pestañas de la tienda según qué se busca (las consolas usan RetroArch en vez de libretro). */
-    fun fuentesImagen(e: Estado = estado.value) = if (e.candidatoPara.startsWith("c_")) listOf("todas", "RetroArch", "SteamGridDB", "Wikipedia") else FUENTES_IMAGEN.filter { f ->
+    fun fuentesImagen(e: Estado = estado.value): List<String> {
+        val carpeta = e.candidatoPara == "c_portada"
+        if (!carpeta && e.candidatoPara.startsWith("c_")) return listOf("todas", "RetroArch", "SteamGridDB", "Wikipedia")
         val c = e.raspadores
-        when (f) {
-            "Steam" -> juegoFicha()?.consolaId in setOf("steam", "windows", "pc")
+        val consola = if (carpeta) juegoDeCarpetaParaArte(e, e.nombreImagen)?.consolaId else juegoFicha()?.consolaId
+        val fuentes = if (carpeta) listOf("todas", "RetroArch") + FUENTES_IMAGEN.drop(1) else FUENTES_IMAGEN
+        return fuentes.filter { f -> when (f) {
+            "Steam" -> consola in setOf("steam", "windows", "pc")
             "ScreenScraper" -> c.screenscraper
             "IGDB" -> c.igdb
             "TheGamesDB" -> c.conTgdb
             "RAWG" -> c.conRawg
             else -> true
-        }
+        } }
     }
 
     /** Busca varias opciones (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
@@ -6498,13 +6572,14 @@ object Diptico {
         val propia = when (e.candidatoPara) {
             "arte" -> d?.arte; "logo" -> d?.logo
             "c_hero" -> cp?.hero; "c_logo" -> cp?.logo; "c_icono" -> e.iconosPropios[e.consolaEditando]
+            "c_portada" -> cp?.portadaCarpeta
             else -> d?.portada
         }
         val atajos = buildList {
             add(cl.nikalbazu.diptico.data.ImagenWeb("accion:archivos", "", "Mis archivos"))
             if (propia != null) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:quitar", propia, "Quitar la propia"))
             if (e.claveSgdb.isBlank()) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:sgdb", "", "Conectar SteamGridDB"))
-            if (!e.candidatoPara.startsWith("c_")) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:fuentes", "", "Configurar fuentes"))
+            if (!e.candidatoPara.startsWith("c_") || e.candidatoPara == "c_portada") add(cl.nikalbazu.diptico.data.ImagenWeb("accion:fuentes", "", "Configurar fuentes"))
         }
         val lista = if (e.fuenteImagen == "todas") e.candidatos else e.candidatos.filter { it.fuente == e.fuenteImagen }
         return atajos + lista
@@ -6515,40 +6590,70 @@ object Diptico {
         actualizar { it.copy(fuenteImagen = l[(l.indexOf(it.fuenteImagen) + d).mod(l.size)], indice = 0) }
     }
 
-    /** Abre la tienda de imágenes (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
+    private var busquedaImagenes: Job? = null
+
+    private fun juegoDeCarpetaParaArte(e: Estado, nombre: String?): Juego? {
+        val juegos = if (e.consolaEditando == "todo") e.juegos else e.juegosPorConsola[e.consolaEditando].orEmpty()
+        val consulta = nombre?.let(Busqueda::normalizar)
+        if (!consulta.isNullOrEmpty()) {
+            juegos.firstOrNull { Busqueda.normalizar(it.titulo) == consulta }?.let { return it }
+        }
+        return juegos.firstOrNull { e.datos[it.clave]?.oculto != true }
+    }
+
+    private fun lanzarBusquedaImagenes(
+        tipo: String,
+        titulo: String,
+        iniciales: List<cl.nikalbazu.diptico.data.ImagenWeb> = emptyList(),
+        buscar: () -> List<cl.nikalbazu.diptico.data.ImagenWeb>,
+    ) {
+        busquedaImagenes?.cancel()
+        actualizar { it.copy(panel = Panel.IMAGENES, candidatos = iniciales, candidatoPara = tipo,
+            buscandoCandidatos = true, indice = 0, nombreImagen = titulo, fuenteImagen = "todas") }
+        busquedaImagenes = scope.launch {
+            val lista = withContext(Dispatchers.IO) { runCatching(buscar).getOrDefault(emptyList()) }
+            if (estado.value.panel == Panel.IMAGENES) {
+                actualizar { it.copy(candidatos = (iniciales + lista).distinctBy { it.url }, buscandoCandidatos = false) }
+            }
+        }
+    }
+
     fun buscarCandidatos(tipo: String, nombre: String? = null) {
         val e = estado.value
-        // Imágenes de una consola (desde su personalización).
+        val consulta = nombre?.takeIf { it.isNotBlank() }
         if (tipo.startsWith("c_")) {
-            val c = Consolas.porId(e.consolaEditando) ?: return
-            val titulo = nombre?.takeIf { it.isNotBlank() } ?: c.bonito
-            actualizar { it.copy(panel = Panel.IMAGENES, candidatos = emptyList(), candidatoPara = tipo, buscandoCandidatos = true, indice = 0, nombreImagen = titulo, fuenteImagen = "todas") }
-            scope.launch {
-                val lista = withContext(Dispatchers.IO) {
-                    try {
-                        val wiki = if (tipo == "c_icono") null else Fichas.buscar(app, titulo, "")
-                        Descargas.candidatosConsola(c, tipo, titulo, e.claveSgdb, wiki)
-                    } catch (ex: Exception) { emptyList() }
+            val consola = Consolas.porId(e.consolaEditando)
+            if (consola == null && tipo != "c_portada") return
+            val titulo = consulta ?: consola?.bonito ?: "Todo"
+            val juego = if (tipo == "c_portada") juegoDeCarpetaParaArte(e, consulta) else null
+            val iniciales = if (tipo == "c_portada" && consola != null) {
+                Descargas.candidatosConsola(consola, "c_icono", titulo, "", null)
+            } else emptyList()
+            lanzarBusquedaImagenes(tipo, titulo, iniciales) {
+                val wiki = if (tipo == "c_icono" || consola == null && consulta == null) null
+                else runCatching { Fichas.buscar(app, titulo, "") }.getOrNull()
+                val plataforma = consola?.let { Descargas.candidatosConsola(it, tipo, titulo, e.claveSgdb, wiki) }
+                    ?: listOfNotNull(wiki?.principal)
+                val sistema = juego?.let { Consolas.porId(it.consolaId) }
+                if (juego == null || sistema == null) plataforma
+                else {
+                    val nombreJuego = consulta ?: juego.titulo
+                    val muestra = if (Busqueda.normalizar(nombreJuego) == Busqueda.normalizar(juego.titulo)) juego
+                    else juego.copy(clave = "${juego.consolaId}/busqueda-icono", archivo = nombreJuego, titulo = nombreJuego)
+                    plataforma + runCatching {
+                        Descargas.candidatos(app, muestra, sistema, "portada", nombreJuego, e.claveSgdb, null, e.raspadores)
+                    }.getOrDefault(emptyList())
                 }
-                if (estado.value.panel == Panel.IMAGENES) actualizar { it.copy(candidatos = lista, buscandoCandidatos = false) }
             }
             return
         }
         val j = juegoFicha() ?: return
         val crudo = todosCrudos().firstOrNull { it.clave == j.clave } ?: return
         val c = Consolas.porId(crudo.consolaId) ?: return
-        val titulo = nombre?.takeIf { it.isNotBlank() } ?: j.titulo
-        actualizar { it.copy(panel = Panel.IMAGENES, candidatos = emptyList(), candidatoPara = tipo, buscandoCandidatos = true, indice = 0, nombreImagen = titulo, fuenteImagen = "todas") }
-        scope.launch {
-            val lista = withContext(Dispatchers.IO) {
-                try {
-                    val wiki = if (nombre == null) e.ficha ?: Fichas.buscar(app, titulo, c.bonito) else Fichas.buscar(app, titulo, c.bonito)
-                    Descargas.candidatos(app, crudo, c, tipo, titulo, e.claveSgdb, wiki, e.raspadores)
-                } catch (ex: Exception) {
-                    emptyList()
-                }
-            }
-            if (estado.value.panel == Panel.IMAGENES) actualizar { it.copy(candidatos = lista, buscandoCandidatos = false) }
+        val titulo = consulta ?: j.titulo
+        lanzarBusquedaImagenes(tipo, titulo) {
+            val wiki = if (nombre == null) e.ficha ?: Fichas.buscar(app, titulo, c.bonito) else Fichas.buscar(app, titulo, c.bonito)
+            Descargas.candidatos(app, crudo, c, tipo, titulo, e.claveSgdb, wiki, e.raspadores)
         }
     }
 
@@ -7028,6 +7133,12 @@ object Diptico {
 
     fun cambiarVistaConsolas(d: Int = 1) = elegirVistaConsolas(VISTAS_CONSOLAS[(VISTAS_CONSOLAS.indexOf(estado.value.vistaConsolas) + d).mod(VISTAS_CONSOLAS.size)])
 
+    fun alternarModoCarpeta() {
+        val nuevo = if (estado.value.modoCarpeta == "completa") "ventana" else "completa"
+        almacen.guardarTexto("modoCarpeta", nuevo)
+        actualizar { it.copy(modoCarpeta = nuevo) }
+    }
+
     /** Modo sistemas: entra a los juegos de la consola elegida. */
     fun entrarSistema() {
         cl.nikalbazu.diptico.audio.Sonidos.abrir()
@@ -7153,10 +7264,36 @@ object Diptico {
 
     fun cambiarFiltro(delta: Int = 1) {
         val f = FILTROS[(FILTROS.indexOf(estado.value.filtro) + delta).mod(FILTROS.size)]
-        actualizar { it.copy(filtro = f, indice = 0) }
+        elegirFiltro(f)
     }
 
-    fun elegirFiltro(f: String) = actualizar { it.copy(filtro = f, indice = 0) }
+    fun elegirFiltro(f: String) = actualizar { e ->
+        val anterior = if (f == "ocultos") {
+            e.antesDeOcultos ?: e.takeIf { it.filtro != "ocultos" }?.antesDeFiltrarOcultos()
+        } else null
+        e.copy(filtro = f, antesDeOcultos = anterior, indice = 0)
+    }
+
+    private fun Estado.antesDeFiltrarOcultos() = BibliotecaAntesDeOcultos(filtro, busqueda, consolaSel, juegoSel)
+
+    fun abrirJuegosOcultos() = actualizar { e ->
+        val anterior = e.antesDeOcultos ?: e.takeIf { it.filtro != "ocultos" }?.antesDeFiltrarOcultos()
+        e.copy(panel = Panel.BUSCAR, filtro = "ocultos", antesDeOcultos = anterior, busqueda = "", consolaSel = "todo", indice = 0)
+    }
+
+    fun salirDeOcultos(cerrarBusqueda: Boolean = false) = actualizar { e ->
+        if (e.filtro != "ocultos") return@actualizar e
+        val anterior = e.antesDeOcultos
+        e.copy(
+            panel = if (cerrarBusqueda) Panel.NINGUNO else e.panel,
+            filtro = anterior?.filtro ?: "todos",
+            busqueda = anterior?.busqueda.orEmpty(),
+            consolaSel = anterior?.consola ?: e.consolaSel,
+            juegoSel = anterior?.juego,
+            antesDeOcultos = null,
+            indice = 0,
+        )
+    }
 
     fun cambiarOrden(delta: Int = 1) {
         val o = ORDENES[(ORDENES.indexOf(estado.value.orden) + delta).mod(ORDENES.size)]
@@ -7174,7 +7311,7 @@ object Diptico {
 
     fun cambiarBusqueda(t: String) = actualizar { it.copy(busqueda = t.take(40), indice = 0) }
 
-    fun limpiarBusqueda() = actualizar { it.copy(busqueda = "", filtro = "todos", indice = 0) }
+    fun limpiarBusqueda() = actualizar { it.copy(busqueda = "", filtro = "todos", antesDeOcultos = null, indice = 0) }
 
     /** L2/R2: salta a la letra anterior o siguiente. */
     fun saltarLetra(delta: Int) {
@@ -7254,9 +7391,11 @@ object Diptico {
         val lista = mutableListOf(
             Opcion(
                 "Vista de consolas", nombreVistaConsolas(e.vistaConsolas), Icono.MANDO,
-                "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande), Carpetas (cada consola como una carpeta con sus portadas asomándose) o Discos (cada consola es un vinilo en su funda, y la elegida saca su disco girando). En Sistemas, Carpetas y Discos primero eliges la consola y después entras a sus juegos.",
+                "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande), Carpetas (cuadrícula de íconos que abren sus juegos) o Discos (cada consola es un vinilo en su funda, y la elegida saca su disco girando). En Sistemas, Carpetas y Discos primero eliges la consola y después entras a sus juegos.",
                 menos = { cambiarVistaConsolas(-1) },
             ) { abrirGaleria("vistas_consolas") },
+            Opcion("Abrir carpetas", if (e.modoCarpeta == "completa") "Pantalla completa" else "Ventana con desenfoque", Icono.CARPETA,
+                "Elige cómo se abren los juegos en la vista Carpetas.") { alternarModoCarpeta() },
             Opcion("Vista de juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, abanico (como cartas abiertas en la mano: la elegida sube al centro), lomos (como una repisa de libros: el elegido se abre), cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { abrirGaleria("vistas_juegos") },
             Opcion("Forma de las cajas", nombreForma(e.formas[consolaParaCajas()]?.forma ?: "original"), Icono.FORMA,
                 "Elige cómo se ven las cajas (cuadrada, póster, horizontal, disco, cartucho o tarjeta) viendo tus portadas en cada forma. Para una consola o para todas.") { abrirCajas() },
@@ -8312,13 +8451,28 @@ object Diptico {
         val id = e.consolaEditando
         val que = e.candidatoPara.removePrefix("c_")
         when (img.url) {
-            "accion:archivos" -> { if (que == "icono") pedirImagen("icono:$id") else pedirArchivoPara("consola_$que:$id", "image/*"); return }
+            "accion:archivos" -> {
+                when (que) {
+                    "icono" -> pedirImagen("icono:$id")
+                    "portada" -> pedirImagen("portada_carpeta:$id")
+                    else -> pedirImagen("consola_$que:$id")
+                }
+                return
+            }
+            "accion:fuentes" -> { abrirMenu(Seccion.PORTADAS); return }
             "accion:sgdb" -> { abrirTexto("sgdb", e.claveSgdb); return }
             "accion:quitar" -> {
                 if (que == "icono") {
                     val m = e.iconosPropios - id
                     almacen.guardarTexto("iconosPropios", escribirMapa(m)); actualizar { it.copy(iconosPropios = m) }
-                } else cambiarConsolaPropia(id) { if (que == "logo") it.copy(logo = null) else it.copy(hero = null) }
+                } else cambiarConsolaPropia(id) {
+                    when (que) {
+                        "logo" -> it.copy(logo = null)
+                        "portada" -> it.copy(portadaCarpeta = null)
+                        else -> it.copy(hero = null)
+                    }
+                }
+                actualizar { it.copy(indice = 0) }
                 avisar("Listo, volvió la imagen original")
                 return
             }
@@ -8334,6 +8488,7 @@ object Diptico {
                     almacen.guardarTexto("iconosPropios", escribirMapa(m)); actualizar { it.copy(iconosPropios = m, iconosVersion = it.iconosVersion + 1) }
                 }
                 "logo" -> cambiarConsolaPropia(id) { it.copy(logo = u) }
+                "portada" -> cambiarConsolaPropia(id) { it.copy(portadaCarpeta = u) }
                 else -> cambiarConsolaPropia(id) { it.copy(hero = u) }
             }
             avisar("¡Listo! Imagen nueva para ${Consolas.porId(id)?.nombre ?: ""}")
@@ -8390,8 +8545,8 @@ object Diptico {
         val id = e.consolaEditando
         val p = e.consolasPropias[id] ?: ConsolaPropia()
         val portada = listOf(
-            Opcion("Portada de carpeta", if (p.portadaCarpeta == null) "Elegir imagen" else "Propia ✓", Icono.PORTADA,
-                "Muestra una imagen propia en Carpetas, Mosaico y Vitrina.") { pedirImagen("portada_carpeta:$id") },
+            Opcion("Imagen del ícono de carpeta", if (p.portadaCarpeta == null) "Buscar imagen" else "Propia ✓", Icono.PORTADA,
+                "Busca arte de la consola o de un juego en las fuentes disponibles, o elige una imagen de tus archivos.") { buscarCandidatos("c_portada") },
         ) + listOfNotNull(p.portadaCarpeta?.let {
             Opcion("Restaurar portada de carpeta", icono = Icono.BORRAR) {
                 cambiarConsolaPropia(id) { it.copy(portadaCarpeta = null) }

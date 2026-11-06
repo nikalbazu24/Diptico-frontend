@@ -184,6 +184,8 @@ internal fun fuenteTema(tipo: String, base: FontFamily = FredokaBase): FontFamil
     "sans" -> FontFamily.SansSerif
     "serif" -> FontFamily.Serif
     "mono" -> FontFamily.Monospace
+    "redonda" -> FredokaBase
+    "suave" -> NunitoBase
     else -> base
 }
 

@@ -34,17 +34,36 @@ private data class Particula(val x: Float, val y: Float, val v: Float, val t: Fl
  */
 @Composable
 fun Decoracion(tema: Tema, animada: Boolean = true) {
+    if (tema.decor == "nada") return
     var tiempo by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(tema.decor, animada) {
         if (!animada) return@LaunchedEffect
         val inicio = withFrameMillis { it }
-        while (true) {
-            withFrameMillis { tiempo = (it - inicio) / 1000f }
+        var ultimo = inicio - 33
+        while (true) withFrameMillis {
+            if (it - ultimo >= 32) {
+                tiempo = (it - inicio) / 1000f
+                ultimo = it
+            }
         }
     }
-    val particulas = remember(tema.decor) {
+    val particulas = remember(tema.decor, tema.intensidadDecoracion) {
         val r = Random(tema.decor.hashCode())
-        val n = when (tema.decor) { "muerdago", "campanas", "chupallas", "volantines" -> 11; "estrellas" -> 26; "bloques" -> 16; "fuegos" -> 5; "faroles" -> 9; "murcielagos" -> 7; else -> 18 }
+        val base = when (tema.decor) {
+            "muerdago", "campanas", "chupallas", "volantines" -> 11
+            in adornosDeJuego -> 14
+            "estrellas" -> 26
+            "bloques" -> 16
+            "fuegos" -> 5
+            "faroles" -> 9
+            "murcielagos" -> 7
+            else -> 18
+        }
+        val n = when (tema.intensidadDecoracion) {
+            1 -> (base * 2 / 5).coerceAtLeast(2)
+            3 -> base * 3 / 2
+            else -> base
+        }
         List(n) { Particula(r.nextFloat(), r.nextFloat(), 0.4f + r.nextFloat() * 0.8f, 0.6f + r.nextFloat() * 0.8f, r.nextFloat() * 6.28f, r.nextInt(3)) }
     }
     val colores = listOf(Color(tema.acento), Color(tema.acento2), Color(tema.acento3))
@@ -53,6 +72,16 @@ fun Decoracion(tema: Tema, animada: Boolean = true) {
         for (p in particulas) {
             val c = colores[p.color]
             when (tema.decor) {
+                in adornosDeJuego -> {
+                    val y = ((p.y + tiempo * 0.035f * p.v) % 1.1f) - 0.05f
+                    val x = (p.x + if (tema.decor == "anillos") tiempo * 0.06f * p.v else sin(tiempo + p.fase) * 0.028f)
+                    val r = (if (animada) 11f * u else size.minDimension * 0.039f) * p.t
+                    translate((x - kotlin.math.floor(x)) * size.width, y * size.height) {
+                        rotate(sin(tiempo * 0.8f + p.fase) * 25f, pivot = Offset.Zero) {
+                            motivoJuego(tema.decor, r, c.copy(alpha = 0.68f))
+                        }
+                    }
+                }
                 "muerdago", "campanas", "chupallas", "volantines" -> {
                     val y = ((p.y + tiempo * 0.023f * p.v) % 1.08f) - 0.04f
                     val x = p.x + sin(tiempo * 0.55f + p.fase) * 0.023f

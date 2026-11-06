@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "tienda-integrada-5"
-    const val NOMBRE = "Tienda integrada y biblioteca personal"
+    const val ID = "carpetas-y-decoraciones-6"
+    const val NOMBRE = "Carpetas y decoraciones por tema"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -199,11 +199,18 @@ object Novedades {
             Pagina("Actualizado · Cinco temas incluidos", "Los demás estilos se instalan desde un JSON o enlace. Ajustes › Temas › Mis temas reúne tus descargas.", Icono.PALETA, 0xFF77BDB8),
             Pagina("Corregido · Accesos al elegir consola", "Entrar y Otra consola comparten la franja con Buscar, Apps y el resto de accesos. Así tienen espacio propio.", Icono.AJUSTES, 0xFFDBB386),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("tienda-integrada-5", "Tienda integrada y biblioteca personal", listOf(
             Pagina("Tienda dentro de Díptico", "Explora e instala 24 temas en Ajustes › Temas › Tienda de temas. En dos pantallas, el catálogo se abre arriba y puedes recorrerlo desde abajo.", Icono.PALETA, 0xFFBCA4FF),
             Pagina("Combina tus temas", "En Mezclar mi tema elige de dónde vienen los colores, la tipografía, las formas, el fondo, la decoración, los efectos y la música.", Icono.EDITAR, 0xFF77BDB8),
             Pagina("Portadas y juegos que se lucen", "Pulsa X o mantén una carpeta para elegir su portada. Mientras recorres Carpetas, Mosaico o Vitrina, el widget Juego elegido muestra títulos de la carpeta enfocada.", Icono.CARPETA, 0xFFDBB386),
             Pagina("Navidad y Fiestas Patrias", "Adornos festivos deja elegir muérdago, campanas, chupallas o volantines. Los temas de las fechas especiales siguen su calendario.", Icono.ESTRELLA, 0xFFFFB46A),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Salir de Ocultos", "En la búsqueda de juegos ocultos toca Salir de Ocultos o pulsa B para recuperar tu vista anterior.", Icono.OCULTAR, 0xFF77BDB8),
+            Pagina("Carpetas como íconos", "Cada consola abre sus juegos en una ventana con la cuadrícula desenfocada. Elige Pantalla completa en Estante › Abrir carpetas.", Icono.CARPETA, 0xFFDBB386),
+            Pagina("Busca un ícono de carpeta", "Mantén un ícono o pulsa X. Puedes elegir arte de las fuentes conectadas o una imagen de tus archivos.", Icono.PORTADA, 0xFFBCA4FF),
+            Pagina("Videojuegos en la tienda", "Hay seis temas nuevos con música y efectos propios. Pruébalos en la pestaña Videojuegos de la tienda.", Icono.MANDO, 0xFF77BDB8),
+            Pagina("Decoraciones por tema", "Abre Ajustes › Decoraciones y despliega un tema para cambiar su adorno y su intensidad.", Icono.ESTRELLA, 0xFFFFB46A),
         )),
     )
 

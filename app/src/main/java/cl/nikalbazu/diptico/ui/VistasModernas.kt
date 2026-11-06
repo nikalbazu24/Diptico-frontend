@@ -60,43 +60,43 @@ fun FilaBiblioteca(e: Estado, j: Juego, elegida: Boolean) {
 }
 
 @Composable
-fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean) {
-    val esc = LocalEscala.current; val p = LocalPaleta.current
-    val c = Consolas.porId(id)
-    val juegos = remember(e.juegos, id) { if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id } }
-    val color = c?.color ?: Uva
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(20)))
-        .background(Brush.verticalGradient(listOf(color.copy(alpha = .22f), p.superficie)))
-        .border(esc.d(if (elegida) 2.5f else 1f), if (elegida) color else p.linea, RoundedCornerShape(esc.d(20)))
-        .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { if (elegida) Diptico.entrarSistema() else Diptico.elegirConsola(id) }
-        .padding(esc.d(10))) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconoConsola(c, 22f, p.fondo)
-            Spacer(Modifier.width(esc.d(6)))
-            Texto(c?.nombre ?: "Todos", 13f, lineas = 1, modifier = Modifier.weight(1f))
-        }
-        Spacer(Modifier.height(esc.d(10)))
-        Row(Modifier.fillMaxWidth().height(esc.d(70)), horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
-            PortadaCarpeta(e, id, Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(6)))) {
-                juegos.take(3).forEach { j ->
-                    Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(esc.d(6)))) {
-                        ArteJuego(j, false, 180, Modifier.fillMaxSize())
-                    }
-                }
+fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Boolean, lado: Float) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val consola = Consolas.porId(id)
+    val color = consola?.color ?: Uva
+    val forma = RoundedCornerShape(esc.d(13))
+    Box(
+        Modifier.fillMaxWidth().aspectRatio(1f).clip(forma)
+            .background(Brush.verticalGradient(listOf(color.copy(alpha = .23f), p.superficie)))
+            .combinedClickable(enabled = interactiva, onLongClick = { Diptico.abrirEditarConsola(id) }) {
+                if (!elegida) Diptico.elegirConsola(id)
+                Diptico.entrarSistema()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        PortadaCarpeta(e, id, Modifier.fillMaxSize(), maxLado = 256) {
+            Box(Modifier.padding(bottom = esc.d(lado * .15f))) {
+                IconoConsola(consola, (lado * .55f).coerceIn(20f, 58f), p.fondo2)
             }
         }
-        Spacer(Modifier.height(esc.d(9)))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Detalle("${juegos.size} juegos", 10.5f, lineas = 1)
-            Texto(if (elegida) "A · Abrir" else "Explorar", 10.5f, color = if (elegida) p.acentoTexto else p.tenue, lineas = 1)
-        }
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+            0.52f to Color.Transparent, 1f to Color.Black.copy(alpha = .82f))))
+        Box(Modifier.fillMaxSize().border(
+            esc.d(if (elegida) 2.5f else 1.25f), if (elegida) p.tinta else color.copy(alpha = .65f), forma))
+        Texto(consola?.nombre ?: "Todo", 10.5f, color = Color.White, lineas = 1,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = esc.d(4), vertical = esc.d(5)))
     }
 }
 
 @Composable
-internal fun PortadaCarpeta(e: Estado, id: String, modifier: Modifier, original: @Composable () -> Unit) {
+internal fun PortadaCarpeta(e: Estado, id: String, modifier: Modifier, maxLado: Int = 512, original: @Composable () -> Unit) {
     val ruta = e.consolasPropias[id]?.portadaCarpeta
-    val portada = key(ruta) { rememberImagen(ruta?.let(android.net.Uri::parse), 512) }
+    if (ruta == null) {
+        original()
+        return
+    }
+    val portada = key(ruta) { rememberImagen(android.net.Uri.parse(ruta), maxLado) }
     if (portada == null) original()
     else Image(portada, contentDescription = null, modifier = modifier, contentScale = ContentScale.Crop)
 }
@@ -106,8 +106,11 @@ fun ControlesBiblioteca(e: Estado) {
     val esc = LocalEscala.current; val p = LocalPaleta.current
     Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(12), vertical = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
         Texto("${e.visibles.size}", 11f, color = p.tenue)
-        listOf("vistas_juegos" to Diptico.nombreVista(e.vista), "filtros" to Diptico.nombreFiltro(e.filtro), "orden" to Diptico.nombreOrden(e.orden)).forEach { (tipo, nombre) ->
-            Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = .8f)).clickable { Diptico.abrirGaleria(tipo) }.padding(horizontal = esc.d(8), vertical = esc.d(7)), contentAlignment = Alignment.Center) {
+        val filtro = if (e.filtro == "ocultos") "Salir de Ocultos" else Diptico.nombreFiltro(e.filtro)
+        listOf("vistas_juegos" to Diptico.nombreVista(e.vista), "filtros" to filtro, "orden" to Diptico.nombreOrden(e.orden)).forEach { (tipo, nombre) ->
+            Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = .8f)).clickable {
+                if (tipo == "filtros" && e.filtro == "ocultos") Diptico.salirDeOcultos() else Diptico.abrirGaleria(tipo)
+            }.padding(horizontal = esc.d(8), vertical = esc.d(7)), contentAlignment = Alignment.Center) {
                 Texto(nombre, 10.5f, lineas = 1)
             }
         }
