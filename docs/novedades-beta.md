@@ -1,4 +1,1 @@
-- **Biblioteca**. Sal de Ocultos con B o con el botón visible para recuperar tu selección anterior.
-- **Carpetas**. La cuadrícula muestra íconos de consola. Ábrelos en una ventana con fondo desenfocado o a pantalla completa y elige el arte desde los proveedores de imágenes o tus archivos.
-- **Tienda de temas**. Seis diseños inspirados en videojuegos con música, efectos y adornos originales. La tienda suma 30 temas que se instalan sin conexión.
-- **Decoraciones**. Cada tema tiene su propio desplegable de estilo e intensidad. Incluye los temas instalados, los de la tienda y el calendario.
+- **Carpetas**. Al abrir una carpeta en modo ventana, la cuadrícula desenfocada queda visible en los bordes y a través del panel translúcido. Puedes tocar fuera o pulsar B para volver a la cuadrícula.

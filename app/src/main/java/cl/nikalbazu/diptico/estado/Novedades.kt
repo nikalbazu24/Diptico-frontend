@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "carpetas-y-decoraciones-6"
-    const val NOMBRE = "Carpetas y decoraciones por tema"
+    const val ID = "desenfoque-carpetas-7"
+    const val NOMBRE = "Ventanas de carpeta"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -205,12 +205,15 @@ object Novedades {
             Pagina("Portadas y juegos que se lucen", "Pulsa X o mantén una carpeta para elegir su portada. Mientras recorres Carpetas, Mosaico o Vitrina, el widget Juego elegido muestra títulos de la carpeta enfocada.", Icono.CARPETA, 0xFFDBB386),
             Pagina("Navidad y Fiestas Patrias", "Adornos festivos deja elegir muérdago, campanas, chupallas o volantines. Los temas de las fechas especiales siguen su calendario.", Icono.ESTRELLA, 0xFFFFB46A),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("carpetas-y-decoraciones-6", "Carpetas y decoraciones por tema", listOf(
             Pagina("Salir de Ocultos", "En la búsqueda de juegos ocultos toca Salir de Ocultos o pulsa B para recuperar tu vista anterior.", Icono.OCULTAR, 0xFF77BDB8),
             Pagina("Carpetas como íconos", "Cada consola abre sus juegos en una ventana con la cuadrícula desenfocada. Elige Pantalla completa en Estante › Abrir carpetas.", Icono.CARPETA, 0xFFDBB386),
             Pagina("Busca un ícono de carpeta", "Mantén un ícono o pulsa X. Puedes elegir arte de las fuentes conectadas o una imagen de tus archivos.", Icono.PORTADA, 0xFFBCA4FF),
             Pagina("Videojuegos en la tienda", "Hay seis temas nuevos con música y efectos propios. Pruébalos en la pestaña Videojuegos de la tienda.", Icono.MANDO, 0xFF77BDB8),
             Pagina("Decoraciones por tema", "Abre Ajustes › Decoraciones y despliega un tema para cambiar su adorno y su intensidad.", Icono.ESTRELLA, 0xFFFFB46A),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Carpetas con fondo desenfocado", "En la vista Carpetas, la ventana deja ver la cuadrícula desenfocada a través del panel y alrededor. Toca fuera o pulsa B para volver.", Icono.CARPETA, 0xFFDBB386),
         )),
     )
 

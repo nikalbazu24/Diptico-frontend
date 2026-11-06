@@ -164,13 +164,18 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
     }
     Box(modifier) {
         val abierta = e.carpetaEnVentana
-        CarpetasConsolas(e, Modifier.fillMaxSize().then(if (abierta) Modifier.blur(10.dp) else Modifier), interactiva = !abierta)
+        CarpetasConsolas(
+            e,
+            Modifier.fillMaxSize().then(if (abierta) Modifier.blur(16.dp) else Modifier),
+            interactiva = !abierta,
+        )
         if (abierta) {
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .34f)).clickable { Diptico.volverASistemas() })
+            Box(Modifier.fillMaxSize().background(p.fondo2.copy(alpha = .12f)).clickable { Diptico.volverASistemas() })
             val forma = RoundedCornerShape(esc.d(19))
             Column(
-                Modifier.align(Alignment.Center).fillMaxWidth(.94f).fillMaxHeight(.91f)
-                    .clip(forma).background(p.fondo2).border(esc.d(1), p.linea, forma).sinCerrar(),
+                Modifier.align(Alignment.Center).fillMaxWidth(.84f).fillMaxHeight(.74f)
+                    .shadow(esc.d(12), forma, clip = false).clip(forma)
+                    .background(p.fondo2.copy(alpha = .80f)).border(esc.d(1), p.linea, forma).sinCerrar(),
             ) {
                 CabeceraSistema(e)
                 VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
