@@ -209,9 +209,10 @@ private fun Modifier.desenfocarCuadricula(): Modifier = drawWithCache {
             drawContent()
         } else {
             imagen.asAndroidBitmap().eraseColor(android.graphics.Color.TRANSPARENT)
+            val contenido = this
             draw(this, layoutDirection, lienzo, size) {
                 lienzo.scale(imagen.width.toFloat() / ancho, imagen.height.toFloat() / alto)
-                drawContent()
+                contenido.drawContent()
             }
             drawImage(imagen, dstSize = IntSize(ancho, alto), filterQuality = FilterQuality.Low)
         }
