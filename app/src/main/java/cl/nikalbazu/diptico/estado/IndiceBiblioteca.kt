@@ -6,7 +6,7 @@ import cl.nikalbazu.diptico.data.Juego
 /** Índices y vistas que se reutilizan mientras el catálogo siga siendo el mismo. */
 internal class IndiceBiblioteca private constructor(private val juegos: List<Juego>) {
     val porConsola by lazy { juegos.groupBy { it.consolaId } }
-    val porClave by lazy { buildMap { juegos.forEach { getOrPut(it.clave) { it } } } }
+    val porClave by lazy { buildMap<String, Juego> { juegos.forEach { juego -> getOrPut(juego.clave) { juego } } } }
     val sinPortada by lazy { juegos.count { it.portada == null } }
 
     private val titulosNormalizados = HashMap<String, String>()
@@ -52,7 +52,7 @@ internal class IndiceBiblioteca private constructor(private val juegos: List<Jue
         }
         val resultado = when (e.orden) {
             "propio" -> {
-                val posiciones = buildMap { manual.forEachIndexed { i, clave -> getOrPut(clave) { i } } }
+                val posiciones = buildMap<String, Int> { manual.forEachIndexed { i, clave -> getOrPut(clave) { i } } }
                 filtrados.sortedWith(compareBy({ posiciones[it.clave] ?: Int.MAX_VALUE }, { it.titulo.lowercase() }))
             }
             "recientes" -> filtrados.sortedByDescending { e.datos[it.clave]?.ultimo ?: 0L }
