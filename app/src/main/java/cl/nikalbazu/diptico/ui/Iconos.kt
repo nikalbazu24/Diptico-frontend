@@ -360,40 +360,32 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
 }
 
 
-/**
- * Bisa, la asistente de Díptico: dos paneles unidos por una bisagra que forman una carita.
- * Es su ícono propio y único (no se parece a ningún otro de Díptico).
- */
+/** Bisa lleva una visera de dos pantallas y una antena que señala que está lista para jugar. */
 fun DrawScope.dibujarBisa(k: Float, c: Color, a: Color, parpadeo: Float = 1f, mirar: Float = 0f) {
-    // Bisa: una carita redonda y amable, mitad de cada color (el díptico), con ojos grandes que miran y parpadean,
-    // mejillas sonrojadas, una sonrisa y una chispa arriba (su "idea").
     fun p(x: Float, y: Float) = Offset(x * k, y * k)
-    val centro = p(12f, 13f)
-    val r = 9.6f * k
-    drawArc(c, 90f, 180f, true, Offset(centro.x - r, centro.y - r), Size(r * 2, r * 2))
-    drawArc(a, -90f, 180f, true, Offset(centro.x - r, centro.y - r), Size(r * 2, r * 2))
-    // Brillo suave arriba a la izquierda (volumen).
-    drawCircle(Color.White.copy(alpha = 0.16f), 4.2f * k, p(8.4f, 8.6f))
-    // Chispa de idea.
-    drawLine(Color.White.copy(alpha = 0.85f), p(12f, 3.4f), p(12f, 1.4f), 1.1f * k, StrokeCap.Round)
-    drawCircle(Color.White, 1.05f * k, p(12f, 1.3f))
-    // Ojos: blancos ovalados con pupila que mira; al parpadear se cierran.
-    val alto = 4.6f * k * parpadeo.coerceIn(0.1f, 1f)
-    val dx = mirar * 0.7f * k
-    for (x in listOf(8.4f, 15.6f)) {
-        drawOval(Color.White, Offset(x * k - 1.9f * k, 12f * k - alto / 2), Size(3.8f * k, alto))
-        if (parpadeo > 0.4f) {
-            drawCircle(Color(0xFF1C1A33), 1.15f * k, Offset(x * k + dx, 12.3f * k))
-            drawCircle(Color.White, 0.42f * k, Offset(x * k + dx + 0.45f * k, 11.8f * k))
-        }
+    fun s(w: Float, h: Float) = Size(w * k, h * k)
+    val noche = Color(0xFF16152D)
+    val menta = Color(0xFF9FF9E5)
+    val radio = androidx.compose.ui.geometry.CornerRadius(5f * k)
+    drawLine(menta, p(16.5f, 7f), p(19f, 3.8f), 1.1f * k, StrokeCap.Round)
+    drawCircle(menta, 1.2f * k, p(19f, 3.8f))
+    drawRoundRect(c, p(2f, 6f), s(20f, 15f), radio)
+    drawRoundRect(a, p(3.3f, 16.7f), s(17.4f, 5.8f), androidx.compose.ui.geometry.CornerRadius(2.8f * k))
+    drawRoundRect(noche, p(4f, 8f), s(16f, 9.3f), androidx.compose.ui.geometry.CornerRadius(3f * k))
+    drawLine(Color.White.copy(alpha = 0.42f), p(7f, 7f), p(15f, 7f), 0.7f * k, StrokeCap.Round)
+    drawLine(noche.copy(alpha = 0.6f), p(11.1f, 18.3f), p(12.9f, 18.3f), 1f * k, StrokeCap.Round)
+    val altoOjo = (3.7f * parpadeo.coerceIn(0.15f, 1f)) * k
+    val dx = mirar.coerceIn(-1f, 1f) * 0.6f * k
+    for (ojo in listOf(8f, 16f)) {
+        drawRoundRect(menta, Offset(ojo * k - k + dx, 12.2f * k - altoOjo / 2), Size(2f * k, altoOjo),
+            androidx.compose.ui.geometry.CornerRadius(k))
     }
-    // Mejillas.
-    drawCircle(Color(0xFFFF8FB1).copy(alpha = 0.55f), 1.35f * k, p(6.2f, 15.6f))
-    drawCircle(Color(0xFFFF8FB1).copy(alpha = 0.55f), 1.35f * k, p(17.8f, 15.6f))
-    // Sonrisa.
-    val boca = Path().apply {
-        moveTo(9.6f * k, 15.9f * k)
-        cubicTo(10.6f * k, 18.1f * k, 13.4f * k, 18.1f * k, 14.4f * k, 15.9f * k)
-    }
-    drawPath(boca, Color.White, style = Stroke(1.5f * k, cap = StrokeCap.Round))
+    drawPath(Path().apply {
+        moveTo(10.7f * k, 14.1f * k)
+        quadraticBezierTo(12f * k, 15.7f * k, 13.3f * k, 14.1f * k)
+    }, menta, style = Stroke(0.65f * k, cap = StrokeCap.Round))
+    drawLine(noche, p(5.6f, 19.8f), p(8f, 19.8f), 0.8f * k, StrokeCap.Round)
+    drawLine(noche, p(6.8f, 18.7f), p(6.8f, 20.9f), 0.8f * k, StrokeCap.Round)
+    drawCircle(menta, 0.55f * k, p(16.9f, 19.8f))
+    drawCircle(Color.White, 0.55f * k, p(18.7f, 19.8f))
 }

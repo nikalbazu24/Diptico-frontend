@@ -139,8 +139,8 @@ private fun infoPaso(e: Estado, paso: PasoTuto): InfoPaso = when (paso) {
         "Escúchala mientras te mueves. Se calla sola al jugar o si pones Spotify o YouTube Music.",
     )
     PasoTuto.APARIENCIA -> InfoPaso(
-        "Apariencia", "¿Claro u oscuro?",
-        "Mira cómo cambia mientras eliges. El oscuro ahorra batería en pantallas OLED.",
+        "Apariencia", "Dale tu estilo a Díptico",
+        "Elige cómo quieres que se vea tu inicio. Puedes cambiarlo cuando quieras desde Ajustes.",
     )
     PasoTuto.CONTROLES -> InfoPaso(
         "Controles", "Probemos el control",

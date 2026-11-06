@@ -158,7 +158,7 @@ data class ConsolaPropia(
 
 /** Forma de las cajas de una consola en el estante. */
 /** Un botón extra del control: su tecla de Android y la acción que le toca. */
-data class BotonExtra(val nombre: String, val tecla: Int, val accion: String) {
+data class BotonExtra(val nombre: String, val tecla: Int, val accion: String, val conStart: Boolean = false) {
     companion object {
         /** L4 y R4 suelen llegar como BUTTON_C y BUTTON_Z; si los tuyos son otros, Díptico los aprende. */
         val PORDEFECTO = listOf(
@@ -338,7 +338,7 @@ data class Estado(
     val android: List<String> = emptyList(),
     /** A qué estante se agregan las apps del panel: "ports" o "androidgames". */
     val appsDestino: String = "ports",
-    /** Para qué es el cuadro de texto: "sgdb", "ia_clave_gemini", "ia_pedido", "titulo" o "notas". */
+    /** Para qué es el cuadro de texto: "sgdb", "ia_clave_gemini", "titulo" o "notas". */
     val textoPara: String = "sgdb",
     val tema: String = "diptico",
     val temaFestivo: Boolean = true,
@@ -539,6 +539,7 @@ data class Estado(
     val widgetSel: Int = 0,
     /** Estudio de widgets: pestaña (0 widget, 1 agregar, 2 página) y si la cruceta está moviendo el widget. */
     val estudioPestana: Int = 0,
+    val catalogoTemas: List<TemaComunidad> = emptyList(),
     val estudioMover: Boolean = false,
     /** En el editor de widgets: la cruceta elige widgets en el inicio ("grilla") o recorre el panel ("panel"). */
     val estudioZona: String = "grilla",
@@ -1632,7 +1633,7 @@ object Diptico {
         PasoTuto.DISPOSICION -> if (e.intercambiar) 1 else 0
         PasoTuto.JUEGOS -> if (e.pantallaJuegos == "abajo") 1 else 0
         PasoTuto.MUSICA -> if (!e.musica) 4 else ordenPistas.indexOf(e.pista).let { if (it < 0) 5 else it }
-        PasoTuto.APARIENCIA -> if (e.oscuro) 0 else 1
+        PasoTuto.APARIENCIA -> if (e.tema == "diptico_vidrio") 2 else if (e.oscuro) 0 else 1
         else -> 0
     }
 
@@ -1810,18 +1811,33 @@ object Diptico {
                 },
             )
             PasoTuto.APARIENCIA -> listOf(
-                Opcion("Modo oscuro", "Ahorra batería en pantallas OLED", Icono.TEMA) { fijarTema(true); siguientePaso() },
-                Opcion("Modo claro", "Más luminoso", Icono.TEMA) { fijarTema(false); siguientePaso() },
+                Opcion("Díptico de noche", "Estante y tonos oscuros", Icono.TEMA) { elegirAparienciaInicial(0); siguientePaso() },
+                Opcion("Díptico de día", "Estante y tonos claros", Icono.TEMA) { elegirAparienciaInicial(1); siguientePaso() },
+                Opcion("Díptico Cristal", "Vidrio y un inicio con widgets", Icono.PALETA) { elegirAparienciaInicial(2); siguientePaso() },
             )
             PasoTuto.CONTROLES -> listOf(Opcion("Continuar", "Cuando quieras", Icono.CHECK) { siguientePaso() })
-            PasoTuto.LISTO -> listOf(Opcion("¡Empezar a jugar!", icono = Icono.JUGAR) { terminarConfiguracion() })
+            PasoTuto.LISTO -> listOf(
+                Opcion("¡Empezar a jugar!", icono = Icono.JUGAR) { terminarConfiguracion() },
+                Opcion("¿Cómo te llama Bisa?", e.nombre.ifBlank { "Opcional" }, Icono.BISA) { abrirTexto("nombre", e.nombre) },
+            )
         }
     }
 
     /** En algunos pasos el cambio se ve (y se oye) en vivo mientras eliges. */
+    private fun elegirAparienciaInicial(i: Int) {
+        fijarTema(i != 1)
+        elegirTema(if (i == 2) "diptico_vidrio" else "diptico")
+        val inicio = if (i == 2) "widgets" else "heroe"
+        almacen.guardarTexto("inicio", inicio)
+        actualizar { it.copy(inicio = inicio) }
+    }
+
     private fun vistaPrevia(paso: PasoTuto, i: Int) {
         when (paso) {
-            PasoTuto.APARIENCIA -> fijarTema(i == 0)
+            PasoTuto.APARIENCIA -> {
+                fijarTema(i != 1)
+                elegirTema(if (i == 2) "diptico_vidrio" else "diptico")
+            }
             PasoTuto.TEXTO -> tamanos.getOrNull(i)?.let { fijarTam(it) }
             PasoTuto.MUSICA -> when (i) {
                 in 0..3 -> {
@@ -2087,6 +2103,7 @@ object Diptico {
         "vistas_consolas" -> listOf("Tus consolas")
         "vistas_juegos" -> listOf("Tus juegos")
         "temas" -> listOf("Colores", "Fiestas del mundo", "Tus temas")
+        "tienda_temas" -> listOf("Tienda de temas")
         "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
         "ia" -> listOf("El cerebro de Bisa")
         "cajas" -> listOf("${Consolas.porId(estado.value.galeriaConsola)?.nombre ?: "Esta consola"}", "Todas las consolas")
@@ -2157,8 +2174,14 @@ object Diptico {
             val detalle = when(v) { "cuadricula" -> "Todas las portadas a la vista"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
             ItemGaleria(v, nombreVista(v), detalle, e.vista == v) { almacen.guardarTexto("vista", v); actualizar { it.copy(vista = v) }; cerrarPanel() }
         }
-        if (e.galeria == "vistas_consolas") return listOf("carpetas", "arriba", "sistemas", "lado", "rueda", "discos", "habitacion").map { v ->
-            ItemGaleria(v, nombreVistaConsolas(v), if(v == "habitacion") "Biblioteca con estantes y recuerdos; decora en Estudio visual" else "Vista previa en la otra pantalla", e.vistaConsolas == v) { elegirVistaConsolas(v); cerrarPanel() }
+        if (e.galeria == "vistas_consolas") return listOf("carpetas", "mosaico", "vitrina", "arriba", "sistemas", "lado", "rueda", "discos", "habitacion").map { v ->
+            val detalle = when (v) {
+                "mosaico" -> "Más consolas a la vista, con una portada y el total de juegos"
+                "vitrina" -> "Carpetas anchas con tres portadas"
+                "habitacion" -> "Biblioteca con estantes y recuerdos"
+                else -> "Vista previa en la otra pantalla"
+            }
+            ItemGaleria(v, nombreVistaConsolas(v), detalle, e.vistaConsolas == v) { elegirVistaConsolas(v); cerrarPanel() }
         }
         if (e.galeria == "colecciones") {
             val j = e.seleccionado
@@ -2171,11 +2194,15 @@ object Diptico {
             "temas" -> when (e.galeriaPestana) {
                 0 -> Temas.incluidos.map { t -> ItemGaleria(t.id, t.nombre, if (t.decor != "nada") Temas.nombreDecor(t.decor) else "", actual.id == t.id, t) { elegirTema(t.id) } }
                 1 -> Temas.fiestas.map { f -> ItemGaleria(f.tema.id, f.nombre, f.donde, actual.id == f.tema.id, f.tema) { elegirTema(f.tema.id) } }
-                else -> e.temasPropios.map { t -> ItemGaleria(t.id, t.nombre, "Creado por ti", actual.id == t.id, t) { elegirTema(t.id) } } +
-                    ItemGaleria("_ia", "Crear con IA", if (llaveNube(e) == null) "Necesita una IA en la nube" else "Escribe tu idea", false) {
-                        if (llaveNube() == null) pedirIANube("Crear temas") else abrirTexto("ia_pedido")
-                    } +
+                else -> e.temasPropios.map { t -> ItemGaleria(t.id, t.nombre, if (t.id.startsWith("com_")) "De la comunidad" else "Tema personal", actual.id == t.id, t) { elegirTema(t.id) } } +
                     ItemGaleria("_colores", "Mis colores", "Toda la interfaz", false) { abrirGaleria("colores") }
+            }
+            "tienda_temas" -> listOf(ItemGaleria("_enlace", "Abrir enlace", "Pega el enlace HTTPS a un tema o catálogo", false) {
+                abrirTexto("tema_enlace")
+            }) + e.catalogoTemas.map { entrada ->
+                val t = entrada.tema
+                val detalle = listOfNotNull(entrada.autor.ifBlank { null }, if (entrada.audio != null) "Incluye música" else null).joinToString(" · ")
+                ItemGaleria(t.id, t.nombre, detalle, e.temasPropios.any { it.id == t.id }, t) { instalarTemaComunidad(entrada) }
             }
             "colores" -> {
                 val mio = e.temasPropios.firstOrNull { it.id == "mio" } ?: actual
@@ -2383,10 +2410,10 @@ object Diptico {
 
     fun abrirClave() = abrirTexto("sgdb", estado.value.claveSgdb)
 
-    /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave_gemini", "ia_pedido", "titulo", "notas"). */
+    /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave_gemini", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
         if (estado.value.panel != Panel.CLAVE) claveDesde = regresoActual()
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_")) }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace") }
         // Para las claves: el teléfono puede mandarla directo (QR con la página de la consola en tu Wi-Fi).
         val oficial = urlClave(para)
         if (oficial != null && para != "ra_usuario") {
@@ -2653,7 +2680,7 @@ object Diptico {
         val max = when {
             estado.value.panel != Panel.CLAVE -> 160
             estado.value.textoPara == "notas" -> 2000
-            estado.value.textoPara == "ia_pedido" -> 200
+            estado.value.textoPara == "tema_enlace" -> 600
             estado.value.textoPara == "titulo" -> 80
             else -> 200
         }
@@ -3411,14 +3438,16 @@ object Diptico {
             Seccion.APARIENCIA -> {
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
-                    "Efecto de los botones", nombreEfecto(e.efecto), Icono.ESTRELLA,
+                    "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
                     "Liso, degradado, con un brillo que pasa, o de vidrio. Se ve en el botón Jugar, el menú y las opciones elegidas.",
                 ) {
                     val l = listOf("liso", "degradado", "brillo", "vidrio")
-                    val v = l[(l.indexOf(estado.value.efecto) + 1).mod(l.size)]
+                    val experiencia = estado.value.experiencia
+                    val actual = if (experiencia.vidrio) "vidrio" else estado.value.efecto
+                    val v = l[(l.indexOf(actual) + 1).mod(l.size)]
                     almacen.guardarTexto("efecto", v)
                     actualizar { it.copy(efecto = v) }
-                    cl.nikalbazu.diptico.ui.Estilo.efecto = v
+                    if (experiencia.vidrio) guardarExperiencia(experiencia.copy(vidrio = false)) else aplicarTema()
                 }
                 lista += Opcion(
                     "Fluidez", nombreFluidez(e.fluidez) + if (e.fluidez == "auto") " (${nombreFluidez(e.fluidezDetectada).lowercase()})" else "", Icono.CHISPA,
@@ -3528,6 +3557,10 @@ object Diptico {
                 }
             }
             Seccion.PORTADAS -> {
+                if (e.seleccionado != null) lista += Opcion("Buscar imágenes del juego", "Portadas por fuente", Icono.PORTADA,
+                    "Elige imágenes para el juego seleccionado. Libretro, Wikipedia y Steam para PC funcionan sin clave.") {
+                    abrirFicha(); buscarCandidatos("portada")
+                }
                 lista += Opcion(
                     "Reconocer nombres de juegos", icono = Icono.TITULO,
                     ayuda = "Busca el nombre oficial de cada juego en libretro (gratis). Se hace solo al buscar juegos nuevos.",
@@ -3951,17 +3984,17 @@ object Diptico {
     private fun opcionesExperiencia(e: Estado): List<Opcion> = buildList {
         val v = e.experiencia
         add(Opcion("Colores del juego · Universo", if (v.universo) "Sí" else "No", Icono.MUNDO, "Colores tomados de la imagen del juego, compartidos por ambas pantallas. Sin imagen se conserva el tema.") { guardarExperiencia(v.copy(universo = !v.universo)) })
-        add(Opcion("Tarjetas de vidrio", if (v.vidrio) "Sí" else "No", Icono.TEMA, "Superficies translúcidas con bordes claros. No se desenfoca ni se captura el juego.") { guardarExperiencia(v.copy(vidrio = !v.vidrio)) })
         add(Opcion("Movimiento ambiental", if (v.movimiento) "Suave" else "Reducido", Icono.ESTRELLA, "Apaga el movimiento ambiental y el zoom lento; en partida se mantiene estático.") {
             guardarExperiencia(v.copy(movimiento = !v.movimiento))
         })
-        add(Opcion("Biblioteca con estantes", nombreVistaConsolas(e.vistaConsolas), Icono.BIBLIOTECA, "Un espacio con consolas, colecciones y recuerdos. Cruceta elige consola, A entra y B vuelve.") {
-            elegirVistaConsolas(if (e.vistaConsolas == "habitacion") "arriba" else "habitacion")
-        })
+        add(Opcion("Vista de carpetas", nombreVistaConsolas(e.vistaConsolas), Icono.BIBLIOTECA,
+            "Elige cómo se ven tus consolas, con vista previa.") { abrirGaleria("vistas_consolas") })
         add(Opcion("Fondo de los estantes", v.pared, Icono.PALETA) { guardarExperiencia(v.copy(pared = Experiencia.paredes[(Experiencia.paredes.indexOf(v.pared) + 1) % Experiencia.paredes.size])) })
         add(Opcion("Adornos de los estantes", v.adorno, Icono.ESTRELLA) { guardarExperiencia(v.copy(adorno = Experiencia.adornos[(Experiencia.adornos.indexOf(v.adorno) + 1) % Experiencia.adornos.size])) })
-        add(Opcion("Editar composición del inicio", "Widgets y posiciones", Icono.EDITAR, "El estudio existente permite mover y redimensionar elementos, con vista previa en la otra pantalla.") { cerrarPanel(); editarWidgets() })
-        add(Opcion("Enviar ficha a la otra pantalla", if (e.fichaFijada == null) "Sin fijar" else "Fijada", Icono.INTERCAMBIAR, "Fija el juego elegido arriba mientras recorres otros títulos abajo. Vuelve a elegir esta opción para soltar la ficha.") { fijarFicha() })
+        add(0, Opcion("Diseñar mi inicio", "Editor visual de widgets", Icono.EDITAR,
+            "Mueve, agranda y prueba tus widgets en vivo.") { cerrarPanel(); editarWidgets() })
+        add(1, Opcion("Paleta y tema", cl.nikalbazu.diptico.ui.Estilo.tema.nombre, Icono.PALETA,
+            "Ve cómo quedan los colores y los temas antes de elegir.") { abrirGaleria("temas") })
         for (nombre in listOf("Jugar", "Explorar", "Ligero")) {
             add(Opcion("Plantilla $nombre", "Personalizable", Icono.PALETA) { plantillaVisual(nombre) })
         }
@@ -4045,24 +4078,30 @@ object Diptico {
         return m[(m.indexOf(c) + 1).mod(m.size)]
     }
 
-    fun crearTemaIA(pedido: String) {
-        val clave = llaveNube() ?: return pedirIANube("Crear temas")
-        trabajo("tema", "Creando tu tema con IA")
-        avisar("Pidiendo un tema a la IA…")
+    private fun cargarCatalogoTemas(enlace: String) {
+        if (enlace.isBlank() || trabajosMapa.containsKey("catalogo_temas")) return
+        trabajo("catalogo_temas", "Abriendo catálogo de temas")
         scope.launch {
-            val r = withContext(Dispatchers.IO) {
-                try {
-                    Result.success(Temas.conIA(clave, pedido))
-                } catch (e: Exception) {
-                    Result.failure(e)
-                }
-            }
-            terminarTrabajo("tema")
-            r.onSuccess { t ->
-                guardarTemasPropios(listOf(t) + estado.value.temasPropios)
-                elegirTema(t.id)
-                avisar(if (t.mensaje.isNotBlank()) "${t.nombre}: ${t.mensaje}" else "¡Listo! Tema \"${t.nombre}\" creado")
-            }.onFailure { avisar(it.message ?: "No pude crear el tema. Revisa tu conexión.") }
+            val resultado = withContext(Dispatchers.IO) { runCatching { TiendaTemas.catalogo(enlace) } }
+            terminarTrabajo("catalogo_temas")
+            resultado.onSuccess { temas ->
+                actualizar { it.copy(catalogoTemas = temas, indice = if (it.galeria == "tienda_temas" && it.panel == Panel.GALERIA) 1 else it.indice) }
+                avisar(if (temas.size == 1) "Tema listo para ver e instalar" else "${temas.size} temas en el catálogo")
+            }.onFailure { avisar(it.message ?: "No pude abrir el catálogo.") }
+        }
+    }
+
+    private fun instalarTemaComunidad(entrada: TemaComunidad) {
+        if (trabajosMapa.containsKey("instalar_tema")) return
+        trabajo("instalar_tema", "Instalando ${entrada.tema.nombre}")
+        scope.launch {
+            val resultado = withContext(Dispatchers.IO) { runCatching { TiendaTemas.instalar(app, entrada) } }
+            terminarTrabajo("instalar_tema")
+            resultado.onSuccess { tema ->
+                guardarTemasPropios(listOf(tema) + estado.value.temasPropios.filterNot { it.id == tema.id })
+                elegirTema(tema.id)
+                avisar("${tema.nombre} instalado")
+            }.onFailure { avisar(it.message ?: "No pude instalar este tema.") }
         }
     }
 
@@ -4083,10 +4122,6 @@ object Diptico {
         e.fiesta?.let { f ->
             lista += Opcion("Hoy: ${f.nombre}", f.donde, Icono.ESTRELLA, f.tema.mensaje) { avisar(f.tema.mensaje.ifBlank { f.nombre }) }
         }
-        lista += Opcion(
-            "Crear tema con IA", if (llaveNube(e) == null) "Necesita una IA en la nube" else "Escribe tu idea", Icono.CHISPA,
-            "Escribe algo como \"Halloween japonés\" o \"Navidad en la playa\", o déjalo vacío y la IA elige la fiesta del mundo más cercana a hoy.",
-        ) { if (llaveNube() == null) pedirIANube("Crear temas") else abrirTexto("ia_pedido") }
         lista.add(
             0,
             Opcion(
@@ -4101,22 +4136,14 @@ object Diptico {
                 "Elige tú el color principal, el secundario, los detalles, el fondo y las letras de todo Díptico.",
             ) { abrirGaleria("colores") },
         )
+        lista.add(1, Opcion("Tienda de temas", "Temas de la comunidad", Icono.WEB,
+            "Abre un enlace HTTPS a un tema o catálogo alojado por la comunidad.") { abrirGaleria("tienda_temas") })
         val mio = e.temasPropios.firstOrNull { it.id == "mio" }
         lista += Opcion("Mi tema · fondo", when (mio?.base) { "oscuro" -> "Oscuro"; "claro" -> "Claro"; "oled" -> "Negro puro"; else -> "Según el modo" }, Icono.TEMA, ayuda = "El fondo de tu tema propio: oscuro, claro, negro puro (ideal para OLED) o según el modo.") {
             editarMiTema { it.copy(base = when (it.base) { "auto" -> "oscuro"; "oscuro" -> "oled"; "oled" -> "claro"; else -> "auto" }) }
         }
         lista += Opcion("Mi tema · decoración", Temas.nombreDecor(mio?.decor ?: "nada"), Icono.ESTRELLA, ayuda = "Un adorno suave sobre el fondo de tu tema propio.") {
             editarMiTema { t -> t.copy(decor = Temas.DECORACIONES[(Temas.DECORACIONES.indexOf(t.decor) + 1).mod(Temas.DECORACIONES.size)]) }
-        }
-        lista += Opcion(
-            "IA para crear temas", llaveNube(e)?.let { IA.nombre(it.proveedor) + " ✓" } ?: "Elegir", Icono.CLAVE,
-            "Los temas con IA usan una IA en la nube: Gemini (gratis con tu cuenta de Google) o ChatGPT.",
-        ) { abrirGaleria("ia") }
-        if (e.temasPropios.any { it.id != "mio" }) {
-            lista += Opcion("Borrar temas creados con IA", icono = Icono.BORRAR, ayuda = "Borra los temas que inventó la IA. Los temas de Díptico y el tuyo no se tocan.") {
-                guardarTemasPropios(estado.value.temasPropios.filter { it.id == "mio" })
-                if (estado.value.tema.startsWith("ia_")) elegirTema("diptico")
-            }
         }
         return lista
     }
@@ -4765,6 +4792,8 @@ object Diptico {
                 }
             }
             "bisa_logros" -> if (c.juego?.clave == a.valor) abrirFichaDe(a.valor, 4)
+            "bisa_pista" -> CentroBisa.prepararPista(e, a.valor)?.let { respuestaBisa(it) }
+            "bisa_escribir" -> if (c.juego?.clave == a.valor) escribirAlAsistente()
             "bisa_pausa" -> if (c.jugando && c.juego?.clave == a.valor) {
                 if (e.temporizadorFin > 0L) {
                     val minutos = ((e.temporizadorFin - System.currentTimeMillis()).coerceAtLeast(0L) + 59_999) / 60_000
@@ -5009,13 +5038,7 @@ object Diptico {
         scope.launch {
             val l = withContext(Dispatchers.IO) {
                 try {
-                    val c = java.net.URL("https://store.steampowered.com/api/storesearch/?term=" + java.net.URLEncoder.encode(q, "UTF-8") + "&l=spanish&cc=US")
-                        .openConnection() as java.net.HttpURLConnection
-                    c.connectTimeout = 10_000; c.readTimeout = 10_000
-                    val j = org.json.JSONObject(c.inputStream.bufferedReader().readText())
-                    val it = j.optJSONArray("items") ?: org.json.JSONArray()
-                    (0 until it.length()).map { k -> it.getJSONObject(k) }.filter { it.optString("type") == "app" }
-                        .map { JuegoPC(it.optString("name"), it.optInt("id"), "STEAM") }.filter { it.id > 0 }.take(10)
+                    Descargas.buscarSteam(q).map { JuegoPC(it.nombre, it.id, "STEAM") }
                 } catch (_: Exception) { null }
             }
             if (l == null) { avisar("No pude conectarme con Steam. Revisa el Wi-Fi."); return@launch }
@@ -5270,12 +5293,12 @@ object Diptico {
         if (t.isBlank()) return BotonExtra.PORDEFECTO
         return t.split(";").mapNotNull { p ->
             val c = p.split(",")
-            if (c.size < 3) null else BotonExtra(c[0], c[1].toIntOrNull() ?: return@mapNotNull null, c[2])
+            if (c.size < 3) null else BotonExtra(c[0], c[1].toIntOrNull() ?: return@mapNotNull null, c[2], c.getOrNull(3) == "start")
         }.ifEmpty { BotonExtra.PORDEFECTO }
     }
 
     private fun guardarBotonesExtra(l: List<BotonExtra>) {
-        almacen.guardarTexto("botonesExtra", l.joinToString(";") { "${it.nombre},${it.tecla},${it.accion}" })
+        almacen.guardarTexto("botonesExtra", l.joinToString(";") { "${it.nombre},${it.tecla},${it.accion},${if (it.conStart) "start" else "solo"}" })
         actualizar { it.copy(botonesExtra = l) }
     }
 
@@ -5300,8 +5323,13 @@ object Diptico {
         if (i < 0) return
         val l = e.botonesExtra.toMutableList()
         if (i >= l.size) return
-        // Si esa tecla estaba en otro botón, se la quita.
-        for (k in l.indices) if (k != i && l[k].tecla == tecla) l[k] = l[k].copy(tecla = 0)
+        if (tecla == android.view.KeyEvent.KEYCODE_BUTTON_START || (l[i].conStart && tecla in teclasCombinadasReservadas(e))) {
+            avisar("Esa tecla ya está reservada. Prueba otra o cambia el atajo que la usa.")
+            return
+        }
+        for (k in l.indices) {
+            if (k != i && l[k].tecla == tecla && l[k].conStart == l[i].conStart) l[k] = l[k].copy(tecla = 0)
+        }
         l[i] = l[i].copy(tecla = tecla)
         actualizar { it.copy(aprendiendoBoton = -1) }
         guardarBotonesExtra(l)
@@ -5311,9 +5339,24 @@ object Diptico {
 
     fun cancelarAprender() = actualizar { it.copy(aprendiendoBoton = -1) }
 
-    /** Si [tecla] es un botón extra con acción, la hace. Devuelve true si era uno de ellos. */
-    fun botonExtra(tecla: Int): Boolean {
-        val b = estado.value.botonesExtra.firstOrNull { it.tecla == tecla && it.tecla != 0 } ?: return false
+    private fun teclasCombinadasReservadas(e: Estado) =
+        listOf(e.atajoBisa, e.atajoApps).mapNotNull { AtajoInicio.leer(it, AtajoInicio.NO).takeUnless { a -> a.doble }?.tecla }
+
+    private fun alternarModoBoton(i: Int) {
+        val e = estado.value
+        val botones = e.botonesExtra.toMutableList()
+        val b = botones.getOrNull(i) ?: return
+        val conStart = !b.conStart
+        val ocupada = botones.withIndex().any { (k, otro) -> k != i && otro.tecla == b.tecla && otro.conStart == conStart }
+        val tecla = b.tecla.takeUnless { ocupada || (conStart && it in teclasCombinadasReservadas(e)) } ?: 0
+        botones[i] = b.copy(conStart = conStart, tecla = tecla)
+        guardarBotonesExtra(botones)
+        if (b.tecla != 0 && tecla == 0) avisar("La combinación ya está en uso. Elige otro botón.")
+    }
+
+    /** Si [tecla] es un botón extra con acción, la ejecuta. */
+    fun botonExtra(tecla: Int, conStart: Boolean = false): Boolean {
+        val b = estado.value.botonesExtra.firstOrNull { it.tecla == tecla && it.tecla != 0 && it.conStart == conStart } ?: return false
         if (b.accion == "nada") return false
         val e = estado.value
         when (b.accion) {
@@ -5343,7 +5386,10 @@ object Diptico {
                 val actualEstado = estado.value
                 val otro = if (bisa) actualEstado.atajoApps else actualEstado.atajoBisa
                 val ahora = if (bisa) actualEstado.atajoBisa else actualEstado.atajoApps
-                val opciones = AtajoInicio.entries.filter { it == AtajoInicio.NO || it.id != otro }
+                val personalizadas = actualEstado.botonesExtra.filter { it.conStart }.map { it.tecla }.toSet()
+                val opciones = AtajoInicio.entries.filter {
+                    it == AtajoInicio.NO || (it.id != otro && (it.doble || it.tecla !in personalizadas))
+                }
                 val i = opciones.indexOfFirst { it.id == ahora }
                 val nuevo = opciones[(i + delta).mod(opciones.size)]
                 almacen.guardarTexto(clave, nuevo.id)
@@ -5374,6 +5420,8 @@ object Diptico {
                     menos = { cambiarAccionBoton(i, -1) },
                 ) { cambiarAccionBoton(i, 1) },
             )
+            add(Opcion("Cómo activar ${b.nombre}", if (b.conStart) "Start + botón" else "Un botón", Icono.MANDO,
+                "Con Start, mantén Start y pulsa el botón aprendido. Las combinaciones funcionan en Inicio.") { alternarModoBoton(i) })
             add(
                 Opcion(
                     "Aprender el botón ${b.nombre}", if (e.aprendiendoBoton == i) "Aprieta el botón…" else if (b.tecla == 0) "Sin aprender" else android.view.KeyEvent.keyCodeToString(b.tecla).removePrefix("KEYCODE_").lowercase(),
@@ -5381,7 +5429,7 @@ object Diptico {
                 ) { aprenderBoton(i) },
             )
         }
-        if (e.botonesExtra.size < 4) add(Opcion("Agregar otro botón", icono = Icono.MANDO, ayuda = "Para controles con más botones (M1, M2, paletas de atrás…).") {
+        if (e.botonesExtra.size < 4) add(Opcion("Agregar un acceso personalizado", icono = Icono.MANDO, ayuda = "Elige un botón, asígnale una acción y decide si quieres combinarlo con Start.") {
             val l = estado.value.botonesExtra + BotonExtra("Extra ${estado.value.botonesExtra.size - 1}", 0, "nada")
             guardarBotonesExtra(l)
             aprenderBoton(l.size - 1)
@@ -6328,12 +6376,19 @@ object Diptico {
     /** Pestañas de la tienda según qué se busca (las consolas usan RetroArch en vez de libretro). */
     fun fuentesImagen(e: Estado = estado.value) = if (e.candidatoPara.startsWith("c_")) listOf("todas", "RetroArch", "SteamGridDB", "Wikipedia") else FUENTES_IMAGEN.filter { f ->
         val c = e.raspadores
-        when (f) { "ScreenScraper" -> c.screenscraper; "IGDB" -> c.igdb; "TheGamesDB" -> c.conTgdb; "RAWG" -> c.conRawg; else -> true }
+        when (f) {
+            "Steam" -> juegoFicha()?.consolaId in setOf("steam", "windows", "pc")
+            "ScreenScraper" -> c.screenscraper
+            "IGDB" -> c.igdb
+            "TheGamesDB" -> c.conTgdb
+            "RAWG" -> c.conRawg
+            else -> true
+        }
     }
 
     /** Busca varias opciones (libretro, SteamGridDB y Wikipedia) para la portada, el hero o el logo. */
     /** Fuentes de la tienda de imágenes (pestañas). */
-    val FUENTES_IMAGEN = listOf("todas", "SteamGridDB", "libretro", "ScreenScraper", "IGDB", "TheGamesDB", "RAWG", "Wikipedia")
+    val FUENTES_IMAGEN = listOf("todas", "Steam", "SteamGridDB", "libretro", "ScreenScraper", "IGDB", "TheGamesDB", "RAWG", "Wikipedia")
     fun nombreFuente(f: String) = if (f == "todas") "Todas" else f
 
     /** Lo que se ve en la tienda: atajos (mis archivos, quitar, conectar SteamGridDB) y las imágenes de la fuente elegida. */
@@ -6350,6 +6405,7 @@ object Diptico {
             add(cl.nikalbazu.diptico.data.ImagenWeb("accion:archivos", "", "Mis archivos"))
             if (propia != null) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:quitar", propia, "Quitar la propia"))
             if (e.claveSgdb.isBlank()) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:sgdb", "", "Conectar SteamGridDB"))
+            if (!e.candidatoPara.startsWith("c_")) add(cl.nikalbazu.diptico.data.ImagenWeb("accion:fuentes", "", "Configurar fuentes"))
         }
         val lista = if (e.fuenteImagen == "todas") e.candidatos else e.candidatos.filter { it.fuente == e.fuenteImagen }
         return atajos + lista
@@ -6383,7 +6439,7 @@ object Diptico {
         val crudo = todosCrudos().firstOrNull { it.clave == j.clave } ?: return
         val c = Consolas.porId(crudo.consolaId) ?: return
         val titulo = nombre?.takeIf { it.isNotBlank() } ?: j.titulo
-        actualizar { it.copy(panel = Panel.IMAGENES, candidatos = emptyList(), candidatoPara = tipo, buscandoCandidatos = true, indice = 0, nombreImagen = titulo) }
+        actualizar { it.copy(panel = Panel.IMAGENES, candidatos = emptyList(), candidatoPara = tipo, buscandoCandidatos = true, indice = 0, nombreImagen = titulo, fuenteImagen = "todas") }
         scope.launch {
             val lista = withContext(Dispatchers.IO) {
                 try {
@@ -6406,6 +6462,7 @@ object Diptico {
         val tipo = e.candidatoPara
         when (img.url) {
             "accion:archivos" -> { pedirImagen(tipo); return }
+            "accion:fuentes" -> { abrirMenu(Seccion.PORTADAS); return }
             "accion:sgdb" -> { abrirTexto("sgdb", e.claveSgdb); return }
             "accion:quitar" -> {
                 cambiarDatos(j.clave) { when (tipo) { "arte" -> it.copy(arte = null); "logo" -> it.copy(logo = null); else -> it.copy(portada = null) } }
@@ -6575,9 +6632,9 @@ object Diptico {
                     return
                 }
             }
-            "ia_pedido" -> {
+            "tema_enlace" -> {
                 cerrarPanel()
-                crearTemaIA(t)
+                cargarCatalogoTemas(t)
                 return
             }
         }
@@ -6826,8 +6883,12 @@ object Diptico {
 
     val VISTAS_CONSOLAS = listOf("arriba", "lado", "rueda", "sistemas", "carpetas", "discos", "habitacion")
     /** Vistas donde primero se elige la consola (en grande) y después se entra a sus juegos. */
-    val MODOS_ELEGIR = setOf("sistemas", "carpetas", "discos", "habitacion")
-    fun nombreVistaConsolas(v: String) = when (v) { "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"; "discos" -> "Discos"; "habitacion" -> "Estantes y recuerdos"; else -> "Arriba" }
+    val VISTAS_CARPETAS = setOf("carpetas", "mosaico", "vitrina")
+    val MODOS_ELEGIR = VISTAS_CARPETAS + setOf("sistemas", "discos", "habitacion")
+    fun nombreVistaConsolas(v: String) = when (v) {
+        "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"
+        "mosaico" -> "Mosaico"; "vitrina" -> "Vitrina"; "discos" -> "Discos"; "habitacion" -> "Estantes y recuerdos"; else -> "Arriba"
+    }
 
     /** Cambia cómo se ven las consolas (arriba, al costado, rueda o sistemas). */
     fun elegirVistaConsolas(v: String) {
@@ -7007,10 +7068,11 @@ object Diptico {
 
     // ---------- Forma de las cajas por consola ----------
 
-    val FORMAS = listOf("original", "cuadrada", "poster", "horizontal", "disco", "cartucho", "tarjeta")
+    val FORMAS = listOf("original", "cuadrada", "poster", "horizontal", "disco", "cartucho", "tarjeta", "panoramica", "instantanea", "cassette")
     fun nombreForma(f: String) = when (f) {
         "cuadrada" -> "Cuadrada"; "poster" -> "Póster"; "horizontal" -> "Horizontal"; "disco" -> "Disco"
-        "cartucho" -> "Cartucho"; "tarjeta" -> "Tarjeta"; else -> "Caja original"
+        "cartucho" -> "Cartucho"; "tarjeta" -> "Tarjeta"; "panoramica" -> "Panorámica"
+        "instantanea" -> "Instantánea"; "cassette" -> "Casete"; else -> "Caja original"
     }
 
     private val IMAGENES_CAJA = listOf("portada", "arte", "logo")
@@ -7372,7 +7434,7 @@ object Diptico {
     // ---------- Música según el tema ----------
 
     /** Qué pista va con cada tema y cada fiesta. */
-    fun musicaDeTema(t: Tema): String = when (t.id.removePrefix("fiesta_")) {
+    fun musicaDeTema(t: Tema): String = (if (::app.isInitialized) TiendaTemas.pista(app, t) else null) ?: when (t.id.removePrefix("fiesta_")) {
         "fiestaspatrias", "chile" -> "cueca"
         "glorias", "sanpedro", "patagonia" -> "oceano"
         "patrimonio", "dosmundos", "menta" -> "bosque"

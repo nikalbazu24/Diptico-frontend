@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "centro-bisa-1"
-    const val NOMBRE = "Centro de Bisa"
+    const val ID = "cristal-comunidad-1"
+    const val NOMBRE = "Cristal y personalización"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -172,10 +172,16 @@ object Novedades {
             Pagina("Capturas y copias", "Desde las opciones del juego puedes abrir su galería, compartir una captura o usarla como mapa. En sistemas con RetroArch puedes guardar y exportar hasta tres copias .srm por juego.", Icono.PORTADA, 0xFFBCA4FF),
             Pagina("Trae tu biblioteca", "En Biblioteca puedes importar títulos y favoritos de un gamelist.xml de ES-DE. Revisa las coincidencias antes de aplicar los cambios.", Icono.BIBLIOTECA, 0xFF73ABFF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("centro-bisa-1", "Centro de Bisa", listOf(
             Pagina("Bisa sabe dónde estás", "Te acompaña con acciones para el juego activo y su sistema. Consulta tu próximo paso y revisa la biblioteca sin configurar un motor. Con un motor puedes pedir pistas.", Icono.BISA, 0xFF57DCC7),
             Pagina("Habla con un gesto", "En Inicio pulsa Start dos veces o toca a Bisa. Start + R3 abre las apps. Puedes cambiar ambos atajos en Controles. Mantén su cara para dictar. En el chat puedes usar X para escribir o L1 para hablar.", Icono.MICROFONO, 0xFFBCA4FF),
             Pagina("Bisa durante una partida", "Con una pantalla libre tienes el chat y sus accesos. Cuando el juego usa toda la consola, usa la burbuja y sus acciones rápidas si Android le dio permiso.", Icono.PANTALLAS, 0xFF73ABFF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Díptico Cristal", "Prueba el tema en Ajustes › Temas. La luz y el arte del fondo se difuminan detrás de la interfaz.", Icono.PALETA, 0xFFBCA4FF),
+            Pagina("Tu estudio y tus carpetas", "Abre Estudio visual para personalizar tus widgets. En Estante prueba Mosaico, Vitrina y las nuevas cajas.", Icono.EDITAR, 0xFFFFB46A),
+            Pagina("Apps y atajos a tu gusto", "En dos pantallas, las opciones aparecen al elegir una app. En Controles puedes aprender un botón y combinarlo con Start.", Icono.MANDO, 0xFF73ABFF),
+            Pagina("Bisa, tu copiloto", "Pídele una pista sin spoilers y cuéntale el punto en que estás. Si ya dejaste una nota, Bisa puede usarla.", Icono.BISA, 0xFF57DCC7),
         )),
     )
 

@@ -56,15 +56,22 @@ fun PanelEstudio(e: Estado) {
             else Modifier.fillMaxSize().background(p.fondo2))
                 .sinCerrar().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10)),
         ) {
-            // Encabezado
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // El estado de la página y el botón de salida se mantienen visibles durante toda la edición.
+            val cabecera = RoundedCornerShape(esc.d(17))
+            Row(
+                Modifier.fillMaxWidth().clip(cabecera)
+                    .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Uva.copy(alpha = 0.30f), p.superficie)))
+                    .padding(horizontal = esc.d(10), vertical = esc.d(8)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Box(Modifier.size(esc.d(36)).clip(RoundedCornerShape(esc.d(11))).fondoBoton(Uva), contentAlignment = Alignment.Center) {
                     IconoDiptico(Icono.EDITAR, SobreUva, 18f, acento = SobreUva)
                 }
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Estudio de widgets", 18f, lineas = 1)
-                    Detalle("Página ${e.paginaInicio + 1} de ${e.paginas} · ${e.widgets.count { it.visible }} widgets", 12f, lineas = 1)
+                    Texto("Estudio visual", 18f, lineas = 1)
+                    val cantidad = e.widgets.count { it.visible && it.pagina == e.paginaInicio }
+                    Detalle("Página ${e.paginaInicio + 1}/${e.paginas} · $cantidad widgets", 12f, lineas = 1)
                 }
                 Box(
                     Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
@@ -86,7 +93,14 @@ fun PanelEstudio(e: Estado) {
                     ) { Texto(t, 13f, color = if (activa) SobreUva else p.tinta, lineas = 1) }
                 }
             }
-            Spacer(Modifier.height(esc.d(8)))
+            Spacer(Modifier.height(esc.d(6)))
+            val guia = when (e.estudioPestana) {
+                1 -> "Elige lo que quieres añadir al inicio."
+                2 -> "Ajusta el espacio, el fondo y la distribución."
+                else -> "Elige un widget para cambiar su forma y estilo."
+            }
+            Detalle(guia, 12f, lineas = 1, modifier = Modifier.padding(horizontal = esc.d(4)))
+            Spacer(Modifier.height(esc.d(6)))
             // En la zona "grilla" la cruceta elige widgets directo en el inicio: aquí se avisa, sin tapar nada.
             val enGrilla = e.estudioZona == "grilla" && !e.estudioMover
             androidx.compose.animation.AnimatedVisibility(enGrilla) {

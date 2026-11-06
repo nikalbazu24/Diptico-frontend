@@ -40,7 +40,7 @@ internal object CentroBisa {
             }
             add(AccionChat("bisa_sistema", j.clave, if (c.consola?.sinEmulador == true) "Ayuda de Android" else "Ayuda de ${c.consola?.nombre ?: "este sistema"}"))
             if (c.jugando) {
-                add(AccionChat("preguntar", "Dame una pista suave para ${j.titulo}. Pregúntame en qué parte estoy si hace falta.", "Pista sin spoilers"))
+                add(AccionChat("bisa_pista", j.clave, "Pista sin spoilers"))
                 add(AccionChat("bisa_pausa", j.clave, if (e.temporizadorFin > 0L) "Ver aviso de pausa" else "Pausa en ${e.temporizadorMin} min"))
             } else {
                 add(AccionChat("bisa_retomar", "", "Retomar partida"))
@@ -71,12 +71,27 @@ internal object CentroBisa {
         return MensajeChat("ia", texto, botones)
     }
 
+    fun prepararPista(e: Estado, clave: String): MensajeChat? {
+        val j = contexto(e).juego?.takeIf { it.clave == clave } ?: return null
+        val nota = e.datos[j.clave]?.paso.orEmpty().trim()
+        val acciones = buildList {
+            if (nota.isNotBlank()) add(AccionChat("preguntar",
+                "Juego ${j.titulo}. Mi último objetivo anotado es «${nota.take(300)}». Dame una pista suave sin spoilers; pregunta si falta contexto.",
+                "Usar mi nota"))
+            add(AccionChat("bisa_escribir", j.clave, "Contar dónde estoy"))
+        }
+        val contexto = if (nota.isBlank()) "" else " Dejaste anotado: «${nota.take(140)}»."
+        return MensajeChat("ia", "Dime el jefe, la zona o el objetivo de ${j.titulo} y partimos con una pista suave.$contexto", acciones)
+    }
+
     fun responder(e: Estado, texto: String): MensajeChat? {
         val consulta = Normalizer.normalize(texto, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
             .lowercase(Locale.ROOT).trim().trim('¿', '?', '¡', '!', '.')
         val c = contexto(e)
         val j = c.juego
         return when {
+            j != null && consulta in setOf("pista", "una pista", "pista sin spoilers", "estoy atascado", "estoy atascada") ->
+                prepararPista(e, j.clave)
             j != null && (consulta in setOf("mi proximo paso", "donde quede", "que deje anotado", "que estaba haciendo") ||
                 consulta.startsWith("donde quede en ")) -> {
                 val paso = e.datos[j.clave]?.paso.orEmpty()

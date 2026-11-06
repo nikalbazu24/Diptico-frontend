@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Brush
 import cl.nikalbazu.diptico.R
 
 data class Paleta(
@@ -194,8 +196,15 @@ val LocalPaleta = staticCompositionLocalOf { PaletaOscura }
  */
 @Composable
 fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f, zoom: Float = 1f, contenido: @Composable () -> Unit) {
-    val paleta = paletaDe(Estilo.tema, oscuro)
-    BoxWithConstraints(modifier.background(paleta.fondo)) {
+    val basePaleta = paletaDe(Estilo.tema, oscuro)
+    val cristal = Estilo.tema.forma == "cristal"
+    val paleta = if (cristal) basePaleta.copy(
+        fondo = basePaleta.fondo.copy(alpha = 0.35f),
+        fondo2 = basePaleta.fondo2.copy(alpha = 0.58f),
+        superficie = basePaleta.superficie.copy(alpha = 0.68f),
+        linea = lerp(basePaleta.linea, basePaleta.tinta, 0.26f).copy(alpha = 0.58f),
+    ) else basePaleta
+    BoxWithConstraints(modifier.background(basePaleta.fondo)) {
         val alto = if (maxHeight.value > 0f) maxHeight.value else 1f
         // En pantallas verticales (un teléfono) manda el ancho, para que nada quede fuera.
         val corto = if (maxWidth.value > 0f) minOf(alto, maxWidth.value) else alto
@@ -212,8 +221,35 @@ fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f,
         val ancho = maxWidth.value / f
         CompositionLocalProvider(LocalEscala provides Escala(f, ancho, tamTexto), LocalPaleta provides paleta) {
             Box(Modifier.fillMaxSize()) {
+                if (cristal) FondoCristal(basePaleta.fondo)
                 contenido()
                 if (Estilo.decoraciones && Estilo.tema.decor != "nada") Decoracion(Estilo.tema)
+            }
+        }
+    }
+}
+
+/** Difumina solo la luz de fondo. El texto, las carátulas y la captura de juego quedan en capas separadas. */
+@Composable
+private fun FondoCristal(fondo: Color) {
+    val morado = Uva
+    val coral = Coral
+    val azul = Sol
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val ancho = maxWidth.value
+        val alto = maxHeight.value
+        androidx.compose.foundation.Canvas(
+            Modifier.fillMaxSize().then(if (Estilo.efectosCompletos) Modifier.blur(34.dp) else Modifier),
+        ) {
+            val radio = minOf(size.width, size.height) * 0.68f
+            if (ancho <= 0f || alto <= 0f || radio <= 0f) return@Canvas
+            val oscuro = fondo.luminance() < 0.45f
+            listOf(
+                Offset(size.width * 0.16f, size.height * 0.15f) to morado,
+                Offset(size.width * 0.83f, size.height * 0.38f) to coral,
+                Offset(size.width * 0.45f, size.height * 0.96f) to azul,
+            ).forEach { (centro, color) ->
+                drawCircle(Brush.radialGradient(listOf(color.copy(alpha = if (oscuro) 0.74f else 0.58f), Color.Transparent), centro, radio), radio, centro)
             }
         }
     }

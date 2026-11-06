@@ -200,6 +200,9 @@ fun cajaDe(consola: Consola, escala: Float = 1f): FormaCaja {
         "disco" -> FormaCaja(116f, 116f, 58f, Banda.NINGUNA)
         "cartucho" -> FormaCaja(120f, 100f, 8f, Banda.ABAJO_CLARA)
         "tarjeta" -> FormaCaja(86f, 104f, 12f, Banda.ARRIBA_CLARA)
+        "panoramica" -> FormaCaja(172f, 74f, 36f, Banda.NINGUNA)
+        "instantanea" -> FormaCaja(101f, 119f, 4f, Banda.ABAJO_CLARA)
+        "cassette" -> FormaCaja(144f, 89f, 6f, Banda.BISAGRA)
         else -> consola.caja
     }
     val k = escala * (cfg?.tam ?: 1f)

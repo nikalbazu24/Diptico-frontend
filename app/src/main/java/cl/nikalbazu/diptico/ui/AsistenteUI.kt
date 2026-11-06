@@ -132,9 +132,9 @@ fun PanelAsistente(e: Estado) {
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 if (e.chat.isEmpty()) item {
                     Column(Modifier.padding(vertical = esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                        Texto("¡Hola! ¿En qué te ayudo?", 20f)
+                        Texto(if (contexto.jugando) "Aquí estoy, copiloto." else "Soy Bisa. ¿Qué jugamos?", 20f)
                         Detalle(
-                            if (Diptico.motorEfectivo(e) == "ninguno") "Puedo encontrar tu próximo paso, recomendarte qué jugar y orientarte en Díptico. Elige una acción o pregúntame."
+                            if (Diptico.motorEfectivo(e) == "ninguno") "Puedo recuperar tus notas, sugerirte qué jugar y revisar cómo abre un juego. Elige una acción, habla o escribe."
                             else "Habla, escribe o elige una acción. Puedo ayudarte con el juego que ves en la tarjeta de contexto.",
                             13.5f,
                         )

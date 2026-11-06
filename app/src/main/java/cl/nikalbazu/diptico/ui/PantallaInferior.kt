@@ -119,7 +119,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             Box(Modifier.padding(vertical = esc.d(14)).width(esc.d(1)).fillMaxHeight().background(p.linea))
                             VistaJuegos(e, Modifier.weight(1f).fillMaxHeight(), escalaEstante * 0.9f)
                         }
-                        "sistemas", "carpetas", "discos", "habitacion" -> AnimatedContent(
+                        "sistemas", "carpetas", "mosaico", "vitrina", "discos", "habitacion" -> AnimatedContent(
                             targetState = e.enSistemas,
                             transitionSpec = {
                                 (fadeIn(tween(260)) + scaleIn(tween(320), initialScale = if (targetState) 1.06f else 0.94f)) togetherWith fadeOut(tween(160))
@@ -128,7 +128,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                         ) { eligiendo ->
                             if (eligiendo) when (e.vistaConsolas) {
                                 "habitacion" -> Habitacion(e, Modifier.fillMaxSize())
-                                "carpetas" -> CarpetasConsolas(e, Modifier.fillMaxSize())
+                                "carpetas", "mosaico", "vitrina" -> CarpetasConsolas(e, Modifier.fillMaxSize())
                                 "discos" -> DiscosConsolas(e, Modifier.fillMaxSize())
                                 else -> SistemasCarrusel(e, Modifier.fillMaxSize())
                             }
@@ -777,7 +777,7 @@ internal fun PanelClave(e: Estado) {
                 "reporte_fallas" -> listOf(Icono.INFO, "Reportar un problema", "Cuéntanos qué pasó. El reporte incluye la versión, el modelo y el diagnóstico técnico. Se comparte al confirmar.", "Ej: la pantalla inferior se quedó en negro")
                 "bisa_paso" -> listOf(Icono.LAPIZ, "Mi próximo paso", "Bisa lo recuerda para este juego.", "Ej: volver al puente")
                 "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
-                "ia_pedido" -> listOf(Icono.CHISPA, "Crear tema con IA", "Escribe tu idea, como \"Halloween japonés\" o \"Navidad en la playa\". Si lo dejas vacío, la IA elige la fiesta del mundo más cercana a hoy.", "Ej: Año Nuevo Lunar con faroles")
+                "tema_enlace" -> listOf(Icono.WEB, "Enlace a la tienda de temas", "Pega el enlace HTTPS al archivo JSON de un tema o catálogo.", "https://…/temas.json")
                 "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")
                 "buscar_juego" -> listOf(Icono.BUSCAR, "Buscar un juego", "Escribe parte del nombre; también puedes dictarlo con la tecla Voz.", "Ej: zelda")
                 "coleccion_nueva" -> listOf(Icono.CARPETA, "Nombre de la colección", "Por ejemplo \"Para jugar con mi hijo\" o \"RPG pendientes\". Aparecerá como widget en tu inicio.", "Ej: RPG pendientes")
@@ -825,7 +825,7 @@ internal fun PanelClave(e: Estado) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
                 val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; "ia_clave_gemini" -> e.claveGemini; "ia_clave_openai" -> e.claveOpenAI; else -> if (e.textoPara.startsWith("ras_")) Diptico.almacen.texto(e.textoPara) else "" }).isNotBlank()
                 BotonGrande(
-                    when { quitar -> "Quitar clave"; e.textoPara == "ia_pedido" -> "Crear tema"; e.textoPara == "asistente" -> "Preguntar"; e.textoPara == "reporte_fallas" -> "Continuar"; else -> "Guardar" },
+                    when { quitar -> "Quitar clave"; e.textoPara == "tema_enlace" -> "Abrir catálogo"; e.textoPara == "asistente" -> "Preguntar"; e.textoPara == "reporte_fallas" -> "Continuar"; else -> "Guardar" },
                     Uva, SobreUva, Modifier.weight(1.4f),
                 ) { Diptico.guardarClave() }
             }

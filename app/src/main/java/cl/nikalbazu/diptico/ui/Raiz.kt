@@ -3,6 +3,7 @@ package cl.nikalbazu.diptico.ui
 import cl.nikalbazu.diptico.estado.Panel
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.animation.core.animateDpAsState
@@ -47,6 +48,13 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         // Deslizar hacia abajo desde el borde de arriba: por la izquierda, notificaciones; por la derecha, ajustes rápidos.
         val libre by androidx.compose.runtime.rememberUpdatedState(e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro)
         Box(Modifier.fillMaxSize().cortinaDesdeArriba { libre }) {
+            if (Estilo.tema.forma == "cristal" && Estilo.efectosCompletos && e.sesion == null &&
+                (e.panel in setOf(Panel.MENU, Panel.APPS, Panel.GALERIA, Panel.ESTUDIO) || (rol == Rol.INFERIOR && e.inicio != "widgets"))) {
+                e.seleccionado?.takeIf { (it.arte ?: it.portada)?.scheme?.let { s -> s != "app" } == true }?.let { juego ->
+                    ArteJuego(juego, preferirArte = true, maxLado = 320,
+                        modifier = Modifier.fillMaxSize().blur(34.dp).graphicsLayer { alpha = 0.42f })
+                }
+            }
             Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
                 when {
                     !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
