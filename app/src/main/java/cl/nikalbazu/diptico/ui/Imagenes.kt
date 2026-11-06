@@ -29,16 +29,19 @@ object Imagenes {
     }
 
     /** La imagen si ya está lista (sin esperar): así no parpadea al volver a dibujarse. */
-    fun enCache(uri: Uri?, maxLado: Int): ImageBitmap? = uri?.let { cache.get("$it@$maxLado") }
+    private fun clave(uri: Uri, maxLado: Int, memoriaGrafica: Boolean) = "$uri@$maxLado:$memoriaGrafica"
 
-    fun cargar(ctx: Context, uri: Uri, maxLado: Int): ImageBitmap? {
-        val clave = "$uri@$maxLado"
+    fun enCache(uri: Uri?, maxLado: Int, memoriaGrafica: Boolean = true): ImageBitmap? =
+        uri?.let { cache.get(clave(it, maxLado, memoriaGrafica)) }
+
+    fun cargar(ctx: Context, uri: Uri, maxLado: Int, memoriaGrafica: Boolean = true): ImageBitmap? {
+        val clave = clave(uri, maxLado, memoriaGrafica)
         cache.get(clave)?.let { return it }
         if (uri.scheme == "app") {
             // Ícono original de una app instalada.
             val d = ctx.packageManager.getApplicationIcon(uri.host ?: return null)
             val lado = maxLado.coerceAtMost(512)
-            val bmp = d.toBitmap(lado, lado)
+            val bmp = d.toBitmap(lado, lado, if (memoriaGrafica) null else android.graphics.Bitmap.Config.ARGB_8888)
             val img = bmp.asImageBitmap()
             cache.put(clave, img)
             return img
@@ -46,7 +49,7 @@ object Imagenes {
         if (uri.scheme == "http" || uri.scheme == "https") {
             // Imagen de internet (carrusel de la ficha, opciones para elegir): se guarda en caché del teléfono.
             val f = web(ctx, uri.toString()) ?: return null
-            return cargar(ctx, Uri.fromFile(f), maxLado)?.also { cache.put(clave, it) }
+            return cargar(ctx, Uri.fromFile(f), maxLado, memoriaGrafica)?.also { cache.put(clave, it) }
         }
         val cr = ctx.contentResolver
         val limites = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -54,10 +57,10 @@ object Imagenes {
         if (limites.outWidth <= 0 || limites.outHeight <= 0) return null
         var muestra = 1
         while (maxOf(limites.outWidth, limites.outHeight) / (muestra * 2) >= maxLado) muestra *= 2
-        // Imagen en la memoria gráfica: se dibuja más rápido y no ocupa la memoria de la app.
+        // Las imágenes de la cuadrícula también se usan en el desenfoque sobre un bitmap.
         val opciones = BitmapFactory.Options().apply {
             inSampleSize = muestra
-            inPreferredConfig = android.graphics.Bitmap.Config.HARDWARE
+            inPreferredConfig = if (memoriaGrafica) android.graphics.Bitmap.Config.HARDWARE else android.graphics.Bitmap.Config.ARGB_8888
         }
         val bmp = cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) } ?: return null
         val img = bmp.asImageBitmap()
@@ -88,13 +91,13 @@ object Imagenes {
 }
 
 @Composable
-fun rememberImagen(uri: Uri?, maxLado: Int): ImageBitmap? {
+fun rememberImagen(uri: Uri?, maxLado: Int, memoriaGrafica: Boolean = true): ImageBitmap? {
     val ctx = LocalContext.current
-    val img by produceState(initialValue = Imagenes.enCache(uri, maxLado), uri, maxLado) {
-        if (value != null && value === Imagenes.enCache(uri, maxLado)) return@produceState
+    val img by produceState(initialValue = Imagenes.enCache(uri, maxLado, memoriaGrafica), uri, maxLado, memoriaGrafica) {
+        if (value != null && value === Imagenes.enCache(uri, maxLado, memoriaGrafica)) return@produceState
         value = if (uri == null) null else withContext(Dispatchers.IO) {
             try {
-                Imagenes.cargar(ctx, uri, maxLado)
+                Imagenes.cargar(ctx, uri, maxLado, memoriaGrafica)
             } catch (e: Exception) {
                 null
             }

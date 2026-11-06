@@ -75,9 +75,10 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Bool
             },
         contentAlignment = Alignment.Center,
     ) {
-        PortadaCarpeta(e, id, Modifier.fillMaxSize(), maxLado = 256) {
+        // El fondo de la carpeta también puede dibujarse sobre un bitmap.
+        PortadaCarpeta(e, id, Modifier.fillMaxSize(), maxLado = 256, memoriaGrafica = false) {
             Box(Modifier.padding(bottom = esc.d(lado * .15f))) {
-                IconoConsola(consola, (lado * .55f).coerceIn(20f, 58f), p.fondo2)
+                IconoConsola(consola, (lado * .55f).coerceIn(20f, 58f), p.fondo2, memoriaGrafica = false)
             }
         }
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
@@ -90,13 +91,16 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Bool
 }
 
 @Composable
-internal fun PortadaCarpeta(e: Estado, id: String, modifier: Modifier, maxLado: Int = 512, original: @Composable () -> Unit) {
+internal fun PortadaCarpeta(
+    e: Estado, id: String, modifier: Modifier, maxLado: Int = 512,
+    memoriaGrafica: Boolean = true, original: @Composable () -> Unit,
+) {
     val ruta = e.consolasPropias[id]?.portadaCarpeta
     if (ruta == null) {
         original()
         return
     }
-    val portada = key(ruta) { rememberImagen(android.net.Uri.parse(ruta), maxLado) }
+    val portada = key(ruta) { rememberImagen(android.net.Uri.parse(ruta), maxLado, memoriaGrafica) }
     if (portada == null) original()
     else Image(portada, contentDescription = null, modifier = modifier, contentScale = ContentScale.Crop)
 }

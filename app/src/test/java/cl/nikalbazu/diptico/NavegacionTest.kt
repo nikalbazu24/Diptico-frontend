@@ -212,7 +212,8 @@ class NavegacionTest {
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("tienda-integrada-5").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("carpetas-y-decoraciones-6").map { it.id })
+        assertEquals(listOf(Novedades.ID, "carpetas-y-decoraciones-6"), Novedades.pendientes("tienda-integrada-5").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

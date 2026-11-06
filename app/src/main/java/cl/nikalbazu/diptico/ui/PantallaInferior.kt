@@ -2,6 +2,7 @@
 
 package cl.nikalbazu.diptico.ui
 
+import android.os.Build
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.animation.core.RepeatMode
@@ -59,13 +60,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalDensity
@@ -77,6 +85,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
+import kotlin.math.roundToInt
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -164,13 +174,18 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
     }
     Box(modifier) {
         val abierta = e.carpetaEnVentana
-        CarpetasConsolas(e, Modifier.fillMaxSize().then(if (abierta) Modifier.blur(10.dp) else Modifier), interactiva = !abierta)
+        CarpetasConsolas(
+            e,
+            Modifier.fillMaxSize().then(if (abierta) Modifier.desenfocarCuadricula() else Modifier),
+            interactiva = !abierta,
+        )
         if (abierta) {
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .34f)).clickable { Diptico.volverASistemas() })
+            Box(Modifier.fillMaxSize().background(p.fondo2.copy(alpha = .12f)).clickable { Diptico.volverASistemas() })
             val forma = RoundedCornerShape(esc.d(19))
             Column(
-                Modifier.align(Alignment.Center).fillMaxWidth(.94f).fillMaxHeight(.91f)
-                    .clip(forma).background(p.fondo2).border(esc.d(1), p.linea, forma).sinCerrar(),
+                Modifier.align(Alignment.Center).fillMaxWidth(.84f).fillMaxHeight(.74f)
+                    .shadow(esc.d(12), forma, clip = false).clip(forma)
+                    .background(p.fondo2.copy(alpha = .80f)).border(esc.d(1), p.linea, forma).sinCerrar(),
             ) {
                 CabeceraSistema(e)
                 VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
@@ -178,6 +193,31 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
         }
     }
 }
+
+/** En un lienzo sin efectos gráficos, suaviza la cuadrícula al dibujarla a baja resolución. */
+private fun Modifier.desenfocarCuadricula(): Modifier = drawWithCache {
+    val ancho = size.width.roundToInt()
+    val alto = size.height.roundToInt()
+    val paso = 9.dp.toPx()
+    val imagen by lazy {
+        ImageBitmap((ancho / paso).roundToInt().coerceAtLeast(1), (alto / paso).roundToInt().coerceAtLeast(1))
+    }
+    val lienzo by lazy { Canvas(imagen) }
+    onDrawWithContent {
+        val efectoNativo = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && drawContext.canvas.nativeCanvas.isHardwareAccelerated
+        if (efectoNativo || ancho == 0 || alto == 0) {
+            drawContent()
+        } else {
+            imagen.asAndroidBitmap().eraseColor(android.graphics.Color.TRANSPARENT)
+            val contenido = this
+            draw(this, layoutDirection, lienzo, size) {
+                lienzo.scale(imagen.width.toFloat() / ancho, imagen.height.toFloat() / alto)
+                contenido.drawContent()
+            }
+            drawImage(imagen, dstSize = IntSize(ancho, alto), filterQuality = FilterQuality.Low)
+        }
+    }
+}.blur(16.dp)
 
 /** Menús, próximo paso, clave y avisos: se dibujan encima de todo. */
 @Composable
