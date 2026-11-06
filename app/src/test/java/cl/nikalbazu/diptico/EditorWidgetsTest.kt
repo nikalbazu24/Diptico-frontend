@@ -1,7 +1,9 @@
 package cl.nikalbazu.diptico
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.collectAsState
@@ -15,21 +17,29 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import cl.nikalbazu.diptico.data.Almacen
+import cl.nikalbazu.diptico.data.Consolas
+import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Panel
 import cl.nikalbazu.diptico.estado.Widget
 import cl.nikalbazu.diptico.estado.Widgets
 import cl.nikalbazu.diptico.ui.ArrastreWidget
+import cl.nikalbazu.diptico.ui.CarpetasConsolas
+import cl.nikalbazu.diptico.ui.Lienzo
 import cl.nikalbazu.diptico.ui.MedidasEditorWidgets
 import cl.nikalbazu.diptico.ui.editarConDedo
 import org.junit.Assert.assertEquals
@@ -85,6 +95,49 @@ class EditorWidgetsTest {
                 }
             }
         }
+    }
+
+    @Test fun lasCarpetasSeAgrandanDuranteElPellizcoYSeDesplazanConUnDedo() {
+        preparar(emptyList())
+        val juegos = Consolas.todas.take(24).map { c ->
+            Juego("${c.id}/juego", c.id, "Juego", "juego.zip", Uri.parse("content://prueba/${c.id}"), c.id)
+        }
+        Diptico.fijarParaPrueba(Estado(
+            configurado = true, listo = true, intro = false, vistaConsolas = "carpetas",
+            enSistemas = true, juegos = juegos,
+        ))
+        regla.setContent {
+            val e by Diptico.estado.collectAsState()
+            Lienzo(true, Modifier.size(300.dp, 225.dp)) {
+                CarpetasConsolas(e, Modifier.fillMaxSize().testTag("cuadricula-carpetas"))
+            }
+        }
+        val grilla = regla.onNodeWithTag("cuadricula-carpetas")
+        val carpeta = regla.onNodeWithText("Todo")
+        val original = carpeta.fetchSemanticsNode().boundsInRoot.width
+        grilla.performTouchInput {
+            val centro = center
+            down(0, centro - Offset(width * .07f, 0f))
+            down(1, centro + Offset(width * .07f, 0f))
+            moveTo(0, centro - Offset(width * .11f, 0f))
+            moveTo(1, centro + Offset(width * .11f, 0f))
+        }
+        assertTrue(carpeta.fetchSemanticsNode().boundsInRoot.width > original * 1.25f)
+        assertEquals(1f, Diptico.estado.value.tamCarpetas, .001f)
+        grilla.performTouchInput { up(1); up(0) }
+        val guardado = Diptico.estado.value.tamCarpetas
+        assertTrue(guardado > 1.25f)
+        assertEquals(guardado, Diptico.almacen.texto("tamCarpetas").toFloat(), .001f)
+        assertTrue(Diptico.estado.value.enSistemas)
+
+        regla.runOnIdle { Diptico.alternarRecorridoCarpetas() }
+        val horizontal = regla.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange))
+        horizontal.performTouchInput { swipeLeft() }
+        regla.waitForIdle()
+        assertTrue(horizontal.fetchSemanticsNode().config[SemanticsProperties.HorizontalScrollAxisRange].value() > 0f)
+        assertTrue(Diptico.almacen.bool("carpetasHorizontal", false))
+        assertEquals(guardado, Diptico.estado.value.tamCarpetas, .001f)
+        assertTrue(Diptico.estado.value.enSistemas)
     }
 
     @Test fun elWidgetSeEstiraAntesDeSoltar() {

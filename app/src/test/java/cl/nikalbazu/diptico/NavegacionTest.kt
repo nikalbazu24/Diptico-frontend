@@ -76,9 +76,9 @@ class NavegacionTest {
         }
         val e = Estado(configurado = true, inicio = "widgets", modoPantallas = "dos", dosDisponibles = true,
             intro = false, vistaConsolas = "mosaico", enSistemas = true, juegos = juegos)
-        val columnasPrevias = Teclas.columnasCarpetas
+        val columnasPrevias = Teclas.carrilesCarpetas
         try {
-            Teclas.columnasCarpetas = 2
+            Teclas.carrilesCarpetas = 2
             Diptico.fijarParaPrueba(e.copy(consolaSel = e.pestanas[3]))
             toque(KeyEvent.KEYCODE_DPAD_UP, 1000L)
             assertEquals(e.pestanas[1], Diptico.estado.value.consolaSel)
@@ -86,7 +86,7 @@ class NavegacionTest {
             assertEquals(e.pestanas[1], Diptico.estado.value.consolaSel)
             assertEquals(-1, Diptico.estado.value.widgetFoco)
         } finally {
-            Teclas.columnasCarpetas = columnasPrevias
+            Teclas.carrilesCarpetas = columnasPrevias
         }
     }
 
@@ -209,11 +209,36 @@ class NavegacionTest {
             .containsAll(listOf("RetroArch", "SteamGridDB", "libretro", "Wikipedia")))
     }
 
+    @Test fun laCrucetaSigueElRecorridoHorizontalDeCarpetas() {
+        val juegos = listOf("snes", "gba", "psx", "nds", "ps2").map { id ->
+            cl.nikalbazu.diptico.data.Juego("$id/juego", id, "Juego", "juego.zip", android.net.Uri.parse("content://prueba/$id"), id)
+        }
+        val e = Estado(configurado = true, intro = false, vistaConsolas = "carpetas",
+            enSistemas = true, carpetasHorizontal = true, juegos = juegos)
+        val anteriores = Teclas.carrilesCarpetas
+        try {
+            Teclas.carrilesCarpetas = 2
+            Diptico.fijarParaPrueba(e)
+            toque(KeyEvent.KEYCODE_DPAD_DOWN, 1000L)
+            assertEquals(e.pestanas[1], Diptico.estado.value.consolaSel)
+            toque(KeyEvent.KEYCODE_DPAD_DOWN, 1100L)
+            assertEquals(e.pestanas[1], Diptico.estado.value.consolaSel)
+            toque(KeyEvent.KEYCODE_DPAD_RIGHT, 1200L)
+            assertEquals(e.pestanas[3], Diptico.estado.value.consolaSel)
+            toque(KeyEvent.KEYCODE_DPAD_UP, 1300L)
+            assertEquals(e.pestanas[2], Diptico.estado.value.consolaSel)
+            toque(KeyEvent.KEYCODE_DPAD_LEFT, 1400L)
+            assertEquals("todo", Diptico.estado.value.consolaSel)
+        } finally {
+            Teclas.carrilesCarpetas = anteriores
+        }
+    }
+
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("carpetas-y-decoraciones-6").map { it.id })
-        assertEquals(listOf(Novedades.ID, "carpetas-y-decoraciones-6"), Novedades.pendientes("tienda-integrada-5").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("desenfoque-carpetas-7").map { it.id })
+        assertEquals(listOf(Novedades.ID, "desenfoque-carpetas-7"), Novedades.pendientes("carpetas-y-decoraciones-6").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

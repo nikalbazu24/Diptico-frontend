@@ -29,12 +29,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +53,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.zIndex
@@ -52,6 +62,7 @@ import cl.nikalbazu.diptico.data.Consola
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
+import cl.nikalbazu.diptico.estado.Teclas
 import kotlin.math.abs
 
 /*
@@ -410,34 +421,63 @@ fun CarruselJuegos(e: Estado, modifier: Modifier = Modifier) {
 @Composable
 fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Boolean = true) {
     val esc = LocalEscala.current
+    val densidad = LocalDensity.current
     val ids = e.pestanas
     val sel = ids.indexOf(e.consolaSel).coerceAtLeast(0)
-    BoxWithConstraints(modifier) {
-        val anchoU = maxWidth.value / esc.factor
-        val cols = when (e.vistaConsolas) {
-            "mosaico" -> if (anchoU > 620f) 5 else if (anchoU > 300f) 3 else 2
-            "vitrina" -> if (anchoU > 560f) 2 else 1
-            else -> ((anchoU - 18f) / 83f).toInt().coerceIn(3, 7)
-        }.also { cl.nikalbazu.diptico.estado.Teclas.columnasCarpetas = it }
-        val ladoIcono = (anchoU - 28f - (cols - 1) * 12f) / cols
-        val grilla = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
-        LaunchedEffect(sel, cols) { grilla.mostrar(sel) }
-        Column(Modifier.fillMaxSize()) {
-            androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
-                columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols), state = grilla,
-                userScrollEnabled = interactiva, modifier = Modifier.fillMaxWidth().weight(1f),
-                contentPadding = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10)),
-                verticalArrangement = Arrangement.spacedBy(esc.d(14)), horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
-            ) {
+    val conZoom = e.vistaConsolas == "carpetas"
+    val horizontal = conZoom && e.carpetasHorizontal
+    val grilla = rememberLazyGridState()
+    var tam by remember(e.tamCarpetas) { mutableFloatStateOf(e.tamCarpetas) }
+    Column(modifier) {
+        val zona = Modifier.fillMaxWidth().weight(1f)
+        BoxWithConstraints(if (conZoom && interactiva) zona.pellizcoCarpetas(
+            ajustar = { tam = Diptico.limitarTamCarpetas(tam * it) },
+            guardar = { Diptico.guardarTamCarpetas(tam) },
+        ) else zona) {
+            val anchoU = maxWidth.value / esc.factor
+            val columnas = when (e.vistaConsolas) {
+                "mosaico" -> if (anchoU > 620f) 5 else if (anchoU > 300f) 3 else 2
+                "vitrina" -> if (anchoU > 560f) 2 else 1
+                else -> ((anchoU - 18f) / 83f).toInt().coerceIn(3, 7)
+            }
+            val separacionX = esc.d(12)
+            val separacionY = esc.d(14)
+            val ancho = with(densidad) { constraints.maxWidth - 2 * esc.d(14).roundToPx() }
+            val alto = with(densidad) { constraints.maxHeight - esc.d(8).roundToPx() - esc.d(10).roundToPx() }
+            val lado = with(densidad) {
+                val base = (ancho - (columnas - 1) * separacionX.roundToPx()) / columnas
+                (base.toDp() * tam).coerceIn(1.dp, minOf(ancho, alto).toDp().coerceAtLeast(1.dp))
+            }
+            val celdas = if (conZoom) GridCells.FixedSize(lado) else GridCells.Fixed(columnas)
+            val carriles = if (!conZoom) columnas else with(densidad) {
+                val espacio = if (horizontal) alto else ancho
+                val separacion = (if (horizontal) separacionY else separacionX).roundToPx()
+                with(celdas) { calculateCrossAxisCellSizes(espacio.coerceAtLeast(0), separacion).size }
+            }
+            SideEffect { Teclas.carrilesCarpetas = carriles }
+            LaunchedEffect(sel, horizontal) { grilla.mostrar(sel, carriles) }
+            val relleno = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10))
+            val contenido: LazyGridScope.() -> Unit = {
                 items(ids.size, key = { ids[it] }) { k ->
                     val id = ids[k]
-                    if (e.vistaConsolas == "carpetas") CarpetaBiblioteca(e, id, k == sel, interactiva, ladoIcono)
+                    if (conZoom) CarpetaBiblioteca(e, id, k == sel, interactiva, lado)
                     else CarpetaVisual(e, id, k == sel, amplia = e.vistaConsolas == "vitrina")
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
-                Pistas("✥" to "Carpeta", "A" to "Abrir", "X" to "Personalizar", "Y" to "Al azar")
-            }
+            if (horizontal) LazyHorizontalGrid(
+                rows = celdas, state = grilla, userScrollEnabled = interactiva,
+                modifier = Modifier.fillMaxSize(), contentPadding = relleno,
+                verticalArrangement = Arrangement.spacedBy(separacionY), horizontalArrangement = Arrangement.spacedBy(separacionX),
+                content = contenido,
+            ) else LazyVerticalGrid(
+                columns = celdas, state = grilla, userScrollEnabled = interactiva,
+                modifier = Modifier.fillMaxSize(), contentPadding = relleno,
+                verticalArrangement = Arrangement.spacedBy(separacionY), horizontalArrangement = Arrangement.spacedBy(separacionX),
+                content = contenido,
+            )
+        }
+        Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
+            Pistas("✥" to "Carpeta", "A" to "Abrir", "X" to "Personalizar", "Y" to "Al azar")
         }
     }
 }

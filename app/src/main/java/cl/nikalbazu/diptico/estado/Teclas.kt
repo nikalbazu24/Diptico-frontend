@@ -420,10 +420,9 @@ object Teclas {
         // Modo Sistemas, eligiendo consola: la cruceta y L1/R1 cambian de consola, A entra, Y elige un juego al azar.
         if (!hayPanel && e.sesion == null && e.eligiendoConsola) {
             if (abajo) {
-                // En Carpetas (una grilla) ↑ ↓ saltan de fila; en Sistemas todo avanza de a uno.
                 dir(code)?.let { (dx, dy) ->
-                    if (dy != 0 && e.vistaConsolas in Diptico.VISTAS_CARPETAS) {
-                        Diptico.subirOBajarCarpetas(dy, columnasCarpetas)
+                    if (e.vistaConsolas in Diptico.VISTAS_CARPETAS) {
+                        Diptico.moverCarpetas(dx, dy, carrilesCarpetas)
                     } else Diptico.cambiarConsola(if (dx + dy < 0) -1 else 1)
                     return true
                 }
@@ -548,7 +547,7 @@ object Teclas {
     var columnasGaleria = 3
     var columnasApps = 5
     @Volatile
-    var columnasCarpetas = 3
+    var carrilesCarpetas = 3
 
     @Volatile
     var columnasMenu = 3

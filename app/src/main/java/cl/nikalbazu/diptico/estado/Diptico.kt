@@ -434,6 +434,8 @@ data class Estado(
     /** Cómo se ven las consolas: "arriba" (pestañas), "lado" (columna), "rueda" (dial) o "sistemas" (carrusel y luego juegos). */
     val vistaConsolas: String = "arriba",
     val modoCarpeta: String = "ventana",
+    val carpetasHorizontal: Boolean = false,
+    val tamCarpetas: Float = 1f,
     /** En modo sistemas: true mientras se elige la consola (antes de entrar a sus juegos). */
     val enSistemas: Boolean = false,
     val tamJuegos: Float = 1f,
@@ -791,6 +793,8 @@ object Diptico {
             temaFestivo = almacen.bool("temaFestivo", true),
             decoraciones = almacen.bool("decoraciones", true),
             modoCarpeta = almacen.texto("modoCarpeta", "ventana"),
+            carpetasHorizontal = almacen.bool("carpetasHorizontal", false),
+            tamCarpetas = limitarTamCarpetas(almacen.texto("tamCarpetas").toFloatOrNull() ?: 1f),
             experiencia = Experiencia.leer(almacen.texto("experiencia", "{}")),
             perfilesVisuales = Experiencia.perfiles(almacen.texto("perfilesVisuales", "{}")),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
@@ -1915,13 +1919,25 @@ object Diptico {
         elegirConsola(tabs[(i + delta).mod(tabs.size)])
     }
 
-    fun subirOBajarCarpetas(filas: Int, columnas: Int) {
+    fun moverCarpetas(dx: Int, dy: Int, carriles: Int) {
         val e = estado.value
+        val horizontal = e.vistaConsolas == "carpetas" && e.carpetasHorizontal
+        val salto = if (horizontal) dx else dy
+        if (!horizontal && salto == 0) {
+            cambiarConsola(dx)
+            return
+        }
         val carpetas = e.pestanas
         val i = carpetas.indexOf(e.consolaSel).coerceAtLeast(0)
-        val inicioFila = (i / columnas + filas) * columnas
-        if (inicioFila !in carpetas.indices) return
-        elegirConsola(carpetas[(inicioFila + i % columnas).coerceAtMost(carpetas.lastIndex)])
+        val carril = i % carriles
+        val inicioLinea = (i / carriles + salto) * carriles
+        if (inicioLinea !in carpetas.indices) return
+        val destino = if (salto == 0) {
+            val fila = carril + dy
+            if (fila !in 0 until carriles || inicioLinea + fila !in carpetas.indices) return
+            inicioLinea + fila
+        } else (inicioLinea + carril).coerceAtMost(carpetas.lastIndex)
+        elegirConsola(carpetas[destino])
     }
 
     fun elegirConsola(id: String) {
@@ -3346,7 +3362,11 @@ object Diptico {
             else -> "Íconos de las consolas"
         }
         Seccion.MUSICA -> if (t.startsWith("Sonidos") || t.startsWith("Juego de sonidos")) "Sonidos" else "Música de fondo"
-        Seccion.ESTANTE -> if (t.startsWith("Cajas") || t.startsWith("Forma") || t.startsWith("Tamaño") || t.startsWith("Imagen")) "Cajas" else "Qué ves y en qué orden"
+        Seccion.ESTANTE -> when {
+            t.endsWith("carpetas") -> "Carpetas"
+            t.startsWith("Cajas") || t.startsWith("Forma") || t.startsWith("Tamaño") || t.startsWith("Imagen") -> "Cajas"
+            else -> "Qué ves y en qué orden"
+        }
         Seccion.PORTADAS -> when {
             t.startsWith("Reconocer") || t == "Títulos de libretro" -> "Nombres de tus juegos"
             t.startsWith("Descarga") || t.startsWith("Buscar de nuevo") || t.startsWith("Imágenes de") || t.startsWith("Borrar") -> "Imágenes"
@@ -7139,6 +7159,31 @@ object Diptico {
         actualizar { it.copy(modoCarpeta = nuevo) }
     }
 
+    fun alternarRecorridoCarpetas() {
+        val horizontal = !estado.value.carpetasHorizontal
+        almacen.guardarBool("carpetasHorizontal", horizontal)
+        actualizar { it.copy(carpetasHorizontal = horizontal) }
+    }
+
+    private val TAMANOS_CARPETAS = listOf(.65f, 1f, 1.3f, 1.6f, 1.9f)
+
+    internal fun limitarTamCarpetas(tam: Float): Float =
+        if (tam.isFinite()) tam.coerceIn(TAMANOS_CARPETAS.first(), TAMANOS_CARPETAS.last()) else 1f
+
+    fun guardarTamCarpetas(tam: Float) {
+        val nuevo = limitarTamCarpetas(tam)
+        if (nuevo == estado.value.tamCarpetas) return
+        almacen.guardarTexto("tamCarpetas", nuevo.toString())
+        actualizar { it.copy(tamCarpetas = nuevo) }
+    }
+
+    private fun cambiarTamCarpetas(agrandar: Boolean) {
+        val actual = estado.value.tamCarpetas
+        val tam = if (agrandar) TAMANOS_CARPETAS.firstOrNull { it > actual + .01f } ?: TAMANOS_CARPETAS.first()
+        else TAMANOS_CARPETAS.lastOrNull { it < actual - .01f } ?: TAMANOS_CARPETAS.last()
+        guardarTamCarpetas(tam)
+    }
+
     /** Modo sistemas: entra a los juegos de la consola elegida. */
     fun entrarSistema() {
         cl.nikalbazu.diptico.audio.Sonidos.abrir()
@@ -7396,6 +7441,11 @@ object Diptico {
             ) { abrirGaleria("vistas_consolas") },
             Opcion("Abrir carpetas", if (e.modoCarpeta == "completa") "Pantalla completa" else "Ventana con desenfoque", Icono.CARPETA,
                 "Elige cómo se abren los juegos en la vista Carpetas.") { alternarModoCarpeta() },
+            Opcion("Recorrido de carpetas", if (e.carpetasHorizontal) "Horizontal" else "Vertical", Icono.VISTA,
+                "Desplaza la cuadrícula hacia los lados o hacia arriba y abajo.") { alternarRecorridoCarpetas() },
+            Opcion("Tamaño de carpetas", "${(e.tamCarpetas * 100 + .5f).toInt()} %", Icono.FORMA,
+                "También puedes juntar o separar dos dedos sobre la cuadrícula.",
+                menos = { cambiarTamCarpetas(false) }) { cambiarTamCarpetas(true) },
             Opcion("Vista de juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, abanico (como cartas abiertas en la mano: la elegida sube al centro), lomos (como una repisa de libros: el elegido se abre), cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { abrirGaleria("vistas_juegos") },
             Opcion("Forma de las cajas", nombreForma(e.formas[consolaParaCajas()]?.forma ?: "original"), Icono.FORMA,
                 "Elige cómo se ven las cajas (cuadrada, póster, horizontal, disco, cartucho o tarjeta) viendo tus portadas en cada forma. Para una consola o para todas.") { abrirCajas() },
@@ -7415,7 +7465,7 @@ object Diptico {
         lista += Opcion("Imagen en todas las cajas", nombreImagenCaja(e.formas.values.firstOrNull()?.imagen ?: "portada"), Icono.PORTADA,
             "Portada, captura del juego o logo, para las cajas de todas tus consolas a la vez.") { imagenTodasLasCajas() }
         val mas = Opcion(if (e.estanteAvanzado) "Ver menos opciones" else "Más opciones de cajas", icono = Icono.AJUSTES) { actualizar { it.copy(navegacion = it.navegacion.copy(estanteAvanzado = !it.estanteAvanzado)) } }
-        return (if (e.estanteAvanzado) lista else lista.take(7)) + mas
+        return (if (e.estanteAvanzado) lista else lista.take(9)) + mas
     }
 
     // ---------- Tamaño de cada pantalla ----------

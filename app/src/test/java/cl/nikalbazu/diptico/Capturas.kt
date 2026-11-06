@@ -974,6 +974,11 @@ class Capturas {
     @Test fun t215_carpetas() = foto("215_vista_carpetas", conRecientes(base()).copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR)
 
     @Config(qualifiers = ABAJO)
+    @Test fun visual_carpetas_horizontal() = foto("carpetas_horizontal_zoom", base().copy(
+        vistaConsolas = "carpetas", enSistemas = true, consolaSel = "todo",
+        carpetasHorizontal = true, tamCarpetas = 1.6f), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
     @Test fun visual_carpeta_ventana() = foto("carpetas_ventana_inferior", base().copy(
         vistaConsolas = "carpetas", vista = "cuadricula", consolaSel = "snes", modoCarpeta = "ventana"), Rol.INFERIOR)
 

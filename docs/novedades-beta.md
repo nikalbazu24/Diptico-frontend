@@ -1,1 +1,3 @@
-- **Carpetas**. Al abrir una carpeta en modo ventana, la cuadrícula desenfocada queda visible en los bordes y a través del panel translúcido. Puedes tocar fuera o pulsar B para volver a la cuadrícula.
+- **Carpetas**. Junta o separa dos dedos para cambiar el tamaño de los íconos. El tamaño también se puede ajustar desde Menú › Estante con el mando.
+- **Recorrido**. Elige desplazamiento horizontal o vertical en Menú › Estante › Recorrido de carpetas. Díptico recuerda el tamaño y la dirección.
+- **Ventana de carpeta**. Tiene más espacio para los juegos y deja visible un margen con el fondo desenfocado.
