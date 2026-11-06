@@ -3,9 +3,7 @@ package cl.nikalbazu.diptico
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import android.view.Choreographer
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -23,10 +21,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestRule
-import org.junit.runners.model.Statement
-import org.robolectric.util.ReflectionHelpers
-import kotlin.coroutines.ContinuationInterceptor
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -35,17 +29,7 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = ARRIBA)
 class EditorWidgetsTest {
-    // El dispatcher de Compose debe usar el reloj de la ventana del test actual.
-    @get:Rule(order = 0) val relojCompose = TestRule { prueba, _ ->
-        object : Statement() {
-            override fun evaluate() {
-                val dispatcher = AndroidUiDispatcher.Main[ContinuationInterceptor] as AndroidUiDispatcher
-                ReflectionHelpers.setField(dispatcher, "choreographer", Choreographer.getInstance())
-                prueba.evaluate()
-            }
-        }
-    }
-    @get:Rule(order = 1) val regla = createComposeRule()
+    @get:Rule val regla = createComposeRule()
     private val reloj = Widget("cronometro", 0, 0, 2, 1)
 
     private fun abrir(widgets: List<Widget> = listOf(reloj)) {

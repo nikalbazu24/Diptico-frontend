@@ -42,9 +42,6 @@ jobs:
       - name: Probar perfiles, navegación y estabilidad
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --no-daemon
 
-      - name: Probar los gestos del editor en un proceso separado
-        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --no-daemon
-
       - name: Compilar y verificar firma de distribución
         if: env.FIRMAR == 'true'
         env:
@@ -143,8 +140,25 @@ jobs:
             Capturas-*.zip
             app/build/reports/tests/
 
+  gestos_widgets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Probar los gestos del editor
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --no-daemon
+
   distribuir_beta:
-    needs: apk
+    needs: [apk, gestos_widgets]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.preparar_firma)
     runs-on: ubuntu-latest
     permissions:
