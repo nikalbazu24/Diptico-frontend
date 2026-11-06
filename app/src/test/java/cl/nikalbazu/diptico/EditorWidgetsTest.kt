@@ -1,14 +1,20 @@
 package cl.nikalbazu.diptico
 
 import android.content.Context
-import android.net.Uri
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -22,7 +28,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -30,19 +35,15 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import cl.nikalbazu.diptico.data.Almacen
-import cl.nikalbazu.diptico.data.Consolas
-import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Panel
 import cl.nikalbazu.diptico.estado.Widget
 import cl.nikalbazu.diptico.estado.Widgets
 import cl.nikalbazu.diptico.ui.ArrastreWidget
-import cl.nikalbazu.diptico.ui.CarpetasConsolas
-import cl.nikalbazu.diptico.ui.Escala
-import cl.nikalbazu.diptico.ui.LocalEscala
 import cl.nikalbazu.diptico.ui.MedidasEditorWidgets
 import cl.nikalbazu.diptico.ui.editarConDedo
+import cl.nikalbazu.diptico.ui.pellizcoCarpetas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -98,32 +99,36 @@ class EditorWidgetsTest {
         }
     }
 
-    @Test fun lasCarpetasSeAgrandanDuranteElPellizcoYSeDesplazanConUnDedo() {
+    @Test fun elPellizcoDeCarpetasAjustaElTamanoYPermiteDeslizarConUnDedo() {
         preparar(emptyList())
-        val juegos = Consolas.todas.take(24).map { c ->
-            Juego("${c.id}/juego", c.id, "Juego", "juego.zip", Uri.parse("content://prueba/${c.id}"), c.id)
-        }
         Diptico.fijarParaPrueba(Estado(
-            configurado = true, listo = true, intro = false, vistaConsolas = "carpetas",
-            enSistemas = true, juegos = juegos,
+            configurado = true, listo = true, intro = false, vistaConsolas = "carpetas", enSistemas = true,
         ))
         regla.setContent {
             val e by Diptico.estado.collectAsState()
-            CompositionLocalProvider(LocalEscala provides Escala(.55f)) {
-                CarpetasConsolas(e, Modifier.size(300.dp, 225.dp).testTag("cuadricula-carpetas"))
+            var tam by remember(e.tamCarpetas) { mutableFloatStateOf(e.tamCarpetas) }
+            val scroll = rememberScrollState()
+            Box(Modifier.size(300.dp, 225.dp).testTag("cuadricula-carpetas").pellizcoCarpetas(
+                ajustar = { tam = Diptico.limitarTamCarpetas(tam * it) },
+                guardar = { Diptico.guardarTamCarpetas(tam) },
+            )) {
+                Row(Modifier.fillMaxSize().horizontalScroll(scroll)) {
+                    Box(Modifier.size((80 * tam).dp).testTag("carpeta").clickable { Diptico.entrarSistema() })
+                    Spacer(Modifier.width(500.dp))
+                }
             }
         }
         val grilla = regla.onNodeWithTag("cuadricula-carpetas")
-        val carpeta = regla.onNodeWithText("Todo")
-        val original = carpeta.fetchSemanticsNode().boundsInRoot.width
+        val carpeta = regla.onNodeWithTag("carpeta")
+        val inicial = carpeta.fetchSemanticsNode().boundsInRoot
+        val centro = inicial.center - grilla.fetchSemanticsNode().boundsInRoot.topLeft
         grilla.performTouchInput {
-            val centro = center
-            down(0, centro - Offset(width * .07f, 0f))
-            down(1, centro + Offset(width * .07f, 0f))
-            moveTo(0, centro - Offset(width * .11f, 0f))
-            moveTo(1, centro + Offset(width * .11f, 0f))
+            down(0, centro - Offset(inicial.width * .2f, 0f))
+            down(1, centro + Offset(inicial.width * .2f, 0f))
+            moveTo(0, centro - Offset(inicial.width * .31f, 0f))
+            moveTo(1, centro + Offset(inicial.width * .31f, 0f))
         }
-        assertTrue(carpeta.fetchSemanticsNode().boundsInRoot.width > original * 1.25f)
+        assertTrue(carpeta.fetchSemanticsNode().boundsInRoot.width > inicial.width * 1.25f)
         assertEquals(1f, Diptico.estado.value.tamCarpetas, .001f)
         grilla.performTouchInput { up(1); up(0) }
         val guardado = Diptico.estado.value.tamCarpetas
@@ -131,11 +136,10 @@ class EditorWidgetsTest {
         assertEquals(guardado, Diptico.almacen.texto("tamCarpetas").toFloat(), .001f)
         assertTrue(Diptico.estado.value.enSistemas)
 
-        regla.runOnIdle { Diptico.alternarRecorridoCarpetas() }
         val horizontal = regla.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange))
         horizontal.performTouchInput { swipeLeft() }
-        regla.waitForIdle()
         assertTrue(horizontal.fetchSemanticsNode().config[SemanticsProperties.HorizontalScrollAxisRange].value() > 0f)
+        regla.runOnIdle { Diptico.alternarRecorridoCarpetas() }
         assertTrue(Diptico.almacen.bool("carpetasHorizontal", false))
         assertEquals(guardado, Diptico.estado.value.tamCarpetas, .001f)
         assertTrue(Diptico.estado.value.enSistemas)
