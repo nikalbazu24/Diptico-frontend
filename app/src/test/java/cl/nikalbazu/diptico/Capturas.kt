@@ -973,6 +973,14 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t215_carpetas() = foto("215_vista_carpetas", conRecientes(base()).copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR)
 
+    @Config(qualifiers = ABAJO)
+    @Test fun visual_carpeta_ventana() = foto("carpetas_ventana_inferior", base().copy(
+        vistaConsolas = "carpetas", vista = "cuadricula", consolaSel = "snes", modoCarpeta = "ventana"), Rol.INFERIOR)
+
+    @Config(qualifiers = ABAJO)
+    @Test fun visual_decoraciones_desplegadas() = foto("decoraciones_desplegadas_inferior", base().copy(
+        panel = Panel.GALERIA, galeria = "decoraciones", decoracionAbierta = "bloques", indice = 3), Rol.INFERIOR)
+
     @Test fun t216_carpetas_una() = foto("216_carpetas_una_pantalla", conRecientes(base()).copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "gba", modoPantallas = "una_negra"), Rol.UNICA)
 
     @Test fun t217_centro_activos() = foto("217_centro_accesos_activos", base().copy(panel = Panel.CENTRO, indice = 0, turbo = true), Rol.SUPERIOR)

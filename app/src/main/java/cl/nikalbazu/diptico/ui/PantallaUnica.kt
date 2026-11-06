@@ -81,9 +81,13 @@ private fun PantallaUnicaContenido(e: Estado) {
         }
         return
     }
-    if (e.vistaConsolas in Diptico.VISTAS_CARPETAS && e.enSistemas) {
+    if (e.vistaConsolas in Diptico.VISTAS_CARPETAS && (e.enSistemas || e.carpetaEnVentana)) {
         Box(Modifier.fillMaxSize().background(p.fondo)) {
-            Box(Modifier.fillMaxSize().difuminar(e)) { CarpetasConsolas(e, Modifier.fillMaxSize().padding(top = LocalEscala.current.d(12))) }
+            Box(Modifier.fillMaxSize().difuminar(e)) {
+                val zona = Modifier.fillMaxSize().padding(top = esc.d(12))
+                if (e.vistaConsolas == "carpetas") VistaCarpetas(e, zona, 1.05f)
+                else CarpetasConsolas(e, zona)
+            }
             Paneles(e, conAyuda = true)
         }
         return

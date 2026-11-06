@@ -34,12 +34,14 @@ data class Tema(
     val acabado: String = "",
     val pistaBase: String = "",
     val tonoSonidos: Int = 0,
+    val intensidadDecoracion: Int = 2,
 ) {
     fun json(): JSONObject = JSONObject()
         .put("id", id).put("nombre", nombre).put("acento", acento).put("acento2", acento2).put("acento3", acento3)
         .put("base", base).put("decor", decor).put("mensaje", mensaje).put("propio", propio)
         .put("fondo", fondo).put("tinta", tinta).put("fuente", fuente).put("forma", forma).put("sonidos", sonidos).put("musica", musica).put("descripcion", descripcion)
         .put("trama", trama).put("acabado", acabado).put("pistaBase", pistaBase).put("tonoSonidos", tonoSonidos)
+        .put("intensidadDecoracion", intensidadDecoracion)
 
     companion object {
         fun deJson(o: JSONObject) = Tema(
@@ -49,6 +51,7 @@ data class Tema(
             o.optString("fuente", ""), o.optString("forma", ""), o.optString("sonidos", ""), o.optString("musica", ""),
             o.optString("descripcion"), o.optString("trama"), o.optString("acabado"), o.optString("pistaBase"),
             o.optInt("tonoSonidos").coerceIn(-6, 6),
+            o.optInt("intensidadDecoracion", 2).coerceIn(1, 3),
         )
     }
 }
@@ -57,12 +60,13 @@ data class Tema(
 data class Fiesta(val id: String, val nombre: String, val donde: String, val tema: Tema, val paises: Set<String> = emptySet())
 
 object Temas {
-    val FUENTES = setOf("", "pixel", "sans", "serif", "mono")
+    val FUENTES = setOf("", "pixel", "sans", "serif", "mono", "redonda", "suave")
     val FORMAS = setOf("", "pixel", "cristal", "recta", "bisel", "capsula")
     val TRAMAS = setOf("cielo", "ondas", "puntos", "barrido", "diagonal", "lcd", "reticula", "papel", "rombos")
     val ACABADOS = setOf("liso", "degradado", "brillo", "vidrio")
     val DECORACIONES = listOf("nada", "nieve", "hojas", "murcielagos", "petalos", "confeti", "corazones",
-        "estrellas", "faroles", "burbujas", "fuegos", "bloques", "muerdago", "campanas", "chupallas", "volantines")
+        "estrellas", "faroles", "burbujas", "fuegos", "bloques", "muerdago", "campanas", "chupallas", "volantines",
+        "monedas", "esferas", "reliquias", "orbitas", "destellos", "anillos")
 
     data class AdornosFestivos(val titulo: String, val temaId: String, val opciones: List<String>)
 
@@ -71,11 +75,42 @@ object Temas {
         AdornosFestivos("Fiestas Patrias", "fiesta_fiestaspatrias", listOf("chupallas", "volantines", "confeti", "nada")),
     )
 
+    fun intensidadNombre(nivel: Int) = when (nivel) {
+        1 -> "Baja"
+        3 -> "Alta"
+        else -> "Media"
+    }
+
+    fun decoracionesPara(tema: Tema): List<String> {
+        adornosFestivos.firstOrNull { it.temaId == tema.id }?.let { return it.opciones }
+        if (tema.id == "mio") return DECORACIONES
+        val alternativas = when (tema.decor) {
+            "monedas" -> listOf("bloques", "confeti")
+            "esferas" -> listOf("hojas", "destellos")
+            "reliquias" -> listOf("hojas", "faroles")
+            "orbitas" -> listOf("estrellas", "destellos")
+            "destellos" -> listOf("estrellas", "burbujas")
+            "anillos" -> listOf("destellos", "fuegos")
+            "chupallas" -> listOf("volantines", "confeti")
+            "hojas", "petalos" -> listOf("hojas", "petalos", "destellos")
+            "estrellas", "nieve" -> listOf("estrellas", "destellos")
+            "burbujas" -> listOf("destellos", "estrellas")
+            "fuegos", "confeti" -> listOf("confeti", "fuegos")
+            "murcielagos" -> listOf("faroles", "estrellas")
+            "bloques" -> listOf("monedas", "destellos")
+            "faroles", "corazones" -> listOf("destellos", "petalos")
+            else -> listOf("destellos")
+        }
+        return (listOf(tema.decor) + alternativas + "nada").distinct()
+    }
+
     fun nombreDecor(d: String) = when (d) {
         "nieve" -> "Nieve"; "hojas" -> "Hojas"; "murcielagos" -> "Murciélagos"; "petalos" -> "Pétalos"
         "confeti" -> "Confeti"; "corazones" -> "Corazones"; "estrellas" -> "Estrellas"; "faroles" -> "Faroles"
         "burbujas" -> "Burbujas"; "fuegos" -> "Fuegos artificiales"; "bloques" -> "Bloques que caen"
         "muerdago" -> "Muérdago"; "campanas" -> "Campanas"; "chupallas" -> "Chupallas"; "volantines" -> "Volantines"
+        "monedas" -> "Monedas"; "esferas" -> "Esferas"; "reliquias" -> "Reliquias"
+        "orbitas" -> "Órbitas"; "destellos" -> "Destellos"; "anillos" -> "Anillos"
         else -> "Sin decoración"
     }
 

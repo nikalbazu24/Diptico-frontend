@@ -119,7 +119,8 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             Box(Modifier.padding(vertical = esc.d(14)).width(esc.d(1)).fillMaxHeight().background(p.linea))
                             VistaJuegos(e, Modifier.weight(1f).fillMaxHeight(), escalaEstante * 0.9f)
                         }
-                        "sistemas", "carpetas", "mosaico", "vitrina", "discos" -> AnimatedContent(
+                        "carpetas" -> VistaCarpetas(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+                        "sistemas", "mosaico", "vitrina", "discos" -> AnimatedContent(
                             targetState = e.enSistemas,
                             transitionSpec = {
                                 (fadeIn(tween(260)) + scaleIn(tween(320), initialScale = if (targetState) 1.06f else 0.94f)) togetherWith fadeOut(tween(160))
@@ -127,7 +128,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             label = "sistemas", modifier = Modifier.fillMaxWidth().weight(1f),
                         ) { eligiendo ->
                             if (eligiendo) when (e.vistaConsolas) {
-                                "carpetas", "mosaico", "vitrina" -> CarpetasConsolas(e, Modifier.fillMaxSize())
+                                "mosaico", "vitrina" -> CarpetasConsolas(e, Modifier.fillMaxSize())
                                 "discos" -> DiscosConsolas(e, Modifier.fillMaxSize())
                                 else -> SistemasCarrusel(e, Modifier.fillMaxSize())
                             }
@@ -146,6 +147,35 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             }
         }
         Paneles(e, conAyuda = false)
+    }
+}
+
+/** Conserva la cuadrícula detrás de la carpeta para mantener su posición al volver. */
+@Composable
+internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    if (!e.enSistemas && !e.carpetaEnVentana) {
+        Column(modifier) {
+            CabeceraSistema(e)
+            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+        }
+        return
+    }
+    Box(modifier) {
+        val abierta = e.carpetaEnVentana
+        CarpetasConsolas(e, Modifier.fillMaxSize().then(if (abierta) Modifier.blur(10.dp) else Modifier), interactiva = !abierta)
+        if (abierta) {
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .34f)).clickable { Diptico.volverASistemas() })
+            val forma = RoundedCornerShape(esc.d(19))
+            Column(
+                Modifier.align(Alignment.Center).fillMaxWidth(.94f).fillMaxHeight(.91f)
+                    .clip(forma).background(p.fondo2).border(esc.d(1), p.linea, forma).sinCerrar(),
+            ) {
+                CabeceraSistema(e)
+                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+            }
+        }
     }
 }
 

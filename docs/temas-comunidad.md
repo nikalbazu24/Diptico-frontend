@@ -1,6 +1,6 @@
 # Temas de la comunidad para Díptico
 
-Los 24 temas del catálogo se exploran e instalan en **Ajustes → Temas → Tienda de temas**. Para probar un aporte de la comunidad, abre **Importar tema** y selecciona el JSON, o usa **Importar por enlace**.
+Los 30 temas del catálogo se exploran e instalan en **Ajustes → Temas → Tienda de temas**. Para probar un aporte de la comunidad, abre **Importar tema** y selecciona el JSON, o usa **Importar por enlace**.
 
 Díptico muestra el nombre, el autor y los colores antes de instalar. Los temas de la tienda incluyen su música y se instalan sin conexión. Los aportes con un enlace de audio descargan su pista al instalarse. Para escucharla, activa la música según el tema en los ajustes de Música.
 
@@ -35,4 +35,5 @@ Los campos opcionales `descripcion`, `trama`, `acabado` y `pistaBase` definen la
 
 - `fuente` acepta `sans`, `serif`, `mono` y `pixel`. Si se omite, se conserva la tipografía de Díptico.
 - `sonidos` acepta `bloques`, `retro` o `burbuja`. `tonoSonidos` ajusta el tono del paquete en semitonos de −6 a +6.
-- `decor` también admite `muerdago`, `campanas`, `chupallas` y `volantines`.
+- `decor` también admite `muerdago`, `campanas`, `chupallas`, `volantines`, `monedas`, `esferas`, `reliquias`, `orbitas`, `destellos` y `anillos`.
+- `intensidadDecoracion` acepta 1 (baja), 2 (media) o 3 (alta).

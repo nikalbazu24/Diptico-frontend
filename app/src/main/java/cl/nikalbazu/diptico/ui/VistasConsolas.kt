@@ -263,6 +263,14 @@ fun CabeceraSistema(e: Estado) {
             Texto(Consolas.porId(e.consolaSel)?.nombreLargo ?: "Todos tus juegos", 15f, lineas = 1)
             Detalle(juegosTexto(e.visibles.size), 11.5f, lineas = 1)
         }
+        if (e.vistaConsolas == "carpetas") {
+            val ventana = e.modoCarpeta != "completa"
+            Box(Modifier.clip(RoundedCornerShape(50)).background(p.superficie)
+                .clickable { Diptico.alternarModoCarpeta() }
+                .padding(horizontal = esc.d(10), vertical = esc.d(6))) {
+                Texto(if (ventana) "Ampliar" else "Abrir en ventana", 11.5f, lineas = 1)
+            }
+        }
     }
 }
 
@@ -274,7 +282,7 @@ fun VistaSistema(e: Estado, completa: Boolean = true, conPistas: Boolean = true)
     val id = e.consolaSel
     val c: Consola? = Consolas.porId(id)
     val color = colorConsola(id)
-    val juegos = if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id }
+    val juegos = if (id == "todo") e.juegos else e.juegosPorConsola[id].orEmpty()
     val tiempo = juegos.sumOf { e.datos[it.clave]?.tiempo ?: 0L }
     val ultimo = juegos.maxByOrNull { e.datos[it.clave]?.ultimo ?: 0L }?.takeIf { (e.datos[it.clave]?.ultimo ?: 0L) > 0 }
     val propia = e.consolasPropias[id]
@@ -397,11 +405,10 @@ fun CarruselJuegos(e: Estado, modifier: Modifier = Modifier) {
 }
 
 /**
- * Carpetas: cada consola es una carpeta de su color, con tres portadas asomándose por arriba
- * (como fichas dentro de un archivador). La elegida se levanta y abre un poco sus portadas. A entra a sus juegos.
+ * Cuadrícula de carpetas de consola. En Carpetas, cada celda es un ícono y A abre sus juegos.
  */
 @Composable
-fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier) {
+fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Boolean = true) {
     val esc = LocalEscala.current
     val ids = e.pestanas
     val sel = ids.indexOf(e.consolaSel).coerceAtLeast(0)
@@ -410,20 +417,21 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier) {
         val cols = when (e.vistaConsolas) {
             "mosaico" -> if (anchoU > 620f) 5 else if (anchoU > 300f) 3 else 2
             "vitrina" -> if (anchoU > 560f) 2 else 1
-            else -> if (anchoU > 620f) 4 else if (anchoU > 300f) 3 else 2
+            else -> ((anchoU - 18f) / 83f).toInt().coerceIn(3, 7)
         }.also { cl.nikalbazu.diptico.estado.Teclas.columnasCarpetas = it }
+        val ladoIcono = (anchoU - 28f - (cols - 1) * 12f) / cols
         val grilla = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
-        LaunchedEffect(sel) { grilla.mostrar(sel) }
+        LaunchedEffect(sel, cols) { grilla.mostrar(sel) }
         Column(Modifier.fillMaxSize()) {
             androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
                 columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols), state = grilla,
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                userScrollEnabled = interactiva, modifier = Modifier.fillMaxWidth().weight(1f),
                 contentPadding = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10)),
                 verticalArrangement = Arrangement.spacedBy(esc.d(14)), horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
             ) {
                 items(ids.size, key = { ids[it] }) { k ->
                     val id = ids[k]
-                    if (e.vistaConsolas == "carpetas") CarpetaBiblioteca(e, id, k == sel)
+                    if (e.vistaConsolas == "carpetas") CarpetaBiblioteca(e, id, k == sel, interactiva, ladoIcono)
                     else CarpetaVisual(e, id, k == sel, amplia = e.vistaConsolas == "vitrina")
                 }
             }
@@ -441,7 +449,8 @@ private fun CarpetaVisual(e: Estado, id: String, elegida: Boolean, amplia: Boole
     val consola = Consolas.porId(id)
     val color = colorConsola(id)
     val juegos = remember(e.juegos, e.datos, id) {
-        e.juegos.filter { (id == "todo" || it.consolaId == id) && e.datos[it.clave]?.oculto != true }
+        val deConsola = if (id == "todo") e.juegos else e.juegosPorConsola[id].orEmpty()
+        deConsola.filter { e.datos[it.clave]?.oculto != true }
     }
     val portadas = remember(juegos, amplia) { juegos.sortedBy { it.portada == null }.take(if (amplia) 3 else 1) }
     val forma = RoundedCornerShape(esc.d(16))

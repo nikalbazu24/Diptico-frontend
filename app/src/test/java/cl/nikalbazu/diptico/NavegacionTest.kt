@@ -2,6 +2,7 @@ package cl.nikalbazu.diptico
 
 import android.view.KeyEvent
 import androidx.test.core.app.ApplicationProvider
+import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.estado.*
 import cl.nikalbazu.diptico.retoma.*
 import org.junit.Assert.*
@@ -119,24 +120,35 @@ class NavegacionTest {
             toque(KeyEvent.KEYCODE_BUTTON_X, 1000L)
             assertEquals(Panel.EDITAR_CONSOLA, Diptico.estado.value.panel)
             assertEquals("todo", Diptico.estado.value.consolaEditando)
-            assertEquals(listOf("Portada de carpeta"), Diptico.opcionesEditarConsola().map { it.titulo })
+            assertEquals(listOf("Imagen del ícono de carpeta"), Diptico.opcionesEditarConsola().map { it.titulo })
         }
     }
 
-    @Test fun tiendaLocalConservaLosRecursosDeLosVeinticuatroTemas() {
+    @Test fun tiendaLocalIncluyeTemasDeVideojuegosConRecursosPropios() {
         val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
         val temas = TiendaTemas.incluidos(ctx)
-        assertEquals(24, temas.size)
-        assertEquals(24, temas.mapNotNull { it.pistaLocal }.toSet().size)
+        assertEquals(TiendaTemas.TOTAL_OFICIAL, temas.size)
+        assertEquals(temas.size, temas.mapNotNull { it.pistaLocal }.toSet().size)
         assertTrue(temas.all { it.tema.descripcion.isNotBlank() && it.categoria.isNotBlank() &&
-            it.tema.fuente.isNotBlank() && it.tema.decor != "nada" })
+            it.tema.fuente.isNotBlank() })
         val chile = temas.single { it.tema.nombre == "Chile" }
         assertEquals("chupallas", chile.tema.decor)
         val instalado = TiendaTemas.instalar(ctx, chile.copy(audio = null))
         assertNotNull(TiendaTemas.pista(ctx, instalado))
         assertNotNull(TiendaTemas.pista(ctx, ComponenteTema.MUSICA.combinar(Temas.iniciales.first().copy(id = "mio"), instalado)))
-        val paisajes = Estado(galeria = "tienda_temas", catalogoTemas = temas, galeriaPestana = 1)
-        assertEquals(temas.count { it.categoria == "Paisajes" }, Diptico.itemsGaleria(paisajes).size)
+        val juegos = temas.filter { it.categoria == "Videojuegos" }
+        assertEquals(6, juegos.size)
+        assertEquals(6, juegos.map { it.tema.sonidos }.toSet().size)
+        assertEquals(6, juegos.map { it.tema.decor }.toSet().size)
+        for (entrada in juegos) {
+            for (accion in listOf("mover", "aceptar", "atras", "jugar")) {
+                val id = ctx.resources.getIdentifier("sfx_${entrada.tema.sonidos}_$accion", "raw", ctx.packageName)
+                assertTrue(id != 0)
+            }
+            assertNotNull(TiendaTemas.pista(ctx, TiendaTemas.instalar(ctx, entrada)))
+        }
+        val tienda = Estado(galeria = "tienda_temas", catalogoTemas = temas, galeriaPestana = 1)
+        assertEquals(juegos.map { it.tema.id }, Diptico.itemsGaleria(tienda).map { it.id })
     }
 
     @Test fun adornosPorDefectoConservanLasFechasDelCalendario() {
@@ -147,10 +159,60 @@ class NavegacionTest {
         }
     }
 
+    @Test fun salirDeOcultosConBRecuperaLaBibliotecaAntesYDespuesDeElegirUnResultado() {
+        val visible = cl.nikalbazu.diptico.data.Juego("gba/visible", "gba", "Visible", "visible.gba",
+            android.net.Uri.parse("content://prueba/visible"), "visible")
+        val oculto = visible.copy(clave = "snes/oculto", consolaId = "snes", titulo = "Oculto")
+        for (abrirResultado in listOf(false, true)) {
+            Diptico.fijarParaPrueba(Estado(configurado = true, intro = false, juegos = listOf(visible, oculto),
+                datos = mapOf(oculto.clave to DatosJuego(oculto = true),
+                    visible.clave to DatosJuego(favorito = true)),
+                filtro = "favoritos", consolaSel = "gba", juegoSel = visible.clave))
+            Diptico.abrirJuegosOcultos()
+            assertEquals(listOf(oculto.clave), Diptico.estado.value.visibles.map { it.clave })
+            if (abrirResultado) Diptico.aceptar()
+            toque(KeyEvent.KEYCODE_BUTTON_B, 1200L)
+            val estado = Diptico.estado.value
+            assertEquals("favoritos", estado.filtro)
+            assertEquals("gba", estado.consolaSel)
+            assertEquals(visible.clave, estado.seleccionado?.clave)
+            assertNull(estado.antesDeOcultos)
+        }
+    }
+
+    @Test fun decoracionPorTemaSeDespliegaYConservaLaIntensidadAlCambiarElAdorno() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(Estado(configurado = true, intro = false, tema = "bloques", temaFestivo = false))
+        Diptico.abrirDecoraciones()
+        fun elegir(id: String) = Diptico.elegirIndice(Diptico.itemsGaleria().indexOfFirst { it.id == id })
+        elegir("decor-tema:bloques")
+        elegir("decor-intensidad:1")
+        elegir("decor-tipo:monedas")
+        assertEquals("monedas", Diptico.estado.value.adornosPorTema["bloques"])
+        assertEquals("1", Diptico.estado.value.intensidadPorTema["bloques"])
+        Diptico.cerrarPanel()
+        assertNull(Diptico.estado.value.decoracionAbierta)
+        assertEquals(Panel.GALERIA, Diptico.estado.value.panel)
+    }
+
+    @Test fun vistaCarpetasAdmiteVentanaYPantallaCompleta() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(Estado(configurado = true, intro = false, vistaConsolas = "carpetas", enSistemas = true))
+        toque(KeyEvent.KEYCODE_BUTTON_A, 1200L)
+        assertTrue(Diptico.estado.value.carpetaEnVentana)
+        Diptico.alternarModoCarpeta()
+        assertFalse(Diptico.estado.value.carpetaEnVentana)
+        assertFalse(Diptico.estado.value.enSistemas)
+        toque(KeyEvent.KEYCODE_BUTTON_B, 1400L)
+        assertTrue(Diptico.estado.value.enSistemas)
+        assertTrue(Diptico.fuentesImagen(Diptico.estado.value.copy(candidatoPara = "c_portada", consolaEditando = "todo"))
+            .containsAll(listOf("RetroArch", "SteamGridDB", "libretro", "Wikipedia")))
+    }
+
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("temas-web-4").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("tienda-integrada-5").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

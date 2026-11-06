@@ -15,7 +15,7 @@ internal enum class ComponenteTema(val titulo: String) {
         FONDO -> destino.copy(base = fuente.base, fondo = fuente.fondo, trama = fuente.trama)
         TIPOGRAFIA -> destino.copy(fuente = fuente.fuente)
         FORMAS -> destino.copy(forma = fuente.forma, acabado = fuente.acabado)
-        DECORACION -> destino.copy(decor = fuente.decor)
+        DECORACION -> destino.copy(decor = fuente.decor, intensidadDecoracion = fuente.intensidadDecoracion)
         EFECTOS -> destino.copy(sonidos = fuente.sonidos, tonoSonidos = fuente.tonoSonidos)
         MUSICA -> destino.copy(musica = fuente.musica, pistaBase = Diptico.pistaIncluidaDeTema(fuente))
     }

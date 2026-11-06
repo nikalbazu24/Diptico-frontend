@@ -152,7 +152,8 @@ private fun VacioEstante(e: Estado) {
             },
             17f,
         )
-        if (e.busqueda.isNotBlank() || e.filtro != "todos") Detalle("X quita la búsqueda y los filtros", 14f)
+        if (e.filtro == "ocultos") Detalle("B · Salir de Ocultos", 14f)
+        else if (e.busqueda.isNotBlank() || e.filtro != "todos") Detalle("X quita la búsqueda y los filtros", 14f)
     }
 }
 
@@ -205,7 +206,16 @@ fun PanelBuscar(e: Estado) {
                 Detalle("${e.visibles.size}", 15f, color = p.tinta)
             }
             Spacer(Modifier.height(esc.d(10)))
-            Chips(Diptico.FILTROS, e.filtro, { Diptico.nombreFiltro(it) }) { Diptico.elegirFiltro(it) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                if (e.filtro == "ocultos") {
+                    Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva)
+                        .clickable { Diptico.salirDeOcultos(cerrarBusqueda = true) }
+                        .padding(horizontal = esc.d(12), vertical = esc.d(6))) {
+                        Texto("Salir de Ocultos", 13f, color = SobreUva, lineas = 1)
+                    }
+                }
+                Chips(Diptico.FILTROS, e.filtro, { Diptico.nombreFiltro(it) }, Modifier.weight(1f)) { Diptico.elegirFiltro(it) }
+            }
             Spacer(Modifier.height(esc.d(6)))
             Chips(Diptico.ORDENES, e.orden, { Diptico.nombreOrden(it) }) { Diptico.elegirOrden(it) }
             Spacer(Modifier.height(esc.d(8)))
@@ -232,16 +242,18 @@ fun PanelBuscar(e: Estado) {
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            Pistas("L1 R1" to "Mostrar", "L2 R2" to "Orden", "X" to (if (e.tecladoPropio) "Escribir" else "Limpiar"), "B" to "Cerrar")
+            Pistas("L1 R1" to "Mostrar", "L2 R2" to "Orden", "X" to (if (e.tecladoPropio) "Escribir" else "Limpiar"), "B" to if (e.filtro == "ocultos") "Salir de Ocultos" else "Cerrar")
         }
     }
 }
 
 @Composable
-private fun Chips(opciones: List<String>, actual: String, nombre: (String) -> String, alElegir: (String) -> Unit) {
+private fun Chips(opciones: List<String>, actual: String, nombre: (String) -> String, modifier: Modifier = Modifier, alElegir: (String) -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+    val fila = rememberLazyListState()
+    LaunchedEffect(opciones, actual) { fila.mostrar(opciones.indexOf(actual)) }
+    LazyRow(modifier = modifier, state = fila, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
         items(opciones) { o ->
             val activo = o == actual
             Box(

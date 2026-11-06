@@ -58,7 +58,7 @@ fun PanelGaleria(e: Estado) {
         "importar_temas" -> "Temas del archivo" to Icono.DESCARGA
         "mezclar_tema" -> "Mezclar mi tema" to Icono.PALETA
         "tienda_temas" -> "Tienda de temas" to Icono.PALETA
-        "adornos_festivos" -> "Adornos festivos" to Icono.ESTRELLA
+        "decoraciones" -> "Decoraciones por tema" to Icono.ESTRELLA
         "colores" -> "Mis colores" to Icono.PALETA
         "ia" -> "IA de Bisa" to Icono.CHISPA
         "cajas" -> "Forma de las cajas" to Icono.FORMA
@@ -99,7 +99,7 @@ fun PanelGaleria(e: Estado) {
             }
             if (e.galeria == "tienda_temas") {
                 Spacer(Modifier.height(esc.d(6)))
-                Detalle("Explora 24 temas e instálalos aquí mismo.", 12f, lineas = 2)
+                Detalle("Explora e instala temas sin conexión.", 12f, lineas = 2)
             }
             if (e.galeria == "mezclar_tema") {
                 Spacer(Modifier.height(esc.d(6)))
@@ -116,7 +116,7 @@ fun PanelGaleria(e: Estado) {
             Spacer(Modifier.height(esc.d(10)))
             val cols = when (e.galeria) {
                 "colores" -> if (esc.angosta) 8 else 12
-                "temas", "importar_temas", "mezclar_tema", "tienda_temas", "adornos_festivos" -> if (esc.angosta) 2 else 3
+                "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> if (esc.angosta) 2 else 3
                 "cajas" -> if (esc.angosta) 3 else 4
                 else -> 1
             }
@@ -141,7 +141,15 @@ fun PanelGaleria(e: Estado) {
                         "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
                         "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
                         "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
-                        "temas", "importar_temas", "mezclar_tema", "tienda_temas", "adornos_festivos" -> TarjetaTema(it, activo, e.oscuro) { Diptico.elegirIndice(i) }
+                        "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> TarjetaTema(it, activo, e.oscuro) { Diptico.elegirIndice(i) }
+                        "decoraciones" -> {
+                            if (it.id.startsWith("decor-tema:")) {
+                                FilaCancion(it, activo, if (it.enUso) Icono.ARRIBA else Icono.ABAJO, "") { Diptico.elegirIndice(i) }
+                            } else Box(Modifier.padding(start = esc.d(14))) {
+                                FilaCancion(it, activo, if (it.id.startsWith("decor-intensidad:")) Icono.BRILLO else Icono.ESTRELLA,
+                                    "Elegido ✓") { Diptico.elegirIndice(i) }
+                            }
+                        }
                         "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
                         "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
                         "colecciones" -> FilaCancion(it, activo, Icono.CARPETA, "Aquí ✓") { Diptico.elegirIndice(i) }
@@ -369,7 +377,7 @@ fun VistaGaleria(e: Estado) {
                 }
             }
             e.galeria in setOf("filtros", "orden", "variantes_juego", "copias_srm") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
-            e.galeria in setOf("temas", "importar_temas", "mezclar_tema", "tienda_temas", "adornos_festivos") && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            e.galeria in setOf("temas", "importar_temas", "mezclar_tema", "tienda_temas", "decoraciones") && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(it.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))
                 Texto(it.nombre, 26f, lineas = 1)
