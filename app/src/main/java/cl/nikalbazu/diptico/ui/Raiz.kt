@@ -59,7 +59,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
                 when {
                     !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
-                    tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e)
+                    tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
                     tienda -> ControlesTiendaTemas(e)
                     rol == Rol.UNICA -> PantallaUnica(e)
                     rol == Rol.SUPERIOR -> if (e.fichaFijada != null && e.panel == Panel.NINGUNO && e.sesion == null) {

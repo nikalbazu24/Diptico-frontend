@@ -224,15 +224,15 @@ fun Heroe(juego: Juego, ancho: Float) {
     // Un acercamiento lento y suave sobre el arte (se apaga en modo ahorro).
     val zoom = zoomLento(true, 1.06f, 14000)
     val (porJuego, todos) = LocalHeroes.current
-    Crossfade(targetState = juego, animationSpec = tween(650), label = "arte", modifier = Modifier.fillMaxSize()) { j ->
+    Crossfade(targetState = juego, animationSpec = tween(if (Estilo.efectosCompletos) 360 else 0), label = "arte", modifier = Modifier.fillMaxSize()) { j ->
         Box(Modifier.fillMaxSize()) {
             val tipo = porJuego[j.clave] ?: todos
             if (tipo == "portada" && j.portada != null) {
                 // La portada entera (sin recortarla), sobre ella misma difuminada para llenar el espacio.
                 Box(Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho)) {
-                    ArteJuego(
+                    if (Estilo.efectosCompletos) ArteJuego(
                         j, preferirArte = false, maxLado = 500,
-                        modifier = Modifier.fillMaxSize().then(if (Estilo.efectosCompletos) Modifier.blur(36.dp) else Modifier).graphicsLayer { alpha = 0.55f; scaleX = 1.15f; scaleY = 1.15f },
+                        modifier = Modifier.fillMaxSize().blur(36.dp).graphicsLayer { alpha = 0.55f; scaleX = 1.15f; scaleY = 1.15f },
                     )
                     ArteJuego(
                         j, preferirArte = false, maxLado = 1100,

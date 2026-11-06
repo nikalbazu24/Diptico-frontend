@@ -5,9 +5,14 @@ import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.data.Biblioteca
+import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.data.IndicesJuego
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.Respaldo
+import cl.nikalbazu.diptico.estado.Estado
+import cl.nikalbazu.diptico.estado.Diptico
+import cl.nikalbazu.diptico.estado.Panel
+import cl.nikalbazu.diptico.ui.Estilo
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.zip.ZipEntry
@@ -34,6 +39,44 @@ class EstabilidadTest {
             }
         }
     }.toByteArray()
+
+    @Test fun recorrerLaBibliotecaReutilizaLaVistaYRespetaCambiosDeFiltroYOrden() {
+        val a = Juego("snes/a", "snes", "Árbol", "a.sfc", Uri.parse("content://prueba/a"), "a")
+        val b = a.copy(clave = "snes/b", titulo = "Búho")
+        val c = a.copy(clave = "gba/c", consolaId = "gba", titulo = "Otro árbol")
+        val e = Estado(juegos = listOf(a, b, c), consolaSel = "snes", orden = "propio",
+            ordenPropio = mapOf("snes" to listOf(b.clave, a.clave)))
+        val vista = e.visibles
+        assertEquals(listOf(b, a), vista)
+        assertSame(vista, e.copy(juegoSel = a.clave, panel = Panel.MENU).visibles)
+        assertSame(e.juegosPorClave, e.copy(indice = 2).juegosPorClave)
+        assertEquals(listOf(a), e.copy(busqueda = "ARBOL").visibles)
+        assertEquals(listOf(c), e.copy(consolaSel = "gba").visibles)
+        val ocultos = e.copy(datos = mapOf(b.clave to DatosJuego(oculto = true)))
+        assertEquals(listOf(a), ocultos.visibles)
+        assertEquals(listOf(b), ocultos.copy(filtro = "ocultos").visibles)
+        assertEquals(listOf(a, b), e.copy(ordenPropio = mapOf("snes" to listOf(a.clave))).visibles)
+    }
+
+    @Test fun aplicarTemaRespetaElModoAhorro() {
+        Diptico.iniciar(ctx)
+        val previo = Diptico.estado.value
+        try {
+            val e = previo.copy(fluidez = "ahorro", tema = "bloques", temaFestivo = false,
+                decoraciones = true, sobremesaModo = "no", sesion = null)
+            Diptico.fijarParaPrueba(e)
+            Diptico.aplicarTema()
+            assertFalse(Estilo.efectosCompletos)
+            assertFalse(Estilo.decoraciones)
+            Diptico.fijarParaPrueba(e.copy(fluidez = "alta"))
+            Diptico.aplicarTema()
+            assertTrue(Estilo.efectosCompletos)
+            assertTrue(Estilo.decoraciones)
+        } finally {
+            Diptico.fijarParaPrueba(previo)
+            Diptico.aplicarTema()
+        }
+    }
 
     @Test fun clavesAntiguasSeConservanEnElEquipoYNoSalenEnElZip() {
         preferencias.edit().putString("claveGemini", "credencial-de-prueba")

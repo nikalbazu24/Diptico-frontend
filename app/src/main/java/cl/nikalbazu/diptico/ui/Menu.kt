@@ -385,7 +385,7 @@ private fun VistaPrevia(e: Estado, sec: Seccion, titulo: String?, modifier: Modi
 
 /** Un inicio en miniatura pintado con los colores del tema. */
 @Composable
-fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
+fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean, animar: Boolean = false) {
     val esc = LocalEscala.current
     val pal = remember(t, oscuro) { paletaDe(t, oscuro) }
     val a = Color(t.acento)
@@ -394,7 +394,7 @@ fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
     val fuente = fuenteTema(t.fuente)
     Box(Modifier.fillMaxSize().background(pal.fondo)) {
         androidx.compose.runtime.CompositionLocalProvider(LocalPaleta provides pal) { TramaTema(t) }
-        if (t.decor != "nada") Decoracion(t, animada = false)
+        if (t.decor != "nada") Decoracion(t, animada = animar)
         if (t.trama.isBlank()) Box(Modifier.align(Alignment.TopEnd).size(esc.d(160)).background(Brush.radialGradient(listOf(a.copy(alpha = 0.23f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(esc.d(12)), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
             Row(verticalAlignment = Alignment.CenterVertically) {

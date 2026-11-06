@@ -32,6 +32,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -86,7 +87,10 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
 /** Un juego abierto ahora mismo. */
 data class Sesion(val clave: String, val inicio: Long, val displayId: Int, val dosPantallas: Boolean)
 
-data class BibliotecaAntesDeOcultos(val filtro: String, val busqueda: String, val consola: String, val juego: String?)
+data class BibliotecaAntesDeOcultos(
+    val filtro: String, val busqueda: String, val consola: String, val juego: String?,
+    val enSistemas: Boolean, val inicio: String,
+)
 
 data class Opcion(
     val titulo: String,
@@ -638,7 +642,9 @@ data class Estado(
     val conTeclado: Boolean
         get() = tecladoPropio && (panel == Panel.PASO || panel == Panel.CLAVE)
 
-    val juegosPorConsola: Map<String, List<Juego>> by lazy { IndiceBiblioteca.agrupar(juegos) }
+    private val biblioteca by lazy { IndiceBiblioteca.de(juegos) }
+    val juegosPorConsola: Map<String, List<Juego>> get() = biblioteca.porConsola
+    val juegosPorClave: Map<String, Juego> get() = biblioteca.porClave
 
     val consolasConJuegos: List<Consola> by lazy {
         val lista = Consolas.todas.filter { it.id in juegosPorConsola }
@@ -652,63 +658,20 @@ data class Estado(
 
     val pestanas: List<String> by lazy { listOf("todo") + consolasConJuegos.map { it.id } }
 
-    /** Los juegos del estante: consola elegida, filtro, búsqueda y orden. Se calcula una vez por estado. */
-    val visibles: List<Juego> by lazy {
-        var l = if (consolaSel == "todo") juegos else juegosPorConsola[consolaSel].orEmpty()
-        fun d(j: Juego) = datos[j.clave]
-        l = when (filtro) {
-            "ocultos" -> l.filter { d(it)?.oculto == true }
-            else -> l.filter { d(it)?.oculto != true }
-        }
-        l = when (filtro) {
-            "favoritos" -> l.filter { d(it)?.favorito == true }
-            "recientes" -> l.filter { (d(it)?.ultimo ?: 0L) > 0 }
-            "mas" -> l.filter { (d(it)?.tiempo ?: 0L) > 0 }
-            "sinjugar" -> l.filter { (d(it)?.tiempo ?: 0L) == 0L }
-            else -> l
-        }
-        if (busqueda.isNotBlank()) {
-            val q = Busqueda.normalizar(busqueda)
-            l = l.filter { Busqueda.normalizar(it.titulo).contains(q) }
-        }
-        when (orden) {
-            "propio" -> {
-                val o = ordenPropio[consolaSel].orEmpty()
-                l.sortedWith(compareBy<Juego>({ o.indexOf(it.clave).let { k -> if (k < 0) Int.MAX_VALUE else k } }, { it.titulo.lowercase() }))
-            }
-            "recientes" -> l.sortedByDescending { d(it)?.ultimo ?: 0L }
-            "tiempo" -> l.sortedByDescending { d(it)?.tiempo ?: 0L }
-            else -> if (consolaSel == "todo" && filtro == "todos" && busqueda.isBlank()) l else l.sortedBy { it.titulo.lowercase() }
-        }
-    }
+    /** La selección y los paneles pueden cambiar sin volver a filtrar ni ordenar la biblioteca. */
+    val visibles: List<Juego> by lazy { biblioteca.visibles(this) }
 
-    val seleccionado: Juego? by lazy {
-        val v = visibles
-        v.firstOrNull { it.clave == juegoSel } ?: v.firstOrNull()
-    }
-
-    val indiceSel: Int by lazy {
-        val clave = seleccionado?.clave
-        if (clave == null) 0 else visibles.indexOfFirst { it.clave == clave }.coerceAtLeast(0)
-    }
-
-    val sinPortada: Int
-        get() = juegos.count { it.portada == null }
-}
-
-private object IndiceBiblioteca {
-    @Volatile private var ultimo: Pair<List<Juego>, Map<String, List<Juego>>>? = null
-
-    fun agrupar(juegos: List<Juego>): Map<String, List<Juego>> {
-        ultimo?.let { (lista, indice) -> if (lista === juegos) return indice }
-        return juegos.groupBy { it.consolaId }.also { ultimo = juegos to it }
-    }
+    val indiceSel: Int by lazy { visibles.indexOfFirst { it.clave == juegoSel }.coerceAtLeast(0) }
+    val seleccionado: Juego? get() = visibles.getOrNull(indiceSel)
+    val sinPortada: Int get() = biblioteca.sinPortada
 }
 
 /** Para buscar sin importar tildes ni mayúsculas. */
 object Busqueda {
+    private val marcas = Regex("\\p{M}")
+
     fun normalizar(s: String): String =
-        java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD).replace(Regex("\\p{M}"), "").lowercase()
+        java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD).replace(marcas, "").lowercase()
 }
 
 /** Estado compartido por las dos pantallas y todas las acciones de Díptico. */
@@ -1008,7 +971,7 @@ object Diptico {
     /** El último juego que se jugó (para "Continuar"). */
     fun ultimoJugado(e: Estado = estado.value): cl.nikalbazu.diptico.data.Juego? =
         e.datos.entries.filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }
-            .firstNotNullOfOrNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }
+            .firstNotNullOfOrNull { (k, _) -> e.juegosPorClave[k] }
 
     /** La pantalla se encendió después de [ausencia] ms apagada. Se llama desde [Inicio]. */
     fun alEncender(ausencia: Long, estabaJugando: Boolean) {
@@ -1397,11 +1360,12 @@ object Diptico {
         if (carpetas.isEmpty()) return
         actualizar { it.copy(escaneando = true) }
         trabajo("escaneo", "Buscando tus juegos")
-        val anteriores = crudos.groupBy { raizDe(it) }
+        val anterior = crudos
         val media = almacen.media
         scope.launch {
             var fallas = 0
             val lista = withContext(Dispatchers.IO) {
+                val anteriores = anterior.groupBy { raizDe(it) }
                 carpetas.flatMap { c ->
                     try {
                         Biblioteca.escanear(app, c.uri, media, c.consola)
@@ -2975,7 +2939,8 @@ object Diptico {
             Panel.PORTS -> e.apps.getOrNull(e.indice)?.let { alternarPort(it.paquete) }
             Panel.FICHA -> if (e.pestanaFicha >= 2) opcionesFicha().getOrNull(e.indice)?.accion?.invoke()
             Panel.BUSCAR -> e.visibles.getOrNull(e.indice)?.let { j ->
-                actualizar { it.copy(juegoSel = j.clave, panel = Panel.NINGUNO) }
+                actualizar { it.copy(juegoSel = j.clave, panel = Panel.NINGUNO, enSistemas = false,
+                    inicio = if (it.unaPantalla) "heroe" else it.inicio) }
             }
             Panel.CARPETAS -> aceptarCarpetas()
             Panel.IMAGENES -> usarCandidato()
@@ -3430,7 +3395,7 @@ object Diptico {
             Seccion.CONSOLAS -> {
                 lista += opcionesIconos(e).first()
                 for (c in e.consolasConJuegos) {
-                    val n = e.juegos.count { it.consolaId == c.id }
+                    val n = e.juegosPorConsola[c.id].orEmpty().size
                     val propia = e.consolasPropias[c.id]?.vacia == false || e.iconosPropios.containsKey(c.id)
                     lista += Opcion(
                         c.bonito, if (propia) "Personalizada ✓" else if (n == 1) "1 juego" else "$n juegos", Icono.MANDO,
@@ -4082,16 +4047,19 @@ object Diptico {
     private fun vigilarUniverso() {
         scope.launch {
             estado.map { e ->
+                if (!e.experiencia.universo) return@map null
                 val c = e.coleccionVisual?.let { e.experiencia.colecciones[it] }
-                val j = e.sesion?.let { s -> e.juegos.firstOrNull { it.clave == s.clave } } ?: e.seleccionado
-                Triple(e.experiencia.universo, c?.color, j?.arte ?: j?.portada)
-            }.distinctUntilChanged().collect { (activo, coleccion, uri) ->
-                // Lectura pequeña y fuera del hilo de interfaz; jamás se captura la pantalla del juego.
-                val color = if (!activo) 0L else coleccion ?: withContext(Dispatchers.IO) {
-                    cl.nikalbazu.diptico.ui.ColorUniverso.leer(app, uri)
+                val j = e.sesion?.let { e.juegosPorClave[it.clave] } ?: e.seleccionado
+                c?.color to (j?.arte ?: j?.portada)
+            }.distinctUntilChanged().collectLatest { fuente ->
+                // Ignora el color de una portada anterior si ya te moviste a otro juego.
+                val color = if (fuente == null) 0L else fuente.first ?: withContext(Dispatchers.IO) {
+                    cl.nikalbazu.diptico.ui.ColorUniverso.leer(app, fuente.second)
                 }
-                actualizar { it.copy(colorUniverso = color) }
-                aplicarTema()
+                if (color != estado.value.colorUniverso) {
+                    actualizar { it.copy(colorUniverso = color) }
+                    aplicarTema()
+                }
             }
         }
     }
@@ -4209,7 +4177,7 @@ object Diptico {
         val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso, decor = "nada") else baseVisual
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
         cl.nikalbazu.diptico.ui.Estilo.efecto = activo.acabado.ifBlank { if (e.experiencia.vidrio) "vidrio" else e.efecto }
-        cl.nikalbazu.diptico.ui.Estilo.decoraciones = e.decoraciones && e.experiencia.movimiento && e.sesion == null
+        aplicarFluidez()
         Sonidos.cambiarJuego(activo.sonidos, activo.tonoSonidos)
         val pista = musicaDeTema(activo)
         if (fiesta?.id != e.fiesta?.id || pista != e.pistaTema) actualizar { it.copy(fiesta = fiesta, pistaTema = pista) }
@@ -5306,12 +5274,7 @@ object Diptico {
         scope.launch {
             estado.map { it.sesion != null }.distinctUntilChanged().collect { jugando ->
                 val e = estado.value
-                if (e.turbo && e.turboReposo) {
-                    if (jugando) {
-                        cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = false
-                        cl.nikalbazu.diptico.ui.Estilo.decoraciones = false
-                    } else aplicarFluidez()
-                }
+                aplicarFluidez()
                 if (e.turbo && e.turboNoMolestar) Turbo.noMolestar(app, jugando)
             }
         }
@@ -5386,6 +5349,7 @@ object Diptico {
     private fun vigilarTele() {
         val dm = app.getSystemService(android.hardware.display.DisplayManager::class.java) ?: return
         fun revisar(avisarCambio: Boolean) {
+            revisarPantallas()
             val tele = buscarTele(dm)
             val antes = estado.value.teleConectada
             if (tele == antes) return
@@ -5867,11 +5831,11 @@ object Diptico {
                 add(Opcion("Música de Díptico", if (e.musica) "Sí" else "No", Icono.MUSICA, "La música propia de cada tema.") { fijarMusica(!estado.value.musica) })
                 add(Opcion("Elegir canción de Díptico", icono = Icono.MUSICA, ayuda = "Elige qué canción de fondo suena en Díptico.") { abrirGaleria("musica") })
             }
-            "recientes" -> juegosComo(e.datos.entries.filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }.mapNotNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }.take(12))
+            "recientes" -> juegosComo(e.datos.entries.filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }.mapNotNull { (k, _) -> e.juegosPorClave[k] }.take(12))
                 .ifEmpty { listOf(Opcion("Todavía no juegas nada con Díptico", icono = Icono.INFO, apagada = true) {}) }
             "favoritos" -> juegosComo(e.juegos.filter { e.datos[it.clave]?.favorito == true })
                 .ifEmpty { listOf(Opcion("Marca favoritos con Y sobre un juego", icono = Icono.CORAZON, apagada = true) {}) }
-            "sugerencia" -> juegosComo(e.sugeridas.mapNotNull { k -> e.juegos.firstOrNull { it.clave == k } }) + listOf(
+            "sugerencia" -> juegosComo(e.sugeridas.mapNotNull { k -> e.juegosPorClave[k] }) + listOf(
                 Opcion("Otras sugerencias", icono = Icono.DADO, ayuda = "Te muestra otros juegos de tu biblioteca para jugar ahora.") { nuevasSugerencias() },
                 Opcion("Pídele una recomendación a Bisa", icono = Icono.BISA, ayuda = "Bisa elige un juego para ti según lo que te gusta.") { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") },
             )
@@ -5904,7 +5868,7 @@ object Diptico {
                 )
             }
             "tiempo", "estadisticas" -> {
-                val top = e.datos.entries.filter { it.value.tiempo > 0 }.sortedByDescending { it.value.tiempo }.mapNotNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }.take(8)
+                val top = e.datos.entries.filter { it.value.tiempo > 0 }.sortedByDescending { it.value.tiempo }.mapNotNull { (k, _) -> e.juegosPorClave[k] }.take(8)
                 listOf(Opcion("Ver todas las estadísticas", icono = Icono.TROFEO, ayuda = "Horas por juego y por consola, partidas y rachas.") { abrirEstadisticas() }) + juegosComo(top)
             }
             "logros" -> if (e.usuarioRA.isBlank()) listOf(Opcion("Conectar RetroAchievements", icono = Icono.CLAVE, ayuda = "Tu usuario y tu clave web de retroachievements.org.") { abrirMenu(Seccion.LOGROS) })
@@ -5913,7 +5877,7 @@ object Diptico {
                 Opcion("Ajustes de logros", icono = Icono.AJUSTES, ayuda = "Tu cuenta de RetroAchievements y cómo se ven tus logros.") { abrirMenu(Seccion.LOGROS) },
             )
             "consolas" -> e.consolasConJuegos.map { c ->
-                Opcion(c.bonito, "${e.juegos.count { it.consolaId == c.id }} juegos", Icono.BIBLIOTECA, ayuda = "Va a esta consola en el estante.") { cerrarPanel(); actualizar { it.copy(widgetFoco = -1) }; elegirConsola(c.id) }
+                Opcion(c.bonito, "${e.juegosPorConsola[c.id].orEmpty().size} juegos", Icono.BIBLIOTECA, ayuda = "Va a esta consola en el estante.") { cerrarPanel(); actualizar { it.copy(widgetFoco = -1) }; elegirConsola(c.id) }
             }
             "frase" -> listOf(
                 Opcion("Otra frase", icono = Icono.CHISPA, ayuda = "Muestra otra frase en el widget.") { actualizar { it.copy(fraseExtra = it.fraseExtra + 1) } },
@@ -5937,7 +5901,7 @@ object Diptico {
                 val id = w.tipo.removePrefix("coleccion-")
                 val c = e.colecciones[id] ?: return emptyList()
                 val j = e.seleccionado
-                juegosComo(c.juegos.mapNotNull { k -> e.juegos.firstOrNull { it.clave == k } }) + listOfNotNull(
+                juegosComo(c.juegos.mapNotNull { k -> e.juegosPorClave[k] }) + listOfNotNull(
                     j?.let { Opcion(if (it.clave in c.juegos) "Quitar ${it.titulo}" else "Agregar ${it.titulo}", icono = Icono.CARPETA, ayuda = "El juego elegido en el estante.") { alternarEnColeccion(id, it.clave) } },
                     Opcion("Borrar esta colección", icono = Icono.BORRAR, ayuda = "Los juegos no se borran, solo la carpeta.") { borrarColeccion(id) },
                 )
@@ -7319,7 +7283,7 @@ object Diptico {
         e.copy(filtro = f, antesDeOcultos = anterior, indice = 0)
     }
 
-    private fun Estado.antesDeFiltrarOcultos() = BibliotecaAntesDeOcultos(filtro, busqueda, consolaSel, juegoSel)
+    private fun Estado.antesDeFiltrarOcultos() = BibliotecaAntesDeOcultos(filtro, busqueda, consolaSel, juegoSel, enSistemas, inicio)
 
     fun abrirJuegosOcultos() = actualizar { e ->
         val anterior = e.antesDeOcultos ?: e.takeIf { it.filtro != "ocultos" }?.antesDeFiltrarOcultos()
@@ -7335,6 +7299,8 @@ object Diptico {
             busqueda = anterior?.busqueda.orEmpty(),
             consolaSel = anterior?.consola ?: e.consolaSel,
             juegoSel = anterior?.juego,
+            enSistemas = anterior?.enSistemas ?: e.enSistemas,
+            inicio = anterior?.inicio ?: e.inicio,
             antesDeOcultos = null,
             indice = 0,
         )
@@ -7872,12 +7838,12 @@ object Diptico {
     fun fluidezEfectiva(e: Estado = estado.value) = if (e.fluidez == "auto") e.fluidezDetectada else e.fluidez
 
     private fun aplicarFluidez() {
-        val e0 = estado.value
-        // En la tele (enchufada) se puede con todos los efectos.
-        val f = if (e0.sobremesa && e0.sobremesaEfectos) "alta" else fluidezEfectiva()
-        cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = f != "ahorro"
-        cl.nikalbazu.diptico.ui.Estilo.efecto = if (estado.value.experiencia.vidrio) "vidrio" else estado.value.efecto
-        cl.nikalbazu.diptico.ui.Estilo.decoraciones = estado.value.decoraciones && f != "ahorro"
+        val e = estado.value
+        // El perfil de sobremesa puede activar efectos. El reposo durante el juego tiene prioridad.
+        val ahorro = fluidezEfectiva(e) == "ahorro" && !(e.sobremesa && e.sobremesaEfectos)
+        val efectos = !ahorro && !(e.sesion != null && e.turbo && e.turboReposo)
+        cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = efectos
+        cl.nikalbazu.diptico.ui.Estilo.decoraciones = efectos && e.decoraciones && e.experiencia.movimiento && e.sesion == null
     }
 
     private var ultimaActividad = SystemClock.uptimeMillis()

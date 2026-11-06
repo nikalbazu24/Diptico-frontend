@@ -1,3 +1,3 @@
-- **Carpetas**. Junta o separa dos dedos para cambiar el tamaño de los íconos. El tamaño también se puede ajustar desde Menú › Estante con el mando.
-- **Recorrido**. Elige desplazamiento horizontal o vertical en Menú › Estante › Recorrido de carpetas. Díptico recuerda el tamaño y la dirección.
-- **Ventana de carpeta**. Tiene más espacio para los juegos y deja visible un margen con el fondo desenfocado.
+- **Una pantalla**. Barra táctil de accesos en la biblioteca y las carpetas. Todas las vistas de consolas, incluido el recorrido lateral, usan la misma navegación. Abre Carpetas en ventana con fondo desenfocado o a pantalla completa.
+- **Temas y decoraciones**. En una pantalla, revisa la vista previa del elemento elegido y aplícalo desde la galería.
+- **Rendimiento**. Díptico reutiliza filtros y orden de la biblioteca, indexa los juegos y evita extraer colores cuando Universo está apagado. El modo Ahorro conserva sus ajustes al cambiar de tema.

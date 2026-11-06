@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "zoom-y-recorrido-carpetas-8"
-    const val NOMBRE = "Carpetas a tu medida"
+    const val ID = "rendimiento-y-una-pantalla-9"
+    const val NOMBRE = "Díptico en una pantalla"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -215,9 +215,14 @@ object Novedades {
         Version("desenfoque-carpetas-7", "Ventanas de carpeta", listOf(
             Pagina("Carpetas con fondo desenfocado", "En la vista Carpetas, la ventana deja ver la cuadrícula desenfocada a través del panel y alrededor. Toca fuera o pulsa B para volver.", Icono.CARPETA, 0xFFDBB386),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("zoom-y-recorrido-carpetas-8", "Carpetas a tu medida", listOf(
             Pagina("Cambia el tamaño con dos dedos", "Junta o separa dos dedos sobre la vista Carpetas. También puedes elegir un tamaño con el mando en Menú › Estante › Tamaño de carpetas.", Icono.FORMA, 0xFFDBB386),
             Pagina("Recorre las carpetas a tu manera", "En Menú › Estante › Recorrido de carpetas elige si quieres deslizar hacia los lados o hacia arriba y abajo.", Icono.CARPETA, 0xFF77BDB8),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Carpetas y accesos en una pantalla", "En consolas de una pantalla, abre Carpetas y usa la barra para buscar, pasar a Widgets, abrir Bisa o entrar a Ajustes. La cabecera te lleva de vuelta a tus consolas.", Icono.CARPETA, 0xFFDBB386),
+            Pagina("Temas con vista previa", "Mira el tema o adorno que estás eligiendo y usa la acción de la galería para instalarlo o aplicarlo desde la misma pantalla.", Icono.PALETA, 0xFF77BDB8),
+            Pagina("Biblioteca más ligera", "Díptico reutiliza la búsqueda y el orden mientras recorres tus juegos. El modo Ahorro conserva las decoraciones y efectos desactivados mientras está en uso.", Icono.CHISPA, 0xFFBCA4FF),
         )),
     )
 
