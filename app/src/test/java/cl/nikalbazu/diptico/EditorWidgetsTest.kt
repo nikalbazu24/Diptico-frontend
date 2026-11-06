@@ -3,9 +3,9 @@ package cl.nikalbazu.diptico
 import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +39,8 @@ import cl.nikalbazu.diptico.estado.Widget
 import cl.nikalbazu.diptico.estado.Widgets
 import cl.nikalbazu.diptico.ui.ArrastreWidget
 import cl.nikalbazu.diptico.ui.CarpetasConsolas
-import cl.nikalbazu.diptico.ui.Lienzo
+import cl.nikalbazu.diptico.ui.Escala
+import cl.nikalbazu.diptico.ui.LocalEscala
 import cl.nikalbazu.diptico.ui.MedidasEditorWidgets
 import cl.nikalbazu.diptico.ui.editarConDedo
 import org.junit.Assert.assertEquals
@@ -108,8 +109,8 @@ class EditorWidgetsTest {
         ))
         regla.setContent {
             val e by Diptico.estado.collectAsState()
-            Lienzo(true, Modifier.size(300.dp, 225.dp)) {
-                CarpetasConsolas(e, Modifier.fillMaxSize().testTag("cuadricula-carpetas"))
+            CompositionLocalProvider(LocalEscala provides Escala(.55f)) {
+                CarpetasConsolas(e, Modifier.size(300.dp, 225.dp).testTag("cuadricula-carpetas"))
             }
         }
         val grilla = regla.onNodeWithTag("cuadricula-carpetas")
