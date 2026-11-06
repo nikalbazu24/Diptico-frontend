@@ -39,8 +39,11 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Probar perfiles, navegación y editor
-        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --no-daemon
+      - name: Probar perfiles, navegación y estabilidad
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --no-daemon
+
+      - name: Probar los gestos del editor en un proceso separado
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --no-daemon
 
       - name: Compilar y verificar firma de distribución
         if: env.FIRMAR == 'true'

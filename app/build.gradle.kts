@@ -105,7 +105,7 @@ dependencies {
 
     // Capturas automáticas de las pantallas (solo para revisar el diseño, no van en la app)
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation("androidx.compose.ui:ui-test-junit4")
     testImplementation("io.github.takahirom.roborazzi:roborazzi:1.26.0")
