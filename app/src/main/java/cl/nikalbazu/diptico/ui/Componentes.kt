@@ -11,6 +11,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.grid.LazyGridItemInfo
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -561,20 +563,26 @@ suspend fun androidx.compose.foundation.lazy.LazyListState.mostrar(i: Int) {
     else animateScrollToItem((i - n + 2).coerceIn(0, i))
 }
 
-/** Lo mismo para grillas (por filas). */
-suspend fun androidx.compose.foundation.lazy.grid.LazyGridState.mostrar(i: Int) {
+/** Desplaza lo justo en el eje de la cuadrícula para mostrar el elemento elegido. */
+suspend fun androidx.compose.foundation.lazy.grid.LazyGridState.mostrar(i: Int, carriles: Int? = null) {
     if (i < 0) return
     val info = layoutInfo
     val vis = info.visibleItemsInfo
     if (vis.isEmpty()) { if (i > 0) scrollToItem(i); return }
+    val horizontal = info.orientation == Orientation.Horizontal
+    fun linea(it: LazyGridItemInfo) = if (horizontal) it.column else it.row
     val fin = info.viewportEndOffset - info.afterContentPadding
-    val cols = vis.count { it.row == vis.first().row }.coerceAtLeast(1)
-    val completos = vis.filter { it.offset.y >= 0 && it.offset.y + it.size.height <= fin }
+    val porLinea = carriles ?: vis.count { linea(it) == linea(vis.first()) }.coerceAtLeast(1)
+    val completos = vis.filter {
+        val inicio = if (horizontal) it.offset.x else it.offset.y
+        val lado = if (horizontal) it.size.width else it.size.height
+        inicio >= 0 && inicio + lado <= fin
+    }
     if (completos.any { it.index == i }) return
-    val filaI = i / cols
-    val filas = completos.map { it.row }.distinct()
-    val primera = filas.minOrNull() ?: vis.first().row
-    val n = filas.size.coerceAtLeast(2)
-    val destino = if (filaI <= primera) (filaI - 1).coerceAtLeast(0) else (filaI - n + 2).coerceIn(0, filaI)
-    animateScrollToItem(destino * cols)
+    val lineaI = i / porLinea
+    val lineas = completos.map(::linea).distinct()
+    val primera = lineas.minOrNull() ?: linea(vis.first())
+    val n = lineas.size.coerceAtLeast(2)
+    val destino = if (lineaI <= primera) (lineaI - 1).coerceAtLeast(0) else (lineaI - n + 2).coerceIn(0, lineaI)
+    animateScrollToItem(destino * porLinea)
 }

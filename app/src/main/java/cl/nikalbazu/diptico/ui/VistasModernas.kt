@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.*
@@ -60,14 +61,14 @@ fun FilaBiblioteca(e: Estado, j: Juego, elegida: Boolean) {
 }
 
 @Composable
-fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Boolean, lado: Float) {
+fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Boolean, lado: Dp) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val consola = Consolas.porId(id)
     val color = consola?.color ?: Uva
     val forma = RoundedCornerShape(esc.d(13))
     Box(
-        Modifier.fillMaxWidth().aspectRatio(1f).clip(forma)
+        Modifier.size(lado).clip(forma)
             .background(Brush.verticalGradient(listOf(color.copy(alpha = .23f), p.superficie)))
             .combinedClickable(enabled = interactiva, onLongClick = { Diptico.abrirEditarConsola(id) }) {
                 if (!elegida) Diptico.elegirConsola(id)
@@ -77,8 +78,8 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Bool
     ) {
         // El fondo de la carpeta también puede dibujarse sobre un bitmap.
         PortadaCarpeta(e, id, Modifier.fillMaxSize(), maxLado = 256, memoriaGrafica = false) {
-            Box(Modifier.padding(bottom = esc.d(lado * .15f))) {
-                IconoConsola(consola, (lado * .55f).coerceIn(20f, 58f), p.fondo2, memoriaGrafica = false)
+            Box(Modifier.padding(bottom = lado * .15f)) {
+                IconoConsola(consola, (lado.value / esc.factor * .55f).coerceIn(20f, 58f), p.fondo2, memoriaGrafica = false)
             }
         }
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
