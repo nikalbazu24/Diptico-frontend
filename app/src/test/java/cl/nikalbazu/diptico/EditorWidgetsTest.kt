@@ -1,22 +1,37 @@
 package cl.nikalbazu.diptico
 
-import androidx.compose.foundation.layout.fillMaxSize
+import android.content.Context
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Panel
 import cl.nikalbazu.diptico.estado.Widget
-import cl.nikalbazu.diptico.ui.Lienzo
-import cl.nikalbazu.diptico.ui.PantallaInicio
+import cl.nikalbazu.diptico.estado.Widgets
+import cl.nikalbazu.diptico.ui.ArrastreWidget
+import cl.nikalbazu.diptico.ui.MedidasEditorWidgets
+import cl.nikalbazu.diptico.ui.editarConDedo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -32,15 +47,43 @@ class EditorWidgetsTest {
     @get:Rule val regla = createComposeRule()
     private val reloj = Widget("cronometro", 0, 0, 2, 1)
 
-    private fun abrir(widgets: List<Widget> = listOf(reloj)) {
-        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+    private fun preparar(widgets: List<Widget>) {
+        val contexto = ApplicationProvider.getApplicationContext<Context>()
+        Diptico.app = contexto
+        Diptico.almacen = Almacen(contexto)
         Diptico.fijarParaPrueba(Estado(
             configurado = true, listo = true, intro = false, inicio = "widgets", panel = Panel.ESTUDIO,
             editandoWidgets = true, widgetSel = 0, paginas = 2, widgets = widgets,
         ))
+    }
+
+    private fun abrir() {
+        preparar(listOf(reloj))
+        // La prueba de entrada monta el mismo detector de punteros que el inicio.
+        // Las capturas cubren por separado la composición completa con el paginador.
         regla.setContent {
             val e by Diptico.estado.collectAsState()
-            Lienzo(e.oscuro, Modifier.fillMaxSize()) { PantallaInicio(e) }
+            val densidad = LocalDensity.current
+            val medidas = remember(densidad) {
+                with(densidad) { MedidasEditorWidgets(280.dp.toPx(), 220.dp.toPx(), 8.dp.toPx(), 6.dp.toPx(), 6, 4, 24.dp.toPx()) }
+            }
+            var arrastre by remember { mutableStateOf<ArrastreWidget?>(null) }
+            Box(Modifier.size(280.dp, 220.dp).testTag("paginas-widgets").editarConDedo(medidas, false) { arrastre = it }) {
+                e.widgets.forEachIndexed { i, w ->
+                    if (w.pagina == e.paginaInicio) {
+                        val rect = medidas.rect(w)
+                        val tam = arrastre?.takeIf { it.indice == i && it.estirando }?.tamano(medidas)
+                            ?: Offset(rect.width, rect.height)
+                        with(densidad) {
+                            Box(Modifier.offset(rect.left.toDp(), rect.top.toDp()).size(tam.x.toDp(), tam.y.toDp())
+                                .semantics { contentDescription = Widgets.nombre(w.tipo) }) {
+                                if (e.widgetSel == i) Box(Modifier.align(Alignment.BottomEnd).size(20.dp)
+                                    .semantics { contentDescription = "Cambiar tamaño" })
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -82,8 +125,8 @@ class EditorWidgetsTest {
     @Test fun unaPaginaLlenaConservaElWidgetEnOrigen() {
         val llena = Widget("juego", 0, 0, 6, 4, pagina = 1)
         val originales = listOf(reloj, llena)
-        abrir(originales)
-        regla.runOnIdle { Diptico.ponerWidget(0, 0, 0, 1) }
+        preparar(originales)
+        Diptico.ponerWidget(0, 0, 0, 1)
         assertEquals(originales, Diptico.estado.value.widgets)
     }
 }
