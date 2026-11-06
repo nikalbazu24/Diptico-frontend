@@ -96,7 +96,9 @@ fun PantallaInicio(e: Estado) {
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         // Fondo: el arte del juego elegido, difuminado, con un brillo del color del tema.
-        if (e.fondoInicio != null) {
+        if (e.editandoWidgets) {
+            Box(Modifier.fillMaxSize().background(p.fondo))
+        } else if (e.fondoInicio != null) {
             ImagenAnimada(android.net.Uri.parse(e.fondoInicio), Modifier.fillMaxSize())
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.15f), p.fondo.copy(alpha = 0.7f)))))
         } else {
@@ -106,11 +108,11 @@ fun PantallaInicio(e: Estado) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.45f), p.fondo.copy(alpha = 0.92f)))))
         }
         // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
-        if (p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
+        if (!e.editandoWidgets && Estilo.tema.forma != "cristal" && p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
             if (e.editandoWidgets) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Box(Modifier.weight(1f)) { Texto("Acomodando tu inicio", 24f, lineas = 1) }
+                    Box(Modifier.weight(1f)) { Texto("Organizar widgets", 20f, lineas = 1) }
                     Box(
                         Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
                             .padding(horizontal = esc.d(14), vertical = esc.d(8)),
@@ -118,7 +120,8 @@ fun PantallaInicio(e: Estado) {
                 }
                 Spacer(Modifier.height(esc.d(2)))
                 Detalle(
-                    "Arrastra al borde para cambiar de página · estira desde la esquina",
+                    if (e.unaPantalla) "Arrastra para mover o quitar · estira desde la esquina"
+                    else "Arrastra para mover o quitar · agrega desde la otra pantalla",
                     12f, lineas = 1,
                 )
                 Spacer(Modifier.height(esc.d(10)))
@@ -196,7 +199,10 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
                     state = pager, modifier = Modifier.fillMaxSize(), userScrollEnabled = !e.editandoWidgets,
                     pageSpacing = esc.d(20),
                 ) { pagina -> Grilla(e, pagina, medidas, arrastre, Modifier.fillMaxSize()) }
-                arrastre?.takeUnless { it.estirando }?.let { FantasmaWidget(it, medidas) }
+                arrastre?.takeUnless { it.estirando }?.let {
+                    if (!it.sobreQuitar) FantasmaWidget(it, medidas)
+                    ZonaQuitarWidget(medidas, activa = it.sobreQuitar)
+                }
             }
         }
         if (e.editandoWidgets) {
@@ -249,9 +255,11 @@ private fun Grilla(e: Estado, pagina: Int, m: MedidasEditorWidgets, arrastre: Ar
         if (e.editandoWidgets) {
             for (x in 0 until m.columnas) for (y in 0 until m.filas) {
                 with(densidad) {
-                    Box(Modifier.offset((x * m.pasoX).toDp(), (y * m.pasoY).toDp())
+                    val ocupado = e.widgets.any { it.visible && it.pagina == pagina &&
+                        x >= it.x && x < it.x + it.an && y >= it.y && y < it.y + it.al }
+                    if (!ocupado) Box(Modifier.offset((x * m.pasoX).toDp(), (y * m.pasoY).toDp())
                         .size(m.celdaAn.toDp(), m.celdaAl.toDp())
-                        .border(esc.d(1.5f), p.linea, RoundedCornerShape(esc.d(14))))
+                        .border(esc.d(1), p.linea.copy(alpha = 0.5f), RoundedCornerShape(esc.d(10))))
                 }
             }
         }
@@ -263,10 +271,12 @@ private fun Grilla(e: Estado, pagina: Int, m: MedidasEditorWidgets, arrastre: Ar
             }
         }
         val b = e.burbuja
-        if (e.editandoWidgets && b != null && pagina == e.paginaInicio) with(densidad) {
-            BurbujaAgregar(e, b, m.celdaAn.toDp().value / esc.factor, m.celdaAl.toDp().value / esc.factor,
-                m.hueco.toDp().value / esc.factor, (m.ancho - 2 * m.margen).toDp().value / esc.factor,
-                (m.alto - 2 * m.margen).toDp().value / esc.factor)
+        if (e.editandoWidgets && e.unaPantalla && b != null && pagina == e.paginaInicio) with(densidad) {
+            Box(Modifier.fillMaxSize().zIndex(3f)) {
+                BurbujaAgregar(e, b, m.celdaAn.toDp().value / esc.factor, m.celdaAl.toDp().value / esc.factor,
+                    m.hueco.toDp().value / esc.factor, (m.ancho - 2 * m.margen).toDp().value / esc.factor,
+                    (m.alto - 2 * m.margen).toDp().value / esc.factor)
+            }
         }
     }
 }
@@ -298,7 +308,7 @@ private fun CeldaWidget(e: Estado, i: Int, w: Widget, m: MedidasEditorWidgets, a
                 scaleY = escalaFoco
             }
             .then(if (e.editandoWidgets) Modifier.clip(forma).semantics { contentDescription = Widgets.nombre(w.tipo) } else Modifier)
-            .then(if (elegido) Modifier.border(esc.d(3), color, forma) else Modifier)
+            .then(if (elegido) Modifier.border(esc.d(2), color, forma) else Modifier)
             .then(if (enfocado) Modifier.anilloFoco(w.radio.toFloat(), if (p.fondo.luminance() < 0.4f) Color.White else Uva) else Modifier),
     ) {
         if (enfocado && !w.tipo.startsWith("imagen")) Box(Modifier.fillMaxSize().background(p.fondo))
@@ -307,14 +317,14 @@ private fun CeldaWidget(e: Estado, i: Int, w: Widget, m: MedidasEditorWidgets, a
             ContenidoWidget(e, w, an, al)
         }
         if (e.editandoWidgets) {
-            Box(Modifier.fillMaxSize().background(if (elegido) Uva.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.18f))
+            Box(Modifier.fillMaxSize().background(if (elegido) Color.Transparent else p.fondo.copy(alpha = 0.09f))
                 .clickable { Diptico.elegirWidget(i); Diptico.abrirAjustesWidget(i) }) {
                 if (elegido) {
-                    Box(Modifier.align(Alignment.TopEnd).padding(esc.d(6)).clip(CircleShape)
+                    if (alto >= esc.d(64)) Box(Modifier.align(Alignment.TopEnd).padding(esc.d(6)).clip(CircleShape)
                         .background(color).padding(horizontal = esc.d(8), vertical = esc.d(3))) {
                         Texto("$an × $al", 11.5f, color = SobreUva, lineas = 1, traducir = false)
                     }
-                    Box(Modifier.align(Alignment.BottomEnd).padding(esc.d(4)).size(esc.d(30))
+                    Box(Modifier.align(Alignment.BottomEnd).padding(esc.d(4)).size(esc.d(24))
                         .semantics { contentDescription = "Cambiar tamaño" }
                         .clip(CircleShape).background(color).border(esc.d(2), Color.White, CircleShape),
                         contentAlignment = Alignment.Center,
@@ -367,7 +377,7 @@ private fun BurbujaAgregar(e: Estado, celda: Pair<Int, Int>, celdaAn: Float, cel
         Modifier.offset(x = esc.d(x0), y = esc.d(y0)).size(esc.d(anchoB), esc.d(altoB))
             .graphicsLayer { scaleX = crecer.value; scaleY = crecer.value; alpha = crecer.value.coerceIn(0f, 1f); transformOrigin = origen }
             .shadow(esc.d(18), RoundedCornerShape(esc.d(30)))
-            .clip(RoundedCornerShape(esc.d(30))).background(p.fondo2.copy(alpha = 0.97f)).border(esc.d(1.5f), Uva.copy(alpha = 0.5f), RoundedCornerShape(esc.d(30)))
+            .clip(RoundedCornerShape(esc.d(30))).background(p.fondo2.copy(alpha = 1f)).border(esc.d(1.5f), Uva.copy(alpha = 0.5f), RoundedCornerShape(esc.d(30)))
             .sinCerrar().padding(esc.d(12)),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

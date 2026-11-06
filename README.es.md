@@ -13,7 +13,6 @@ Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido
 ## Personalización visual
 
 - **Universo del juego:** colores de sus imágenes locales en ambas pantallas, sin capturar el juego.
-- **Habitación:** vista de consolas con colecciones y recuerdos, paredes y objetos elegibles.
 - **Colecciones propias:** color, fondo, logo, música y disposición desde Menú › Apariencia.
 - **Ficha fijada:** desliza hacia arriba la tarjeta «Enviar ficha» para conservarla en la otra pantalla.
 - **Perfiles:** tres composiciones guardables, importación con confirmación y exportación JSON sin rutas ni claves. Los recursos locales de las colecciones se configuran en cada dispositivo.

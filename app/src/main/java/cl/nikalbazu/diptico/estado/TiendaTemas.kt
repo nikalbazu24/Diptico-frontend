@@ -11,6 +11,12 @@ import org.json.JSONObject
 data class TemaComunidad(val tema: Tema, val autor: String, val audio: String?)
 
 internal object TiendaTemas {
+    val destacados = listOf(
+        Tema("com_diptico_tinta", "Tinta", 0xFF8982DF, 0xFFA9ABCC, 0xFFE6C58D, "oscuro", fondo = 0xFF13141D),
+        Tema("com_diptico_brisamar", "Brisamar", 0xFF428388, 0xFF83A9A8, 0xFFCFAA82, "claro", fondo = 0xFFF0F5F3),
+        Tema("com_diptico_ascua", "Ascua", 0xFFD98D68, 0xFFC5A19A, 0xFFE8BF83, "oscuro", fondo = 0xFF201A1D),
+    ).map { TemaComunidad(it.copy(propio = true), "Díptico", null) }
+
     private const val LIMITE_CATALOGO = 256 * 1024
     private const val LIMITE_AUDIO = 16 * 1024 * 1024
     private val nombreArchivo = Regex("com_[0-9a-f]{24}\\.(mp3|ogg|m4a|wav)")

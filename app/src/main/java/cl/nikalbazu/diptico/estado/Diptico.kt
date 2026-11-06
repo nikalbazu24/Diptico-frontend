@@ -286,7 +286,6 @@ data class Descarga(val hechos: Int, val total: Int, val actual: String, val enc
 
 data class Estado(
     val navegacion: NavegacionEstado = NavegacionEstado(),
-    val habitacionSel: Int = 0,
     val experiencia: Experiencia = Experiencia(),
     val perfilesVisuales: Map<String, Experiencia> = emptyMap(),
     val colorUniverso: Long = 0L,
@@ -545,6 +544,7 @@ data class Estado(
     /** Burbuja para agregar un widget: en qué celda se abrió (x, y) y cuál se está eligiendo. */
     val burbuja: Pair<Int, Int>? = null,
     val burbujaSel: Int = 0,
+    val celdaCatalogo: Pair<Int, Int>? = null,
     /** Zoom de cada pantalla (1 = automático según su forma). */
     val zoomArriba: Float = 1f,
     val zoomAbajo: Float = 1f,
@@ -734,6 +734,9 @@ object Diptico {
         val apps = AtajoInicio.leer(almacen.texto("atajoApps"), AtajoInicio.START_R3)
         val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_L3)
             .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
+        val vistaGuardada = almacen.texto("vistaConsolas", "arriba")
+        val vistaConsolas = vistaConsolasCompatible(vistaGuardada)
+        if (vistaConsolas != vistaGuardada) almacen.guardarTexto("vistaConsolas", vistaConsolas)
         _estado.value = Estado(
             navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
             listo = true,
@@ -787,10 +790,10 @@ object Diptico {
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
             vista = almacen.texto("vista", "estante"),
-            vistaConsolas = almacen.texto("vistaConsolas", "arriba"),
+            vistaConsolas = vistaConsolas,
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
-            enSistemas = almacen.texto("vistaConsolas", "arriba") in MODOS_ELEGIR,
+            enSistemas = vistaConsolas in MODOS_ELEGIR,
             tamJuegos = almacen.texto("tamJuegos", "1").toFloatOrNull() ?: 1f,
             orden = almacen.texto("orden", "az"),
             ordenConsolas = almacen.texto("ordenConsolas").split(",").filter { it.isNotBlank() },
@@ -2086,9 +2089,13 @@ object Diptico {
         return true
     }
 
-    fun abrirGaleria(tipo: String) {
+    internal fun enTiendaTemas(e: Estado): Boolean = e.galeria == "temas" && e.galeriaPestana == 3
+
+    private fun abrirTiendaTemas() = abrirGaleria("temas", pestana = 3)
+
+    fun abrirGaleria(tipo: String, pestana: Int = 0) {
         if (estado.value.panel != Panel.GALERIA) galeriaDesde = regresoActual()
-        actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = 0, indice = 0) }
+        actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = pestana, indice = 0) }
         val i = itemsGaleria().indexOfFirst { it.enUso }
         if (i > 0) actualizar { it.copy(indice = i) }
     }
@@ -2101,8 +2108,7 @@ object Diptico {
         "orden" -> listOf("Ordenar juegos")
         "vistas_consolas" -> listOf("Tus consolas")
         "vistas_juegos" -> listOf("Tus juegos")
-        "temas" -> listOf("Colores", "Fiestas del mundo", "Tus temas")
-        "tienda_temas" -> listOf("Tienda de temas")
+        "temas" -> listOf("Incluidos", "Fechas especiales", "Mis temas", "Tienda")
         "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
         "ia" -> listOf("El cerebro de Bisa")
         "cajas" -> listOf("${Consolas.porId(estado.value.galeriaConsola)?.nombre ?: "Esta consola"}", "Todas las consolas")
@@ -2173,11 +2179,10 @@ object Diptico {
             val detalle = when(v) { "cuadricula" -> "Todas las portadas a la vista"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
             ItemGaleria(v, nombreVista(v), detalle, e.vista == v) { almacen.guardarTexto("vista", v); actualizar { it.copy(vista = v) }; cerrarPanel() }
         }
-        if (e.galeria == "vistas_consolas") return listOf("carpetas", "mosaico", "vitrina", "arriba", "sistemas", "lado", "rueda", "discos", "habitacion").map { v ->
+        if (e.galeria == "vistas_consolas") return VISTAS_CONSOLAS.map { v ->
             val detalle = when (v) {
                 "mosaico" -> "Más consolas a la vista, con una portada y el total de juegos"
                 "vitrina" -> "Carpetas anchas con tres portadas"
-                "habitacion" -> "Biblioteca con estantes y recuerdos"
                 else -> "Vista previa en la otra pantalla"
             }
             ItemGaleria(v, nombreVistaConsolas(v), detalle, e.vistaConsolas == v) { elegirVistaConsolas(v); cerrarPanel() }
@@ -2192,16 +2197,10 @@ object Diptico {
         return when (e.galeria) {
             "temas" -> when (e.galeriaPestana) {
                 0 -> Temas.incluidos.map { t -> ItemGaleria(t.id, t.nombre, if (t.decor != "nada") Temas.nombreDecor(t.decor) else "", actual.id == t.id, t) { elegirTema(t.id) } }
+                3 -> itemsTiendaTemas(e)
                 1 -> Temas.fiestas.map { f -> ItemGaleria(f.tema.id, f.nombre, f.donde, actual.id == f.tema.id, f.tema) { elegirTema(f.tema.id) } }
                 else -> e.temasPropios.map { t -> ItemGaleria(t.id, t.nombre, if (t.id.startsWith("com_")) "De la comunidad" else "Tema personal", actual.id == t.id, t) { elegirTema(t.id) } } +
                     ItemGaleria("_colores", "Mis colores", "Toda la interfaz", false) { abrirGaleria("colores") }
-            }
-            "tienda_temas" -> listOf(ItemGaleria("_enlace", "Abrir enlace", "Pega el enlace HTTPS a un tema o catálogo", false) {
-                abrirTexto("tema_enlace")
-            }) + e.catalogoTemas.map { entrada ->
-                val t = entrada.tema
-                val detalle = listOfNotNull(entrada.autor.ifBlank { null }, if (entrada.audio != null) "Incluye música" else null).joinToString(" · ")
-                ItemGaleria(t.id, t.nombre, detalle, e.temasPropios.any { it.id == t.id }, t) { instalarTemaComunidad(entrada) }
             }
             "colores" -> {
                 val mio = e.temasPropios.firstOrNull { it.id == "mio" } ?: actual
@@ -3268,7 +3267,7 @@ object Diptico {
             return listOf(Opcion("Quitar la búsqueda", "\"${e.buscarAjuste}\" · ${res.size}", Icono.CERRAR) { actualizar { it.copy(buscarAjuste = "", indice = 0) } }) + res
         }
         val elegidos = listOf(
-            "Modo", "Tamaño de letra", "Modo de pantallas", "Intercambiar pantallas", "Teclado", "Música de fondo",
+            "Tienda de temas", "Modo", "Tamaño de letra", "Modo de pantallas", "Intercambiar pantallas", "Teclado", "Música de fondo",
             "Sonidos al moverte", "Fechas especiales", "Efecto de los botones", "Fluidez", "Bisa mientras juegas",
         )
         val lista = mutableListOf(
@@ -3923,7 +3922,7 @@ object Diptico {
     fun recibirPerfilVisual(texto: String) {
         try {
             val v = Experiencia.importar(texto)
-            mostrarDialogo(Dialogo("perfil_visual", "Importar perfil visual", "Universo: ${if (v.universo) "sí" else "no"} · Vidrio: ${if (v.vidrio) "sí" else "no"} · Habitación: ${v.pared}. Tus colecciones y juegos se conservan.", Icono.PALETA)) {
+            mostrarDialogo(Dialogo("perfil_visual", "Importar perfil visual", "Universo: ${if (v.universo) "sí" else "no"} · Vidrio: ${if (v.vidrio) "sí" else "no"}. Tus colecciones y juegos se conservan.", Icono.PALETA)) {
                 aplicarPerfil(v.copy(colecciones = estado.value.experiencia.colecciones))
             }
         } catch (_: Exception) { avisar("Ese archivo no es un perfil visual compatible") }
@@ -3933,28 +3932,6 @@ object Diptico {
         if (id !in estado.value.colecciones) return
         abrirWidgetTipo("coleccion-$id")
         actualizar { it.copy(coleccionVisual = id) }
-    }
-
-    fun objetosHabitacion(e: Estado = estado.value): List<String> = e.pestanas.map { "consola:$it" } +
-        e.colecciones.keys.map { "coleccion:$it" } +
-        e.juegos.filter { (e.datos[it.clave]?.tiempo ?: 0L) > 0L }.sortedByDescending { e.datos[it.clave]?.tiempo }.take(3).map { "juego:${it.clave}" }
-
-    fun moverHabitacion(delta: Int) {
-        val objetos = objetosHabitacion()
-        if (objetos.isEmpty()) return
-        val i = (estado.value.habitacionSel + delta).mod(objetos.size)
-        val id = objetos[i]
-        if (id.startsWith("consola:")) elegirConsola(id.removePrefix("consola:"))
-        actualizar { it.copy(habitacionSel = i) }
-    }
-
-    fun abrirObjetoHabitacion(id: String? = null) {
-        val objeto = id ?: objetosHabitacion().getOrNull(estado.value.habitacionSel) ?: return
-        when {
-            objeto.startsWith("consola:") -> { elegirConsola(objeto.removePrefix("consola:")); entrarSistema() }
-            objeto.startsWith("coleccion:") -> abrirColeccionVisual(objeto.removePrefix("coleccion:"))
-            objeto.startsWith("juego:") -> { elegirConsola("todo"); elegirJuego(objeto.removePrefix("juego:")); entrarSistema() }
-        }
     }
 
     fun fijarFicha() {
@@ -3986,14 +3963,6 @@ object Diptico {
         add(Opcion("Movimiento ambiental", if (v.movimiento) "Suave" else "Reducido", Icono.ESTRELLA, "Apaga el movimiento ambiental y el zoom lento; en partida se mantiene estático.") {
             guardarExperiencia(v.copy(movimiento = !v.movimiento))
         })
-        if (e.vistaConsolas == "habitacion") {
-            add(Opcion("Fondo de los estantes", v.pared, Icono.PALETA) {
-                guardarExperiencia(v.copy(pared = ciclar(Experiencia.paredes, v.pared, 1)))
-            })
-            add(Opcion("Adornos de los estantes", v.adorno, Icono.ESTRELLA) {
-                guardarExperiencia(v.copy(adorno = ciclar(Experiencia.adornos, v.adorno, 1)))
-            })
-        }
         for (nombre in listOf("Jugar", "Explorar", "Ligero")) {
             add(Opcion("Plantilla $nombre", "Personalizable", Icono.PALETA) { plantillaVisual(nombre) })
         }
@@ -4077,6 +4046,30 @@ object Diptico {
         return m[(m.indexOf(c) + 1).mod(m.size)]
     }
 
+    private fun itemsTiendaTemas(e: Estado): List<ItemGaleria> =
+        listOf(ItemGaleria("_enlace", "Importar catálogo", "Pega un enlace HTTPS a un tema o una colección", false) {
+            abrirTexto("tema_enlace")
+        }) + (e.catalogoTemas + TiendaTemas.destacados).distinctBy { it.tema.id }.map { entrada ->
+            val t = entrada.tema
+            val instalada = e.temasPropios.any { it.id == t.id }
+            val detalle = listOfNotNull(
+                entrada.autor.takeIf { it.isNotBlank() },
+                if (entrada.audio != null) "Incluye música" else null,
+                if (instalada) "Instalado" else "Instalar y usar",
+            ).joinToString(" · ")
+            ItemGaleria(t.id, t.nombre, detalle, e.tema == t.id, t) {
+                if (instalada) elegirTemaDeTienda(t.id) else instalarTemaComunidad(entrada)
+            }
+        }
+
+    private fun elegirTemaDeTienda(id: String) {
+        if (estado.value.fiesta != null) {
+            almacen.guardarBool("temaFestivo", false)
+            actualizar { it.copy(temaFestivo = false) }
+        }
+        elegirTema(id)
+    }
+
     private fun cargarCatalogoTemas(enlace: String) {
         if (enlace.isBlank() || trabajosMapa.containsKey("catalogo_temas")) return
         trabajo("catalogo_temas", "Abriendo catálogo de temas")
@@ -4084,7 +4077,7 @@ object Diptico {
             val resultado = withContext(Dispatchers.IO) { runCatching { TiendaTemas.catalogo(enlace) } }
             terminarTrabajo("catalogo_temas")
             resultado.onSuccess { temas ->
-                actualizar { it.copy(catalogoTemas = temas, indice = if (it.galeria == "tienda_temas" && it.panel == Panel.GALERIA) 1 else it.indice) }
+                actualizar { it.copy(catalogoTemas = temas, indice = if (enTiendaTemas(it) && it.panel == Panel.GALERIA) 1 else it.indice) }
                 avisar(if (temas.size == 1) "Tema listo para ver e instalar" else "${temas.size} temas en el catálogo")
             }.onFailure { avisar(it.message ?: "No pude abrir el catálogo.") }
         }
@@ -4098,8 +4091,8 @@ object Diptico {
             terminarTrabajo("instalar_tema")
             resultado.onSuccess { tema ->
                 guardarTemasPropios(listOf(tema) + estado.value.temasPropios.filterNot { it.id == tema.id })
-                elegirTema(tema.id)
-                avisar("${tema.nombre} instalado")
+                elegirTemaDeTienda(tema.id)
+                avisar("${tema.nombre} instalado y aplicado")
             }.onFailure { avisar(it.message ?: "No pude instalar este tema.") }
         }
     }
@@ -4135,8 +4128,8 @@ object Diptico {
                 "Elige tú el color principal, el secundario, los detalles, el fondo y las letras de todo Díptico.",
             ) { abrirGaleria("colores") },
         )
-        lista.add(1, Opcion("Tienda de temas", "Temas de la comunidad", Icono.WEB,
-            "Abre un enlace HTTPS a un tema o catálogo alojado por la comunidad.") { abrirGaleria("tienda_temas") })
+        lista.add(0, Opcion("Tienda de temas", "Explorar e instalar", Icono.PALETA,
+            "Explora la selección de Díptico o importa un catálogo de la comunidad por enlace.") { abrirTiendaTemas() })
         val mio = e.temasPropios.firstOrNull { it.id == "mio" }
         lista += Opcion("Mi tema · fondo", when (mio?.base) { "oscuro" -> "Oscuro"; "claro" -> "Claro"; "oled" -> "Negro puro"; else -> "Según el modo" }, Icono.TEMA, ayuda = "El fondo de tu tema propio: oscuro, claro, negro puro (ideal para OLED) o según el modo.") {
             editarMiTema { it.copy(base = when (it.base) { "auto" -> "oscuro"; "oscuro" -> "oled"; "oled" -> "claro"; else -> "auto" }) }
@@ -4311,12 +4304,13 @@ object Diptico {
     fun editarWidgets() {
         almacen.guardarTexto("inicio", "widgets")
         val primero = widgetsDePagina().firstOrNull() ?: -1
-        actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.ESTUDIO, estudioPestana = 0, estudioMover = false, indice = 0, widgetFoco = -1, estudioZona = "grilla", burbuja = null) }
+        actualizar { it.copy(inicio = "widgets", editandoWidgets = true, widgetSel = primero, panel = Panel.ESTUDIO, estudioPestana = 0, estudioMover = false, indice = 0, widgetFoco = -1, estudioZona = "grilla", burbuja = null, celdaCatalogo = null) }
     }
 
     fun terminarEdicion() {
         almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
-        actualizar { it.copy(editandoWidgets = false, estudioMover = false, panel = if (it.panel == Panel.ESTUDIO) Panel.NINGUNO else it.panel) }
+        actualizar { it.copy(editandoWidgets = false, estudioMover = false, burbuja = null, celdaCatalogo = null,
+            panel = if (it.panel == Panel.ESTUDIO) Panel.NINGUNO else it.panel) }
         avisar("Inicio guardado")
     }
 
@@ -6880,20 +6874,27 @@ object Diptico {
     private val VISTAS = listOf("estante", "carrusel", "abanico", "lomos", "cuadricula", "lista")
     fun nombreVista(v: String) = when (v) { "cuadricula" -> "Galería"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
 
-    val VISTAS_CONSOLAS = listOf("arriba", "lado", "rueda", "sistemas", "carpetas", "discos", "habitacion")
+    val VISTAS_CONSOLAS = listOf("carpetas", "mosaico", "vitrina", "arriba", "sistemas", "lado", "rueda", "discos")
     /** Vistas donde primero se elige la consola (en grande) y después se entra a sus juegos. */
     val VISTAS_CARPETAS = setOf("carpetas", "mosaico", "vitrina")
-    val MODOS_ELEGIR = VISTAS_CARPETAS + setOf("sistemas", "discos", "habitacion")
+    val MODOS_ELEGIR = VISTAS_CARPETAS + setOf("sistemas", "discos")
     fun nombreVistaConsolas(v: String) = when (v) {
         "lado" -> "Al costado"; "rueda" -> "Rueda"; "sistemas" -> "Sistemas"; "carpetas" -> "Carpetas"
-        "mosaico" -> "Mosaico"; "vitrina" -> "Vitrina"; "discos" -> "Discos"; "habitacion" -> "Estantes y recuerdos"; else -> "Arriba"
+        "mosaico" -> "Mosaico"; "vitrina" -> "Vitrina"; "discos" -> "Discos"; else -> "Arriba"
     }
 
     /** Cambia cómo se ven las consolas (arriba, al costado, rueda o sistemas). */
+    internal fun vistaConsolasCompatible(vista: String): String = when {
+        vista == "habitacion" -> "carpetas"
+        vista in VISTAS_CONSOLAS -> vista
+        else -> "arriba"
+    }
+
     fun elegirVistaConsolas(v: String) {
-        almacen.guardarTexto("vistaConsolas", v)
-        actualizar { it.copy(vistaConsolas = v, enSistemas = v in MODOS_ELEGIR) }
-        avisar("Consolas: ${nombreVistaConsolas(v)}")
+        val vista = vistaConsolasCompatible(v)
+        almacen.guardarTexto("vistaConsolas", vista)
+        actualizar { it.copy(vistaConsolas = vista, enSistemas = vista in MODOS_ELEGIR) }
+        avisar("Consolas: ${nombreVistaConsolas(vista)}")
     }
 
     fun cambiarVistaConsolas(d: Int = 1) = elegirVistaConsolas(VISTAS_CONSOLAS[(VISTAS_CONSOLAS.indexOf(estado.value.vistaConsolas) + d).mod(VISTAS_CONSOLAS.size)])
@@ -7651,7 +7652,7 @@ object Diptico {
 
     fun abrirAjustesWidget(i: Int = estado.value.widgetSel) {
         if (!estado.value.editandoWidgets) editarWidgets()
-        actualizar { it.copy(widgetSel = i, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 0, estudioZona = "panel") }
+        actualizar { it.copy(widgetSel = i, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 0, estudioZona = "panel", celdaCatalogo = null) }
     }
 
     /** En el editor: pasar de elegir widgets en el inicio a las opciones del panel (y de vuelta). */
@@ -7712,7 +7713,9 @@ object Diptico {
     fun abrirBurbuja(x: Int, y: Int) {
         val e = estado.value
         if (!e.editandoWidgets) return
-        actualizar { it.copy(burbuja = x.coerceIn(0, Widgets.COLUMNAS - 1) to y.coerceIn(0, Widgets.FILAS - 1), burbujaSel = 0, estudioMover = false) }
+        val celda = x.coerceIn(0, Widgets.COLUMNAS - 1) to y.coerceIn(0, Widgets.FILAS - 1)
+        if (!e.unaPantalla) abrirCatalogoWidgets(celda)
+        else actualizar { it.copy(burbuja = celda, burbujaSel = 0, estudioMover = false) }
         Sonidos.abrir()
     }
 
@@ -7786,16 +7789,17 @@ object Diptico {
         if (!ubicarWidget(i, c)) avisar("No hay espacio para estirarlo tanto")
     }
 
-    fun abrirCatalogoWidgets() {
+    fun abrirCatalogoWidgets(celda: Pair<Int, Int>? = null) {
         if (!estado.value.editandoWidgets) editarWidgets()
-        actualizar { it.copy(panel = Panel.ESTUDIO, estudioPestana = 1, indice = 0) }
+        actualizar { it.copy(panel = Panel.ESTUDIO, estudioPestana = 1, indice = 0,
+            estudioZona = "panel", estudioMover = false, burbuja = null, celdaCatalogo = celda) }
     }
 
     fun cambiarPestanaEstudio(d: Int) = actualizar {
-        it.copy(estudioPestana = (it.estudioPestana + d).mod(PESTANAS_ESTUDIO.size), indice = 0, estudioMover = false)
+        it.copy(estudioPestana = (it.estudioPestana + d).mod(PESTANAS_ESTUDIO.size), indice = 0, estudioMover = false, celdaCatalogo = null)
     }
 
-    fun elegirPestanaEstudio(i: Int) = actualizar { it.copy(estudioPestana = i, indice = 0, estudioMover = false) }
+    fun elegirPestanaEstudio(i: Int) = actualizar { it.copy(estudioPestana = i, indice = 0, estudioMover = false, celdaCatalogo = if (i == 1) it.celdaCatalogo else null) }
 
     fun alternarMoverWidget() {
         val v = !estado.value.estudioMover
@@ -7902,6 +7906,10 @@ object Diptico {
             ) {
                 if (w.visible) {
                     actualizar { it.copy(widgetSel = k, estudioPestana = 0, indice = 0, paginaInicio = w.pagina) }
+                } else if (e.celdaCatalogo != null) {
+                    val (columna, fila) = e.celdaCatalogo
+                    actualizar { it.copy(celdaCatalogo = null) }
+                    ponerEnCelda(k, columna, fila)
                 } else {
                     alternarWidget(k)
                     if (estado.value.widgets[k].visible) {
@@ -7913,10 +7921,25 @@ object Diptico {
         }.sortedBy { if (it.valor == "Agregar") 0 else 1 } + Control(
             "Imagen o GIF propio", "catalogo", "Elegir", "Para agregar", Icono.PORTADA,
             ayuda = "Una foto o un GIF animado de tu consola como widget.", extra = "imagen",
-        ) { pedirArchivoPara("widgetImagen", "image/*") } + Control(
+        ) { celdaPendiente = e.celdaCatalogo; pedirArchivoPara("widgetImagen", "image/*") } + Control(
             "Video corto", "catalogo", "Elegir", "Para agregar", Icono.JUGAR,
             ayuda = "Un clip corto (mp4) que se repite en silencio. Se pausa solo mientras juegas.", extra = "video",
-        ) { pedirArchivoPara("widgetVideo", "video/*") }
+        ) { celdaPendiente = e.celdaCatalogo; pedirArchivoPara("widgetVideo", "video/*") } + listOf(
+            Control("Acceso a un juego", "catalogo", "Agregar", "Para agregar", Icono.CONTINUAR,
+                ayuda = "Usa el juego elegido en el estante.", extra = "atajo") {
+                val juego = estado.value.seleccionado
+                if (juego == null) avisar("Primero elige un juego en el estante") else {
+                    celdaPendiente = e.celdaCatalogo
+                    crearAtajo(juego.clave)
+                    celdaPendiente = null
+                }
+            },
+            Control("Colección nueva", "catalogo", "Crear", "Para agregar", Icono.CARPETA,
+                ayuda = "Crea una colección y añádela a tu inicio.", extra = "coleccion") {
+                celdaPendiente = e.celdaCatalogo
+                abrirTexto("coleccion_nueva")
+            },
+        )
     }
 
     private fun controlesPagina(e: Estado): List<Control> = listOf(
@@ -8317,7 +8340,7 @@ object Diptico {
         actualizar {
             if (!it.editandoWidgets) it.copy(paginaInicio = pagina)
             else it.copy(
-                paginaInicio = pagina, burbuja = null, estudioMover = false,
+                paginaInicio = pagina, burbuja = null, estudioMover = false, celdaCatalogo = null,
                 widgetSel = it.widgets.indexOfFirst { w -> w.visible && w.pagina == pagina },
             )
         }
@@ -8328,7 +8351,7 @@ object Diptico {
         if (!e.editandoWidgets || e.paginas >= 12) return
         val paginas = e.paginas + 1
         almacen.guardarTexto("paginas", paginas.toString())
-        actualizar { it.copy(paginas = paginas, paginaInicio = paginas - 1, widgetSel = -1, estudioMover = false, burbuja = null) }
+        actualizar { it.copy(paginas = paginas, paginaInicio = paginas - 1, widgetSel = -1, estudioMover = false, burbuja = null, celdaCatalogo = null) }
     }
 
     private fun opcionesGrilla(e: Estado): List<Opcion> = listOf(

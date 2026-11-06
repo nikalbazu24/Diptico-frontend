@@ -29,8 +29,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Brush
 import cl.nikalbazu.diptico.R
 
 data class Paleta(
@@ -88,6 +86,22 @@ val SobreUva: Color get() = if (Uva.luminance() > 0.55f) Tinta else Color.White
 
 /** Arma la paleta de fondo, superficies y letras a partir del tema y del modo claro/oscuro. */
 fun paletaDe(t: Tema, oscuroPersona: Boolean): Paleta {
+    val base = paletaBase(t, oscuroPersona)
+    if (t.forma != "cristal") return base
+    val claro = base.fondo.luminance() > 0.45f
+    val fondo = if (t.id == "diptico_vidrio") {
+        if (claro) Color(0xFFE9EDF4) else Color(0xFF10131B)
+    } else base.fondo
+    val velo = if (claro) Color.White else Color(0xFFBDC8E1)
+    return base.copy(
+        fondo = fondo,
+        fondo2 = lerp(fondo, velo, if (claro) 0.72f else 0.045f).copy(alpha = 0.94f),
+        superficie = lerp(fondo, velo, if (claro) 0.92f else 0.11f).copy(alpha = 0.95f),
+        linea = lerp(fondo, base.tinta, if (claro) 0.16f else 0.22f),
+    )
+}
+
+private fun paletaBase(t: Tema, oscuroPersona: Boolean): Paleta {
     if (t.base == "gb") {
         return Paleta(
             fondo = Color(0xFF0F380F), fondo2 = Color(0xFF16461A), superficie = Color(0xFF306230), tinta = Color(0xFFE3F5C8),
@@ -196,15 +210,8 @@ val LocalPaleta = staticCompositionLocalOf { PaletaOscura }
  */
 @Composable
 fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f, zoom: Float = 1f, contenido: @Composable () -> Unit) {
-    val basePaleta = paletaDe(Estilo.tema, oscuro)
-    val cristal = Estilo.tema.forma == "cristal"
-    val paleta = if (cristal) basePaleta.copy(
-        fondo = basePaleta.fondo.copy(alpha = 0.35f),
-        fondo2 = basePaleta.fondo2.copy(alpha = 0.58f),
-        superficie = basePaleta.superficie.copy(alpha = 0.68f),
-        linea = lerp(basePaleta.linea, basePaleta.tinta, 0.26f).copy(alpha = 0.58f),
-    ) else basePaleta
-    BoxWithConstraints(modifier.background(basePaleta.fondo)) {
+    val paleta = paletaDe(Estilo.tema, oscuro)
+    BoxWithConstraints(modifier.background(paleta.fondo)) {
         val alto = if (maxHeight.value > 0f) maxHeight.value else 1f
         // En pantallas verticales (un teléfono) manda el ancho, para que nada quede fuera.
         val corto = if (maxWidth.value > 0f) minOf(alto, maxWidth.value) else alto
@@ -221,35 +228,8 @@ fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f,
         val ancho = maxWidth.value / f
         CompositionLocalProvider(LocalEscala provides Escala(f, ancho, tamTexto), LocalPaleta provides paleta) {
             Box(Modifier.fillMaxSize()) {
-                if (cristal) FondoCristal(basePaleta.fondo)
                 contenido()
                 if (Estilo.decoraciones && Estilo.tema.decor != "nada") Decoracion(Estilo.tema)
-            }
-        }
-    }
-}
-
-/** Difumina solo la luz de fondo. El texto, las carátulas y la captura de juego quedan en capas separadas. */
-@Composable
-private fun FondoCristal(fondo: Color) {
-    val morado = Uva
-    val coral = Coral
-    val azul = Sol
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val ancho = maxWidth.value
-        val alto = maxHeight.value
-        androidx.compose.foundation.Canvas(
-            Modifier.fillMaxSize().then(if (Estilo.efectosCompletos) Modifier.blur(34.dp) else Modifier),
-        ) {
-            val radio = minOf(size.width, size.height) * 0.68f
-            if (ancho <= 0f || alto <= 0f || radio <= 0f) return@Canvas
-            val oscuro = fondo.luminance() < 0.45f
-            listOf(
-                Offset(size.width * 0.16f, size.height * 0.15f) to morado,
-                Offset(size.width * 0.83f, size.height * 0.38f) to coral,
-                Offset(size.width * 0.45f, size.height * 0.96f) to azul,
-            ).forEach { (centro, color) ->
-                drawCircle(Brush.radialGradient(listOf(color.copy(alpha = if (oscuro) 0.74f else 0.58f), Color.Transparent), centro, radio), radio, centro)
             }
         }
     }

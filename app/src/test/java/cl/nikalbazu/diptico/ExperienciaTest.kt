@@ -38,20 +38,11 @@ class ExperienciaTest {
         assertEquals(Experiencia(), Experiencia.leer("incorrecto"))
         assertEquals("medianoche", Experiencia.leer("{\"pared\":\"desconocida\"}").pared)
     }
-    @Test fun habitacionIncluyeColeccionesYRecuerdosEnLaNavegacion() {
-        Diptico.iniciar(androidx.test.core.app.ApplicationProvider.getApplicationContext())
-        val j = cl.nikalbazu.diptico.data.Juego("snes/a", "snes", "Aventura", "a.zip", android.net.Uri.parse("content://test/a"), "a")
-        val e = Estado(listo = true, configurado = true, juegos = listOf(j), juegoSel = j.clave,
-            vistaConsolas = "habitacion", enSistemas = true,
-            colecciones = mapOf("c" to Coleccion("Favoritos", listOf(j.clave))), datos = mapOf(j.clave to cl.nikalbazu.diptico.data.DatosJuego(tiempo = 120)))
-        Diptico.fijarParaPrueba(e)
-        assertEquals(listOf("consola:todo", "consola:snes", "coleccion:c", "juego:snes/a"), Diptico.objetosHabitacion(e))
-        Diptico.moverHabitacion(2)
-        assertEquals(2, Diptico.estado.value.habitacionSel)
-        Diptico.moverHabitacion(1)
-        assertEquals(3, Diptico.estado.value.habitacionSel)
-        Diptico.moverHabitacion(1)
-        assertEquals(0, Diptico.estado.value.habitacionSel)
+    @Test fun losPerfilesAntiguosAbrenCarpetas() {
+        assertEquals("carpetas", Diptico.vistaConsolasCompatible("habitacion"))
+        assertEquals("carpetas", Experiencia.leer("""{"sistemasPerfil":"habitacion"}""").sistemasPerfil)
+        assertEquals("vitrina", Experiencia.leer("""{"sistemasPerfil":"vitrina"}""").sistemasPerfil)
+        assertEquals(false, Diptico.VISTAS_CONSOLAS.contains("habitacion"))
     }
 
 }

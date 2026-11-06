@@ -69,10 +69,19 @@ class NavegacionTest {
         assertEquals(Panel.APPS, Diptico.estado.value.panel)
     }
 
+    @Test fun tiendaTieneTemasDisponiblesSinEnlace() {
+        val galeria = Estado(galeria = "temas", galeriaPestana = 3)
+        assertEquals("Tienda", Diptico.pestanasGaleria("temas")[3])
+        val temas = Diptico.itemsGaleria(galeria)
+        assertEquals("_enlace", temas.first().id)
+        assertTrue(temas.drop(1).size >= 3)
+        assertTrue(temas.drop(1).all { it.tema != null })
+    }
+
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("centro-bisa-1").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("cristal-accesos-2").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

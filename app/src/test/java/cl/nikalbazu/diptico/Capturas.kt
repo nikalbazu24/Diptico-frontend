@@ -1140,12 +1140,19 @@ class Capturas {
         Tema("mio", "Mi tema", 0xFF2EC4A6, 0xFFFFC93C, 0xFFFF5D8F, propio = true, fondo = 0xFF10243A, tinta = 0xFFE8F4FF),
     )
     @Config(qualifiers = ABAJO)
-    @Test fun visual_habitacion_abajo() = foto("visual_habitacion_abajo", base().copy(vistaConsolas = "habitacion", enSistemas = true), Rol.INFERIOR, mi = 1)
+
+    @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 3), Rol.INFERIOR, mi = 1)
+
+    @Test fun visual_cristal_y_barra() = foto("visual_cristal_y_barra", base(), Rol.SUPERIOR, tema = Temas.incluidos.first { it.id == "diptico_vidrio" })
+
+    @Test fun visual_catalogo_widgets_arriba() = foto("visual_catalogo_widgets_arriba",
+        base().copy(inicio = "widgets", panel = Panel.ESTUDIO, editandoWidgets = true, estudioPestana = 1,
+            estudioZona = "panel", celdaCatalogo = 2 to 1), Rol.SUPERIOR)
 
     @Test fun visual_estudio_arriba() = foto("visual_estudio_arriba", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true), Rol.SUPERIOR)
 
     @Config(qualifiers = ABAJO)
-    @Test fun visual_estudio_previa_abajo() = foto("visual_estudio_previa_abajo", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, vistaConsolas = "habitacion"), Rol.INFERIOR, mi = 1)
+    @Test fun visual_estudio_previa_abajo() = foto("visual_estudio_previa_abajo", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, vistaConsolas = "carpetas"), Rol.INFERIOR, mi = 1)
 
     @Test fun visual_coleccion_arriba() = foto("visual_coleccion_arriba", base().copy(panel = Panel.WIDGET, coleccionVisual = "muestra", colecciones = mapOf("muestra" to cl.nikalbazu.diptico.estado.Coleccion("Aventuras", juegos.map { it.clave }))), Rol.SUPERIOR)
 

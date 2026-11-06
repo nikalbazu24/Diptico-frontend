@@ -1,4 +1,4 @@
-- **Agregado:** Díptico Cristal, tienda de temas comunitarios por enlace, nuevas cajas y vistas Mosaico y Vitrina.
-- **Actualizado:** Barra superior, Bisa, controles personalizados, arranque y fuentes de imágenes.
-- **Corregido:** Accesos fantasma y duplicados de Android, acciones del cajón en dos pantallas y espera de Ajustes con el atajo predeterminado.
-- **Retirado:** Entrada Estudio visual y creación de temas con IA. Los widgets se editan desde su inicio.
+- **Agregado** Suelta un widget en la zona Quitar widget y explora temas instalables desde la tienda.
+- **Corregido** En dos pantallas, el lienzo de widgets queda libre y el catálogo aparece abajo.
+- **Actualizado** Díptico Cristal usa tonos neutros y la barra se integra con las carátulas y el encabezado de widgets.
+- **Retirado** La vista Habitación pasa a Carpetas si la tenías guardada.

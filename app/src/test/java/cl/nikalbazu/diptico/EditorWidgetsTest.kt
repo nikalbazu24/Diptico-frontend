@@ -122,6 +122,33 @@ class EditorWidgetsTest {
         assertTrue(Diptico.estado.value.editandoWidgets)
     }
 
+    @Test fun soltarEnZonaDeQuitarOcultaElWidget() {
+        abrir()
+        val grilla = regla.onNodeWithTag("paginas-widgets")
+        val vista = grilla.fetchSemanticsNode().boundsInRoot
+        val centro = regla.onNodeWithContentDescription("Cronómetro", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.center - vista.topLeft
+        grilla.performTouchInput {
+            down(centro)
+            moveTo(Offset(vista.width / 2f, vista.height * 0.9f))
+        }
+        assertTrue(Diptico.estado.value.widgets.first().visible)
+        grilla.performTouchInput { up() }
+        assertEquals(false, Diptico.estado.value.widgets.first().visible)
+        assertTrue(Diptico.estado.value.editandoWidgets)
+    }
+
+    @Test fun agregarEnDosPantallasUsaElCatalogoSinBurbuja() {
+        preparar(listOf(reloj))
+        Diptico.actualizar { it.copy(dosDisponibles = true, modoPantallas = "dos") }
+        Diptico.abrirBurbuja(2, 1)
+        val e = Diptico.estado.value
+        assertEquals(null, e.burbuja)
+        assertEquals(2 to 1, e.celdaCatalogo)
+        assertEquals(1, e.estudioPestana)
+        assertEquals("panel", e.estudioZona)
+    }
+
     @Test fun unaPaginaLlenaConservaElWidgetEnOrigen() {
         val llena = Widget("juego", 0, 0, 6, 4, pagina = 1)
         val originales = listOf(reloj, llena)

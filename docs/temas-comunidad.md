@@ -1,6 +1,6 @@
 # Temas de la comunidad para Díptico
 
-Abre **Ajustes → Temas → Tienda de temas → Abrir enlace**. Pega la dirección HTTPS al archivo JSON del tema. También sirven los enlaces de GitHub que muestran el archivo.
+Abre **Ajustes → Temas → Tienda de temas** para ver los destacados. Usa **Importar catálogo** para agregar temas de la comunidad. Pega la dirección HTTPS al archivo JSON del tema. También sirven los enlaces de GitHub que muestran el archivo.
 
 Díptico muestra el nombre, el autor y los colores antes de instalar. Si el tema incluye música, se descarga al instalar. Para escucharla, activa la música según el tema en los ajustes de Música.
 

@@ -52,7 +52,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 (e.panel in setOf(Panel.MENU, Panel.APPS, Panel.GALERIA, Panel.ESTUDIO) || (rol == Rol.INFERIOR && e.inicio != "widgets"))) {
                 e.seleccionado?.takeIf { (it.arte ?: it.portada)?.scheme?.let { s -> s != "app" } == true }?.let { juego ->
                     ArteJuego(juego, preferirArte = true, maxLado = 320,
-                        modifier = Modifier.fillMaxSize().blur(34.dp).graphicsLayer { alpha = 0.42f })
+                        modifier = Modifier.fillMaxSize().blur(24.dp).graphicsLayer { alpha = 0.24f })
                 }
             }
             Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {

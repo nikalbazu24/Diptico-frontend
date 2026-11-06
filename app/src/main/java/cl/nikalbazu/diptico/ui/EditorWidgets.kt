@@ -51,6 +51,13 @@ internal data class MedidasEditorWidgets(
     val pasoX = celdaAn + hueco
     val pasoY = celdaAl + hueco
 
+    fun zonaQuitar(): Rect {
+        val anchoZona = minOf(ancho * 0.60f, manija * 5f)
+        val altoZona = minOf(alto * 0.28f, manija * 1.30f)
+        val pie = (alto - margen).coerceAtLeast(altoZona)
+        return Rect((ancho - anchoZona) / 2f, pie - altoZona, (ancho + anchoZona) / 2f, pie)
+    }
+
     fun ancho(celdas: Int) = pasoX * celdas - hueco
     fun alto(celdas: Int) = pasoY * celdas - hueco
 
@@ -67,6 +74,7 @@ internal data class MedidasEditorWidgets(
 
 internal class ArrastreWidget(val indice: Int, val original: Widget, val estirando: Boolean) {
     var delta by mutableStateOf(Offset.Zero)
+    var sobreQuitar by mutableStateOf(false)
 
     fun tamano(m: MedidasEditorWidgets): Offset = Offset(
         (m.ancho(original.an) + delta.x).coerceIn(m.celdaAn, m.ancho((m.columnas - original.x).coerceAtLeast(1))),
@@ -114,6 +122,7 @@ internal fun Modifier.editarConDedo(
                 if (gesto == null) return
                 gesto.delta = delta
                 if (gesto.estirando) return
+                gesto.sobreQuitar = m.zonaQuitar().contains(posicion)
 
                 val zona = m.manija.coerceAtMost(m.ancho / 6)
                 val lado = when {
@@ -147,6 +156,7 @@ internal fun Modifier.editarConDedo(
                         val (an, al) = m.celdas(gesto.tamano(m), gesto.original)
                         Diptico.redimensionarWidget(gesto.indice, an, al)
                     }
+                    gesto.sobreQuitar -> Diptico.quitarWidget(gesto.indice)
                     else -> {
                         val w = gesto.original
                         Diptico.ponerWidget(
@@ -159,6 +169,28 @@ internal fun Modifier.editarConDedo(
                 espera?.cancel()
                 mostrar(null)
             }
+        }
+    }
+}
+
+@Composable
+internal fun ZonaQuitarWidget(m: MedidasEditorWidgets, activa: Boolean) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val forma = RoundedCornerShape(esc.d(14))
+    val rect = m.zonaQuitar()
+    val color = Color(0xFFBF3F55)
+    with(LocalDensity.current) {
+        Row(
+            Modifier.offset(rect.left.toDp(), rect.top.toDp()).size(rect.width.toDp(), rect.height.toDp())
+                .clip(forma).background(if (activa) color else p.fondo)
+                .border(esc.d(1), if (activa) Color.White.copy(alpha = 0.65f) else p.linea, forma),
+            horizontalArrangement = Arrangement.spacedBy(esc.d(7), Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val tinta = if (activa) Color.White else p.tinta
+            IconoDiptico(cl.nikalbazu.diptico.estado.Icono.BORRAR, tinta, 17f)
+            Texto(if (activa) "Suelta para quitar" else "Quitar widget", 13f, color = tinta, lineas = 1)
         }
     }
 }

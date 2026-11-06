@@ -114,9 +114,6 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                     else MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
                 }
                 Seccion.APARIENCIA -> when {
-                    t.endsWith("de los estantes") -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) {
-                        Habitacion(ev, Modifier.fillMaxSize())
-                    }
                     t.startsWith("Efecto") || t == "Modo" -> Marco { PreviaBotonesGrande(e) }
                     t.contains("cono") -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(vistaConsolas = "arriba"), 1) }
                     else -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }

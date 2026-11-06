@@ -147,6 +147,7 @@ private fun Caratulas(e: Estado) {
                     Detalle("Abre el menú con Start › Biblioteca para elegirla.", 15f)
                 }
             }
+            if (e.sesion == null) BarraFlotante(e, null, Modifier.align(Alignment.BottomCenter))
             return@Box
         }
         Heroe(juego, if (angosta) 1f else 0.86f)
@@ -248,119 +249,73 @@ fun Heroe(juego: Juego, ancho: Float) {
 /** Qué imagen va en grande en el inicio: la elegida por juego y la de todos ("arte" o "portada"). */
 val LocalHeroes = androidx.compose.runtime.staticCompositionLocalOf { emptyMap<String, String>() to "arte" }
 
-/** Un botón con la tecla del control que lo hace: se toca o se aprieta. */
-@Composable
-private fun AccionRapida(tecla: String, texto: String, accion: () -> Unit) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Row(
-        Modifier.clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = 0.85f)).clickable { accion() }
-            .padding(start = esc.d(4), end = esc.d(11), top = esc.d(4), bottom = esc.d(4)),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(esc.d(21)).clip(CircleShape).background(p.fondo), contentAlignment = Alignment.Center) { Texto(tecla, 10.5f, traducir = false) }
-        Spacer(Modifier.width(esc.d(6)))
-        Texto(texto, 12.5f, lineas = 1)
-    }
-}
-
-/** Accesos del inicio. En Widgets ocupa una fila corta alineada a la derecha. */
+/** Los accesos comparten una superficie con la escena o se alinean con el saludo de widgets. */
 @Composable
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val compacta = arriba && esc.angosta
-    val posicion = if (arriba) modifier else modifier.fillMaxWidth().padding(bottom = esc.d(14), start = esc.d(12), end = esc.d(12))
-    val forma = RoundedCornerShape(esc.d(22))
+    val compacta = arriba || esc.angosta
     val widgets = e.inicio == "widgets"
-    Box(posicion, contentAlignment = if (arriba) Alignment.TopEnd else Alignment.BottomCenter) {
-        Column(horizontalAlignment = Alignment.End) {
-            if (juego != null && !esc.angosta) {
-                ConsejoBisa(e, juego)
-                Spacer(Modifier.height(esc.d(8)))
+    val base = if (arriba) modifier else modifier.fillMaxWidth().background(
+        Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.60f), p.fondo)),
+    )
+    Column(base) {
+        if (!arriba) Spacer(Modifier.fillMaxWidth().height(esc.d(1)).background(p.linea.copy(alpha = 0.62f)))
+        Row(
+            Modifier.then(if (arriba) Modifier else Modifier.fillMaxWidth())
+                .horizontalScroll(rememberScrollState()).padding(
+                    horizontal = esc.d(if (arriba) 0 else if (compacta) 10 else 24),
+                    vertical = esc.d(if (arriba) 0 else 6),
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(esc.d(if (compacta) 2 else 8)),
+        ) {
+            if (juego != null) {
+                BotonAcceso(Icono.JUGAR, "Jugar", compacta = false, principal = true) { Diptico.jugar() }
+                BotonAcceso(Icono.INFO, "Ficha", compacta) { Diptico.abrirFicha() }
+                BotonAcceso(Icono.MENU, "Opciones", compacta) { Diptico.abrirRapido() }
+                Spacer(Modifier.padding(horizontal = esc.d(4)).size(esc.d(1), esc.d(22)).background(p.linea))
             }
-            Row(
-                Modifier.shadow(esc.d(8), forma).clip(forma)
-                    .background(p.fondo2.copy(alpha = 0.96f)).border(esc.d(1), p.linea, forma)
-                    .horizontalScroll(rememberScrollState()).padding(esc.d(5)),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(esc.d(if (compacta) 2 else 5)),
-            ) {
-                if (juego != null) {
-                    BotonJugar()
-                    AccionRapida("X", "Ficha") { Diptico.abrirFicha() }
-                    if (!esc.angosta) AccionRapida("Y", "Opciones") { Diptico.abrirRapido() }
-                    SeparadorBarra()
-                }
-                IconoBarra(Icono.BUSCAR, "Buscar", compacta) { Diptico.abrirBuscar() }
-                IconoBarra(Icono.APPS, "Apps", compacta) { Diptico.abrirApps() }
-                IconoBarra(if (widgets) Icono.PORTADA else Icono.VISTA, if (widgets) "Carátulas" else "Widgets", compacta) {
-                    Diptico.alternarInicio()
-                }
-                if (widgets) IconoBarra(Icono.EDITAR, "Editar", compacta) { Diptico.editarWidgets() }
-                SeparadorBarra()
-                val bisa = RoundedCornerShape(esc.d(15))
-                Column(
-                    Modifier.clip(bisa).background(Uva.copy(alpha = 0.16f))
-                        .combinedClickable(onClickLabel = "Abrir Bisa", onLongClickLabel = "Hablar con Bisa",
-                            onLongClick = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() }
-                        .padding(horizontal = esc.d(if (compacta) 5 else 9), vertical = esc.d(3)),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(if (compacta) 23 else 20).value)
-                    if (!compacta) Texto("Bisa", 10f, color = p.tinta, lineas = 1)
-                }
-                IconoBarra(Icono.AJUSTES, "Ajustes", compacta, destacada = true) { Diptico.abrirMenu() }
+            BotonAcceso(Icono.BUSCAR, "Buscar", compacta) { Diptico.abrirBuscar() }
+            BotonAcceso(Icono.APPS, "Apps", compacta) { Diptico.abrirApps() }
+            BotonAcceso(if (widgets) Icono.PORTADA else Icono.VISTA, if (widgets) "Carátulas" else "Widgets", compacta) {
+                Diptico.alternarInicio()
             }
+            if (widgets) BotonAcceso(Icono.EDITAR, "Editar widgets", compacta) { Diptico.editarWidgets() }
+            BotonAcceso(Icono.BISA, "Bisa", compacta, alMantener = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() }
+            BotonAcceso(Icono.AJUSTES, "Ajustes", compacta) { Diptico.abrirMenu() }
         }
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun SeparadorBarra() {
+private fun BotonAcceso(
+    icono: Icono,
+    texto: String,
+    compacta: Boolean,
+    principal: Boolean = false,
+    alMantener: (() -> Unit)? = null,
+    accion: () -> Unit,
+) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    Box(Modifier.padding(horizontal = esc.d(2)).size(esc.d(1), esc.d(24)).background(p.linea))
-}
-
-@Composable
-private fun IconoBarra(icono: Icono, texto: String, compacta: Boolean, destacada: Boolean = false, accion: () -> Unit) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val forma = RoundedCornerShape(esc.d(14))
-    Column(
-        Modifier.clip(forma).then(if (destacada) Modifier.fondoBoton(Uva) else Modifier.background(p.superficie.copy(alpha = 0.68f)))
-            .clickable(onClickLabel = texto, onClick = accion)
-            .padding(horizontal = esc.d(if (compacta) 6 else 8), vertical = esc.d(if (compacta) 6 else 4)),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    val forma = RoundedCornerShape(esc.d(11))
+    val pulsar = if (alMantener == null) Modifier.clickable(onClickLabel = texto, onClick = accion)
+    else Modifier.combinedClickable(onClickLabel = texto, onLongClickLabel = "Hablar con Bisa", onLongClick = alMantener, onClick = accion)
+    Row(
+        Modifier.clip(forma).then(if (principal) Modifier.background(p.superficie) else Modifier)
+            .then(pulsar).height(esc.d(36)).padding(horizontal = esc.d(if (compacta) 7 else 8)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(esc.d(5)),
     ) {
-        val tinta = if (destacada) SobreUva else p.tinta
-        IconoDiptico(icono, tinta, 17f, acento = if (destacada) tinta else Coral)
-        if (!compacta) Texto(texto, 10f, color = tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
+        val tinta = if (principal) p.acentoTexto else p.tinta
+        IconoDiptico(icono, tinta, 17f, acento = tinta)
+        if (!compacta) Texto(texto, 12f, color = tinta, familia = Nunito, lineas = 1)
     }
 }
 
-/** Una burbuja de diálogo de Bisa con algo útil sobre el juego elegido. Al tocarla, Bisa responde. */
-@Composable
-private fun ConsejoBisa(e: Estado, j: Juego) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val d = e.datos[j.clave]
-    val (texto, pregunta) = when {
-        d == null || d.tiempo == 0L -> "¿Quieres saber de qué se trata ${j.titulo}?" to "Cuéntame de qué se trata ${j.titulo} y si me va a gustar, sin spoilers."
-        d.paso.isNotBlank() -> "¿Te ayudo con tu próximo paso?" to "En ${j.titulo} mi próximo paso es: \"${d.paso}\". Dame una pista suave."
-        d.tiempo > 10 * 3600 -> "Llevas harto en este juego. ¿Te digo qué te falta?" to "Llevo muchas horas en ${j.titulo}. ¿Qué cosas importantes o secretos me podría estar perdiendo?"
-        else -> "¿Un truco para ${j.titulo}?" to "Dame un buen truco o consejo para ${j.titulo}."
-    }
-    Box(
-        Modifier.widthIn(max = esc.d(250)).clip(RoundedCornerShape(topStart = esc.d(16), topEnd = esc.d(16), bottomStart = esc.d(16), bottomEnd = esc.d(4)))
-            .background(p.superficie.copy(alpha = 0.92f)).clickable { Diptico.abrirAsistente(); Diptico.preguntar(pregunta) }
-            .padding(horizontal = esc.d(12), vertical = esc.d(8)),
-    ) { Detalle(texto, 13f, color = p.tinta, lineas = 2) }
-}
-
-/** Consola, título (o logo), tiempo jugado y el próximo paso. */
 @Composable
 fun InfoJuego(e: Estado, j: Juego, tamTitulo: Float, conPaso: Boolean = true) {
     val p = LocalPaleta.current

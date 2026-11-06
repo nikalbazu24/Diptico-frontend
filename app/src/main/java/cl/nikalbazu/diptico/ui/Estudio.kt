@@ -57,15 +57,12 @@ fun PanelEstudio(e: Estado) {
                 .sinCerrar().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10)),
         ) {
             // El estado de la página y el botón de salida se mantienen visibles durante toda la edición.
-            val cabecera = RoundedCornerShape(esc.d(17))
             Row(
-                Modifier.fillMaxWidth().clip(cabecera)
-                    .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Uva.copy(alpha = 0.30f), p.superficie)))
-                    .padding(horizontal = esc.d(10), vertical = esc.d(8)),
+                Modifier.fillMaxWidth().padding(horizontal = esc.d(4), vertical = esc.d(5)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(esc.d(36)).clip(RoundedCornerShape(esc.d(11))).fondoBoton(Uva), contentAlignment = Alignment.Center) {
-                    IconoDiptico(Icono.EDITAR, SobreUva, 18f, acento = SobreUva)
+                Box(Modifier.size(esc.d(30)).clip(RoundedCornerShape(esc.d(9))).background(p.superficie), contentAlignment = Alignment.Center) {
+                    IconoDiptico(Icono.EDITAR, p.acentoTexto, 17f)
                 }
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
@@ -95,7 +92,8 @@ fun PanelEstudio(e: Estado) {
             }
             Spacer(Modifier.height(esc.d(6)))
             val guia = when (e.estudioPestana) {
-                1 -> "Elige lo que quieres añadir al inicio."
+                1 -> e.celdaCatalogo?.let { (x, y) -> "Agregar en columna ${x + 1} · fila ${y + 1}" }
+                    ?: "Elige un widget para añadirlo a esta página."
                 2 -> "Ajusta el espacio, el fondo y la distribución."
                 else -> "Elige un widget para cambiar su forma y estilo."
             }

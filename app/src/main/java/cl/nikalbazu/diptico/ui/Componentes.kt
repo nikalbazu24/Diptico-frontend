@@ -178,16 +178,6 @@ fun Modifier.fondoBoton(color: Color): Modifier = if (Estilo.tema.forma == "pixe
     drawRect(Color.White.copy(alpha = 0.18f), size = androidx.compose.ui.geometry.Size(b, size.height))
     drawRect(Color.Black.copy(alpha = 0.3f), topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - b), size = androidx.compose.ui.geometry.Size(size.width, b))
     drawRect(Color.Black.copy(alpha = 0.22f), topLeft = androidx.compose.ui.geometry.Offset(size.width - b, 0f), size = androidx.compose.ui.geometry.Size(b, size.height))
-} else if (Estilo.tema.forma == "cristal") {
-    this.background(Brush.verticalGradient(listOf(
-        androidx.compose.ui.graphics.lerp(color, Color.White, 0.29f).copy(alpha = 0.87f),
-        color.copy(alpha = 0.72f),
-        androidx.compose.ui.graphics.lerp(color, Color.Black, 0.18f).copy(alpha = 0.86f),
-    ))).drawWithContent {
-        drawContent()
-        drawLine(Color.White.copy(alpha = 0.52f), androidx.compose.ui.geometry.Offset.Zero,
-            androidx.compose.ui.geometry.Offset(size.width, 0f), 2f * density)
-    }
 } else when (Estilo.efecto) {
     "degradado" -> this.background(
         Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(color, Color.White, 0.2f), color, androidx.compose.ui.graphics.lerp(color, Color.Black, 0.28f))),

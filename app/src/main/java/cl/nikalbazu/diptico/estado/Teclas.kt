@@ -390,7 +390,7 @@ object Teclas {
         }
 
         // Inicio con widgets: ↑ desde el estante entra a los widgets; ahí la cruceta salta entre ellos, A abre y B vuelve.
-        if (!hayPanel && e.sesion == null && e.inicio == "widgets" && !e.editandoWidgets && !(e.vistaConsolas == "habitacion" && e.enSistemas)) {
+        if (!hayPanel && e.sesion == null && e.inicio == "widgets" && !e.editandoWidgets) {
             if (e.widgetFoco >= 0) {
                 if (abajo) {
                     dir(code)?.let { (dx, dy) -> Diptico.moverFocoWidget(dx, dy); return true }
@@ -416,18 +416,17 @@ object Teclas {
             if (abajo) {
                 // En Carpetas (una grilla) ↑ ↓ saltan de fila; en Sistemas todo avanza de a uno.
                 dir(code)?.let { (dx, dy) ->
-                    if (e.vistaConsolas == "habitacion") { Diptico.moverHabitacion(if (dy != 0) dy * columnasHabitacion else dx); return true }
                     Diptico.cambiarConsola(if (dy != 0 && e.vistaConsolas in Diptico.VISTAS_CARPETAS) dy * columnasCarpetas else if (dx + dy < 0) -1 else 1); return true }
                 if ((code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) && ev.repeatCount == 0) {
-                    if (e.vistaConsolas == "habitacion") Diptico.moverHabitacion(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1) else Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
+                    Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
                 }
                 if (esA(code) || esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y || code == KeyEvent.KEYCODE_BUTTON_X) return true
             }
             if (arriba) {
                 when {
-                    esA(code) -> { if (e.vistaConsolas == "habitacion") Diptico.abrirObjetoHabitacion() else Diptico.entrarSistema(); return true }
+                    esA(code) -> { Diptico.entrarSistema(); return true }
                     esB(code) -> return true
-                    code == KeyEvent.KEYCODE_BUTTON_X -> { if (e.vistaConsolas == "habitacion") Diptico.abrirMenu(Seccion.APARIENCIA) else Diptico.abrirEditarConsola(e.consolaSel); return true }
+                    code == KeyEvent.KEYCODE_BUTTON_X -> { Diptico.abrirEditarConsola(e.consolaSel); return true }
                     code == KeyEvent.KEYCODE_BUTTON_Y -> { Diptico.sorprendeme(); Diptico.entrarSistema(); return true }
                 }
             }
@@ -540,7 +539,6 @@ object Teclas {
     var columnasApps = 5
     @Volatile
     var columnasCarpetas = 3
-    var columnasHabitacion = 3
 
     @Volatile
     var columnasMenu = 3

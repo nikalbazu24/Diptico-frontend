@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cristal-accesos-2"
-    const val NOMBRE = "Cristal y accesos rápidos"
+    const val ID = "cristal-editor-3"
+    const val NOMBRE = "Tienda y edición de widgets"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -177,7 +177,7 @@ object Novedades {
             Pagina("Habla con un gesto", "En Inicio pulsa Start + L3 o toca a Bisa. Start + R3 abre las apps. Puedes cambiar ambos atajos en Controles. Mantén su cara para dictar. En el chat puedes usar X para escribir o L1 para hablar.", Icono.MICROFONO, 0xFFBCA4FF),
             Pagina("Bisa durante una partida", "Con una pantalla libre tienes el chat y sus accesos. Cuando el juego usa toda la consola, usa la burbuja y sus acciones rápidas si Android le dio permiso.", Icono.PANTALLAS, 0xFF73ABFF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("cristal-accesos-2", "Cristal y accesos rápidos", listOf(
             Pagina("Díptico Cristal", "Prueba el tema en Ajustes › Temas. La luz y el arte del fondo se difuminan detrás de la interfaz.", Icono.PALETA, 0xFFBCA4FF),
             Pagina("Agregado · Carpetas y cajas", "En Estante prueba Mosaico, Vitrina y las cajas Panorámica, Instantánea y Casete. Edita los widgets desde su propio inicio.", Icono.FORMA, 0xFFFFB46A),
             Pagina("Actualizado · Barra de arriba", "Buscar, Apps, Widgets y Bisa ahora se distinguen mejor. Ajustes tiene su propio botón y Start lo abre al soltarlo con los atajos predeterminados.", Icono.AJUSTES, 0xFFBCA4FF),
@@ -185,6 +185,13 @@ object Novedades {
             Pagina("Corregido · Biblioteca", "Se filtran accesos de Android que ya no tienen una app disponible y se evitan duplicados entre Android, Ports y accesos importados.", Icono.BIBLIOTECA, 0xFF73ABFF),
             Pagina("Apps y atajos a tu gusto", "En dos pantallas, las opciones aparecen al elegir una app. En Controles puedes aprender un botón y combinarlo con Start.", Icono.MANDO, 0xFF73ABFF),
             Pagina("Bisa, tu copiloto", "Pídele una pista sin spoilers y cuéntale el punto en que estás. Si ya dejaste una nota, Bisa puede usarla.", Icono.BISA, 0xFF57DCC7),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Agregado · Quitar al arrastrar", "Mueve el widget hasta la zona Quitar widget al pie de la pantalla. Cuando se destaque, suéltalo para quitarlo del inicio.", Icono.BORRAR, 0xFFDB7187),
+            Pagina("Corregido · Edición en dos pantallas", "Arriba queda la cuadrícula y abajo el catálogo. Mantén una celda o pulsa Y en la cuadrícula para agregar en ese lugar.", Icono.EDITAR, 0xFF8F89DF),
+            Pagina("Actualizado · Cristal y accesos", "Cristal usa tonos neutros, con desenfoque suave. Los accesos se alinean con el fondo del juego y con el encabezado de widgets.", Icono.PALETA, 0xFFA8B2D2),
+            Pagina("Agregado · Tienda visible", "Abre Ajustes › Temas › Tienda de temas. Ya hay temas para previsualizar e instalar, y puedes importar más por enlace.", Icono.WEB, 0xFF77BDB8),
+            Pagina("Retirado · Habitación", "La vista Habitación sale de la biblioteca. Si la usabas, Díptico abre tus consolas en Carpetas.", Icono.CARPETA, 0xFFDBB386),
         )),
     )
 

@@ -65,7 +65,7 @@ object Temas {
 
     val incluidos = listOf(
         Tema("diptico", "Díptico", 0xFF6B4EFF, 0xFFFF7A59, 0xFFFFC93C),
-        Tema("diptico_vidrio", "Díptico Cristal", 0xFF8A78FA, 0xFFFF8A83, 0xFFACDCFF, forma = "cristal"),
+        Tema("diptico_vidrio", "Díptico Cristal", 0xFF6A60BD, 0xFFADB4D1, 0xFFCAD3E2, forma = "cristal"),
         // Mundo de bloques: pasto, tierra y diamante; letra de píxeles, esquinas escalonadas, sonidos de madera y piano tranquilo.
         Tema(
             "bloques", "Mundo de bloques", 0xFF62B33F, 0xFFA0703F, 0xFF5CE1E6, "oscuro", "bloques",
