@@ -391,7 +391,8 @@ fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
     val a2 = Color(t.acento2)
     val a3 = Color(t.acento3)
     Box(Modifier.fillMaxSize().background(pal.fondo)) {
-        Box(Modifier.align(Alignment.TopEnd).size(esc.d(160)).background(Brush.radialGradient(listOf(a.copy(alpha = 0.35f), Color.Transparent))))
+        androidx.compose.runtime.CompositionLocalProvider(LocalPaleta provides pal) { TramaTema(t) }
+        if (t.trama.isBlank()) Box(Modifier.align(Alignment.TopEnd).size(esc.d(160)).background(Brush.radialGradient(listOf(a.copy(alpha = 0.23f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(esc.d(12)), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(esc.d(14)).clip(CircleShape).background(a))
@@ -402,14 +403,16 @@ fun PreviaTema(t: cl.nikalbazu.diptico.estado.Tema, oscuro: Boolean) {
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.Bottom) {
                 listOf(a, a2, a3, a.copy(alpha = 0.6f)).forEachIndexed { i, c ->
                     Box(
-                        Modifier.weight(1f).fillMaxHeight(if (i == 0) 1f else 0.82f).clip(RoundedCornerShape(esc.d(8)))
+                        Modifier.weight(1f).fillMaxHeight(if (i == 0) 1f else 0.82f)
+                            .clip(formaTema(esc.d(8), 0, androidx.compose.foundation.shape.RoundedCornerShape(esc.d(8)), t.forma))
                             .background(Brush.verticalGradient(listOf(c, lerpColor(c, pal.fondo, 0.45f)))),
                     )
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    Modifier.clip(RoundedCornerShape(50)).background(Brush.linearGradient(listOf(a, a2)))
+                    Modifier.clip(formaTema(null, 50, androidx.compose.foundation.shape.RoundedCornerShape(50), t.forma))
+                        .background(if (t.acabado == "liso") Brush.linearGradient(listOf(a, a)) else Brush.linearGradient(listOf(a, a2)))
                         .padding(horizontal = esc.d(12), vertical = esc.d(5)),
                 ) { Texto("▶ Jugar", 11.5f, color = if (a.luminance() > 0.55f) Tinta else Color.White) }
                 Spacer(Modifier.width(esc.d(8)))

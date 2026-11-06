@@ -1,6 +1,6 @@
 # Temas de la comunidad para Díptico
 
-Abre **Ajustes → Temas → Tienda de temas** para ver los destacados. Usa **Importar catálogo** para agregar temas de la comunidad. Pega la dirección HTTPS al archivo JSON del tema. También sirven los enlaces de GitHub que muestran el archivo.
+Descarga los temas desde la [web de Díptico](https://diptico-temas.nickalbazu.chatgpt.site). En la app abre **Ajustes → Temas → Importar tema** y selecciona el JSON. También puedes usar **Importar por enlace**.
 
 Díptico muestra el nombre, el autor y los colores antes de instalar. Si el tema incluye música, se descarga al instalar. Para escucharla, activa la música según el tema en los ajustes de Música.
 
@@ -28,3 +28,5 @@ Guarda un archivo llamado `tema.json` con esta estructura y publícalo en tu rep
 - `base` acepta `auto`, `claro`, `oscuro` u `oled`. `forma` acepta `cristal`, `pixel` o el valor vacío.
 - `audio` es opcional. Acepta una ruta relativa al JSON o un enlace HTTPS directo a MP3, OGG, M4A o WAV de hasta 16 MB. Comparte música con autorización para distribuirla.
 - Puedes publicar hasta 50 temas juntos en un JSON con la estructura `{"temas": [...]}`. La lista debe contener los objetos completos de cada tema.
+
+Los campos opcionales `descripcion`, `trama`, `acabado` y `pistaBase` definen la explicación, la textura, el estilo de los botones y la música integrada. También puedes usar `recta`, `bisel` o `capsula` en `forma`.

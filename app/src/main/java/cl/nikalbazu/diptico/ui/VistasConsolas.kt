@@ -268,7 +268,7 @@ fun CabeceraSistema(e: Estado) {
 
 /** En la otra pantalla, en modo Sistemas: la consola elegida en grande, con lo último que jugaste en ella. */
 @Composable
-fun VistaSistema(e: Estado, completa: Boolean = true) {
+fun VistaSistema(e: Estado, completa: Boolean = true, conPistas: Boolean = true) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val id = e.consolaSel
@@ -288,6 +288,7 @@ fun VistaSistema(e: Estado, completa: Boolean = true) {
         if (completa && propia?.hero == null) Box(Modifier.align(Alignment.CenterEnd).padding(end = esc.d(30)).graphicsLayer { alpha = 0.16f; rotationZ = -8f }) {
             IconoConsola(c, 300f, Color.Transparent)
         }
+        TramaTema()
         BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 32f, trabajos = e.trabajos)
         Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(36), end = esc.d(36)).fillMaxWidth(if (completa) 0.62f else 0.46f)) {
             Etiqueta(if (id == "todo") "Toda tu colección" else "Consola", Coral, 12f)
@@ -316,7 +317,7 @@ fun VistaSistema(e: Estado, completa: Boolean = true) {
                 }
             }
         }
-        if (completa) Row(Modifier.align(Alignment.BottomStart).padding(start = esc.d(36), bottom = esc.d(22))) {
+        if (completa && conPistas) Row(Modifier.align(Alignment.BottomStart).padding(start = esc.d(36), bottom = esc.d(22))) {
             Pistas("A" to "Entrar", "← →" to "Otra consola")
         }
     }

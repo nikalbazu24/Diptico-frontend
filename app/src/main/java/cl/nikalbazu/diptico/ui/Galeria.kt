@@ -45,7 +45,6 @@ fun PanelGaleria(e: Estado) {
     val esc = LocalEscala.current
     val items = remember(e) { Diptico.itemsGaleria(e) }
     val pestanas = Diptico.pestanasGaleria(e.galeria)
-    val tienda = Diptico.enTiendaTemas(e)
     val (titulo, icono) = when (e.galeria) {
         "capturas_juego", "captura_acciones" -> "Capturas del juego" to Icono.PORTADA
         "variantes_juego" -> "Versión del juego" to Icono.FORMA
@@ -54,7 +53,8 @@ fun PanelGaleria(e: Estado) {
         "vistas_consolas" -> "Cómo ver tus consolas" to Icono.MANDO
         "filtros" -> "Mostrar juegos" to Icono.BUSCAR
         "orden" -> "Orden de los juegos" to Icono.MENU
-        "temas" -> (if (tienda) "Tienda de temas" else "Temas") to Icono.PALETA
+        "temas" -> "Temas" to Icono.PALETA
+        "importar_temas" -> "Temas del archivo" to Icono.DESCARGA
         "colores" -> "Mis colores" to Icono.PALETA
         "ia" -> "IA de Bisa" to Icono.CHISPA
         "cajas" -> "Forma de las cajas" to Icono.FORMA
@@ -85,10 +85,6 @@ fun PanelGaleria(e: Estado) {
                     }
                 }
             }
-            if (tienda) {
-                Spacer(Modifier.height(esc.d(8)))
-                Detalle("Explora los temas destacados o agrega un catálogo de la comunidad.", 12f, lineas = 2)
-            }
             if (e.galeria == "colores") {
                 Spacer(Modifier.height(esc.d(6)))
                 Detalle("Lo que elijas se aplica al tiro a toda la interfaz (queda guardado como \"Mi tema\").", 12f, lineas = 2)
@@ -100,7 +96,7 @@ fun PanelGaleria(e: Estado) {
             Spacer(Modifier.height(esc.d(10)))
             val cols = when (e.galeria) {
                 "colores" -> if (esc.angosta) 8 else 12
-                "temas" -> if (esc.angosta) 2 else 3
+                "temas", "importar_temas" -> if (esc.angosta) 2 else 3
                 "cajas" -> if (esc.angosta) 3 else 4
                 else -> 1
             }
@@ -125,9 +121,7 @@ fun PanelGaleria(e: Estado) {
                         "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
                         "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
                         "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
-                        "temas" -> if (tienda && it.tema == null) {
-                            FilaCancion(it, activo, Icono.WEB) { Diptico.elegirIndice(i) }
-                        } else TarjetaTema(it, activo, e.oscuro) { Diptico.elegirIndice(i) }
+                        "temas", "importar_temas" -> TarjetaTema(it, activo, e.oscuro) { Diptico.elegirIndice(i) }
                         "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
                         "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
                         "colecciones" -> FilaCancion(it, activo, Icono.CARPETA, "Aquí ✓") { Diptico.elegirIndice(i) }
@@ -168,7 +162,7 @@ private fun TarjetaTema(it: Diptico.ItemGaleria, activo: Boolean, oscuro: Boolea
             Texto(it.nombre, 13f, lineas = 1, modifier = Modifier.weight(1f))
             if (it.enUso) Texto("✓", 13f, color = Sol, traducir = false)
         }
-        if (it.detalle.isNotBlank()) Detalle(it.detalle, 11f, lineas = 1)
+        if (it.detalle.isNotBlank()) Detalle(it.detalle, 11f, lineas = 4)
     }
 }
 
@@ -297,17 +291,11 @@ fun VistaGaleria(e: Estado) {
                 }
             }
             e.galeria in setOf("filtros", "orden", "variantes_juego", "copias_srm") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
-            e.galeria == "temas" && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            e.galeria in setOf("temas", "importar_temas") && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(it.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))
                 Texto(it.nombre, 26f, lineas = 1)
-                if (it.detalle.isNotBlank()) Detalle(it.detalle, 15f, lineas = 1)
-            }
-            Diptico.enTiendaTemas(e) -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconoDiptico(Icono.PALETA, Uva, 38f)
-                Spacer(Modifier.height(esc.d(8)))
-                Texto("Temas de la comunidad", 24f)
-                Detalle("Aquí verás el tema antes de instalarlo.", 14f, lineas = 2)
+                if (it.detalle.isNotBlank()) Detalle(it.detalle, 14f, lineas = 4)
             }
             e.galeria == "ia" && it != null -> ExplicaIA(it.id)
             e.galeria == "colores" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {

@@ -129,9 +129,9 @@ fun PantallaSuperior(e: Estado) {
 private fun Caratulas(e: Estado) {
     // Modo Sistemas: mientras eliges consola, aquí se ve la consola en grande.
     if (e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas && e.sesion == null) {
-        Box(Modifier.fillMaxSize()) {
-            VistaSistema(e)
-            BarraFlotante(e, null, Modifier.align(Alignment.BottomCenter))
+        Column(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxWidth().weight(1f)) { VistaSistema(e, conPistas = false) }
+            BarraFlotante(e, null, consola = true)
         }
         return
     }
@@ -166,6 +166,7 @@ private fun Caratulas(e: Estado) {
                 .background(Brush.verticalGradient(listOf(Color.Transparent, p.fondo))),
         )
 
+        TramaTema()
         BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos)
 
         AnimatedContent(
@@ -256,7 +257,7 @@ val LocalHeroes = androidx.compose.runtime.staticCompositionLocalOf { emptyMap<S
 /** Los accesos comparten una superficie con la escena o se alinean con el saludo de widgets. */
 @Composable
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false) {
+fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false, consola: Boolean = false) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val compacta = arriba || esc.angosta
@@ -275,7 +276,11 @@ fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arrib
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(esc.d(if (compacta) 2 else 8)),
         ) {
-            if (juego != null) {
+            if (consola) {
+                BotonAcceso(Icono.CONTINUAR, "Entrar", compacta = false, principal = true) { Diptico.entrarSistema() }
+                BotonAcceso(Icono.INTERCAMBIAR, "Otra consola", compacta) { Diptico.cambiarConsola(1) }
+                Spacer(Modifier.padding(horizontal = esc.d(4)).size(esc.d(1), esc.d(22)).background(p.linea))
+            } else if (juego != null) {
                 BotonAcceso(Icono.JUGAR, "Jugar", compacta = false, principal = true) { Diptico.jugar() }
                 BotonAcceso(Icono.INFO, "Ficha", compacta) { Diptico.abrirFicha() }
                 BotonAcceso(Icono.MENU, "Opciones", compacta) { Diptico.abrirRapido() }

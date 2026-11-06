@@ -14,14 +14,33 @@ import androidx.compose.foundation.shape.RoundedCornerShape as Redondeada
  * Esquinas de Díptico. Normalmente son redondeadas; con un tema de píxeles (Mundo de bloques)
  * se vuelven escalonadas, como en los juegos de antes. Todas las pantallas usan estas funciones.
  */
-private val pixel: Boolean get() = Estilo.tema.forma == "pixel"
+internal fun formaTema(dp: Dp?, porcentaje: Int, normal: Shape, forma: String = Estilo.tema.forma): Shape = when (forma) {
+    "pixel" -> EsquinaPixel(dp, porcentaje)
+    "bisel" -> EsquinaBisel(dp, porcentaje)
+    "recta" -> Redondeada(2.dp)
+    "capsula" -> if (dp != null) Redondeada((dp.value * 1.45f).dp) else Redondeada((porcentaje * 1.3f).toInt().coerceAtMost(50))
+    else -> normal
+}
 
-fun RoundedCornerShape(percent: Int): Shape = if (pixel) EsquinaPixel(null, percent) else Redondeada(percent)
+fun RoundedCornerShape(percent: Int): Shape = formaTema(null, percent, Redondeada(percent))
 
-fun RoundedCornerShape(size: Dp): Shape = if (pixel) EsquinaPixel(size, 0) else Redondeada(size)
+fun RoundedCornerShape(size: Dp): Shape = formaTema(size, 0, Redondeada(size))
 
 fun RoundedCornerShape(topStart: Dp = 0.dp, topEnd: Dp = 0.dp, bottomEnd: Dp = 0.dp, bottomStart: Dp = 0.dp): Shape =
-    if (pixel) EsquinaPixel(maxOf(topStart, topEnd, bottomEnd, bottomStart), 0) else Redondeada(topStart, topEnd, bottomEnd, bottomStart)
+    formaTema(maxOf(topStart, topEnd, bottomEnd, bottomStart), 0, Redondeada(topStart, topEnd, bottomEnd, bottomStart))
+
+private data class EsquinaBisel(val tam: Dp?, val porcentaje: Int) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val w = size.width
+        val h = size.height
+        val pedido = with(density) { tam?.toPx() } ?: (size.minDimension * porcentaje / 100f)
+        val c = minOf(pedido, size.minDimension * 0.24f)
+        return Outline.Generic(Path().apply {
+            moveTo(c, 0f); lineTo(w, 0f); lineTo(w, h - c); lineTo(w - c, h)
+            lineTo(0f, h); lineTo(0f, c); close()
+        })
+    }
+}
 
 /** Forma con las cuatro esquinas en dos escalones de píxel. [tam] o [porcentaje] dicen qué tan grande es la esquina. */
 class EsquinaPixel(private val tam: Dp?, private val porcentaje: Int) : Shape {

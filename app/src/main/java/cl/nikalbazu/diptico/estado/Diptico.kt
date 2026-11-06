@@ -2101,9 +2101,7 @@ object Diptico {
         return true
     }
 
-    internal fun enTiendaTemas(e: Estado): Boolean = e.galeria == "temas" && e.galeriaPestana == 3
-
-    private fun abrirTiendaTemas() = abrirGaleria("temas", pestana = 3)
+    private const val WEB_TEMAS = "https://diptico-temas.nickalbazu.chatgpt.site"
 
     fun abrirGaleria(tipo: String, pestana: Int = 0) {
         if (estado.value.panel != Panel.GALERIA) galeriaDesde = regresoActual()
@@ -2120,7 +2118,8 @@ object Diptico {
         "orden" -> listOf("Ordenar juegos")
         "vistas_consolas" -> listOf("Tus consolas")
         "vistas_juegos" -> listOf("Tus juegos")
-        "temas" -> listOf("Incluidos", "Fechas especiales", "Mis temas", "Tienda")
+        "temas" -> listOf("Incluidos", "Mis temas")
+        "importar_temas" -> listOf("Importar temas")
         "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
         "ia" -> listOf("El cerebro de Bisa")
         "cajas" -> listOf("${Consolas.porId(estado.value.galeriaConsola)?.nombre ?: "Esta consola"}", "Todas las consolas")
@@ -2208,11 +2207,16 @@ object Diptico {
         }
         return when (e.galeria) {
             "temas" -> when (e.galeriaPestana) {
-                0 -> Temas.incluidos.map { t -> ItemGaleria(t.id, t.nombre, if (t.decor != "nada") Temas.nombreDecor(t.decor) else "", actual.id == t.id, t) { elegirTema(t.id) } }
-                3 -> itemsTiendaTemas(e)
-                1 -> Temas.fiestas.map { f -> ItemGaleria(f.tema.id, f.nombre, f.donde, actual.id == f.tema.id, f.tema) { elegirTema(f.tema.id) } }
-                else -> e.temasPropios.map { t -> ItemGaleria(t.id, t.nombre, if (t.id.startsWith("com_")) "De la comunidad" else "Tema personal", actual.id == t.id, t) { elegirTema(t.id) } } +
-                    ItemGaleria("_colores", "Mis colores", "Toda la interfaz", false) { abrirGaleria("colores") }
+                0 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTemaDeTienda(t.id) } }
+                else -> temasPersonales(e).map { t ->
+                    ItemGaleria(t.id, t.nombre, t.descripcion.ifBlank { "Tema guardado en tu consola" }, actual.id == t.id, t) {
+                        elegirTemaDeTienda(t.id)
+                    }
+                } + ItemGaleria("_colores", "Mis colores", "Personaliza la interfaz", false) { abrirGaleria("colores") }
+            }
+            "importar_temas" -> e.catalogoTemas.map { entrada ->
+                val t = entrada.tema
+                ItemGaleria(t.id, t.nombre, t.descripcion.ifBlank { entrada.autor }, false, t) { confirmarTemaImportado(entrada) }
             }
             "colores" -> {
                 val mio = e.temasPropios.firstOrNull { it.id == "mio" } ?: actual
@@ -3279,7 +3283,7 @@ object Diptico {
             return listOf(Opcion("Quitar la búsqueda", "\"${e.buscarAjuste}\" · ${res.size}", Icono.CERRAR) { actualizar { it.copy(buscarAjuste = "", indice = 0) } }) + res
         }
         val elegidos = listOf(
-            "Tienda de temas", "Modo", "Tamaño de letra", "Modo de pantallas", "Intercambiar pantallas", "Teclado", "Música de fondo",
+            "Ver catálogo web", "Modo", "Tamaño de letra", "Modo de pantallas", "Intercambiar pantallas", "Teclado", "Música de fondo",
             "Sonidos al moverte", "Fechas especiales", "Efecto de los botones", "Fluidez", "Bisa mientras juegas",
         )
         val lista = mutableListOf(
@@ -4010,7 +4014,12 @@ object Diptico {
 
     // ---------- Temas ----------
 
-    fun todosLosTemas(e: Estado = estado.value): List<Tema> = Temas.incluidos + e.temasPropios
+    private fun temasPersonales(e: Estado): List<Tema> {
+        val temaAnterior = Temas.incluidos.firstOrNull { it.id == e.tema && Temas.iniciales.none { t -> t.id == it.id } }
+        return (e.temasPropios + listOfNotNull(temaAnterior)).distinctBy { it.id }
+    }
+
+    fun todosLosTemas(e: Estado = estado.value): List<Tema> = Temas.iniciales + temasPersonales(e)
 
     /** Aplica el tema elegido, o el de la fiesta de hoy si está activado. */
     fun aplicarTema() {
@@ -4022,7 +4031,7 @@ object Diptico {
         val baseVisual = fiesta?.tema ?: elegido
         val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso, decor = "nada") else baseVisual
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
-        cl.nikalbazu.diptico.ui.Estilo.efecto = if (e.experiencia.vidrio) "vidrio" else e.efecto
+        cl.nikalbazu.diptico.ui.Estilo.efecto = activo.acabado.ifBlank { if (e.experiencia.vidrio) "vidrio" else e.efecto }
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = e.decoraciones && e.experiencia.movimiento && e.sesion == null
         Sonidos.juego = activo.sonidos
         val pista = musicaDeTema(activo)
@@ -4058,22 +4067,6 @@ object Diptico {
         return m[(m.indexOf(c) + 1).mod(m.size)]
     }
 
-    private fun itemsTiendaTemas(e: Estado): List<ItemGaleria> =
-        listOf(ItemGaleria("_enlace", "Importar catálogo", "Pega un enlace HTTPS a un tema o una colección", false) {
-            abrirTexto("tema_enlace")
-        }) + (e.catalogoTemas + TiendaTemas.destacados).distinctBy { it.tema.id }.map { entrada ->
-            val t = entrada.tema
-            val instalada = e.temasPropios.any { it.id == t.id }
-            val detalle = listOfNotNull(
-                entrada.autor.takeIf { it.isNotBlank() },
-                if (entrada.audio != null) "Incluye música" else null,
-                if (instalada) "Instalado" else "Instalar y usar",
-            ).joinToString(" · ")
-            ItemGaleria(t.id, t.nombre, detalle, e.tema == t.id, t) {
-                if (instalada) elegirTemaDeTienda(t.id) else instalarTemaComunidad(entrada)
-            }
-        }
-
     private fun elegirTemaDeTienda(id: String) {
         if (estado.value.fiesta != null) {
             almacen.guardarBool("temaFestivo", false)
@@ -4082,17 +4075,27 @@ object Diptico {
         elegirTema(id)
     }
 
-    private fun cargarCatalogoTemas(enlace: String) {
-        if (enlace.isBlank() || trabajosMapa.containsKey("catalogo_temas")) return
-        trabajo("catalogo_temas", "Abriendo catálogo de temas")
+    private fun importarTemas(leer: () -> List<TemaComunidad>) {
+        if (trabajosMapa.containsKey("catalogo_temas")) return
+        trabajo("catalogo_temas", "Leyendo el tema")
         scope.launch {
-            val resultado = withContext(Dispatchers.IO) { runCatching { TiendaTemas.catalogo(enlace) } }
+            val resultado = withContext(Dispatchers.IO) { runCatching(leer) }
             terminarTrabajo("catalogo_temas")
             resultado.onSuccess { temas ->
-                actualizar { it.copy(catalogoTemas = temas, indice = if (enTiendaTemas(it) && it.panel == Panel.GALERIA) 1 else it.indice) }
-                avisar(if (temas.size == 1) "Tema listo para ver e instalar" else "${temas.size} temas en el catálogo")
-            }.onFailure { avisar(it.message ?: "No pude abrir el catálogo.") }
+                if (temas.size == 1) confirmarTemaImportado(temas.first())
+                else {
+                    actualizar { it.copy(catalogoTemas = temas) }
+                    abrirGaleria("importar_temas")
+                }
+            }.onFailure { avisar(it.message ?: "No pude leer el tema.") }
         }
+    }
+
+    private fun confirmarTemaImportado(entrada: TemaComunidad) {
+        val tema = entrada.tema
+        val detalle = tema.descripcion.ifBlank { "Tema de ${entrada.autor.ifBlank { "la comunidad" }}" }
+        mostrarDialogo(Dialogo("instalar_tema", "Instalar ${tema.nombre}", detalle, Icono.PALETA,
+            si = "Instalar y usar", no = "Cancelar")) { instalarTemaComunidad(entrada) }
     }
 
     private fun instalarTemaComunidad(entrada: TemaComunidad) {
@@ -4104,6 +4107,7 @@ object Diptico {
             resultado.onSuccess { tema ->
                 guardarTemasPropios(listOf(tema) + estado.value.temasPropios.filterNot { it.id == tema.id })
                 elegirTemaDeTienda(tema.id)
+                abrirGaleria("temas", pestana = 1)
                 avisar("${tema.nombre} instalado y aplicado")
             }.onFailure { avisar(it.message ?: "No pude instalar este tema.") }
         }
@@ -4130,7 +4134,7 @@ object Diptico {
             0,
             Opcion(
                 "Elegir tema", cl.nikalbazu.diptico.ui.Estilo.tema.nombre, Icono.PALETA,
-                "Una galería con todos los temas, separados en pestañas: colores, fiestas del mundo y los tuyos. Se ve cómo queda antes de elegir.",
+                "Cinco temas incluidos y los que hayas instalado. Cada tema trae una explicación y vista previa.",
             ) { abrirGaleria("temas") },
         )
         lista.add(
@@ -4140,8 +4144,12 @@ object Diptico {
                 "Elige tú el color principal, el secundario, los detalles, el fondo y las letras de todo Díptico.",
             ) { abrirGaleria("colores") },
         )
-        lista.add(0, Opcion("Tienda de temas", "Explorar e instalar", Icono.PALETA,
-            "Explora la selección de Díptico o importa un catálogo de la comunidad por enlace.") { abrirTiendaTemas() })
+        lista.add(2, Opcion("Ver catálogo web", "Abre el navegador", Icono.WEB,
+            "Explora y descarga temas desde la web de Díptico.") { abrirWeb(WEB_TEMAS) })
+        lista.add(3, Opcion("Importar tema", "Archivo JSON", Icono.DESCARGA,
+            "Selecciona un tema que hayas descargado.") { pedirArchivoPara("temaJson", "*/*") })
+        lista.add(4, Opcion("Importar por enlace", "Tema o catálogo", Icono.WEB,
+            "Pega el enlace HTTPS directo al archivo JSON.") { abrirTexto("tema_enlace") })
         val mio = e.temasPropios.firstOrNull { it.id == "mio" }
         lista += Opcion("Mi tema · fondo", when (mio?.base) { "oscuro" -> "Oscuro"; "claro" -> "Claro"; "oled" -> "Negro puro"; else -> "Según el modo" }, Icono.TEMA, ayuda = "El fondo de tu tema propio: oscuro, claro, negro puro (ideal para OLED) o según el modo.") {
             editarMiTema { it.copy(base = when (it.base) { "auto" -> "oscuro"; "oscuro" -> "oled"; "oled" -> "claro"; else -> "auto" }) }
@@ -6639,7 +6647,7 @@ object Diptico {
             }
             "tema_enlace" -> {
                 cerrarPanel()
-                cargarCatalogoTemas(t)
+                if (t.isNotBlank()) importarTemas { TiendaTemas.catalogo(t) }
                 return
             }
         }
@@ -6763,6 +6771,11 @@ object Diptico {
     }
 
     fun archivoElegido(uri: Uri) {
+        if (archivoPara == "temaJson") {
+            archivoPara = ""
+            importarTemas { TiendaTemas.archivo(app, uri) }
+            return
+        }
         if (archivoPara.startsWith("partida-srm:")) {
             val clave = archivoPara.removePrefix("partida-srm:")
             archivoPara = ""
@@ -7446,7 +7459,7 @@ object Diptico {
     // ---------- Música según el tema ----------
 
     /** Qué pista va con cada tema y cada fiesta. */
-    fun musicaDeTema(t: Tema): String = (if (::app.isInitialized) TiendaTemas.pista(app, t) else null) ?: when (t.id.removePrefix("fiesta_")) {
+    fun musicaDeTema(t: Tema): String = (if (::app.isInitialized) TiendaTemas.pista(app, t) else null) ?: t.pistaBase.takeIf { id -> Musica.pistas.any { it.id == id } } ?: when (t.id.removePrefix("fiesta_")) {
         "fiestaspatrias", "chile" -> "cueca"
         "glorias", "sanpedro", "patagonia" -> "oceano"
         "patrimonio", "dosmundos", "menta" -> "bosque"

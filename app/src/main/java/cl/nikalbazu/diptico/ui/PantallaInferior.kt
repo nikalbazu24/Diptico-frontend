@@ -778,7 +778,7 @@ internal fun PanelClave(e: Estado) {
                 "reporte_fallas" -> listOf(Icono.INFO, "Reportar un problema", "Cuéntanos qué pasó. El reporte incluye la versión, el modelo y el diagnóstico técnico. Se comparte al confirmar.", "Ej: la pantalla inferior se quedó en negro")
                 "bisa_paso" -> listOf(Icono.LAPIZ, "Mi próximo paso", "Bisa lo recuerda para este juego.", "Ej: volver al puente")
                 "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
-                "tema_enlace" -> listOf(Icono.WEB, "Enlace a la tienda de temas", "Pega el enlace HTTPS al archivo JSON de un tema o catálogo.", "https://…/temas.json")
+                "tema_enlace" -> listOf(Icono.WEB, "Importar un tema por enlace", "Pega el enlace HTTPS al JSON que quieras instalar.", "https://…/temas.json")
                 "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")
                 "buscar_juego" -> listOf(Icono.BUSCAR, "Buscar un juego", "Escribe parte del nombre; también puedes dictarlo con la tecla Voz.", "Ej: zelda")
                 "coleccion_nueva" -> listOf(Icono.CARPETA, "Nombre de la colección", "Por ejemplo \"Para jugar con mi hijo\" o \"RPG pendientes\". Aparecerá como widget en tu inicio.", "Ej: RPG pendientes")
@@ -826,7 +826,7 @@ internal fun PanelClave(e: Estado) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }
                 val quitar = esClave && e.borrador.isBlank() && (when (e.textoPara) { "sgdb" -> e.claveSgdb; "ra_clave" -> e.claveRA; "ia_clave_gemini" -> e.claveGemini; "ia_clave_openai" -> e.claveOpenAI; else -> if (e.textoPara.startsWith("ras_")) Diptico.almacen.texto(e.textoPara) else "" }).isNotBlank()
                 BotonGrande(
-                    when { quitar -> "Quitar clave"; e.textoPara == "tema_enlace" -> "Abrir catálogo"; e.textoPara == "asistente" -> "Preguntar"; e.textoPara == "reporte_fallas" -> "Continuar"; else -> "Guardar" },
+                    when { quitar -> "Quitar clave"; e.textoPara == "tema_enlace" -> "Leer tema"; e.textoPara == "asistente" -> "Preguntar"; e.textoPara == "reporte_fallas" -> "Continuar"; else -> "Guardar" },
                     Uva, SobreUva, Modifier.weight(1.4f),
                 ) { Diptico.guardarClave() }
             }

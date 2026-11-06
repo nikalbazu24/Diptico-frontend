@@ -89,19 +89,19 @@ class NavegacionTest {
         }
     }
 
-    @Test fun tiendaTieneTemasDisponiblesSinEnlace() {
-        val galeria = Estado(galeria = "temas", galeriaPestana = 3)
-        assertEquals("Tienda", Diptico.pestanasGaleria("temas")[3])
-        val temas = Diptico.itemsGaleria(galeria)
-        assertEquals("_enlace", temas.first().id)
-        assertTrue(temas.drop(1).size >= 3)
-        assertTrue(temas.drop(1).all { it.tema != null })
+    @Test fun soloCincoTemasIncluidosYTodosTienenDescripcion() {
+        val e = Estado(galeria = "temas")
+        val incluidos = Diptico.itemsGaleria(e)
+        assertEquals(5, incluidos.size)
+        assertTrue(incluidos.all { it.detalle.isNotBlank() && it.tema != null })
+        assertEquals(listOf("Incluidos", "Mis temas"), Diptico.pestanasGaleria("temas"))
+        assertEquals(1, Diptico.itemsGaleria(e.copy(galeriaPestana = 1)).size)
     }
 
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("cristal-accesos-2").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("cristal-editor-3").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

@@ -29,11 +29,16 @@ data class Tema(
     val forma: String = "",
     val sonidos: String = "",
     val musica: String = "",
+    val descripcion: String = "",
+    val trama: String = "",
+    val acabado: String = "",
+    val pistaBase: String = "",
 ) {
     fun json(): JSONObject = JSONObject()
         .put("id", id).put("nombre", nombre).put("acento", acento).put("acento2", acento2).put("acento3", acento3)
         .put("base", base).put("decor", decor).put("mensaje", mensaje).put("propio", propio)
-        .put("fondo", fondo).put("tinta", tinta).put("fuente", fuente).put("forma", forma).put("sonidos", sonidos).put("musica", musica)
+        .put("fondo", fondo).put("tinta", tinta).put("fuente", fuente).put("forma", forma).put("sonidos", sonidos).put("musica", musica).put("descripcion", descripcion)
+        .put("trama", trama).put("acabado", acabado).put("pistaBase", pistaBase)
 
     companion object {
         fun deJson(o: JSONObject) = Tema(
@@ -41,6 +46,7 @@ data class Tema(
             o.optString("base", "auto"), o.optString("decor", "nada"), o.optString("mensaje", ""), o.optBoolean("propio", true),
             o.optLong("fondo", 0L), o.optLong("tinta", 0L),
             o.optString("fuente", ""), o.optString("forma", ""), o.optString("sonidos", ""), o.optString("musica", ""),
+            o.optString("descripcion"), o.optString("trama"), o.optString("acabado"), o.optString("pistaBase"),
         )
     }
 }
@@ -49,6 +55,9 @@ data class Tema(
 data class Fiesta(val id: String, val nombre: String, val donde: String, val tema: Tema, val paises: Set<String> = emptySet())
 
 object Temas {
+    val FORMAS = setOf("", "pixel", "cristal", "recta", "bisel", "capsula")
+    val TRAMAS = setOf("cielo", "ondas", "puntos", "barrido", "diagonal", "lcd", "reticula", "papel", "rombos")
+    val ACABADOS = setOf("liso", "degradado", "brillo", "vidrio")
     val DECORACIONES = listOf("nada", "nieve", "hojas", "murcielagos", "petalos", "confeti", "corazones", "estrellas", "faroles", "burbujas", "fuegos", "bloques")
 
     fun nombreDecor(d: String) = when (d) {
@@ -94,6 +103,21 @@ object Temas {
         Tema("patagonia", "Patagonia", 0xFF0EA5E9, 0xFF64748B, 0xFFE0F2FE, decor = "nieve"),
         Tema("retro80", "Retro 80", 0xFFFF6EC7, 0xFF7B61FF, 0xFF00E5FF, "oscuro"),
     )
+
+    val iniciales = listOf(
+        "diptico" to "La identidad original del frontend, con una paleta pensada para acompañar las carátulas.",
+        "diptico_vidrio" to "Para quien prefiere una interfaz sobria, con transparencias suaves y controles bien definidos.",
+        "bloques" to "Una vuelta a los juegos de construcción, con letras pixeladas, esquinas escalonadas y sonidos de madera.",
+        "papel" to "Para leer a plena luz. Recuerda a una libreta de juegos, con líneas de papel y controles discretos.",
+        "oled" to "Para jugar en la oscuridad y dejar que destaque el arte. Mantiene negro puro y botones discretos.",
+    ).map { (id, descripcion) ->
+        val tema = incluidos.first { it.id == id }.copy(descripcion = descripcion)
+        when (id) {
+            "papel" -> tema.copy(trama = "papel", forma = "recta", acabado = "liso")
+            "oled" -> tema.copy(acabado = "liso")
+            else -> tema
+        }
+    }
 
     // ---------- Celebraciones del mundo ----------
 

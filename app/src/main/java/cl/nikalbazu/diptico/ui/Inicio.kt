@@ -109,6 +109,7 @@ fun PantallaInicio(e: Estado) {
         }
         // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
         if (!e.editandoWidgets && Estilo.tema.forma != "cristal" && p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
+        if (!e.editandoWidgets) TramaTema()
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
             if (e.editandoWidgets) {
                 Row(verticalAlignment = Alignment.Bottom) {

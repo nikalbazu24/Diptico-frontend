@@ -11,12 +11,6 @@ import org.json.JSONObject
 data class TemaComunidad(val tema: Tema, val autor: String, val audio: String?)
 
 internal object TiendaTemas {
-    val destacados = listOf(
-        Tema("com_diptico_tinta", "Tinta", 0xFF8982DF, 0xFFA9ABCC, 0xFFE6C58D, "oscuro", fondo = 0xFF13141D),
-        Tema("com_diptico_brisamar", "Brisamar", 0xFF428388, 0xFF83A9A8, 0xFFCFAA82, "claro", fondo = 0xFFF0F5F3),
-        Tema("com_diptico_ascua", "Ascua", 0xFFD98D68, 0xFFC5A19A, 0xFFE8BF83, "oscuro", fondo = 0xFF201A1D),
-    ).map { TemaComunidad(it.copy(propio = true), "Díptico", null) }
-
     private const val LIMITE_CATALOGO = 256 * 1024
     private const val LIMITE_AUDIO = 16 * 1024 * 1024
     private val nombreArchivo = Regex("com_[0-9a-f]{24}\\.(mp3|ogg|m4a|wav)")
@@ -69,12 +63,21 @@ internal object TiendaTemas {
 
     fun catalogo(enlace: String): List<TemaComunidad> {
         val origen = url(enlace)
-        val json = leer(origen, LIMITE_CATALOGO) { input ->
-            java.io.ByteArrayOutputStream().use { salida ->
-                copiar(input, salida, LIMITE_CATALOGO)
-                JSONObject(salida.toString("UTF-8"))
-            }
-        }
+        return leer(origen, LIMITE_CATALOGO) { parsear(json(it), origen) }
+    }
+
+    fun archivo(ctx: Context, uri: android.net.Uri): List<TemaComunidad> {
+        require(uri.scheme == "content")
+        val entrada = ctx.contentResolver.openInputStream(uri) ?: error("No pude abrir ese archivo.")
+        return entrada.use { parsear(json(it), null) }
+    }
+
+    private fun json(entrada: InputStream): JSONObject = java.io.ByteArrayOutputStream().use { salida ->
+        copiar(entrada, salida, LIMITE_CATALOGO)
+        JSONObject(salida.toString("UTF-8"))
+    }
+
+    private fun parsear(json: JSONObject, origen: URL?): List<TemaComunidad> {
         val lista = json.optJSONArray("temas")
         val entradas = if (lista == null) listOf(json) else {
             require(lista.length() in 1..50) { "El catálogo debe tener entre 1 y 50 temas." }
@@ -86,19 +89,24 @@ internal object TiendaTemas {
                 require(original.id.matches(Regex("[a-zA-Z0-9_-]{1,60}")) && original.nombre.isNotBlank())
                 require(listOf(original.acento, original.acento2, original.acento3).all { it in 0xFF000000L..0xFFFFFFFFL })
                 require(listOf(original.fondo, original.tinta).all { it == 0L || it in 0xFF000000L..0xFFFFFFFFL })
-                val llave = "$origen|${original.id}".toByteArray()
+                val deDiptico = origen?.host == "diptico-temas.nickalbazu.chatgpt.site" && origen.path.startsWith("/temas/")
+                val llave = (if (origen == null || deDiptico) o.toString() else "$origen|${original.id}").toByteArray(Charsets.UTF_8)
                 val huella = java.security.MessageDigest.getInstance("SHA-256").digest(llave)
                     .take(12).joinToString("") { "%02x".format(it.toInt() and 255) }
                 val t = original.copy(
                     id = "com_$huella", nombre = original.nombre.trim().take(36), propio = true, musica = "",
-                    base = original.base.takeIf { it in setOf("auto", "claro", "oscuro", "oled") } ?: "auto",
+                    base = original.base.takeIf { it in setOf("auto", "claro", "oscuro", "oled", "gb") } ?: "auto",
                     decor = original.decor.takeIf { it in Temas.DECORACIONES } ?: "nada",
-                    forma = original.forma.takeIf { it in setOf("pixel", "cristal") }.orEmpty(),
+                    forma = original.forma.takeIf { it in Temas.FORMAS }.orEmpty(),
                     fuente = original.fuente.takeIf { it == "pixel" }.orEmpty(),
-                    sonidos = original.sonidos.takeIf { it == "bloques" }.orEmpty(),
+                    sonidos = original.sonidos.takeIf { it in setOf("bloques", "retro", "burbuja") }.orEmpty(),
                     mensaje = original.mensaje.take(80),
+                    descripcion = original.descripcion.trim().take(320),
+                    trama = original.trama.takeIf { it in Temas.TRAMAS }.orEmpty(),
+                    acabado = original.acabado.takeIf { it in Temas.ACABADOS }.orEmpty(),
+                    pistaBase = original.pistaBase.takeIf { id -> cl.nikalbazu.diptico.audio.Musica.pistas.any { it.id == id } }.orEmpty(),
                 )
-                val audio = o.optString("audio").trim().takeIf { it.isNotEmpty() }?.let { url(URL(origen, it).toString()).toString() }
+                val audio = o.optString("audio").trim().takeIf { it.isNotEmpty() }?.let { url(if (origen == null) it else URL(origen, it).toString()).toString() }
                 TemaComunidad(t, o.optString("autor").trim().take(40), audio)
             }.getOrNull()
         }.distinctBy { it.tema.id }.also { require(it.isNotEmpty()) { "El enlace no contiene temas compatibles." } }
