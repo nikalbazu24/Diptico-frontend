@@ -1,5 +1,6 @@
 package cl.nikalbazu.diptico
 
+import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Panel
@@ -33,7 +35,10 @@ class EditorWidgetsTest {
     private val reloj = Widget("cronometro", 0, 0, 2, 1)
 
     private fun abrir(widgets: List<Widget> = listOf(reloj)) {
-        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        // El editor usa su estado y persistencia. La prueba de gestos no necesita los servicios de arranque.
+        val contexto = ApplicationProvider.getApplicationContext<Context>()
+        Diptico.app = contexto
+        Diptico.almacen = Almacen(contexto)
         Diptico.fijarParaPrueba(Estado(
             configurado = true, listo = true, intro = false, inicio = "widgets", panel = Panel.ESTUDIO,
             editandoWidgets = true, widgetSel = 0, paginas = 2, widgets = widgets,
