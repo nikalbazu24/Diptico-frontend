@@ -10,11 +10,11 @@ Un launcher que usa las dos pantallas como un díptico: arriba, el juego elegido
 - Selección directa de vistas con R3, previa en la otra pantalla, tarjetas/carpetas/lista renovadas, filtro y orden accesibles.
 - Retoma tras una pausa configurable. En dos pantallas, clip opcional de hasta 6 segundos a baja resolución y sin audio. Requiere permiso de captura de Android y está desactivado por defecto. La lupa tiene prioridad. Tras bloquear la consola puede ser necesario preparar otro clip; hay un botón para hacerlo en la retoma y en Inicio. Sin clip se muestra la imagen del juego.
 
-## Actualización Estudio visual
+## Personalización visual
 
 - **Universo del juego:** colores de sus imágenes locales en ambas pantallas, sin capturar el juego.
 - **Habitación:** vista de consolas con colecciones y recuerdos, paredes y objetos elegibles.
-- **Colecciones propias:** color, fondo, logo, música y disposición desde Menú › Estudio visual.
+- **Colecciones propias:** color, fondo, logo, música y disposición desde Menú › Apariencia.
 - **Ficha fijada:** desliza hacia arriba la tarjeta «Enviar ficha» para conservarla en la otra pantalla.
 - **Perfiles:** tres composiciones guardables, importación con confirmación y exportación JSON sin rutas ni claves. Los recursos locales de las colecciones se configuran en cada dispositivo.
 - **Correcciones:** transición de ayuda independiente del porcentaje de descarga; opciones de ventana idempotentes en la pantalla inferior.

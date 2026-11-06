@@ -155,6 +155,41 @@ jobs:
           name: Diptico-APK
           path: distribucion
 
+      - name: Revisar el tour y preparar las notas de la beta
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_BETA: v${{ needs.apk.outputs.numero }}
+        run: |
+          set -euo pipefail
+          ruta=app/src/main/java/cl/nikalbazu/diptico/estado/Novedades.kt
+          leer_archivo() {
+            gh api "repos/$GITHUB_REPOSITORY/contents/$1?ref=$2" --jq .content | base64 -d
+          }
+          id_tour() {
+            sed -n 's/^[[:space:]]*const val ID = "\([^"]*\)".*/\1/p'
+          }
+
+          actual=$(leer_archivo "$ruta" "$GITHUB_SHA" | id_tour)
+          test -n "$actual"
+          if [[ "$GITHUB_EVENT_NAME" == push ]]; then
+            anterior=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" |
+              jq -r --arg tag "$TAG_BETA" 'map(select(.draft == false and (.tag_name | startswith("v1.1-beta.")) and .tag_name != $tag))[0].tag_name // empty')
+            if [[ -n "$anterior" && "$actual" == "$(leer_archivo "$ruta" "$anterior" | id_tour)" ]]; then
+              echo "::error::Actualiza el ID y las páginas de Novedades antes de publicar otra beta."
+              exit 1
+            fi
+          fi
+
+          leer_archivo docs/novedades-beta.md "$GITHUB_SHA" > notas-beta.md
+          test -s notas-beta.md
+          cat >> notas-beta.md <<'EOF'
+
+          **Español.** APK normal para consolas Android y APK «-movil» para teléfonos.
+          [Guía de migración y firma](https://github.com/nikalbazu24/Diptico-frontend/blob/main/docs/distribucion.md).
+
+          **English.** Use the regular APK for Android handhelds and the «-movil» APK for phones.
+          EOF
+
       - name: Publicar beta o guardar borrador manual
         uses: softprops/action-gh-release@v2
         with:
@@ -167,10 +202,4 @@ jobs:
           files: |
             distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}.apk
             distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}-movil.apk
-          body: |
-            **Español.** Descarga el APK normal para consolas Android o el APK «-movil» para teléfonos.
-            Si vienes de una beta 1.0, exporta y verifica un respaldo de Díptico antes de migrar.
-            [Guía de migración y firma](https://github.com/nikalbazu24/Diptico-frontend/blob/main/docs/distribucion.md).
-
-            **English.** Use the regular APK for Android handhelds and the «-movil» APK for phones.
-            If you use a 1.0 beta, export and verify your backup before migrating.
+          body_path: notas-beta.md

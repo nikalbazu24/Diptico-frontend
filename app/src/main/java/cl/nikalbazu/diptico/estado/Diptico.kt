@@ -60,7 +60,6 @@ enum class Icono {
  */
 enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val grupo: String = "") {
     ESENCIAL("Lo esencial", Icono.ESTRELLA, "Lo que más se cambia, todo junto. Y para buscar cualquier ajuste por su nombre.", "Empieza aquí"),
-    EXPERIENCIA("Estudio visual", Icono.CHISPA, "Universo del juego, habitación, colecciones y perfiles visuales compartibles.", "Tu Díptico"),
     TEMAS("Temas", Icono.PALETA, "Colores, temas de fiestas del mundo, tus propios colores y temas creados con IA.", "Cómo se ve"),
     APARIENCIA("Apariencia", Icono.TEMA, "Claro u oscuro, efecto de los botones, decoraciones, íconos de las consolas y la animación de entrada."),
     INICIO("Inicio", Icono.APPS, "La pantalla principal: el juego en grande o tu inicio con widgets, y la bienvenida al encender."),
@@ -733,7 +732,7 @@ object Diptico {
         val idioma = almacen.texto("idioma").ifEmpty { Idioma.delSistema() }
         Idioma.fijar(app, idioma)
         val apps = AtajoInicio.leer(almacen.texto("atajoApps"), AtajoInicio.START_R3)
-        val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_DOBLE)
+        val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_L3)
             .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
         _estado.value = Estado(
             navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
@@ -3154,7 +3153,7 @@ object Diptico {
 
     /** Las secciones del modo simple: lo de todos los días. Las demás quedan a un toque en «Más ajustes». */
     val SECCIONES_SIMPLES = listOf(
-        Seccion.ESENCIAL, Seccion.EXPERIENCIA, Seccion.TEMAS, Seccion.INICIO, Seccion.ESTANTE, Seccion.MUSICA,
+        Seccion.ESENCIAL, Seccion.TEMAS, Seccion.INICIO, Seccion.ESTANTE, Seccion.MUSICA,
         Seccion.BIBLIOTECA, Seccion.EMULADORES, Seccion.ASISTENTE, Seccion.PANTALLAS, Seccion.SISTEMA,
     )
 
@@ -3287,7 +3286,6 @@ object Diptico {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
-            Seccion.EXPERIENCIA -> lista += opcionesExperiencia(e)
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
@@ -3436,6 +3434,7 @@ object Diptico {
                 lista += Opcion(nombre, if (e.idioma == cod) "En uso ✓" else "", Icono.IDIOMA, Idioma.ayuda(cod)) { cambiarIdioma(cod) }
             }
             Seccion.APARIENCIA -> {
+                lista += opcionesPersonalizacion(e)
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
                     "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
@@ -3841,7 +3840,7 @@ object Diptico {
 
     private fun escribirMapa(m: Map<String, String>): String = org.json.JSONObject(m as Map<*, *>).toString()
 
-    // ---------- Estudio visual: configuración y persistencia fuera de los componentes ----------
+    // ---------- Personalización y perfiles visuales ----------
     var exportarVisual: ((String) -> Unit)? = null
     var importarVisual: (() -> Unit)? = null
     private var imagenVisual: Pair<String, String>? = null
@@ -3981,20 +3980,20 @@ object Diptico {
         }
     }
 
-    private fun opcionesExperiencia(e: Estado): List<Opcion> = buildList {
+    private fun opcionesPersonalizacion(e: Estado): List<Opcion> = buildList {
         val v = e.experiencia
         add(Opcion("Colores del juego · Universo", if (v.universo) "Sí" else "No", Icono.MUNDO, "Colores tomados de la imagen del juego, compartidos por ambas pantallas. Sin imagen se conserva el tema.") { guardarExperiencia(v.copy(universo = !v.universo)) })
         add(Opcion("Movimiento ambiental", if (v.movimiento) "Suave" else "Reducido", Icono.ESTRELLA, "Apaga el movimiento ambiental y el zoom lento; en partida se mantiene estático.") {
             guardarExperiencia(v.copy(movimiento = !v.movimiento))
         })
-        add(Opcion("Vista de carpetas", nombreVistaConsolas(e.vistaConsolas), Icono.BIBLIOTECA,
-            "Elige cómo se ven tus consolas, con vista previa.") { abrirGaleria("vistas_consolas") })
-        add(Opcion("Fondo de los estantes", v.pared, Icono.PALETA) { guardarExperiencia(v.copy(pared = Experiencia.paredes[(Experiencia.paredes.indexOf(v.pared) + 1) % Experiencia.paredes.size])) })
-        add(Opcion("Adornos de los estantes", v.adorno, Icono.ESTRELLA) { guardarExperiencia(v.copy(adorno = Experiencia.adornos[(Experiencia.adornos.indexOf(v.adorno) + 1) % Experiencia.adornos.size])) })
-        add(0, Opcion("Diseñar mi inicio", "Editor visual de widgets", Icono.EDITAR,
-            "Mueve, agranda y prueba tus widgets en vivo.") { cerrarPanel(); editarWidgets() })
-        add(1, Opcion("Paleta y tema", cl.nikalbazu.diptico.ui.Estilo.tema.nombre, Icono.PALETA,
-            "Ve cómo quedan los colores y los temas antes de elegir.") { abrirGaleria("temas") })
+        if (e.vistaConsolas == "habitacion") {
+            add(Opcion("Fondo de los estantes", v.pared, Icono.PALETA) {
+                guardarExperiencia(v.copy(pared = ciclar(Experiencia.paredes, v.pared, 1)))
+            })
+            add(Opcion("Adornos de los estantes", v.adorno, Icono.ESTRELLA) {
+                guardarExperiencia(v.copy(adorno = ciclar(Experiencia.adornos, v.adorno, 1)))
+            })
+        }
         for (nombre in listOf("Jugar", "Explorar", "Ligero")) {
             add(Opcion("Plantilla $nombre", "Personalizable", Icono.PALETA) { plantillaVisual(nombre) })
         }
@@ -5398,7 +5397,7 @@ object Diptico {
             }
             return Opcion(titulo, AtajoInicio.leer(actual, AtajoInicio.NO).titulo,
                 if (bisa) Icono.BISA else Icono.APPS,
-                "Elige con A o ← →. Solo funciona en Inicio. La combinación asignada al otro acceso no se repite.",
+                "Elige con A o ← →. Funciona en Inicio. Si eliges Doble Start, Ajustes espera un instante para distinguir los dos toques.",
                 menos = { cambiar(-1) }) { cambiar(1) }
         }
         add(opcionAtajo(true))

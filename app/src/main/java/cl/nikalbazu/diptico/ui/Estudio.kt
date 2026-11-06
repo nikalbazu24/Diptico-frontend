@@ -69,7 +69,7 @@ fun PanelEstudio(e: Estado) {
                 }
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Estudio visual", 18f, lineas = 1)
+                    Texto("Editar widgets", 18f, lineas = 1)
                     val cantidad = e.widgets.count { it.visible && it.pagina == e.paginaInicio }
                     Detalle("Página ${e.paginaInicio + 1}/${e.paginas} · $cantidad widgets", 12f, lineas = 1)
                 }

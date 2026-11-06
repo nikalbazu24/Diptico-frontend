@@ -54,7 +54,6 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.PANTALLAS -> Color(0xFF6B4EFF)
     Seccion.INICIO -> Color(0xFF00ACC1)
     Seccion.ESTANTE -> Color(0xFFFF8A5B)
-    Seccion.EXPERIENCIA -> Color(0xFF57DCC7)
     Seccion.TEMAS -> Color(0xFFB388FF)
     Seccion.APARIENCIA -> Color(0xFFFF5D8F)
     Seccion.MUSICA -> Color(0xFFFF7A59)
@@ -84,14 +83,14 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     conAyudaAngosta = conAyuda && !esc.angosta
-    val entrada = remember { androidx.compose.animation.core.Animatable(if (e.experiencia.movimiento) 0f else 1f) }
+    val entrada = remember { androidx.compose.animation.core.Animatable(if (e.experiencia.movimiento) 0.84f else 1f) }
     LaunchedEffect(e.experiencia.movimiento) {
-        if (e.experiencia.movimiento) entrada.animateTo(1f, tween(180)) else entrada.snapTo(1f)
+        if (e.experiencia.movimiento) entrada.animateTo(1f, tween(120)) else entrada.snapTo(1f)
     }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Row(Modifier.fillMaxSize().graphicsLayer {
             alpha = entrada.value
-            translationY = esc.d(8).toPx() * (1f - entrada.value)
+            translationY = esc.d(12).toPx() * (1f - entrada.value)
         }) {
             // Con una sola pantalla la columna de secciones es más angosta, para dejar lugar a la vista previa.
             ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta || conAyuda) 156f else 196f)).fillMaxHeight())

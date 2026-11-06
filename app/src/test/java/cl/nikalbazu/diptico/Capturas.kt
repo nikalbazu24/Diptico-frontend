@@ -1142,10 +1142,10 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun visual_habitacion_abajo() = foto("visual_habitacion_abajo", base().copy(vistaConsolas = "habitacion", enSistemas = true), Rol.INFERIOR, mi = 1)
 
-    @Test fun visual_estudio_arriba() = foto("visual_estudio_arriba", base().copy(panel = Panel.MENU, seccion = Seccion.EXPERIENCIA, enOpciones = true), Rol.SUPERIOR)
+    @Test fun visual_estudio_arriba() = foto("visual_estudio_arriba", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true), Rol.SUPERIOR)
 
     @Config(qualifiers = ABAJO)
-    @Test fun visual_estudio_previa_abajo() = foto("visual_estudio_previa_abajo", base().copy(panel = Panel.MENU, seccion = Seccion.EXPERIENCIA, enOpciones = true, vistaConsolas = "habitacion"), Rol.INFERIOR, mi = 1)
+    @Test fun visual_estudio_previa_abajo() = foto("visual_estudio_previa_abajo", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, vistaConsolas = "habitacion"), Rol.INFERIOR, mi = 1)
 
     @Test fun visual_coleccion_arriba() = foto("visual_coleccion_arriba", base().copy(panel = Panel.WIDGET, coleccionVisual = "muestra", colecciones = mapOf("muestra" to cl.nikalbazu.diptico.estado.Coleccion("Aventuras", juegos.map { it.clave }))), Rol.SUPERIOR)
 

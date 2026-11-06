@@ -80,7 +80,7 @@ fun Habitacion(e: Estado, modifier: Modifier = Modifier) {
                 Texto("Tu habitación", 25f, color = Color.White)
                 Texto("${e.juegos.size} juegos · ${e.experiencia.adorno}", 11f, color = Color(0xFFCED8EF))
             }
-            Box(Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = .12f)).clickable { Diptico.abrirMenu(); Diptico.elegirSeccion(Seccion.EXPERIENCIA) }.padding(esc.d(10))) {
+            Box(Modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = .12f)).clickable { Diptico.abrirMenu(Seccion.APARIENCIA) }.padding(esc.d(10))) {
                 Texto("Decorar", 12f, color = Color.White)
             }
         }

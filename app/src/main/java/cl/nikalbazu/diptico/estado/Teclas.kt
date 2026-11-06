@@ -427,7 +427,7 @@ object Teclas {
                 when {
                     esA(code) -> { if (e.vistaConsolas == "habitacion") Diptico.abrirObjetoHabitacion() else Diptico.entrarSistema(); return true }
                     esB(code) -> return true
-                    code == KeyEvent.KEYCODE_BUTTON_X -> { if (e.vistaConsolas == "habitacion") Diptico.abrirMenu(Seccion.EXPERIENCIA) else Diptico.abrirEditarConsola(e.consolaSel); return true }
+                    code == KeyEvent.KEYCODE_BUTTON_X -> { if (e.vistaConsolas == "habitacion") Diptico.abrirMenu(Seccion.APARIENCIA) else Diptico.abrirEditarConsola(e.consolaSel); return true }
                     code == KeyEvent.KEYCODE_BUTTON_Y -> { Diptico.sorprendeme(); Diptico.entrarSistema(); return true }
                 }
             }

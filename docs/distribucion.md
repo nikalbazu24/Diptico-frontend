@@ -2,6 +2,8 @@
 
 Cada cambio de la app que llega a `main` ejecuta las pruebas y genera los dos APK con la firma de distribución. GitHub verifica ambos certificados, sube los APK y publica una beta `1.1` que puede detectar el actualizador. Los cambios de documentación y las ramas `fix/**` no publican versiones.
 
+Antes de publicar una beta, cambia el ID y las páginas del tour en `Novedades.kt` y actualiza `docs/novedades-beta.md`. Escribe qué se agregó, corrigió, actualizó o retiró según corresponda. GitHub usa esas notas en la publicación y exige un tour nuevo.
+
 Configura en GitHub Actions los secretos `DIPTICO_KEYSTORE_BASE64`, `DIPTICO_STORE_PASSWORD`, `DIPTICO_KEY_ALIAS` y `DIPTICO_KEY_PASSWORD`. Configura `DIPTICO_CERT_SHA256` como variable con la huella SHA-256 del certificado, 64 caracteres hexadecimales en minúsculas sin separadores. Guarda la clave privada y su contraseña fuera del repositorio, con una copia de recuperación. Usa la misma firma en cada versión futura. La firma de pruebas no sirve para distribución.
 
 ## Configuración inicial desde Windows

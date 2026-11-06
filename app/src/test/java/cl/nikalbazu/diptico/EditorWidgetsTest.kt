@@ -1,10 +1,11 @@
 package cl.nikalbazu.diptico
 
-import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import android.view.Choreographer
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -12,7 +13,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Panel
@@ -23,23 +23,33 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
+import org.junit.runners.model.Statement
+import org.robolectric.util.ReflectionHelpers
+import kotlin.coroutines.ContinuationInterceptor
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.LooperMode
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
-@LooperMode(LooperMode.Mode.LEGACY)
-// Los gestos usan las posiciones medidas por Compose y no requieren un perfil de pantalla fijo.
-@Config(sdk = [29], qualifiers = "land")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [34], qualifiers = ARRIBA)
 class EditorWidgetsTest {
-    @get:Rule val regla = createComposeRule()
+    // El dispatcher de Compose debe usar el reloj de la ventana del test actual.
+    @get:Rule(order = 0) val relojCompose = TestRule { prueba, _ ->
+        object : Statement() {
+            override fun evaluate() {
+                val dispatcher = AndroidUiDispatcher.Main[ContinuationInterceptor] as AndroidUiDispatcher
+                ReflectionHelpers.setField(dispatcher, "choreographer", Choreographer.getInstance())
+                prueba.evaluate()
+            }
+        }
+    }
+    @get:Rule(order = 1) val regla = createComposeRule()
     private val reloj = Widget("cronometro", 0, 0, 2, 1)
 
     private fun abrir(widgets: List<Widget> = listOf(reloj)) {
-        // El editor usa su estado y persistencia. La prueba de gestos no necesita los servicios de arranque.
-        val contexto = ApplicationProvider.getApplicationContext<Context>()
-        Diptico.app = contexto
-        Diptico.almacen = Almacen(contexto)
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(Estado(
             configurado = true, listo = true, intro = false, inicio = "widgets", panel = Panel.ESTUDIO,
             editandoWidgets = true, widgetSel = 0, paginas = 2, widgets = widgets,

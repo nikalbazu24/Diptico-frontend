@@ -89,7 +89,8 @@ class NavegacionTest {
 
     @Test fun dobleStartAbreBisaSinActivarElMenu() {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
-        Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false))
+        Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false,
+            navegacion = NavegacionEstado(atajoBisa = AtajoInicio.START_DOBLE.id)))
         toque(KeyEvent.KEYCODE_BUTTON_START, 1000L)
         assertEquals(Panel.NINGUNO, Diptico.estado.value.panel)
         toque(KeyEvent.KEYCODE_BUTTON_START, 1120L)
@@ -103,8 +104,6 @@ class NavegacionTest {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(Estado(listo = true, configurado = true, intro = false))
         toque(KeyEvent.KEYCODE_BUTTON_START, 1000L)
-        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper())
-            .idleFor(java.time.Duration.ofMillis(350))
         assertEquals(Panel.MENU, Diptico.estado.value.panel)
     }
 

@@ -12,8 +12,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cristal-comunidad-1"
-    const val NOMBRE = "Cristal y personalización"
+    const val ID = "cristal-accesos-2"
+    const val NOMBRE = "Cristal y accesos rápidos"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -147,8 +147,8 @@ object Novedades {
             ),
         )),
         Version("estudio-visual-1", "Estudio visual", listOf(
-            Pagina("Tu Díptico, a tu manera", "Menú › Estudio visual: Universo del juego toma colores de tus imágenes; tarjetas de vidrio y movimiento ambiental a elección.", Icono.PALETA, 0xFF57DCC7),
-            Pagina("Tu habitación", "Consolas, colecciones y recuerdos en un espacio propio. Cambia la pared y los objetos en Estudio visual. Cruceta elige y A entra.", Icono.BIBLIOTECA, 0xFF8EAFFF),
+            Pagina("Tu Díptico, a tu manera", "Menú › Apariencia: Universo del juego toma colores de tus imágenes; tarjetas de vidrio y movimiento ambiental a elección.", Icono.PALETA, 0xFF57DCC7),
+            Pagina("Tu habitación", "Consolas, colecciones y recuerdos en un espacio propio. Cambia la pared y los objetos en Apariencia. Cruceta elige y A entra.", Icono.BIBLIOTECA, 0xFF8EAFFF),
             Pagina("Colecciones con identidad", "Elige color, fondo, logo, música y disposición para cada colección. Comparte y guarda perfiles visuales con la composición de tus widgets.", Icono.CARPETA, 0xFFFFB46A),
             Pagina("Una ficha en la otra pantalla", "Usa «Enviar ficha a la otra pantalla» en el menú de personalización. Ahí mismo puedes soltarla cuando quieras.", Icono.PANTALLAS, 0xFFBCA4FF),
             Pagina("Actualizador más tranquilo", "La ayuda conserva su panel al cambiar el porcentaje de descarga y la pantalla inferior evita reaplicar opciones de ventana sin cambios.", Icono.DESCARGA, 0xFF57DCC7),
@@ -167,19 +167,22 @@ object Novedades {
         )),
         Version("mesa-partida-1", "Tu partida, a tu manera", listOf(
             Pagina("Tu pantalla de partida", "Toca Portada, Bitácora, Herramientas o Ligera en la pantalla libre. La vista se recuerda para cada juego. Desde sus opciones también la puedes cambiar con el mando.", Icono.PANTALLAS, 0xFF57DCC7),
-            Pagina("Un inicio para cada momento", "En Estudio visual prueba Jugar, Explorar o Ligero. Puedes ajustar los widgets, guardar el perfil y volver a tu distribución anterior.", Icono.PALETA, 0xFFBCA4FF),
+            Pagina("Un inicio para cada momento", "En Apariencia prueba Jugar, Explorar o Ligero. Puedes ajustar los widgets, guardar el perfil y volver a tu distribución anterior.", Icono.PALETA, 0xFFBCA4FF),
             Pagina("Planea tu próxima partida", "Agrega Mi próxima partida, Cola de juegos o Tengo 20 minutos al inicio. Desde las opciones de un juego puedes marcarlo pendiente, jugando o terminado.", Icono.CONTINUAR, 0xFFFFB46A),
             Pagina("Capturas y copias", "Desde las opciones del juego puedes abrir su galería, compartir una captura o usarla como mapa. En sistemas con RetroArch puedes guardar y exportar hasta tres copias .srm por juego.", Icono.PORTADA, 0xFFBCA4FF),
             Pagina("Trae tu biblioteca", "En Biblioteca puedes importar títulos y favoritos de un gamelist.xml de ES-DE. Revisa las coincidencias antes de aplicar los cambios.", Icono.BIBLIOTECA, 0xFF73ABFF),
         )),
         Version("centro-bisa-1", "Centro de Bisa", listOf(
             Pagina("Bisa sabe dónde estás", "Te acompaña con acciones para el juego activo y su sistema. Consulta tu próximo paso y revisa la biblioteca sin configurar un motor. Con un motor puedes pedir pistas.", Icono.BISA, 0xFF57DCC7),
-            Pagina("Habla con un gesto", "En Inicio pulsa Start dos veces o toca a Bisa. Start + R3 abre las apps. Puedes cambiar ambos atajos en Controles. Mantén su cara para dictar. En el chat puedes usar X para escribir o L1 para hablar.", Icono.MICROFONO, 0xFFBCA4FF),
+            Pagina("Habla con un gesto", "En Inicio pulsa Start + L3 o toca a Bisa. Start + R3 abre las apps. Puedes cambiar ambos atajos en Controles. Mantén su cara para dictar. En el chat puedes usar X para escribir o L1 para hablar.", Icono.MICROFONO, 0xFFBCA4FF),
             Pagina("Bisa durante una partida", "Con una pantalla libre tienes el chat y sus accesos. Cuando el juego usa toda la consola, usa la burbuja y sus acciones rápidas si Android le dio permiso.", Icono.PANTALLAS, 0xFF73ABFF),
         )),
         Version(ID, NOMBRE, listOf(
             Pagina("Díptico Cristal", "Prueba el tema en Ajustes › Temas. La luz y el arte del fondo se difuminan detrás de la interfaz.", Icono.PALETA, 0xFFBCA4FF),
-            Pagina("Tu estudio y tus carpetas", "Abre Estudio visual para personalizar tus widgets. En Estante prueba Mosaico, Vitrina y las nuevas cajas.", Icono.EDITAR, 0xFFFFB46A),
+            Pagina("Agregado · Carpetas y cajas", "En Estante prueba Mosaico, Vitrina y las cajas Panorámica, Instantánea y Casete. Edita los widgets desde su propio inicio.", Icono.FORMA, 0xFFFFB46A),
+            Pagina("Actualizado · Barra de arriba", "Buscar, Apps, Widgets y Bisa ahora se distinguen mejor. Ajustes tiene su propio botón y Start lo abre al soltarlo con los atajos predeterminados.", Icono.AJUSTES, 0xFFBCA4FF),
+            Pagina("Retirado · Estudio visual e IA para temas", "Quitamos la entrada Estudio visual y la creación de temas con IA. Busca los perfiles en Apariencia y los temas de la comunidad en Temas.", Icono.PALETA, 0xFFFF8A83),
+            Pagina("Corregido · Biblioteca", "Se filtran accesos de Android que ya no tienen una app disponible y se evitan duplicados entre Android, Ports y accesos importados.", Icono.BIBLIOTECA, 0xFF73ABFF),
             Pagina("Apps y atajos a tu gusto", "En dos pantallas, las opciones aparecen al elegir una app. En Controles puedes aprender un botón y combinarlo con Start.", Icono.MANDO, 0xFF73ABFF),
             Pagina("Bisa, tu copiloto", "Pídele una pista sin spoilers y cuéntale el punto en que estás. Si ya dejaste una nota, Bisa puede usarla.", Icono.BISA, 0xFF57DCC7),
         )),
