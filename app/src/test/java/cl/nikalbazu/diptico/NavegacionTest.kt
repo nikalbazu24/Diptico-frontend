@@ -167,7 +167,8 @@ class NavegacionTest {
             Diptico.fijarParaPrueba(Estado(configurado = true, intro = false, juegos = listOf(visible, oculto),
                 datos = mapOf(oculto.clave to DatosJuego(oculto = true),
                     visible.clave to DatosJuego(favorito = true)),
-                filtro = "favoritos", consolaSel = "gba", juegoSel = visible.clave))
+                filtro = "favoritos", consolaSel = "gba", juegoSel = visible.clave,
+                vistaConsolas = "carpetas", enSistemas = true))
             Diptico.abrirJuegosOcultos()
             assertEquals(listOf(oculto.clave), Diptico.estado.value.visibles.map { it.clave })
             if (abrirResultado) Diptico.aceptar()
@@ -176,6 +177,7 @@ class NavegacionTest {
             assertEquals("favoritos", estado.filtro)
             assertEquals("gba", estado.consolaSel)
             assertEquals(visible.clave, estado.seleccionado?.clave)
+            assertTrue(estado.enSistemas)
             assertNull(estado.antesDeOcultos)
         }
     }
@@ -234,11 +236,25 @@ class NavegacionTest {
         }
     }
 
+    @Test fun buscarDesdeWidgetsAbreElJuegoEncontradoEnUnaPantalla() {
+        val juego = cl.nikalbazu.diptico.data.Juego("snes/1", "snes", "Juego", "juego.sfc",
+            android.net.Uri.parse("content://prueba/juego"), "juego")
+        Diptico.fijarParaPrueba(Estado(configurado = true, intro = false, dosDisponibles = false,
+            inicio = "widgets", vistaConsolas = "carpetas", enSistemas = true, juegos = listOf(juego)))
+        Diptico.abrirBuscar()
+        Diptico.aceptar()
+        val e = Diptico.estado.value
+        assertEquals(Panel.NINGUNO, e.panel)
+        assertFalse(e.enSistemas)
+        assertEquals("heroe", e.inicio)
+        assertEquals(juego, e.seleccionado)
+    }
+
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("desenfoque-carpetas-7").map { it.id })
-        assertEquals(listOf(Novedades.ID, "desenfoque-carpetas-7"), Novedades.pendientes("carpetas-y-decoraciones-6").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("zoom-y-recorrido-carpetas-8").map { it.id })
+        assertEquals(listOf(Novedades.ID, "zoom-y-recorrido-carpetas-8"), Novedades.pendientes("desenfoque-carpetas-7").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

@@ -9,9 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
+import cl.nikalbazu.diptico.estado.Panel
 
 /**
  * Modo una pantalla (como en una tele, una Odin o un teléfono): el arte del juego de fondo,
@@ -43,7 +41,7 @@ import cl.nikalbazu.diptico.estado.Icono
  */
 @Composable
 fun PantallaUnica(e: Estado) {
-    if (e.editandoWidgets) {
+    if (e.editandoWidgets || !Estilo.efectosCompletos) {
         PantallaUnicaContenido(e)
         return
     }
@@ -64,10 +62,10 @@ fun PantallaUnica(e: Estado) {
 private fun PantallaUnicaContenido(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    if (e.panel == cl.nikalbazu.diptico.estado.Panel.WIDGET && e.coleccionVisual != null) { ColeccionUniverso(e); return }
+    if (e.panel == Panel.WIDGET && e.coleccionVisual != null) { ColeccionUniverso(e); return }
     if (e.inicio == "widgets") {
         Box(Modifier.fillMaxSize()) {
-            val dividido = e.panel == cl.nikalbazu.diptico.estado.Panel.ESTUDIO && !esc.angosta
+            val dividido = e.panel == Panel.ESTUDIO && !esc.angosta
             if (dividido) {
                 Lienzo(e.oscuro, Modifier.fillMaxWidth(0.5f).fillMaxHeight(), e.tamTexto) {
                     PantallaInicio(e)
@@ -81,33 +79,28 @@ private fun PantallaUnicaContenido(e: Estado) {
         }
         return
     }
-    if (e.vistaConsolas in Diptico.VISTAS_CARPETAS && (e.enSistemas || e.carpetaEnVentana)) {
+    if (e.vistaConsolas in Diptico.MODOS_ELEGIR) {
         Box(Modifier.fillMaxSize().background(p.fondo)) {
-            Box(Modifier.fillMaxSize().difuminar(e)) {
-                val zona = Modifier.fillMaxSize().padding(top = esc.d(12))
-                if (e.vistaConsolas == "carpetas") VistaCarpetas(e, zona, 1.05f)
-                else CarpetasConsolas(e, zona)
-            }
-            Paneles(e, conAyuda = true)
-        }
-        return
-    }
-    if (e.vistaConsolas == "discos" && e.enSistemas) {
-        // Con una pantalla: la consola en grande a la izquierda y la caja de discos a la derecha.
-        Box(Modifier.fillMaxSize().background(p.fondo)) {
-            Box(Modifier.fillMaxSize().difuminar(e)) {
-                VistaSistema(e, completa = false)
-                DiscosConsolas(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.55f).fillMaxHeight(0.82f).clipToBounds())
-            }
-            Paneles(e, conAyuda = true)
-        }
-        return
-    }
-    if (e.vistaConsolas == "sistemas" && e.enSistemas) {
-        Box(Modifier.fillMaxSize().background(p.fondo)) {
-            Box(Modifier.fillMaxSize().difuminar(e)) {
-                VistaSistema(e, completa = false)
-                SistemasCarrusel(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).fillMaxHeight(0.8f).clipToBounds())
+            Column(Modifier.fillMaxSize().difuminar(e)) {
+                Box(Modifier.fillMaxWidth().weight(1f).padding(top = esc.d(12))) {
+                    when {
+                        e.vistaConsolas == "carpetas" -> VistaCarpetas(e, Modifier.fillMaxSize(), 1.05f)
+                        !e.enSistemas -> Column(Modifier.fillMaxSize()) {
+                            CabeceraSistema(e)
+                            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), 1.05f)
+                        }
+                        e.vistaConsolas in Diptico.VISTAS_CARPETAS -> CarpetasConsolas(e, Modifier.fillMaxSize())
+                        e.vistaConsolas == "discos" -> {
+                            VistaSistema(e, completa = false)
+                            DiscosConsolas(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.55f).fillMaxHeight(0.82f).clipToBounds())
+                        }
+                        else -> {
+                            VistaSistema(e, completa = false)
+                            SistemasCarrusel(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).fillMaxHeight(0.8f).clipToBounds())
+                        }
+                    }
+                }
+                if (e.sesion == null && !e.carpetaEnVentana) BarraFlotante(e, if (e.enSistemas) null else e.seleccionado, consola = e.enSistemas)
             }
             Paneles(e, conAyuda = true)
         }
@@ -124,22 +117,12 @@ private fun PantallaUnicaContenido(e: Estado) {
         )
 
         BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos) {
-            // Con una sola pantalla no hay barra de accesos: el turbo, las apps y el menú quedan arriba.
+            // El turbo queda junto al estado del equipo.
             Box(
                 Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f))
                     .combinedClickable(onLongClick = { Diptico.alternarTurbo() }) { Diptico.turboAhora() },
                 contentAlignment = Alignment.Center,
             ) { IconoDiptico(Icono.CHISPA, if (e.turbo) Color(0xFFFF5252) else p.tenue, 17f) }
-            Spacer(Modifier.width(esc.d(8)))
-            Box(
-                Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f)).clickable { Diptico.abrirApps() },
-                contentAlignment = Alignment.Center,
-            ) { IconoDiptico(Icono.APPS, p.tinta, 17f, acento = Cielo) }
-            Spacer(Modifier.width(esc.d(8)))
-            Box(
-                Modifier.size(esc.d(32)).clip(CircleShape).background(p.superficie.copy(alpha = 0.8f)).clickable { Diptico.abrirMenu() },
-                contentAlignment = Alignment.Center,
-            ) { IconoDiptico(Icono.MENU, p.tinta, 18f, acento = Coral) }
             Spacer(Modifier.width(esc.d(14)))
         }
 
@@ -157,26 +140,26 @@ private fun PantallaUnicaContenido(e: Estado) {
             ) { j -> InfoUnica(e, j) }
         }
 
-        if (e.vista == "estante") {
-            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
-                Cinta(e)
-                Estante(e, alto = 140f * LocalTamJuegos.current.coerceAtMost(1.2f), escala = 0.74f * LocalTamJuegos.current)
-                Row(
-                    Modifier.fillMaxWidth().padding(start = esc.d(22), end = esc.d(22), bottom = esc.d(8)),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Spacer(Modifier.weight(1f))
-                    Pistas("A" to "Jugar", "Y" to "Opciones", "L1 R1" to "Consola", "Select" to "Widgets", "Start" to "Menú")
+        val lateral = e.vistaConsolas == "lado" || e.vistaConsolas == "rueda"
+        Column(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .then(if (e.vista == "estante" && !lateral) Modifier else Modifier.fillMaxHeight(0.62f)),
+        ) {
+            when {
+                lateral -> Row(Modifier.fillMaxWidth().weight(1f)) {
+                    if (e.vistaConsolas == "lado") RielConsolas(e) else RuedaConsolas(e)
+                    VistaJuegos(e, Modifier.fillMaxHeight().weight(1f), 0.74f)
+                }
+                e.vista == "estante" -> {
+                    Cinta(e)
+                    Estante(e, alto = 140f * LocalTamJuegos.current.coerceAtMost(1.2f), escala = 0.74f * LocalTamJuegos.current)
+                }
+                else -> {
+                    Cinta(e)
+                    VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), 0.74f)
                 }
             }
-        } else {
-            Column(
-                Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.6f)
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, p.fondo.copy(alpha = 0.95f), p.fondo))),
-            ) {
-                Cinta(e)
-                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), 0.74f)
-            }
+            if (e.sesion == null) BarraFlotante(e, juego)
         }
       }
 

@@ -821,14 +821,17 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 Etiqueta("Tiempo jugado", p.tenue, 11f)
                 Texto(if (total > 0) formatoTiempo(total) else "0 min", 28f, lineas = 1)
                 top?.let { (clave, d) ->
-                    val t = e.juegos.firstOrNull { it.clave == clave }?.titulo ?: return@let
+                    val t = e.juegosPorClave[clave]?.titulo ?: return@let
                     Detalle("Más jugado: $t (${formatoTiempo(d.tiempo)})", 13f, lineas = 2)
                 }
             }
         }
         "recientes" -> Tarjeta {
-            val recientes = e.datos.entries.filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }
-                .mapNotNull { (k, _) -> e.juegos.firstOrNull { it.clave == k } }.take(if (variante == 1) al * 2 else if (tam >= 3) 5 else if (tam == 2) 3 else 2)
+            val limite = if (variante == 1) al * 2 else if (tam >= 3) 5 else if (tam == 2) 3 else 2
+            val recientes = remember(e.datos, e.juegos, limite) {
+                e.datos.entries.asSequence().filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }
+                    .mapNotNull { (k, _) -> e.juegosPorClave[k] }.take(limite).toList()
+            }
             Column {
                 Etiqueta("Jugados hace poco", p.tenue, 11f)
                 Spacer(Modifier.height(esc.d(8)))
@@ -1108,7 +1111,7 @@ private fun WidgetCompacto(e: Estado, tipo: String) {
         "juego" -> Triple(Icono.JUGAR, j?.titulo ?: "Elige un juego", "A · ¡Jugar!")
         "paso" -> Triple(Icono.LAPIZ, "Tu próximo paso", j?.let { e.datos[it.clave]?.paso }.orEmpty().ifEmpty { "Sin anotar" })
         "tiempo" -> Triple(Icono.RELOJ, "Tiempo jugado", formatoTiempo(e.datos.values.sumOf { it.tiempo }))
-        "recientes" -> Triple(Icono.CONTINUAR, "Último jugado", e.datos.entries.filter { it.value.ultimo > 0 }.maxByOrNull { it.value.ultimo }?.let { (k, _) -> e.juegos.firstOrNull { it.clave == k }?.titulo } ?: "Nada aún")
+        "recientes" -> Triple(Icono.CONTINUAR, "Último jugado", e.datos.entries.filter { it.value.ultimo > 0 }.maxByOrNull { it.value.ultimo }?.let { (k, _) -> e.juegosPorClave[k]?.titulo } ?: "Nada aún")
         "fiesta" -> Triple(Icono.MUNDO, e.fiesta?.nombre ?: (Temas.proxima()?.first?.nombre ?: "Fiestas"), e.fiesta?.donde ?: "Próxima fiesta")
         "consolas" -> Triple(Icono.BIBLIOTECA, "${e.juegos.size} juegos", "${e.consolasConJuegos.size} consolas")
         "favoritos" -> Triple(Icono.CORAZON, "Favoritos", "${e.datos.values.count { it.favorito }} juegos")
@@ -1262,7 +1265,7 @@ private fun WidgetMini(e: Estado, tipo: String, al: Int) {
     // Juego, recientes y sugerencia: la portada llena el widget.
     val portada = when (tipo) {
         "juego" -> j
-        "recientes" -> e.datos.entries.filter { it.value.ultimo > 0 }.maxByOrNull { it.value.ultimo }?.let { (k, _) -> e.juegos.firstOrNull { it.clave == k } }
+        "recientes" -> e.datos.entries.filter { it.value.ultimo > 0 }.maxByOrNull { it.value.ultimo }?.let { (k, _) -> e.juegosPorClave[k] }
         "favoritos" -> e.juegos.firstOrNull { e.datos[it.clave]?.favorito == true }
         else -> null
     }
@@ -1592,7 +1595,7 @@ private fun MuestrarioWidgets0(e: Estado, an: Int, al: Int, foco: Int) {
 @Composable
 private fun WidgetAtajo(e: Estado, clave: String, al: Int) {
     val esc = LocalEscala.current
-    val j = e.juegos.firstOrNull { it.clave == clave }
+    val j = e.juegosPorClave[clave]
     val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
     Box(
         Modifier.fillMaxSize().clip(forma).background(LocalPaleta.current.superficie)
@@ -1643,7 +1646,7 @@ private fun WidgetColeccion(e: Estado, id: String, an: Int, al: Int) {
     val c = e.colecciones[id]
     Tarjeta(alPulsar = { Diptico.abrirColeccionVisual(id) }) {
         if (c == null) { Detalle("Colección borrada", 12f); return@Tarjeta }
-        val juegos = c.juegos.mapNotNull { k -> e.juegos.firstOrNull { it.clave == k } }
+        val juegos = c.juegos.mapNotNull { k -> e.juegosPorClave[k] }
         Column(Modifier.fillMaxSize()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconoDiptico(Icono.CARPETA, Coral, 16f)

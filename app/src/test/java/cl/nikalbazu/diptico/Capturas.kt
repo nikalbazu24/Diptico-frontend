@@ -986,6 +986,21 @@ class Capturas {
     @Test fun visual_decoraciones_desplegadas() = foto("decoraciones_desplegadas_inferior", base().copy(
         panel = Panel.GALERIA, galeria = "decoraciones", decoracionAbierta = "bloques", indice = 3), Rol.INFERIOR)
 
+    @Test fun visual_carpetas_una_horizontal() = foto("carpetas_una_horizontal_accesos", base().copy(
+        dosDisponibles = false, vistaConsolas = "carpetas", enSistemas = true, carpetasHorizontal = true, tamCarpetas = 1.6f,
+    ), Rol.UNICA)
+
+    @Test fun visual_carpeta_una_completa() = foto("carpeta_una_pantalla_completa", base().copy(
+        dosDisponibles = false, vistaConsolas = "carpetas", modoCarpeta = "completa", vista = "cuadricula", consolaSel = "snes",
+    ), Rol.UNICA)
+
+    @Test fun visual_tienda_una_pantalla() {
+        val catalogo = cl.nikalbazu.diptico.estado.TiendaTemas.incluidos(ApplicationProvider.getApplicationContext())
+        foto("tienda_una_pantalla_previa", base().copy(
+            dosDisponibles = false, panel = Panel.GALERIA, galeria = "tienda_temas", galeriaPestana = 1, catalogoTemas = catalogo,
+        ), Rol.UNICA)
+    }
+
     @Test fun t216_carpetas_una() = foto("216_carpetas_una_pantalla", conRecientes(base()).copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "gba", modoPantallas = "una_negra"), Rol.UNICA)
 
     @Test fun t217_centro_activos() = foto("217_centro_accesos_activos", base().copy(panel = Panel.CENTRO, indice = 0, turbo = true), Rol.SUPERIOR)

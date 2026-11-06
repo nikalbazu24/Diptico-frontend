@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,11 +42,13 @@ import cl.nikalbazu.diptico.estado.Teclas
 
 /** Galería de temas, canciones o colores: pestañas arriba (L1/R1) y todo a la vista para elegir. */
 @Composable
-fun PanelGaleria(e: Estado) {
+fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val items = remember(e) { Diptico.itemsGaleria(e) }
     val pestanas = Diptico.pestanasGaleria(e.galeria)
+    val seleccion = items.getOrNull(e.indice)?.takeIf { conPrevia && it.tema != null }
+    val vistaLateral = seleccion != null && !esc.angosta
     val (titulo, icono) = when (e.galeria) {
         "capturas_juego", "captura_acciones" -> "Capturas del juego" to Icono.PORTADA
         "variantes_juego" -> "Versión del juego" to Icono.FORMA
@@ -123,39 +126,50 @@ fun PanelGaleria(e: Estado) {
             SideEffect { Teclas.columnasGaleria = cols }
             val grilla = rememberLazyGridState()
             LaunchedEffect(e.indice, e.galeriaPestana) { if (items.isNotEmpty()) grilla.mostrar(e.indice) }
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(cols), state = grilla, modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(esc.d(if (e.galeria == "colores") 6f else 8f)),
-                verticalArrangement = Arrangement.spacedBy(esc.d(if (e.galeria == "colores") 6f else 8f)),
-                contentPadding = PaddingValues(esc.d(3)),
-            ) {
-                itemsIndexed(items, key = { _, it -> it.id + it.nombre }) { i, it ->
-                    val activo = i == e.indice
-                    when (e.galeria) {
-                        "vistas_juegos", "vistas_consolas", "filtros", "orden", "variantes_juego" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
-                        "capturas_juego" -> {
-                            val uri = Diptico.imagenCaptura(e, it.id)
-                            if (uri == null) FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
-                            else MiniCaptura(it.nombre, uri, activo) { Diptico.elegirIndice(i) }
-                        }
-                        "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
-                        "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
-                        "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
-                        "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> TarjetaTema(it, activo, e.oscuro) { Diptico.elegirIndice(i) }
-                        "decoraciones" -> {
-                            if (it.id.startsWith("decor-tema:")) {
-                                FilaCancion(it, activo, if (it.enUso) Icono.ARRIBA else Icono.ABAJO, "") { Diptico.elegirIndice(i) }
-                            } else Box(Modifier.padding(start = esc.d(14))) {
-                                FilaCancion(it, activo, if (it.id.startsWith("decor-intensidad:")) Icono.BRILLO else Icono.ESTRELLA,
-                                    "Elegido ✓") { Diptico.elegirIndice(i) }
+            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(cols), state = grilla, modifier = Modifier.weight(1f).fillMaxHeight(),
+                    horizontalArrangement = Arrangement.spacedBy(esc.d(if (e.galeria == "colores") 6f else 8f)),
+                    verticalArrangement = Arrangement.spacedBy(esc.d(if (e.galeria == "colores") 6f else 8f)),
+                    contentPadding = PaddingValues(esc.d(3)),
+                ) {
+                    itemsIndexed(items, key = { _, it -> it.id + it.nombre }) { i, it ->
+                        val activo = i == e.indice
+                        when (e.galeria) {
+                            "vistas_juegos", "vistas_consolas", "filtros", "orden", "variantes_juego" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
+                            "capturas_juego" -> {
+                                val uri = Diptico.imagenCaptura(e, it.id)
+                                if (uri == null) FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
+                                else MiniCaptura(it.nombre, uri, activo) { Diptico.elegirIndice(i) }
                             }
+                            "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
+                            "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
+                            "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
+                            "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> TarjetaTema(it, activo, e.oscuro) {
+                                if (conPrevia && it.tema != null && !activo) Diptico.actualizar { estado -> estado.copy(indice = i) }
+                                else Diptico.elegirIndice(i)
+                            }
+                            "decoraciones" -> {
+                                if (it.id.startsWith("decor-tema:")) {
+                                    FilaCancion(it, activo, if (it.enUso) Icono.ARRIBA else Icono.ABAJO, "") { Diptico.elegirIndice(i) }
+                                } else Box(Modifier.padding(start = esc.d(14))) {
+                                    FilaCancion(it, activo, if (it.id.startsWith("decor-intensidad:")) Icono.BRILLO else Icono.ESTRELLA,
+                                        "Elegido ✓") { Diptico.elegirIndice(i) }
+                                }
+                            }
+                            "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
+                            "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
+                            "colecciones" -> FilaCancion(it, activo, Icono.CARPETA, "Aquí ✓") { Diptico.elegirIndice(i) }
+                            else -> FilaCancion(it, activo) { Diptico.elegirIndice(i) }
                         }
-                        "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
-                        "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
-                        "colecciones" -> FilaCancion(it, activo, Icono.CARPETA, "Aquí ✓") { Diptico.elegirIndice(i) }
-                        else -> FilaCancion(it, activo) { Diptico.elegirIndice(i) }
                     }
                 }
+                if (vistaLateral && seleccion != null) {
+                    VistaPreviaGaleria(e, seleccion, Modifier.fillMaxWidth(.36f).fillMaxHeight())
+                }
+            }
+            if (!vistaLateral && seleccion != null) {
+                VistaPreviaGaleria(e, seleccion, Modifier.fillMaxWidth(), compacta = true)
             }
             Spacer(Modifier.height(esc.d(6)))
             Pistas(
@@ -165,6 +179,42 @@ fun PanelGaleria(e: Estado) {
                     else -> arrayOf("A" to "Elegir", "B" to "Volver")
                 }),
             )
+        }
+    }
+}
+
+/** En una pantalla, la vista previa y la acción están junto a la galería. */
+@Composable
+private fun VistaPreviaGaleria(e: Estado, item: Diptico.ItemGaleria, modifier: Modifier, compacta: Boolean = false) {
+    val tema = item.tema ?: return
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val instalando = e.galeria == "tienda_temas" && e.trabajos.any { it.id == "instalar_tema" }
+    val accion = when {
+        e.galeria != "tienda_temas" -> "Elegir"
+        instalando -> "Instalando…"
+        item.enUso -> "Usar tema"
+        else -> "Instalar"
+    }
+    val animar = e.galeria == "decoraciones" && Estilo.efectosCompletos
+    if (compacta) {
+        Row(modifier.padding(top = esc.d(8)), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            Box(Modifier.width(esc.d(96)).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(9)))) {
+                PreviaTema(tema, e.oscuro, animar = animar)
+            }
+            Texto(item.nombre, 13f, lineas = 2, modifier = Modifier.weight(1f))
+            AccionTienda(accion, principal = true, habilitada = !instalando) { Diptico.aceptar() }
+        }
+    } else {
+        Column(modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie).padding(esc.d(12)),
+            verticalArrangement = Arrangement.spacedBy(esc.d(7))) {
+            Box(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(esc.d(12)))) {
+                PreviaTema(tema, e.oscuro, animar = animar)
+            }
+            Texto(item.nombre, 16f, lineas = 1)
+            if (item.detalle.isNotBlank()) Detalle(item.detalle, 12f, lineas = 3)
+            AccionTienda(accion, principal = true, habilitada = !instalando) { Diptico.aceptar() }
         }
     }
 }

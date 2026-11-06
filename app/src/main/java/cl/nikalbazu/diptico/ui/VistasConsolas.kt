@@ -77,7 +77,7 @@ private fun colorConsola(id: String): Color = Consolas.porId(id)?.color ?: Uva
 private fun nombreConsola(id: String): String = Consolas.porId(id)?.nombre ?: "Todo"
 /** "1 juego" o "N juegos". */
 fun juegosTexto(n: Int) = if (n == 1) "1 juego" else "$n juegos"
-private fun cuantos(e: Estado, id: String) = if (id == "todo") e.juegos.size else e.juegos.count { it.consolaId == id }
+private fun cuantos(e: Estado, id: String) = if (id == "todo") e.juegos.size else e.juegosPorConsola[id].orEmpty().size
 
 /** Distancia más corta entre dos posiciones de una lista circular (para que la rueda gire por el lado corto). */
 private fun distancia(k: Int, pos: Float, n: Int): Float {

@@ -272,7 +272,7 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.ENCUADRE -> PanelEncuadre(e)
             // Con dos pantallas, el widget abierto se muestra arriba (donde están los widgets).
             Panel.WIDGET -> if (!conAyuda && !e.intercambiar) Box(Modifier.fillMaxSize()) else PanelWidget(e)
-            Panel.GALERIA -> PanelGaleria(e)
+            Panel.GALERIA -> PanelGaleria(e, conPrevia = conAyuda)
             Panel.ESTUDIO -> PanelEstudio(e)
             Panel.EDITAR_CONSOLA -> PanelEditarConsola(e)
             Panel.APPS -> PanelApps(e)

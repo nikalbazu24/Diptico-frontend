@@ -2,20 +2,13 @@ package cl.nikalbazu.diptico
 
 import android.app.ActivityOptions
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -31,7 +24,7 @@ import kotlinx.coroutines.launch
 
 /**
  * La pantalla principal del equipo (la de arriba en la Thor).
- * El tutorial y el modo una pantalla viven aquí. En un teléfono vertical, las dos partes van una sobre otra.
+ * El tutorial y el modo una pantalla usan una sola interfaz adaptada al tamaño del equipo.
  */
 class MainActivity : BaseActivity() {
 
@@ -39,23 +32,15 @@ class MainActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val e by Diptico.estado.collectAsState()
-            val hayInferior = Pantallas.inferior(this) != null
-            val vertical = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
             val mi = miDisplay()
             val t = e.tamTexto
             // En la tele: todo más grande y con margen para que no se corte nada en los bordes.
             val z = e.zoomArriba * (if (e.sobremesa) e.sobremesaTam else 1f)
             val margen = if (e.sobremesa) e.sobremesaMargen else 0
-            when {
-                !hayInferior && vertical && e.configurado -> Column(Modifier.fillMaxSize().background(Color.Black)) {
-                    Lienzo(e.oscuro, Modifier.fillMaxWidth().aspectRatio(16f / 9f), t) { Raiz(e, Rol.SUPERIOR, mi) }
-                    Lienzo(e.oscuro, Modifier.fillMaxWidth().weight(1f), t) { Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) }
-                }
-                e.unaPantalla -> Lienzo(e.oscuro, Modifier.fillMaxSize().margenPorcentaje(margen), t, z) { Raiz(e, Rol.UNICA, mi) }
-                else -> Lienzo(e.oscuro, Modifier.fillMaxSize().margenPorcentaje(margen), t, z) {
-                    Intercambio(e.intercambiar, esArriba = true) { inter ->
-                        if (inter) Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) else Raiz(e, Rol.SUPERIOR, mi)
-                    }
+            Lienzo(e.oscuro, Modifier.fillMaxSize().margenPorcentaje(margen), t, z) {
+                if (e.unaPantalla) Raiz(e, Rol.UNICA, mi)
+                else Intercambio(e.intercambiar, esArriba = true) { inter ->
+                    if (inter) Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) else Raiz(e, Rol.SUPERIOR, mi)
                 }
             }
         }
@@ -75,8 +60,8 @@ class MainActivity : BaseActivity() {
                         window.attributes = lp
                     }
                 }
-                Diptico.estado.map { it.modoPantallas }.distinctUntilChanged().collect { modo ->
-                    if (modo != "una_libre") abrirPantallaInferior()
+                Diptico.estado.map { it.modoPantallas to it.dosDisponibles }.distinctUntilChanged().collect { (modo, hayInferior) ->
+                    if (hayInferior && modo != "una_libre") abrirPantallaInferior()
                 }
             }
         }
