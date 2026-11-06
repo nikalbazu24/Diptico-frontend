@@ -451,7 +451,7 @@ val LocalIconos = staticCompositionLocalOf { IconosCfg() }
  * Ícono de una consola según el estilo elegido: imagen propia, paquete de RetroArch, siglas o el dibujo de Díptico.
  */
 @Composable
-fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Modifier) {
+fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Modifier, memoriaGrafica: Boolean = true) {
     val cfg = LocalIconos.current
     val esc = LocalEscala.current
     val p = LocalPaleta.current
@@ -466,7 +466,7 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
         paquete?.let { Descargas.archivoIcono(ctx, it.id, c.id).takeIf { f -> f.exists() }?.let { f -> android.net.Uri.fromFile(f) } }
     }
     val uri = propio ?: archivo
-    val img = rememberImagen(uri, 192)
+    val img = rememberImagen(uri, 192, memoriaGrafica)
     // Si un paquete no trae el ícono de esta consola, se dibuja uno con la misma línea (a color o en contorno).
     val dibujo = if (paquete != null) (if (paquete.blanco) "contorno" else "insignia") else cfg.estilo
     when {
