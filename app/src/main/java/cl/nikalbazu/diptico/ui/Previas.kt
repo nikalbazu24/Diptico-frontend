@@ -108,15 +108,15 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
         Spacer(Modifier.height(esc.d(6)))
         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
             when (sec) {
-                Seccion.EXPERIENCIA -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) {
-                    if (e.vistaConsolas == "habitacion") Habitacion(ev, Modifier.fillMaxSize()) else PantallaInferior(ev, 1)
-                }
                 Seccion.TEMAS -> {
                     val tema = Diptico.todosLosTemas(e).firstOrNull { it.nombre == t }
                     if (tema != null) Marco { PreviaTema(tema, e.oscuro) }
                     else MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
                 }
                 Seccion.APARIENCIA -> when {
+                    t.endsWith("de los estantes") -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) {
+                        Habitacion(ev, Modifier.fillMaxSize())
+                    }
                     t.startsWith("Efecto") || t == "Modo" -> Marco { PreviaBotonesGrande(e) }
                     t.contains("cono") -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(vistaConsolas = "arriba"), 1) }
                     else -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }

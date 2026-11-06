@@ -3434,7 +3434,6 @@ object Diptico {
                 lista += Opcion(nombre, if (e.idioma == cod) "En uso ✓" else "", Icono.IDIOMA, Idioma.ayuda(cod)) { cambiarIdioma(cod) }
             }
             Seccion.APARIENCIA -> {
-                lista += opcionesPersonalizacion(e)
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
                     "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
@@ -3495,6 +3494,7 @@ object Diptico {
                     actualizar { it.copy(mostrarIntro = v) }
                 }
                 lista += Opcion("Ver la animación ahora", icono = Icono.ESTRELLA, ayuda = "Para mostrársela a alguien.") { verIntro() }
+                lista += opcionesPersonalizacion(e)
             }
             Seccion.MUSICA -> {
                 lista += Opcion(
