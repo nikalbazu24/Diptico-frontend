@@ -23,6 +23,7 @@ android {
         versionCode = numero
         versionName = "$versionBase-beta.$numero"
         buildConfigField("String", "REPORTES_URL", "\"$reportesUrl\"")
+        buildConfigField("boolean", "RENACER", "false")
         // La Thor (y casi todas las consolas Android) es arm64: así el APK no carga librerías que no usa.
         ndk { abiFilters += "arm64-v8a" }
     }
@@ -42,6 +43,13 @@ android {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("publica") ?: signingConfigs.getByName("debug")
+        }
+        create("renacer") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".renacer"
+            versionNameSuffix = "-renacer"
+            buildConfigField("boolean", "RENACER", "true")
+            matchingFallbacks += "debug"
         }
     }
 
@@ -113,5 +121,6 @@ dependencies {
     testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.26.0")
     testImplementation("io.github.takahirom.roborazzi:roborazzi-junit-rule:1.26.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    add("renacerImplementation", "androidx.compose.ui:ui-test-manifest")
 }
 
