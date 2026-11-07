@@ -186,10 +186,11 @@ private fun PortadaEscena(juego: Juego, modifier: Modifier) {
 internal fun InicioUnificado(e: Estado) {
     val esc = LocalEscala.current
     BoxWithConstraints(Modifier.fillMaxSize().background(LocalPaleta.current.fondo)) {
+        val vertical = maxHeight > maxWidth
         Box(Modifier.fillMaxSize().difuminar(e)) {
-            val vertical = maxHeight > maxWidth
             Column(Modifier.fillMaxSize()) {
                 if (vertical) {
+                    BarraSuperior(Modifier, inicio = 24f, trabajos = e.trabajos)
                     Box(Modifier.fillMaxWidth().weight(.43f)) { EscenaDiptico(e, controles = false, reducida = true) }
                     Box(Modifier.fillMaxWidth().weight(.57f)) { ColeccionUnificada(e) }
                 } else {
@@ -217,11 +218,21 @@ private fun ColeccionUnificada(e: Estado) {
             // El reparto de columnas depende del ancho del panel, no del ancho del dispositivo entero.
             BoxWithConstraints(Modifier.weight(1f)) {
                 CompositionLocalProvider(LocalEscala provides Escala(esc.factor, maxWidth.value / esc.factor, esc.texto)) {
-                    if (e.vistaConsolas == "carpetas") VistaCarpetas(e, Modifier.fillMaxSize(), .8f)
-                    else if (e.enSistemas && e.vistaConsolas in Diptico.MODOS_ELEGIR) CarpetasConsolas(e, Modifier.fillMaxSize())
-                    else Column(Modifier.fillMaxSize()) {
-                        Cinta(e)
-                        VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), .8f)
+                    when {
+                        e.vistaConsolas == "carpetas" -> VistaCarpetas(e, Modifier.fillMaxSize(), .8f)
+                        e.vistaConsolas == "lado" || e.vistaConsolas == "rueda" -> Row(Modifier.fillMaxSize()) {
+                            if (e.vistaConsolas == "lado") RielConsolas(e) else RuedaConsolas(e)
+                            VistaJuegos(e, Modifier.weight(1f).fillMaxHeight(), .8f)
+                        }
+                        e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas -> when (e.vistaConsolas) {
+                            "discos" -> DiscosConsolas(e, Modifier.fillMaxSize())
+                            "sistemas" -> SistemasCarrusel(e, Modifier.fillMaxSize())
+                            else -> CarpetasConsolas(e, Modifier.fillMaxSize())
+                        }
+                        else -> Column(Modifier.fillMaxSize()) {
+                            if (e.vistaConsolas in Diptico.MODOS_ELEGIR) CabeceraSistema(e) else Cinta(e)
+                            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), .8f)
+                        }
                     }
                 }
             }
@@ -257,7 +268,7 @@ internal fun IconoCarpetaDiptico(e: Estado, id: String, elegida: Boolean, intera
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .52f)))))
             Box(Modifier.fillMaxSize().border(esc.d(if (elegida) 2.2f else .8f), if (elegida) p.tinta else color.copy(alpha = .55f), forma))
-            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth(.38f).height(esc.d(if (elegida) 3 else 1.5f))
+            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth(.38f).height(esc.d(if (elegida) 3f else 1.5f))
                 .background(if (elegida) p.tinta else color))
             if (lado / esc.d(1) >= 66f) Texto("$cantidad", 8.5f, familia = Nunito, color = Color.White.copy(alpha = .8f),
                 modifier = Modifier.align(Alignment.TopEnd).padding(esc.d(8)))
