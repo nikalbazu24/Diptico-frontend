@@ -15,6 +15,8 @@ import cl.nikalbazu.diptico.estado.TiendaTemas
 import cl.nikalbazu.diptico.estado.Temas
 import cl.nikalbazu.diptico.estado.TemaComunidad
 import com.github.takahirom.roborazzi.captureRoboImage
+import cl.nikalbazu.diptico.ui.Imagenes
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -27,15 +29,25 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [34], qualifiers = "w960dp-h600dp-land-xhdpi")
 class CapturasRenacer {
     @get:Rule val regla = createComposeRule()
-    private val juegos = listOf(
-        Juego("snes/1", "snes", "Nebula Rift", "jardin.sfc", Uri.parse("content://prueba/1"), "1"),
-        Juego("gba/2", "gba", "Circuit Breakers", "faro.gba", Uri.parse("content://prueba/2"), "2"),
+    private fun imagen(nombre: String): Uri {
+        val contexto = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val archivo = File(contexto.cacheDir, nombre)
+        requireNotNull(javaClass.getResourceAsStream("/renacer/$nombre")).use { archivo.writeBytes(it.readBytes()) }
+        val uri = Uri.fromFile(archivo)
+        listOf(350, 460, 1000).forEach { Imagenes.cargar(contexto, uri, it) }
+        return uri
+    }
+    private val juegos by lazy { listOf(
+        Juego("snes/1", "snes", "Super Mario World", "mario.sfc", Uri.parse("content://prueba/1"), "1",
+            portada = imagen("mario-portada.png"), arte = imagen("mario-captura.png")),
+        Juego("gba/2", "gba", "Pokémon Emerald", "pokemon.gba", Uri.parse("content://prueba/2"), "2",
+            portada = imagen("pokemon-portada.png")),
         Juego("psx/3", "psx", "Temple of Echoes", "estacion.chd", Uri.parse("content://prueba/3"), "3"),
         Juego("gc/4", "gc", "Skyward Atlas", "isla.iso", Uri.parse("content://prueba/4"), "4"),
-    )
-    private val base = Salon(juegos = juegos, elegido = juegos[0].clave, cargando = false, calendario = false,
-        datos = mapOf(juegos[0].clave to DatosJuego(ultimo = 2, favorito = true, paso = "Sector 04 · Recuperar el núcleo de energía."),
-            juegos[1].clave to DatosJuego(ultimo = 1)))
+    ) }
+    private val base by lazy { Salon(juegos = juegos, elegido = juegos[0].clave, cargando = false, calendario = false,
+        datos = mapOf(juegos[0].clave to DatosJuego(ultimo = 2, favorito = true, paso = "Buscar la salida secreta de la casa fantasma."),
+            juegos[1].clave to DatosJuego(ultimo = 1))) }
 
     private val catalogo by lazy { TiendaTemas.incluidos(ApplicationProvider.getApplicationContext()) }
 

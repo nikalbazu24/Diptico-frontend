@@ -226,7 +226,9 @@ internal fun HeroeRenacer(e: Salon, juego: Juego?, enviar: (Accion) -> Unit, pan
             Spacer(Modifier.weight(1f))
             if (juego != null) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = { enviar(Accion.Jugar(juego.clave, pantalla)) }, shape = marcoRenacer(12)) {
-                    Text("▶  " + if ((e.datos[juego.clave]?.ultimo ?: 0L) > 0) "Continuar" else "Jugar")
+                    IconoDiptico(Icono.JUGAR, colores.onPrimary, 16f)
+                    Spacer(Modifier.width(7.dp))
+                    Text(if ((e.datos[juego.clave]?.ultimo ?: 0L) > 0) "Continuar" else "Jugar")
                 }
                 OutlinedButton(onClick = { enviar(Accion.Abrir(Ventana.Juego(juego.clave))) }, shape = marcoRenacer(12)) { Text("Ver juego") }
             }

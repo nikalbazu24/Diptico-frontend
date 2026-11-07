@@ -75,4 +75,4 @@ Cada hito debe entregar un recorrido utilizable. La matriz de funciones del READ
 
 `RenacerTest` comprueba los regresos, las salidas de filtros, la búsqueda en otros idiomas y el comportamiento de la caché cuando una carpeta pierde acceso o se quita. `CapturasRenacer` verifica las acciones principales y genera imágenes en escritorio, pantalla inferior y teléfono.
 
-Los juegos de las capturas son ejemplos de diseño con nombres y fondos vectoriales de ejemplo. Las capturas permiten revisar la interfaz. La fluidez y los emuladores se evalúan en dispositivos.
+Las capturas combinan datos de ejemplo, fondos vectoriales de reserva y medios de Super Mario World y Pokémon Emerald procedentes de libretro-thumbnails para revisar el espacio real de las portadas. Las imágenes de apoyo se guardan como recursos de las pruebas. Las capturas permiten revisar la interfaz. La fluidez y los emuladores se evalúan en dispositivos.
