@@ -51,7 +51,9 @@ class CapturasRedisenio {
         val archivo = File(ctx.cacheDir, nombre)
         requireNotNull(javaClass.getResourceAsStream("/renacer/$nombre")).use { archivo.writeBytes(it.readBytes()) }
         return Uri.fromFile(archivo).also { uri ->
-            listOf(96, 240, 256, 400, 480, 700, 1600).forEach { Imagenes.cargar(ctx, uri, it) }
+            listOf(96, 240, 256, 400, 480, 700, 1600).forEach {
+                Imagenes.cargar(ctx, uri, it, memoriaGrafica = android.os.Build.VERSION.SDK_INT >= 31)
+            }
         }
     }
     private val juegos by lazy { listOf(
@@ -108,6 +110,8 @@ class CapturasRedisenio {
     @Test fun carpetaAbierta() = foto("03-carpeta-abierta", base.copy(enSistemas = false), Rol.INFERIOR)
     @Test fun unaPantalla() = foto("04-una-pantalla", base.copy(modoPantallas = "una_negra"), Rol.UNICA)
     @Test fun ventanaEnUnaPantalla() = foto("09-ventana-una-pantalla", base.copy(modoPantallas = "una_negra", enSistemas = false), Rol.UNICA)
+    @Config(sdk = [29])
+    @Test fun ventanaEnAndroid10() = foto("11-ventana-android10", base.copy(modoPantallas = "una_negra", enSistemas = false), Rol.UNICA)
     @Test fun carpetaCompletaEnUnaPantalla() = foto("10-carpeta-completa", base.copy(modoPantallas = "una_negra", enSistemas = false, modoCarpeta = "completa"), Rol.UNICA)
     @Config(qualifiers = "w390dp-h844dp-port-xhdpi")
     @Test fun telefono() = foto("05-telefono", base.copy(modoPantallas = "una_negra"), Rol.UNICA)

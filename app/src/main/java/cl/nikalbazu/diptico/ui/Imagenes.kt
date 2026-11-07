@@ -91,7 +91,7 @@ object Imagenes {
 }
 
 @Composable
-fun rememberImagen(uri: Uri?, maxLado: Int, memoriaGrafica: Boolean = true): ImageBitmap? {
+fun rememberImagen(uri: Uri?, maxLado: Int, memoriaGrafica: Boolean = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S): ImageBitmap? {
     val ctx = LocalContext.current
     val img by produceState(initialValue = Imagenes.enCache(uri, maxLado, memoriaGrafica), uri, maxLado, memoriaGrafica) {
         if (value != null && value === Imagenes.enCache(uri, maxLado, memoriaGrafica)) return@produceState
