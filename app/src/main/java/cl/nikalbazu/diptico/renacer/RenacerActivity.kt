@@ -11,6 +11,7 @@ import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -50,7 +51,7 @@ open class RenacerActivity : ComponentActivity(), DisplayManager.DisplayListener
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() = control.volver()
+            override fun handleOnBackPressed() = volver()
         })
         setContent {
             val e by control.estado.collectAsState()
@@ -151,17 +152,23 @@ open class RenacerActivity : ComponentActivity(), DisplayManager.DisplayListener
         }
     }
 
+    private fun tecladoVisible() = ViewCompat.getRootWindowInsets(window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) == true
+    private fun volver() {
+        if (tecladoVisible()) WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
+        else control.volver()
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         when (event.keyCode) {
             KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> {
-                if (event.action == KeyEvent.ACTION_UP && control.estado.value.ventana == null) {
+                if (event.action == KeyEvent.ACTION_UP && control.estado.value.ventana == null && !tecladoVisible()) {
                     val lugares = Lugar.entries
                     val paso = if (event.keyCode == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1
                     control.ir(lugares[(lugares.indexOf(control.estado.value.lugar) + paso).mod(lugares.size)])
                 }
                 return true
             }
-            KeyEvent.KEYCODE_BUTTON_B -> { if (event.action == KeyEvent.ACTION_UP) control.volver(); return true }
+            KeyEvent.KEYCODE_BUTTON_B -> { if (event.action == KeyEvent.ACTION_UP) volver(); return true }
             KeyEvent.KEYCODE_BUTTON_Y -> { if (event.action == KeyEvent.ACTION_UP) control.estado.value.protagonista?.let { control.abrir(Ventana.Juego(it.clave)) }; return true }
             KeyEvent.KEYCODE_BUTTON_A -> return super.dispatchKeyEvent(KeyEvent(event.downTime, event.eventTime, event.action,
                 KeyEvent.KEYCODE_DPAD_CENTER, event.repeatCount, event.metaState, event.deviceId, event.scanCode, event.flags, event.source))

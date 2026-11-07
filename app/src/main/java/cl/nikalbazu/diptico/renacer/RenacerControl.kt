@@ -104,7 +104,10 @@ class RenacerControl(contexto: Context) {
             val lectura = withContext(Dispatchers.IO) { disco.withLock { biblioteca.escanear(carpetas) } }
             if (carpetas != estado.value.carpetas) { escaneos.trySend(Unit); return }
             _estado.update { actual ->
-                actual.copy(juegos = lectura.juegos, error = lectura.fallas.takeIf { it.isNotEmpty() }
+                val juegos = lectura.juegos.map { juego ->
+                    actual.datos[juego.clave]?.portada?.let { juego.copy(portada = Uri.parse(it)) } ?: juego
+                }
+                actual.copy(juegos = juegos, error = lectura.fallas.takeIf { it.isNotEmpty() }
                     ?.joinToString(prefix = "Revisa el acceso a ", separator = ", "),
                     consola = actual.consola?.takeIf { id -> id == "*" || lectura.juegos.any { it.consolaId == id } })
             }
@@ -205,7 +208,7 @@ class RenacerControl(contexto: Context) {
         try { app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
         catch (_: SecurityException) { avisar("No pude conservar el acceso a esa imagen."); return }
         dato(clave) { it.copy(portada = uri.toString()) }
-        escanear()
+        _estado.update { e -> e.copy(juegos = e.juegos.map { if (it.clave == clave) it.copy(portada = uri) else it }) }
     }
 
     fun exportar(uri: Uri) {
