@@ -136,7 +136,8 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
             } finally { presionado = false }
         }
     }
-    return shadow(if (entorno.efectos) (if (capa == CapaCristal.PANEL) 18 else 10).dp else 0.dp,
+    val elevacion = when (capa) { CapaCristal.PANEL -> 18; CapaCristal.CONTROL -> 10; CapaCristal.CONTENIDO -> 2 }
+    return shadow(if (entorno.efectos) elevacion.dp else 0.dp,
         forma, clip = false, ambientColor = Color.Black.copy(alpha = .18f), spotColor = Color(0xFF143A5B).copy(alpha = .28f))
         .clip(forma).then(gesto).onGloballyPositioned {
             posicion = it.positionInRoot()
@@ -148,6 +149,7 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
         }.drawWithCache {
             val contorno = forma.createOutline(size, layoutDirection, this)
             val borde = 1.dp.toPx()
+            val desplazamiento = .7f.dp.toPx()
             val iluminacion = Brush.linearGradient(listOf(Color.White.copy(alpha = if (claro) .9f else .46f), Color.White.copy(alpha = .06f), Color(0xFF76C9FF).copy(alpha = .2f)), Offset.Zero, Offset(size.width, size.height))
             val reflejo = Brush.verticalGradient(listOf(Color.White.copy(alpha = if (claro) .31f else .12f), Color.Transparent, Color.Black.copy(alpha = if (claro) .035f else .11f)))
             onDrawWithContent {
@@ -169,7 +171,7 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
                 drawContent()
                 if (entorno.contraste) drawOutline(contorno, p.tinta, style = Stroke(2.dp.toPx()))
                 else if (entorno.efectos) {
-                    withTransform({ translate(0f, .7f.dp.toPx()) }) { drawOutline(contorno, Color.Black.copy(alpha = if (claro) .14f else .52f), style = Stroke(borde * 2)) }
+                    withTransform({ translate(0f, desplazamiento) }) { drawOutline(contorno, Color.Black.copy(alpha = if (claro) .14f else .52f), style = Stroke(borde * 2)) }
                     drawOutline(contorno, iluminacion, style = Stroke(if (capa == CapaCristal.CONTENIDO) borde * .5f else borde))
                 }
             }

@@ -71,7 +71,7 @@ internal fun CabeceraColeccion(e: Estado, modifier: Modifier = Modifier) {
 private fun AccesoColeccion(icono: Icono, nombre: String, accion: () -> Unit) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
-    Box(Modifier.size(esc.d(35)).semantics { contentDescription = nombre }.clip(RoundedCornerShape(esc.d(12)))
+    Box(Modifier.size(esc.d(35)).semantics { contentDescription = nombre }
         .superficieApp(p.superficie.copy(alpha = .78f), RoundedCornerShape(esc.d(12)))
         .clickable(onClickLabel = nombre, onClick = accion), contentAlignment = Alignment.Center) {
         IconoDiptico(icono, p.tinta, 17f)
