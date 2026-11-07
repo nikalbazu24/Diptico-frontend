@@ -80,10 +80,12 @@ internal object FondosCristal {
 }
 
 @Composable
-internal fun recordarFondoCristal(imagen: ImageBitmap?): ImageBitmap? = key(imagen) {
-    if (imagen == null) return@key null
-    val fondo by produceState(FondosCristal.disponible(imagen), imagen) {
-        value = withContext(Dispatchers.Default) { FondosCristal.preparar(imagen) }
+internal fun recordarFondoCristal(imagen: ImageBitmap?): ImageBitmap? {
+    if (imagen == null) return null
+    return key(imagen) {
+        val fondo by produceState(FondosCristal.disponible(imagen), imagen) {
+            value = withContext(Dispatchers.Default) { FondosCristal.preparar(imagen) }
+        }
+        fondo
     }
-    fondo
 }

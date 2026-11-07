@@ -79,7 +79,11 @@ class CapturasRedisenio {
             paso = "Buscar la salida secreta de la casa fantasma."))) }
 
     private fun mostrar(e: Estado, rol: Rol, tema: Tema = Temas.incluidos[0], nuevo: Boolean = true) {
-        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
+        Diptico.iniciar(ctx)
+        // Robolectric recrea Application; el coordinador compartido debe usar el almacén de esta prueba.
+        Diptico.app = ctx
+        Diptico.almacen = cl.nikalbazu.diptico.data.Almacen(ctx)
         Consolas.cargar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(e)
         Estilo.tema = tema
