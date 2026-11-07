@@ -2,12 +2,10 @@ package cl.nikalbazu.diptico.renacer
 
 import android.net.Uri
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,7 +30,7 @@ import kotlinx.coroutines.withContext
 internal fun VentanasRenacer(e: Salon, enviar: (Accion) -> Unit, pantalla: Int, alterna: Int?, apps: List<App>, buscandoArte: String?) {
     val ventana = e.ventana ?: return
     Dialog(onDismissRequest = { enviar(Accion.Abrir(null)) }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxWidth(.93f).widthIn(max = 800.dp).fillMaxHeight(.9f), shape = RoundedCornerShape(24.dp)) {
+        Surface(Modifier.fillMaxWidth(.93f).widthIn(max = 800.dp).fillMaxHeight(.9f), shape = marcoRenacer(24)) {
             when (ventana) {
                 is Ventana.Juego -> DetalleRenacer(e, ventana.clave, enviar, pantalla, alterna, buscandoArte)
                 Ventana.Fuentes -> CarpetasRenacer(e, enviar)
@@ -71,7 +69,7 @@ private fun DetalleRenacer(e: Salon, clave: String, enviar: (Accion) -> Unit, pa
         Eyebrow(consola?.bonito ?: juego.consolaId)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             val imagen = rememberImagen(juego.portada, 500)
-            Box(Modifier.width(110.dp).height(135.dp).clip(RoundedCornerShape(12.dp))) {
+            Box(Modifier.width(110.dp).height(135.dp).clip(marcoRenacer(12))) {
                 if (imagen != null) Image(imagen, juego.titulo, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
                 else Paisaje(juego, Modifier.fillMaxSize())
             }
@@ -116,7 +114,7 @@ private fun CarpetasRenacer(e: Salon, enviar: (Accion) -> Unit) {
         }
         LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(e.carpetas, key = { it.uri.toString() }) { carpeta ->
-                Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+                Surface(shape = marcoRenacer(14), color = MaterialTheme.colorScheme.secondaryContainer) {
                     Column(Modifier.fillMaxWidth().padding(14.dp)) {
                         Text(Biblioteca.nombreCarpeta(carpeta.uri), style = MaterialTheme.typography.titleMedium)
                         Text(Consolas.porId(carpeta.consola.orEmpty())?.bonito ?: "Reconocer consolas automáticamente", style = MaterialTheme.typography.bodyMedium)

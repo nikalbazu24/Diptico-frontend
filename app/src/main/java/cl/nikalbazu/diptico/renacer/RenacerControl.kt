@@ -11,6 +11,7 @@ import cl.nikalbazu.diptico.data.Descargas
 import cl.nikalbazu.diptico.emu.App
 import cl.nikalbazu.diptico.emu.Lanzador
 import cl.nikalbazu.diptico.estado.Respaldo
+import cl.nikalbazu.diptico.estado.TiendaTemas
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +54,9 @@ class RenacerControl(contexto: Context) {
                 val inicial = withContext(Dispatchers.IO) { disco.withLock {
                     val juegos = biblioteca.cargar()
                     Salon(juegos = juegos, datos = almacen.datos(), carpetas = almacen.carpetas(),
-                        ambiente = Ambiente.entries.firstOrNull { it.name == almacen.texto("renacer_ambiente") } ?: Ambiente.PAPEL,
+                        temaId = almacen.texto("renacer_tema", "renacer"),
+                        temas = TiendaTemas.incluidos(app),
+                        decoraciones = almacen.bool("renacer_decoraciones", true),
                         calendario = almacen.bool("renacer_calendario", true),
                         movimiento = almacen.bool("renacer_movimiento", true),
                         usarDos = almacen.bool("renacer_dos", true), cargando = false)
@@ -92,7 +95,11 @@ class RenacerControl(contexto: Context) {
     fun lista() = _estado.update { it.copy(lista = !it.lista) }
     fun pantallas(disponibles: Boolean) = _estado.update { it.copy(dosPantallas = disponibles) }
     fun escanear() { if (listo) escaneos.trySend(Unit) }
-    fun ambiente(ambiente: Ambiente) { _estado.update { it.copy(ambiente = ambiente) }; guardar() }
+    fun tema(id: String) {
+        _estado.update { it.conTema(id) }
+        guardar()
+    }
+    fun decoraciones(valor: Boolean) { _estado.update { it.copy(decoraciones = valor) }; guardar() }
     fun calendario(valor: Boolean) { _estado.update { it.copy(calendario = valor) }; guardar() }
     fun movimiento(valor: Boolean) { _estado.update { it.copy(movimiento = valor) }; guardar() }
     fun usarDos(valor: Boolean) { _estado.update { it.copy(usarDos = valor) }; guardar() }
@@ -241,7 +248,8 @@ class RenacerControl(contexto: Context) {
         val e = estado.value
         almacen.guardarDatos(e.datos)
         almacen.guardarCarpetas(e.carpetas)
-        almacen.guardarTexto("renacer_ambiente", e.ambiente.name)
+        almacen.guardarTexto("renacer_tema", e.temaId)
+        almacen.guardarBool("renacer_decoraciones", e.decoraciones)
         almacen.guardarBool("renacer_calendario", e.calendario)
         almacen.guardarBool("renacer_movimiento", e.movimiento)
         almacen.guardarBool("renacer_dos", e.usarDos)

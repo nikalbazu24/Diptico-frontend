@@ -10,9 +10,23 @@ El recorrido principal empieza en la partida que quieres retomar. Tiene tres des
 |---|---|
 | Jugar | Retomar una partida, recordar el próximo paso y elegir algo de la biblioteca |
 | Biblioteca | Encontrar juegos, entrar en sus consolas, ordenarlos y consultar sus opciones |
-| Ambiente | Elegir cómo se siente Díptico y administrar sus preferencias |
+| Personalizar | Elegir cómo se siente Díptico y administrar sus preferencias |
 
-La dirección visual de esta primera propuesta usa papel cálido, tinta, terracota y una bisagra como marca. Los títulos tienen una tipografía editorial. Los estados seleccionados y el foco del mando se distinguen con borde y color. Los fondos vectoriales son propios y sirven mientras falta arte de un juego. Las portadas del usuario toman su lugar cuando están disponibles.
+La dirección visual se basa en una biblioteca de videojuegos para mando. El arte, los logos y las portadas del juego ocupan el centro. Las consolas tienen emblemas de hardware, el foco usa un marco visible y los accesos muestran los botones del control. La marca representa dos pantallas y sus botones.
+
+Los 30 temas actuales de Díptico definen los colores, las fuentes, los marcos, la trama y las decoraciones de la nueva interfaz. El calendario automático aplica el tema completo de la celebración. Elegir un tema manual pausa el calendario hasta que la persona vuelva a activarlo.
+
+### Referencias de la revisión visual
+
+| Referencia | Criterio aplicado | Fuente oficial |
+|---|---|---|
+| iiSU | Arte e íconos con presencia, composición de una y dos pantallas | [Galería](https://iisu.network/gallery) |
+| Cocoon | Cuadrícula de consolas y juegos y temas que transforman la interfaz | [Presentación](https://cocoon-shell.com/) |
+| ES-DE | Navegación con mando y una estructura adaptable a temas distintos | [Frontend y temas](https://es-de.org/) |
+| Daijishō | Identidad visual por plataforma y opciones agrupadas | [Repositorio oficial](https://github.com/TapiocaFox/Daijishou) |
+| Beacon | Selección directa de juegos, portadas y metadatos | [Ficha del desarrollador](https://play.google.com/store/apps/details?id=com.radikal.gamelauncher) |
+
+Estas referencias orientan la composición y los recorridos. Los recursos visuales y el código utilizados son los de Díptico.
 
 El tono es cercano. La bienvenida pide agregar juegos y permite recuperar un respaldo. Los permisos aparecen al realizar la acción que los necesita. Al abrir una ficha se conserva el lugar, la consola, la búsqueda y el filtro. Siempre hay una salida visible de Ocultos.
 
@@ -20,7 +34,7 @@ El tono es cercano. La bienvenida pide agregar juegos y permite recuperar un res
 
 La variante `completaRenacer` instala `cl.nikalbazu.diptico.renacer`, con el nombre Díptico Renacer. Se puede instalar junto a la beta y probar con las mismas carpetas de juegos. El selector de Android concede los permisos a esta instalación.
 
-Esta primera edición usa textos en español. Incluye la nueva entrada de la app, navegación, inicio, biblioteca por consolas, cuadrícula y lista, búsqueda, favoritos, juegos ocultos, apps de Android, asignación manual de consolas, selección de emulador, lanzamiento en una de las pantallas, próximo paso, arte local o descargado, tres ambientes, acentos del calendario y respaldo portable. La segunda pantalla comparte selección y sesión con la principal.
+Esta primera edición usa textos en español. Incluye la nueva entrada de la app, navegación, inicio, biblioteca por consolas, cuadrícula y lista, búsqueda, favoritos, juegos ocultos, apps de Android, asignación manual de consolas, selección de emulador, lanzamiento en una de las pantallas, próximo paso, arte local o descargado, el catálogo visual de temas y el calendario completo y respaldo portable. La segunda pantalla comparte selección y sesión con la principal.
 
 Para recuperar datos de la beta, guarda un respaldo desde ella e impórtalo en Renacer. Se recuperan los datos de juegos que contiene ese respaldo. Las carpetas y recursos de este dispositivo se seleccionan desde Renacer. Las bibliotecas muy grandes, los emuladores, el cambio físico de pantalla y las sesiones necesitan prueba en hardware además de las pruebas automatizadas.
 
@@ -34,6 +48,7 @@ Para recuperar datos de la beta, guarda un respaldo desde ella e impórtalo en R
 | `RenacerControl.kt` | Coordinar tareas, guardar cambios y mantener la sesión compartida |
 | `RenacerActivity.kt` | Permisos, selectores de Android y pantallas físicas |
 | `MandoRenacer.kt` | Repetición del stick mediante el foco nativo de Android |
+| `Identidad.kt` | Selección de temas, calendario, formas y contraste |
 | `Diseno.kt` | Paleta, tipografía, marca, foco y arte vectorial |
 | `SalonUI.kt` | Inicio, biblioteca, ambiente y pantalla compañera |
 | `Ventanas.kt` | Fichas y administración de fuentes |
@@ -60,4 +75,4 @@ Cada hito debe entregar un recorrido utilizable. La matriz de funciones del READ
 
 `RenacerTest` comprueba los regresos, las salidas de filtros, la búsqueda en otros idiomas y el comportamiento de la caché cuando una carpeta pierde acceso o se quita. `CapturasRenacer` verifica las acciones principales y genera imágenes en escritorio, pantalla inferior y teléfono.
 
-Los juegos de las capturas son ejemplos de diseño con nombres y paisajes originales. Las capturas permiten revisar la interfaz. La fluidez y los emuladores se evalúan en dispositivos.
+Los juegos de las capturas son ejemplos de diseño con nombres y fondos vectoriales de ejemplo. Las capturas permiten revisar la interfaz. La fluidez y los emuladores se evalúan en dispositivos.

@@ -55,17 +55,34 @@ class RenacerTest {
             assertEquals(listOf(a, b), salon.abrirConsola("*").visibles)
         } finally { Locale.setDefault(anterior) }
     }
-    @Test fun losAcentosDelCalendarioSeLeenEnTodosLosAmbientes() {
-        val acentos = Ambiente.entries.map { it.acento } + cl.nikalbazu.diptico.estado.Temas.fiestas.map { it.tema.acento }
-        Ambiente.entries.forEach { ambiente ->
-            val fondo = Color(ambiente.fondo)
-            acentos.forEach { color ->
-                val texto = acentoLegible(Color(color), fondo)
-                val claros = maxOf(texto.luminance(), fondo.luminance())
-                val oscuros = minOf(texto.luminance(), fondo.luminance())
-                assertTrue("Acento de calendario ilegible sobre ${ambiente.nombre}", (claros + .05f) / (oscuros + .05f) >= 4.5f)
-            }
+    @Test fun losTemasActualesConservanContrasteYTransformanLaIdentidad() {
+        val contexto: Context = ApplicationProvider.getApplicationContext()
+        val catalogo = cl.nikalbazu.diptico.estado.TiendaTemas.incluidos(contexto)
+        assertEquals(30, catalogo.size)
+        val temas = catalogo.map { it.tema } + cl.nikalbazu.diptico.estado.Temas.fiestas.map { it.tema }
+        temas.forEach { tema ->
+            val fondo = cl.nikalbazu.diptico.ui.paletaDe(tema, true).fondo
+            val texto = acentoLegible(Color(tema.acento), fondo)
+            val claros = maxOf(texto.luminance(), fondo.luminance())
+            val oscuros = minOf(texto.luminance(), fondo.luminance())
+            assertTrue("Acento ilegible en ${tema.nombre}", (claros + .05f) / (oscuros + .05f) >= 4.5f)
         }
+        val tuberias = catalogo.first { it.pistaLocal == "tuberias.ogg" }.tema
+        val conTema = salon.copy(temas = catalogo).conTema(tuberias.id)
+        assertFalse(conTema.calendario)
+        assertEquals(tuberias, IdentidadRenacer.tema(conTema))
+        assertEquals("pixel", tuberias.forma)
+        assertEquals("pixel", tuberias.fuente)
+        assertEquals("monedas", tuberias.decor)
+        assertEquals(salon.juegos, conTema.juegos)
+        assertEquals(salon.datos, conTema.datos)
+    }
+
+    @Test fun unTemaDesconocidoNoCambiaElCalendarioNiLaSeleccion() {
+        assertSame(salon, salon.conTema("inexistente"))
+        val festivo = IdentidadRenacer.tema(salon.copy(calendario = true), java.time.LocalDate.of(2026, 12, 24))
+        assertEquals("fiesta_navidad", festivo.id)
+        assertEquals("muerdago", festivo.decor)
     }
 
     @Test fun quitarUnaCarpetaNoLaRecuperaDesdeLaCacheAlReiniciar() {

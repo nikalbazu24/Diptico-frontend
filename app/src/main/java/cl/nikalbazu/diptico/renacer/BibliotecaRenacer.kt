@@ -53,7 +53,7 @@ internal class BibliotecaRenacer(private val contexto: Context) {
                 titulo = dato?.titulo ?: medio?.titulo ?: juego.titulo,
                 portada = dato?.portada?.let(Uri::parse) ?: juego.portada ?: medio?.portada?.let { Uri.fromFile(java.io.File(it)) },
                 arte = dato?.arte?.let(Uri::parse) ?: juego.arte ?: medio?.arte?.let { Uri.fromFile(java.io.File(it)) },
-                logo = dato?.logo?.let(Uri::parse) ?: juego.logo,
+                logo = dato?.logo?.let(Uri::parse) ?: juego.logo ?: medio?.logo?.let { Uri.fromFile(java.io.File(it)) },
             )
         }
         val apps = (almacen.android.orEmpty() + almacen.ports).distinct().mapNotNull { paquete ->

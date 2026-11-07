@@ -1,7 +1,6 @@
 package cl.nikalbazu.diptico.renacer
 
 import android.app.ActivityOptions
-import android.content.Context
 import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.os.Bundle
@@ -130,7 +129,8 @@ open class RenacerActivity : ComponentActivity(), DisplayManager.DisplayListener
             is Accion.Paso -> control.paso(a.clave, a.texto)
             is Accion.Emulador -> control.emulador(a.clave, a.id)
             is Accion.Jugar -> control.jugar(a.clave, a.pantalla)
-            is Accion.Estilo -> control.ambiente(a.ambiente)
+            is Accion.Estilo -> control.tema(a.id)
+            is Accion.Decoraciones -> control.decoraciones(a.activo)
             is Accion.Calendario -> control.calendario(a.activo)
             is Accion.Movimiento -> control.movimiento(a.activo)
             is Accion.DosPantallas -> control.usarDos(a.activo)

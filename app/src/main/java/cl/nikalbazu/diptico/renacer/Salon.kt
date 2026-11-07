@@ -3,17 +3,14 @@ package cl.nikalbazu.diptico.renacer
 import cl.nikalbazu.diptico.data.CarpetaJuegos
 import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.data.Juego
+import cl.nikalbazu.diptico.estado.TemaComunidad
 import java.text.Normalizer
 import java.util.Locale
 
 /** Navegación del nuevo Díptico. Cada destino tiene una única función. */
-enum class Lugar(val nombre: String) { JUGAR("Jugar"), BIBLIOTECA("Biblioteca"), AMBIENTE("Ambiente") }
+enum class Lugar(val nombre: String) { JUGAR("Jugar"), BIBLIOTECA("Biblioteca"), AMBIENTE("Personalizar") }
 enum class Filtro(val nombre: String) { TODOS("Todos"), FAVORITOS("Favoritos"), RECIENTES("Recientes"), OCULTOS("Ocultos") }
-enum class Ambiente(val nombre: String, val descripcion: String, val acento: Long, val fondo: Long) {
-    PAPEL("Papel", "Luz cálida, tinta y terracota.", 0xFFBD5638, 0xFFF4EFE5),
-    BOSQUE("Bosque", "Verdes profundos y un poco de calma.", 0xFFB7D6AD, 0xFF182B28),
-    NOCHE("Noche", "Tinta azul y luz de sobremesa.", 0xFFDFB975, 0xFF161D2B),
-}
+
 
 sealed interface Ventana {
     data class Juego(val clave: String) : Ventana
@@ -36,7 +33,9 @@ data class Salon(
     val cargando: Boolean = true,
     val aviso: String? = null,
     val error: String? = null,
-    val ambiente: Ambiente = Ambiente.PAPEL,
+    val temaId: String = "renacer",
+    val temas: List<TemaComunidad> = emptyList(),
+    val decoraciones: Boolean = true,
     val calendario: Boolean = true,
     val movimiento: Boolean = true,
     val dosPantallas: Boolean = false,
@@ -66,6 +65,11 @@ data class Salon(
 
     fun ir(lugar: Lugar) = copy(lugar = lugar, ventana = null, aviso = null)
     fun abrirConsola(id: String?) = copy(lugar = Lugar.BIBLIOTECA, consola = id, consulta = "", filtro = Filtro.TODOS, ventana = null)
+    fun conTema(id: String): Salon {
+        if (id == "renacer") return copy(temaId = id, calendario = false)
+        val entrada = temas.firstOrNull { it.claveVisual == id || it.tema.id == id } ?: return this
+        return copy(temaId = entrada.claveVisual, calendario = false)
+    }
     fun limpiar() = copy(consulta = "", filtro = Filtro.TODOS)
     fun volver(): Salon = when {
         ventana != null -> copy(ventana = null)

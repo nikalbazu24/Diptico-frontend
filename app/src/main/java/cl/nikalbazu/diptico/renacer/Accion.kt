@@ -15,8 +15,9 @@ sealed interface Accion {
     data class Paso(val clave: String, val texto: String) : Accion
     data class Emulador(val clave: String, val id: String?) : Accion
     data class Jugar(val clave: String, val pantalla: Int) : Accion
-    data class Estilo(val ambiente: Ambiente) : Accion
+    data class Estilo(val id: String) : Accion
     data class Calendario(val activo: Boolean) : Accion
+    data class Decoraciones(val activo: Boolean) : Accion
     data class Movimiento(val activo: Boolean) : Accion
     data class DosPantallas(val activo: Boolean) : Accion
     data class QuitarCarpeta(val uri: Uri) : Accion
