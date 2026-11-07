@@ -20,7 +20,7 @@ El tono es cercano. La bienvenida pide agregar juegos y permite recuperar un res
 
 La variante `completaRenacer` instala `cl.nikalbazu.diptico.renacer`, con el nombre Díptico Renacer. Se puede instalar junto a la beta y probar con las mismas carpetas de juegos. El selector de Android concede los permisos a esta instalación.
 
-Esta entrega incluye la nueva entrada de la app, navegación, inicio, biblioteca por consolas, cuadrícula y lista, búsqueda, favoritos, juegos ocultos, apps de Android, asignación manual de consolas, selección de emulador, lanzamiento en una de las pantallas, próximo paso, arte local o descargado, tres ambientes, acentos del calendario y respaldo portable. La segunda pantalla comparte selección y sesión con la principal.
+Esta primera edición usa textos en español. Incluye la nueva entrada de la app, navegación, inicio, biblioteca por consolas, cuadrícula y lista, búsqueda, favoritos, juegos ocultos, apps de Android, asignación manual de consolas, selección de emulador, lanzamiento en una de las pantallas, próximo paso, arte local o descargado, tres ambientes, acentos del calendario y respaldo portable. La segunda pantalla comparte selección y sesión con la principal.
 
 Para recuperar datos de la beta, guarda un respaldo desde ella e impórtalo en Renacer. Se recuperan los datos de juegos que contiene ese respaldo. Las carpetas y recursos de este dispositivo se seleccionan desde Renacer. Las bibliotecas muy grandes, los emuladores, el cambio físico de pantalla y las sesiones necesitan prueba en hardware además de las pruebas automatizadas.
 
@@ -51,6 +51,7 @@ Se aprovechan el catálogo ES-DE, los comandos de lanzamiento, la lectura de arc
 | Ambiente completo | Integrar temas de la tienda, recursos, calendario, decoraciones por tema, intensidad y editor | La tienda vive en Díptico y los temas respetan estructura y legibilidad |
 | Compañero de partida | Integrar Bisa, bitácora, audio, logros, lupa y retoma en el nuevo modelo | Los permisos, la captura y el regreso funcionan en equipo real |
 | Inicio personal | Reconstruir widgets y perfiles sobre el mismo sistema de composición y foco | Editar con mando y toque conserva el contenido y funciona en una pantalla |
+| Accesibilidad e idiomas | Revisar escalado de letra, lector de pantalla, foco e idiomas mediante recursos de Android | Los recorridos completos conservan legibilidad y funcionan en cada idioma |
 | Migración y publicación | Validar respaldos, recursos locales, actualizador y recuperación de fallos | Migración comprobada, pruebas completas y APK de distribución verificado |
 
 Cada hito debe entregar un recorrido utilizable. La matriz de funciones del README de la beta sirve como inventario de migración. El código anterior se retira por componentes a medida que su reemplazo cubre el comportamiento y los datos necesarios.

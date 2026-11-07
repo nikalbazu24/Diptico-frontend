@@ -244,7 +244,7 @@ private fun BibliotecaSalon(e: Salon, enviar: (Accion) -> Unit, modifier: Modifi
             item { TextButton(onClick = { enviar(Accion.Lista) }) { Text(if (e.lista) "Cuadrícula" else "Lista") } }
         }
         if (e.filtro != Filtro.TODOS || e.consulta.isNotEmpty()) Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("${e.visibles.size} juegos", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            Text(if (e.visibles.size == 1) "1 juego" else "${e.visibles.size} juegos", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = { enviar(Accion.Limpiar) }) { Text("Limpiar filtros") }
         }
         when {
@@ -285,7 +285,7 @@ private fun TarjetaSistema(id: String, nombre: String, cantidad: Int, juego: Jue
             }
             Column(Modifier.padding(13.dp)) {
                 Text(nombre, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("$cantidad juegos", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (cantidad == 1) "1 juego" else "$cantidad juegos", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
