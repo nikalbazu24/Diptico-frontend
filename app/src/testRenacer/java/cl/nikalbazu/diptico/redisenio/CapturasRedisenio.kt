@@ -7,11 +7,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import cl.nikalbazu.diptico.data.Consolas
@@ -48,7 +51,7 @@ class CapturasRedisenio {
         val archivo = File(ctx.cacheDir, nombre)
         requireNotNull(javaClass.getResourceAsStream("/renacer/$nombre")).use { archivo.writeBytes(it.readBytes()) }
         return Uri.fromFile(archivo).also { uri ->
-            listOf(96, 256, 320, 350, 480, 700, 1100, 1600).forEach { Imagenes.cargar(ctx, uri, it) }
+            listOf(96, 240, 256, 400, 480, 700, 1600).forEach { Imagenes.cargar(ctx, uri, it) }
         }
     }
     private val juegos by lazy { listOf(
@@ -104,6 +107,8 @@ class CapturasRedisenio {
     @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
     @Test fun carpetaAbierta() = foto("03-carpeta-abierta", base.copy(enSistemas = false), Rol.INFERIOR)
     @Test fun unaPantalla() = foto("04-una-pantalla", base.copy(modoPantallas = "una_negra"), Rol.UNICA)
+    @Test fun ventanaEnUnaPantalla() = foto("09-ventana-una-pantalla", base.copy(modoPantallas = "una_negra", enSistemas = false), Rol.UNICA)
+    @Test fun carpetaCompletaEnUnaPantalla() = foto("10-carpeta-completa", base.copy(modoPantallas = "una_negra", enSistemas = false, modoCarpeta = "completa"), Rol.UNICA)
     @Config(qualifiers = "w390dp-h844dp-port-xhdpi")
     @Test fun telefono() = foto("05-telefono", base.copy(modoPantallas = "una_negra"), Rol.UNICA)
     @Test fun widgets() = foto("06-widgets", base.copy(inicio = "widgets"))
@@ -123,6 +128,16 @@ class CapturasRedisenio {
         mostrar(base, Rol.INFERIOR)
         regla.onNodeWithContentDescription("Buscar juegos").assertIsDisplayed().performClick()
         assertEquals(Panel.BUSCAR, Diptico.estado.value.panel)
+    }
+
+    @Test fun ampliarCarpetaUsaTodoElAnchoEnUnaPantalla() {
+        mostrar(base.copy(modoPantallas = "una_negra", enSistemas = false), Rol.UNICA)
+        regla.onNodeWithText("Ampliar").assertIsDisplayed().performClick()
+        regla.mainClock.advanceTimeBy(600)
+        assertEquals("completa", Diptico.estado.value.modoCarpeta)
+        regla.onNodeWithTag("carpeta-completa").assertIsDisplayed().assertWidthIsAtLeast(700.dp)
+        Diptico.volverASistemas()
+        assertTrue(Diptico.estado.value.enSistemas)
     }
 
     @Config(qualifiers = "w472dp-h411dp-land-xhdpi")

@@ -183,21 +183,13 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
         )
         if (abierta) {
             Box(Modifier.fillMaxSize().background(p.fondo2.copy(alpha = .12f)).clickable { Diptico.volverASistemas() })
-            val forma = RoundedCornerShape(esc.d(19))
-            Column(
-                Modifier.align(Alignment.Center).fillMaxWidth(.90f).fillMaxHeight(.84f)
-                    .shadow(esc.d(12), forma, clip = false).clip(forma)
-                    .background(p.fondo2.copy(alpha = .80f)).border(esc.d(1), p.linea, forma).sinCerrar(),
-            ) {
-                CabeceraSistema(e)
-                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
-            }
+            VentanaCarpeta(e, Modifier.align(Alignment.Center).fillMaxWidth(.90f).fillMaxHeight(.84f), escalaEstante)
         }
     }
 }
 
 /** En un lienzo sin efectos gráficos, suaviza la cuadrícula al dibujarla a baja resolución. */
-private fun Modifier.desenfocarCuadricula(): Modifier = drawWithCache {
+internal fun Modifier.desenfocarCuadricula(): Modifier = drawWithCache {
     val ancho = size.width.roundToInt()
     val alto = size.height.roundToInt()
     val paso = 9.dp.toPx()

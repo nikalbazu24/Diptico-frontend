@@ -189,26 +189,47 @@ private fun PortadaEscena(juego: Juego, modifier: Modifier) {
 @Composable
 internal fun InicioUnificado(e: Estado) {
     val esc = LocalEscala.current
+    val ventana = e.carpetaEnVentana
+    val completa = e.vistaConsolas == "carpetas" && !e.enSistemas && e.modoCarpeta == "completa"
+    val fondo = if (ventana) e.copy(enSistemas = true) else e
     BoxWithConstraints(Modifier.fillMaxSize().background(LocalPaleta.current.fondo)) {
         val vertical = maxHeight > maxWidth
-        Box(Modifier.fillMaxSize().difuminar(e)) {
+        Box(Modifier.fillMaxSize().difuminar(e).then(if (ventana) Modifier.desenfocarCuadricula() else Modifier)) {
             Column(Modifier.fillMaxSize()) {
-                if (vertical) {
+                if (completa) {
+                    Box(Modifier.fillMaxWidth().weight(1f).testTag("carpeta-completa")) { ColeccionUnificada(e) }
+                } else if (vertical) {
                     BarraSuperior(Modifier, inicio = 24f, trabajos = e.trabajos)
                     Box(Modifier.fillMaxWidth().weight(.43f)) { EscenaDiptico(e, controles = false, reducida = true) }
-                    Box(Modifier.fillMaxWidth().weight(.57f)) { ColeccionUnificada(e) }
+                    Box(Modifier.fillMaxWidth().weight(.57f)) { ColeccionUnificada(fondo) }
                 } else {
                     BarraSuperior(Modifier, inicio = 24f, trabajos = e.trabajos)
                     Row(Modifier.weight(1f).padding(top = esc.d(12))) {
                         Box(Modifier.weight(.43f).fillMaxHeight()) { EscenaDiptico(e, controles = false, reducida = true) }
-                        Box(Modifier.weight(.57f).fillMaxHeight().clip(RoundedCornerShape(esc.d(22)))) { ColeccionUnificada(e) }
+                        Box(Modifier.weight(.57f).fillMaxHeight().clip(RoundedCornerShape(esc.d(22)))) { ColeccionUnificada(fondo) }
                         Spacer(Modifier.width(esc.d(14)))
                     }
                 }
                 if (e.sesion == null) DockDiptico(e, e.seleccionado, Modifier, arriba = false, consola = false)
             }
         }
+        if (ventana) {
+            Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo.copy(alpha = .18f)).clickable { Diptico.volverASistemas() })
+            VentanaCarpeta(e, Modifier.align(Alignment.Center).fillMaxWidth(.94f).fillMaxHeight(.90f), .95f)
+        }
         Paneles(e, conAyuda = true)
+    }
+}
+
+@Composable
+internal fun VentanaCarpeta(e: Estado, modifier: Modifier, escala: Float) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val forma = RoundedCornerShape(esc.d(19))
+    Column(modifier.shadow(esc.d(12), forma, clip = false).clip(forma)
+        .background(p.fondo2.copy(alpha = if (LocalRedisenio.current) .92f else .80f)).border(esc.d(1), p.linea, forma).sinCerrar()) {
+        CabeceraSistema(e)
+        VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escala)
     }
 }
 
