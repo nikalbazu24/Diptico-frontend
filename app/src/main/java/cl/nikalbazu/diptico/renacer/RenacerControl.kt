@@ -106,7 +106,7 @@ class RenacerControl(contexto: Context) {
             _estado.update { actual ->
                 actual.copy(juegos = lectura.juegos, error = lectura.fallas.takeIf { it.isNotEmpty() }
                     ?.joinToString(prefix = "Revisa el acceso a ", separator = ", "),
-                    consola = actual.consola?.takeIf { id -> lectura.juegos.any { it.consolaId == id } })
+                    consola = actual.consola?.takeIf { id -> id == "*" || lectura.juegos.any { it.consolaId == id } })
             }
         } catch (cancelado: CancellationException) { throw cancelado }
         catch (_: Exception) { _estado.update { it.copy(error = "No pude leer tus juegos. Revisa la carpeta e inténtalo de nuevo.") } }
@@ -223,9 +223,9 @@ class RenacerControl(contexto: Context) {
             try {
                 withContext(Dispatchers.IO) { disco.withLock {
                     app.contentResolver.openInputStream(uri)?.use { Respaldo.restaurar(app, it) } ?: error("Sin acceso")
+                    val datos = almacen.datos()
+                    _estado.update { it.copy(datos = datos) }
                 } }
-                val datos = withContext(Dispatchers.IO) { almacen.datos() }
-                _estado.update { it.copy(datos = datos) }
                 escanear()
                 avisar("Recuperé tus favoritos, tiempos y notas. Agrega las carpetas de este equipo para ver sus juegos.")
             } catch (cancelado: CancellationException) { throw cancelado }

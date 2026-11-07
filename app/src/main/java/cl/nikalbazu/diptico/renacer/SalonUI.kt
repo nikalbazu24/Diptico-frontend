@@ -2,6 +2,9 @@
 
 package cl.nikalbazu.diptico.renacer
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -49,6 +52,7 @@ fun SalonRenacer(
         Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             BoxWithConstraints(Modifier.fillMaxSize()) {
                 val ancho = maxWidth >= 700.dp
+                val compacta = maxHeight < 500.dp
                 val fondo = if (e.ventana != null && e.movimiento) Modifier.blur(12.dp) else Modifier
                 Column(Modifier.fillMaxSize().then(fondo)) {
                     if (companera) {
@@ -59,7 +63,7 @@ fun SalonRenacer(
                         Row(Modifier.weight(1f)) {
                             if (ancho) Navegacion(e, enviar, vertical = true)
                             Column(Modifier.weight(1f)) {
-                                Cabecera(e, enviar)
+                                if (!compacta || e.lugar == Lugar.JUGAR) Cabecera(e, enviar)
                                 when {
                                     e.cargando && e.juegos.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                                     e.juegos.isEmpty() && e.lugar != Lugar.AMBIENTE -> BienvenidaRenacer(e, enviar, Modifier.weight(1f))
@@ -150,7 +154,14 @@ private fun InicioRenacer(e: Salon, enviar: (Accion) -> Unit, pantalla: Int, mod
     LazyColumn(modifier, contentPadding = PaddingValues(start = 22.dp, end = 22.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
             Eyebrow(if (e.recientes.isEmpty()) "ELIGE TU PRIMER VIAJE" else "TU PRÓXIMA PARTIDA", Modifier.padding(bottom = 10.dp))
-            HeroeRenacer(e, juego, enviar, pantalla, Modifier.fillMaxWidth().height(252.dp))
+            if (e.dosPantallas && e.usarDos && juego != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(juego.titulo, Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Button(onClick = { enviar(Accion.Jugar(juego.clave, pantalla)) }) { Text("Continuar") }
+                }
+                val paso = e.datos[juego.clave]?.paso.orEmpty()
+                if (paso.isNotBlank()) Text(paso, Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+            } else HeroeRenacer(e, juego, enviar, pantalla, Modifier.fillMaxWidth().height(252.dp))
         }
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -177,7 +188,9 @@ private fun InicioRenacer(e: Salon, enviar: (Accion) -> Unit, pantalla: Int, mod
 @Composable
 internal fun HeroeRenacer(e: Salon, juego: Juego?, enviar: (Accion) -> Unit, pantalla: Int, modifier: Modifier) {
     Box(modifier.clip(RoundedCornerShape(20.dp))) {
-        Paisaje(juego, Modifier.fillMaxSize())
+        Crossfade(juego, Modifier.fillMaxSize(), animationSpec = if (e.movimiento) tween(160) else snap(), label = "arteDelJuego") { actual ->
+            Paisaje(actual, Modifier.fillMaxSize())
+        }
         Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(Color(0xFF172D28), Color(0xED172D28), Color(0x35172D28)))))
         Column(Modifier.fillMaxHeight().fillMaxWidth(.82f).padding(22.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Eyebrow(juego?.let { Consolas.porId(it.consolaId)?.bonito } ?: "TU BIBLIOTECA", color = Color(0xFFD9DDCB))
