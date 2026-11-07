@@ -2157,7 +2157,12 @@ object Diptico {
     fun temaEnTienda(e: Estado): TemaComunidad? = temasEnTienda(e).getOrNull(e.indice)
 
     fun abrirGaleria(tipo: String, pestana: Int = 0) {
-        if (estado.value.panel != Panel.GALERIA) galeriaDesde = regresoActual()
+        if (estado.value.panel != Panel.GALERIA) {
+            val e = estado.value
+            galeriaDesde = regresoActual() ?: e.takeIf { it.panel == Panel.NINGUNO }?.let {
+                Regreso(it.panel, it.seccion, it.enOpciones, it.indice, it.pestanaFicha)
+            }
+        }
         actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = pestana, indice = 0, decoracionAbierta = null) }
         val i = itemsGaleria().indexOfFirst { it.enUso }
         if (i > 0) actualizar { it.copy(indice = i) }
