@@ -212,14 +212,14 @@ internal fun HeroeRenacer(e: Salon, juego: Juego?, enviar: (Accion) -> Unit, pan
         }
         Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(
             listOf(colores.background.copy(alpha = .97f), colores.background.copy(alpha = .88f), colores.background.copy(alpha = .08f)))))
-        Column(Modifier.fillMaxHeight().fillMaxWidth(.87f).padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.fillMaxHeight().fillMaxWidth(.87f).padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                 EmblemaConsola(juego?.consolaId.orEmpty(), Modifier.size(24.dp))
                 Eyebrow(juego?.let { Consolas.porId(it.consolaId)?.bonito } ?: "TU BIBLIOTECA", color = colores.primary)
             }
             if (logo != null) Image(logo, juego?.titulo, Modifier.heightIn(max = 70.dp).widthIn(max = 280.dp), contentScale = ContentScale.Fit)
             else Text(juego?.titulo ?: "Elige tu próxima partida", color = colores.onBackground,
-                style = MaterialTheme.typography.headlineLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 32.sp, lineHeight = 36.sp), maxLines = 2, overflow = TextOverflow.Ellipsis)
             val paso = juego?.let { e.datos[it.clave]?.paso }.orEmpty()
             if (paso.isNotBlank()) Text(paso, color = colores.onSurfaceVariant, maxLines = 2,
                 overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)

@@ -49,6 +49,7 @@ android {
             applicationIdSuffix = ".renacer"
             versionNameSuffix = "-renacer"
             buildConfigField("boolean", "RENACER", "true")
+            signingConfig = signingConfigs.findByName("publica") ?: signingConfigs.getByName("debug")
             matchingFallbacks += "debug"
         }
     }

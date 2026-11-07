@@ -34,6 +34,8 @@ El tono es cercano. La bienvenida pide agregar juegos y permite recuperar un res
 
 La variante `completaRenacer` instala `cl.nikalbazu.diptico.renacer`, con el nombre Díptico Renacer. Se puede instalar junto a la beta y probar con las mismas carpetas de juegos. El selector de Android concede los permisos a esta instalación.
 
+Las revisiones nuevas de Renacer usan la firma de distribución configurada en GitHub. La primera edición usó claves de depuración generadas por cada compilación. Para pasar desde esa edición a la firma estable, guarda un respaldo y reinstala la edición Renacer. Después puedes recuperar el respaldo y volver a elegir las carpetas del equipo.
+
 Esta primera edición usa textos en español. Incluye la nueva entrada de la app, navegación, inicio, biblioteca por consolas, cuadrícula y lista, búsqueda, favoritos, juegos ocultos, apps de Android, asignación manual de consolas, selección de emulador, lanzamiento en una de las pantallas, próximo paso, arte local o descargado, el catálogo visual de temas y el calendario completo y respaldo portable. La segunda pantalla comparte selección y sesión con la principal.
 
 Para recuperar datos de la beta, guarda un respaldo desde ella e impórtalo en Renacer. Se recuperan los datos de juegos que contiene ese respaldo. Las carpetas y recursos de este dispositivo se seleccionan desde Renacer. Las bibliotecas muy grandes, los emuladores, el cambio físico de pantalla y las sesiones necesitan prueba en hardware además de las pruebas automatizadas.

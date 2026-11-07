@@ -22,8 +22,33 @@ jobs:
           gradle-version: '8.9'
       - name: Probar navegación, biblioteca y recorridos de la nueva interfaz
         run: gradle :app:testCompletaRenacerUnitTest --tests 'cl.nikalbazu.diptico.renacer.*' --no-daemon
-      - name: Compilar la edición de prueba
-        run: gradle :app:assembleCompletaRenacer --no-daemon
+      - name: Compilar y verificar la edición de prueba con firma estable
+        env:
+          FIRMA_BASE64: ${{ secrets.DIPTICO_KEYSTORE_BASE64 }}
+          DIPTICO_STORE_PASSWORD: ${{ secrets.DIPTICO_STORE_PASSWORD }}
+          DIPTICO_KEY_ALIAS: ${{ secrets.DIPTICO_KEY_ALIAS }}
+          DIPTICO_KEY_PASSWORD: ${{ secrets.DIPTICO_KEY_PASSWORD }}
+          DIPTICO_CERT_SHA256: ${{ vars.DIPTICO_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          test -n "$FIRMA_BASE64" && test -n "$DIPTICO_STORE_PASSWORD" && test -n "$DIPTICO_KEY_ALIAS" && test -n "$DIPTICO_KEY_PASSWORD"
+          [[ "$DIPTICO_CERT_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          umask 077
+          firma_renacer="$(mktemp)"
+          trap 'rm -f "$firma_renacer"' EXIT
+          printf '%s' "$FIRMA_BASE64" | base64 --decode > "$firma_renacer"
+          unset FIRMA_BASE64
+          export DIPTICO_KEYSTORE="$firma_renacer"
+          gradle :app:assembleCompletaRenacer --no-daemon
+          apk="app/build/outputs/apk/completa/renacer/app-completa-renacer.apk"
+          apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n1)"
+          informe="$("$apksigner" verify --print-certs "$apk")"
+          certificado="$(awk '/certificate SHA-256 digest:/ { print tolower($NF) }' <<< "$informe" | sort -u)"
+          if [[ "$certificado" != "$DIPTICO_CERT_SHA256" ]]; then
+            echo "::error::La firma de Renacer no coincide con el certificado configurado."
+            exit 1
+          fi
+          echo "Firma estable de Renacer verificada."
       - name: Preparar el APK
         run: cp app/build/outputs/apk/completa/renacer/app-completa-renacer.apk Diptico-Renacer.apk
       - uses: actions/upload-artifact@v4
