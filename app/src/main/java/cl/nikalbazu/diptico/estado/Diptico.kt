@@ -724,7 +724,7 @@ object Diptico {
         val apps = AtajoInicio.leer(almacen.texto("atajoApps"), AtajoInicio.START_R3)
         val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_L3)
             .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
-        val vistaGuardada = almacen.texto("vistaConsolas", "arriba")
+        val vistaGuardada = almacen.texto("vistaConsolas", if (cl.nikalbazu.diptico.BuildConfig.RENACER) "carpetas" else "arriba")
         val vistaConsolas = vistaConsolasCompatible(vistaGuardada)
         if (vistaConsolas != vistaGuardada) almacen.guardarTexto("vistaConsolas", vistaConsolas)
         _estado.value = Estado(
@@ -6350,6 +6350,7 @@ object Diptico {
     private var ultimaConsultaAct: Long? = null
 
     private fun vigilarActualizaciones() {
+        if (cl.nikalbazu.diptico.BuildConfig.RENACER) return
         Actualizador.programar(app, estado.value.actualizarSolo)
         scope.launch {
             while (true) {
@@ -6360,6 +6361,7 @@ object Diptico {
     }
 
     fun revisarActualizacionAlVolver() {
+        if (cl.nikalbazu.diptico.BuildConfig.RENACER) return
         if (!estado.value.listo || !estado.value.actualizarSolo) return
         val ultima = ultimaConsultaAct
         if (ultima == null || android.os.SystemClock.elapsedRealtime() - ultima >= 60_000L) {
@@ -6370,6 +6372,10 @@ object Diptico {
     }
 
     fun buscarActualizacion(silencioso: Boolean = false) {
+        if (cl.nikalbazu.diptico.BuildConfig.RENACER) {
+            if (!silencioso) avisar("Esta edición de prueba se actualiza desde su APK de revisión en GitHub")
+            return
+        }
         if (estado.value.buscandoAct) return
         ultimaConsultaAct = android.os.SystemClock.elapsedRealtime()
         actualizar { it.copy(buscandoAct = true) }

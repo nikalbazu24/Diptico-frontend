@@ -44,7 +44,7 @@ object Actualizador {
     /** Android reúne estas comprobaciones con otros trabajos cuando Díptico está cerrado. */
     fun programar(ctx: Context, activo: Boolean) {
         val scheduler = ctx.getSystemService(JobScheduler::class.java) ?: return
-        if (!activo) {
+        if (!activo || cl.nikalbazu.diptico.BuildConfig.RENACER) {
             scheduler.cancel(REVISION)
             return
         }

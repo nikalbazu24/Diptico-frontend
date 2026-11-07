@@ -1,25 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <application>
-        <activity android:name=".MainActivity" android:enabled="false" />
-        <activity android:name=".InferiorActivity" android:enabled="false" />
-        <activity android:name=".InicioAbajo" android:enabled="false" tools:replace="android:enabled" />
-        <activity android:name=".renacer.RenacerActivity" android:exported="true" android:launchMode="singleTask"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode" android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".renacer.RenacerInferiorActivity" android:exported="false" android:excludeFromRecents="true"
-            android:launchMode="singleTask" android:taskAffinity="${applicationId}.inferior" android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode" />
-        <service android:name=".audio.OyenteMedios" tools:node="remove" />
+        <activity android:name=".InferiorActivity" android:taskAffinity="${applicationId}.inferior" tools:replace="android:taskAffinity" />
         <service android:name=".estado.RevisionActualizaciones" tools:node="remove" />
     </application>
 </manifest>

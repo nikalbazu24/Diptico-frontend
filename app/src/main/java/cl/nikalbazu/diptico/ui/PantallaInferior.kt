@@ -115,6 +115,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo2)) {
+        if (LocalRedisenio.current) FondoColeccion(e, Modifier.fillMaxSize())
         val s = e.sesion
         // Con la lupa no se difumina nada encima (la copia de la pantalla de arriba se veía rara con el desenfoque).
         val conLupa = s != null && e.lupaActiva && e.datos[s.clave]?.lupa == true && s.displayId == android.view.Display.DEFAULT_DISPLAY && !s.dosPantallas
@@ -122,6 +123,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Column(Modifier.fillMaxSize()) {
+                    if (LocalRedisenio.current) CabeceraColeccion(e)
                     val escalaEstante = if (esc.angosta) 1.08f else 1.18f
                     when (e.vistaConsolas) {
                         "lado", "rueda" -> Row(Modifier.fillMaxWidth().weight(1f)) {

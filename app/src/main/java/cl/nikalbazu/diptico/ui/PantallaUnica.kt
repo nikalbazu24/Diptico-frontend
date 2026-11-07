@@ -79,6 +79,10 @@ private fun PantallaUnicaContenido(e: Estado) {
         }
         return
     }
+    if (LocalRedisenio.current) {
+        InicioUnificado(e)
+        return
+    }
     if (e.vistaConsolas in Diptico.MODOS_ELEGIR) {
         Box(Modifier.fillMaxSize().background(p.fondo)) {
             Column(Modifier.fillMaxSize().difuminar(e)) {

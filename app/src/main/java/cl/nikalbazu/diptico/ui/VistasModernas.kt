@@ -62,6 +62,10 @@ fun FilaBiblioteca(e: Estado, j: Juego, elegida: Boolean) {
 
 @Composable
 fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Boolean, lado: Dp) {
+    if (LocalRedisenio.current) {
+        IconoCarpetaDiptico(e, id, elegida, interactiva, lado)
+        return
+    }
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val consola = Consolas.porId(id)

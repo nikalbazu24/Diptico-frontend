@@ -1,4 +1,4 @@
-name: Probar Díptico Renacer
+name: Probar el rediseño de Díptico
 
 on:
   push:
@@ -20,8 +20,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Probar navegación, biblioteca y recorridos de la nueva interfaz
-        run: gradle :app:testCompletaRenacerUnitTest --tests 'cl.nikalbazu.diptico.renacer.*' --no-daemon
+      - name: Probar el rediseño y los recorridos completos de Díptico
+        run: gradle :app:testCompletaRenacerUnitTest --tests 'cl.nikalbazu.diptico.redisenio.*' --tests 'cl.nikalbazu.diptico.EstabilidadTest' --tests 'cl.nikalbazu.diptico.NavegacionTest' --tests 'cl.nikalbazu.diptico.ExperienciaTest' --tests 'cl.nikalbazu.diptico.EditorWidgetsTest' --no-daemon
       - name: Compilar y verificar la edición de prueba con firma estable
         env:
           FIRMA_BASE64: ${{ secrets.DIPTICO_KEYSTORE_BASE64 }}

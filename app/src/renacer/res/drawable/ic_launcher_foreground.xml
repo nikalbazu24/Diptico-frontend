@@ -1,4 +1,14 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#00000000" android:strokeColor="#72F5D0" android:strokeWidth="2.5" android:strokeLineJoin="round" android:pathData="M29,30L62,30L62,46L29,46Z M35,54L68,54L68,70L35,70Z" />
-    <path android:fillColor="#72F5D0" android:pathData="M75,57m-2,0a2,2 0,1 0,4 0a2,2 0,1 0,-4 0 M75,67m-2,0a2,2 0,1 0,4 0a2,2 0,1 0,-4 0" />
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícono de Díptico: dos paneles como la Thor, el de arriba más ancho. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#6B4EFF"
+        android:pathData="M39,33.5h30a7,7 0 0 1 7,7v4a7,7 0 0 1 -7,7h-30a7,7 0 0 1 -7,-7v-4a7,7 0 0 1 7,-7z" />
+    <path
+        android:fillColor="#FF7A59"
+        android:pathData="M44,56.5h20a7,7 0 0 1 7,7v4a7,7 0 0 1 -7,7h-20a7,7 0 0 1 -7,-7v-4a7,7 0 0 1 7,-7z" />
 </vector>
