@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 
-private data class TrazoEmblema(val forma: Path, val color: Color, val grosor: Float = 0f)
+internal data class TrazoEmblema(val forma: Path, val color: Color, val grosor: Float = 0f)
 
 /** Emblemas vectoriales propios: conservan nitidez con el pellizco y no requieren red ni bitmaps por celda. */
 @Composable
@@ -30,7 +30,7 @@ internal fun EmblemaCarpeta(referencia: ReferenciaCarpeta, modifier: Modifier) {
     })
 }
 
-private fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
+internal fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
     val blanco = Color(0xFFFFF5DE); val oscuro = Color(0xFF101B32)
     val oro = Color(0xFFFFCC57); val azul = Color(0xFF5CA9FF)
     val rojo = Color(0xFFFF6176); val menta = Color(0xFF6BE1B6)

@@ -39,4 +39,24 @@ class CristalTest {
         }
         assertTrue(densidadCristal(CapaCristal.PANEL, true, false) > densidadCristal(CapaCristal.CONTROL, true, false))
     }
+
+    @Test fun todosLosNivelesConservanTextoLegibleYElCeroEsSolido() {
+        val tema = Temas.incluidos.first { it.id == "diptico_vidrio" }
+        listOf(false, true).forEach { oscuro ->
+            val p = paletaDe(tema, oscuro)
+            listOf(0, 25, 55, 75, 100).forEach { nivel ->
+                listOf(CapaCristal.CARPETA, CapaCristal.WIDGET).forEach { capa ->
+                    val densidad = densidadCristal(capa, true, false, nivel = nivel)
+                    if (nivel == 0) assertEquals(1f, densidad, 0f)
+                    assertEquals(1f, densidadCristal(capa, false, false, nivel = nivel), 0f)
+                    assertEquals(1f, densidadCristal(capa, true, true, nivel = nivel), 0f)
+                    listOf(Color.Black, Color.White).forEach { debajo ->
+                        val superficie = lerp(debajo, colorMaterialCristal(p, capa), densidad)
+                        assertTrue("Texto $capa $nivel", contraste(p.tinta, superficie) >= 4.5f)
+                        if (capa == CapaCristal.WIDGET) assertTrue("Detalle $nivel", contraste(paletaLecturaCristal(p, nivel).tenue, superficie) >= 4.5f)
+                    }
+                }
+            }
+        }
+    }
 }

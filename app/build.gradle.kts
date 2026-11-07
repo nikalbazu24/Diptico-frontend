@@ -46,8 +46,8 @@ android {
         }
         create("renacer") {
             initWith(getByName("debug"))
-            applicationIdSuffix = ".renacer"
-            versionNameSuffix = "-renacer"
+            applicationIdSuffix = ".prueba.renacer"
+            versionNameSuffix = "-prueba-renacer"
             buildConfigField("boolean", "RENACER", "true")
             signingConfig = signingConfigs.findByName("publica") ?: signingConfigs.getByName("debug")
             matchingFallbacks += "debug"

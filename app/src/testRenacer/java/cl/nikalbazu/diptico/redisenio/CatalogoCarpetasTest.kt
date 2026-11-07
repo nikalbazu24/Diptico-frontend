@@ -23,6 +23,7 @@ class CatalogoCarpetasTest {
             assertNotNull("Falta ${c.id}",ref)
             assertFalse(ref!!.juego.isBlank())
             assertFalse(ref.motivo.isBlank())
+            assertTrue("Collage de ${c.id}", motivosCarpeta(c.id).size >= 3)
         }
         assertEquals("Genshin Impact",ReferenciasCarpetas.para(Consolas.ANDROID)?.juego)
         assertEquals("To the Moon",ReferenciasCarpetas.para(Consolas.RPGMAKER)?.juego)

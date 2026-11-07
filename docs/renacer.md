@@ -21,7 +21,7 @@ El rediseño de Díptico Cristal se documenta en [Cristal](cristal.md), con sus 
 
 ## Implementación
 
-`ui/Redisenio.kt` contiene la nueva composición. `ui/SeleccionJuegos.kt` reúne la cabecera, las portadas, el pie de selección y los acentos de consola. `LocalRedisenio` permite activar la revisión y capturar una comparación con la interfaz anterior. La variante `renacer` conserva el identificador `cl.nikalbazu.diptico.renacer`, con el nombre visible **Díptico · Rediseño**, y usa las actividades principales, el estado y las integraciones completas existentes.
+`ui/Redisenio.kt` contiene la nueva composición. `ui/SeleccionJuegos.kt` reúne la cabecera, las portadas, el pie de selección y los acentos de consola. `LocalRedisenio` permite activar la revisión y capturar una comparación con la interfaz anterior. La variante `renacer` usa el identificador independiente `cl.nikalbazu.diptico.prueba.renacer`, con el nombre visible **Díptico · Prueba Renacer**, y usa las actividades principales, el estado y las integraciones completas existentes.
 
 La revisión retira el núcleo y las pantallas del primer prototipo Renacer. La limpieza se limita a ese prototipo descartado. El trabajo de separar el coordinador completo por responsabilidades continúa como una tarea independiente de estabilización.
 
@@ -29,7 +29,7 @@ La nueva composición se activa en la edición de prueba. La beta pública manti
 
 ## Instalación y datos
 
-El APK usa la firma estable de distribución y GitHub Actions verifica su certificado. Puede actualizar la revisión Renacer con firma estable. Quien conserve una primera Renacer con firma de depuración necesita guardar un respaldo antes de reinstalar esa edición.
+El archivo **Diptico-Prueba-Renacer.apk** usa la firma estable de distribución y GitHub Actions verifica su certificado. Se instala como una app nueva junto a Díptico y a la revisión anterior `cl.nikalbazu.diptico.renacer`. Tiene ajustes, permisos y datos propios. El icono usa menta y ámbar para distinguir esta edición. Las siguientes compilaciones de Prueba Renacer actualizan únicamente este paquete.
 
 La revisión usa el tutorial, el respaldo y los permisos de carpetas de la aplicación completa. Los favoritos, notas y tiempos persistidos en el formato compartido siguen disponibles. Las preferencias específicas del prototipo descartado no definen la disposición nueva. Para traer datos desde la beta se utiliza su respaldo y se seleccionan las carpetas del dispositivo.
 

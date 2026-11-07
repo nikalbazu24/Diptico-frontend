@@ -1,6 +1,12 @@
 package cl.nikalbazu.diptico.ui
 
 import androidx.compose.runtime.remember
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
+import kotlin.math.roundToInt
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -124,7 +130,7 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
     }
     Column(modifier.then(if (Estilo.glass) Modifier.padding(esc.d(5)).superficieCristal(RoundedCornerShape(esc.d(22)), CapaCristal.PANEL)
         else Modifier.background(p.fondo.copy(alpha = 0.55f))).padding(top = esc.d(10), bottom = esc.d(8))) {
-        Row(Modifier.padding(horizontal = esc.d(12)), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(12)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             MarcaLogo(12f)
             Spacer(Modifier.width(esc.d(8)))
             Texto("Ajustes", 18f, lineas = 1)
@@ -149,7 +155,7 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
         ) {
             itemsIndexed(filas, key = { _, f -> if (f is Seccion) f.name else "g_$f" }) { k, f ->
                 if (f is String) {
-                    Etiqueta(f, p.tenue.copy(alpha = 0.8f), 10f, Modifier.padding(start = esc.d(8), top = esc.d(if (k == 0) 2f else 10f), bottom = esc.d(2)))
+                    Etiqueta(f, p.tenue.copy(alpha = 0.8f), 10f, Modifier.fillMaxWidth().padding(top = esc.d(if (k == 0) 2f else 10f), bottom = esc.d(2)))
                     return@itemsIndexed
                 }
                 val s = f as Seccion
@@ -164,7 +170,7 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
                     Modifier.fillMaxWidth().height(esc.d(42)).clip(RoundedCornerShape(esc.d(14))).background(fondo)
                         .then(if (enfoque) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(14))) else Modifier)
                         .clickable { Diptico.elegirSeccion(s) }.padding(horizontal = esc.d(8)),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
                 ) {
                     Box(
                         Modifier.size(esc.d(28)).clip(CircleShape).background(if (activa) color else color.copy(alpha = 0.16f)),
@@ -197,7 +203,8 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
                 .padding(start = esc.d(14), end = esc.d(10), top = esc.d(10), bottom = esc.d(10)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(Modifier.weight(1f)) {
+            Spacer(Modifier.width(esc.d(34)))
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Texto(s.titulo, 20f, lineas = 1)
                 Detalle(s.ayuda, 12f, lineas = 1)
             }
@@ -221,7 +228,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
                 val g = Diptico.grupoOpcion(s, o.titulo)
                 Column {
                     if (g.isNotEmpty() && (i == 0 || Diptico.grupoOpcion(s, opciones[i - 1].titulo) != g)) {
-                        Etiqueta(g, color, 10.5f, Modifier.padding(start = esc.d(6), top = esc.d(if (i == 0) 0f else 6f), bottom = esc.d(5)))
+                        Etiqueta(g, color, 10.5f, Modifier.fillMaxWidth().padding(top = esc.d(if (i == 0) 0f else 6f), bottom = esc.d(5)))
                     }
                     FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) }
                 }
@@ -233,7 +240,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
         }
         Pistas(
             *(if (e.enOpciones) arrayOf("↑ ↓" to "Moverte", "A" to "Cambiar", "B" to "Secciones") else arrayOf("↑ ↓" to "Sección", "A" to "Entrar", "B" to "Cerrar")),
-            modifier = Modifier.padding(start = esc.d(14), top = esc.d(4), bottom = esc.d(10)),
+            modifier = Modifier.fillMaxWidth().padding(top = esc.d(4), bottom = esc.d(10)),
         )
     }
 }
@@ -251,6 +258,55 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val fondo by animateColorAsState(if (activa) p.superficie else p.superficie.copy(alpha = 0.45f), label = "fila")
+    if (o.rango != null) {
+        val rango = o.rango
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(fondo)
+            .then(if (activa) Modifier.border(esc.d(1.5f), color, RoundedCornerShape(esc.d(16))) else Modifier)
+            .padding(horizontal = esc.d(12), vertical = esc.d(8)), horizontalAlignment = Alignment.CenterHorizontally) {
+            Texto(o.titulo, 14f, modifier = Modifier.fillMaxWidth(), lineas = 1)
+            Texto(o.valor, 12f, color = color, familia = Nunito, traducir = false)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(esc.d(8), Alignment.CenterHorizontally)) {
+                Box(Modifier.size(esc.d(42)).clip(CircleShape).background(p.fondo2)
+                    .semantics { contentDescription = "Reducir ${o.titulo}" }.clickable { o.menos?.invoke() }, contentAlignment = Alignment.Center) {
+                    Texto("−", 20f, traducir = false)
+                }
+                Slider(value = rango.valor.toFloat(), onValueChange = { rango.alCambiar(it.roundToInt()) },
+                    valueRange = 0f..100f,
+                    modifier = Modifier.weight(1f).testTag(o.titulo).semantics { contentDescription = o.titulo },
+                    colors = SliderDefaults.colors(thumbColor = color, activeTrackColor = color))
+                Box(Modifier.size(esc.d(42)).clip(CircleShape).background(p.fondo2)
+                    .semantics { contentDescription = "Aumentar ${o.titulo}" }.clickable { o.accion() }, contentAlignment = Alignment.Center) {
+                    Texto("+", 20f, traducir = false)
+                }
+            }
+        }
+        return
+    }
+    if (LocalRedisenio.current) {
+        Row(Modifier.fillMaxWidth().heightIn(min = esc.d(62)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
+            .then(if (activa) Modifier.border(esc.d(1.5f), color, RoundedCornerShape(esc.d(16))) else Modifier)
+            .clickable { alPulsar() }.graphicsLayer { alpha = if (o.apagada) .5f else 1f }
+            .padding(horizontal = esc.d(8), vertical = esc.d(7)), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.width(esc.d(44)), contentAlignment = Alignment.Center) {
+                o.icono?.let { IconoDiptico(it, color, 21f, acento = color) }
+            }
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Texto(o.titulo, 14.5f, modifier = Modifier.fillMaxWidth(), lineas = 2)
+                if (o.valor.isNotEmpty() && !esInterruptor(o)) Texto(o.valor, 12f, color = p.tenue, familia = Nunito, lineas = 2)
+            }
+            Box(Modifier.width(esc.d(44)), contentAlignment = Alignment.Center) {
+                if (esInterruptor(o)) {
+                    val si = o.valor == "Sí"
+                    Box(Modifier.size(esc.d(40), esc.d(24)).clip(RoundedCornerShape(50)).background(if (si) color else p.linea),
+                        contentAlignment = if (si) Alignment.CenterEnd else Alignment.CenterStart) {
+                        Box(Modifier.padding(esc.d(3)).size(esc.d(18)).clip(CircleShape).background(Color.White))
+                    }
+                } else Texto("›", 18f, color = p.tenue)
+            }
+        }
+        return
+    }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val interruptor = esInterruptor(o)
         val ancho = maxWidth

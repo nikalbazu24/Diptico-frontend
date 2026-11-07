@@ -8,6 +8,15 @@ import org.json.JSONObject
 
 /** Guarda las preferencias y la memoria de Díptico en el teléfono. */
 class Almacen(ctx: Context) {
+    var nivelesGlass: cl.nikalbazu.diptico.estado.NivelesGlass
+        get() = cl.nikalbazu.diptico.estado.NivelesGlass(
+            texto("glassCarpetas", "70").toIntOrNull()?.coerceIn(0, 100) ?: 70,
+            texto("glassWidgets", "55").toIntOrNull()?.coerceIn(0, 100) ?: 55,
+        )
+        set(valor) {
+            guardarTexto("glassCarpetas", valor.carpetas.coerceIn(0, 100).toString())
+            guardarTexto("glassWidgets", valor.widgets.coerceIn(0, 100).toString())
+        }
     companion object {
         private val credencialesLocales = setOf(
             "claveSgdb", "claveGemini", "claveOpenAI", "claveIa", "claveRA", "usuarioRA",

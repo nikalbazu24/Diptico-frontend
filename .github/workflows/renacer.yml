@@ -54,12 +54,12 @@ jobs:
           fi
           echo "Firma estable de Renacer verificada."
       - name: Preparar el APK
-        run: cp app/build/outputs/apk/completa/renacer/app-completa-renacer.apk Diptico-Renacer.apk
+        run: cp app/build/outputs/apk/completa/renacer/app-completa-renacer.apk Diptico-Prueba-Renacer.apk
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Diptico-Renacer
+          name: Diptico-Prueba-Renacer
           path: |
-            Diptico-Renacer.apk
+            Diptico-Prueba-Renacer.apk
             app/capturas-renacer/
             app/build/reports/tests/testCompletaRenacerUnitTest/

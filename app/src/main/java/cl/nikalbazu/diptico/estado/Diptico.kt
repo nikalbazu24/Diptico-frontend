@@ -105,6 +105,7 @@ data class Opcion(
     val menos: (() -> Unit)? = null,
     /** Para los accesos que se encienden y apagan (Wi-Fi, Bluetooth, turbo…): si está encendido ahora. null = no aplica. */
     val activa: Boolean? = null,
+    val rango: RangoOpcion? = null,
     val accion: () -> Unit,
 )
 
@@ -614,6 +615,7 @@ data class Estado(
     val esInicio: Boolean = true,
 ) {
     val atajoApps get() = navegacion.atajoApps
+    val nivelesGlass get() = experiencia.nivelesGlass
     val atajoBisa get() = navegacion.atajoBisa
     val ordenApps get() = navegacion.ordenApps
     val appsMenu get() = navegacion.appsMenu
@@ -762,7 +764,7 @@ object Diptico {
             modoCarpeta = almacen.texto("modoCarpeta", "ventana"),
             carpetasHorizontal = almacen.bool("carpetasHorizontal", false),
             tamCarpetas = limitarTamCarpetas(almacen.texto("tamCarpetas").toFloatOrNull() ?: 1f),
-            experiencia = Experiencia.leer(almacen.texto("experiencia", "{}")),
+            experiencia = Experiencia.leer(almacen.texto("experiencia", "{}")).copy(nivelesGlass = almacen.nivelesGlass),
             perfilesVisuales = Experiencia.perfiles(almacen.texto("perfilesVisuales", "{}")),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             adornosPorTema = leerMapa(almacen.texto("adornosPorTema", "{}")),
@@ -3332,6 +3334,7 @@ object Diptico {
             else -> "Su cerebro"
         }
         Seccion.TEMAS -> when {
+            t.contains("Glass") -> "Glass"
             t.startsWith("Mi tema") || t == "Mezclar mi tema" -> "Mi tema"
             t.contains("IA") -> "Con IA"
             else -> "Elegir"
@@ -3344,7 +3347,7 @@ object Diptico {
             else -> "Más"
         }
         Seccion.APARIENCIA -> when {
-            t == "Modo" || t == "Acabado Glass" || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
+            t == "Modo" || t.contains("Glass") || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
             t.contains("protector", true) -> "Protector de pantalla"
             t.startsWith("Zoom") || t.contains("nimación") -> "Detalles"
             else -> "Íconos de las consolas"
@@ -3571,6 +3574,7 @@ object Diptico {
             Seccion.APARIENCIA -> {
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += opcionGlass(e)
+                lista += opcionesNivelesGlass(e)
                 lista += Opcion(
                     "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
                     "Liso, degradado, con un brillo que pasa, o de vidrio. Se ve en el botón Jugar, el menú y las opciones elegidas.",
@@ -3974,6 +3978,7 @@ object Diptico {
     fun cancelarArchivoVisual() { imagenVisual = null }
 
     fun guardarExperiencia(v: Experiencia) {
+        almacen.nivelesGlass = v.nivelesGlass
         almacen.guardarTexto("experiencia", v.json(local = true).toString())
         actualizar { it.copy(experiencia = v) }
         cl.nikalbazu.diptico.ui.Estilo.efecto = if (v.vidrio) "vidrio" else estado.value.efecto
@@ -4231,6 +4236,26 @@ object Diptico {
         elegirMaterialInterfaz(opciones[(opciones.indexOf(estado.value.materialInterfaz) + 1).mod(opciones.size)])
     }
 
+    fun elegirNivelGlass(zona: ZonaGlass, valor: Int) {
+        val nuevos = estado.value.nivelesGlass.cambiar(zona, valor)
+        if (nuevos == estado.value.nivelesGlass) return
+        almacen.nivelesGlass = nuevos
+        val e = estado.value
+        val indice = if (e.panel == Panel.MENU) opcionesSeccion(e.seccion).indexOfFirst { it.titulo == "Glass de ${zona.nombre}" } else -1
+        val experiencia = e.experiencia.copy(nivelesGlass = nuevos)
+        almacen.guardarTexto("experiencia", experiencia.json(local = true).toString())
+        actualizar { it.copy(experiencia = experiencia, indice = indice.takeIf { i -> i >= 0 } ?: it.indice) }
+    }
+
+    private fun opcionesNivelesGlass(e: Estado): List<Opcion> = ZonaGlass.entries.map { zona ->
+        val nivel = e.nivelesGlass.para(zona)
+        Opcion("Glass de ${zona.nombre}", "$nivel %", Icono.ESTRELLA,
+            "Regula solo ${zona.nombre}: 0 % deja una superficie sólida y 100 % aplica la máxima intensidad. Se conserva al cambiar de tema. Activa Acabado Glass para verlo.",
+            menos = { elegirNivelGlass(zona, estado.value.nivelesGlass.para(zona) - 10) },
+            rango = RangoOpcion(nivel) { elegirNivelGlass(zona, it) },
+        ) { elegirNivelGlass(zona, estado.value.nivelesGlass.para(zona) + 10) }
+    }
+
     private fun guardarTemasPropios(l: List<Tema>) {
         almacen.guardarTexto("temasPropios", escribirTemas(l))
         actualizar { it.copy(temasPropios = l) }
@@ -4294,6 +4319,7 @@ object Diptico {
     private fun opcionesTemas(e: Estado): List<Opcion> {
         val lista = mutableListOf<Opcion>()
         lista += opcionGlass(e)
+        lista += opcionesNivelesGlass(e)
         val prox = Temas.proxima()
         lista += Opcion(
             "Fechas especiales", if (e.temaFestivo) "Sí" else "No", Icono.MUNDO,

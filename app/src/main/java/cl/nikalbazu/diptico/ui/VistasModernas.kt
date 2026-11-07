@@ -55,7 +55,7 @@ fun FilaBiblioteca(e: Estado, j: Juego, elegida: Boolean) {
         .padding(esc.d(8)), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(esc.d(54)).clip(RoundedCornerShape(esc.d(10)))) { ArteJuego(j, false, 180, Modifier.fillMaxSize()) }
         Spacer(Modifier.width(esc.d(12)))
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Texto(j.titulo, 15f, lineas = 1)
             Detalle(listOfNotNull(c?.nombre, d?.tiempo?.takeIf { it > 0 }?.let { formatoTiempo(it) }).joinToString(" · "), 11.5f, lineas = 1)
         }

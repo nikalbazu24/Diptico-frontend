@@ -144,7 +144,7 @@ private fun EncabezadoWidgets(e: Estado) {
         val anchoBarra = if (e.saludoInicio) maxWidth * 0.66f else maxWidth
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
             if (e.saludoInicio) {
-                Column(Modifier.weight(1f).padding(end = esc.d(8))) {
+                Column(Modifier.weight(1f).padding(horizontal = esc.d(8)), horizontalAlignment = Alignment.CenterHorizontally) {
                     val nombre = e.nombre.takeIf { it.isNotBlank() && esc.ancho >= 650f }
                     Texto(if (nombre == null) saludo() else "${saludo()}, $nombre", 22f, lineas = 1)
                     val formato = if (esc.angosta) "dMMM" else "EEEEdMMMM"
@@ -440,14 +440,18 @@ private fun juegoDelWidget(e: Estado): Juego? {
 /** El contenido de cada widget según su tipo y su tamaño (1×1, angosto, una fila o grande). */
 @Composable
 private fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an: Int, al: Int) {
-    when {
-        w.tipo.startsWith("atajo-") -> WidgetAtajo(e, w.tipo.removePrefix("atajo-"), al)
-        w.tipo.startsWith("coleccion-") -> WidgetColeccion(e, w.tipo.removePrefix("coleccion-"), an, al)
-        w.tipo.startsWith("imagen") -> WidgetImagen(w)
-        w.tipo.startsWith("video") -> WidgetVideo(w, e.sesion == null)
-        w.tipo in planWidgets -> WidgetPlanPartida(e, w.tipo, an, al)
-        an == 1 && w.tipo !in herramientasWidgets -> WidgetMini(e, w.tipo, al)
-        else -> WidgetVista(e, w.tipo, an, al)
+    val p = LocalPaleta.current
+    val paleta = if (Estilo.glass) paletaLecturaCristal(p, e.nivelesGlass.widgets) else p
+    CompositionLocalProvider(LocalPaleta provides paleta) {
+        when {
+            w.tipo.startsWith("atajo-") -> WidgetAtajo(e, w.tipo.removePrefix("atajo-"), al)
+            w.tipo.startsWith("coleccion-") -> WidgetColeccion(e, w.tipo.removePrefix("coleccion-"), an, al)
+            w.tipo.startsWith("imagen") -> WidgetImagen(w)
+            w.tipo.startsWith("video") -> WidgetVideo(w, e.sesion == null)
+            w.tipo in planWidgets -> WidgetPlanPartida(e, w.tipo, an, al)
+            an == 1 && w.tipo !in herramientasWidgets -> WidgetMini(e, w.tipo, al)
+            else -> WidgetVista(e, w.tipo, an, al)
+        }
     }
 }
 
@@ -478,7 +482,7 @@ private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nul
     val base = propio ?: p.superficie
     val acento = propio ?: Uva
     val fondo = if (Estilo.glass && estilo != "sinfondo" && estilo != "contorno") {
-        Modifier.superficieCristal(forma, CapaCristal.CONTENIDO)
+        Modifier.superficieCristal(forma, CapaCristal.WIDGET)
     } else when (estilo) {
         "vidrio" -> Modifier.background(Brush.linearGradient(listOf((propio ?: Color.White).copy(alpha = 0.16f * op), (propio ?: Color.White).copy(alpha = 0.05f * op))))
             .border(esc.d(1.2f), Color.White.copy(alpha = 0.22f), forma)
@@ -492,6 +496,7 @@ private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nul
         modifier.fillMaxSize().clip(forma).then(fondo)
             .combinedClickable(onClick = { if (alPulsar != null) alPulsar() else w?.let { Diptico.abrirWidgetTipo(it.tipo) } }, onLongClick = { Diptico.editarWidgets() })
             .padding(esc.d(12)),
+        contentAlignment = Alignment.Center,
     ) { contenido() }
 }
 
@@ -527,7 +532,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 ) {
                     ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize())
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
-                    Column(Modifier.align(Alignment.BottomStart).padding(esc.d(14))) {
+                    Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(esc.d(14)), horizontalAlignment = Alignment.CenterHorizontally) {
                         Etiqueta(Consolas.porId(j.consolaId)?.nombre ?: "", Sol, 11f)
                         Texto(j.titulo, if (tam >= 2) 22f else 17f, color = Color.White, lineas = 2, sombra = true)
                         Spacer(Modifier.height(esc.d(6)))
@@ -542,14 +547,14 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 if (j == null) {
                     Detalle("Elige un juego en el estante", 15f)
                 } else {
-                    Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                         val c = Consolas.porId(j.consolaId)
                         if (c != null) {
                             val base = cajaDe(c)
                             CajaJuego(j, c, escala = minOf((al * 64f) / base.alto, 1.1f))
                         }
                         Spacer(Modifier.width(esc.d(14)))
-                        Column(Modifier.weight(1f)) {
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Etiqueta(c?.nombre ?: "", Coral, 11f)
                             Texto(j.titulo, if (tam >= 2) 22f else 17f, lineas = 2, interlineado = if (tam >= 2) 25f else 20f)
                             Spacer(Modifier.height(esc.d(8)))
@@ -564,7 +569,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         "reloj" -> Tarjeta {
             // Si hay temporizador o cronómetro andando, se ven en el reloj.
             if (e.temporizadorFin > 0L || e.cronoInicio > 0L) {
-                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                     Texto(rememberHora(), if (compacto) 22f else 34f, lineas = 1)
                     Spacer(Modifier.height(esc.d(4)))
                     if (e.temporizadorFin > 0L) FilaCuenta(Icono.RELOJ, "Temporizador", cuentaRegresiva(e.temporizadorFin), Coral)
@@ -579,7 +584,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                     RelojAnalogico(ahora, Modifier.fillMaxHeight().aspectRatio(1f))
                     if (an >= 3) {
                         Spacer(Modifier.width(esc.d(14)))
-                        Column {
+                        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                             Texto(ahora, 24f, lineas = 1)
                             Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 13f, lineas = 2)
                         }
@@ -594,14 +599,14 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 return@Tarjeta
             }
             if (compacto) {
-                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     Texto(rememberHora(), 30f)
                     Spacer(Modifier.width(esc.d(10)))
                     Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEdMMM"), 13f, lineas = 1)
                 }
                 return@Tarjeta
             }
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 Texto(rememberHora(), if (al >= 3) 72f else if (tam >= 2) 58f else 44f, interlineado = if (al >= 3) 74f else if (tam >= 2) 60f else 46f)
                 Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 14f, lineas = 1)
             }
@@ -628,7 +633,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 return@Tarjeta
             }
             if (compacto) {
-                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     IconoDiptico(Icono.BATERIA, if (b in 0..19) Coral else p.tinta, 20f, acento = Coral)
                     Spacer(Modifier.width(esc.d(8)))
                     Texto(if (b >= 0) "$b%" else "—", 20f, lineas = 1, traducir = false)
@@ -639,7 +644,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 }
                 return@Tarjeta
             }
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 Texto(if (b >= 0) "$b%" else "—", 40f)
                 Spacer(Modifier.height(esc.d(8)))
                 Box(Modifier.fillMaxWidth().height(esc.d(10)).clip(RoundedCornerShape(50)).background(p.linea)) {
@@ -652,12 +657,12 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         "musica" -> WidgetMusica(tam, compacto)
         "favoritos" -> Tarjeta {
             val favs = e.juegos.filter { e.datos[it.clave]?.favorito == true }.take(if (variante == 1) al * 2 else if (tam >= 3) 6 else if (tam == 2) 4 else 2)
-            Column {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Etiqueta("Favoritos", Coral, 11f)
                 Spacer(Modifier.height(esc.d(8)))
                 if (favs.isEmpty()) Detalle("Marca favoritos con Y sobre un juego", 14f)
                 if (variante == 1) { ListaJuegosWidget(favs); return@Column }
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(10), Alignment.CenterHorizontally)) {
                     for (j in favs) {
                         val c = Consolas.porId(j.consolaId) ?: continue
                         val base = cajaDe(c)
@@ -669,7 +674,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             }
         }
         "frase" -> Tarjeta {
-            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                 IconoDiptico(Icono.CHISPA, Sol, 22f, acento = Coral)
                 Spacer(Modifier.width(esc.d(10)))
                 Texto(fraseDelDia(e), 16f, lineas = if (compacto) 1 else 3)
@@ -677,7 +682,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         }
         "paso" -> Tarjeta(alPulsar = { Diptico.abrirQuedaste() }) {
             val paso = e.seleccionado?.let { e.datos[it.clave]?.paso }.orEmpty()
-            Column {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconoDiptico(Icono.LAPIZ, Coral, 18f)
                     Spacer(Modifier.width(esc.d(8)))
@@ -693,10 +698,10 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 // Una fila: el total y la consola más jugada con su barra.
                 val top = e.datos.entries.filter { it.value.tiempo > 0 }.groupBy { it.key.substringBefore('/') }
                     .mapValues { (_, v) -> v.sumOf { it.value.tiempo } }.maxByOrNull { it.value }
-                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     IconoDiptico(Icono.RELOJ, Uva, 20f, acento = Coral)
                     Spacer(Modifier.width(esc.d(8)))
-                    Column(Modifier.weight(1f)) {
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Etiqueta("Estadísticas", p.tenue, 10.5f)
                         Texto(formatoTiempo(total), 15f, lineas = 1)
                     }
@@ -710,7 +715,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             val porConsola = e.datos.entries.filter { it.value.tiempo > 0 }
                 .groupBy { it.key.substringBefore('/') }.mapValues { (_, v) -> v.sumOf { it.value.tiempo } }
                 .entries.sortedByDescending { it.value }.take(if (tam >= 2) 4 else 2)
-            Column {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconoDiptico(Icono.RELOJ, Uva, 18f, acento = Coral)
                     Spacer(Modifier.width(esc.d(6)))
@@ -733,7 +738,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         "sugerencia" -> {
             val j = remember(e.juegos.size) { e.juegos.filter { (e.datos[it.clave]?.tiempo ?: 0L) == 0L }.ifEmpty { e.juegos }.randomOrNull() }
             Tarjeta(alPulsar = { j?.let { Diptico.elegirConsola("todo"); Diptico.elegirJuego(it.clave) } }) {
-                Column {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Etiqueta("¿Qué juego hoy?", Coral, 11f)
                     Spacer(Modifier.height(esc.d(6)))
                     if (j == null) Detalle("Agrega juegos para recibir sugerencias.", 13f)
@@ -748,7 +753,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         "logros" -> Tarjeta(alPulsar = { Diptico.abrirWidgetTipo("logros") }) {
             val ra = e.perfilRA
             LaunchedEffect(e.usuarioRA) { if (ra == null) Diptico.cargarPerfilRA() }
-            Column {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconoDiptico(Icono.TROFEO, Sol, 18f, acento = Coral)
                     Spacer(Modifier.width(esc.d(8)))
@@ -767,7 +772,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                                 if (img != null) Image(img, null, Modifier.fillMaxSize())
                             }
                             Spacer(Modifier.width(esc.d(8)))
-                            Column(Modifier.weight(1f)) {
+                            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                                 Texto(l.titulo, 13f, lineas = 1)
                                 if (!compacto) Detalle(juego, 11f, lineas = 1)
                             }
@@ -801,7 +806,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         "notificaciones" -> {
             val avisos by cl.nikalbazu.diptico.audio.Avisos.lista.collectAsState()
             Tarjeta(alPulsar = { Diptico.abrirCentro() }) {
-                Column {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconoDiptico(Icono.CAMPANA, p.tinta, 18f, acento = Coral)
                         Spacer(Modifier.width(esc.d(6)))
@@ -819,7 +824,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         "tiempo" -> Tarjeta(alPulsar = { Diptico.abrirWidgetTipo("tiempo") }) {
             val total = e.datos.values.sumOf { it.tiempo }
             val top = e.datos.maxByOrNull { it.value.tiempo }?.takeIf { it.value.tiempo > 0 }
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 Etiqueta("Tiempo jugado", p.tenue, 11f)
                 Texto(if (total > 0) formatoTiempo(total) else "0 min", 28f, lineas = 1)
                 top?.let { (clave, d) ->
@@ -834,12 +839,12 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 e.datos.entries.asSequence().filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }
                     .mapNotNull { (k, _) -> e.juegosPorClave[k] }.take(limite).toList()
             }
-            Column {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Etiqueta("Jugados hace poco", p.tenue, 11f)
                 Spacer(Modifier.height(esc.d(8)))
                 if (recientes.isEmpty()) Detalle("Todavía no juegas nada con Díptico", 14f)
                 if (variante == 1) { ListaJuegosWidget(recientes); return@Column }
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(10), Alignment.CenterHorizontally)) {
                     for (j in recientes) {
                         val c = Consolas.porId(j.consolaId) ?: continue
                         val base = cajaDe(c)
@@ -853,7 +858,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         "fiesta" -> Tarjeta {
             val hoy = e.fiesta
             val prox = Temas.proxima()
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 IconoDiptico(Icono.MUNDO, Sol, 26f, acento = Coral)
                 Spacer(Modifier.height(esc.d(6)))
                 if (hoy != null) {
@@ -867,12 +872,12 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             }
         }
         "consolas" -> Tarjeta {
-            Column {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Etiqueta("Tu colección", p.tenue, 11f)
                 Texto("${e.juegos.size} juegos", 26f)
                 Detalle("en ${e.consolasConJuegos.size} consolas", 13f)
                 Spacer(Modifier.height(esc.d(6)))
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(6), Alignment.CenterHorizontally)) {
                     e.consolasConJuegos.take(if (tam >= 2) 8 else 4).forEach { IconoConsola(it, 24f, p.superficie) }
                 }
             }
@@ -943,17 +948,17 @@ private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
     if (!permiso) {
         Tarjeta(alPulsar = { Medios.pedirPermiso(ctx) }) {
             if (compacto) {
-                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     IconoDiptico(Icono.MUSICA, Uva, 22f, acento = Coral)
                     Spacer(Modifier.width(esc.d(10)))
-                    Column(Modifier.weight(1f)) {
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Texto("Widget de música", 14.5f, lineas = 1)
                         Detalle("Toca para dar permiso", 11.5f, lineas = 1)
                     }
                 }
                 return@Tarjeta
             }
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 IconoDiptico(Icono.MUSICA, Uva, 26f, acento = Coral)
                 Spacer(Modifier.height(esc.d(6)))
                 Texto("Widget de música", 17f)
@@ -965,7 +970,7 @@ private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
     Tarjeta {
         val musica = s
         if (compacto) {
-            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                 IconoDiptico(Icono.MUSICA, Coral, 20f, acento = Uva)
                 Spacer(Modifier.width(esc.d(8)))
                 Texto(musica?.titulo ?: "Nada sonando", 14.5f, lineas = 1, modifier = Modifier.weight(1f))
@@ -975,7 +980,7 @@ private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
             }
             return@Tarjeta
         }
-        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Box(
                 Modifier.size(esc.d(if (tam >= 2) 96f else 56f)).clip(RoundedCornerShape(esc.d(14))).background(Uva.copy(alpha = 0.25f))
                     .clickable { musica?.paquete?.let { Diptico.abrirPaquete(it) } },
@@ -986,7 +991,7 @@ private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
                 else IconoDiptico(Icono.MUSICA, p.tinta, 28f, acento = Coral)
             }
             Spacer(Modifier.width(esc.d(12)))
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Etiqueta(musica?.app ?: "Música", Coral, 11f)
                 Texto(musica?.titulo ?: "Nada sonando", 16f, lineas = 2)
                 if (!musica?.artista.isNullOrBlank()) Detalle(musica!!.artista, 13f, lineas = 1)
@@ -994,7 +999,7 @@ private fun WidgetMusica(tam: Int, compacto: Boolean = false) {
                 if (musica == null) {
                     // Nada sonando: accesos a Spotify y YouTube Music.
                     val apps = remember { Diptico.appsMusica().ifEmpty { listOf(cl.nikalbazu.diptico.emu.App("com.spotify.music", "Spotify"), cl.nikalbazu.diptico.emu.App("com.google.android.apps.youtube.music", "YT Music")) } }
-                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(6), Alignment.CenterHorizontally)) {
                         for (a in apps) {
                             Box(
                                 Modifier.clip(RoundedCornerShape(50)).fondoBoton(if (a.paquete.contains("spotify")) Color(0xFF1DB954) else Color(0xFFFF0033))
@@ -1024,7 +1029,7 @@ private fun BotonCirculo(icono: Icono, grande: Boolean = false, invertido: Boole
         contentAlignment = Alignment.Center,
     ) {
         if (pausa) {
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(4), Alignment.CenterHorizontally)) {
                 Box(Modifier.size(esc.d(4), esc.d(14)).clip(RoundedCornerShape(50)).background(SobreUva))
                 Box(Modifier.size(esc.d(4), esc.d(14)).clip(RoundedCornerShape(50)).background(SobreUva))
             }
@@ -1054,7 +1059,7 @@ private fun WidgetPlanPartida(e: Estado, tipo: String, an: Int, al: Int) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 IconoDiptico(Widgets.icono(tipo), Coral, 22f)
             }
-        } else Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+        } else Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Etiqueta(Widgets.nombre(tipo), p.acentoTexto, 11f)
             Texto(primero?.titulo ?: when (tipo) {
                 "proximaPartida" -> "Aún no tienes una sesión"
@@ -1090,12 +1095,12 @@ private fun WidgetHerramienta(e: Estado, tipo: String, an: Int) {
         else -> ""
     }
     Tarjeta(alPulsar = { Diptico.abrirWidgetTipo(tipo) }) {
-        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             if (an >= 2 || valor.isEmpty()) {
                 IconoDiptico(Widgets.icono(tipo), if (activo) Coral else p.tinta, 18f)
                 if (an >= 2) Spacer(Modifier.width(esc.d(8)))
             }
-            if (valor.isNotEmpty() || an >= 2) Column(Modifier.weight(1f)) {
+            if (valor.isNotEmpty() || an >= 2) Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 if (an >= 2) Detalle(Widgets.nombre(tipo), 12f, lineas = 1)
                 if (valor.isNotEmpty()) Texto(valor, if (an == 1) 12f else 19f, lineas = 1)
             }
@@ -1120,12 +1125,12 @@ private fun WidgetCompacto(e: Estado, tipo: String) {
         else -> Triple(Icono.ESTRELLA, Widgets.nombre(tipo), "")
     }
     Tarjeta(alPulsar = { if (tipo == "juego") Diptico.jugarJuegoMostrado(j?.clave) else if (tipo == "paso") Diptico.abrirPaso() }) {
-        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Box(Modifier.size(esc.d(34)).clip(CircleShape).background(Uva.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
                 IconoDiptico(icono, p.tinta, 18f, acento = Coral)
             }
             Spacer(Modifier.width(esc.d(10)))
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Texto(titulo, 15f, lineas = 1)
                 if (valor.isNotEmpty()) Texto(valor, 12.5f, color = p.tenue, familia = Nunito, peso = FontWeight.Bold, lineas = 1)
             }
@@ -1367,7 +1372,7 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
         Row(Modifier.fillMaxSize().padding(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
             cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(if (compacto) 40f else if (al >= 2) 64f else 48f).value)
             Spacer(Modifier.width(esc.d(10)))
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 if (!compacto) Etiqueta("Bisa", Coral, 10.5f)
                 androidx.compose.animation.AnimatedContent(
                     targetState = frases[k.mod(frases.size)],
@@ -1381,7 +1386,7 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
                 }
                 if (!compacto && al >= 2) {
                     Spacer(Modifier.height(esc.d(7)))
-                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(6), Alignment.CenterHorizontally)) {
                         ChipBisa("Hablar") { Diptico.hablarConBisa() }
                         // Los accesos que caben: uno en los angostos, dos en los medianos y tres en los anchos.
                         if (j != null && an >= 4) ChipBisa("Un truco") { Diptico.abrirAsistente(); Diptico.preguntar("Dame un buen truco o consejo para ${j.titulo}.") }
@@ -1629,12 +1634,12 @@ private fun WidgetAtajo(e: Estado, clave: String, al: Int) {
         val conLogo = (variante == 2 || variante == 3) && j.logo != null
         if (!conLogo) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.55f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
-            Column(Modifier.align(Alignment.BottomStart).padding(esc.d(8))) {
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(esc.d(8)), horizontalAlignment = Alignment.CenterHorizontally) {
                 Texto(j.titulo, if (al >= 2) 13f else 11f, color = Color.White, lineas = 2, sombra = true, interlineado = if (al >= 2) 15f else 12.5f)
             }
         }
         Box(
-            Modifier.align(Alignment.TopEnd).padding(esc.d(6)).size(esc.d(24)).clip(CircleShape).background(Uva),
+            Modifier.align(Alignment.TopCenter).padding(esc.d(6)).size(esc.d(24)).clip(CircleShape).background(Uva),
             contentAlignment = Alignment.Center,
         ) { IconoDiptico(Icono.JUGAR, SobreUva, 11f) }
     }
@@ -1649,8 +1654,8 @@ private fun WidgetColeccion(e: Estado, id: String, an: Int, al: Int) {
     Tarjeta(alPulsar = { Diptico.abrirColeccionVisual(id) }) {
         if (c == null) { Detalle("Colección borrada", 12f); return@Tarjeta }
         val juegos = c.juegos.mapNotNull { k -> e.juegosPorClave[k] }
-        Column(Modifier.fillMaxSize()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                 IconoDiptico(Icono.CARPETA, Coral, 16f)
                 Spacer(Modifier.width(esc.d(6)))
                 Texto(c.nombre, 14f, lineas = 1, traducir = false, modifier = Modifier.weight(1f))

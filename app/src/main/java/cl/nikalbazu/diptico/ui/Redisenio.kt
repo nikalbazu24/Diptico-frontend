@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,12 +43,17 @@ val LocalRedisenio = staticCompositionLocalOf { BuildConfig.RENACER }
 internal fun FondoColeccion(e: Estado, modifier: Modifier = Modifier) {
     val p = LocalPaleta.current
     val color = colorColeccion(e.consolaSel)
+    val cristal = LocalCristal.current
+    val translucido = Estilo.glass && cristal.efectos && !cristal.contraste
     Box(modifier.fondoPantalla(p.fondo2)) {
-        e.seleccionado?.let { juego ->
+        if (translucido && cristal.imagen != null) {
+            Image(cristal.imagen, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = .65f)
+        } else e.seleccionado?.let { juego ->
             val imagen = rememberImagen(juego.arte ?: juego.portada, 96)
             if (imagen != null) Image(imagen, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = .10f)
         }
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo2.copy(alpha = .5f), p.fondo2))))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(
+            p.fondo2.copy(alpha = if (translucido) .18f else .5f), p.fondo2.copy(alpha = if (translucido) .36f else 1f)))))
         Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(color.copy(alpha = .18f), Color.Transparent, Coral.copy(alpha = .08f)))))
     }
 }
@@ -57,7 +63,8 @@ internal fun CabeceraColeccion(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     Row(modifier.fillMaxWidth().padding(horizontal = esc.d(17), vertical = esc.d(9)), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
+        Spacer(Modifier.width(esc.d(76)))
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Texto("Tu colección", 21f, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
             Detalle("${e.juegos.count { e.datos[it.clave]?.oculto != true }} juegos · ${e.pestanas.count { it != "todo" }} consolas", 10.5f, lineas = 1)
         }
@@ -134,23 +141,23 @@ internal fun EscenaDiptico(e: Estado, modifier: Modifier = Modifier, controles: 
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
             0f to p.fondo.copy(alpha = .15f), .6f to Color.Transparent, 1f to p.fondo.copy(alpha = .94f))))
         if (!reducida) BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 25f, trabajos = e.trabajos)
-        if (juego == null) Column(Modifier.align(Alignment.CenterStart).padding(esc.d(26))) {
+        if (juego == null) Column(Modifier.align(Alignment.Center).padding(esc.d(26)), horizontalAlignment = Alignment.CenterHorizontally) {
             Logo(26f)
             Spacer(Modifier.height(esc.d(12)))
             Texto("Aquí empieza tu próxima partida", 25f, familia = Nunito, lineas = 2)
             Detalle("Agrega tus juegos desde Ajustes › Biblioteca", 13f)
         } else {
-            Row(Modifier.fillMaxSize().padding(start = esc.d(26), end = esc.d(30),
+            Row(Modifier.fillMaxSize().padding(start = esc.d(28), end = esc.d(28),
                 top = esc.d(if (reducida) 16 else 66), bottom = esc.d(if (controles) 73 else 18)),
                 verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(10)), horizontalAlignment = Alignment.CenterHorizontally) {
                     val c = Consolas.porId(juego.consolaId)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(7))) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(7), Alignment.CenterHorizontally)) {
                         IconoConsola(c, 20f, p.fondo)
                         Texto(c?.nombreLargo ?: "Tu biblioteca", 10.5f, color = p.acentoTexto, familia = Nunito, lineas = 1)
                     }
                     val logo = rememberImagen(juego.logo, 700)
-                    if (logo != null) Image(logo, juego.titulo, Modifier.fillMaxWidth().heightIn(max = esc.d(if (reducida) 65 else 95)), contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
+                    if (logo != null) Image(logo, juego.titulo, Modifier.fillMaxWidth().heightIn(max = esc.d(if (reducida) 65 else 95)), contentScale = ContentScale.Fit, alignment = Alignment.Center)
                     else Texto(juego.titulo, if (reducida) 26f else 35f, familia = Nunito, peso = FontWeight.ExtraBold,
                         lineas = if (reducida) 2 else 3, interlineado = if (reducida) 29f else 37f, sombra = true)
                     val d = e.datos[juego.clave]
@@ -194,9 +201,16 @@ internal fun InicioUnificado(e: Estado) {
     val ventana = e.carpetaEnVentana
     val completa = e.vistaConsolas == "carpetas" && !e.enSistemas && e.modoCarpeta == "completa"
     val fondo = if (ventana) e.copy(enSistemas = true) else e
+    val cristal = LocalCristal.current
+    val captura = remember(ventana, e.consolaSel, e.tema, e.oscuro, cristal.imagen, e.nivelesGlass.carpetas) { FondoVentanaCristal() }
+    val capturar = ventana && e.nivelesGlass.carpetas > 0 && Estilo.glass && cristal.efectos && !cristal.contraste
     BoxWithConstraints(Modifier.fillMaxSize().background(LocalPaleta.current.fondo)) {
         val vertical = maxHeight > maxWidth
-        Box(Modifier.fillMaxSize().difuminar(e).then(if (ventana) Modifier.desenfocarCuadricula() else Modifier)) {
+        Box(Modifier.fillMaxSize().difuminar(e).then(when {
+            capturar -> Modifier.fondoDeVentana(captura, e.nivelesGlass.carpetas)
+            ventana -> Modifier.desenfocarCuadricula()
+            else -> Modifier
+        })) {
             Column(Modifier.fillMaxSize()) {
                 if (completa) {
                     Box(Modifier.fillMaxWidth().weight(1f).testTag("carpeta-completa")) { ColeccionUnificada(e) }
@@ -217,7 +231,9 @@ internal fun InicioUnificado(e: Estado) {
         }
         if (ventana) {
             Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo.copy(alpha = .18f)).clickable { Diptico.volverASistemas() })
-            VentanaCarpeta(e, Modifier.align(Alignment.Center).fillMaxWidth(.94f).fillMaxHeight(.90f), .95f)
+            CompositionLocalProvider(LocalFondoVentanaCristal provides captura.takeIf { capturar }) {
+                VentanaCarpeta(e, Modifier.align(Alignment.Center).fillMaxWidth(.94f).fillMaxHeight(.90f), .95f)
+            }
         }
         Paneles(e, conAyuda = true)
     }
@@ -227,14 +243,16 @@ internal fun InicioUnificado(e: Estado) {
 internal fun VentanaCarpeta(e: Estado, modifier: Modifier, escala: Float) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
-    val forma = RoundedCornerShape(esc.d(19))
-    Column(modifier.then(if (Estilo.glass) Modifier.superficieCristal(forma, CapaCristal.PANEL)
-        else Modifier.shadow(esc.d(12), forma, clip = false).clip(forma)
-            .background(p.fondo2.copy(alpha = if (LocalRedisenio.current) .92f else .80f)).border(esc.d(1), p.linea, forma)).sinCerrar()) {
-        if (LocalRedisenio.current && !Estilo.glass) Box(Modifier.fillMaxWidth().height(esc.d(3))
-            .background(Brush.horizontalGradient(listOf(colorColeccion(e.consolaSel), Uva, Coral))))
-        CabeceraSistema(e)
-        VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escala)
+    val forma = RoundedCornerShape(esc.d(if (Estilo.glass) 30 else 19))
+    CompositionLocalProvider(LocalPaleta provides if (Estilo.glass) paletaLecturaCristal(p, e.nivelesGlass.carpetas) else p) {
+        Column(modifier.testTag("ventana-carpeta").then(if (Estilo.glass) Modifier.superficieCristal(forma, CapaCristal.CARPETA)
+            else Modifier.shadow(esc.d(12), forma, clip = false).clip(forma)
+                .background(p.fondo2.copy(alpha = if (LocalRedisenio.current) .92f else .80f)).border(esc.d(1), p.linea, forma)).sinCerrar()) {
+            if (LocalRedisenio.current && !Estilo.glass) Box(Modifier.fillMaxWidth().height(esc.d(3))
+                .background(Brush.horizontalGradient(listOf(colorColeccion(e.consolaSel), Uva, Coral))))
+            CabeceraSistema(e)
+            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escala)
+        }
     }
 }
 
@@ -289,28 +307,17 @@ internal fun IconoCarpetaDiptico(e: Estado, id: String, elegida: Boolean, intera
                 Diptico.entrarSistema()
             }, contentAlignment = Alignment.Center) {
             PortadaCarpeta(e, id, Modifier.fillMaxSize(), maxLado = 320, memoriaGrafica = false) {
-                Canvas(Modifier.fillMaxSize()) {
-                    drawCircle(color.copy(alpha = .12f), size.width * .65f, Offset(size.width * .82f, size.height * .3f))
-                    drawCircle(color.copy(alpha = .20f), size.width * .46f, Offset(size.width * .8f, size.height * .25f), style = Stroke(size.width * .013f))
-                    drawLine(color.copy(alpha = .16f), Offset(0f, size.height * .8f), Offset(size.width, size.height * .34f), size.width * .06f)
-                }
-                val referencia = ReferenciasCarpetas.para(id)
-                if (referencia != null && id !in e.iconosPropios) {
-                    EmblemaCarpeta(referencia, Modifier.fillMaxSize(.92f).align(Alignment.TopCenter))
-                    val sello = lado * .30f
-                    Box(Modifier.align(Alignment.BottomStart).padding(lado * .065f).size(sello)
-                        .clip(RoundedCornerShape(sello * .3f)).background(p.fondo2.copy(alpha = .94f))
-                        .border(esc.d(.6f), color.copy(alpha = .55f), RoundedCornerShape(sello * .3f)), contentAlignment = Alignment.Center) {
-                        IconoConsola(c?.copy(color = color), (sello.value / esc.factor * .75f).coerceAtLeast(8f), p.fondo2, memoriaGrafica = false)
-                    }
-                } else IconoConsola(c?.copy(color = color), (lado.value / esc.factor * .47f).coerceIn(18f, 76f), p.fondo2, memoriaGrafica = false)
+                if (id in e.iconosPropios) {
+                    IconoConsola(c, (lado.value / esc.factor * .52f).coerceIn(18f, 90f), p.fondo2, memoriaGrafica = false)
+                } else ArteCarpeta(c, Modifier.fillMaxSize())
             }
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .52f)))))
-            Box(Modifier.fillMaxSize().border(esc.d(if (elegida) 2.2f else .8f), if (elegida) p.tinta else color.copy(alpha = .55f), forma))
-            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth(.38f).height(esc.d(if (elegida) 3f else 1.5f))
-                .background(if (elegida) p.tinta else color))
-            if (lado / esc.d(1) >= 66f) Texto("$cantidad", 8.5f, familia = Nunito, color = Color.White.copy(alpha = .8f),
-                modifier = Modifier.align(Alignment.TopEnd).padding(esc.d(8)))
+            Box(Modifier.fillMaxSize().border(esc.d(if (elegida) 1.4f else .5f),
+                if (elegida) Color.White.copy(alpha = .95f) else Color.White.copy(alpha = .22f), forma))
+            if (lado / esc.d(1) >= 66f) Box(Modifier.align(Alignment.TopCenter).padding(esc.d(6))
+                .clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = .46f))
+                .padding(horizontal = esc.d(6), vertical = esc.d(2))) {
+                Texto("$cantidad", 8.5f, familia = Nunito, color = Color.White)
+            }
         }
         Spacer(Modifier.height(esc.d(6)))
         Texto(c?.nombre ?: "Todo", 10.5f, familia = Nunito, peso = FontWeight.ExtraBold,

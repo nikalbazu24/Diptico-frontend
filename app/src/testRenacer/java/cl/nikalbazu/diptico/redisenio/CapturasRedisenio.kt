@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import cl.nikalbazu.diptico.estado.NivelesGlass
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -193,6 +194,49 @@ class CapturasRedisenio {
     @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
     @Test fun cristalVentanaClara() = foto("28-cristal-ventana-clara", base.copy(enSistemas = false, oscuro = false), Rol.INFERIOR, cristal)
     @Test fun glassDesactivadoEnCristal() = foto("29-glass-desactivado", base.copy(materialInterfaz = "original"), tema = cristal)
+
+    @Config(qualifiers = "w850dp-h380dp-land-xhdpi")
+    @Test fun portadasConConsolaCentrada() {
+        Consolas.cargar(ApplicationProvider.getApplicationContext())
+        Estilo.tema = cristal
+        Estilo.materialInterfaz = "glass"
+        val ids = listOf("gb", "gba", "snes", "n64", "psx", "dreamcast", "switch", "xbox", "androidgames", "rpgmaker")
+        regla.setContent {
+            Lienzo(true, Modifier.fillMaxSize()) {
+                CompositionLocalProvider(LocalEscala provides Escala(1f, 850f, 1f)) {
+                    Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                        ids.chunked(5).forEach { fila ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                                fila.forEach { id -> IconoCarpetaDiptico(base, id, false, false, 145.dp) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        regla.onRoot().captureRoboImage("capturas-renacer/30-portadas-consola-central.png")
+    }
+
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun juegosTituloYAccionCompartenElEjeCentral() {
+        mostrar(base.copy(juegos = juegos.take(2), consolaSel = "todo", enSistemas = false), Rol.INFERIOR, cristal)
+        regla.onRoot().captureRoboImage("capturas-renacer/34-seleccion-centrada.png")
+        val centro = regla.onNodeWithTag("ventana-carpeta").fetchSemanticsNode().boundsInRoot.center.x
+        listOf("titulo-carpeta", "accion-jugar").forEach { tag ->
+            assertEquals(tag, centro, regla.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.center.x, 2f)
+        }
+        val mario = regla.onNodeWithText("Super Mario World").fetchSemanticsNode().boundsInRoot.center.x
+        val pokemon = regla.onNodeWithText("Pokémon Emerald").fetchSemanticsNode().boundsInRoot.center.x
+        assertEquals("Fila de portadas centrada", centro, (mario + pokemon) / 2f, 2f)
+    }
+
+
+    @Test fun widgetsGlassSolido() = foto("36-widgets-glass-0", base.copy(inicio = "widgets", experiencia = base.experiencia.copy(nivelesGlass = NivelesGlass(70, 0))), tema = cristal)
+    @Test fun widgetsGlassCompleto() = foto("37-widgets-glass-100", base.copy(inicio = "widgets", experiencia = base.experiencia.copy(nivelesGlass = NivelesGlass(70, 100))), tema = cristal)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun carpetasGlassSolido() = foto("38-carpetas-glass-0", base.copy(enSistemas = false, experiencia = base.experiencia.copy(nivelesGlass = NivelesGlass(0, 55))), Rol.INFERIOR, cristal)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun carpetasGlassCompleto() = foto("39-carpetas-glass-100", base.copy(enSistemas = false, experiencia = base.experiencia.copy(nivelesGlass = NivelesGlass(100, 55))), Rol.INFERIOR, cristal)
 
     @Test fun activarGlassDesdeAjustesPersisteAlCambiarDeTemaYPermiteDesactivarlo() {
         mostrar(base.copy(panel = Panel.MENU, seccion = cl.nikalbazu.diptico.estado.Seccion.APARIENCIA, enOpciones = true), Rol.SUPERIOR)

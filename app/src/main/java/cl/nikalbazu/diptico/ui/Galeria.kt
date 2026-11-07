@@ -338,7 +338,7 @@ private fun FilaIA(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Uni
             else Texto(letra, 17f, color = Color.White, lineas = 1, traducir = false)
         }
         Spacer(Modifier.width(esc.d(12)))
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Texto(it.nombre, 15.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
             Detalle(it.detalle, 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, lineas = 1)
         }
@@ -376,7 +376,7 @@ private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, icono: Icono =
             IconoDiptico(icono, if (activo) SobreUva else p.tinta, 18f, acento = if (activo) SobreUva else Coral)
         }
         Spacer(Modifier.width(esc.d(10)))
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Texto(it.nombre, 15f, color = if (activo) SobreUva else p.tinta, lineas = 1)
             if (it.detalle.isNotBlank()) Detalle(it.detalle, 12f, color = if (activo) SobreUva.copy(alpha = 0.8f) else p.tenue, lineas = 1)
         }
@@ -494,7 +494,7 @@ fun ExplicaIA(id: String) {
                     IconoDiptico(icono, color, 18f, acento = color)
                 }
                 Spacer(Modifier.width(esc.d(12)))
-                Column(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Etiqueta(etiqueta, color, 11f)
                     Detalle(texto, 14f, color = p.tinta, lineas = 3)
                 }

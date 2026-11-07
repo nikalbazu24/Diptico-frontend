@@ -285,7 +285,7 @@ fun Texto(
         overflow = TextOverflow.Ellipsis,
         lineHeight = interlineado?.let { esc.s(it) } ?: TextUnit.Unspecified,
         letterSpacing = espaciado?.let { esc.s(it) } ?: TextUnit.Unspecified,
-        textAlign = alinear,
+        textAlign = alinear ?: if (LocalRedisenio.current) TextAlign.Center else null,
         style = if (sombra) TextStyle(shadow = Shadow(Color(0x88000000), Offset(0f, 2f), 12f)) else TextStyle.Default,
     )
 }

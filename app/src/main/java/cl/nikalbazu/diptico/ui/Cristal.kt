@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,7 +35,7 @@ import cl.nikalbazu.diptico.estado.Estado
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-internal enum class CapaCristal { CONTROL, PANEL, CONTENIDO }
+internal enum class CapaCristal { CONTROL, PANEL, CONTENIDO, CARPETA, WIDGET }
 internal data class EntornoCristal(
     val imagen: ImageBitmap? = null,
     val efectos: Boolean = true,
@@ -42,6 +43,7 @@ internal data class EntornoCristal(
     val contraste: Boolean = false,
     val colorAmbiente: Color = Color.Transparent,
     val detalle: Float = 0f,
+    val niveles: cl.nikalbazu.diptico.estado.NivelesGlass = cl.nikalbazu.diptico.estado.NivelesGlass(),
 )
 internal val LocalCristal = staticCompositionLocalOf { EntornoCristal() }
 
@@ -65,7 +67,8 @@ internal fun recordarCristal(e: Estado): EntornoCristal {
     val efectos = Estilo.efectosCompletos && Diptico.fluidezEfectiva(e) != "ahorro" && e.sesion == null
     // Textura pequeña y compartida: no se captura ni se vuelve a procesar toda la pantalla por control.
     val reducir = contraste || config.fontScale >= 1.4f
-    val fuente = if (efectos && !reducir) rememberImagen(e.seleccionado?.arte ?: e.seleccionado?.portada, 96, memoriaGrafica = false) else null
+    val ruta = if (e.inicio == "widgets" && e.fondoInicio != null) android.net.Uri.parse(e.fondoInicio) else e.seleccionado?.arte ?: e.seleccionado?.portada
+    val fuente = if (efectos && !reducir) rememberImagen(ruta, 96, memoriaGrafica = false) else null
     val imagen = recordarFondoCristal(fuente)
     val luz = remember(fuente) {
         if (fuente == null) Color.Transparent to 0f else {
@@ -79,20 +82,25 @@ internal fun recordarCristal(e: Estado): EntornoCristal {
             Color(r / 64, g / 64, b / 64) to ((cuadrados / 64 - (media / 64) * (media / 64)) * 8).coerceIn(0f, 1f)
         }
     }
-    return EntornoCristal(imagen, efectos, efectos && e.experiencia.movimiento && ValueAnimator.areAnimatorsEnabled(), reducir, luz.first, luz.second)
+    return EntornoCristal(imagen, efectos, efectos && e.experiencia.movimiento && ValueAnimator.areAnimatorsEnabled(), reducir, luz.first, luz.second, e.nivelesGlass)
 }
 
 /** Densidad por función. El texto extenso usa un material más sólido que la navegación flotante. */
-internal fun densidadCristal(capa: CapaCristal, efectos: Boolean, contraste: Boolean, detalle: Float = 0f): Float = when {
-    !efectos || contraste -> 1f
+internal fun densidadCristal(capa: CapaCristal, efectos: Boolean, contraste: Boolean, detalle: Float = 0f, nivel: Int = 100): Float = when {
+    !efectos || contraste || nivel <= 0 -> 1f
+    capa == CapaCristal.CARPETA || capa == CapaCristal.WIDGET ->
+        1f - (.32f - .04f * detalle.coerceIn(0f, 1f)) * nivel.coerceIn(0, 100) / 100f
     capa == CapaCristal.CONTENIDO -> .97f
-    capa == CapaCristal.PANEL -> .93f + .03f * detalle.coerceIn(0f, 1f)
-    else -> .79f + .1f * detalle.coerceIn(0f, 1f)
+    capa == CapaCristal.PANEL -> .72f + .06f * detalle.coerceIn(0f, 1f)
+    else -> .68f + .08f * detalle.coerceIn(0f, 1f)
 }
 
 /** El color del contenido permanece opaco y legible, incluso al reducir los efectos. */
 internal fun colorMaterialCristal(p: Paleta, capa: CapaCristal): Color =
     lerp(p.fondo2, p.superficie, if (capa == CapaCristal.CONTROL) .78f else .55f).copy(alpha = 1f)
+
+internal fun paletaLecturaCristal(p: Paleta, nivel: Int): Paleta =
+    p.copy(tenue = lerp(p.tenue, p.tinta, nivel.coerceIn(0, 100) / 100f))
 
 @Composable
 internal fun Modifier.fondoPantalla(normal: Color): Modifier {
@@ -118,9 +126,17 @@ internal fun Modifier.fondoPantalla(normal: Color): Modifier {
 internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCristal.CONTROL): Modifier {
     val p = LocalPaleta.current
     val entorno = LocalCristal.current
-    val material = if (entorno.efectos && !entorno.contraste && entorno.colorAmbiente.alpha > 0f)
+    val fondoVentana = if (capa == CapaCristal.CARPETA) LocalFondoVentanaCristal.current else null
+    val nivel = when (capa) {
+        CapaCristal.CARPETA -> entorno.niveles.carpetas
+        CapaCristal.WIDGET -> entorno.niveles.widgets
+        else -> 100
+    }.coerceIn(0, 100)
+    val efectos = entorno.efectos && nivel > 0
+    val intensidad = nivel / 100f
+    val material = if (efectos && !entorno.contraste && entorno.colorAmbiente.alpha > 0f)
         lerp(colorMaterialCristal(p, capa), entorno.colorAmbiente, .07f) else colorMaterialCristal(p, capa)
-    val opacidad = densidadCristal(capa, entorno.efectos, entorno.contraste, entorno.detalle)
+    val opacidad = densidadCristal(capa, efectos, entorno.contraste, entorno.detalle, nivel)
     val claro = p.fondo.luminance() > .5f
     var posicion by remember { mutableStateOf(Offset.Zero) }
     var mundo by remember { mutableStateOf(IntSize.Zero) }
@@ -139,9 +155,9 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
             } finally { presionado = false }
         }
     }
-    val elevacion = when (capa) { CapaCristal.PANEL -> 26; CapaCristal.CONTROL -> 12; CapaCristal.CONTENIDO -> 2 }
-    return shadow(if (entorno.efectos && !entorno.contraste) elevacion.dp else 0.dp,
-        forma, clip = false, ambientColor = Color.Black.copy(alpha = .28f), spotColor = Color.Black.copy(alpha = .45f))
+    val elevacion = when (capa) { CapaCristal.PANEL, CapaCristal.CARPETA -> 28; CapaCristal.CONTROL -> 10; CapaCristal.WIDGET -> 7; CapaCristal.CONTENIDO -> 2 }
+    return shadow(if (efectos && !entorno.contraste) (elevacion * intensidad).dp else 0.dp,
+        forma, clip = false, ambientColor = Color.Black.copy(alpha = .15f), spotColor = Color.Black.copy(alpha = .24f))
         .clip(forma).then(gesto).onGloballyPositioned {
             posicion = it.positionInRoot()
             mundo = it.parentLayoutCoordinates?.let { parent ->
@@ -151,35 +167,51 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
             } ?: it.size
         }.drawWithCache {
             val contorno = forma.createOutline(size, layoutDirection, this)
-            val borde = (if (capa == CapaCristal.PANEL) 1.6f else 1.1f).dp.toPx()
-            val margen = (if (capa == CapaCristal.PANEL) 3f else 2f).dp.toPx().coerceAtMost(size.minDimension / 4)
-            val interior = forma.createOutline(Size((size.width - margen * 2).coerceAtLeast(1f), (size.height - margen * 2).coerceAtLeast(1f)), layoutDirection, this)
-            val iluminacion = Brush.linearGradient(listOf(Color.White.copy(alpha = if (claro) .98f else .78f), Color.White.copy(alpha = .08f), p.acentoTexto.copy(alpha = .45f)), Offset.Zero, Offset(size.width, size.height))
-            val bisel = Brush.verticalGradient(listOf(Color.White.copy(alpha = if (claro) .45f else .2f), Color.Transparent, Color.Black.copy(alpha = .38f)))
-            val reflejo = Brush.verticalGradient(listOf(Color.White.copy(alpha = if (claro) .31f else .12f), Color.Transparent, Color.Black.copy(alpha = if (claro) .035f else .11f)))
+            val borde = .8f.dp.toPx()
+            val iluminacion = Brush.linearGradient(
+                0f to Color.White.copy(alpha = (if (claro) .9f else .62f) * intensidad),
+                .28f to Color.White.copy(alpha = .12f),
+                .6f to Color.White.copy(alpha = .03f),
+                1f to Color.White.copy(alpha = (if (claro) .5f else .24f) * intensidad),
+                start = Offset.Zero, end = Offset(size.width, size.height))
+            val reflejo = Brush.verticalGradient(listOf(Color.White.copy(alpha = (if (claro) .16f else .07f) * intensidad), Color.Transparent, Color.Black.copy(alpha = .025f)))
+            val anillo = if (fondoVentana != null) {
+                val dentro = Path().apply { addOutline(forma.createOutline(Size((size.width - 12.dp.toPx()).coerceAtLeast(1f), (size.height - 12.dp.toPx()).coerceAtLeast(1f)), layoutDirection, this@drawWithCache)) }
+                dentro.translate(Offset(6.dp.toPx(), 6.dp.toPx()))
+                Path.combine(PathOperation.Difference, Path().apply { addOutline(contorno) }, dentro)
+            } else null
             onDrawWithContent {
                 drawRect(material)
-                val imagen = entorno.imagen
-                if (entorno.efectos && !entorno.contraste && capa != CapaCristal.CONTENIDO && imagen != null && mundo.width > 0 && mundo.height > 0) {
+                val captura = fondoVentana?.imagen
+                val imagen = captura ?: entorno.imagen
+                if (efectos && !entorno.contraste && capa != CapaCristal.CONTENIDO && imagen != null && mundo.width > 0 && mundo.height > 0) {
                     // Ampliación local del arte ambiental: una aproximación óptica, no captura de los controles.
-                    val escala = max(mundo.width.toFloat() / imagen.width, mundo.height.toFloat() / imagen.height) * 1.07f
+                    val dimensiones = fondoVentana?.takeIf { captura != null }?.dimensiones ?: mundo
+                    val origen = fondoVentana?.takeIf { captura != null }?.origen ?: Offset.Zero
+                    val escala = max(dimensiones.width.toFloat() / imagen.width, dimensiones.height.toFloat() / imagen.height)
                     val an = imagen.width * escala
                     val al = imagen.height * escala
-                    drawImage(imagen, dstOffset = IntOffset(((mundo.width - an) / 2 - posicion.x).roundToInt(), ((mundo.height - al) / 2 - posicion.y).roundToInt()),
-                        dstSize = IntSize(an.roundToInt().coerceAtLeast(1), al.roundToInt().coerceAtLeast(1)), filterQuality = FilterQuality.Low)
+                    val destino = IntOffset(((dimensiones.width - an) / 2 + origen.x - posicion.x).roundToInt(), ((dimensiones.height - al) / 2 + origen.y - posicion.y).roundToInt())
+                    // La misma escena continúa bajo el panel; la máscara de borde concentra una
+                    // segunda muestra ligeramente ampliada para sugerir el efecto de lente.
+                    val tamano = IntSize(an.roundToInt().coerceAtLeast(1), al.roundToInt().coerceAtLeast(1))
+                    drawImage(imagen, dstOffset = destino, dstSize = tamano, filterQuality = FilterQuality.Medium)
+                    if (captura != null && anillo != null) {
+                        clipPath(anillo) {
+                            withTransform({ scale(1f + .035f * intensidad, 1f + .035f * intensidad, center) }) {
+                                drawImage(imagen, dstOffset = destino, dstSize = tamano, filterQuality = FilterQuality.Medium)
+                            }
+                        }
+                    }
                     drawRect(material.copy(alpha = opacidad))
                 }
-                if (entorno.efectos && !entorno.contraste && capa != CapaCristal.CONTENIDO) {
+                if (efectos && !entorno.contraste && capa != CapaCristal.CONTENIDO) {
                     drawRect(reflejo)
                     if (luz > 0f) drawRect(Brush.radialGradient(listOf(Color.White.copy(alpha = .17f * luz), Color.Transparent), Offset(punto.x * size.width, punto.y * size.height), size.width.coerceAtLeast(size.height)))
                 }
                 drawContent()
                 if (entorno.contraste) drawOutline(contorno, p.tinta, style = Stroke(2.dp.toPx()))
-                else if (entorno.efectos) {
-                    drawOutline(contorno, Color.Black.copy(alpha = if (claro) .24f else .8f), style = Stroke(borde * 4))
-                    if (capa != CapaCristal.CONTENIDO) withTransform({ translate(margen, margen) }) {
-                        drawOutline(interior, bisel, style = Stroke(borde * .75f))
-                    }
+                else if (efectos) {
                     drawOutline(contorno, iluminacion, style = Stroke(if (capa == CapaCristal.CONTENIDO) borde * .5f else borde))
                 }
             }

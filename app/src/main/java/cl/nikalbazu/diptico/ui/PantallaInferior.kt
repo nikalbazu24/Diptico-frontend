@@ -52,6 +52,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -167,6 +168,9 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
 internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    val cristal = LocalCristal.current
+    val captura = remember(e.carpetaEnVentana, e.consolaSel, e.tema, e.oscuro, cristal.imagen, e.nivelesGlass.carpetas) { FondoVentanaCristal() }
+    val capturar = e.carpetaEnVentana && e.nivelesGlass.carpetas > 0 && Estilo.glass && cristal.efectos && !cristal.contraste
     if (!e.enSistemas && !e.carpetaEnVentana) {
         Column(modifier) {
             CabeceraSistema(e)
@@ -176,14 +180,19 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
     }
     Box(modifier) {
         val abierta = e.carpetaEnVentana
-        CarpetasConsolas(
-            e,
-            Modifier.fillMaxSize().then(if (abierta) Modifier.desenfocarCuadricula() else Modifier),
-            interactiva = !abierta,
-        )
+        Box(Modifier.fillMaxSize().then(when {
+                capturar -> Modifier.fondoDeVentana(captura, e.nivelesGlass.carpetas)
+                abierta -> Modifier.desenfocarCuadricula()
+                else -> Modifier
+            })) {
+            if (abierta && LocalRedisenio.current) FondoColeccion(e, Modifier.fillMaxSize())
+            CarpetasConsolas(e, Modifier.fillMaxSize(), interactiva = !abierta)
+        }
         if (abierta) {
             Box(Modifier.fillMaxSize().background(p.fondo2.copy(alpha = .12f)).clickable { Diptico.volverASistemas() })
-            VentanaCarpeta(e, Modifier.align(Alignment.Center).fillMaxWidth(.90f).fillMaxHeight(.84f), escalaEstante)
+            CompositionLocalProvider(LocalFondoVentanaCristal provides captura.takeIf { capturar }) {
+                VentanaCarpeta(e, Modifier.align(Alignment.Center).fillMaxWidth(.90f).fillMaxHeight(.84f), escalaEstante)
+            }
         }
     }
 }

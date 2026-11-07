@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import cl.nikalbazu.diptico.data.Consola
@@ -33,6 +34,28 @@ internal fun DrawScope.dibujarHardware(consola: Consola, color: Color, fondo: Co
         linea(x, y - 1.4f, x, y + 1.4f)
     }
     when (consola.id) {
+        "android", "androidapps", "androidgames" -> {
+            linea(7f, 6f, 5.5f, 3.5f, color); linea(17f, 6f, 18.5f, 3.5f, color)
+            val cabeza = Path().apply {
+                moveTo(p(5f, 10f).x, p(5f, 10f).y)
+                cubicTo(p(5f, 1.8f).x, p(5f, 1.8f).y, p(19f, 1.8f).x, p(19f, 1.8f).y, p(19f, 10f).x, p(19f, 10f).y)
+                close()
+            }
+            drawPath(cabeza, color)
+            punto(8.7f, 7.3f, .7f); punto(15.3f, 7.3f, .7f)
+            caja(5f, 11.2f, 14f, 7.4f, 1.5f)
+            caja(1.9f, 11.2f, 2f, 7f, 1f); caja(20.1f, 11.2f, 2f, 7f, 1f)
+            caja(7.3f, 17f, 2.5f, 5.5f, 1.2f); caja(14.2f, 17f, 2.5f, 5.5f, 1.2f)
+        }
+        "rpgmaker", "easyrpg" -> {
+            val gema = Path().apply {
+                moveTo(p(12f, 2f).x, p(12f, 2f).y); lineTo(p(21f, 9f).x, p(21f, 9f).y)
+                lineTo(p(12f, 22f).x, p(12f, 22f).y); lineTo(p(3f, 9f).x, p(3f, 9f).y); close()
+            }
+            drawPath(gema, color)
+            linea(5f, 9f, 19f, 9f); linea(12f, 4f, 8f, 9f); linea(8f, 9f, 12f, 19f)
+            linea(12f, 4f, 16f, 9f); linea(16f, 9f, 12f, 19f)
+        }
         "switch", "switch2", "psp", "psvita", "gba", "gamegear", "atarilynx", "ngp", "ngpc", "wonderswan", "wonderswancolor" -> {
             val modular = consola.id.startsWith("switch")
             caja(1f, 6f, 22f, 12f, if (modular) 3f else 5f)
@@ -42,7 +65,7 @@ internal fun DrawScope.dibujarHardware(consola: Consola, color: Color, fondo: Co
             punto(19.6f, 14.2f, 0.72f)
             if (modular) { linea(5f, 7f, 5f, 17f); linea(19f, 7f, 19f, 17f) }
         }
-        "gb", "gbc" -> {
+        "gb", "sgb", "gbc" -> {
             caja(5f, 2f, 14f, 20f, if (consola.id == "gb") 2f else 4f)
             caja(7f, 4.7f, 10f, 7.5f, 1.4f, hueco)
             cruceta(9.2f, 15.4f)

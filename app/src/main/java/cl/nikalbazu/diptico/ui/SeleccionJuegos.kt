@@ -20,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.testTag
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.Diptico
@@ -48,25 +49,24 @@ internal fun CabeceraJuegosLimpia(e: Estado) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val c = Consolas.porId(e.consolaSel)
-    Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(13), vertical = esc.d(10)),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-        Box(Modifier.size(esc.d(38)).clip(RoundedCornerShape(esc.d(13)))
+    Box(Modifier.fillMaxWidth().padding(horizontal = esc.d(13), vertical = esc.d(10))) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = esc.d(46)).testTag("titulo-carpeta"),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(1))) {
+            Texto(c?.nombre ?: "Todos tus juegos", 19f, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8), Alignment.CenterHorizontally)) {
+                Texto(juegosTexto(e.visibles.size), 10.5f, color = p.tenue, familia = Nunito, lineas = 1)
+                if (e.vistaConsolas == "carpetas") Box(Modifier.clip(RoundedCornerShape(esc.d(11)))
+                    .clickable { Diptico.alternarModoCarpeta() }.padding(horizontal = esc.d(7), vertical = esc.d(5))) {
+                    Texto(if (e.modoCarpeta != "completa") "Ampliar" else "En ventana", 10.5f, familia = Nunito, color = p.acentoTexto, lineas = 1)
+                }
+            }
+        }
+        Box(Modifier.align(Alignment.CenterStart).size(esc.d(38)).clip(RoundedCornerShape(esc.d(13)))
             .background(p.superficie.copy(alpha = if (Estilo.glass) .32f else .68f)).semantics { contentDescription = "Volver a consolas" }
             .clickable { Diptico.volverASistemas() }, contentAlignment = Alignment.Center) {
             Texto("‹", 28f, familia = Nunito, traducir = false)
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(1))) {
-            Texto(c?.nombre ?: "Todos tus juegos", 19f, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
-            Texto(juegosTexto(e.visibles.size), 10.5f, color = p.tenue, familia = Nunito, lineas = 1)
-        }
-        if (e.vistaConsolas == "carpetas") {
-            Box(Modifier.clip(RoundedCornerShape(esc.d(11))).clickable { Diptico.alternarModoCarpeta() }
-                .padding(horizontal = esc.d(9), vertical = esc.d(10))) {
-                Texto(if (e.modoCarpeta != "completa") "Ampliar" else "En ventana", 11f, familia = Nunito,
-                    color = p.acentoTexto, lineas = 1)
-            }
-        }
-        Box(Modifier.size(esc.d(38)).clip(RoundedCornerShape(esc.d(13)))
+        Box(Modifier.align(Alignment.CenterEnd).size(esc.d(38)).clip(RoundedCornerShape(esc.d(13)))
             .background(p.superficie.copy(alpha = if (Estilo.glass) .32f else .68f)).semantics { contentDescription = "Opciones de juegos" }
             .clickable { Diptico.abrirGaleria("biblioteca") }, contentAlignment = Alignment.Center) {
             Texto("•••", 14f, familia = Nunito, espaciado = 1f, traducir = false)
@@ -97,9 +97,8 @@ internal fun PieSeleccion(e: Estado) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(15), vertical = esc.d(8)),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-        Texto(j.titulo, 12.5f, familia = Nunito, lineas = 1, modifier = Modifier.weight(1f))
-        Row(Modifier.height(esc.d(42)).clip(RoundedCornerShape(esc.d(14))).fondoBoton(Uva)
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Row(Modifier.height(esc.d(42)).testTag("accion-jugar").clip(RoundedCornerShape(esc.d(14))).fondoBoton(Uva)
             .semantics { contentDescription = "Jugar ${j.titulo}" }.clickable { Diptico.jugar() }
             .padding(horizontal = esc.d(18)), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(esc.d(7))) {
@@ -133,6 +132,6 @@ internal fun PortadaSeleccion(j: Juego, elegida: Boolean, ancho: Float, alto: Fl
         if (titulo) Texto(j.titulo, 11f, familia = Nunito,
             color = if (elegida) p.tinta else p.tenue, peso = if (elegida) FontWeight.ExtraBold else FontWeight.SemiBold,
             lineas = 2, alinear = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = esc.d(7), start = esc.d(2), end = esc.d(2)))
+            modifier = Modifier.fillMaxWidth().height(esc.d(38f * esc.texto)).wrapContentHeight(Alignment.CenterVertically).padding(top = esc.d(7), start = esc.d(2), end = esc.d(2)))
     }
 }
