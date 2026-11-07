@@ -93,11 +93,12 @@ object Imagenes {
 @Composable
 fun rememberImagen(uri: Uri?, maxLado: Int, memoriaGrafica: Boolean = true): ImageBitmap? {
     val ctx = LocalContext.current
-    val img by produceState(initialValue = Imagenes.enCache(uri, maxLado, memoriaGrafica), uri, maxLado, memoriaGrafica) {
-        if (value != null && value === Imagenes.enCache(uri, maxLado, memoriaGrafica)) return@produceState
+    val grafica = memoriaGrafica && !Estilo.glass && android.os.Build.VERSION.SDK_INT >= 31
+    val img by produceState(initialValue = Imagenes.enCache(uri, maxLado, grafica), uri, maxLado, grafica) {
+        if (value != null && value === Imagenes.enCache(uri, maxLado, grafica)) return@produceState
         value = if (uri == null) null else withContext(Dispatchers.IO) {
             try {
-                Imagenes.cargar(ctx, uri, maxLado, memoriaGrafica)
+                Imagenes.cargar(ctx, uri, maxLado, grafica)
             } catch (e: Exception) {
                 null
             }

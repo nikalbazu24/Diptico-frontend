@@ -9,6 +9,8 @@ data class NavegacionEstado(
     val appsMenuIndice: Int = 0,
     val appsMoviendo: String? = null,
     val estanteAvanzado: Boolean = false,
+    val grupoEditorWidget: Int = 0,
+    val buscarWidgets: String = "",
     val clipRetoma: Boolean = false,
     val esperaRetoma: Int = 30,
     val retomaVideo: String = "",

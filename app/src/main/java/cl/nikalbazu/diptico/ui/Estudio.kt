@@ -24,6 +24,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.platform.testTag
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,11 +66,13 @@ fun PanelEstudio(e: Estado) {
                     IconoDiptico(Icono.EDITAR, p.acentoTexto, 17f)
                 }
                 Spacer(Modifier.width(esc.d(10)))
+                if (e.estudioPestana == 0) Box(Modifier.size(esc.d(28)).clickable { Diptico.siguienteWidget(-1) }, contentAlignment = Alignment.Center) { Texto("‹", 22f) }
                 Column(Modifier.weight(1f)) {
-                    Texto("Editar widgets", 18f, lineas = 1)
+                    Texto(if (e.estudioPestana == 0) e.widgets.getOrNull(e.widgetSel)?.let { Widgets.nombre(it.tipo) } ?: "Editar widgets" else "Editar widgets", 18f, lineas = 1)
                     val cantidad = e.widgets.count { it.visible && it.pagina == e.paginaInicio }
                     Detalle("Página ${e.paginaInicio + 1}/${e.paginas} · $cantidad widgets", 12f, lineas = 1)
                 }
+                if (e.estudioPestana == 0) Box(Modifier.size(esc.d(28)).clickable { Diptico.siguienteWidget(1) }, contentAlignment = Alignment.Center) { Texto("›", 22f) }
                 Box(
                     Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
                         .padding(horizontal = esc.d(14), vertical = esc.d(7)),
@@ -93,32 +98,48 @@ fun PanelEstudio(e: Estado) {
                 1 -> e.celdaCatalogo?.let { (x, y) -> "Agregar en columna ${x + 1} · fila ${y + 1}" }
                     ?: "Elige un widget para añadirlo a esta página."
                 2 -> "Ajusta el espacio, el fondo y la distribución."
-                else -> "Elige un widget para cambiar su forma y estilo."
+                else -> when (e.navegacion.grupoEditorWidget) { 1 -> "Cambia el aspecto y mira el resultado en vivo."; 2 -> "Más opciones del widget elegido."; else -> "Arrastra en tu inicio o elige un tamaño." }
             }
             Detalle(guia, 12f, lineas = 1, modifier = Modifier.padding(horizontal = esc.d(4)))
             Spacer(Modifier.height(esc.d(6)))
-            // En la zona "grilla" la cruceta elige widgets directo en el inicio: aquí se avisa, sin tapar nada.
-            val enGrilla = e.estudioZona == "grilla" && !e.estudioMover
-            androidx.compose.animation.AnimatedVisibility(enGrilla) {
-                Row(
-                    Modifier.fillMaxWidth().padding(bottom = esc.d(8)).clip(RoundedCornerShape(esc.d(14))).background(Uva.copy(alpha = 0.16f))
-                        .border(esc.d(1), Uva.copy(alpha = 0.4f), RoundedCornerShape(esc.d(14)))
-                        .clickable { Diptico.zonaEstudio("panel") }.padding(horizontal = esc.d(12), vertical = esc.d(8)),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconoDiptico(Icono.MANDO, p.tinta, 18f, acento = Coral)
-                    Spacer(Modifier.width(esc.d(10)))
-                    Column(Modifier.weight(1f)) {
-                        Texto("Elige un widget en tu inicio", 13.5f, lineas = 1)
-                        Detalle("A lo mueve · mantén A para agregar · R1 para sus opciones", 11.5f, lineas = 1)
+            if (e.estudioPestana == 1) {
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14))).background(p.superficie).padding(esc.d(10))) {
+                    if (e.navegacion.buscarWidgets.isEmpty()) Detalle("Buscar widget…", 13f)
+                    BasicTextField(e.navegacion.buscarWidgets, { Diptico.buscarEnCatalogoWidgets(it) }, singleLine = true,
+                        textStyle = TextStyle(color = p.tinta, fontSize = esc.s(14)),
+                        modifier = Modifier.fillMaxWidth().testTag("buscar-widgets"))
+                }
+                Spacer(Modifier.height(esc.d(6)))
+            }
+            if (e.unaPantalla && esc.angosta && e.estudioPestana == 0) {
+                e.widgets.getOrNull(e.widgetSel)?.let { w ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = esc.d(5)), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                        Box(Modifier.width(esc.d(150)).height(esc.d(82)).testTag("previa-widget")) {
+                            androidx.compose.runtime.CompositionLocalProvider(LocalWidget provides w) {
+                                WidgetAdaptable(w) { an, al -> ContenidoWidget(e, w, an, al) }
+                            }
+                            Box(Modifier.fillMaxSize().sinCerrar())
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Etiqueta("Vista previa", p.acentoTexto, 10f)
+                            Detalle("${w.an} × ${w.al} · Página ${w.pagina + 1}", 12f)
+                            Detalle("Los cambios se guardan al instante", 11f, lineas = 2)
+                        }
                     }
                 }
+            }
+            // En la zona "grilla" la cruceta elige widgets directo en el inicio: aquí se avisa, sin tapar nada.
+            val enGrilla = e.estudioZona == "grilla" && !e.estudioMover
+            if (enGrilla) Box(Modifier.fillMaxWidth().clickable { Diptico.zonaEstudio("panel") }.padding(esc.d(6))) {
+                Detalle("Elige en tu inicio · R1 para editar aquí", 11f, color = p.acentoTexto)
             }
             // Controles agrupados: cada grupo es una tarjeta, con aire entre grupos.
             val filas = remember(controles) {
                 buildList {
                     var grupo = ""
                     controles.forEachIndexed { i, c ->
+                        if (e.estudioPestana == 0 && i == 0 && c.titulo == "Widget elegido") return@forEachIndexed
                         if (c.grupo.isNotEmpty() && c.grupo != grupo) { add(-1 to c.grupo); grupo = c.grupo }
                         add(i to "")
                     }
@@ -147,6 +168,7 @@ fun PanelEstudio(e: Estado) {
                 state = lista,
                 modifier = Modifier.weight(1f).graphicsLayer { alpha = if (enGrilla) 0.6f else 1f },
             ) {
+                if (controles.isEmpty()) item { Detalle("No hay resultados. Prueba otro nombre.", 14f, modifier = Modifier.padding(esc.d(16))) }
                 items(filas.size) { k ->
                     val (i, grupo) = filas[k]
                     if (i < 0) {
@@ -156,7 +178,7 @@ fun PanelEstudio(e: Estado) {
                         val primero = k == 0 || filas[k - 1].first < 0
                         val ultimo = k == filas.size - 1 || filas[k + 1].first < 0
                         ControlEstudio(
-                            controles[i], activo = i == e.indice && !e.estudioMover && !enGrilla, moviendo = e.estudioMover && e.estudioPestana == 0 && i == 1,
+                            controles[i], activo = i == e.indice && !e.estudioMover && !enGrilla, moviendo = e.estudioMover && e.estudioPestana == 0 && controles[i].titulo.startsWith("Moviendo"),
                             primero = primero, ultimo = ultimo,
                         ) {
                             Diptico.actualizar { it.copy(indice = i, estudioZona = "panel") }

@@ -46,8 +46,9 @@ fun VentanaDialogo(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val acento = if (d.peligro) Color(0xFFE5484D) else Uva
-    val entra = remember(d.id) { Animatable(0.9f) }
-    LaunchedEffect(d.id) { entra.animateTo(1f, spring(dampingRatio = 0.65f, stiffness = 420f)) }
+    val animar = LocalMovimiento.current
+    val entra = remember(d.id) { Animatable(if (animar) .955f else 1f) }
+    LaunchedEffect(d.id, animar) { entra.animateTo(1f, tween(if (animar) 240 else 0)) }
     // Avance de "mantener A": se llena mientras se mantiene, y vuelve a cero al soltar.
     val avance = remember(d.id) { Animatable(0f) }
     LaunchedEffect(e.dialogoMantener) {
@@ -60,10 +61,9 @@ fun VentanaDialogo(e: Estado) {
     ) {
         Column(
             Modifier
-                .graphicsLayer { scaleX = entra.value; scaleY = entra.value; alpha = ((entra.value - 0.9f) / 0.1f).coerceIn(0f, 1f) }
+                .graphicsLayer { scaleX = entra.value; scaleY = entra.value; alpha = ((entra.value - .955f) / .045f).coerceIn(0f, 1f) }
                 .widthIn(max = esc.d(520)).fillMaxWidth(0.9f)
-                .clip(RoundedCornerShape(esc.d(28))).background(p.fondo2)
-                .border(esc.d(1.5f), acento.copy(alpha = 0.45f), RoundedCornerShape(esc.d(28)))
+                .superficieApp(p.fondo2, RoundedCornerShape(esc.d(28)), CapaCristal.PANEL)
                 .padding(esc.d(22)),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

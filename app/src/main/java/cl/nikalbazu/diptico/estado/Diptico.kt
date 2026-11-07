@@ -105,6 +105,7 @@ data class Opcion(
     val menos: (() -> Unit)? = null,
     /** Para los accesos que se encienden y apagan (Wi-Fi, Bluetooth, turbo…): si está encendido ahora. null = no aplica. */
     val activa: Boolean? = null,
+    val rango: RangoOpcion? = null,
     val accion: () -> Unit,
 )
 
@@ -611,6 +612,7 @@ data class Estado(
     /** Díptico es la app de inicio de Android (el botón Inicio trae aquí). */
     val esInicio: Boolean = true,
 ) {
+    val nivelesGlass get() = experiencia.nivelesGlass
     val atajoApps get() = navegacion.atajoApps
     val atajoBisa get() = navegacion.atajoBisa
     val ordenApps get() = navegacion.ordenApps
@@ -2157,13 +2159,20 @@ object Diptico {
     fun temaEnTienda(e: Estado): TemaComunidad? = temasEnTienda(e).getOrNull(e.indice)
 
     fun abrirGaleria(tipo: String, pestana: Int = 0) {
-        if (estado.value.panel != Panel.GALERIA) galeriaDesde = regresoActual()
+        if (estado.value.panel != Panel.GALERIA) {
+            val e = estado.value
+            galeriaDesde = regresoActual() ?: e.takeIf { it.panel == Panel.NINGUNO }?.let {
+                Regreso(it.panel, it.seccion, it.enOpciones, it.indice, it.pestanaFicha)
+            }
+        }
         actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = pestana, indice = 0, decoracionAbierta = null) }
         val i = itemsGaleria().indexOfFirst { it.enUso }
         if (i > 0) actualizar { it.copy(indice = i) }
     }
 
     fun pestanasGaleria(tipo: String = estado.value.galeria): List<String> = if (tipo == "colecciones") listOf("Colecciones") else when (tipo) {
+        "orden_carpetas" -> listOf("Orden de carpetas")
+        "biblioteca" -> listOf("Opciones de biblioteca")
         "variantes_juego" -> listOf("Archivos del juego")
         "capturas_juego", "captura_acciones" -> listOf("Capturas guardadas")
         "copias_srm" -> listOf("Copias de RetroArch")
@@ -2200,6 +2209,16 @@ object Diptico {
 
     fun itemsGaleria(e: Estado = estado.value): List<ItemGaleria> {
         val actual = cl.nikalbazu.diptico.ui.Estilo.tema
+        if (e.galeria == "biblioteca") return listOf(
+            ItemGaleria("buscar", "Buscar un juego", "Por nombre", false) { abrirBuscar() },
+            ItemGaleria("filtros", "Filtrar", nombreFiltro(e.filtro), false) { abrirGaleria("filtros") },
+            ItemGaleria("orden", "Ordenar juegos", nombreOrden(e.orden), false) { abrirGaleria("orden") },
+            ItemGaleria("vista", "Vista de juegos", nombreVista(e.vista), false) { abrirGaleria("vistas_juegos") },
+        )
+        if (e.galeria == "orden_carpetas") return listOf(
+            ItemGaleria("alfabetico", "Nombre · A → Z", "Orden alfabético", false) { ordenarCarpetas(true); cerrarPanel() },
+            ItemGaleria("sistemas", "Familias de consolas", "Orden del catálogo", false) { ordenarCarpetas(false); cerrarPanel() },
+        )
         if (e.galeria == "copias_srm") return opcionesCopiasPartida
         if (e.galeria == "captura_acciones") {
             val (clave, ruta) = capturaPara ?: return emptyList()
@@ -3553,6 +3572,7 @@ object Diptico {
                 lista += Opcion(nombre, if (e.idioma == cod) "En uso ✓" else "", Icono.IDIOMA, Idioma.ayuda(cod)) { cambiarIdioma(cod) }
             }
             Seccion.APARIENCIA -> {
+                lista += opcionesGlass(e)
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
                     "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
@@ -4183,6 +4203,7 @@ object Diptico {
         val baseVisual = conAdorno(e, fiesta?.tema ?: elegido)
         val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso, decor = "nada") else baseVisual
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
+        cl.nikalbazu.diptico.ui.Estilo.materialInterfaz = e.experiencia.materialInterfaz
         cl.nikalbazu.diptico.ui.Estilo.efecto = activo.acabado.ifBlank { if (e.experiencia.vidrio) "vidrio" else e.efecto }
         aplicarFluidez()
         Sonidos.cambiarJuego(activo.sonidos, activo.tonoSonidos)
@@ -4260,6 +4281,7 @@ object Diptico {
 
     private fun opcionesTemas(e: Estado): List<Opcion> {
         val lista = mutableListOf<Opcion>()
+        lista += opcionesGlass(e)
         val prox = Temas.proxima()
         lista += Opcion(
             "Fechas especiales", if (e.temaFestivo) "Sí" else "No", Icono.MUNDO,
@@ -7135,7 +7157,7 @@ object Diptico {
         if (tam.isFinite()) tam.coerceIn(TAMANOS_CARPETAS.first(), TAMANOS_CARPETAS.last()) else 1f
 
     fun guardarTamCarpetas(tam: Float) {
-        val nuevo = limitarTamCarpetas(tam)
+        val nuevo = Densidades.carpetas.masCercana(tam).escala
         if (nuevo == estado.value.tamCarpetas) return
         almacen.guardarTexto("tamCarpetas", nuevo.toString())
         actualizar { it.copy(tamCarpetas = nuevo) }
@@ -7167,37 +7189,19 @@ object Diptico {
         avisar("Vista: ${nombreVista(v)}")
     }
 
-    private val TAMANOS_JUEGO = listOf(0.8f, 1f, 1.2f, 1.4f)
-    fun nombreTamJuegos(t: Float) = when { t < 0.9f -> "Chico"; t < 1.1f -> "Mediano"; t < 1.3f -> "Grande"; else -> "Enorme" }
+    fun nombreTamJuegos(t: Float) = Densidades.juegos.masCercana(t).nombre
 
-    fun cambiarTamJuegos(delta: Int = 1) {
-        val i = TAMANOS_JUEGO.indexOfFirst { kotlin.math.abs(it - estado.value.tamJuegos) < 0.01f }
-        val t = TAMANOS_JUEGO[(i + delta).coerceIn(0, TAMANOS_JUEGO.size - 1)]
+    fun elegirTamJuegos(tam: Float) {
+        val t = Densidades.juegos.masCercana(tam).escala
+        if (t == estado.value.tamJuegos) return
         almacen.guardarTexto("tamJuegos", t.toString())
         actualizar { it.copy(tamJuegos = t) }
     }
 
-    /** Escalera del pellizco: de lo más chico (lista) a lo más grande (estante enorme). */
-    private val ESCALERA = listOf(
-        "lista" to 1f, "cuadricula" to 0.8f, "cuadricula" to 1f, "cuadricula" to 1.2f, "cuadricula" to 1.4f,
-        "estante" to 0.8f, "estante" to 1f, "estante" to 1.2f, "estante" to 1.4f,
-    )
+    fun cambiarTamJuegos(delta: Int = 1) = elegirTamJuegos(Densidades.juegos.siguiente(estado.value.tamJuegos, delta).escala)
 
-    /** Pellizco con dos dedos: abrir agranda los juegos, cerrar los achica (y cambia de vista en los extremos). */
-    fun pellizcar(agrandar: Boolean) {
-        val e = estado.value
-        val actual = ESCALERA.indices.minByOrNull { i ->
-            val (v, t) = ESCALERA[i]
-            (if (v == e.vista) 0f else 10f) + kotlin.math.abs(t - e.tamJuegos)
-        } ?: 0
-        val n = (actual + if (agrandar) 1 else -1).coerceIn(0, ESCALERA.size - 1)
-        if (n == actual) return
-        val (v, t) = ESCALERA[n]
-        almacen.guardarTexto("vista", v)
-        almacen.guardarTexto("tamJuegos", t.toString())
-        actualizar { it.copy(vista = v, tamJuegos = t) }
-        avisar("${nombreVista(v)} · ${nombreTamJuegos(t)}")
-    }
+    /** Conserva la vista y la selección. El gesto y el mando usan los mismos tamaños fijos. */
+    fun pellizcar(agrandar: Boolean) = cambiarTamJuegos(if (agrandar) 1 else -1)
 
     val FILTROS = listOf("todos", "favoritos", "recientes", "mas", "sinjugar", "ocultos")
     fun nombreFiltro(f: String) = when (f) {
@@ -7259,6 +7263,14 @@ object Diptico {
     }
 
     /** Cambia el lugar de una consola en la lista (para "Tus consolas" y las vistas de consolas). */
+    fun ordenarCarpetas(alfabetico: Boolean) {
+        val lista = estado.value.consolasConJuegos
+        val ids = (if (alfabetico) lista.sortedBy { it.nombre.lowercase(java.util.Locale.ROOT) }
+            else Consolas.todas.filter { c -> lista.any { it.id == c.id } }).map { it.id }
+        almacen.guardarTexto("ordenConsolas", ids.joinToString(","))
+        actualizar { it.copy(ordenConsolas = ids) }
+    }
+
     fun moverConsola(id: String, d: Int) {
         val e = estado.value
         val l = e.consolasConJuegos.map { it.id }.toMutableList()
@@ -7415,7 +7427,7 @@ object Diptico {
             Opcion("Vista de juegos", nombreVista(e.vista), Icono.VISTA, "Estante con cajas, carrusel en 3D, abanico (como cartas abiertas en la mano: la elegida sube al centro), lomos (como una repisa de libros: el elegido se abre), cuadrícula de carátulas o lista. Se cambia rápido con R3 (apretar el stick derecho).") { abrirGaleria("vistas_juegos") },
             Opcion("Forma de las cajas", nombreForma(e.formas[consolaParaCajas()]?.forma ?: "original"), Icono.FORMA,
                 "Elige cómo se ven las cajas (cuadrada, póster, horizontal, disco, cartucho o tarjeta) viendo tus portadas en cada forma. Para una consola o para todas.") { abrirCajas() },
-            Opcion("Tamaño de los juegos", nombreTamJuegos(e.tamJuegos), Icono.FORMA, "Más chico para ver más juegos, o más grande para verlos mejor.") { cambiarTamJuegos(if (e.tamJuegos >= 1.39f) -3 else 1) },
+            Opcion("Tamaño de los juegos", nombreTamJuegos(e.tamJuegos), Icono.FORMA, "Cuatro espacios predeterminados. Ajusta con dos dedos o con izquierda y derecha; conserva la vista y el juego elegido.", menos = { cambiarTamJuegos(-1) }) { cambiarTamJuegos(1) },
             Opcion("Mostrar", nombreFiltro(e.filtro), Icono.CORAZON, "Todos, solo favoritos, jugados hace poco, los más jugados o los que no has jugado.") { cambiarFiltro() },
             Opcion("Ordenar", nombreOrden(e.orden), Icono.MENU, "A → Z, últimos jugados o más tiempo jugado.") { cambiarOrden() },
             Opcion("Buscar un juego", icono = Icono.BUSCAR, ayuda = "También con L3 (apretar el stick izquierdo).") { abrirBuscar() },
@@ -7939,7 +7951,8 @@ object Diptico {
 
     fun abrirAjustesWidget(i: Int = estado.value.widgetSel) {
         if (!estado.value.editandoWidgets) editarWidgets()
-        actualizar { it.copy(widgetSel = i, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 0, estudioZona = "panel", celdaCatalogo = null) }
+        actualizar { it.copy(widgetSel = i, panel = Panel.ESTUDIO, estudioPestana = 0, indice = 0, estudioZona = "panel", celdaCatalogo = null,
+            navegacion = it.navegacion.copy(grupoEditorWidget = 0)) }
     }
 
     /** En el editor: pasar de elegir widgets en el inicio a las opciones del panel (y de vuelta). */
@@ -8116,9 +8129,29 @@ object Diptico {
 
     /** Los controles de la pestaña abierta del estudio. */
     fun controlesEstudio(e: Estado = estado.value): List<Control> = when (e.estudioPestana) {
-        1 -> controlesAgregar(e)
+        1 -> controlesAgregar(e).filter { c -> e.navegacion.buscarWidgets.isBlank() ||
+            (c.titulo + " " + c.ayuda).contains(e.navegacion.buscarWidgets, ignoreCase = true) }
         2 -> controlesPagina(e)
-        else -> controlesWidget(e)
+        else -> controlesWidget(e).let { controles ->
+            if (controles.size <= 1) controles else organizarControlesWidget(e, controles)
+        }
+    }
+
+    fun elegirGrupoEditorWidget(grupo: Int) = actualizar {
+        it.copy(navegacion = it.navegacion.copy(grupoEditorWidget = grupo.coerceIn(0, 2)), indice = 1)
+    }
+
+    fun buscarEnCatalogoWidgets(texto: String) = actualizar {
+        it.copy(navegacion = it.navegacion.copy(buscarWidgets = texto.take(60)), indice = 0)
+    }
+
+    private fun organizarControlesWidget(e: Estado, controles: List<Control>): List<Control> {
+        val grupo = e.navegacion.grupoEditorWidget
+        val grupos = listOf("Posición y tamaño", "Aspecto", "Más")
+        val selector = Control("Personalizar", "chips", grupo = "",
+            elecciones = listOf("Tamaño", "Diseño", "Más ajustes"), elegida = grupo,
+            elegir = { elegirGrupoEditorWidget(it) }) { elegirGrupoEditorWidget((grupo + 1).mod(3)) }
+        return listOf(controles.first(), selector) + controles.drop(1).filter { it.grupo == grupos[grupo] }
     }
 
     private fun controlesWidget(e: Estado): List<Control> {

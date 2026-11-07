@@ -250,6 +250,7 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val fondo by animateColorAsState(if (activa) p.superficie else p.superficie.copy(alpha = 0.45f), label = "fila")
+    if (o.rango != null) { ControlGlass(o, color); return }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val interruptor = esInterruptor(o)
         val ancho = maxWidth

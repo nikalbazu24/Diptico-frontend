@@ -1,4 +1,8 @@
-- **Biblioteca**. Si cambias las carpetas o las imágenes de ES-DE mientras Díptico está buscando juegos, vuelve a leer la configuración antes de mostrar el resultado. Las carpetas que pierden acceso conservan sus juegos en caché y las que quitas dejan de reaparecer al reiniciar.
-- **Estabilidad**. La biblioteca sigue cargando cuando una entrada de la caché está incompleta o cuando las imágenes de ES-DE pierden su permiso. El indicador de búsqueda se limpia si falla la tarea.
-- **Rendimiento y mantenimiento**. Díptico prepara los marcadores de las traducciones al cargar el idioma y elimina cálculos sin uso del editor de widgets.
-- **Guía**. El README de GitHub reúne las funciones, la instalación y los enlaces de la comunidad en español e inglés.
+- **Base 153.** Conserva la interfaz y las funciones de la beta 153: dos pantallas, widgets, Bisa, calendario y tienda.
+- **Liquid Glass.** Material opcional para todos los temas. Fondo real desenfocado en carpetas y widgets, borde fino, luz y profundidad. Intensidad independiente de 0 a 100 % para carpetas y widgets; superficies sólidas con Ahorro o alto contraste.
+- **Carpetas.** Iconos propios de cada sistema, etiquetas separadas, filas centradas y orden por nombre o familias. Conserva las portadas personales.
+- **Dos dedos.** Previa de tamaño mientras ajustas, con paradas fijas al soltar. Los juegos conservan la vista y la selección. Un dedo sigue desplazando; cancelar descarta la previa.
+- **Movimiento.** Apertura y cierre de carpetas, ventanas y transiciones suaves. Respeta el ajuste de movimiento reducido.
+- **Mantenimiento.** Gestos, densidades, material y ventana de carpeta en módulos separados. Perfiles visuales anteriores compatibles.
+- **Editor de widgets.** Tamaño, Diseño y Más ajustes separan los controles sin quitar opciones. Catálogo con búsqueda y vista previa en móviles. El contenido adapta escala, distribución y texto al espacio real. Los textos largos conservan una lectura completa al tocarlos.
+- **Hora y batería.** Una barra persistente por pantalla permanece sobre carpetas y paneles; las cabeceras internas dejan de repetirla. Las carpetas reducen los controles para dar más espacio a los juegos.

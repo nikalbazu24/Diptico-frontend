@@ -8,3 +8,6 @@ local.properties
 captures/
 .cxx/
 __pycache__/
+
+.kotlin/
+app/capturas/

@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DIPTICO_REPORTES_URL: ${{ vars.DIPTICO_REPORTES_URL }}
-      FIRMAR: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.preparar_firma) }}
+      FIRMAR: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/153-liquid-glass') && (github.event_name == 'push' || inputs.preparar_firma) }}
     outputs:
       numero: ${{ steps.paquete.outputs.numero }}
     steps:
@@ -40,7 +40,7 @@ jobs:
           gradle-version: "8.9"
 
       - name: Probar perfiles, navegación y estabilidad
-        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --no-daemon
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --no-daemon
 
       - name: Compilar y verificar firma de distribución
         if: env.FIRMAR == 'true'

@@ -125,9 +125,7 @@ internal fun PreviaConsolaEditada(e: Estado) {
     if (id == "todo" || opcion == "Imagen del ícono de carpeta" || opcion == "Restaurar portada de carpeta") {
         val esc = LocalEscala.current
         Box(Modifier.fillMaxSize().padding(esc.d(20)), contentAlignment = Alignment.Center) {
-            PortadaCarpeta(e, id, Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(20)))) {
-                IconoConsola(Consolas.porId(id), 64f, LocalPaleta.current.fondo2)
-            }
+            PortadaCarpeta(e, id, Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(20))))
         }
     } else {
         VistaSistema(e.copy(consolaSel = id, panel = cl.nikalbazu.diptico.estado.Panel.NINGUNO))
