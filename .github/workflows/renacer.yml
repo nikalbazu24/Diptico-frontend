@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: diptico-redisenio-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   renacer:
     runs-on: ubuntu-latest

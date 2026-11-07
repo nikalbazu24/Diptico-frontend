@@ -8,16 +8,18 @@ La revisión parte de la beta anterior a Renacer. Recupera su composición, sus 
 |---|---|
 | Escena del juego | Arte a todo el lienzo, título o logo, portada completa, tiempo de juego y próximo paso |
 | Carpetas | Íconos de consola con su color, carátula personalizada o descargada, foco visible y nombre bajo el ícono |
-| Biblioteca | Cabecera breve, búsqueda y ajustes agrupados, fondo tenue que acompaña al juego |
+| Biblioteca | Cabecera breve, colores por consola y opciones agrupadas, fondo tenue que acompaña al juego |
 | Controles | Dock flotante con Jugar, ficha, búsqueda, apps, widgets, Bisa y ajustes |
 | Una pantalla | Escena y biblioteca conviven en dos zonas, adaptadas a horizontal y vertical |
 | Dos pantallas | La selección, las carpetas y las funciones continúan en el modelo completo de Díptico |
 
 Se conservan los gestos de tamaño y dirección de las carpetas, la ventana ampliable con desenfoque de fondo, las vistas de juegos, los proveedores de imágenes, los widgets y su editor, Bisa, la tienda de temas integrada, los recursos de los temas y las decoraciones con sus opciones. El calendario mundial y chileno mantiene el comportamiento de la beta.
 
+La selección de juegos presenta una cabecera, las portadas y una acción Jugar junto al nombre elegido. Las vistas, filtros, orden y personalización están en Opciones de juegos. Si hay un filtro o una búsqueda activa, Mostrar todos permite salir directamente sin cerrar la app. El color propio de una consola tiene prioridad y los temas festivos conservan su paleta.
+
 ## Implementación
 
-`ui/Redisenio.kt` contiene la nueva composición y sus componentes. `LocalRedisenio` permite activar la revisión y capturar una comparación con la interfaz anterior. La variante `renacer` conserva el identificador `cl.nikalbazu.diptico.renacer`, con el nombre visible **Díptico · Rediseño**, y usa las actividades principales, el estado y las integraciones completas existentes.
+`ui/Redisenio.kt` contiene la nueva composición. `ui/SeleccionJuegos.kt` reúne la cabecera, las portadas, el pie de selección y los acentos de consola. `LocalRedisenio` permite activar la revisión y capturar una comparación con la interfaz anterior. La variante `renacer` conserva el identificador `cl.nikalbazu.diptico.renacer`, con el nombre visible **Díptico · Rediseño**, y usa las actividades principales, el estado y las integraciones completas existentes.
 
 La revisión retira el núcleo y las pantallas del primer prototipo Renacer. La limpieza se limita a ese prototipo descartado. El trabajo de separar el coordinador completo por responsabilidades continúa como una tarea independiente de estabilización.
 

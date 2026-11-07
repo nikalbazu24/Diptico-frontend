@@ -86,7 +86,7 @@ fun Cuadricula(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val t = LocalTamJuegos.current
     val anchoCelda = 96f * t
-    val altoCelda = 112f * t
+    val altoCelda = (if (LocalRedisenio.current) 90f else 112f) * t
     val lista = e.visibles
     BoxWithConstraints(modifier) {
         val anchoUnidades = maxWidth.value / esc.factor

@@ -255,6 +255,10 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
 /** Arriba de los juegos, en modo Sistemas: la consola en la que estás y cómo volver. */
 @Composable
 fun CabeceraSistema(e: Estado) {
+    if (LocalRedisenio.current) {
+        CabeceraJuegosLimpia(e)
+        return
+    }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Row(Modifier.fillMaxWidth().padding(start = esc.d(12), end = esc.d(16), top = esc.d(8), bottom = esc.d(4)), verticalAlignment = Alignment.CenterVertically) {

@@ -118,6 +118,50 @@ class CapturasRedisenio {
     @Test fun widgets() = foto("06-widgets", base.copy(inicio = "widgets"))
     @Test fun chile() = foto("07-chile", tema = Temas.fiestas.first { it.id == "fiestaspatrias" }.tema)
     @Test fun navidad() = foto("08-navidad", tema = Temas.fiestas.first { it.id == "navidad" }.tema)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun seleccionLimpia() = foto("12-seleccion-limpia", base.copy(juegos = juegos.take(2), consolaSel = "todo", enSistemas = false), Rol.INFERIOR)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun opcionesDeJuegos() = foto("13-opciones-juegos", base.copy(enSistemas = false, panel = Panel.GALERIA, galeria = "biblioteca"), Rol.INFERIOR)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun filtroConSalida() = foto("14-filtro-activo", base.copy(enSistemas = false, filtro = "favoritos"), Rol.INFERIOR)
+
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun lasOpcionesPermitenFiltrarYRegresarALaSeleccionSinPerderLaCarpeta() {
+        mostrar(base.copy(enSistemas = false), Rol.INFERIOR)
+        regla.onNodeWithContentDescription("Opciones de juegos").assertIsDisplayed().performClick()
+        regla.mainClock.advanceTimeBy(600)
+        regla.onNodeWithText("Filtrar").assertIsDisplayed().performClick()
+        regla.mainClock.advanceTimeBy(600)
+        regla.onNodeWithText("Favoritos").assertIsDisplayed().performClick()
+        regla.mainClock.advanceTimeBy(600)
+        assertEquals(Panel.NINGUNO, Diptico.estado.value.panel)
+        assertEquals("favoritos", Diptico.estado.value.filtro)
+        assertEquals("snes", Diptico.estado.value.consolaSel)
+        assertFalse(Diptico.estado.value.enSistemas)
+        regla.onNodeWithText("Mostrar todos").assertIsDisplayed().performClick()
+        assertEquals("todos", Diptico.estado.value.filtro)
+        assertEquals(base.juegoSel, Diptico.estado.value.juegoSel)
+    }
+
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun unaBusquedaDeOcultosSinResultadosTieneSalidaVisible() {
+        mostrar(base.copy(enSistemas = false, filtro = "ocultos", busqueda = "nada"), Rol.INFERIOR)
+        regla.onNodeWithText("Mostrar todos").assertIsDisplayed().performClick()
+        assertEquals("todos", Diptico.estado.value.filtro)
+        assertEquals("", Diptico.estado.value.busqueda)
+        assertEquals("snes", Diptico.estado.value.consolaSel)
+        assertEquals(1, Diptico.estado.value.visibles.size)
+    }
+
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun personalizarDesdeOpcionesConservaLaConsola() {
+        mostrar(base.copy(enSistemas = false), Rol.INFERIOR)
+        regla.onNodeWithContentDescription("Opciones de juegos").performClick()
+        regla.mainClock.advanceTimeBy(600)
+        regla.onNodeWithText("Personalizar carpeta").performClick()
+        assertEquals(Panel.EDITAR_CONSOLA, Diptico.estado.value.panel)
+        assertEquals("snes", Diptico.estado.value.consolaEditando)
+    }
 
     @Test fun elDockAbreWidgetsYConservaLaSeleccion() {
         mostrar(base, Rol.SUPERIOR)

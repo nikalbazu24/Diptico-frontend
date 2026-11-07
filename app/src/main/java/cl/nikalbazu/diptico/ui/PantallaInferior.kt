@@ -123,7 +123,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Column(Modifier.fillMaxSize()) {
-                    if (LocalRedisenio.current) CabeceraColeccion(e)
+                    if (LocalRedisenio.current && !(e.vistaConsolas in Diptico.MODOS_ELEGIR && !e.enSistemas)) CabeceraColeccion(e)
                     val escalaEstante = if (esc.angosta) 1.08f else 1.18f
                     when (e.vistaConsolas) {
                         "lado", "rueda" -> Row(Modifier.fillMaxWidth().weight(1f)) {
@@ -308,6 +308,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
             }
         }
     }
+        if (LocalRedisenio.current) PieSeleccion(e)
     }
 }
 

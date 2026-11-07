@@ -2164,6 +2164,7 @@ object Diptico {
     }
 
     fun pestanasGaleria(tipo: String = estado.value.galeria): List<String> = if (tipo == "colecciones") listOf("Colecciones") else when (tipo) {
+        "biblioteca" -> listOf("Opciones de juegos")
         "variantes_juego" -> listOf("Archivos del juego")
         "capturas_juego", "captura_acciones" -> listOf("Capturas guardadas")
         "copias_srm" -> listOf("Copias de RetroArch")
@@ -2200,6 +2201,13 @@ object Diptico {
 
     fun itemsGaleria(e: Estado = estado.value): List<ItemGaleria> {
         val actual = cl.nikalbazu.diptico.ui.Estilo.tema
+        if (e.galeria == "biblioteca") return listOf(
+            ItemGaleria("buscar", "Buscar un juego", "Por nombre", false) { abrirBuscar() },
+            ItemGaleria("filtros", "Filtrar", nombreFiltro(e.filtro), false) { abrirGaleria("filtros") },
+            ItemGaleria("orden", "Ordenar", nombreOrden(e.orden), false) { abrirGaleria("orden") },
+            ItemGaleria("vistas", "Cambiar vista", nombreVista(e.vista), false) { abrirGaleria("vistas_juegos") },
+            ItemGaleria("carpeta", "Personalizar carpeta", Consolas.porId(e.consolaSel)?.nombre ?: "Todos tus juegos", false) { abrirEditarConsola(e.consolaSel) },
+        )
         if (e.galeria == "copias_srm") return opcionesCopiasPartida
         if (e.galeria == "captura_acciones") {
             val (clave, ruta) = capturaPara ?: return emptyList()

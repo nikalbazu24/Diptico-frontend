@@ -50,6 +50,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
     val seleccion = items.getOrNull(e.indice)?.takeIf { conPrevia && it.tema != null }
     val vistaLateral = seleccion != null && !esc.angosta
     val (titulo, icono) = when (e.galeria) {
+        "biblioteca" -> "Opciones de juegos" to Icono.MENU
         "capturas_juego", "captura_acciones" -> "Capturas del juego" to Icono.PORTADA
         "variantes_juego" -> "Versión del juego" to Icono.FORMA
         "copias_srm" -> "Copias de RetroArch" to Icono.COPIAR
@@ -136,7 +137,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                     itemsIndexed(items, key = { _, it -> it.id + it.nombre }) { i, it ->
                         val activo = i == e.indice
                         when (e.galeria) {
-                            "vistas_juegos", "vistas_consolas", "filtros", "orden", "variantes_juego" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
+                            "biblioteca", "vistas_juegos", "vistas_consolas", "filtros", "orden", "variantes_juego" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
                             "capturas_juego" -> {
                                 val uri = Diptico.imagenCaptura(e, it.id)
                                 if (uri == null) FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }

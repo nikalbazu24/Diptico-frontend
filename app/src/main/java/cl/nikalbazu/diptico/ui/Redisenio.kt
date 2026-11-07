@@ -41,13 +41,14 @@ val LocalRedisenio = staticCompositionLocalOf { BuildConfig.RENACER }
 @Composable
 internal fun FondoColeccion(e: Estado, modifier: Modifier = Modifier) {
     val p = LocalPaleta.current
+    val color = colorColeccion(e.consolaSel)
     Box(modifier.background(p.fondo2)) {
         e.seleccionado?.let { juego ->
             val imagen = rememberImagen(juego.arte ?: juego.portada, 96)
             if (imagen != null) Image(imagen, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = .10f)
         }
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo2.copy(alpha = .5f), p.fondo2))))
-        Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Uva.copy(alpha = .12f), Color.Transparent))))
+        Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(color.copy(alpha = .18f), Color.Transparent, Coral.copy(alpha = .08f)))))
     }
 }
 
@@ -62,7 +63,7 @@ internal fun CabeceraColeccion(e: Estado, modifier: Modifier = Modifier) {
         }
         AccesoColeccion(Icono.BUSCAR, "Buscar juegos") { Diptico.abrirBuscar() }
         Spacer(Modifier.width(esc.d(6)))
-        AccesoColeccion(Icono.AJUSTES, "Ajustes de biblioteca") { Diptico.abrirMenu() }
+        AccesoColeccion(Icono.MENU, "Opciones de biblioteca") { Diptico.abrirGaleria("biblioteca") }
     }
 }
 
@@ -210,7 +211,7 @@ internal fun InicioUnificado(e: Estado) {
                         Spacer(Modifier.width(esc.d(14)))
                     }
                 }
-                if (e.sesion == null) DockDiptico(e, e.seleccionado, Modifier, arriba = false, consola = false)
+                if (e.sesion == null && !completa) DockDiptico(e, e.seleccionado.takeIf { e.enSistemas }, Modifier, arriba = false, consola = false)
             }
         }
         if (ventana) {
@@ -228,6 +229,8 @@ internal fun VentanaCarpeta(e: Estado, modifier: Modifier, escala: Float) {
     val forma = RoundedCornerShape(esc.d(19))
     Column(modifier.shadow(esc.d(12), forma, clip = false).clip(forma)
         .background(p.fondo2.copy(alpha = if (LocalRedisenio.current) .92f else .80f)).border(esc.d(1), p.linea, forma).sinCerrar()) {
+        if (LocalRedisenio.current) Box(Modifier.fillMaxWidth().height(esc.d(3))
+            .background(Brush.horizontalGradient(listOf(colorColeccion(e.consolaSel), Uva, Coral))))
         CabeceraSistema(e)
         VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escala)
     }
@@ -239,7 +242,7 @@ private fun ColeccionUnificada(e: Estado) {
     Box(Modifier.fillMaxSize()) {
         FondoColeccion(e, Modifier.fillMaxSize())
         Column(Modifier.fillMaxSize()) {
-            CabeceraColeccion(e)
+            if (!(e.vistaConsolas in Diptico.MODOS_ELEGIR && !e.enSistemas)) CabeceraColeccion(e)
             // El reparto de columnas depende del ancho del panel, no del ancho del dispositivo entero.
             BoxWithConstraints(Modifier.weight(1f)) {
                 CompositionLocalProvider(LocalEscala provides Escala(esc.factor, maxWidth.value / esc.factor, esc.texto)) {
@@ -271,13 +274,13 @@ internal fun IconoCarpetaDiptico(e: Estado, id: String, elegida: Boolean, intera
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val c = Consolas.porId(id)
-    val color = c?.color ?: Uva
+    val color = colorColeccion(id)
     val forma = RoundedCornerShape(lado * .22f)
     val juegos = if (id == "todo") e.juegos else e.juegosPorConsola[id].orEmpty()
     val cantidad = juegos.count { e.datos[it.clave]?.oculto != true }
     Column(Modifier.size(lado), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.weight(1f).aspectRatio(1f).testTag("carpeta-$id").shadow(if (elegida) esc.d(7) else esc.d(2), forma, spotColor = color)
-            .clip(forma).background(Brush.linearGradient(listOf(color.copy(alpha = .38f), p.fondo)))
+            .clip(forma).background(Brush.linearGradient(listOf(color.copy(alpha = .48f), p.fondo)))
             .combinedClickable(enabled = interactiva, onClickLabel = "Abrir ${c?.nombre ?: "todos los juegos"}",
                 onLongClickLabel = "Personalizar carpeta", onLongClick = { Diptico.abrirEditarConsola(id) }) {
                 if (!elegida) Diptico.elegirConsola(id)
@@ -289,7 +292,7 @@ internal fun IconoCarpetaDiptico(e: Estado, id: String, elegida: Boolean, intera
                     drawCircle(color.copy(alpha = .20f), size.width * .46f, Offset(size.width * .8f, size.height * .25f), style = Stroke(size.width * .013f))
                     drawLine(color.copy(alpha = .16f), Offset(0f, size.height * .8f), Offset(size.width, size.height * .34f), size.width * .06f)
                 }
-                IconoConsola(c, (lado.value / esc.factor * .47f).coerceIn(18f, 76f), p.fondo2, memoriaGrafica = false)
+                IconoConsola(c?.copy(color = color), (lado.value / esc.factor * .47f).coerceIn(18f, 76f), p.fondo2, memoriaGrafica = false)
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .52f)))))
             Box(Modifier.fillMaxSize().border(esc.d(if (elegida) 2.2f else .8f), if (elegida) p.tinta else color.copy(alpha = .55f), forma))

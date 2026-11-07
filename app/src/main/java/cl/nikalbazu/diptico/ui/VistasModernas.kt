@@ -23,6 +23,10 @@ import cl.nikalbazu.diptico.estado.*
 
 @Composable
 fun TarjetaCaratula(j: Juego, elegida: Boolean, ancho: Float, alto: Float, titulo: Boolean, elegir: () -> Unit) {
+    if (LocalRedisenio.current) {
+        PortadaSeleccion(j, elegida, ancho, alto, titulo, elegir)
+        return
+    }
     val esc = LocalEscala.current; val p = LocalPaleta.current
     val c = Consolas.porId(j.consolaId) ?: return
     val caja = cajaDe(c); val k = minOf((ancho - 12) / caja.ancho, (alto - 8) / caja.alto)
@@ -112,6 +116,10 @@ internal fun PortadaCarpeta(
 
 @Composable
 fun ControlesBiblioteca(e: Estado) {
+    if (LocalRedisenio.current) {
+        FiltroActivoLimpio(e)
+        return
+    }
     val esc = LocalEscala.current; val p = LocalPaleta.current
     Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(12), vertical = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
         Texto("${e.visibles.size}", 11f, color = p.tenue)
