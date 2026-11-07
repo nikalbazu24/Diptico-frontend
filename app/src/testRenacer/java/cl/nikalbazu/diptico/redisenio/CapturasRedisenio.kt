@@ -82,6 +82,15 @@ class CapturasRedisenio {
             }
         }
         regla.mainClock.advanceTimeBy(1600)
+        regla.runOnIdle {
+            Diptico.fijarParaPrueba(e.copy(tema = tema.id))
+            Diptico.aplicarTema()
+            Estilo.tema = tema
+            Estilo.efectosCompletos = false
+            Estilo.decoraciones = tema.decor != "nada"
+            cl.nikalbazu.diptico.estado.Idioma.fijar(ApplicationProvider.getApplicationContext(), "es")
+        }
+        regla.mainClock.advanceTimeBy(100)
     }
     private fun foto(nombre: String, e: Estado = base, rol: Rol = Rol.SUPERIOR, tema: Tema = Temas.incluidos[0], nuevo: Boolean = true) {
         mostrar(e, rol, tema, nuevo)

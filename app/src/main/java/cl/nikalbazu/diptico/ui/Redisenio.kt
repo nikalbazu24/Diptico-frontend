@@ -165,7 +165,7 @@ internal fun EscenaDiptico(e: Estado, modifier: Modifier = Modifier, controles: 
                 }
                 if (!reducida && esc.ancho >= 600f && juego.portada != null) {
                     Spacer(Modifier.width(esc.d(28)))
-                    PortadaEscena(juego, Modifier.fillMaxHeight(.82f).aspectRatio(.78f))
+                    PortadaEscena(juego, Modifier.widthIn(max = esc.d(190)).heightIn(max = esc.d(220)))
                 }
             }
         }
@@ -176,10 +176,12 @@ internal fun EscenaDiptico(e: Estado, modifier: Modifier = Modifier, controles: 
 @Composable
 private fun PortadaEscena(juego: Juego, modifier: Modifier) {
     val esc = LocalEscala.current
+    val portada = rememberImagen(juego.portada, 700) ?: return
+    val proporcion = portada.width.toFloat() / portada.height.coerceAtLeast(1)
     val forma = RoundedCornerShape(esc.d(14))
-    Box(modifier.shadow(esc.d(22), forma).clip(forma).background(LocalPaleta.current.superficie)
+    Box(modifier.aspectRatio(proporcion).shadow(esc.d(22), forma).clip(forma).background(LocalPaleta.current.superficie)
         .border(esc.d(1), Color.White.copy(alpha = .25f), forma)) {
-        ArteJuego(juego, false, 700, Modifier.fillMaxSize())
+        Image(portada, juego.titulo, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
     }
 }
 
