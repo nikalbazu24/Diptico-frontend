@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -19,6 +20,7 @@ import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Experiencia
+import cl.nikalbazu.diptico.estado.Panel
 import cl.nikalbazu.diptico.estado.Tema
 import cl.nikalbazu.diptico.estado.Temas
 import cl.nikalbazu.diptico.ui.Estilo
@@ -98,6 +100,21 @@ class CapturasRedisenio {
     @Test fun widgets() = foto("06-widgets", base.copy(inicio = "widgets"))
     @Test fun chile() = foto("07-chile", tema = Temas.fiestas.first { it.id == "fiestaspatrias" }.tema)
     @Test fun navidad() = foto("08-navidad", tema = Temas.fiestas.first { it.id == "navidad" }.tema)
+
+    @Test fun elDockAbreWidgetsYConservaLaSeleccion() {
+        mostrar(base, Rol.SUPERIOR)
+        regla.onNodeWithContentDescription("Widgets").assertIsDisplayed().performClick()
+        assertEquals("widgets", Diptico.estado.value.inicio)
+        assertEquals(base.juegoSel, Diptico.estado.value.juegoSel)
+        assertEquals(base.juegos, Diptico.estado.value.juegos)
+    }
+
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun laBusquedaDeLaCabeceraAbreElPanelCompleto() {
+        mostrar(base, Rol.INFERIOR)
+        regla.onNodeWithContentDescription("Buscar juegos").assertIsDisplayed().performClick()
+        assertEquals(Panel.BUSCAR, Diptico.estado.value.panel)
+    }
 
     @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
     @Test fun abrirCarpetaConservaElJuegoYVolverRecuperaLaCuadricula() {

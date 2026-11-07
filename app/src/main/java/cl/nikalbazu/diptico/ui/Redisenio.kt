@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import cl.nikalbazu.diptico.BuildConfig
 import cl.nikalbazu.diptico.data.Consolas
@@ -68,7 +70,7 @@ internal fun CabeceraColeccion(e: Estado, modifier: Modifier = Modifier) {
 private fun AccesoColeccion(icono: Icono, nombre: String, accion: () -> Unit) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
-    Box(Modifier.size(esc.d(35)).clip(RoundedCornerShape(esc.d(12)))
+    Box(Modifier.size(esc.d(35)).semantics { contentDescription = nombre }.clip(RoundedCornerShape(esc.d(12)))
         .background(p.superficie.copy(alpha = .78f)).border(esc.d(.7f), p.linea, RoundedCornerShape(esc.d(12)))
         .clickable(onClickLabel = nombre, onClick = accion), contentAlignment = Alignment.Center) {
         IconoDiptico(icono, p.tinta, 17f)
@@ -107,7 +109,7 @@ private fun AccesoDock(icono: Icono, nombre: String, destacado: Boolean = false,
     val p = LocalPaleta.current
     val forma = RoundedCornerShape(esc.d(16))
     val tinta = if (destacado) SobreUva else p.tenue
-    Row(Modifier.height(esc.d(38)).clip(forma)
+    Row(Modifier.height(esc.d(38)).semantics { contentDescription = nombre }.clip(forma)
         .then(if (destacado) Modifier.fondoBoton(Uva) else Modifier)
         .combinedClickable(onClickLabel = nombre, onLongClick = mantener, onClick = accion)
         .padding(horizontal = esc.d(if (destacado) 15 else 11)),
