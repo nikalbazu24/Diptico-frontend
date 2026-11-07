@@ -172,7 +172,7 @@ fun BotonGrande(texto: String, fondo: Color, tinta: Color, modifier: Modifier = 
  * Va después de clip(forma).
  */
 @Composable
-fun Modifier.fondoBoton(color: Color): Modifier = if (Estilo.tema.forma == "pixel") this.background(color).drawWithContent {
+fun Modifier.fondoBoton(color: Color): Modifier = if (Estilo.tema.forma == "cristal") tinteCristal(color) else if (Estilo.tema.forma == "pixel") this.background(color).drawWithContent {
     // Botón de bloque: color parejo con borde claro arriba-izquierda y oscuro abajo-derecha.
     drawContent()
     val b = 2.5f * density
@@ -217,7 +217,7 @@ fun TarjetaOpcion(o: Opcion, activa: Boolean, modifier: Modifier = Modifier, alt
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val fondo by animateColorAsState(if (activa) Uva else p.superficie.copy(alpha = if (p == PaletaOscura) 0.75f else 0.95f), label = "fondo")
-    val alza by animateFloatAsState(if (activa) 1.015f else 1f, spring(dampingRatio = 0.55f), label = "alza")
+    val alza by animateFloatAsState(if (activa && (Estilo.tema.forma != "cristal" || LocalCristal.current.movimiento)) 1.015f else 1f, spring(dampingRatio = 0.55f), label = "alza")
     Row(
         modifier.fillMaxWidth().height(esc.d(alto))
             .graphicsLayer { scaleX = alza; scaleY = alza; alpha = if (o.apagada) 0.5f else 1f }

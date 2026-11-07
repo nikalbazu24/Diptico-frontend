@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape as Redondeada
  * se vuelven escalonadas, como en los juegos de antes. Todas las pantallas usan estas funciones.
  */
 internal fun formaTema(dp: Dp?, porcentaje: Int, normal: Shape, forma: String = Estilo.tema.forma): Shape = when (forma) {
+    "cristal" -> if (dp != null) Redondeada((dp.value * 1.18f).dp) else Redondeada((porcentaje + 3).coerceAtMost(50))
     "pixel" -> EsquinaPixel(dp, porcentaje)
     "bisel" -> EsquinaBisel(dp, porcentaje)
     "recta" -> Redondeada(2.dp)

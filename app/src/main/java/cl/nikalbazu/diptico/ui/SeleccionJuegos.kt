@@ -51,7 +51,7 @@ internal fun CabeceraJuegosLimpia(e: Estado) {
     Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(13), vertical = esc.d(10)),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
         Box(Modifier.size(esc.d(38)).clip(RoundedCornerShape(esc.d(13)))
-            .background(p.superficie.copy(alpha = .68f)).semantics { contentDescription = "Volver a consolas" }
+            .background(p.superficie.copy(alpha = if (Estilo.tema.forma == "cristal") .32f else .68f)).semantics { contentDescription = "Volver a consolas" }
             .clickable { Diptico.volverASistemas() }, contentAlignment = Alignment.Center) {
             Texto("‹", 28f, familia = Nunito, traducir = false)
         }
@@ -67,7 +67,7 @@ internal fun CabeceraJuegosLimpia(e: Estado) {
             }
         }
         Box(Modifier.size(esc.d(38)).clip(RoundedCornerShape(esc.d(13)))
-            .background(p.superficie.copy(alpha = .68f)).semantics { contentDescription = "Opciones de juegos" }
+            .background(p.superficie.copy(alpha = if (Estilo.tema.forma == "cristal") .32f else .68f)).semantics { contentDescription = "Opciones de juegos" }
             .clickable { Diptico.abrirGaleria("biblioteca") }, contentAlignment = Alignment.Center) {
             Texto("•••", 14f, familia = Nunito, espaciado = 1f, traducir = false)
         }

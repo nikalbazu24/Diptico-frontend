@@ -42,7 +42,7 @@ val LocalRedisenio = staticCompositionLocalOf { BuildConfig.RENACER }
 internal fun FondoColeccion(e: Estado, modifier: Modifier = Modifier) {
     val p = LocalPaleta.current
     val color = colorColeccion(e.consolaSel)
-    Box(modifier.background(p.fondo2)) {
+    Box(modifier.fondoPantalla(p.fondo2)) {
         e.seleccionado?.let { juego ->
             val imagen = rememberImagen(juego.arte ?: juego.portada, 96)
             if (imagen != null) Image(imagen, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = .10f)
@@ -72,7 +72,7 @@ private fun AccesoColeccion(icono: Icono, nombre: String, accion: () -> Unit) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     Box(Modifier.size(esc.d(35)).semantics { contentDescription = nombre }.clip(RoundedCornerShape(esc.d(12)))
-        .background(p.superficie.copy(alpha = .78f)).border(esc.d(.7f), p.linea, RoundedCornerShape(esc.d(12)))
+        .superficieApp(p.superficie.copy(alpha = .78f), RoundedCornerShape(esc.d(12)))
         .clickable(onClickLabel = nombre, onClick = accion), contentAlignment = Alignment.Center) {
         IconoDiptico(icono, p.tinta, 17f)
     }
@@ -87,8 +87,9 @@ internal fun DockDiptico(e: Estado, juego: Juego?, modifier: Modifier, arriba: B
     val forma = RoundedCornerShape(esc.d(21))
     Box(modifier.then(if (arriba) Modifier else Modifier.fillMaxWidth()).padding(
         horizontal = esc.d(if (arriba) 0 else 14), vertical = esc.d(if (arriba) 0 else 9)), contentAlignment = Alignment.Center) {
-        Row(Modifier.widthIn(max = esc.d(740)).shadow(esc.d(12), forma).clip(forma)
-            .background(p.fondo2.copy(alpha = .96f)).border(esc.d(.8f), p.linea, forma)
+        Row(Modifier.widthIn(max = esc.d(740)).then(
+            if (Estilo.tema.forma == "cristal") Modifier.superficieCristal(forma)
+            else Modifier.shadow(esc.d(12), forma).clip(forma).background(p.fondo2.copy(alpha = .96f)).border(esc.d(.8f), p.linea, forma))
             .horizontalScroll(rememberScrollState()).padding(esc.d(5)),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(3))) {
             if (consola) AccesoDock(Icono.CARPETA, "Abrir carpeta", destacado = true) { Diptico.entrarSistema() }
@@ -227,9 +228,10 @@ internal fun VentanaCarpeta(e: Estado, modifier: Modifier, escala: Float) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val forma = RoundedCornerShape(esc.d(19))
-    Column(modifier.shadow(esc.d(12), forma, clip = false).clip(forma)
-        .background(p.fondo2.copy(alpha = if (LocalRedisenio.current) .92f else .80f)).border(esc.d(1), p.linea, forma).sinCerrar()) {
-        if (LocalRedisenio.current) Box(Modifier.fillMaxWidth().height(esc.d(3))
+    Column(modifier.then(if (Estilo.tema.forma == "cristal") Modifier.superficieCristal(forma, CapaCristal.PANEL)
+        else Modifier.shadow(esc.d(12), forma, clip = false).clip(forma)
+            .background(p.fondo2.copy(alpha = if (LocalRedisenio.current) .92f else .80f)).border(esc.d(1), p.linea, forma)).sinCerrar()) {
+        if (LocalRedisenio.current && Estilo.tema.forma != "cristal") Box(Modifier.fillMaxWidth().height(esc.d(3))
             .background(Brush.horizontalGradient(listOf(colorColeccion(e.consolaSel), Uva, Coral))))
         CabeceraSistema(e)
         VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escala)
@@ -280,7 +282,7 @@ internal fun IconoCarpetaDiptico(e: Estado, id: String, elegida: Boolean, intera
     val cantidad = juegos.count { e.datos[it.clave]?.oculto != true }
     Column(Modifier.size(lado), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.weight(1f).aspectRatio(1f).testTag("carpeta-$id").shadow(if (elegida) esc.d(7) else esc.d(2), forma, spotColor = color)
-            .clip(forma).background(Brush.linearGradient(listOf(color.copy(alpha = .48f), p.fondo)))
+            .clip(forma).background(Brush.linearGradient(listOf(color.copy(alpha = if (Estilo.tema.forma == "cristal") .25f else .48f), p.fondo)))
             .combinedClickable(enabled = interactiva, onClickLabel = "Abrir ${c?.nombre ?: "todos los juegos"}",
                 onLongClickLabel = "Personalizar carpeta", onLongClick = { Diptico.abrirEditarConsola(id) }) {
                 if (!elegida) Diptico.elegirConsola(id)

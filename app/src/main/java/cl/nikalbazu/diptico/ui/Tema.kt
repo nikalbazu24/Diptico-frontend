@@ -82,7 +82,7 @@ val Tinta = Color(0xFF1C1A33)
 val Cielo = Color(0xFF3BA8FF)
 
 /** Color de letra que se lee bien sobre el color principal (blanco, o tinta si el color es muy claro). */
-val SobreUva: Color get() = if (Uva.luminance() > 0.55f) Tinta else Color.White
+val SobreUva: Color get() = if (Uva.luminance() > 0.179f) Color.Black else Color.White
 
 /** Arma la paleta de fondo, superficies y letras a partir del tema y del modo claro/oscuro. */
 fun paletaDe(t: Tema, oscuroPersona: Boolean): Paleta {
@@ -90,14 +90,17 @@ fun paletaDe(t: Tema, oscuroPersona: Boolean): Paleta {
     if (t.forma != "cristal") return base
     val claro = base.fondo.luminance() > 0.45f
     val fondo = if (t.id == "diptico_vidrio") {
-        if (claro) Color(0xFFE9EDF4) else Color(0xFF10131B)
+        if (claro) Color(0xFFEAF0F8) else Color(0xFF0C1422)
     } else base.fondo
-    val velo = if (claro) Color.White else Color(0xFFBDC8E1)
+    val velo = if (claro) Color.White else Color(0xFF9BB9DA)
     return base.copy(
         fondo = fondo,
-        fondo2 = lerp(fondo, velo, if (claro) 0.72f else 0.045f).copy(alpha = 0.94f),
-        superficie = lerp(fondo, velo, if (claro) 0.92f else 0.11f).copy(alpha = 0.95f),
-        linea = lerp(fondo, base.tinta, if (claro) 0.16f else 0.22f),
+        fondo2 = lerp(fondo, velo, if (claro) 0.38f else 0.065f),
+        superficie = lerp(fondo, velo, if (claro) 0.8f else 0.19f),
+        tinta = if (claro) Color(0xFF17263C) else Color(0xFFF3F8FF),
+        tenue = if (claro) Color(0xFF52647C) else Color(0xFFB5C7DE),
+        acentoTexto = if (claro) Color(0xFF2857A8) else Color(0xFFB0D5FF),
+        linea = lerp(fondo, base.tinta, if (claro) 0.18f else 0.27f),
     )
 }
 

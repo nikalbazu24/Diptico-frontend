@@ -477,7 +477,9 @@ private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nul
     val propio = w?.color?.takeIf { it != 0L }?.let { Color(it) }
     val base = propio ?: p.superficie
     val acento = propio ?: Uva
-    val fondo = when (estilo) {
+    val fondo = if (Estilo.tema.forma == "cristal" && estilo != "sinfondo" && estilo != "contorno") {
+        Modifier.superficieCristal(forma, CapaCristal.CONTENIDO)
+    } else when (estilo) {
         "vidrio" -> Modifier.background(Brush.linearGradient(listOf((propio ?: Color.White).copy(alpha = 0.16f * op), (propio ?: Color.White).copy(alpha = 0.05f * op))))
             .border(esc.d(1.2f), Color.White.copy(alpha = 0.22f), forma)
         "solido" -> Modifier.background(Brush.linearGradient(listOf(acento.copy(alpha = 0.9f * op), acento.copy(alpha = 0.65f * op))))

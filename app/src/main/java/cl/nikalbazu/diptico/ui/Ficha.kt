@@ -134,7 +134,7 @@ fun PanelFicha(e: Estado) {
     val esc = LocalEscala.current
     val j = e.juegos.firstOrNull { it.clave == e.fichaDe } ?: return
     val c = Consolas.porId(j.consolaId)
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo2).sinCerrar()) {
         Box(Modifier.fillMaxWidth().height(esc.d(150)).background(Brush.verticalGradient(listOf(colorDe(j.clave).copy(alpha = 0.35f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(16), end = esc.d(16), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -330,7 +330,7 @@ fun PanelImagenes(e: Estado) {
     val esc = LocalEscala.current
     val j = e.juegos.firstOrNull { it.clave == e.fichaDe }
     val lista = remember(e.candidatos, e.fuenteImagen, e.candidatoPara, e.datos, e.claveSgdb) { Diptico.candidatosVisibles(e) }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconoDiptico(Icono.DESCARGA, p.tinta, 22f, acento = Coral)

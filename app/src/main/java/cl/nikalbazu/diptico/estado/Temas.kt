@@ -122,7 +122,7 @@ object Temas {
 
     val incluidos = listOf(
         Tema("diptico", "Díptico", 0xFF6B4EFF, 0xFFFF7A59, 0xFFFFC93C),
-        Tema("diptico_vidrio", "Díptico Cristal", 0xFF6A60BD, 0xFFADB4D1, 0xFFCAD3E2, forma = "cristal"),
+        Tema("diptico_vidrio", "Díptico Cristal", 0xFF78B7FF, 0xFF60DCC3, 0xFFFFA5BE, fuente = "suave", forma = "cristal", acabado = "vidrio"),
         // Mundo de bloques: pasto, tierra y diamante; letra de píxeles, esquinas escalonadas, sonidos de madera y piano tranquilo.
         Tema(
             "bloques", "Mundo de bloques", 0xFF62B33F, 0xFFA0703F, 0xFF5CE1E6, "oscuro", "bloques",
@@ -154,7 +154,7 @@ object Temas {
 
     val iniciales = listOf(
         "diptico" to "La identidad original del frontend, con una paleta pensada para acompañar las carátulas.",
-        "diptico_vidrio" to "Para quien prefiere una interfaz sobria, con transparencias suaves y controles bien definidos.",
+        "diptico_vidrio" to "Luz, profundidad y color en controles flotantes. El arte sigue al centro, con superficies serenas para leer y un cristal más denso en ventanas y menús.",
         "bloques" to "Una vuelta a los juegos de construcción, con letras pixeladas, esquinas escalonadas y sonidos de madera.",
         "papel" to "Para leer a plena luz. Recuerda a una libreta de juegos, con líneas de papel y controles discretos.",
         "oled" to "Para jugar en la oscuridad y dejar que destaque el arte. Mantiene negro puro y botones discretos.",

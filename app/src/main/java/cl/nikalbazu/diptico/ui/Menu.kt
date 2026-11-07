@@ -88,7 +88,7 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
     LaunchedEffect(e.experiencia.movimiento) {
         if (e.experiencia.movimiento) entrada.animateTo(1f, tween(120)) else entrada.snapTo(1f)
     }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo2).sinCerrar()) {
         Row(Modifier.fillMaxSize().graphicsLayer {
             alpha = entrada.value
             translationY = esc.d(12).toPx() * (1f - entrada.value)
@@ -122,7 +122,8 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
         if (i > 0 && filas[i - 1] is String) lista.mostrar(i - 1)
         lista.mostrar(i)
     }
-    Column(modifier.background(p.fondo.copy(alpha = 0.55f)).padding(top = esc.d(10), bottom = esc.d(8))) {
+    Column(modifier.then(if (Estilo.tema.forma == "cristal") Modifier.padding(esc.d(5)).superficieCristal(RoundedCornerShape(esc.d(22)), CapaCristal.PANEL)
+        else Modifier.background(p.fondo.copy(alpha = 0.55f))).padding(top = esc.d(10), bottom = esc.d(8))) {
         Row(Modifier.padding(horizontal = esc.d(12)), verticalAlignment = Alignment.CenterVertically) {
             MarcaLogo(12f)
             Spacer(Modifier.width(esc.d(8)))

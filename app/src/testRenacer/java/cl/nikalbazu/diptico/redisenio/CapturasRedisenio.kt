@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -54,6 +55,7 @@ class CapturasRedisenio {
             listOf(96, 240, 256, 400, 480, 700, 1600).forEach {
                 Imagenes.cargar(ctx, uri, it, memoriaGrafica = android.os.Build.VERSION.SDK_INT >= 31)
             }
+            Imagenes.cargar(ctx, uri, 96, memoriaGrafica = false)
         }
     }
     private val juegos by lazy { listOf(
@@ -78,7 +80,7 @@ class CapturasRedisenio {
         Diptico.fijarParaPrueba(e)
         Estilo.tema = tema
         Estilo.decoraciones = tema.decor != "nada"
-        Estilo.efectosCompletos = false
+        Estilo.efectosCompletos = tema.forma == "cristal" && e.fluidez != "ahorro"
         regla.mainClock.autoAdvance = false
         regla.setContent {
             val estado by Diptico.estado.collectAsState()
@@ -91,7 +93,7 @@ class CapturasRedisenio {
             Diptico.fijarParaPrueba(e.copy(tema = tema.id))
             Diptico.aplicarTema()
             Estilo.tema = tema
-            Estilo.efectosCompletos = false
+            Estilo.efectosCompletos = tema.forma == "cristal" && e.fluidez != "ahorro"
             Estilo.decoraciones = tema.decor != "nada"
             cl.nikalbazu.diptico.estado.Idioma.fijar(ApplicationProvider.getApplicationContext(), "es")
         }
@@ -124,6 +126,39 @@ class CapturasRedisenio {
     @Test fun opcionesDeJuegos() = foto("13-opciones-juegos", base.copy(enSistemas = false, panel = Panel.GALERIA, galeria = "biblioteca"), Rol.INFERIOR)
     @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
     @Test fun filtroConSalida() = foto("14-filtro-activo", base.copy(enSistemas = false, filtro = "favoritos"), Rol.INFERIOR)
+
+    private val cristal get() = Temas.incluidos.first { it.id == "diptico_vidrio" }
+    @Test fun cristalEscena() = foto("15-cristal-escena", tema = cristal)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun cristalColeccion() = foto("16-cristal-carpetas", rol = Rol.INFERIOR, tema = cristal)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun cristalSeleccion() = foto("17-cristal-seleccion", base.copy(juegos = juegos.take(2), consolaSel = "todo", enSistemas = false), Rol.INFERIOR, cristal)
+    @Test fun cristalWidgets() = foto("18-cristal-widgets", base.copy(inicio = "widgets"), tema = cristal)
+    @Test fun cristalClaro() = foto("19-cristal-claro", base.copy(oscuro = false), tema = cristal)
+    @Test fun cristalAjustes() = foto("20-cristal-ajustes", base.copy(panel = Panel.MENU, seccion = cl.nikalbazu.diptico.estado.Seccion.APARIENCIA, enOpciones = true), tema = cristal)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun cristalAhorro() = foto("21-cristal-ahorro", base.copy(enSistemas = false, fluidez = "ahorro"), Rol.INFERIOR, cristal)
+    @Config(sdk = [29])
+    @Test fun cristalAndroid10() = foto("22-cristal-android10", base.copy(modoPantallas = "una_negra", enSistemas = false), Rol.UNICA, cristal)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun cristalContraste() {
+        val cr = ApplicationProvider.getApplicationContext<android.content.Context>().contentResolver
+        android.provider.Settings.Secure.putInt(cr, "high_text_contrast_enabled", 1)
+        try { foto("23-cristal-contraste", base.copy(enSistemas = false), Rol.INFERIOR, cristal) }
+        finally { android.provider.Settings.Secure.putInt(cr, "high_text_contrast_enabled", 0) }
+    }
+
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun cristalPermiteAbrirOpcionesYVolverALaCarpeta() {
+        mostrar(base.copy(enSistemas = false, experiencia = base.experiencia.copy(movimiento = true)), Rol.INFERIOR, cristal)
+        regla.onNodeWithContentDescription("Opciones de juegos").assertIsDisplayed().performTouchInput { down(center); up() }
+        regla.mainClock.advanceTimeBy(600)
+        assertEquals("biblioteca", Diptico.estado.value.galeria)
+        regla.runOnIdle { Diptico.atras() }
+        regla.mainClock.advanceTimeBy(600)
+        assertEquals(Panel.NINGUNO, Diptico.estado.value.panel)
+        assertEquals(base.juegoSel, Diptico.estado.value.juegoSel)
+    }
 
     @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
     @Test fun lasOpcionesPermitenFiltrarYRegresarALaSeleccionSinPerderLaCarpeta() {

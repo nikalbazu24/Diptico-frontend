@@ -17,6 +17,8 @@ Se conservan los gestos de tamaño y dirección de las carpetas, la ventana ampl
 
 La selección de juegos presenta una cabecera, las portadas y una acción Jugar junto al nombre elegido. Las vistas, filtros, orden y personalización están en Opciones de juegos. Si hay un filtro o una búsqueda activa, Mostrar todos permite salir directamente sin cerrar la app. El color propio de una consola tiene prioridad y los temas festivos conservan su paleta.
 
+El rediseño de Díptico Cristal se documenta en [Cristal](cristal.md), con sus referencias, materiales, adaptación a Android y límites de renderizado.
+
 ## Implementación
 
 `ui/Redisenio.kt` contiene la nueva composición. `ui/SeleccionJuegos.kt` reúne la cabecera, las portadas, el pie de selección y los acentos de consola. `LocalRedisenio` permite activar la revisión y capturar una comparación con la interfaz anterior. La variante `renacer` conserva el identificador `cl.nikalbazu.diptico.renacer`, con el nombre visible **Díptico · Rediseño**, y usa las actividades principales, el estado y las integraciones completas existentes.

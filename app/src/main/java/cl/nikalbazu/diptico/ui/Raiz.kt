@@ -31,6 +31,7 @@ import cl.nikalbazu.diptico.estado.Estado
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     CompositionLocalProvider(
+        LocalCristal provides recordarCristal(e),
         LocalIconos provides IconosCfg(e.estiloIconos, e.iconosPropios, e.iconosVersion),
         LocalFormas provides remember(e.formas, e.formaTodos, e.consolaSel) { cl.nikalbazu.diptico.estado.Diptico.formasVisibles(e) },
         LocalHeroes provides (e.heroes to e.imagenHeroe),

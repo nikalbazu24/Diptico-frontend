@@ -69,7 +69,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
         "colecciones" -> "Colecciones" to Icono.CARPETA
         else -> "Música" to Icono.MUSICA
     }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconoDiptico(icono, p.tinta, 22f, acento = Coral)
