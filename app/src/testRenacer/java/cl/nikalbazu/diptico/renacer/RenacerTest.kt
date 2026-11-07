@@ -3,6 +3,8 @@ package cl.nikalbazu.diptico.renacer
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.test.core.app.ApplicationProvider
 import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.data.CarpetaJuegos
@@ -53,6 +55,19 @@ class RenacerTest {
             assertEquals(listOf(a, b), salon.abrirConsola("*").visibles)
         } finally { Locale.setDefault(anterior) }
     }
+    @Test fun losAcentosDelCalendarioSeLeenEnTodosLosAmbientes() {
+        val acentos = Ambiente.entries.map { it.acento } + cl.nikalbazu.diptico.estado.Temas.fiestas.map { it.tema.acento }
+        Ambiente.entries.forEach { ambiente ->
+            val fondo = Color(ambiente.fondo)
+            acentos.forEach { color ->
+                val texto = acentoLegible(Color(color), fondo)
+                val claros = maxOf(texto.luminance(), fondo.luminance())
+                val oscuros = minOf(texto.luminance(), fondo.luminance())
+                assertTrue("Acento de calendario ilegible sobre ${ambiente.nombre}", (claros + .05f) / (oscuros + .05f) >= 4.5f)
+            }
+        }
+    }
+
     @Test fun quitarUnaCarpetaNoLaRecuperaDesdeLaCacheAlReiniciar() {
         val contexto: Context = ApplicationProvider.getApplicationContext()
         val almacen = Almacen(contexto)

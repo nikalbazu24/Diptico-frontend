@@ -47,14 +47,14 @@ fun TemaRenacer(e: Salon, contenido: @Composable () -> Unit) {
     val fondo = Color(e.ambiente.fondo)
     val claro = fondo.luminance() > .5f
     val tinta = if (claro) Color(0xFF292B2A) else Color(0xFFF1ECE0)
-    val acento = fecha?.tema?.acento?.let(::Color) ?: Color(e.ambiente.acento)
+    val acento = acentoLegible(fecha?.tema?.acento?.let(::Color) ?: Color(e.ambiente.acento), fondo)
     val esquema = if (claro) lightColorScheme(
-        primary = acento, onPrimary = if (acento.luminance() > .45f) Color(0xFF202820) else Color.White,
+        primary = acento, onPrimary = if (acento.luminance() > .179f) Color.Black else Color.White,
         background = fondo, onBackground = tinta, surface = lerp(fondo, Color.White, .48f),
         onSurface = tinta, onSurfaceVariant = Color(0xFF62635D), outline = Color(0xFFCBC5B8),
         secondaryContainer = Color(0xFFE6E0D4), onSecondaryContainer = tinta,
     ) else darkColorScheme(
-        primary = acento, onPrimary = Color(0xFF192521), background = fondo, onBackground = tinta,
+        primary = acento, onPrimary = if (acento.luminance() > .179f) Color.Black else Color.White, background = fondo, onBackground = tinta,
         surface = lerp(fondo, Color.White, .045f), onSurface = tinta, onSurfaceVariant = Color(0xFFC0C3B8),
         outline = lerp(fondo, Color.White, .23f), secondaryContainer = lerp(fondo, Color.White, .1f), onSecondaryContainer = tinta,
     )
@@ -68,6 +68,19 @@ fun TemaRenacer(e: Salon, contenido: @Composable () -> Unit) {
         labelLarge = TextStyle(fontSize = 14.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold),
         labelSmall = TextStyle(fontSize = 11.sp, lineHeight = 15.sp, letterSpacing = .8.sp),
     ), content = contenido)
+}
+
+/** El acento también se usa como texto. Las fechas especiales deben conservar su legibilidad. */
+internal fun acentoLegible(acento: Color, fondo: Color): Color {
+    val destino = if (fondo.luminance() > .5f) Color.Black else Color.White
+    var ajustado = acento
+    repeat(12) {
+        val luminosidades = listOf(ajustado.luminance(), fondo.luminance())
+        val contraste = (luminosidades.max() + .05f) / (luminosidades.min() + .05f)
+        if (contraste >= 4.5f) return ajustado
+        ajustado = lerp(ajustado, destino, .12f)
+    }
+    return destino
 }
 
 /** La bisagra y sus dos hojas forman la marca. Se mantiene legible a tamaño de ícono. */
