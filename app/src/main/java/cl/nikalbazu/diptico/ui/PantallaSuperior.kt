@@ -127,6 +127,10 @@ fun PantallaSuperior(e: Estado) {
 /** El inicio con el juego elegido en grande (carátulas). */
 @Composable
 private fun Caratulas(e: Estado) {
+    if (LocalRedisenio.current) {
+        EscenaDiptico(e)
+        return
+    }
     // Modo Sistemas: mientras eliges consola, aquí se ve la consola en grande.
     if (e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas && e.sesion == null) {
         Column(Modifier.fillMaxSize()) {
@@ -258,6 +262,10 @@ val LocalHeroes = androidx.compose.runtime.staticCompositionLocalOf { emptyMap<S
 @Composable
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false, consola: Boolean = false) {
+    if (LocalRedisenio.current) {
+        DockDiptico(e, juego, modifier, arriba, consola)
+        return
+    }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val compacta = arriba || esc.angosta

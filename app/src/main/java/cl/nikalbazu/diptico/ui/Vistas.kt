@@ -86,8 +86,22 @@ fun Cuadricula(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val t = LocalTamJuegos.current
     val anchoCelda = 96f * t
-    val altoCelda = 112f * t
+    val altoCelda = (if (LocalRedisenio.current) 90f else 112f) * t
     val lista = e.visibles
+    if (LocalRedisenio.current) {
+        BoxWithConstraints(modifier) {
+            val cols = ((maxWidth.value / esc.factor - 24f) / (anchoCelda + 12f)).toInt().coerceAtLeast(1)
+            SideEffect { Teclas.columnasCuadricula = cols }
+            if (lista.isEmpty()) VacioEstante(e)
+            RejillaCentrada(lista.size, cols, e.indiceSel, esc.d(12), esc.d(14), PaddingValues(esc.d(12)),
+                Modifier.fillMaxSize(), clave = { lista[it].clave }) { i ->
+                Celda(lista[i], i == e.indiceSel, anchoCelda, altoCelda) {
+                    if (i == e.indiceSel) Diptico.jugar() else Diptico.elegirJuego(lista[i].clave)
+                }
+            }
+        }
+        return
+    }
     BoxWithConstraints(modifier) {
         val anchoUnidades = maxWidth.value / esc.factor
         val cols = ((anchoUnidades - 24f) / (anchoCelda + 12f)).toInt().coerceAtLeast(2)

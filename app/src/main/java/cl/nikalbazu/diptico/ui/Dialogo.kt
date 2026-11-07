@@ -62,7 +62,7 @@ fun VentanaDialogo(e: Estado) {
             Modifier
                 .graphicsLayer { scaleX = entra.value; scaleY = entra.value; alpha = ((entra.value - 0.9f) / 0.1f).coerceIn(0f, 1f) }
                 .widthIn(max = esc.d(520)).fillMaxWidth(0.9f)
-                .clip(RoundedCornerShape(esc.d(28))).background(p.fondo2)
+                .superficieApp(p.fondo2, RoundedCornerShape(esc.d(28)), CapaCristal.PANEL)
                 .border(esc.d(1.5f), acento.copy(alpha = 0.45f), RoundedCornerShape(esc.d(28)))
                 .padding(esc.d(22)),
         ) {

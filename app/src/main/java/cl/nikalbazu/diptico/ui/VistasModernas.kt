@@ -23,6 +23,10 @@ import cl.nikalbazu.diptico.estado.*
 
 @Composable
 fun TarjetaCaratula(j: Juego, elegida: Boolean, ancho: Float, alto: Float, titulo: Boolean, elegir: () -> Unit) {
+    if (LocalRedisenio.current) {
+        PortadaSeleccion(j, elegida, ancho, alto, titulo, elegir)
+        return
+    }
     val esc = LocalEscala.current; val p = LocalPaleta.current
     val c = Consolas.porId(j.consolaId) ?: return
     val caja = cajaDe(c); val k = minOf((ancho - 12) / caja.ancho, (alto - 8) / caja.alto)
@@ -51,7 +55,7 @@ fun FilaBiblioteca(e: Estado, j: Juego, elegida: Boolean) {
         .padding(esc.d(8)), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(esc.d(54)).clip(RoundedCornerShape(esc.d(10)))) { ArteJuego(j, false, 180, Modifier.fillMaxSize()) }
         Spacer(Modifier.width(esc.d(12)))
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Texto(j.titulo, 15f, lineas = 1)
             Detalle(listOfNotNull(c?.nombre, d?.tiempo?.takeIf { it > 0 }?.let { formatoTiempo(it) }).joinToString(" · "), 11.5f, lineas = 1)
         }
@@ -62,6 +66,10 @@ fun FilaBiblioteca(e: Estado, j: Juego, elegida: Boolean) {
 
 @Composable
 fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Boolean, lado: Dp) {
+    if (LocalRedisenio.current) {
+        IconoCarpetaDiptico(e, id, elegida, interactiva, lado)
+        return
+    }
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val consola = Consolas.porId(id)
@@ -108,6 +116,10 @@ internal fun PortadaCarpeta(
 
 @Composable
 fun ControlesBiblioteca(e: Estado) {
+    if (LocalRedisenio.current) {
+        FiltroActivoLimpio(e)
+        return
+    }
     val esc = LocalEscala.current; val p = LocalPaleta.current
     Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(12), vertical = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
         Texto("${e.visibles.size}", 11f, color = p.tenue)

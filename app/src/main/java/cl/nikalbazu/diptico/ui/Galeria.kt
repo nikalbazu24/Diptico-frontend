@@ -50,6 +50,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
     val seleccion = items.getOrNull(e.indice)?.takeIf { conPrevia && it.tema != null }
     val vistaLateral = seleccion != null && !esc.angosta
     val (titulo, icono) = when (e.galeria) {
+        "biblioteca" -> "Opciones de juegos" to Icono.MENU
         "capturas_juego", "captura_acciones" -> "Capturas del juego" to Icono.PORTADA
         "variantes_juego" -> "Versión del juego" to Icono.FORMA
         "copias_srm" -> "Copias de RetroArch" to Icono.COPIAR
@@ -68,7 +69,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
         "colecciones" -> "Colecciones" to Icono.CARPETA
         else -> "Música" to Icono.MUSICA
     }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconoDiptico(icono, p.tinta, 22f, acento = Coral)
@@ -136,7 +137,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                     itemsIndexed(items, key = { _, it -> it.id + it.nombre }) { i, it ->
                         val activo = i == e.indice
                         when (e.galeria) {
-                            "vistas_juegos", "vistas_consolas", "filtros", "orden", "variantes_juego" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
+                            "biblioteca", "vistas_juegos", "vistas_consolas", "filtros", "orden", "variantes_juego" -> FilaCancion(it, activo, Icono.VISTA, "En uso ✓") { Diptico.elegirIndice(i) }
                             "capturas_juego" -> {
                                 val uri = Diptico.imagenCaptura(e, it.id)
                                 if (uri == null) FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
@@ -337,7 +338,7 @@ private fun FilaIA(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Uni
             else Texto(letra, 17f, color = Color.White, lineas = 1, traducir = false)
         }
         Spacer(Modifier.width(esc.d(12)))
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Texto(it.nombre, 15.5f, color = if (activo) SobreUva else p.tinta, lineas = 1)
             Detalle(it.detalle, 11.5f, color = if (activo) SobreUva.copy(alpha = 0.85f) else p.tenue, lineas = 1)
         }
@@ -375,7 +376,7 @@ private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, icono: Icono =
             IconoDiptico(icono, if (activo) SobreUva else p.tinta, 18f, acento = if (activo) SobreUva else Coral)
         }
         Spacer(Modifier.width(esc.d(10)))
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Texto(it.nombre, 15f, color = if (activo) SobreUva else p.tinta, lineas = 1)
             if (it.detalle.isNotBlank()) Detalle(it.detalle, 12f, color = if (activo) SobreUva.copy(alpha = 0.8f) else p.tenue, lineas = 1)
         }
@@ -493,7 +494,7 @@ fun ExplicaIA(id: String) {
                     IconoDiptico(icono, color, 18f, acento = color)
                 }
                 Spacer(Modifier.width(esc.d(12)))
-                Column(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Etiqueta(etiqueta, color, 11f)
                     Detalle(texto, 14f, color = p.tinta, lineas = 3)
                 }

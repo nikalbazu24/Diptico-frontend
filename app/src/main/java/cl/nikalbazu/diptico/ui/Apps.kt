@@ -77,7 +77,7 @@ fun PanelApps(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val apps = remember(e.appsTodas, e.appsFijadas, e.appsPestana, e.ordenApps) { Diptico.appsVisibles(e) }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo2).sinCerrar()) {
         Box(Modifier.fillMaxWidth().height(esc.d(160)).background(Brush.verticalGradient(listOf(Cielo.copy(alpha = 0.16f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -174,7 +174,7 @@ fun LecturaApps(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val a = remember(e.appsTodas, e.appsFijadas, e.appsPestana, e.ordenApps, e.indice) { Diptico.appsVisibles(e).getOrNull(e.indice) }
-    Box(Modifier.fillMaxSize().background(p.fondo)) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo)) {
         Box(Modifier.align(Alignment.CenterEnd).size(esc.d(520)).background(Brush.radialGradient(listOf(Cielo.copy(alpha = 0.22f), Color.Transparent))))
         BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
         if (a == null) {

@@ -42,7 +42,7 @@ fun PanelEditarConsola(e: Estado) {
     val c = Consolas.porId(e.consolaEditando)
     val color = c?.color ?: Uva
     val opciones = remember(e) { Diptico.opcionesEditarConsola(e) }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo2).sinCerrar()) {
         // Un poco del color (o la imagen) de la consola de fondo.
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(color.copy(alpha = 0.3f), Color.Transparent))))
         Row(Modifier.fillMaxSize()) {

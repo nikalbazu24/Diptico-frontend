@@ -105,6 +105,7 @@ data class Opcion(
     val menos: (() -> Unit)? = null,
     /** Para los accesos que se encienden y apagan (Wi-Fi, Bluetooth, turbo…): si está encendido ahora. null = no aplica. */
     val activa: Boolean? = null,
+    val rango: RangoOpcion? = null,
     val accion: () -> Unit,
 )
 
@@ -573,6 +574,8 @@ data class Estado(
     val pistaTema: String = "bisagra",
     /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
     val efecto: String = "degradado",
+    /** Glass puede activarse o desactivarse para cualquier tema sin modificarlo. */
+    val materialInterfaz: String = "tema",
     /** "auto", "alta", "equilibrada" o "ahorro". */
     val fluidez: String = "auto",
     /** Lo que eligió "auto" según la consola. */
@@ -612,6 +615,7 @@ data class Estado(
     val esInicio: Boolean = true,
 ) {
     val atajoApps get() = navegacion.atajoApps
+    val nivelesGlass get() = experiencia.nivelesGlass
     val atajoBisa get() = navegacion.atajoBisa
     val ordenApps get() = navegacion.ordenApps
     val appsMenu get() = navegacion.appsMenu
@@ -724,7 +728,7 @@ object Diptico {
         val apps = AtajoInicio.leer(almacen.texto("atajoApps"), AtajoInicio.START_R3)
         val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_L3)
             .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
-        val vistaGuardada = almacen.texto("vistaConsolas", "arriba")
+        val vistaGuardada = almacen.texto("vistaConsolas", if (cl.nikalbazu.diptico.BuildConfig.RENACER) "carpetas" else "arriba")
         val vistaConsolas = vistaConsolasCompatible(vistaGuardada)
         if (vistaConsolas != vistaGuardada) almacen.guardarTexto("vistaConsolas", vistaConsolas)
         _estado.value = Estado(
@@ -760,7 +764,7 @@ object Diptico {
             modoCarpeta = almacen.texto("modoCarpeta", "ventana"),
             carpetasHorizontal = almacen.bool("carpetasHorizontal", false),
             tamCarpetas = limitarTamCarpetas(almacen.texto("tamCarpetas").toFloatOrNull() ?: 1f),
-            experiencia = Experiencia.leer(almacen.texto("experiencia", "{}")),
+            experiencia = Experiencia.leer(almacen.texto("experiencia", "{}")).copy(nivelesGlass = almacen.nivelesGlass),
             perfilesVisuales = Experiencia.perfiles(almacen.texto("perfilesVisuales", "{}")),
             temasPropios = leerTemas(almacen.texto("temasPropios", "[]")),
             adornosPorTema = leerMapa(almacen.texto("adornosPorTema", "{}")),
@@ -829,6 +833,7 @@ object Diptico {
             avisosEmergentes = almacen.bool("avisosEmergentes", true),
             carpetas = carpetas,
             efecto = almacen.texto("efecto", "degradado"),
+            materialInterfaz = almacen.texto("materialInterfaz", "tema"),
             fluidez = almacen.texto("fluidez", "auto"),
             fluidezDetectada = detectarFluidez(),
             sonidos = almacen.bool("sonidos", true),
@@ -2157,13 +2162,19 @@ object Diptico {
     fun temaEnTienda(e: Estado): TemaComunidad? = temasEnTienda(e).getOrNull(e.indice)
 
     fun abrirGaleria(tipo: String, pestana: Int = 0) {
-        if (estado.value.panel != Panel.GALERIA) galeriaDesde = regresoActual()
+        if (estado.value.panel != Panel.GALERIA) {
+            val e = estado.value
+            galeriaDesde = regresoActual() ?: e.takeIf { it.panel == Panel.NINGUNO }?.let {
+                Regreso(it.panel, it.seccion, it.enOpciones, it.indice, it.pestanaFicha)
+            }
+        }
         actualizar { it.copy(panel = Panel.GALERIA, galeria = tipo, galeriaPestana = pestana, indice = 0, decoracionAbierta = null) }
         val i = itemsGaleria().indexOfFirst { it.enUso }
         if (i > 0) actualizar { it.copy(indice = i) }
     }
 
     fun pestanasGaleria(tipo: String = estado.value.galeria): List<String> = if (tipo == "colecciones") listOf("Colecciones") else when (tipo) {
+        "biblioteca" -> listOf("Opciones de juegos")
         "variantes_juego" -> listOf("Archivos del juego")
         "capturas_juego", "captura_acciones" -> listOf("Capturas guardadas")
         "copias_srm" -> listOf("Copias de RetroArch")
@@ -2200,6 +2211,13 @@ object Diptico {
 
     fun itemsGaleria(e: Estado = estado.value): List<ItemGaleria> {
         val actual = cl.nikalbazu.diptico.ui.Estilo.tema
+        if (e.galeria == "biblioteca") return listOf(
+            ItemGaleria("buscar", "Buscar un juego", "Por nombre", false) { abrirBuscar() },
+            ItemGaleria("filtros", "Filtrar", nombreFiltro(e.filtro), false) { abrirGaleria("filtros") },
+            ItemGaleria("orden", "Ordenar", nombreOrden(e.orden), false) { abrirGaleria("orden") },
+            ItemGaleria("vistas", "Cambiar vista", nombreVista(e.vista), false) { abrirGaleria("vistas_juegos") },
+            ItemGaleria("carpeta", "Personalizar carpeta", Consolas.porId(e.consolaSel)?.nombre ?: "Todos tus juegos", false) { abrirEditarConsola(e.consolaSel) },
+        )
         if (e.galeria == "copias_srm") return opcionesCopiasPartida
         if (e.galeria == "captura_acciones") {
             val (clave, ruta) = capturaPara ?: return emptyList()
@@ -3316,6 +3334,7 @@ object Diptico {
             else -> "Su cerebro"
         }
         Seccion.TEMAS -> when {
+            t.contains("Glass") -> "Glass"
             t.startsWith("Mi tema") || t == "Mezclar mi tema" -> "Mi tema"
             t.contains("IA") -> "Con IA"
             else -> "Elegir"
@@ -3328,7 +3347,7 @@ object Diptico {
             else -> "Más"
         }
         Seccion.APARIENCIA -> when {
-            t == "Modo" || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
+            t == "Modo" || t.contains("Glass") || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
             t.contains("protector", true) -> "Protector de pantalla"
             t.startsWith("Zoom") || t.contains("nimación") -> "Detalles"
             else -> "Íconos de las consolas"
@@ -3554,6 +3573,8 @@ object Diptico {
             }
             Seccion.APARIENCIA -> {
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
+                lista += opcionGlass(e)
+                lista += opcionesNivelesGlass(e)
                 lista += Opcion(
                     "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
                     "Liso, degradado, con un brillo que pasa, o de vidrio. Se ve en el botón Jugar, el menú y las opciones elegidas.",
@@ -3957,6 +3978,7 @@ object Diptico {
     fun cancelarArchivoVisual() { imagenVisual = null }
 
     fun guardarExperiencia(v: Experiencia) {
+        almacen.nivelesGlass = v.nivelesGlass
         almacen.guardarTexto("experiencia", v.json(local = true).toString())
         actualizar { it.copy(experiencia = v) }
         cl.nikalbazu.diptico.ui.Estilo.efecto = if (v.vidrio) "vidrio" else estado.value.efecto
@@ -4183,6 +4205,7 @@ object Diptico {
         val baseVisual = conAdorno(e, fiesta?.tema ?: elegido)
         val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso, decor = "nada") else baseVisual
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
+        cl.nikalbazu.diptico.ui.Estilo.materialInterfaz = e.materialInterfaz
         cl.nikalbazu.diptico.ui.Estilo.efecto = activo.acabado.ifBlank { if (e.experiencia.vidrio) "vidrio" else e.efecto }
         aplicarFluidez()
         Sonidos.cambiarJuego(activo.sonidos, activo.tonoSonidos)
@@ -4196,6 +4219,41 @@ object Diptico {
         aplicarTema()
         val e = estado.value
         if (e.fiesta != null) avisar("Hoy manda el tema de ${e.fiesta.nombre}. Apaga \"Fechas especiales\" para usar este.")
+    }
+
+    fun elegirMaterialInterfaz(material: String) {
+        if (material !in listOf("tema", "glass", "original")) return
+        almacen.guardarTexto("materialInterfaz", material)
+        actualizar { it.copy(materialInterfaz = material) }
+        aplicarTema()
+    }
+
+    private fun opcionGlass(e: Estado) = Opcion(
+        "Acabado Glass", when (e.materialInterfaz) { "glass" -> "Activado"; "original" -> "Desactivado"; else -> "Según el tema" }, Icono.ESTRELLA,
+        "Luz, desenfoque y profundidad en cualquier tema. Conserva sus colores, música, formas y decoraciones. Puedes activarlo, desactivarlo o respetar el acabado original del tema.",
+    ) {
+        val opciones = listOf("tema", "glass", "original")
+        elegirMaterialInterfaz(opciones[(opciones.indexOf(estado.value.materialInterfaz) + 1).mod(opciones.size)])
+    }
+
+    fun elegirNivelGlass(zona: ZonaGlass, valor: Int) {
+        val nuevos = estado.value.nivelesGlass.cambiar(zona, valor)
+        if (nuevos == estado.value.nivelesGlass) return
+        almacen.nivelesGlass = nuevos
+        val e = estado.value
+        val indice = if (e.panel == Panel.MENU) opcionesSeccion(e.seccion).indexOfFirst { it.titulo == "Glass de ${zona.nombre}" } else -1
+        val experiencia = e.experiencia.copy(nivelesGlass = nuevos)
+        almacen.guardarTexto("experiencia", experiencia.json(local = true).toString())
+        actualizar { it.copy(experiencia = experiencia, indice = indice.takeIf { i -> i >= 0 } ?: it.indice) }
+    }
+
+    private fun opcionesNivelesGlass(e: Estado): List<Opcion> = ZonaGlass.entries.map { zona ->
+        val nivel = e.nivelesGlass.para(zona)
+        Opcion("Glass de ${zona.nombre}", "$nivel %", Icono.ESTRELLA,
+            "Regula solo ${zona.nombre}: 0 % deja una superficie sólida y 100 % aplica la máxima intensidad. Se conserva al cambiar de tema. Activa Acabado Glass para verlo.",
+            menos = { elegirNivelGlass(zona, estado.value.nivelesGlass.para(zona) - 10) },
+            rango = RangoOpcion(nivel) { elegirNivelGlass(zona, it) },
+        ) { elegirNivelGlass(zona, estado.value.nivelesGlass.para(zona) + 10) }
     }
 
     private fun guardarTemasPropios(l: List<Tema>) {
@@ -4260,6 +4318,8 @@ object Diptico {
 
     private fun opcionesTemas(e: Estado): List<Opcion> {
         val lista = mutableListOf<Opcion>()
+        lista += opcionGlass(e)
+        lista += opcionesNivelesGlass(e)
         val prox = Temas.proxima()
         lista += Opcion(
             "Fechas especiales", if (e.temaFestivo) "Sí" else "No", Icono.MUNDO,
@@ -6350,6 +6410,7 @@ object Diptico {
     private var ultimaConsultaAct: Long? = null
 
     private fun vigilarActualizaciones() {
+        if (cl.nikalbazu.diptico.BuildConfig.RENACER) return
         Actualizador.programar(app, estado.value.actualizarSolo)
         scope.launch {
             while (true) {
@@ -6360,6 +6421,7 @@ object Diptico {
     }
 
     fun revisarActualizacionAlVolver() {
+        if (cl.nikalbazu.diptico.BuildConfig.RENACER) return
         if (!estado.value.listo || !estado.value.actualizarSolo) return
         val ultima = ultimaConsultaAct
         if (ultima == null || android.os.SystemClock.elapsedRealtime() - ultima >= 60_000L) {
@@ -6370,6 +6432,10 @@ object Diptico {
     }
 
     fun buscarActualizacion(silencioso: Boolean = false) {
+        if (cl.nikalbazu.diptico.BuildConfig.RENACER) {
+            if (!silencioso) avisar("Esta edición de prueba se actualiza desde su APK de revisión en GitHub")
+            return
+        }
         if (estado.value.buscandoAct) return
         ultimaConsultaAct = android.os.SystemClock.elapsedRealtime()
         actualizar { it.copy(buscandoAct = true) }

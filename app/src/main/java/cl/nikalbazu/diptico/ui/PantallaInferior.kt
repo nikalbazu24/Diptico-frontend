@@ -52,6 +52,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -115,6 +116,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo2)) {
+        if (LocalRedisenio.current) FondoColeccion(e, Modifier.fillMaxSize())
         val s = e.sesion
         // Con la lupa no se difumina nada encima (la copia de la pantalla de arriba se veía rara con el desenfoque).
         val conLupa = s != null && e.lupaActiva && e.datos[s.clave]?.lupa == true && s.displayId == android.view.Display.DEFAULT_DISPLAY && !s.dosPantallas
@@ -122,6 +124,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Column(Modifier.fillMaxSize()) {
+                    if (LocalRedisenio.current && !(e.vistaConsolas in Diptico.MODOS_ELEGIR && !e.enSistemas)) CabeceraColeccion(e)
                     val escalaEstante = if (esc.angosta) 1.08f else 1.18f
                     when (e.vistaConsolas) {
                         "lado", "rueda" -> Row(Modifier.fillMaxWidth().weight(1f)) {
@@ -165,6 +168,9 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
 internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    val cristal = LocalCristal.current
+    val captura = remember(e.carpetaEnVentana, e.consolaSel, e.tema, e.oscuro, cristal.imagen, e.nivelesGlass.carpetas) { FondoVentanaCristal() }
+    val capturar = e.carpetaEnVentana && e.nivelesGlass.carpetas > 0 && Estilo.glass && cristal.efectos && !cristal.contraste
     if (!e.enSistemas && !e.carpetaEnVentana) {
         Column(modifier) {
             CabeceraSistema(e)
@@ -174,35 +180,33 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
     }
     Box(modifier) {
         val abierta = e.carpetaEnVentana
-        CarpetasConsolas(
-            e,
-            Modifier.fillMaxSize().then(if (abierta) Modifier.desenfocarCuadricula() else Modifier),
-            interactiva = !abierta,
-        )
+        Box(Modifier.fillMaxSize().then(when {
+                capturar -> Modifier.fondoDeVentana(captura, e.nivelesGlass.carpetas)
+                abierta -> Modifier.desenfocarCuadricula()
+                else -> Modifier
+            })) {
+            if (abierta && LocalRedisenio.current) FondoColeccion(e, Modifier.fillMaxSize())
+            CarpetasConsolas(e, Modifier.fillMaxSize(), interactiva = !abierta)
+        }
         if (abierta) {
             Box(Modifier.fillMaxSize().background(p.fondo2.copy(alpha = .12f)).clickable { Diptico.volverASistemas() })
-            val forma = RoundedCornerShape(esc.d(19))
-            Column(
-                Modifier.align(Alignment.Center).fillMaxWidth(.90f).fillMaxHeight(.84f)
-                    .shadow(esc.d(12), forma, clip = false).clip(forma)
-                    .background(p.fondo2.copy(alpha = .80f)).border(esc.d(1), p.linea, forma).sinCerrar(),
-            ) {
-                CabeceraSistema(e)
-                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+            CompositionLocalProvider(LocalFondoVentanaCristal provides captura.takeIf { capturar }) {
+                VentanaCarpeta(e, Modifier.align(Alignment.Center).fillMaxWidth(.90f).fillMaxHeight(.84f), escalaEstante)
             }
         }
     }
 }
 
-/** En un lienzo sin efectos gráficos, suaviza la cuadrícula al dibujarla a baja resolución. */
-private fun Modifier.desenfocarCuadricula(): Modifier = drawWithCache {
+/** Android 12 usa el filtro gráfico; Android 10/11 y las capturas aplican el mismo suavizado en software. */
+internal fun Modifier.desenfocarCuadricula(): Modifier = drawWithCache {
     val ancho = size.width.roundToInt()
     val alto = size.height.roundToInt()
-    val paso = 9.dp.toPx()
+    val paso = 4.dp.toPx()
     val imagen by lazy {
         ImageBitmap((ancho / paso).roundToInt().coerceAtLeast(1), (alto / paso).roundToInt().coerceAtLeast(1))
     }
     val lienzo by lazy { Canvas(imagen) }
+    val filtro by lazy { DesenfoqueBitmap(imagen.width, imagen.height, 4) }
     onDrawWithContent {
         val efectoNativo = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && drawContext.canvas.nativeCanvas.isHardwareAccelerated
         if (efectoNativo || ancho == 0 || alto == 0) {
@@ -211,9 +215,13 @@ private fun Modifier.desenfocarCuadricula(): Modifier = drawWithCache {
             imagen.asAndroidBitmap().eraseColor(android.graphics.Color.TRANSPARENT)
             val contenido = this
             draw(this, layoutDirection, lienzo, size) {
-                lienzo.scale(imagen.width.toFloat() / ancho, imagen.height.toFloat() / alto)
-                contenido.drawContent()
+                lienzo.save()
+                try {
+                    lienzo.scale(imagen.width.toFloat() / ancho, imagen.height.toFloat() / alto)
+                    contenido.drawContent()
+                } finally { lienzo.restore() }
             }
+            filtro.aplicar(imagen.asAndroidBitmap())
             drawImage(imagen, dstSize = IntSize(ancho, alto), filterQuality = FilterQuality.Low)
         }
     }
@@ -314,6 +322,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
             }
         }
     }
+        if (LocalRedisenio.current) PieSeleccion(e)
     }
 }
 

@@ -31,6 +31,7 @@ import cl.nikalbazu.diptico.estado.Estado
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     CompositionLocalProvider(
+        LocalCristal provides recordarCristal(e),
         LocalIconos provides IconosCfg(e.estiloIconos, e.iconosPropios, e.iconosVersion),
         LocalFormas provides remember(e.formas, e.formaTodos, e.consolaSel) { cl.nikalbazu.diptico.estado.Diptico.formasVisibles(e) },
         LocalHeroes provides (e.heroes to e.imagenHeroe),
@@ -49,7 +50,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         // Deslizar hacia abajo desde el borde de arriba: por la izquierda, notificaciones; por la derecha, ajustes rápidos.
         val libre by androidx.compose.runtime.rememberUpdatedState(e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro)
         Box(Modifier.fillMaxSize().cortinaDesdeArriba { libre }) {
-            if (Estilo.tema.forma == "cristal" && Estilo.efectosCompletos && e.sesion == null &&
+            if (Estilo.glass && Estilo.efectosCompletos && e.sesion == null &&
                 (e.panel in setOf(Panel.MENU, Panel.APPS, Panel.GALERIA, Panel.ESTUDIO) || (rol == Rol.INFERIOR && e.inicio != "widgets"))) {
                 e.seleccionado?.takeIf { (it.arte ?: it.portada)?.scheme?.let { s -> s != "app" } == true }?.let { juego ->
                     ArteJuego(juego, preferirArte = true, maxLado = 320,

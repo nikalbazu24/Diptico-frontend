@@ -255,6 +255,10 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
 /** Arriba de los juegos, en modo Sistemas: la consola en la que estás y cómo volver. */
 @Composable
 fun CabeceraSistema(e: Estado) {
+    if (LocalRedisenio.current) {
+        CabeceraJuegosLimpia(e)
+        return
+    }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Row(Modifier.fillMaxWidth().padding(start = esc.d(12), end = esc.d(16), top = esc.d(8), bottom = esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
@@ -464,10 +468,15 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
                     else CarpetaVisual(e, id, k == sel, amplia = e.vistaConsolas == "vitrina")
                 }
             }
-            if (horizontal) LazyHorizontalGrid(
+            if (LocalRedisenio.current && conZoom) {
+                RejillaCentrada(ids.size, carriles, sel, separacionX, separacionY, relleno,
+                    Modifier.fillMaxSize(), interactiva, horizontal = horizontal, clave = { ids[it] }) { k ->
+                    CarpetaBiblioteca(e, ids[k], k == sel, interactiva, lado)
+                }
+            } else if (horizontal) LazyHorizontalGrid(
                 rows = celdas, state = grilla, userScrollEnabled = interactiva,
                 modifier = Modifier.fillMaxSize(), contentPadding = relleno,
-                verticalArrangement = Arrangement.spacedBy(separacionY), horizontalArrangement = Arrangement.spacedBy(separacionX),
+                verticalArrangement = Arrangement.spacedBy(separacionY, Alignment.CenterVertically), horizontalArrangement = Arrangement.spacedBy(separacionX, Alignment.CenterHorizontally),
                 content = contenido,
             ) else LazyVerticalGrid(
                 columns = celdas, state = grilla, userScrollEnabled = interactiva,

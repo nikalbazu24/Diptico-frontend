@@ -88,7 +88,7 @@ fun PanelAsistente(e: Estado) {
     val esc = LocalEscala.current
     val elementos = remember(e) { Diptico.elementosAsistente(e) }
     val contexto = remember(e.sesion, e.juegos, e.seleccionado, e.dosDisponibles, e.unaPantalla) { CentroBisa.contexto(e) }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().fondoPantalla(p.fondo2).sinCerrar()) {
         Box(Modifier.align(Alignment.TopEnd).size(esc.d(320)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(8))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
