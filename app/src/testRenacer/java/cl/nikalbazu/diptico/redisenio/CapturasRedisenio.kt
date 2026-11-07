@@ -35,6 +35,8 @@ import cl.nikalbazu.diptico.ui.IconoCarpetaDiptico
 import cl.nikalbazu.diptico.ui.glassActivo
 import cl.nikalbazu.diptico.ui.Lienzo
 import cl.nikalbazu.diptico.ui.LocalRedisenio
+import cl.nikalbazu.diptico.ui.LocalEscala
+import cl.nikalbazu.diptico.ui.Escala
 import cl.nikalbazu.diptico.ui.Raiz
 import cl.nikalbazu.diptico.ui.Rol
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -166,10 +168,12 @@ class CapturasRedisenio {
         Estilo.materialInterfaz = "original"
         regla.setContent {
             Lienzo(true, Modifier.fillMaxSize()) {
-                Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Consolas.todas.chunked(10).forEach { fila ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                            fila.forEach { consola -> IconoCarpetaDiptico(base, consola.id, false, false, 63.dp) }
+                CompositionLocalProvider(LocalEscala provides Escala(1f, 780f, 1f)) {
+                    Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Consolas.todas.chunked(10).forEach { fila ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                fila.forEach { consola -> IconoCarpetaDiptico(base, consola.id, false, false, 63.dp) }
+                            }
                         }
                     }
                 }
@@ -197,12 +201,13 @@ class CapturasRedisenio {
             assertEquals("glass", Diptico.estado.value.materialInterfaz)
             assertTrue(Estilo.glass)
             assertEquals("glass", cl.nikalbazu.diptico.data.Almacen(ApplicationProvider.getApplicationContext()).texto("materialInterfaz", "tema"))
-            Diptico.elegirTema("navidad")
+            val navidad = Temas.fiestas.first { it.id == "navidad" }.tema.id
+            Diptico.elegirTema(navidad)
             assertTrue(Estilo.glass)
-            assertEquals("navidad", Estilo.tema.id)
+            assertEquals(navidad, Estilo.tema.id)
             Diptico.elegirMaterialInterfaz("original")
             assertFalse(Estilo.glass)
-            assertEquals("navidad", Estilo.tema.id)
+            assertEquals(navidad, Estilo.tema.id)
             assertEquals("original", cl.nikalbazu.diptico.data.Almacen(ApplicationProvider.getApplicationContext()).texto("materialInterfaz", "tema"))
         }
     }
