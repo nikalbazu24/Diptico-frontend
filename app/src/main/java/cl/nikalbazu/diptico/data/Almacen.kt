@@ -3,6 +3,7 @@ package cl.nikalbazu.diptico.data
 import android.content.Context
 import android.net.Uri
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 /** Guarda las preferencias y la memoria de Díptico en el teléfono. */
@@ -142,8 +143,10 @@ class Almacen(ctx: Context) {
     fun guardarCarpetas(l: List<CarpetaJuegos>) {
         val a = JSONArray()
         l.forEach { a.put(JSONObject().put("uri", it.uri.toString()).put("consola", it.consola ?: "")) }
-        p.edit().putString("carpetas", a.toString()).apply()
-        carpeta = l.firstOrNull()?.uri
+        p.edit()
+            .putString("carpetas", a.toString())
+            .putString("carpeta", l.firstOrNull()?.uri?.toString())
+            .apply()
     }
 
     fun medios(): Map<String, MediosJuego> {
@@ -248,24 +251,28 @@ class Almacen(ctx: Context) {
         val salida = ArrayList<Juego>(a.length())
         for (i in 0 until a.length()) {
             val o = a.optJSONObject(i) ?: continue
-            salida += Juego(
-                clave = o.getString("clave"),
-                consolaId = o.getString("consola"),
-                titulo = o.getString("titulo"),
-                archivo = o.getString("archivo"),
-                uri = Uri.parse(o.getString("uri")),
-                docId = o.getString("doc"),
-                portada = o.optString("portada", "").takeIf { it.isNotEmpty() }?.let(Uri::parse),
-                arte = o.optString("arte", "").takeIf { it.isNotEmpty() }?.let(Uri::parse),
-                esCarpeta = o.optBoolean("carpeta", false),
-                variantes = o.optJSONArray("variantes")?.let { a ->
-                    (0 until a.length()).mapNotNull { i ->
-                        val v = a.optJSONObject(i) ?: return@mapNotNull null
-                        val ruta = v.optString("uri").ifBlank { return@mapNotNull null }
-                        VarianteJuego(v.optString("archivo"), Uri.parse(ruta), v.optString("doc"), v.optBoolean("carpeta"))
-                    }
-                }.orEmpty(),
-            )
+            try {
+                salida += Juego(
+                    clave = o.getString("clave"),
+                    consolaId = o.getString("consola"),
+                    titulo = o.getString("titulo"),
+                    archivo = o.getString("archivo"),
+                    uri = Uri.parse(o.getString("uri")),
+                    docId = o.getString("doc"),
+                    portada = o.optString("portada", "").takeIf { it.isNotEmpty() }?.let(Uri::parse),
+                    arte = o.optString("arte", "").takeIf { it.isNotEmpty() }?.let(Uri::parse),
+                    esCarpeta = o.optBoolean("carpeta", false),
+                    variantes = o.optJSONArray("variantes")?.let { variantes ->
+                        (0 until variantes.length()).mapNotNull { indice ->
+                            val v = variantes.optJSONObject(indice) ?: return@mapNotNull null
+                            val ruta = v.optString("uri").ifBlank { return@mapNotNull null }
+                            VarianteJuego(v.optString("archivo"), Uri.parse(ruta), v.optString("doc"), v.optBoolean("carpeta"))
+                        }
+                    }.orEmpty(),
+                )
+            } catch (_: JSONException) {
+                // La caché se vuelve a completar al escanear las carpetas.
+            }
         }
         return salida
     }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
+import java.io.IOException
 
 /**
  * Busca juegos dentro de la carpeta elegida. Espera una carpeta por consola
@@ -30,8 +31,19 @@ object Biblioteca {
                 val mime = c.getString(2) ?: ""
                 salida += Doc(id, nombre, mime == Document.MIME_TYPE_DIR)
             }
-        }
+        } ?: throw IOException("El proveedor no respondió al leer la carpeta")
         return salida
+    }
+
+    // Una carpeta de imágenes de ES-DE que perdió el permiso no impide leer los juegos.
+    private fun listarMedios(ctx: Context, arbol: Uri, docId: String? = null): List<Doc> = try {
+        listar(ctx, arbol, docId ?: DocumentsContract.getTreeDocumentId(arbol))
+    } catch (_: SecurityException) {
+        emptyList()
+    } catch (_: IllegalArgumentException) {
+        emptyList()
+    } catch (_: IOException) {
+        emptyList()
     }
 
     private fun nombreDe(ctx: Context, arbol: Uri, docId: String): String? {
@@ -84,7 +96,8 @@ object Biblioteca {
     }
 
     private fun escanearConsolas(ctx: Context, arbol: Uri, media: Uri?, carpetasConsola: List<Pair<Doc, Consola>>): List<Juego> {
-        val mediaRaiz = media?.let { m -> listar(ctx, m, DocumentsContract.getTreeDocumentId(m)) }
+        if (carpetasConsola.isEmpty()) return emptyList()
+        val mediaRaiz = media?.let { listarMedios(ctx, it) }
         val juegos = mutableListOf<Juego>()
 
         for ((dir, consola) in carpetasConsola) {
@@ -107,13 +120,13 @@ object Biblioteca {
             // Imágenes descargadas por ES-DE (downloaded_media/<consola>/covers, fanart o screenshots).
             if (media != null && mediaRaiz != null) {
                 mediaRaiz.firstOrNull { it.esCarpeta && it.nombre.equals(dir.nombre, true) }?.let { sistema ->
-                    val categorias = listar(ctx, media, sistema.id)
+                    val categorias = listarMedios(ctx, media, sistema.id)
                     categorias.firstOrNull { it.esCarpeta && it.nombre.equals("covers", true) }?.let {
-                        juntarImagenes(media, listar(ctx, media, it.id), portadas)
+                        juntarImagenes(media, listarMedios(ctx, media, it.id), portadas)
                     }
                     (categorias.firstOrNull { it.esCarpeta && it.nombre.equals("fanart", true) }
                         ?: categorias.firstOrNull { it.esCarpeta && it.nombre.equals("screenshots", true) })?.let {
-                        juntarImagenes(media, listar(ctx, media, it.id), artes)
+                        juntarImagenes(media, listarMedios(ctx, media, it.id), artes)
                     }
                 }
             }
