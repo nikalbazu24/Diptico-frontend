@@ -15,6 +15,8 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -30,13 +32,18 @@ import cl.nikalbazu.diptico.estado.Estado
  */
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
+    val barra = e.configurado && !(rol == Rol.INFERIOR && e.unaPantalla)
+    val esc = LocalEscala.current
     CompositionLocalProvider(
+        LocalBarraSistema provides barra,
         LocalIconos provides IconosCfg(e.estiloIconos, e.iconosPropios, e.iconosVersion),
         LocalFormas provides remember(e.formas, e.formaTodos, e.consolaSel) { cl.nikalbazu.diptico.estado.Diptico.formasVisibles(e) },
         LocalHeroes provides (e.heroes to e.imagenHeroe),
         LocalEncuadres provides cl.nikalbazu.diptico.estado.Diptico.encuadresVisibles(e),
         LocalZoomLento provides (e.zoomLento && e.experiencia.movimiento && e.sesion == null),
         LocalTamJuegos provides e.tamJuegos,
+        LocalCristal provides recordarCristal(e),
+        LocalMovimiento provides (e.experiencia.movimiento && Estilo.efectosCompletos && android.animation.ValueAnimator.areAnimatorsEnabled()),
     ) {
         // El centro de control vive siempre en la pantalla de arriba (la principal), aunque se intercambien.
         val arribaFisica = miPantalla == android.view.Display.DEFAULT_DISPLAY &&
@@ -49,75 +56,78 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         // Deslizar hacia abajo desde el borde de arriba: por la izquierda, notificaciones; por la derecha, ajustes rápidos.
         val libre by androidx.compose.runtime.rememberUpdatedState(e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro)
         Box(Modifier.fillMaxSize().cortinaDesdeArriba { libre }) {
-            if (Estilo.tema.forma == "cristal" && Estilo.efectosCompletos && e.sesion == null &&
-                (e.panel in setOf(Panel.MENU, Panel.APPS, Panel.GALERIA, Panel.ESTUDIO) || (rol == Rol.INFERIOR && e.inicio != "widgets"))) {
-                e.seleccionado?.takeIf { (it.arte ?: it.portada)?.scheme?.let { s -> s != "app" } == true }?.let { juego ->
-                    ArteJuego(juego, preferirArte = true, maxLado = 320,
-                        modifier = Modifier.fillMaxSize().blur(24.dp).graphicsLayer { alpha = 0.24f })
+            Box(Modifier.fillMaxSize().padding(top = esc.d(if (barra) ALTO_BARRA_SISTEMA else 0f))) {
+                if (Estilo.tema.forma == "cristal" && Estilo.efectosCompletos && e.sesion == null &&
+                    (e.panel in setOf(Panel.MENU, Panel.APPS, Panel.GALERIA, Panel.ESTUDIO) || (rol == Rol.INFERIOR && e.inicio != "widgets"))) {
+                    e.seleccionado?.takeIf { (it.arte ?: it.portada)?.scheme?.let { s -> s != "app" } == true }?.let { juego ->
+                        ArteJuego(juego, preferirArte = true, maxLado = 320,
+                            modifier = Modifier.fillMaxSize().blur(24.dp).graphicsLayer { alpha = 0.24f })
+                    }
                 }
-            }
-            Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
-                when {
-                    !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
-                    tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
-                    tienda -> ControlesTiendaTemas(e)
-                    rol == Rol.UNICA -> PantallaUnica(e)
-                    rol == Rol.SUPERIOR -> if (e.fichaFijada != null && e.panel == Panel.NINGUNO && e.sesion == null) {
-                        PantallaSuperior(e.copy(juegoSel = e.fichaFijada, consolaSel = "todo"))
-                    } else PantallaSuperior(e)
-                    else -> PantallaInferior(e, miPantalla)
+                Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
+                    when {
+                        !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
+                        tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
+                        tienda -> ControlesTiendaTemas(e)
+                        rol == Rol.UNICA -> PantallaUnica(e)
+                        rol == Rol.SUPERIOR -> if (e.fichaFijada != null && e.panel == Panel.NINGUNO && e.sesion == null) {
+                            PantallaSuperior(e.copy(juegoSel = e.fichaFijada, consolaSel = "todo"))
+                        } else PantallaSuperior(e)
+                        else -> PantallaInferior(e, miPantalla)
+                    }
                 }
+                AnimatedVisibility(visible = centroAqui, enter = fadeIn(tween(160)), exit = fadeOut(tween(200))) { PanelCentro(e) }
+                // Mientras juegas: Bisa se abre en la pantalla libre (la que no tiene el juego).
+                val s = e.sesion
+                val companeraLibre = s != null && !e.unaPantalla && !s.dosPantallas && miPantalla != s.displayId
+                if (companeraLibre && e.panel == Panel.ASISTENTE) PanelAsistente(e)
+                if (companeraLibre && rol == Rol.SUPERIOR && e.panel == Panel.CLAVE &&
+                    e.textoPara in setOf("asistente", "bisa_paso")) PanelClave(e)
+                AnimatedVisibility(
+                    visible = e.relojGrande && rol != Rol.INFERIOR,
+                    enter = fadeIn(tween(250)) + scaleIn(tween(320), initialScale = 0.9f),
+                    exit = fadeOut(tween(200)) + scaleOut(tween(200), targetScale = 1.05f),
+                ) { RelojGrande(e) }
+                // Teclado de Díptico: en la pantalla contraria a la del texto.
+                AnimatedVisibility(
+                    visible = e.conTeclado && if (s != null && e.textoPara in setOf("asistente", "bisa_paso") && e.panel == Panel.CLAVE)
+                        companeraLibre else (rol == Rol.SUPERIOR || rol == Rol.UNICA),
+                    enter = fadeIn(tween(200)) + androidx.compose.animation.slideInVertically(tween(300)) { it / 3 },
+                    exit = fadeOut(tween(160)),
+                ) { TecladoDiptico(e) }
+                if (e.protector && !(rol == Rol.INFERIOR && e.unaPantalla)) Protector(e, rol)
+                // Bienvenida al encender (y el recordatorio si estabas jugando), encima de todo menos la animación de entrada.
+                AnimatedVisibility(
+                    visible = e.bienvenida > 0L && !e.intro && !(rol == Rol.INFERIOR && e.unaPantalla),
+                    enter = fadeIn(tween(380)), exit = fadeOut(tween(420)),
+                ) { Bienvenida(e, rol) }
+                // ¿En qué pantalla lo abro?: la ventana va donde está el estante (abajo); arriba, un marco si se abrirá ahí.
+                if (e.donde != null) {
+                    val fisicaArriba = miPantalla == android.view.Display.DEFAULT_DISPLAY
+                    if (rol != Rol.UNICA) MarcoDonde(if (fisicaArriba) e.dondeSel == 0 else e.dondeSel == 1)
+                    if (rol == Rol.UNICA || rol == Rol.INFERIOR) VentanaDonde(e)
+                }
+                // ¿Dónde quedaste? y el mapa: en la pantalla del estante (la de abajo, o la única).
+                val delEstante = rol == Rol.UNICA || rol == Rol.INFERIOR
+                if (delEstante && e.quedaste && e.marcandoMapa == null) TarjetaQuedaste(e)
+                if (delEstante && e.marcandoMapa != null) MarcarMapa(e)
+                // Tour de novedades (una vez por versión): en la pantalla principal; la otra acompaña.
+                AnimatedVisibility(
+                    visible = e.novedades >= 0 && !e.intro,
+                    enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.95f), exit = fadeOut(tween(260)),
+                ) { if (rol == Rol.INFERIOR) NovedadesCompania(e) else TourNovedades(e) }
+                val sc = e.sesion
+                AnimatedVisibility(
+                    visible = e.continuacion > 0L && sc != null && !sc.dosPantallas && miPantalla != sc.displayId && e.datos[sc.clave]?.lupa != true,
+                    enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.94f), exit = fadeOut(tween(400)),
+                ) { Continuacion(e) }
+                // Ventana de pregunta (reporte de fallas, desinstalar…): en la pantalla del estante, encima de todo.
+                if ((if (tienda) !arribaFisica || rol == Rol.UNICA else delEstante) && e.dialogo != null) VentanaDialogo(e)
+                // En modo una pantalla, la de abajo no muestra la animación.
+                val sinIntro = rol == Rol.INFERIOR && rolIntro == Rol.INFERIOR && e.unaPantalla
+                if (e.intro && !sinIntro) Intro(rolIntro)
             }
-            AnimatedVisibility(visible = centroAqui, enter = fadeIn(tween(160)), exit = fadeOut(tween(200))) { PanelCentro(e) }
-            // Mientras juegas: Bisa se abre en la pantalla libre (la que no tiene el juego).
-            val s = e.sesion
-            val companeraLibre = s != null && !e.unaPantalla && !s.dosPantallas && miPantalla != s.displayId
-            if (companeraLibre && e.panel == Panel.ASISTENTE) PanelAsistente(e)
-            if (companeraLibre && rol == Rol.SUPERIOR && e.panel == Panel.CLAVE &&
-                e.textoPara in setOf("asistente", "bisa_paso")) PanelClave(e)
-            AnimatedVisibility(
-                visible = e.relojGrande && rol != Rol.INFERIOR,
-                enter = fadeIn(tween(250)) + scaleIn(tween(320), initialScale = 0.9f),
-                exit = fadeOut(tween(200)) + scaleOut(tween(200), targetScale = 1.05f),
-            ) { RelojGrande(e) }
-            // Teclado de Díptico: en la pantalla contraria a la del texto.
-            AnimatedVisibility(
-                visible = e.conTeclado && if (s != null && e.textoPara in setOf("asistente", "bisa_paso") && e.panel == Panel.CLAVE)
-                    companeraLibre else (rol == Rol.SUPERIOR || rol == Rol.UNICA),
-                enter = fadeIn(tween(200)) + androidx.compose.animation.slideInVertically(tween(300)) { it / 3 },
-                exit = fadeOut(tween(160)),
-            ) { TecladoDiptico(e) }
-            if (e.protector && !(rol == Rol.INFERIOR && e.unaPantalla)) Protector(e, rol)
-            // Bienvenida al encender (y el recordatorio si estabas jugando), encima de todo menos la animación de entrada.
-            AnimatedVisibility(
-                visible = e.bienvenida > 0L && !e.intro && !(rol == Rol.INFERIOR && e.unaPantalla),
-                enter = fadeIn(tween(380)), exit = fadeOut(tween(420)),
-            ) { Bienvenida(e, rol) }
-            // ¿En qué pantalla lo abro?: la ventana va donde está el estante (abajo); arriba, un marco si se abrirá ahí.
-            if (e.donde != null) {
-                val fisicaArriba = miPantalla == android.view.Display.DEFAULT_DISPLAY
-                if (rol != Rol.UNICA) MarcoDonde(if (fisicaArriba) e.dondeSel == 0 else e.dondeSel == 1)
-                if (rol == Rol.UNICA || rol == Rol.INFERIOR) VentanaDonde(e)
-            }
-            // ¿Dónde quedaste? y el mapa: en la pantalla del estante (la de abajo, o la única).
-            val delEstante = rol == Rol.UNICA || rol == Rol.INFERIOR
-            if (delEstante && e.quedaste && e.marcandoMapa == null) TarjetaQuedaste(e)
-            if (delEstante && e.marcandoMapa != null) MarcarMapa(e)
-            // Tour de novedades (una vez por versión): en la pantalla principal; la otra acompaña.
-            AnimatedVisibility(
-                visible = e.novedades >= 0 && !e.intro,
-                enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.95f), exit = fadeOut(tween(260)),
-            ) { if (rol == Rol.INFERIOR) NovedadesCompania(e) else TourNovedades(e) }
-            val sc = e.sesion
-            AnimatedVisibility(
-                visible = e.continuacion > 0L && sc != null && !sc.dosPantallas && miPantalla != sc.displayId && e.datos[sc.clave]?.lupa != true,
-                enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.94f), exit = fadeOut(tween(400)),
-            ) { Continuacion(e) }
-            // Ventana de pregunta (reporte de fallas, desinstalar…): en la pantalla del estante, encima de todo.
-            if ((if (tienda) !arribaFisica || rol == Rol.UNICA else delEstante) && e.dialogo != null) VentanaDialogo(e)
-            // En modo una pantalla, la de abajo no muestra la animación.
-            val sinIntro = rol == Rol.INFERIOR && rolIntro == Rol.INFERIOR && e.unaPantalla
-            if (e.intro && !sinIntro) Intro(rolIntro)
+            if (barra && !(e.relojGrande && rol != Rol.INFERIOR)) BarraSistema(e, Modifier.align(Alignment.TopCenter))
         }
     }
 }

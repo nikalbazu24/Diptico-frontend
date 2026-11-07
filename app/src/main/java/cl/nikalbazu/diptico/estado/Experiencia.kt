@@ -34,8 +34,11 @@ data class Experiencia(
     val vistaPerfil: String? = null,
     val sistemasPerfil: String? = null,
     val vistaPartida: String? = null,
+    val materialInterfaz: String = "glass",
+    val nivelesGlass: NivelesGlass = NivelesGlass(),
 ) {
     fun json(local: Boolean = false): JSONObject = JSONObject().put("formato", "diptico-visual").put("version", 1)
+        .put("materialInterfaz", materialInterfaz).put("glassCarpetas", nivelesGlass.carpetas).put("glassWidgets", nivelesGlass.widgets)
         .put("universo", universo).put("vidrio", vidrio).put("movimiento", movimiento)
         .put("pared", pared).put("adorno", adorno).put("columnas", columnas).put("filas", filas).put("paginas", paginas).apply {
             inicioPerfil?.let { put("inicioPerfil", it) }
@@ -92,6 +95,8 @@ data class Experiencia(
             o.optString("sistemasPerfil").takeIf { it == "habitacion" || it in Diptico.VISTAS_CONSOLAS }
                 ?.let(Diptico::vistaConsolasCompatible),
             o.optString("vistaPartida").takeIf { valor -> VistaPartida.entries.any { it.name == valor } },
+            o.optString("materialInterfaz").takeIf { it in setOf("tema", "glass", "original") } ?: "glass",
+            NivelesGlass(o.optInt("glassCarpetas", 70).coerceIn(0, 100), o.optInt("glassWidgets", 55).coerceIn(0, 100)),
         )
         fun perfiles(texto: String): Map<String, Experiencia> = try {
             val o = JSONObject(texto)

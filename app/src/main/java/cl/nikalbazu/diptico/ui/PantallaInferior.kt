@@ -2,7 +2,6 @@
 
 package cl.nikalbazu.diptico.ui
 
-import android.os.Build
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.animation.core.RepeatMode
@@ -10,10 +9,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,10 +25,8 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -60,22 +53,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -85,8 +72,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntSize
-import kotlin.math.roundToInt
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -160,68 +145,10 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
     }
 }
 
-/** Conserva la cuadrícula detrás de la carpeta para mantener su posición al volver. */
-@Composable
-internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    if (!e.enSistemas && !e.carpetaEnVentana) {
-        Column(modifier) {
-            CabeceraSistema(e)
-            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
-        }
-        return
-    }
-    Box(modifier) {
-        val abierta = e.carpetaEnVentana
-        CarpetasConsolas(
-            e,
-            Modifier.fillMaxSize().then(if (abierta) Modifier.desenfocarCuadricula() else Modifier),
-            interactiva = !abierta,
-        )
-        if (abierta) {
-            Box(Modifier.fillMaxSize().background(p.fondo2.copy(alpha = .12f)).clickable { Diptico.volverASistemas() })
-            val forma = RoundedCornerShape(esc.d(19))
-            Column(
-                Modifier.align(Alignment.Center).fillMaxWidth(.90f).fillMaxHeight(.84f)
-                    .shadow(esc.d(12), forma, clip = false).clip(forma)
-                    .background(p.fondo2.copy(alpha = .80f)).border(esc.d(1), p.linea, forma).sinCerrar(),
-            ) {
-                CabeceraSistema(e)
-                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
-            }
-        }
-    }
-}
-
-/** En un lienzo sin efectos gráficos, suaviza la cuadrícula al dibujarla a baja resolución. */
-private fun Modifier.desenfocarCuadricula(): Modifier = drawWithCache {
-    val ancho = size.width.roundToInt()
-    val alto = size.height.roundToInt()
-    val paso = 9.dp.toPx()
-    val imagen by lazy {
-        ImageBitmap((ancho / paso).roundToInt().coerceAtLeast(1), (alto / paso).roundToInt().coerceAtLeast(1))
-    }
-    val lienzo by lazy { Canvas(imagen) }
-    onDrawWithContent {
-        val efectoNativo = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && drawContext.canvas.nativeCanvas.isHardwareAccelerated
-        if (efectoNativo || ancho == 0 || alto == 0) {
-            drawContent()
-        } else {
-            imagen.asAndroidBitmap().eraseColor(android.graphics.Color.TRANSPARENT)
-            val contenido = this
-            draw(this, layoutDirection, lienzo, size) {
-                lienzo.scale(imagen.width.toFloat() / ancho, imagen.height.toFloat() / alto)
-                contenido.drawContent()
-            }
-            drawImage(imagen, dstSize = IntSize(ancho, alto), filterQuality = FilterQuality.Low)
-        }
-    }
-}.blur(16.dp)
-
 /** Menús, próximo paso, clave y avisos: se dibujan encima de todo. */
 @Composable
 fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
+    val animar = LocalMovimiento.current
     // Moviendo un juego de lugar: un cartel arriba con lo que hace cada botón.
     androidx.compose.animation.AnimatedVisibility(
         e.ordenando && e.panel == Panel.NINGUNO, Modifier.align(Alignment.TopCenter).padding(top = LocalEscala.current.d(10)).zIndex(5f),
@@ -245,13 +172,13 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
         transitionSpec = {
             val completo = targetState in setOf(Panel.MENU, Panel.ENCUADRE, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
             val entra = if (targetState == Panel.MENU || targetState == Panel.ESTUDIO) {
-                fadeIn(tween(100), initialAlpha = 0.88f)
+                fadeIn(tween(if (animar) 100 else 0), initialAlpha = 0.88f)
             } else if (completo) {
-                fadeIn(tween(260)) + slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 8 }
+                fadeIn(tween(if (animar) 260 else 0)) + slideInVertically(tween(if (animar) 340 else 0, easing = FastOutSlowInEasing)) { it / 8 }
             } else {
-                fadeIn(tween(200)) + scaleIn(tween(260, easing = FastOutSlowInEasing), initialScale = 0.92f)
+                fadeIn(tween(if (animar) 200 else 0)) + scaleIn(tween(if (animar) 260 else 0, easing = FastOutSlowInEasing), initialScale = 0.92f)
             }
-            (entra togetherWith fadeOut(tween(160)) + scaleOut(tween(200), targetScale = 0.97f)).using(SizeTransform(clip = false))
+            (entra togetherWith fadeOut(tween(if (animar) 160 else 0)) + scaleOut(tween(if (animar) 200 else 0), targetScale = 0.97f)).using(SizeTransform(clip = false))
         },
         label = "panel",
         modifier = Modifier.fillMaxSize(),
@@ -291,14 +218,28 @@ fun Modifier.difuminar(e: Estado): Modifier =
 @Composable
 fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
     val esc = LocalEscala.current
-    val t = LocalTamJuegos.current
+    val animar = LocalMovimiento.current
+    var borrador by remember(e.tamJuegos) { androidx.compose.runtime.mutableFloatStateOf(e.tamJuegos) }
+    var ajustando by remember { androidx.compose.runtime.mutableStateOf(false) }
+    val t by animateFloatAsState(borrador, tween(duracionMovimiento(if (ajustando) 60 else 220)), label = "densidad juegos")
     Column(modifier) {
         ControlesBiblioteca(e)
+        androidx.compose.animation.AnimatedVisibility(ajustando, enter = fadeIn(tween(duracionMovimiento(100))), exit = fadeOut(tween(duracionMovimiento(180)))) {
+            ParadasDensidad(cl.nikalbazu.diptico.estado.Densidades.juegos, borrador, { Diptico.elegirTamJuegos(it) })
+        }
+        androidx.compose.runtime.CompositionLocalProvider(LocalTamJuegos provides t) {
     AnimatedContent(
         targetState = e.vista,
-        transitionSpec = { (fadeIn(tween(260)) + scaleIn(tween(300), initialScale = 0.96f)) togetherWith fadeOut(tween(160)) },
+        transitionSpec = { (fadeIn(tween(if (animar) 200 else 0)) + scaleIn(tween(if (animar) 260 else 0), initialScale = 0.98f)) togetherWith fadeOut(tween(if (animar) 160 else 0)) },
         label = "vista",
-        modifier = Modifier.fillMaxWidth().weight(1f).pellizco(),
+        modifier = Modifier.fillMaxWidth().weight(1f).testTag("zona-juegos").ajustarDensidad(
+            iniciar = { ajustando = true },
+            ajustar = { borrador = cl.nikalbazu.diptico.estado.Densidades.juegos.limitar(borrador * it) },
+            terminar = { guardar ->
+                if (guardar) Diptico.elegirTamJuegos(borrador)
+                borrador = if (guardar) cl.nikalbazu.diptico.estado.Densidades.juegos.masCercana(borrador).escala else e.tamJuegos
+                ajustando = false
+            }),
     ) { vista ->
         when (vista) {
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
@@ -315,24 +256,6 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
         }
     }
     }
-}
-
-/** Dos dedos sobre los juegos: abrir agranda, cerrar achica (como en Cocoon o iiSU). Un dedo sigue desplazando. */
-fun Modifier.pellizco(): Modifier = this.pointerInput(Unit) {
-    awaitEachGesture {
-        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-        var acumulado = 1f
-        while (true) {
-            val ev = awaitPointerEvent(PointerEventPass.Initial)
-            val dedos = ev.changes.count { it.pressed }
-            if (dedos == 0) break
-            if (dedos >= 2) {
-                acumulado *= ev.calculateZoom()
-                ev.changes.forEach { it.consume() }
-                if (acumulado > 1.3f) { Diptico.pellizcar(true); acumulado = 1f }
-                else if (acumulado < 0.77f) { Diptico.pellizcar(false); acumulado = 1f }
-            }
-        }
     }
 }
 
@@ -526,11 +449,13 @@ private fun EnJuego(e: Estado) {
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(16), vertical = esc.d(12))) {
             // Barra de estado: hora, batería y sesión.
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (!LocalBarraSistema.current) {
                 Texto(rememberHora(), 18f, color = Color.White)
                 Spacer(Modifier.width(esc.d(12)))
                 IconoDiptico(Icono.BATERIA, if (bateria in 0..15 && !cargando) Coral else Color(0xFFB9B5D6), 18f, acento = if (cargando) Sol else Color(0xFFB9B5D6))
                 Spacer(Modifier.width(esc.d(4)))
                 Texto(if (bateria >= 0) "$bateria%" + if (cargando) " ⚡" else "" else "", 14f, color = Color(0xFFB9B5D6), traducir = false)
+                }
                 Spacer(Modifier.weight(1f))
                 Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.08f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
                     Texto("Sesión · $reloj", 13f, color = Color(0xFFB9B5D6))

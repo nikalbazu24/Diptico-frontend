@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "mantenimiento-y-estabilidad-10"
-    const val NOMBRE = "Mantenimiento y estabilidad"
+    const val ID = "glass-y-densidades-153-11"
+    const val NOMBRE = "Glass y carpetas"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -222,9 +222,15 @@ object Novedades {
             Pagina("Temas con vista previa", "Mira el tema o adorno que estás eligiendo y usa la acción de la galería para instalarlo o aplicarlo desde la misma pantalla.", Icono.PALETA, 0xFF77BDB8),
             Pagina("Biblioteca más ligera", "Díptico reutiliza la búsqueda y el orden mientras recorres tus juegos. El modo Ahorro conserva las decoraciones y efectos desactivados mientras está en uso.", Icono.CHISPA, 0xFFBCA4FF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("mantenimiento-y-estabilidad-10", "Mantenimiento y estabilidad", listOf(
             Pagina("Biblioteca más estable", "Si cambias las carpetas durante un escaneo, Díptico vuelve a leerlas con los ajustes nuevos. Si una carpeta no responde, conserva los juegos que ya conocía de ella.", Icono.CARPETA, 0xFFDBB386),
             Pagina("Guía actualizada", "El README de GitHub reúne la instalación y las funciones de Díptico en español e inglés, con enlaces a los temas de la comunidad y a las pruebas de la beta.", Icono.INFO, 0xFF77BDB8),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Liquid Glass", "Actívalo en Apariencia. Las carpetas usan el fondo real desenfocado, con bordes finos y luz suave. Regula por separado el nivel de carpetas y widgets.", Icono.ESTRELLA, 0xFF8ECFD4),
+            Pagina("Carpetas ordenadas", "Los iconos propios de cada sistema tienen su nombre debajo. Ordena por nombre o por familias desde la biblioteca; tus portadas personales siguen disponibles.", Icono.CARPETA, 0xFFBCA4FF),
+            Pagina("Editor de widgets más simple", "Tamaño, Diseño y Más ajustes conservan toda la personalización. Busca widgets en el catálogo. El contenido se adapta al espacio; toca ↗ para leer un texto largo completo.", Icono.EDITAR, 0xFF8ECFD4),
+            Pagina("Espacios predeterminados", "Ajusta los juegos con dos dedos: Compacto, Equilibrado, Amplio o Detalle. Al soltar se ajustan a una parada fija y conservan tu vista y tu selección.", Icono.FORMA, 0xFFDBB386),
         )),
     )
 

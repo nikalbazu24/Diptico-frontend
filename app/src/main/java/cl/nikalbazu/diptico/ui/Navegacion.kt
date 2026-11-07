@@ -33,30 +33,6 @@ fun Modifier.pellizcoWidgets(): Modifier = pointerInput(Unit) {
     }
 }
 
-/** Separa el pellizco del desplazamiento con un dedo y del toque para abrir. */
-@Composable
-internal fun Modifier.pellizcoCarpetas(ajustar: (Float) -> Unit, guardar: () -> Unit): Modifier {
-    val alAjustar by rememberUpdatedState(ajustar)
-    val alGuardar by rememberUpdatedState(guardar)
-    return pointerInput(Unit) {
-        awaitEachGesture {
-            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            var pellizcando = false
-            do {
-                val evento = awaitPointerEvent(PointerEventPass.Initial)
-                val dedos = evento.changes.count { it.pressed }
-                if (dedos >= 2) {
-                    pellizcando = true
-                    val zoom = evento.calculateZoom()
-                    if (zoom.isFinite() && zoom > 0f && zoom != 1f) alAjustar(zoom)
-                }
-                if (pellizcando) evento.changes.forEach { it.consume() }
-            } while (dedos > 0)
-            if (pellizcando) alGuardar()
-        }
-    }
-}
-
 @Composable
 fun MenuApp(e: Estado) {
     val p = LocalPaleta.current; val esc = LocalEscala.current

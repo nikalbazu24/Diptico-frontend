@@ -172,7 +172,7 @@ fun BotonGrande(texto: String, fondo: Color, tinta: Color, modifier: Modifier = 
  * Va después de clip(forma).
  */
 @Composable
-fun Modifier.fondoBoton(color: Color): Modifier = if (Estilo.tema.forma == "pixel") this.background(color).drawWithContent {
+fun Modifier.fondoBoton(color: Color): Modifier = if (Estilo.glass) this.tinteCristal(color) else if (Estilo.tema.forma == "pixel") this.background(color).drawWithContent {
     // Botón de bloque: color parejo con borde claro arriba-izquierda y oscuro abajo-derecha.
     drawContent()
     val b = 2.5f * density
@@ -295,6 +295,7 @@ fun Aviso(texto: String?, modifier: Modifier, abajo: Float = 70f) {
 /** Logo, trabajos de fondo, hora y batería. Tocar la hora agranda el reloj. */
 @Composable
 fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabajo> = emptyList(), extra: @Composable () -> Unit = {}) {
+    if (LocalBarraSistema.current) return
     val esc = LocalEscala.current
     val hora = rememberHora()
     val bat = rememberBateria()

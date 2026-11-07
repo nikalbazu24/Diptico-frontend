@@ -30,8 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridScope
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -257,6 +255,15 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
 fun CabeceraSistema(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    if (e.vistaConsolas == "carpetas") {
+        Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(12), vertical = esc.d(7)), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(esc.d(28)).clip(CircleShape).clickable { Diptico.volverASistemas() }, contentAlignment = Alignment.Center) { Texto("‹", 24f) }
+            Texto(Consolas.porId(e.consolaSel)?.nombreLargo ?: "Todos tus juegos", 15f, lineas = 1,
+                alinear = TextAlign.Center, modifier = Modifier.weight(1f))
+            Box(Modifier.size(esc.d(28)).clip(CircleShape).clickable { Diptico.alternarModoCarpeta() }, contentAlignment = Alignment.Center) { Texto(if (e.modoCarpeta == "completa") "↙" else "↗", 17f) }
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth().padding(start = esc.d(12), end = esc.d(16), top = esc.d(8), bottom = esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
         Row(
             Modifier.clip(RoundedCornerShape(50)).background(p.superficie).clickable { Diptico.volverASistemas() }
@@ -428,11 +435,20 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
     val horizontal = conZoom && e.carpetasHorizontal
     val grilla = rememberLazyGridState()
     var tam by remember(e.tamCarpetas) { mutableFloatStateOf(e.tamCarpetas) }
+    var ajustando by remember { androidx.compose.runtime.mutableStateOf(false) }
+    val animado by animateFloatAsState(tam, tween(duracionMovimiento(if (ajustando) 60 else 220)), label = "densidad carpetas")
     Column(modifier) {
+        CabeceraCarpetas(e, interactiva)
+        if (ajustando) ParadasDensidad(cl.nikalbazu.diptico.estado.Densidades.carpetas, tam, { Diptico.guardarTamCarpetas(it) })
         val zona = Modifier.fillMaxWidth().weight(1f)
-        BoxWithConstraints(if (conZoom && interactiva) zona.pellizcoCarpetas(
+        BoxWithConstraints(if (conZoom && interactiva) zona.ajustarDensidad(
+            iniciar = { ajustando = true },
             ajustar = { tam = Diptico.limitarTamCarpetas(tam * it) },
-            guardar = { Diptico.guardarTamCarpetas(tam) },
+            terminar = { guardar ->
+                if (guardar) Diptico.guardarTamCarpetas(tam)
+                tam = if (guardar) cl.nikalbazu.diptico.estado.Densidades.carpetas.masCercana(tam).escala else e.tamCarpetas
+                ajustando = false
+            },
         ) else zona) {
             val anchoU = maxWidth.value / esc.factor
             val columnas = when (e.vistaConsolas) {
@@ -440,41 +456,33 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
                 "vitrina" -> if (anchoU > 560f) 2 else 1
                 else -> ((anchoU - 18f) / 83f).toInt().coerceIn(3, 7)
             }
-            val separacionX = esc.d(12)
-            val separacionY = esc.d(14)
+            val separacionX = esc.d(18)
+            val separacionY = esc.d(12)
             val ancho = with(densidad) { constraints.maxWidth - 2 * esc.d(14).roundToPx() }
             val alto = with(densidad) { constraints.maxHeight - esc.d(8).roundToPx() - esc.d(10).roundToPx() }
             val lado = with(densidad) {
                 val base = (ancho - (columnas - 1) * separacionX.roundToPx()) / columnas
-                (base.toDp() * tam).coerceIn(1.dp, minOf(ancho, alto).toDp().coerceAtLeast(1.dp))
+                (base.toDp() * animado).coerceIn(1.dp, minOf(ancho, (alto - esc.d(24).roundToPx()).coerceAtLeast(1)).toDp().coerceAtLeast(1.dp))
             }
             val celdas = if (conZoom) GridCells.FixedSize(lado) else GridCells.Fixed(columnas)
             val carriles = if (!conZoom) columnas else with(densidad) {
-                val espacio = if (horizontal) alto else ancho
-                val separacion = (if (horizontal) separacionY else separacionX).roundToPx()
+                val espacio = if (horizontal) (alto - esc.d(24).roundToPx()).coerceAtLeast(0) else ancho
+                val separacion = (if (horizontal) separacionY + esc.d(24) else separacionX).roundToPx()
                 with(celdas) { calculateCrossAxisCellSizes(espacio.coerceAtLeast(0), separacion).size }
             }
             SideEffect { Teclas.carrilesCarpetas = carriles }
             LaunchedEffect(sel, horizontal) { grilla.mostrar(sel, carriles) }
             val relleno = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10))
-            val contenido: LazyGridScope.() -> Unit = {
-                items(ids.size, key = { ids[it] }) { k ->
-                    val id = ids[k]
-                    if (conZoom) CarpetaBiblioteca(e, id, k == sel, interactiva, lado)
-                    else CarpetaVisual(e, id, k == sel, amplia = e.vistaConsolas == "vitrina")
+            if (conZoom) {
+                RejillaCentrada(ids.size, carriles, sel, separacionX, separacionY, relleno,
+                    Modifier.fillMaxSize(), interactiva, horizontal, { ids[it] }) { k ->
+                    CarpetaBiblioteca(e, ids[k], k == sel, interactiva, lado)
                 }
+            } else LazyVerticalGrid(columns = celdas, state = grilla, userScrollEnabled = interactiva,
+                modifier = Modifier.fillMaxSize(), contentPadding = relleno,
+                verticalArrangement = Arrangement.spacedBy(separacionY), horizontalArrangement = Arrangement.spacedBy(separacionX)) {
+                items(ids.size, key = { ids[it] }) { k -> CarpetaVisual(e, ids[k], k == sel, amplia = e.vistaConsolas == "vitrina") }
             }
-            if (horizontal) LazyHorizontalGrid(
-                rows = celdas, state = grilla, userScrollEnabled = interactiva,
-                modifier = Modifier.fillMaxSize(), contentPadding = relleno,
-                verticalArrangement = Arrangement.spacedBy(separacionY), horizontalArrangement = Arrangement.spacedBy(separacionX),
-                content = contenido,
-            ) else LazyVerticalGrid(
-                columns = celdas, state = grilla, userScrollEnabled = interactiva,
-                modifier = Modifier.fillMaxSize(), contentPadding = relleno,
-                verticalArrangement = Arrangement.spacedBy(separacionY), horizontalArrangement = Arrangement.spacedBy(separacionX),
-                content = contenido,
-            )
         }
         Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
             Pistas("✥" to "Carpeta", "A" to "Abrir", "X" to "Personalizar", "Y" to "Al azar")
@@ -492,7 +500,6 @@ private fun CarpetaVisual(e: Estado, id: String, elegida: Boolean, amplia: Boole
         val deConsola = if (id == "todo") e.juegos else e.juegosPorConsola[id].orEmpty()
         deConsola.filter { e.datos[it.clave]?.oculto != true }
     }
-    val portadas = remember(juegos, amplia) { juegos.sortedBy { it.portada == null }.take(if (amplia) 3 else 1) }
     val forma = RoundedCornerShape(esc.d(16))
     Column(
         Modifier.fillMaxWidth().clip(forma).background(p.superficie)
@@ -502,19 +509,7 @@ private fun CarpetaVisual(e: Estado, id: String, elegida: Boolean, amplia: Boole
             },
     ) {
         Row(Modifier.fillMaxWidth().height(esc.d(if (amplia) 100f else 78f))) {
-            PortadaCarpeta(e, id, Modifier.fillMaxSize()) {
-                portadas.forEach { juego ->
-                    Box(Modifier.weight(1f).fillMaxHeight()) {
-                        ArteJuego(juego, preferirArte = !amplia, maxLado = 192, modifier = Modifier.fillMaxSize())
-                        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, color.copy(alpha = 0.28f)))))
-                    }
-                }
-                if (portadas.isEmpty()) {
-                    Box(Modifier.fillMaxSize().background(color.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
-                        IconoConsola(consola, 38f, p.fondo2)
-                    }
-                }
-            }
+            PortadaCarpeta(e, id, Modifier.fillMaxSize())
         }
         Row(Modifier.padding(esc.d(8)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
             IconoConsola(consola, 22f, p.fondo2)

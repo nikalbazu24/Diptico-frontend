@@ -92,23 +92,12 @@ fun Cuadricula(e: Estado, modifier: Modifier = Modifier) {
         val anchoUnidades = maxWidth.value / esc.factor
         val cols = ((anchoUnidades - 24f) / (anchoCelda + 12f)).toInt().coerceAtLeast(2)
         SideEffect { Teclas.columnasCuadricula = cols }
-        val estado = rememberLazyGridState()
-        LaunchedEffect(e.indiceSel, lista.size) { if (lista.isNotEmpty()) estado.mostrar(e.indiceSel) }
         if (lista.isEmpty()) VacioEstante(e)
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(cols),
-            state = estado,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = esc.d(12), end = esc.d(12), top = esc.d(14), bottom = esc.d(14)),
-            horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
-            verticalArrangement = Arrangement.spacedBy(esc.d(14)),
-        ) {
-            itemsIndexed(lista, key = { _, j -> j.clave }) { i, j ->
-                Box(contentAlignment = Alignment.Center) {
-                    Celda(j, i == e.indiceSel, anchoCelda, altoCelda) {
-                        if (i == e.indiceSel) Diptico.jugar() else Diptico.elegirJuego(j.clave)
-                    }
-                }
+        RejillaCentrada(lista.size, cols, e.indiceSel, esc.d(12), esc.d(14),
+            PaddingValues(horizontal = esc.d(12), vertical = esc.d(14)), Modifier.fillMaxSize(), clave = { lista[it].clave }) { i ->
+            val j = lista[i]
+            Celda(j, i == e.indiceSel, anchoCelda, altoCelda) {
+                if (i == e.indiceSel) Diptico.jugar() else Diptico.elegirJuego(j.clave)
             }
         }
     }
@@ -278,9 +267,8 @@ fun VentanaJuego(e: Estado) {
     Velo {
         val color = colorDe(j.clave)
         Column(
-            Modifier.widthIn(max = esc.d(560)).fillMaxHeight(0.94f).clip(RoundedCornerShape(esc.d(26)))
-                .background(Brush.verticalGradient(listOf(lerpColor(p.superficie, color, 0.22f), p.superficie)))
-                .border(esc.d(1), p.linea, RoundedCornerShape(esc.d(26)))
+            Modifier.widthIn(max = esc.d(560)).fillMaxHeight(0.94f)
+                .superficieApp(lerpColor(p.superficie, color, .12f), RoundedCornerShape(esc.d(26)), CapaCristal.PANEL)
                 .sinCerrar().padding(esc.d(14)),
         ) {
             // Encabezado compacto
@@ -367,21 +355,21 @@ fun PanelCentro(e: Estado) {
     val avisos by Avisos.lista.collectAsState()
     val acciones = remember(e.centroVersion, e.turbo) { Diptico.opcionesCentro() }
     val esAvisos = e.cortina == "avisos"
-    val bajar = remember { Animatable(-1f) }
-    LaunchedEffect(Unit) { bajar.animateTo(0f, spring(dampingRatio = 0.55f, stiffness = 260f)) }
+    val animar = LocalMovimiento.current
+    val bajar = remember { Animatable(if (animar) -.12f else 0f) }
+    LaunchedEffect(animar) { bajar.animateTo(0f, tween(if (animar) 280 else 0)) }
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { Diptico.cerrarPanel() }) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val alto = maxHeight
             Column(
                 Modifier.fillMaxWidth().fillMaxHeight(0.94f)
                     .graphicsLayer { translationY = bajar.value * alto.toPx() }
-                    .clip(RoundedCornerShape(bottomStart = esc.d(28), bottomEnd = esc.d(28)))
-                    .background(Brush.verticalGradient(listOf(p.fondo2.copy(alpha = if (Estilo.efectosCompletos) 0.93f else 0.98f), p.fondo2.copy(alpha = if (Estilo.efectosCompletos) 0.84f else 0.96f))))
+                    .superficieApp(p.fondo2, RoundedCornerShape(bottomStart = esc.d(28), bottomEnd = esc.d(28)), CapaCristal.PANEL)
                     .sinCerrar()
                     .padding(start = esc.d(14), end = esc.d(14), top = esc.d(10), bottom = esc.d(8)),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Texto(rememberHora(), 24f)
+                    Texto(if (LocalBarraSistema.current) "Centro de control" else rememberHora(), 24f)
                     Spacer(Modifier.width(esc.d(10)))
                     Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM"), 13.5f, lineas = 1, modifier = Modifier.weight(1f))
                 }

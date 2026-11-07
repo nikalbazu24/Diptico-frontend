@@ -97,6 +97,11 @@ fun PantallaInicio(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo)) {
+        val uri = e.fondoInicio?.let(android.net.Uri::parse) ?: e.seleccionado?.arte ?: e.seleccionado?.portada
+        val imagen = rememberImagen(uri, 480, memoriaGrafica = false)
+        val fondo = remember(uri, imagen, e.editandoWidgets, Estilo.tema, e.oscuro) { FondoVentanaCristal() }
+        Box(Modifier.fillMaxSize().then(if (Estilo.glass && LocalCristal.current.efectos && !e.editandoWidgets)
+            Modifier.fondoDeVentana(fondo, e.nivelesGlass.widgets, mostrarDifuminado = false) else Modifier)) {
         // Fondo: el arte del juego elegido, difuminado, con un brillo del color del tema.
         if (e.editandoWidgets) {
             Box(Modifier.fillMaxSize().background(p.fondo))
@@ -110,8 +115,10 @@ fun PantallaInicio(e: Estado) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.45f), p.fondo.copy(alpha = 0.92f)))))
         }
         // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
-        if (!e.editandoWidgets && Estilo.tema.forma != "cristal" && p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
+        if (!e.editandoWidgets && !Estilo.glass && p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         if (!e.editandoWidgets) TramaTema()
+        }
+        CompositionLocalProvider(LocalFondoVentanaCristal provides fondo) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
             if (e.editandoWidgets) {
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -134,6 +141,7 @@ fun PantallaInicio(e: Estado) {
             }
             PaginasWidgets(e, Modifier.fillMaxWidth().weight(1f))
         }
+    }
     }
 }
 
@@ -315,9 +323,8 @@ private fun CeldaWidget(e: Estado, i: Int, w: Widget, m: MedidasEditorWidgets, a
             .then(if (enfocado) Modifier.anilloFoco(w.radio.toFloat(), if (p.fondo.luminance() < 0.4f) Color.White else Uva) else Modifier),
     ) {
         if (enfocado && !w.tipo.startsWith("imagen")) Box(Modifier.fillMaxSize().background(p.fondo))
-        val auto = remember(w.tipo, an, al) { escalaAuto(w.copy(an = an, al = al)) }
-        CompositionLocalProvider(LocalWidget provides w, LocalEscala provides Escala(esc.factor * w.escala * auto, esc.ancho, esc.texto)) {
-            ContenidoWidget(e, w, an, al)
+        CompositionLocalProvider(LocalWidget provides w) {
+            WidgetAdaptable(w.copy(an = an, al = al)) { columnas, filas -> ContenidoWidget(e, w, columnas, filas) }
         }
         if (e.editandoWidgets) {
             Box(Modifier.fillMaxSize().background(if (elegido) Color.Transparent else p.fondo.copy(alpha = 0.09f))
@@ -439,7 +446,7 @@ private fun juegoDelWidget(e: Estado): Juego? {
 
 /** El contenido de cada widget según su tipo y su tamaño (1×1, angosto, una fila o grande). */
 @Composable
-private fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an: Int, al: Int) {
+internal fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an: Int, al: Int) {
     when {
         w.tipo.startsWith("atajo-") -> WidgetAtajo(e, w.tipo.removePrefix("atajo-"), al)
         w.tipo.startsWith("coleccion-") -> WidgetColeccion(e, w.tipo.removePrefix("coleccion-"), an, al)
@@ -451,20 +458,11 @@ private fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an
     }
 }
 
-/** Qué tanto crece el contenido según cuánto más grande es el widget que su tamaño de siempre. */
-private fun escalaAuto(w: cl.nikalbazu.diptico.estado.Widget): Float {
-    val base = cl.nikalbazu.diptico.estado.Widgets.porDefecto.firstOrNull { it.tipo == w.tipo } ?: return 1f
-    // Crece solo si el widget es más grande en las dos direcciones (si solo es más ancho o más alto, el texto no cabría).
-    val area = kotlin.math.sqrt((w.an * w.al).toFloat() / (base.an * base.al).toFloat())
-    val r = minOf(area, w.an.toFloat() / base.an, w.al.toFloat() / base.al)
-    return if (r > 1f) r.coerceAtMost(1.25f) else 1f
-}
-
 /** El widget que se está dibujando (su estilo, color, fondo y esquinas). */
 private val planWidgets = setOf("proximaPartida", "colaJuegos", "tengo20")
 private val herramientasWidgets = setOf("temporizador", "cronometro", "buscar")
 
-private val LocalWidget = androidx.compose.runtime.compositionLocalOf<cl.nikalbazu.diptico.estado.Widget?> { null }
+internal val LocalWidget = androidx.compose.runtime.compositionLocalOf<cl.nikalbazu.diptico.estado.Widget?> { null }
 
 @Composable
 private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = null, contenido: @Composable () -> Unit) {
@@ -477,7 +475,7 @@ private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nul
     val propio = w?.color?.takeIf { it != 0L }?.let { Color(it) }
     val base = propio ?: p.superficie
     val acento = propio ?: Uva
-    val fondo = when (estilo) {
+    val fondo = if (Estilo.glass && estilo in setOf("tarjeta", "vidrio")) Modifier.superficieCristal(forma, CapaCristal.WIDGET, tinte = propio, opacidadFondo = op) else when (estilo) {
         "vidrio" -> Modifier.background(Brush.linearGradient(listOf((propio ?: Color.White).copy(alpha = 0.16f * op), (propio ?: Color.White).copy(alpha = 0.05f * op))))
             .border(esc.d(1.2f), Color.White.copy(alpha = 0.22f), forma)
         "solido" -> Modifier.background(Brush.linearGradient(listOf(acento.copy(alpha = 0.9f * op), acento.copy(alpha = 0.65f * op))))
@@ -487,10 +485,12 @@ private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nul
             .border(esc.d(1), Color.White.copy(alpha = 0.06f), forma)
     }
     Box(
-        modifier.fillMaxSize().clip(forma).then(fondo)
+        modifier.fillMaxSize().then(fondo).clip(forma)
             .combinedClickable(onClick = { if (alPulsar != null) alPulsar() else w?.let { Diptico.abrirWidgetTipo(it.tipo) } }, onLongClick = { Diptico.editarWidgets() })
             .padding(esc.d(12)),
-    ) { contenido() }
+    ) {
+        CompositionLocalProvider(LocalPaleta provides (if (Estilo.glass) paletaLecturaCristal(p, LocalCristal.current.niveles.widgets) else p)) { contenido() }
+    }
 }
 
 @Composable
@@ -593,15 +593,15 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             }
             if (compacto) {
                 Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                    Texto(rememberHora(), 30f)
+                    Texto(rememberHora(), 30f, lineas = 1)
                     Spacer(Modifier.width(esc.d(10)))
                     Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEdMMM"), 13f, lineas = 1)
                 }
                 return@Tarjeta
             }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-                Texto(rememberHora(), if (al >= 3) 72f else if (tam >= 2) 58f else 44f, interlineado = if (al >= 3) 74f else if (tam >= 2) 60f else 46f)
-                Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 14f, lineas = 1)
+                Texto(rememberHora(), if (al >= 3) 72f else if (tam >= 2) 58f else 44f, interlineado = if (al >= 3) 74f else if (tam >= 2) 60f else 46f, lineas = 1)
+                Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 14f, lineas = 2)
             }
         }
         "bateria" -> Tarjeta {
@@ -1577,9 +1577,8 @@ private fun MuestrarioWidgets0(e: Estado, an: Int, al: Int, foco: Int) {
                         Column {
                             Detalle(tipo, 10f, lineas = 1)
                             Box(Modifier.size(esc.d(ancho), esc.d(alto)).then(if (k == foco) Modifier.anilloFoco(w.radio.toFloat(), if (p.fondo.luminance() < 0.4f) Color.White else Uva) else Modifier)) {
-                                val auto = remember(w.tipo, w.an, w.al) { escalaAuto(w) }
-                                CompositionLocalProvider(LocalWidget provides w, LocalEscala provides Escala(esc.factor * w.escala * auto, esc.ancho, esc.texto)) {
-                                    ContenidoWidget(e, w, an, al)
+                                CompositionLocalProvider(LocalWidget provides w) {
+                                    WidgetAdaptable(w) { columnas, filas -> ContenidoWidget(e, w, columnas, filas) }
                                 }
                             }
                         }

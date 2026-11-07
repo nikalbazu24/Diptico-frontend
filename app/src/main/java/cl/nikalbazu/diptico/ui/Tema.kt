@@ -67,6 +67,8 @@ val PaletaClara = Paleta(
 /** Tema elegido y si se dibujan sus decoraciones. Al cambiarlos, toda la app se repinta sola. */
 object Estilo {
     var tema by mutableStateOf(Temas.incluidos[0])
+    var materialInterfaz by mutableStateOf("glass")
+    val glass: Boolean get() = materialInterfaz == "glass" || (materialInterfaz == "tema" && tema.forma == "cristal")
     var decoraciones by mutableStateOf(true)
     /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
     var efecto by mutableStateOf("degradado")
@@ -262,6 +264,14 @@ fun Texto(
     val esc = LocalEscala.current
     // Lee el idioma (estado de Compose) para que todo se redibuje al cambiarlo.
     val idioma = cl.nikalbazu.diptico.estado.Idioma.actual
+    if (LocalTextoWidget.current && lineas <= 4) {
+        TextoWidget(if (traducir && idioma != "es") cl.nikalbazu.diptico.estado.Idioma.t(texto) else texto,
+            modifier, TextStyle(color = color, fontSize = esc.s(tam), fontWeight = peso, fontFamily = familia,
+                lineHeight = interlineado?.let { esc.s(it) } ?: TextUnit.Unspecified,
+                letterSpacing = espaciado?.let { esc.s(it) } ?: TextUnit.Unspecified,
+                shadow = if (sombra) Shadow(Color(0x88000000), Offset(0f, 2f), 12f) else null), lineas, alinear)
+        return
+    }
     Text(
         text = if (traducir && idioma != "es") cl.nikalbazu.diptico.estado.Idioma.t(texto) else texto,
         modifier = modifier,

@@ -7,13 +7,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.shadow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
@@ -34,8 +35,7 @@ fun TarjetaCaratula(j: Juego, elegida: Boolean, ancho: Float, alto: Float, titul
         Box(Modifier.fillMaxWidth().height(esc.d(alto)), contentAlignment = Alignment.Center) { CajaJuego(j, c, escala = k, vivo = elegida) }
         if (titulo) {
             Spacer(Modifier.height(esc.d(5))); Texto(j.titulo, 12f, lineas = 2, modifier = Modifier.fillMaxWidth().padding(horizontal = esc.d(4)))
-            if (elegida) Texto("A · Jugar   Y · Opciones", 9.5f, color = p.acentoTexto, lineas = 1, modifier = Modifier.padding(vertical = esc.d(4)))
-            else Spacer(Modifier.height(esc.d(8)))
+            Spacer(Modifier.height(esc.d(4)))
         }
     }
 }
@@ -66,58 +66,50 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Bool
     val p = LocalPaleta.current
     val consola = Consolas.porId(id)
     val color = consola?.color ?: Uva
-    val forma = RoundedCornerShape(esc.d(13))
-    Box(
-        Modifier.size(lado).clip(forma)
-            .background(Brush.verticalGradient(listOf(color.copy(alpha = .23f), p.superficie)))
+    val forma = androidx.compose.foundation.shape.RoundedCornerShape(esc.d(19))
+    val foco by androidx.compose.animation.core.animateFloatAsState(if (elegida && interactiva) 1f else 0f,
+        androidx.compose.animation.core.tween(duracionMovimiento(180)), label = "foco carpeta")
+    Column(Modifier.width(lado), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(lado).graphicsLayer { scaleX = 1f - .035f * (1f - foco); scaleY = scaleX }
+            .shadow(esc.d(3 + 5 * foco), forma, clip = false).clip(forma)
             .combinedClickable(enabled = interactiva, onLongClick = { Diptico.abrirEditarConsola(id) }) {
                 if (!elegida) Diptico.elegirConsola(id)
                 Diptico.entrarSistema()
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        // El fondo de la carpeta también puede dibujarse sobre un bitmap.
-        PortadaCarpeta(e, id, Modifier.fillMaxSize(), maxLado = 256, memoriaGrafica = false) {
-            Box(Modifier.padding(bottom = lado * .15f)) {
-                IconoConsola(consola, (lado.value / esc.factor * .55f).coerceIn(20f, 58f), p.fondo2, memoriaGrafica = false)
-            }
+            }, contentAlignment = Alignment.Center) {
+            PortadaCarpeta(e, id, Modifier.fillMaxSize(), maxLado = 256, memoriaGrafica = false)
+            Box(Modifier.fillMaxSize().border(esc.d(.8f + .7f * foco),
+                if (elegida) p.tinta.copy(alpha = .85f) else Color.White.copy(alpha = .3f), forma))
         }
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-            0.52f to Color.Transparent, 1f to Color.Black.copy(alpha = .82f))))
-        Box(Modifier.fillMaxSize().border(
-            esc.d(if (elegida) 2.5f else 1.25f), if (elegida) p.tinta else color.copy(alpha = .65f), forma))
-        Texto(consola?.nombre ?: "Todo", 10.5f, color = Color.White, lineas = 1,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = esc.d(4), vertical = esc.d(5)))
+        Spacer(Modifier.height(esc.d(6)))
+        Texto(consola?.nombre ?: "Todo", 11f, color = if (elegida) p.tinta else p.tenue,
+            lineas = 1, alinear = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth())
     }
 }
 
 @Composable
 internal fun PortadaCarpeta(
     e: Estado, id: String, modifier: Modifier, maxLado: Int = 512,
-    memoriaGrafica: Boolean = true, original: @Composable () -> Unit,
+    memoriaGrafica: Boolean = true,
 ) {
     val ruta = e.consolasPropias[id]?.portadaCarpeta
     if (ruta == null) {
-        original()
+        ArteCarpeta(Consolas.porId(id), modifier)
         return
     }
     val portada = key(ruta) { rememberImagen(android.net.Uri.parse(ruta), maxLado, memoriaGrafica) }
-    if (portada == null) original()
+    if (portada == null) ArteCarpeta(Consolas.porId(id), modifier)
     else Image(portada, contentDescription = null, modifier = modifier, contentScale = ContentScale.Crop)
 }
 
 @Composable
 fun ControlesBiblioteca(e: Estado) {
     val esc = LocalEscala.current; val p = LocalPaleta.current
-    Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(12), vertical = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
-        Texto("${e.visibles.size}", 11f, color = p.tenue)
-        val filtro = if (e.filtro == "ocultos") "Salir de Ocultos" else Diptico.nombreFiltro(e.filtro)
-        listOf("vistas_juegos" to Diptico.nombreVista(e.vista), "filtros" to filtro, "orden" to Diptico.nombreOrden(e.orden)).forEach { (tipo, nombre) ->
-            Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = .8f)).clickable {
-                if (tipo == "filtros" && e.filtro == "ocultos") Diptico.salirDeOcultos() else Diptico.abrirGaleria(tipo)
-            }.padding(horizontal = esc.d(8), vertical = esc.d(7)), contentAlignment = Alignment.Center) {
-                Texto(nombre, 10.5f, lineas = 1)
-            }
-        }
+    Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(14), vertical = esc.d(3)),
+        horizontalArrangement = Arrangement.spacedBy(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
+        Texto(juegosTexto(e.visibles.size), 10.5f, color = p.tenue, lineas = 1)
+        Spacer(Modifier.weight(1f))
+        Texto(Diptico.nombreVista(e.vista), 10.5f, color = p.acentoTexto, lineas = 1,
+            modifier = Modifier.clickable { Diptico.abrirGaleria("vistas_juegos") }.padding(esc.d(6)))
+        Texto("•••", 16f, lineas = 1, modifier = Modifier.clickable(onClickLabel = "Opciones de biblioteca") { Diptico.abrirGaleria("biblioteca") }.padding(esc.d(6)))
     }
 }
