@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -46,7 +47,7 @@ internal val LocalCristal = staticCompositionLocalOf { EntornoCristal() }
 
 @Composable
 internal fun recordarCristal(e: Estado): EntornoCristal {
-    if (Estilo.tema.forma != "cristal") return EntornoCristal(efectos = false, movimiento = false)
+    if (!Estilo.glass) return EntornoCristal(efectos = false, movimiento = false)
     val ctx = LocalContext.current
     val config = LocalConfiguration.current
     var contraste by remember { mutableStateOf(false) }
@@ -64,13 +65,14 @@ internal fun recordarCristal(e: Estado): EntornoCristal {
     val efectos = Estilo.efectosCompletos && Diptico.fluidezEfectiva(e) != "ahorro" && e.sesion == null
     // Textura pequeña y compartida: no se captura ni se vuelve a procesar toda la pantalla por control.
     val reducir = contraste || config.fontScale >= 1.4f
-    val imagen = if (efectos && !reducir) rememberImagen(e.seleccionado?.arte ?: e.seleccionado?.portada, 96, memoriaGrafica = false) else null
-    val luz = remember(imagen) {
-        if (imagen == null) Color.Transparent to 0f else {
-            val pixeles = imagen.toPixelMap()
+    val fuente = if (efectos && !reducir) rememberImagen(e.seleccionado?.arte ?: e.seleccionado?.portada, 96, memoriaGrafica = false) else null
+    val imagen = recordarFondoCristal(fuente)
+    val luz = remember(fuente) {
+        if (fuente == null) Color.Transparent to 0f else {
+            val pixeles = fuente.toPixelMap()
             var r = 0f; var g = 0f; var b = 0f; var media = 0f; var cuadrados = 0f
             repeat(8) { x -> repeat(8) { y ->
-                val c = pixeles[x * (imagen.width - 1) / 7, y * (imagen.height - 1) / 7]
+                val c = pixeles[x * (fuente.width - 1) / 7, y * (fuente.height - 1) / 7]
                 r += c.red; g += c.green; b += c.blue
                 val l = c.luminance(); media += l; cuadrados += l * l
             } }
@@ -94,15 +96,16 @@ internal fun colorMaterialCristal(p: Paleta, capa: CapaCristal): Color =
 
 @Composable
 internal fun Modifier.fondoPantalla(normal: Color): Modifier {
-    if (Estilo.tema.forma != "cristal") return background(normal)
+    if (!Estilo.glass) return background(normal)
     val claro = LocalPaleta.current.fondo.luminance() > .5f
+    val a = Uva; val b = Coral; val c = Sol
     return drawWithCache {
         val w = size.width
         val h = size.height
         val radio = max(w, h).coerceAtLeast(1f)
-        val azul = Brush.radialGradient(listOf(Color(0xFF58ADFF).copy(alpha = if (claro) .19f else .18f), Color.Transparent), Offset(w * .12f, h * .12f), radio * .85f)
-        val menta = Brush.radialGradient(listOf(Color(0xFF57E1C3).copy(alpha = if (claro) .14f else .12f), Color.Transparent), Offset(w, h * .66f), radio * .64f)
-        val rosa = Brush.radialGradient(listOf(Color(0xFFFF91BA).copy(alpha = .09f), Color.Transparent), Offset(w * .6f, h), radio * .5f)
+        val azul = Brush.radialGradient(listOf(a.copy(alpha = if (claro) .19f else .18f), Color.Transparent), Offset(w * .12f, h * .12f), radio * .85f)
+        val menta = Brush.radialGradient(listOf(b.copy(alpha = if (claro) .14f else .12f), Color.Transparent), Offset(w, h * .66f), radio * .64f)
+        val rosa = Brush.radialGradient(listOf(c.copy(alpha = .09f), Color.Transparent), Offset(w * .6f, h), radio * .5f)
         onDrawBehind {
             drawRect(normal)
             drawRect(azul); drawRect(menta); drawRect(rosa)
@@ -123,7 +126,7 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
     var mundo by remember { mutableStateOf(IntSize.Zero) }
     var presionado by remember { mutableStateOf(false) }
     var punto by remember { mutableStateOf(Offset(.22f, .1f)) }
-    val dinamico = entorno.movimiento && capa == CapaCristal.CONTROL
+    val dinamico = entorno.movimiento && !entorno.contraste && capa == CapaCristal.CONTROL
     val luz by animateFloatAsState(if (presionado && dinamico) 1f else 0f, tween(if (dinamico) 140 else 0), label = "luzCristal")
     val gesto = if (!dinamico) Modifier else Modifier.pointerInput(Unit) {
         awaitEachGesture {
@@ -136,9 +139,9 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
             } finally { presionado = false }
         }
     }
-    val elevacion = when (capa) { CapaCristal.PANEL -> 18; CapaCristal.CONTROL -> 10; CapaCristal.CONTENIDO -> 2 }
-    return shadow(if (entorno.efectos) elevacion.dp else 0.dp,
-        forma, clip = false, ambientColor = Color.Black.copy(alpha = .18f), spotColor = Color(0xFF143A5B).copy(alpha = .28f))
+    val elevacion = when (capa) { CapaCristal.PANEL -> 26; CapaCristal.CONTROL -> 12; CapaCristal.CONTENIDO -> 2 }
+    return shadow(if (entorno.efectos && !entorno.contraste) elevacion.dp else 0.dp,
+        forma, clip = false, ambientColor = Color.Black.copy(alpha = .28f), spotColor = Color.Black.copy(alpha = .45f))
         .clip(forma).then(gesto).onGloballyPositioned {
             posicion = it.positionInRoot()
             mundo = it.parentLayoutCoordinates?.let { parent ->
@@ -148,9 +151,11 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
             } ?: it.size
         }.drawWithCache {
             val contorno = forma.createOutline(size, layoutDirection, this)
-            val borde = 1.dp.toPx()
-            val desplazamiento = .7f.dp.toPx()
-            val iluminacion = Brush.linearGradient(listOf(Color.White.copy(alpha = if (claro) .9f else .46f), Color.White.copy(alpha = .06f), Color(0xFF76C9FF).copy(alpha = .2f)), Offset.Zero, Offset(size.width, size.height))
+            val borde = (if (capa == CapaCristal.PANEL) 1.6f else 1.1f).dp.toPx()
+            val margen = (if (capa == CapaCristal.PANEL) 3f else 2f).dp.toPx().coerceAtMost(size.minDimension / 4)
+            val interior = forma.createOutline(Size((size.width - margen * 2).coerceAtLeast(1f), (size.height - margen * 2).coerceAtLeast(1f)), layoutDirection, this)
+            val iluminacion = Brush.linearGradient(listOf(Color.White.copy(alpha = if (claro) .98f else .78f), Color.White.copy(alpha = .08f), p.acentoTexto.copy(alpha = .45f)), Offset.Zero, Offset(size.width, size.height))
+            val bisel = Brush.verticalGradient(listOf(Color.White.copy(alpha = if (claro) .45f else .2f), Color.Transparent, Color.Black.copy(alpha = .38f)))
             val reflejo = Brush.verticalGradient(listOf(Color.White.copy(alpha = if (claro) .31f else .12f), Color.Transparent, Color.Black.copy(alpha = if (claro) .035f else .11f)))
             onDrawWithContent {
                 drawRect(material)
@@ -164,14 +169,17 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
                         dstSize = IntSize(an.roundToInt().coerceAtLeast(1), al.roundToInt().coerceAtLeast(1)), filterQuality = FilterQuality.Low)
                     drawRect(material.copy(alpha = opacidad))
                 }
-                if (entorno.efectos && capa != CapaCristal.CONTENIDO) {
+                if (entorno.efectos && !entorno.contraste && capa != CapaCristal.CONTENIDO) {
                     drawRect(reflejo)
                     if (luz > 0f) drawRect(Brush.radialGradient(listOf(Color.White.copy(alpha = .17f * luz), Color.Transparent), Offset(punto.x * size.width, punto.y * size.height), size.width.coerceAtLeast(size.height)))
                 }
                 drawContent()
                 if (entorno.contraste) drawOutline(contorno, p.tinta, style = Stroke(2.dp.toPx()))
                 else if (entorno.efectos) {
-                    withTransform({ translate(0f, desplazamiento) }) { drawOutline(contorno, Color.Black.copy(alpha = if (claro) .14f else .52f), style = Stroke(borde * 2)) }
+                    drawOutline(contorno, Color.Black.copy(alpha = if (claro) .24f else .8f), style = Stroke(borde * 4))
+                    if (capa != CapaCristal.CONTENIDO) withTransform({ translate(margen, margen) }) {
+                        drawOutline(interior, bisel, style = Stroke(borde * .75f))
+                    }
                     drawOutline(contorno, iluminacion, style = Stroke(if (capa == CapaCristal.CONTENIDO) borde * .5f else borde))
                 }
             }
@@ -181,7 +189,7 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
 /** Permite integrar el material sin modificar las formas ni los fondos de los otros temas. */
 @Composable
 internal fun Modifier.superficieApp(normal: Color, forma: Shape, capa: CapaCristal = CapaCristal.CONTROL): Modifier =
-    if (Estilo.tema.forma == "cristal") superficieCristal(forma, capa) else clip(forma).background(normal)
+    if (Estilo.glass) superficieCristal(forma, capa) else clip(forma).background(normal)
 
 /** El tinte de una acción comparte la capa del control: no agrega otro fondo desenfocado encima. */
 @Composable

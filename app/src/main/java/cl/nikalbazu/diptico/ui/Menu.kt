@@ -122,7 +122,7 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
         if (i > 0 && filas[i - 1] is String) lista.mostrar(i - 1)
         lista.mostrar(i)
     }
-    Column(modifier.then(if (Estilo.tema.forma == "cristal") Modifier.padding(esc.d(5)).superficieCristal(RoundedCornerShape(esc.d(22)), CapaCristal.PANEL)
+    Column(modifier.then(if (Estilo.glass) Modifier.padding(esc.d(5)).superficieCristal(RoundedCornerShape(esc.d(22)), CapaCristal.PANEL)
         else Modifier.background(p.fondo.copy(alpha = 0.55f))).padding(top = esc.d(10), bottom = esc.d(8))) {
         Row(Modifier.padding(horizontal = esc.d(12)), verticalAlignment = Alignment.CenterVertically) {
             MarcaLogo(12f)

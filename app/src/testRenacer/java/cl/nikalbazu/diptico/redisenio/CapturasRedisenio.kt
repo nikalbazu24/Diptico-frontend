@@ -2,6 +2,7 @@ package cl.nikalbazu.diptico.redisenio
 
 import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,6 +30,9 @@ import cl.nikalbazu.diptico.estado.Tema
 import cl.nikalbazu.diptico.estado.Temas
 import cl.nikalbazu.diptico.ui.Estilo
 import cl.nikalbazu.diptico.ui.Imagenes
+import cl.nikalbazu.diptico.ui.FondosCristal
+import cl.nikalbazu.diptico.ui.IconoCarpetaDiptico
+import cl.nikalbazu.diptico.ui.glassActivo
 import cl.nikalbazu.diptico.ui.Lienzo
 import cl.nikalbazu.diptico.ui.LocalRedisenio
 import cl.nikalbazu.diptico.ui.Raiz
@@ -55,7 +59,7 @@ class CapturasRedisenio {
             listOf(96, 240, 256, 400, 480, 700, 1600).forEach {
                 Imagenes.cargar(ctx, uri, it, memoriaGrafica = android.os.Build.VERSION.SDK_INT >= 31)
             }
-            Imagenes.cargar(ctx, uri, 96, memoriaGrafica = false)
+            Imagenes.cargar(ctx, uri, 96, memoriaGrafica = false)?.let { FondosCristal.preparar(it) }
         }
     }
     private val juegos by lazy { listOf(
@@ -79,8 +83,9 @@ class CapturasRedisenio {
         Consolas.cargar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(e)
         Estilo.tema = tema
+        Estilo.materialInterfaz = e.materialInterfaz
         Estilo.decoraciones = tema.decor != "nada"
-        Estilo.efectosCompletos = tema.forma == "cristal" && e.fluidez != "ahorro"
+        Estilo.efectosCompletos = glassActivo(tema, e.materialInterfaz) && e.fluidez != "ahorro"
         regla.mainClock.autoAdvance = false
         regla.setContent {
             val estado by Diptico.estado.collectAsState()
@@ -93,7 +98,7 @@ class CapturasRedisenio {
             Diptico.fijarParaPrueba(e.copy(tema = tema.id))
             Diptico.aplicarTema()
             Estilo.tema = tema
-            Estilo.efectosCompletos = tema.forma == "cristal" && e.fluidez != "ahorro"
+            Estilo.efectosCompletos = glassActivo(tema, e.materialInterfaz) && e.fluidez != "ahorro"
             Estilo.decoraciones = tema.decor != "nada"
             cl.nikalbazu.diptico.estado.Idioma.fijar(ApplicationProvider.getApplicationContext(), "es")
         }
@@ -146,6 +151,56 @@ class CapturasRedisenio {
         android.provider.Settings.Secure.putInt(cr, "high_text_contrast_enabled", 1)
         try { foto("23-cristal-contraste", base.copy(enSistemas = false), Rol.INFERIOR, cristal) }
         finally { android.provider.Settings.Secure.putInt(cr, "high_text_contrast_enabled", 0) }
+    }
+
+    @Config(qualifiers = "w780dp-h1480dp-port-xhdpi")
+    @Test fun iconosDeTodoElCatalogo() {
+        Consolas.cargar(ApplicationProvider.getApplicationContext())
+        val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
+        Diptico.iniciar(ctx)
+        Estilo.tema = Temas.incluidos[0]
+        Estilo.materialInterfaz = "original"
+        regla.setContent {
+            Lienzo(true, Modifier.fillMaxSize()) {
+                Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Consolas.todas.chunked(10).forEach { fila ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            fila.forEach { consola -> IconoCarpetaDiptico(base, consola.id, false, false, 63.dp) }
+                        }
+                    }
+                }
+            }
+        }
+        regla.onRoot().captureRoboImage("capturas-renacer/24-iconos-catalogo.png")
+    }
+
+    @Test fun glassSobreChile() = foto("25-glass-chile", base.copy(materialInterfaz = "glass"), tema = Temas.fiestas.first { it.id == "fiestaspatrias" }.tema)
+    @Test fun glassSobreNavidad() = foto("26-glass-navidad", base.copy(materialInterfaz = "glass"), tema = Temas.fiestas.first { it.id == "navidad" }.tema)
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun iconosAndroidYRpgMaker() {
+        val extra = listOf("androidgames", "rpgmaker", "switch", "n64", "ps2", "dreamcast", "gb", "wiiu", "psvita", "neogeo")
+        val nuevos = extra.map { id -> Juego("$id/1", id, id, "juego", Uri.parse("content://prueba/$id"), id) }
+        foto("27-android-rpgmaker", base.copy(juegos = juegos + nuevos, consolaSel = "rpgmaker", materialInterfaz = "glass"), Rol.INFERIOR)
+    }
+    @Config(qualifiers = "w472dp-h411dp-land-xhdpi")
+    @Test fun cristalVentanaClara() = foto("28-cristal-ventana-clara", base.copy(enSistemas = false, oscuro = false), Rol.INFERIOR, cristal)
+    @Test fun glassDesactivadoEnCristal() = foto("29-glass-desactivado", base.copy(materialInterfaz = "original"), tema = cristal)
+
+    @Test fun activarGlassDesdeAjustesPersisteAlCambiarDeTemaYPermiteDesactivarlo() {
+        mostrar(base.copy(panel = Panel.MENU, seccion = cl.nikalbazu.diptico.estado.Seccion.APARIENCIA, enOpciones = true), Rol.SUPERIOR)
+        regla.onNodeWithText("Acabado Glass").assertIsDisplayed().performClick()
+        regla.runOnIdle {
+            assertEquals("glass", Diptico.estado.value.materialInterfaz)
+            assertTrue(Estilo.glass)
+            assertEquals("glass", cl.nikalbazu.diptico.data.Almacen(ApplicationProvider.getApplicationContext()).texto("materialInterfaz", "tema"))
+            Diptico.elegirTema("navidad")
+            assertTrue(Estilo.glass)
+            assertEquals("navidad", Estilo.tema.id)
+            Diptico.elegirMaterialInterfaz("original")
+            assertFalse(Estilo.glass)
+            assertEquals("navidad", Estilo.tema.id)
+            assertEquals("original", cl.nikalbazu.diptico.data.Almacen(ApplicationProvider.getApplicationContext()).texto("materialInterfaz", "tema"))
+        }
     }
 
     @Config(qualifiers = "w472dp-h411dp-land-xhdpi")

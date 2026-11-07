@@ -110,7 +110,7 @@ fun PantallaInicio(e: Estado) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.45f), p.fondo.copy(alpha = 0.92f)))))
         }
         // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
-        if (!e.editandoWidgets && Estilo.tema.forma != "cristal" && p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
+        if (!e.editandoWidgets && !Estilo.glass && p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         if (!e.editandoWidgets) TramaTema()
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
             if (e.editandoWidgets) {
@@ -477,7 +477,7 @@ private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nul
     val propio = w?.color?.takeIf { it != 0L }?.let { Color(it) }
     val base = propio ?: p.superficie
     val acento = propio ?: Uva
-    val fondo = if (Estilo.tema.forma == "cristal" && estilo != "sinfondo" && estilo != "contorno") {
+    val fondo = if (Estilo.glass && estilo != "sinfondo" && estilo != "contorno") {
         Modifier.superficieCristal(forma, CapaCristal.CONTENIDO)
     } else when (estilo) {
         "vidrio" -> Modifier.background(Brush.linearGradient(listOf((propio ?: Color.White).copy(alpha = 0.16f * op), (propio ?: Color.White).copy(alpha = 0.05f * op))))

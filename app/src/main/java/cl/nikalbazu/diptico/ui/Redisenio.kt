@@ -88,7 +88,7 @@ internal fun DockDiptico(e: Estado, juego: Juego?, modifier: Modifier, arriba: B
     Box(modifier.then(if (arriba) Modifier else Modifier.fillMaxWidth()).padding(
         horizontal = esc.d(if (arriba) 0 else 14), vertical = esc.d(if (arriba) 0 else 9)), contentAlignment = Alignment.Center) {
         Row(Modifier.widthIn(max = esc.d(740)).then(
-            if (Estilo.tema.forma == "cristal") Modifier.superficieCristal(forma)
+            if (Estilo.glass) Modifier.superficieCristal(forma)
             else Modifier.shadow(esc.d(12), forma).clip(forma).background(p.fondo2.copy(alpha = .96f)).border(esc.d(.8f), p.linea, forma))
             .horizontalScroll(rememberScrollState()).padding(esc.d(5)),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(3))) {
@@ -228,10 +228,10 @@ internal fun VentanaCarpeta(e: Estado, modifier: Modifier, escala: Float) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val forma = RoundedCornerShape(esc.d(19))
-    Column(modifier.then(if (Estilo.tema.forma == "cristal") Modifier.superficieCristal(forma, CapaCristal.PANEL)
+    Column(modifier.then(if (Estilo.glass) Modifier.superficieCristal(forma, CapaCristal.PANEL)
         else Modifier.shadow(esc.d(12), forma, clip = false).clip(forma)
             .background(p.fondo2.copy(alpha = if (LocalRedisenio.current) .92f else .80f)).border(esc.d(1), p.linea, forma)).sinCerrar()) {
-        if (LocalRedisenio.current && Estilo.tema.forma != "cristal") Box(Modifier.fillMaxWidth().height(esc.d(3))
+        if (LocalRedisenio.current && !Estilo.glass) Box(Modifier.fillMaxWidth().height(esc.d(3))
             .background(Brush.horizontalGradient(listOf(colorColeccion(e.consolaSel), Uva, Coral))))
         CabeceraSistema(e)
         VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escala)
@@ -282,7 +282,7 @@ internal fun IconoCarpetaDiptico(e: Estado, id: String, elegida: Boolean, intera
     val cantidad = juegos.count { e.datos[it.clave]?.oculto != true }
     Column(Modifier.size(lado), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.weight(1f).aspectRatio(1f).testTag("carpeta-$id").shadow(if (elegida) esc.d(7) else esc.d(2), forma, spotColor = color)
-            .clip(forma).background(Brush.linearGradient(listOf(color.copy(alpha = if (Estilo.tema.forma == "cristal") .25f else .48f), p.fondo)))
+            .clip(forma).background(Brush.linearGradient(listOf(color.copy(alpha = if (Estilo.glass) .25f else .48f), p.fondo)))
             .combinedClickable(enabled = interactiva, onClickLabel = "Abrir ${c?.nombre ?: "todos los juegos"}",
                 onLongClickLabel = "Personalizar carpeta", onLongClick = { Diptico.abrirEditarConsola(id) }) {
                 if (!elegida) Diptico.elegirConsola(id)
@@ -294,7 +294,16 @@ internal fun IconoCarpetaDiptico(e: Estado, id: String, elegida: Boolean, intera
                     drawCircle(color.copy(alpha = .20f), size.width * .46f, Offset(size.width * .8f, size.height * .25f), style = Stroke(size.width * .013f))
                     drawLine(color.copy(alpha = .16f), Offset(0f, size.height * .8f), Offset(size.width, size.height * .34f), size.width * .06f)
                 }
-                IconoConsola(c?.copy(color = color), (lado.value / esc.factor * .47f).coerceIn(18f, 76f), p.fondo2, memoriaGrafica = false)
+                val referencia = ReferenciasCarpetas.para(id)
+                if (referencia != null && id !in e.iconosPropios) {
+                    EmblemaCarpeta(referencia, Modifier.fillMaxSize(.92f).align(Alignment.TopCenter))
+                    val sello = lado * .30f
+                    Box(Modifier.align(Alignment.BottomStart).padding(lado * .065f).size(sello)
+                        .clip(RoundedCornerShape(sello * .3f)).background(p.fondo2.copy(alpha = .94f))
+                        .border(esc.d(.6f), color.copy(alpha = .55f), RoundedCornerShape(sello * .3f)), contentAlignment = Alignment.Center) {
+                        IconoConsola(c?.copy(color = color), (sello.value / esc.factor * .75f).coerceAtLeast(8f), p.fondo2, memoriaGrafica = false)
+                    }
+                } else IconoConsola(c?.copy(color = color), (lado.value / esc.factor * .47f).coerceIn(18f, 76f), p.fondo2, memoriaGrafica = false)
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .52f)))))
             Box(Modifier.fillMaxSize().border(esc.d(if (elegida) 2.2f else .8f), if (elegida) p.tinta else color.copy(alpha = .55f), forma))

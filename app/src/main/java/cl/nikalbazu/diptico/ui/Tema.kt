@@ -67,11 +67,20 @@ val PaletaClara = Paleta(
 /** Tema elegido y si se dibujan sus decoraciones. Al cambiarlos, toda la app se repinta sola. */
 object Estilo {
     var tema by mutableStateOf(Temas.incluidos[0])
+    /** Acabado independiente del tema: tema, glass u original. */
+    var materialInterfaz by mutableStateOf("tema")
+    val glass: Boolean get() = glassActivo(tema, materialInterfaz)
     var decoraciones by mutableStateOf(true)
     /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
     var efecto by mutableStateOf("degradado")
     /** Animaciones y difuminados completos (se apagan en modo ahorro). */
     var efectosCompletos by mutableStateOf(true)
+}
+
+internal fun glassActivo(tema: Tema, material: String): Boolean = when (material) {
+    "glass" -> true
+    "original" -> false
+    else -> tema.forma == "cristal"
 }
 
 val Uva: Color get() = Color(Estilo.tema.acento)

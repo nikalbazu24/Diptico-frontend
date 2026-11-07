@@ -27,9 +27,15 @@ La aplicación usa componentes propios de Android y Compose. Las referencias ori
 
 El tema cambia paleta, tipografía, geometría y acabados en toda la interfaz. La selección de juegos mantiene la cabecera, las portadas y una acción Jugar. Sus opciones permanecen en el menú secundario.
 
+## Glass en cualquier tema
+
+Ajustes › Temas y Ajustes › Apariencia incluyen **Acabado Glass**, con tres opciones: Según el tema, Activado y Desactivado. La preferencia se guarda y se mantiene al cambiar de tema, incluido el cambio por calendario. Activarlo no modifica el archivo del tema ni sus colores, formas, música, sonidos, tipografía o decoraciones. También se puede quitar el acabado al tema Díptico Cristal. El ahorro y el alto contraste siguen reduciendo los efectos aunque esté activado.
+
 ## Adaptación técnica y límites
 
-`ui/Cristal.kt` define el material compartido. Se reutiliza una textura del arte de hasta 96 píxeles de lado, con una ampliación local leve. La luminosidad y su variación se muestrean una vez al cambiar la imagen. La densidad aumenta cuando el fondo tiene más detalle. Los contornos y los degradados se preparan en la caché de dibujo; no hay una captura completa de la pantalla por control ni una animación ambiental permanente.
+`ui/Cristal.kt` define el material compartido. `ui/Desenfoque.kt` aplica tres filtros separables al arte, de hasta 96 píxeles de lado, en un hilo de trabajo. La textura suavizada se comparte entre controles y pantallas mediante una caché de 256 KiB. Mientras se prepara, se muestra una superficie sólida, sin destellos del arte nítido. La luminosidad y su variación se muestrean una vez al cambiar la imagen original. La densidad aumenta cuando el fondo tiene más detalle. Los contornos y los degradados se preparan en la caché de dibujo; no hay una captura completa de la pantalla por control ni una animación ambiental permanente.
+
+Las ventanas tienen un bisel exterior iluminado, un borde oscuro, un contorno interior y una sombra más amplia. La cuadrícula que permanece detrás usa el filtro de Android 12; Android 10/11 y las capturas usan un desenfoque separable sobre un lienzo reducido con buffers reutilizados. No se aplica el filtro a las portadas ni al texto de la ventana.
 
 La luz de respuesta observa el toque sin consumirlo. La preferencia de movimiento de Díptico y las animaciones desactivadas en Android reducen esa respuesta. El perfil de ahorro quita el muestreo, las sombras y la transparencia. El ajuste de texto de alto contraste del sistema, o una escala de fuente muy grande, usa superficies opacas y bordes contrastados.
 

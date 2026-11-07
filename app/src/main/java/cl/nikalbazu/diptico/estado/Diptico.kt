@@ -573,6 +573,8 @@ data class Estado(
     val pistaTema: String = "bisagra",
     /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
     val efecto: String = "degradado",
+    /** Glass puede activarse o desactivarse para cualquier tema sin modificarlo. */
+    val materialInterfaz: String = "tema",
     /** "auto", "alta", "equilibrada" o "ahorro". */
     val fluidez: String = "auto",
     /** Lo que eligió "auto" según la consola. */
@@ -829,6 +831,7 @@ object Diptico {
             avisosEmergentes = almacen.bool("avisosEmergentes", true),
             carpetas = carpetas,
             efecto = almacen.texto("efecto", "degradado"),
+            materialInterfaz = almacen.texto("materialInterfaz", "tema"),
             fluidez = almacen.texto("fluidez", "auto"),
             fluidezDetectada = detectarFluidez(),
             sonidos = almacen.bool("sonidos", true),
@@ -3341,7 +3344,7 @@ object Diptico {
             else -> "Más"
         }
         Seccion.APARIENCIA -> when {
-            t == "Modo" || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
+            t == "Modo" || t == "Acabado Glass" || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
             t.contains("protector", true) -> "Protector de pantalla"
             t.startsWith("Zoom") || t.contains("nimación") -> "Detalles"
             else -> "Íconos de las consolas"
@@ -3567,6 +3570,7 @@ object Diptico {
             }
             Seccion.APARIENCIA -> {
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
+                lista += opcionGlass(e)
                 lista += Opcion(
                     "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
                     "Liso, degradado, con un brillo que pasa, o de vidrio. Se ve en el botón Jugar, el menú y las opciones elegidas.",
@@ -4196,6 +4200,7 @@ object Diptico {
         val baseVisual = conAdorno(e, fiesta?.tema ?: elegido)
         val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso, decor = "nada") else baseVisual
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
+        cl.nikalbazu.diptico.ui.Estilo.materialInterfaz = e.materialInterfaz
         cl.nikalbazu.diptico.ui.Estilo.efecto = activo.acabado.ifBlank { if (e.experiencia.vidrio) "vidrio" else e.efecto }
         aplicarFluidez()
         Sonidos.cambiarJuego(activo.sonidos, activo.tonoSonidos)
@@ -4209,6 +4214,21 @@ object Diptico {
         aplicarTema()
         val e = estado.value
         if (e.fiesta != null) avisar("Hoy manda el tema de ${e.fiesta.nombre}. Apaga \"Fechas especiales\" para usar este.")
+    }
+
+    fun elegirMaterialInterfaz(material: String) {
+        if (material !in listOf("tema", "glass", "original")) return
+        almacen.guardarTexto("materialInterfaz", material)
+        actualizar { it.copy(materialInterfaz = material) }
+        aplicarTema()
+    }
+
+    private fun opcionGlass(e: Estado) = Opcion(
+        "Acabado Glass", when (e.materialInterfaz) { "glass" -> "Activado"; "original" -> "Desactivado"; else -> "Según el tema" }, Icono.ESTRELLA,
+        "Luz, desenfoque y profundidad en cualquier tema. Conserva sus colores, música, formas y decoraciones. Puedes activarlo, desactivarlo o respetar el acabado original del tema.",
+    ) {
+        val opciones = listOf("tema", "glass", "original")
+        elegirMaterialInterfaz(opciones[(opciones.indexOf(estado.value.materialInterfaz) + 1).mod(opciones.size)])
     }
 
     private fun guardarTemasPropios(l: List<Tema>) {
@@ -4273,6 +4293,7 @@ object Diptico {
 
     private fun opcionesTemas(e: Estado): List<Opcion> {
         val lista = mutableListOf<Opcion>()
+        lista += opcionGlass(e)
         val prox = Temas.proxima()
         lista += Opcion(
             "Fechas especiales", if (e.temaFestivo) "Sí" else "No", Icono.MUNDO,
