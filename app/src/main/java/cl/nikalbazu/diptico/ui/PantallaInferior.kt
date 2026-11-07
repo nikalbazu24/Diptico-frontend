@@ -667,29 +667,6 @@ private fun AccionCompa(icono: Icono, texto: String, modifier: Modifier, fondo: 
 @Composable
 private fun anchoPanel(max: Float): Float = minOf(max, LocalEscala.current.ancho - 28f)
 
-/** Menú rápido de un juego (mantener A). */
-@Composable
-private fun PanelRapido(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val opciones = Diptico.opcionesRapido()
-    val lista = rememberLazyListState()
-    LaunchedEffect(e.indice) { if (opciones.isNotEmpty()) lista.mostrar(e.indice) }
-    Velo {
-        Column(
-            Modifier.width(esc.d(anchoPanel(440f))).clip(RoundedCornerShape(esc.d(24))).background(p.fondo2).sinCerrar()
-                .padding(esc.d(12)),
-        ) {
-            Texto(e.seleccionado?.titulo ?: "", 19f, lineas = 1, modifier = Modifier.padding(start = esc.d(6), top = esc.d(4), bottom = esc.d(10)))
-            LazyColumn(state = lista, modifier = Modifier.heightIn(max = esc.d(270)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                itemsIndexed(opciones) { i, o -> TarjetaOpcion(o, i == e.indice, alto = 54f) { Diptico.elegirIndice(i) } }
-            }
-            Spacer(Modifier.height(esc.d(8)))
-            Pistas("A" to "Elegir", "B" to "Cerrar", modifier = Modifier.padding(start = esc.d(6)))
-        }
-    }
-}
-
 /** Un cuadro de texto grande, para escribir con el teclado de la pantalla. */
 @Composable
 private fun CampoTexto(valor: String, ejemplo: String, alListo: () -> Unit, numerico: Boolean = false, alto: Float = 60f) {

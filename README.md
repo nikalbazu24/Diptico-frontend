@@ -2,98 +2,109 @@
 
 # Díptico
 
-**A dual-screen Android frontend for retro handhelds.**
-Top screen shows off your game. Bottom screen is where you pick it.
+**An Android game launcher for one or two screens.**
 
-[**⬇ Download the beta**](https://github.com/Nikalbazu24/diptico-frontend/releases) · [**🎮 Become a tester**](https://github.com/Nikalbazu24/diptico-frontend/issues/new?template=2-tester.yml) · [**🐞 Report a bug**](https://github.com/Nikalbazu24/diptico-frontend/issues/new?template=1-bug.yml) · [Español](README.es.md)
+On a dual-screen handheld, game art fills the top screen and you browse the library below. On one screen, the library, home and settings share the same interface.
 
-<img src="docs/img/hero.png" alt="Díptico on a dual-screen handheld: the game's art and logo on top, the shelf of games below" width="720">
+[Download the beta](https://github.com/nikalbazu24/Diptico-frontend/releases) · [Join the beta](https://github.com/nikalbazu24/Diptico-frontend/issues/new?template=2-tester.yml) · [Report a bug](https://github.com/nikalbazu24/Diptico-frontend/issues/new?template=1-bug.yml) · [Español](README.es.md)
+
+<img src="docs/img/hero.png" alt="Díptico shows game art on the top screen and the game shelf below" width="720">
 
 </div>
 
-## 🧪 We're looking for beta testers
+<details>
+<summary>See example screenshots</summary>
 
-Díptico is in **open beta**. It was built on an AYN Thor, and now it needs more hands and more devices.
+<img src="docs/img/pick-screen.png" alt="Choosing a screen for a game" width="220">
+<img src="docs/img/widgets.png" alt="Widget home" width="220">
+<img src="docs/img/themes.png" alt="Halloween theme" width="220">
 
-**Who we're looking for:**
+</details>
 
-- Anyone with an **AYN Thor**: it's the device Díptico was designed for.
-- Owners of **other handhelds**: Odin 2, Retroid Pocket, Anbernic, AYANEO and others.
-- People who play on a **phone, tablet or TV** with a controller.
-- People who use **ES-DE, Daijishō, Cocoon or iiSU** today and can tell us what's missing.
+## Install and update
 
-**What testing means:**
+1. Open [Releases](https://github.com/nikalbazu24/Diptico-frontend/releases) on your **ARM64 device running Android 10 or newer**.
+2. In the public `v1.1-beta.N` release, download `Diptico-v1.1-beta.N.apk` for handhelds or `Diptico-v1.1-beta.N-movil.apk` for phones. The phone variant omits notification access and the widgets that rely on it.
+3. Open the APK. The setup tour helps you choose a screen mode, add your folders and connect emulators. You can set Díptico as your Android home app.
+4. Updates with the same signing certificate install over your existing copy. Díptico checks for the matching variant and offers it in **Menu › About**. On launch, the tour catches you up on releases you skipped. If you're upgrading from a beta with a different signature, see the [migration guide in Spanish](docs/distribucion.md).
 
-1. Install the latest APK and use Díptico as your launcher for about a week.
-2. Tell us what broke, what was confusing and what you loved.
-3. That's it. No coding needed. Write in English or Spanish.
+You'll need your own game and BIOS files and the corresponding emulators.
 
-👉 [**Sign up as a tester**](https://github.com/Nikalbazu24/diptico-frontend/issues/new?template=2-tester.yml): it's a short form about your device.
+## Screens and controls
 
-## ✨ What makes it different
+- **Two screens.** Show game art, logos, details or previews above, with the library or widgets below. Hold Select to swap screens. Choose and remember where each game or app opens, and pin a game page to the other screen.
+- **One screen.** The library, folders, widgets, touch toolbar, keyboard, galleries and theme store work on the main display. Preview and apply gallery choices on the same screen. Settings also have previews.
+- **Device and TV layouts.** Profiles cover AYN Thor, Odin, Retroid, Anbernic, AYANEO, phones, tablets and TVs. Adjust display scale and text size. Docked mode adapts margins, scale, sound and effects for a TV.
+- **Navigation.** Controller and touch support, configurable sticks and extra buttons, on-screen keyboard with voice input and searchable settings. Pin and arrange Android apps in the drawer, choose their screen or uninstall them through Android.
+- **Control center.** Quick access to connectivity, brightness, volume, Turbo and Do Not Disturb. In the full variant, notifications open separately and playback from other apps can be controlled from Díptico.
 
-<table>
-<tr>
-<td width="50%"><img src="docs/img/where-you-left-off.png" alt="Where did you leave off? card"></td>
-<td><b>It remembers where you left off.</b><br>When you quit a game, Díptico asks where you were. Type it, record a voice note or drop a pin on the game's map. Next time, it reminds you.</td>
-</tr>
-<tr>
-<td><img src="docs/img/pick-screen.png" alt="Choosing which screen a game opens on"></td>
-<td><b>Built for two screens from day one.</b><br>Art, logo and playtime on top; shelf, folders or carousel below. Hold A on any game or app to choose which screen it opens on. One screen works too.</td>
-</tr>
-<tr>
-<td><img src="docs/img/widgets.png" alt="Widget home screen"></td>
-<td><b>A home screen of widgets.</b><br>Clock, music, battery, playtime, collections, GIFs and shortcuts to your favorite games. Arrange them with the D-pad.</td>
-</tr>
-<tr>
-<td><img src="docs/img/themes.png" alt="Halloween theme on both screens"></td>
-<td><b>Themes, sounds and holidays.</b><br>Seasonal themes, your own colors, or a theme made by AI.</td>
-</tr>
-</table>
+## Game library
 
-**Also inside:**
+- **Game folders.** Add folders from internal storage or SD using ES-DE system names, or assign a system yourself. Connect ES-DE's `downloaded_media` and preview title and favorite changes before importing a `gamelist.xml`.
+- **Emulation and native games.** Use ES-DE launch rules, select an emulator or RetroArch core per system or game, and include installed Android games, ports and PC shortcuts. Add Steam titles to open with a supported client installed on your device. RPG Maker XP/VX/VX Ace fan games open with [Essentia](https://github.com/Nikalbazu24/essentia) from `rpgmaker`, `fangames` or an `.essentia` shortcut.
+- **System views.** Top tabs, sidebar, wheel, system carousel, folders and records. Reorder systems and customize their names, colors, artwork, logos, music and case shapes.
+- **Folder icons.** Pinch the grid to resize it and choose horizontal or vertical scrolling. Open the games in a window over the blurred grid or in full screen. Press **X** or hold an icon to find system or game artwork from available providers, or pick a local file. In Folder, Mosaic and Showcase layouts, **Selected Game** cycles through games in the focused folder.
+- **Game views.** Shelf, grid, list, 3D carousel, fan and spines. Set the case size and shape and choose cover, screenshot or logo. Group game variants and select a disc from supported playlists.
+- **Organization.** Accent-insensitive search, favorites, recently played, most played, unplayed, manual ordering, filters and custom collections. Tap **Exit Hidden** or press **B** to restore your previous view after searching hidden games.
+- **Artwork and game pages.** Download or select covers, hero art and logos. Crop images, edit titles, assign music, and see game history, guides, notes and RetroAchievements. For files managed by Díptico, the uninstall prompt lists the items it will remove before you confirm.
 
-- 🕹️ **Fan games** (RPG Maker XP/VX/VX Ace, like Pokémon Essentials games) open straight away with [Essentia](https://github.com/Nikalbazu24/essentia).
-- 🔔 **Notifications and quick settings, apart**: swipe down from the top left for notifications, from the top right for quick settings.
-- ☁️ **Google Drive backup** of your settings, collections, playtime and notes, updated daily.
-- 🤖 **Bisa**, a built-in helper you can talk to: what to play, how to beat a part, or change a setting for you. Works offline, or with your own Gemini or ChatGPT key.
-- 🖼️ **Covers, art and logos** from libretro, SteamGridDB, ScreenScraper, IGDB, TheGamesDB and RAWG (you bring your own free accounts).
-- 🏆 **RetroAchievements** in each game's page.
-- 🎮 **Fully controller-driven**, with a big on-screen keyboard and voice typing.
-- ⚡ **Turbo** button to free memory before launching heavy games.
-- 🔄 **Updates from inside the app**, with a tour of what's new.
-- 🌍 **Spanish, English, Portuguese, Chinese and Japanese.**
+For example folder names and emulator options, see the [system table in Spanish](README.es.md#carpetas-y-emuladores) or the [full system catalog](app/src/main/assets/sistemas.json).
 
-## 📥 Install
+### Artwork sources
 
-1. Open [**Releases**](https://github.com/Nikalbazu24/diptico-frontend/releases) on your device.
-2. Download the APK that fits:
-   - **Consoles** (AYN Thor, Odin, Retroid…): `Diptico-v1.0-beta.N.apk`
-   - **Phones**: `Diptico-v1.0-beta.N-movil.apk`. It skips the notification access that makes Google Play Protect block the full version.
-3. Open it and let Android install it. The first launch walks you through picking your games folder and emulators.
+Díptico reads local images with the same name as the game, either alongside it or in a folder such as `covers`. It can also read ES-DE's `covers`, `fanart` or `screenshots`. Use **Menu › Covers** to download missing artwork or choose individual images. Artwork types vary by provider and system.
 
-New versions install over the old one, and you keep your games and settings. Díptico checks for updates on its own.
+| Source | Access |
+|---|---|
+| libretro-thumbnails, RetroArch packs and Wikipedia | No key |
+| SteamGridDB | Account API key |
+| ScreenScraper | Username and password, plus developer ID and password |
+| IGDB | Twitch Client ID and Client Secret |
+| TheGamesDB and RAWG | Provider API key |
 
-**Requirements:** Android 10 or newer.
+## Home and personalization
 
-## 🗂️ Your games
+- **Widgets.** Pinch to resize the grid and move or resize widgets with touch or a controller. The studio lets you set size, background, shape, design, colors and content. Widgets include the selected game, clock, battery, music, notifications, favorites, recent games, statistics, achievements, holidays, timer, stopwatch, search, Bisa, play queue, suggestions for short sessions, collections, shortcuts, images, GIFs and short videos.
+- **Built-in theme store.** Find, preview and install **30 included themes** offline under **Menu › Themes › Theme Store**. On dual-screen devices, the store opens on top. Designs inspired by Mario, Pokémon, Zelda, Metroid, Kirby and Sonic have their own palettes, shapes, backgrounds, music, sounds and decorations.
+- **World and Chilean calendars.** Automatic themes mark occasions such as Lunar New Year, Halloween, Day of the Dead, Chilean Independence celebrations, Christmas, Navy Day and La Tirana. Under **Menu › Decorations**, expand a theme to choose its decoration and intensity where applicable. Examples include mistletoe or bells for Christmas and chupallas or kites for Chile.
+- **Your style.** Light, dark and OLED modes, custom colors, built-in or local music, sound packs and button shapes. **Mix My Theme** combines colors, backgrounds, typography, shapes, decorations, sound effects and music from installed themes. **Game Universe** uses colors from your local game art. Collections can have their own colors, backgrounds, logos, music and layout.
+- **Shareable themes and profiles.** Import themes from JSON or a link, create a theme with AI, and import or export layout profiles. Contributors can create themes in the [web studio](https://diptico-temas.nickalbazu.chatgpt.site). The [community guide in Spanish](docs/temas-comunidad.md) documents the format and how to test a theme in Díptico.
 
-Díptico reads the same folder layout as **ES-DE**: one folder per system inside your games folder (`snes`, `psx`, `ps2`, `switch`, `n3ds`…). If you already use ES-DE, point Díptico at the same folder and at ES-DE's `downloaded_media`.
+## During and after play
 
-It launches more than 100 systems through their usual Android emulators: RetroArch cores, DuckStation, NetherSX2, PPSSPP, Dolphin, melonDS, Azahar, Eden, Cemu and more. The full table is in the [Spanish README](README.es.md#cómo-ordenar-tus-juegos).
+- **Play log and statistics.** Track sessions and playtime, leave a text note, voice note or map pin for your next session, and pick up where you left off. Set break reminders and build a queue for future sessions.
+- **In-game companion.** The free screen can show time, battery, session length, a game logo, controls and Bisa. Magnifier can enlarge a region of the other display. The optional resume clip captures up to six seconds without audio. Both need Android screen-capture permission, and Magnifier takes priority. [Resume guide in Spanish](docs/navegacion-retoma.md)
+- **RetroAchievements and saves.** Connect your account and Web API Key to see per-game achievements and statistics. Keep up to three manual copies of a RetroArch `.srm` save and export them for recovery.
+- **Bisa.** Get library recommendations, tiered hints, shortcuts and optional web search. Type or speak, use the optional offline model, or connect your own Gemini or OpenAI key. The in-game bubble requires Android's overlay permission.
+- **Performance and idle.** Smoothness settings, including a power-saving mode, Turbo, dimming during play and a screensaver featuring your library. Díptico can greet you on wake and offer a shortcut to your last game.
 
-> Díptico does **not** include or link to games or BIOS files. Use your own legally obtained copies.
+## Settings, backups and help
 
-## 🛠️ How it's built
+- **Backups.** In **Menu › About**, back up or restore settings, collections, playtime and text or voice notes using a local file or Google Drive. Díptico can refresh the backup daily after you choose a destination. Set up credentials and folder permissions again on each device.
+- **Languages.** Spanish, English, Portuguese, Simplified Chinese and Japanese.
+- **Open beta.** Review the contents of a diagnostic before sending it, or file a bug on GitHub. Include your device, app version, screen mode and steps to reproduce. [Bug report form](https://github.com/nikalbazu24/Diptico-frontend/issues/new?template=1-bug.yml)
 
-Kotlin + Jetpack Compose. Every push to `main` builds the APKs with GitHub Actions and renders screenshots of every screen at the Thor's resolution, so changes can be reviewed visually before they ship.
+### Default shortcuts
 
-## 🙏 Credits
+| Control | Action |
+|---|---|
+| D-pad or stick, L1 / R1 | Browse games and switch systems |
+| L2 / R2 | Jump by letter |
+| A, B | Enter or play, go back or close |
+| Hold A | Choose where a game or app opens |
+| X, Y | Game page and game options |
+| L3, R3 | Search and choose a view |
+| Select, hold Select | Switch between library and widgets, swap screens |
+| Start, hold Start | Menu and control center |
+| Start + R3 | App drawer |
 
-- Launch rules and the system list come from [ES-DE](https://es-de.org) (MIT license).
-- Covers from [libretro-thumbnails](https://github.com/libretro-thumbnails); system icons from [retroarch-assets](https://github.com/libretro/retroarch-assets).
-- Pixel font for the block theme: Tiny5 (SIL Open Font License 1.1).
+## Development and credits
+
+Díptico uses **Kotlin and Jetpack Compose**. GitHub Actions runs tests, builds the full and phone variants and renders UI screenshots. App changes on `main` publish the signed beta. See the [distribution guide](docs/distribucion.md), [beta notes](docs/novedades-beta.md) and [release history](https://github.com/nikalbazu24/Diptico-frontend/releases).
+
+- Launch rules and base system catalog from [ES-DE](https://es-de.org) (MIT).
+- Covers from [libretro-thumbnails](https://github.com/libretro-thumbnails) and icons from [retroarch-assets](https://github.com/libretro/retroarch-assets).
+- Tiny5, the pixel font for the block theme, under SIL Open Font License 1.1.
 - Game history from Wikipedia.
 
-Made in Chile 🇨🇱 by [@Nikalbazu24](https://github.com/Nikalbazu24).
-
+Made in Chile by [@Nikalbazu24](https://github.com/Nikalbazu24).

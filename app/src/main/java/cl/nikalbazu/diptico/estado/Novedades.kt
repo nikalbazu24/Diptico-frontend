@@ -1,7 +1,5 @@
 package cl.nikalbazu.diptico.estado
 
-
-
 /**
  * Tour de novedades: se muestra una vez al abrir Díptico después de actualizar.
  * Cada versión cambia [ID] y sus páginas; el tour sale solo si la persona todavía no vio este [ID].
@@ -12,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "rendimiento-y-una-pantalla-9"
-    const val NOMBRE = "Díptico en una pantalla"
+    const val ID = "mantenimiento-y-estabilidad-10"
+    const val NOMBRE = "Mantenimiento y estabilidad"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -219,10 +217,14 @@ object Novedades {
             Pagina("Cambia el tamaño con dos dedos", "Junta o separa dos dedos sobre la vista Carpetas. También puedes elegir un tamaño con el mando en Menú › Estante › Tamaño de carpetas.", Icono.FORMA, 0xFFDBB386),
             Pagina("Recorre las carpetas a tu manera", "En Menú › Estante › Recorrido de carpetas elige si quieres deslizar hacia los lados o hacia arriba y abajo.", Icono.CARPETA, 0xFF77BDB8),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("rendimiento-y-una-pantalla-9", "Díptico en una pantalla", listOf(
             Pagina("Carpetas y accesos en una pantalla", "En consolas de una pantalla, abre Carpetas y usa la barra para buscar, pasar a Widgets, abrir Bisa o entrar a Ajustes. La cabecera te lleva de vuelta a tus consolas.", Icono.CARPETA, 0xFFDBB386),
             Pagina("Temas con vista previa", "Mira el tema o adorno que estás eligiendo y usa la acción de la galería para instalarlo o aplicarlo desde la misma pantalla.", Icono.PALETA, 0xFF77BDB8),
             Pagina("Biblioteca más ligera", "Díptico reutiliza la búsqueda y el orden mientras recorres tus juegos. El modo Ahorro conserva las decoraciones y efectos desactivados mientras está en uso.", Icono.CHISPA, 0xFFBCA4FF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Biblioteca más estable", "Si cambias las carpetas durante un escaneo, Díptico vuelve a leerlas con los ajustes nuevos. Si una carpeta no responde, conserva los juegos que ya conocía de ella.", Icono.CARPETA, 0xFFDBB386),
+            Pagina("Guía actualizada", "El README de GitHub reúne la instalación y las funciones de Díptico en español e inglés, con enlaces a los temas de la comunidad y a las pruebas de la beta.", Icono.INFO, 0xFF77BDB8),
         )),
     )
 

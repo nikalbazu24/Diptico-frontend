@@ -1,3 +1,4 @@
-- **Una pantalla**. Barra táctil de accesos en la biblioteca y las carpetas. Todas las vistas de consolas, incluido el recorrido lateral, usan la misma navegación. Abre Carpetas en ventana con fondo desenfocado o a pantalla completa.
-- **Temas y decoraciones**. En una pantalla, revisa la vista previa del elemento elegido y aplícalo desde la galería.
-- **Rendimiento**. Díptico reutiliza filtros y orden de la biblioteca, indexa los juegos y evita extraer colores cuando Universo está apagado. El modo Ahorro conserva sus ajustes al cambiar de tema.
+- **Biblioteca**. Si cambias las carpetas o las imágenes de ES-DE mientras Díptico está buscando juegos, vuelve a leer la configuración antes de mostrar el resultado. Las carpetas que pierden acceso conservan sus juegos en caché y las que quitas dejan de reaparecer al reiniciar.
+- **Estabilidad**. La biblioteca sigue cargando cuando una entrada de la caché está incompleta o cuando las imágenes de ES-DE pierden su permiso. El indicador de búsqueda se limpia si falla la tarea.
+- **Rendimiento y mantenimiento**. Díptico prepara los marcadores de las traducciones al cargar el idioma y elimina cálculos sin uso del editor de widgets.
+- **Guía**. El README de GitHub reúne las funciones, la instalación y los enlaces de la comunidad en español e inglés.

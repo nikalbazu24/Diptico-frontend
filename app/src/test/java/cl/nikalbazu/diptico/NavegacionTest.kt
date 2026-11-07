@@ -253,8 +253,9 @@ class NavegacionTest {
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("zoom-y-recorrido-carpetas-8").map { it.id })
-        assertEquals(listOf(Novedades.ID, "zoom-y-recorrido-carpetas-8"), Novedades.pendientes("desenfoque-carpetas-7").map { it.id })
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("rendimiento-y-una-pantalla-9").map { it.id })
+        assertEquals(listOf(Novedades.ID, "rendimiento-y-una-pantalla-9", "zoom-y-recorrido-carpetas-8"),
+            Novedades.pendientes("desenfoque-carpetas-7").map { it.id })
     }
 
     @Test fun tiempoConConsolaCerradaNoCuentaComoTiempoJugado() {

@@ -39,7 +39,9 @@ object Idioma {
     private var plantillas: List<Plantilla> = emptyList()
     private val cache = LruCache<String, String>(1500)
 
-    private class Plantilla(val origen: String, val destino: String, val regex: Regex, val fijo: String)
+    private val marcador = Regex("""\{(\d+)\}""")
+
+    private class Plantilla(val destino: String, val regex: Regex, val fijo: String, val marcas: List<String>)
 
     fun fijar(ctx: Context, codigo: String) {
         val cod = IDIOMAS.firstOrNull { it.first == codigo }?.first ?: "es"
@@ -53,12 +55,13 @@ object Idioma {
                 val pl = ArrayList<Plantilla>()
                 for (k in o.keys()) {
                     val v = o.getString(k)
-                    if (Regex("""\{\d+\}""").containsMatchIn(k)) {
+                    val marcas = marcador.findAll(k).map { it.groupValues[1] }.toList()
+                    if (marcas.isNotEmpty()) {
                         // "Encontré {0} de {1}" -> ^Encontré (.+?) de (.+?)$
-                        val partes = k.split(Regex("""\{\d+\}"""))
+                        val partes = k.split(marcador)
                         val patron = partes.joinToString("(.+?)") { Regex.escape(it) }
                         val fijo = partes.maxByOrNull { it.length }.orEmpty()
-                        pl += Plantilla(k, v, Regex("^$patron$", RegexOption.DOT_MATCHES_ALL), fijo)
+                        pl += Plantilla(v, Regex("^$patron$", RegexOption.DOT_MATCHES_ALL), fijo, marcas)
                     } else {
                         ex[k] = v
                     }
@@ -91,10 +94,8 @@ object Idioma {
             val m = p.regex.matchEntire(texto) ?: continue
             var salida = p.destino
             // Los números de las plantillas se respetan: {1} puede ir antes que {0} en otro idioma.
-            val marcas = Regex("""\{(\d+)\}""").findAll(p.origen).map { it.groupValues[1].toInt() }.toList()
-            m.groupValues.drop(1).forEachIndexed { i, v ->
-                val n = marcas.getOrElse(i) { i }
-                salida = salida.replace("{$n}", t(v))
+            p.marcas.forEachIndexed { i, n ->
+                salida = salida.replace("{$n}", t(m.groupValues[i + 1]))
             }
             return salida
         }

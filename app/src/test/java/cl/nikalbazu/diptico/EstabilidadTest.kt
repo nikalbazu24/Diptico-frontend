@@ -174,6 +174,17 @@ class EstabilidadTest {
         assertEquals(reunidos, almacen.biblioteca())
     }
 
+    @Test fun unRegistroIncompletoNoImpideRecuperarLaBibliotecaGuardada() {
+        val juego = Juego("snes/a", "snes", "Árbol", "a.sfc", Uri.parse("content://prueba/a"), "a")
+        val almacen = Almacen(ctx)
+        almacen.guardarBiblioteca(listOf(juego))
+        val cache = org.json.JSONArray(preferencias.getString("biblioteca", "[]") ?: "[]")
+        val incompleto = org.json.JSONArray().put(org.json.JSONObject().put("clave", "snes/b")).put(cache.getJSONObject(0))
+        preferencias.edit().putString("biblioteca", incompleto.toString()).commit()
+
+        assertEquals(listOf(juego), almacen.biblioteca())
+    }
+
     @Test fun perfilConservaWidgetsTransparentesYModoPartida() {
         val perfil = cl.nikalbazu.diptico.estado.Experiencia(
             vistaPartida = "BITACORA",

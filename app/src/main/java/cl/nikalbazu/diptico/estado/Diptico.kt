@@ -25,6 +25,7 @@ import cl.nikalbazu.diptico.data.MediosJuego
 import cl.nikalbazu.diptico.emu.App
 import cl.nikalbazu.diptico.emu.Lanzador
 import cl.nikalbazu.diptico.emu.Pantallas
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -714,9 +715,10 @@ object Diptico {
         almacen = Almacen(app)
         Consolas.cargar(app)
         Musica.iniciar(app)
-        val carpeta = almacen.carpeta
+        val carpetas = almacen.carpetas()
+        val raices = carpetas.mapTo(HashSet()) { it.uri }
         medios = almacen.medios()
-        crudos = almacen.biblioteca()
+        crudos = almacen.biblioteca().filter { raizDe(it) in raices }
         val idioma = almacen.texto("idioma").ifEmpty { Idioma.delSistema() }
         Idioma.fijar(app, idioma)
         val apps = AtajoInicio.leer(almacen.texto("atajoApps"), AtajoInicio.START_R3)
@@ -729,8 +731,8 @@ object Diptico {
             navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
             listo = true,
             idioma = idioma,
-            configurado = almacen.configurado && carpeta != null,
-            tieneCarpeta = carpeta != null,
+            configurado = almacen.configurado && carpetas.isNotEmpty(),
+            tieneCarpeta = carpetas.isNotEmpty(),
             tieneMedia = almacen.media != null,
             juegos = Descargas.aplicar(crudos, medios, almacen.titulosBonitos),
             oscuro = almacen.oscuro,
@@ -825,7 +827,7 @@ object Diptico {
             zoomAbajo = almacen.texto("zoomAbajo", "1").toFloatOrNull() ?: 1f,
             musicaTema = almacen.bool("musicaTema", true),
             avisosEmergentes = almacen.bool("avisosEmergentes", true),
-            carpetas = almacen.carpetas(),
+            carpetas = carpetas,
             efecto = almacen.texto("efecto", "degradado"),
             fluidez = almacen.texto("fluidez", "auto"),
             fluidezDetectada = detectarFluidez(),
@@ -885,11 +887,7 @@ object Diptico {
         vigilarAppsInstaladas()
         Medios.revisar(app)
         if (almacen.android == null) detectarAndroid(silencioso = true)
-        if (carpeta != null) escanear()
-        else if (crudos.any(::esAccesoAndroid)) scope.launch {
-            accesosAndroid = leerAccesosAndroid(crudos)
-            publicarJuegos()
-        }
+        if (carpetas.isNotEmpty()) escanear()
         // La música sigue al estado: suena con Díptico a la vista y sin juego abierto.
         scope.launch {
             estado.map { e ->
@@ -928,16 +926,12 @@ object Diptico {
 
     // ---------- Barra flotante ----------
 
-    private var trabajoBarra: kotlinx.coroutines.Job? = null
-    const val BARRA_MS = 5_000L
-
-    /** Saca la barra flotante del inicio y la vuelve a esconder a los 5 segundos sin tocar nada. */
+    /** Vuelve a mostrar la barra de inicio al tocar la pantalla o volver del juego. */
     fun mostrarBarra() { if (!estado.value.barra) actualizar { it.copy(barra = true) } }
 
     fun cambiarBarraFija(v: Boolean) {
         almacen.guardarBool("barraFija", v)
         actualizar { it.copy(barraFija = v, barra = true) }
-        if (!v) mostrarBarra()
     }
 
     /** La pantalla de abajo existe ahora (por ejemplo, si se conecta o desconecta una pantalla). */
@@ -1356,39 +1350,52 @@ object Diptico {
 
     fun escanear() {
         if (estado.value.escaneando) return
-        val carpetas = almacen.carpetas()
-        if (carpetas.isEmpty()) return
         actualizar { it.copy(escaneando = true) }
         trabajo("escaneo", "Buscando tus juegos")
-        val anterior = crudos
-        val media = almacen.media
         scope.launch {
-            var fallas = 0
-            val lista = withContext(Dispatchers.IO) {
-                val anteriores = anterior.groupBy { raizDe(it) }
-                carpetas.flatMap { c ->
-                    try {
-                        Biblioteca.escanear(app, c.uri, media, c.consola)
-                    } catch (e: Exception) {
-                        fallas++
-                        anteriores[c.uri].orEmpty()
+            try {
+                while (true) {
+                    val carpetas = almacen.carpetas()
+                    val media = almacen.media
+                    val anterior = crudos
+                    val (lista, fallas) = withContext(Dispatchers.IO) {
+                        val anteriores = anterior.groupBy(::raizDe)
+                        var fallas = 0
+                        val juegos = carpetas.flatMap { carpeta ->
+                            try {
+                                Biblioteca.escanear(app, carpeta.uri, media, carpeta.consola)
+                            } catch (cancelado: CancellationException) {
+                                throw cancelado
+                            } catch (_: Exception) {
+                                fallas++
+                                anteriores[carpeta.uri].orEmpty()
+                            }
+                        }.distinctBy { it.clave }.sortedWith(compareBy({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
+                        juegos to fallas
                     }
-                }.distinctBy { it.clave }.sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
-            }.takeIf { fallas < carpetas.size }
-            if (fallas > 0) avisar(if (lista == null) "No pude leer tus carpetas de juegos. Elígelas otra vez." else "No pude leer $fallas de tus carpetas")
-            accesosAndroid = leerAccesosAndroid(lista ?: crudos)
-            if (lista != null) {
-                crudos = lista
-                withContext(Dispatchers.IO) { almacen.guardarBiblioteca(lista) }
-                publicarJuegos()
-                actualizar { it.copy(escaneando = false, indice = if (it.configurado) it.indice else it.indice.coerceAtMost(1)) }
-                bajarIconosFaltantes()
-                identificarNombres()
-            } else {
-                publicarJuegos()
+                    val accesos = leerAccesosAndroid(lista)
+                    // Si se cambió una carpeta durante el escaneo, vuelve a leer la configuración antes de mostrar resultados.
+                    if (carpetas != almacen.carpetas() || media != almacen.media) continue
+                    withContext(Dispatchers.IO) { almacen.guardarBiblioteca(lista) }
+                    if (carpetas != almacen.carpetas() || media != almacen.media) continue
+                    crudos = lista
+                    accesosAndroid = accesos
+                    publicarJuegos()
+                    if (fallas > 0) avisar(
+                        if (fallas == carpetas.size) "No pude leer tus carpetas de juegos. Elígelas otra vez."
+                        else "No pude leer $fallas de tus carpetas",
+                    )
+                    if (fallas < carpetas.size) {
+                        actualizar { it.copy(indice = if (it.configurado) it.indice else it.indice.coerceAtMost(1)) }
+                        bajarIconosFaltantes()
+                        identificarNombres()
+                    }
+                    break
+                }
+            } finally {
                 actualizar { it.copy(escaneando = false) }
+                terminarTrabajo("escaneo")
             }
-            terminarTrabajo("escaneo")
         }
     }
 
@@ -2971,7 +2978,7 @@ object Diptico {
             e.panel == Panel.MENU && e.enOpciones -> columnaMenu(false)
             e.panel != Panel.NINGUNO -> cerrarPanel()
             // En el inicio, B saca la barra flotante (y la esconde si ya estaba a la vista).
-            e.configurado && e.sesion == null && !e.barraFija -> if (e.barra) { trabajoBarra?.cancel(); actualizar { it.copy(barra = false) } } else mostrarBarra()
+            e.configurado && e.sesion == null && !e.barraFija -> actualizar { it.copy(barra = !it.barra) }
         }
     }
 
@@ -4212,11 +4219,6 @@ object Diptico {
         if (e.tema != "mio") elegirTema("mio") else aplicarTema()
     }
 
-    private fun siguienteColor(c: Long): Long {
-        val m = Temas.MUESTRAS
-        return m[(m.indexOf(c) + 1).mod(m.size)]
-    }
-
     private fun importarTemas(leer: () -> List<TemaComunidad>) {
         if (trabajosMapa.containsKey("catalogo_temas")) return
         trabajo("catalogo_temas", "Leyendo el tema")
@@ -4660,8 +4662,6 @@ object Diptico {
         if (w.visible) {
             cambiarWidget(i) { it.copy(visible = false) }
         } else {
-            val ocupadas = HashSet<Pair<Int, Int>>()
-            l.filter { it.visible && it.pagina == estado.value.paginaInicio }.forEach { o -> for (x in o.x until o.x + o.an) for (y in o.y until o.y + o.al) ocupadas += x to y }
             // Busca un hueco en la página actual (achicándolo si hace falta) y si no, en las otras páginas.
             val e = estado.value
             var puesto: Widget? = null
@@ -7806,12 +7806,13 @@ object Diptico {
         }
         almacen.guardarCarpetas(l)
         actualizar { it.copy(carpetas = l, indice = it.indice.coerceAtMost(l.size), tieneCarpeta = l.isNotEmpty()) }
-        avisar("Carpeta quitada")
-        escanear()
         if (l.isEmpty()) {
             crudos = emptyList()
+            accesosAndroid = emptyMap()
             publicarJuegos()
         }
+        avisar("Carpeta quitada")
+        escanear()
     }
 
     fun nombreCarpeta(c: CarpetaJuegos): String = Biblioteca.nombreCarpeta(c.uri)
