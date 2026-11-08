@@ -58,3 +58,12 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - v1.6 Conectado: Discord (investigar kit social), descargas ordenadas solas, importar frontends, biblioteca inteligente,
   HowLongToBeat, repaso una pantalla/celular/TV, votación de la comunidad.
 - Regla transversal: todo funciona con una pantalla, mando y dedo; lo vistoso se puede apagar.
+
+## Hecho el 8 nov 2026 (v1.1-beta.182, por Claude: Codex sin cupo hasta ~12 nov)
+
+- #23–#27, #29, #30 cerrados. Solo queda #28 (textos, para Gemini/Jules) y la decisión de la barra.
+- Partida: `jugarComprobado` trae al frente si hay sesión del mismo juego (`volverALaPartida`) y relanza sin
+  CLEAR_TASK/CLEAR_TOP si se cerró hace < 6 h (`ultimaPartida`). Pendiente que Nicolás confirme en la Thor.
+- `Diptico.intercambioEfectivo(e)`: durante una partida, la pantalla libre muestra el estante con las herramientas.
+- REQUEST_DELETE_PACKAGES se mantiene a propósito (ACTION_DELETE lo exige con targetSdk ≥ 28).
+- Las portadas no usan HARDWARE con Glass a propósito: la captura del fondo dibuja en un lienzo de software.
