@@ -43,3 +43,18 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 
 - Cada versión nueva va con un **reporte de cambios detallado** (qué se agregó, corrigió, cambió y quitó, y qué probar en la Thor).
 - Sus listas de mejoras y errores se ordenan en la bitácora por versiones antes de repartirlas como issues.
+
+## Plan acordado (8 nov 2026, detalle en la bitácora)
+
+- Errores primero: #29 juego se reinicia al reabrir la consola, #30 herramientas no pasan a la pantalla libre con pantallas
+  intercambiadas, más #23–#28.
+- v1.2 Orden y base: ajustes con menús desplegables, barra difusa/transparente/sólida por pantalla, accesos de la cortina
+  editables, vibración con niveles, limpieza (dividir `Diptico.kt`).
+- v1.3 Movimiento y vistas: transiciones con intensidad/velocidad (Nicolás debe describir los videos de X: no se abren aquí),
+  cuadrícula solo íconos, cartuchos 3D genéricos, galería de artes y capturas, dock + cajón de apps, estilos de carpetas.
+- v1.4 Mientras juegas: pantalla de abajo minimalista con menú desplegable, temperatura y consejos (no se puede cambiar el
+  ventilador sin permisos de sistema), por qué falló un juego, respaldo de partidas, «Tu año» en diciembre.
+- v1.5 DIPO (Bisa renombrada, personaje original, 3 propuestas), ventana de logros en la barra, más widgets.
+- v1.6 Conectado: Discord (investigar kit social), descargas ordenadas solas, importar frontends, biblioteca inteligente,
+  HowLongToBeat, repaso una pantalla/celular/TV, votación de la comunidad.
+- Regla transversal: todo funciona con una pantalla, mando y dedo; lo vistoso se puede apagar.
