@@ -38,3 +38,8 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Menú recargado: Apariencia ~27 opciones, 8 ajustes que se pisan (Glass ×3, Efecto «vidrio», Fluidez, Movimiento…).
 - Barra de accesos: quedó fija (`barraFija = true`), código de «se esconde sola» muerto. Decisión de Nicolás pendiente.
 - `Diptico.kt` creció a 8.719 líneas.
+
+## Preferencias de Nicolás
+
+- Cada versión nueva va con un **reporte de cambios detallado** (qué se agregó, corrigió, cambió y quitó, y qué probar en la Thor).
+- Sus listas de mejoras y errores se ordenan en la bitácora por versiones antes de repartirlas como issues.
