@@ -217,9 +217,9 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
         ) {
             itemsIndexed(opciones) { i, o ->
                 // Título de grupo cuando empieza uno nuevo.
-                val g = Diptico.grupoOpcion(s, o.titulo)
+                val g = Diptico.grupoOpcion(s, o)
                 Column {
-                    if (g.isNotEmpty() && (i == 0 || Diptico.grupoOpcion(s, opciones[i - 1].titulo) != g)) {
+                    if (g.isNotEmpty() && (i == 0 || Diptico.grupoOpcion(s, opciones[i - 1]) != g)) {
                         Etiqueta(g, color, 10.5f, Modifier.padding(start = esc.d(6), top = esc.d(if (i == 0) 0f else 6f), bottom = esc.d(5)))
                     }
                     FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) }

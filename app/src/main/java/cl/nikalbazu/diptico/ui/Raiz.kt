@@ -47,7 +47,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     ) {
         // El centro de control vive siempre en la pantalla de arriba (la principal), aunque se intercambien.
         val arribaFisica = miPantalla == android.view.Display.DEFAULT_DISPLAY &&
-            (rol == Rol.UNICA || rol == (if (e.intercambiar) Rol.INFERIOR else Rol.SUPERIOR))
+            (rol == Rol.UNICA || rol == (if (cl.nikalbazu.diptico.estado.Diptico.intercambioEfectivo(e)) Rol.INFERIOR else Rol.SUPERIOR))
         val centroAqui = e.panel == Panel.CENTRO && arribaFisica
         val tienda = e.panel == Panel.GALERIA && e.galeria == "tienda_temas"
         // Desenfoque detrás de lo que se abre encima: el centro de control, la bienvenida, el reloj grande o la continuación.

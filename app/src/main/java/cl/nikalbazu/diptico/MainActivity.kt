@@ -39,7 +39,7 @@ class MainActivity : BaseActivity() {
             val margen = if (e.sobremesa) e.sobremesaMargen else 0
             Lienzo(e.oscuro, Modifier.fillMaxSize().margenPorcentaje(margen), t, z) {
                 if (e.unaPantalla) Raiz(e, Rol.UNICA, mi)
-                else Intercambio(e.intercambiar, esArriba = true) { inter ->
+                else Intercambio(Diptico.intercambioEfectivo(e), esArriba = true) { inter ->
                     if (inter) Raiz(e, Rol.INFERIOR, mi, rolIntro = Rol.SUPERIOR) else Raiz(e, Rol.SUPERIOR, mi)
                 }
             }

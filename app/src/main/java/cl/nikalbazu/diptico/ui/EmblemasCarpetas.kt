@@ -14,22 +14,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 
 internal data class TrazoEmblema(val forma: Path, val color: Color, val grosor: Float = 0f)
 
-/** Emblemas vectoriales propios: conservan nitidez con el pellizco y no requieren red ni bitmaps por celda. */
-@Composable
-internal fun EmblemaCarpeta(referencia: ReferenciaCarpeta, modifier: Modifier) {
-    Box(modifier.drawWithCache {
-        val trazos = construirEmblema(referencia.motivo)
-        onDrawBehind {
-            withTransform({ scale(size.width / 100, size.height / 100, Offset.Zero) }) {
-                trazos.forEach { t ->
-                    if (t.grosor == 0f) drawPath(t.forma, t.color)
-                    else drawPath(t.forma, t.color, style = Stroke(t.grosor))
-                }
-            }
-        }
-    })
-}
-
+/** Emblemas vectoriales propios (dibujos genéricos, sin franquicias): nítidos a cualquier tamaño y sin red. */
 internal fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
     val blanco = Color(0xFFFFF5DE); val oscuro = Color(0xFF101B32)
     val oro = Color(0xFFFFCC57); val azul = Color(0xFF5CA9FF)
@@ -59,21 +44,8 @@ internal fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
     // Una sombra corta separa el sello del fondo sin animaciones ni desenfoques por ícono.
     oval(oscuro.copy(alpha = .3f), 17f, 66f, 68f, 14f)
     when (motivo) {
-        "gorra" -> {
-            forma(rojo) { moveTo(18f, 53f); cubicTo(14f, 7f, 77f, 3f, 78f, 48f); lineTo(84f, 55f); cubicTo(59f, 63f, 30f, 62f, 18f, 53f); close() }
-            forma(Color(0xFFC82D57)) { moveTo(17f, 50f); cubicTo(42f, 43f, 75f, 46f, 90f, 56f); cubicTo(68f, 70f, 31f, 67f, 17f, 50f); close() }
-            oval(blanco, 34f, 22f, 29f, 28f)
-            linea(rojo, 4f, 40f, 43f, 41f, 30f, 48f, 37f, 55f, 30f, 57f, 43f)
-        }
         "estrella" -> {
             estrella(oro); estrella(Color(0xFFFFE68C), 43f, 38f, 20f)
-            caja(oscuro, 43f, 36f, 4f, 14f); caja(oscuro, 55f, 36f, 4f, 14f)
-        }
-        "trifuerza" -> {
-            oval(oro.copy(alpha = .28f), 12f, 8f, 76f, 76f, 2f)
-            pol(oro, 50f, 11f, 33f, 40f, 67f, 40f)
-            pol(Color(0xFFFFDF80), 32f, 42f, 14f, 72f, 49f, 72f)
-            pol(Color(0xFFE9A93D), 68f, 42f, 51f, 72f, 86f, 72f)
         }
         "vela" -> {
             linea(blanco, 3f, 50f, 12f, 50f, 76f)
@@ -82,33 +54,19 @@ internal fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
             pol(oro, 18f, 65f, 82f, 65f, 69f, 78f, 32f, 78f)
             pol(rojo, 50f, 12f, 65f, 17f, 50f, 21f)
         }
-        "bola", "gema" -> {
-            oval(blanco, 16f, 12f, 68f, 68f)
-            forma(if (motivo == "gema") menta else rojo) { arcTo(Rect(16f, 12f, 84f, 80f), 180f, 180f, true); close() }
-            linea(oscuro, 5f, 17f, 46f, 83f, 46f)
-            oval(oscuro, 38f, 34f, 25f, 25f); oval(blanco, 43f, 39f, 15f, 15f)
-            if (motivo == "gema") pol(menta, 79f, 6f, 90f, 20f, 79f, 34f, 68f, 20f)
+        "gema" -> {
+            // Una gema facetada simple (dibujo propio).
+            pol(menta, 30f, 18f, 70f, 18f, 86f, 38f, 50f, 82f, 14f, 38f)
+            pol(blanco.copy(alpha = .55f), 30f, 18f, 50f, 38f, 14f, 38f)
+            pol(blanco.copy(alpha = .3f), 70f, 18f, 86f, 38f, 50f, 38f)
+            linea(oscuro.copy(alpha = .4f), 2f, 14f, 38f, 86f, 38f)
         }
-        "anillo" -> {
-            pol(azul, 39f, 10f, 77f, 15f, 68f, 27f, 91f, 28f, 77f, 41f, 92f, 45f, 75f, 56f, 81f, 65f, 40f, 74f, 26f, 44f)
-            oval(Color(0xFFCE8B2F), 21f, 16f, 57f, 61f, 10f)
-            oval(oro, 20f, 12f, 57f, 61f, 7f)
-            forma(blanco, 2f) { arcTo(Rect(21f, 13f, 76f, 72f), 198f, 112f, true) }
-        }
-        "espada", "espadon" -> {
+        "espada" -> {
             oval(azul.copy(alpha = .15f), 13f, 6f, 76f, 76f)
-            if (motivo == "espadon") pol(Color(0xFFCCE5EE), 22f, 61f, 65f, 9f, 86f, 24f, 41f, 72f)
-            else pol(blanco, 38f, 59f, 68f, 12f, 76f, 8f, 78f, 21f, 48f, 66f)
+            pol(blanco, 38f, 59f, 68f, 12f, 76f, 8f, 78f, 21f, 48f, 66f)
             linea(Color(0xFF8DC0D0), 2f, 37f, 60f, 74f, 18f)
             pol(oro, 22f, 57f, 52f, 76f, 57f, 70f, 26f, 50f)
             linea(Color(0xFF6F74CD), 8f, 23f, 78f, 37f, 61f)
-        }
-        "garras" -> {
-            pol(Color(0xFFAA3D5F), 50f, 8f, 85f, 24f, 77f, 65f, 50f, 83f, 23f, 65f, 15f, 24f)
-            for (x in listOf(29f, 45f, 61f)) pol(oro, x + 18f, 17f, x + 11f, 56f, x - 3f, 69f, x + 6f, 32f)
-        }
-        "omega" -> {
-            forma(rojo, 9f) { moveTo(30f, 75f); lineTo(15f, 75f); lineTo(15f, 61f); lineTo(28f, 61f); arcTo(Rect(23f, 14f, 77f, 71f), 145f, 250f, false); lineTo(85f, 61f); lineTo(85f, 75f); lineTo(70f, 75f) }
         }
         "luna" -> {
             val luna = Path().apply { addOval(Rect(17f, 9f, 81f, 74f)) }
@@ -122,18 +80,10 @@ internal fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
             linea(Color(0xFF238B78), 3f, 20f, 82f, 66f, 31f)
             oval(oscuro, 68f, 37f, 17f, 17f)
         }
-        "calamar", "fantasma" -> {
-            if (motivo == "calamar") forma(rojo) { moveTo(50f, 9f); cubicTo(28f, 23f, 17f, 43f, 17f, 57f); lineTo(29f, 56f); lineTo(24f, 76f); lineTo(43f, 69f); lineTo(50f, 81f); lineTo(58f, 69f); lineTo(77f, 76f); lineTo(71f, 56f); lineTo(84f, 57f); cubicTo(82f, 38f, 66f, 18f, 50f, 9f); close() }
-            else forma(rojo) { moveTo(18f, 78f); lineTo(18f, 43f); cubicTo(18f, 1f, 82f, 1f, 82f, 43f); lineTo(82f, 78f); lineTo(66f, 69f); lineTo(50f, 80f); lineTo(34f, 69f); close() }
+        "fantasma" -> {
+            forma(rojo) { moveTo(18f, 78f); lineTo(18f, 43f); cubicTo(18f, 1f, 82f, 1f, 82f, 43f); lineTo(82f, 78f); lineTo(66f, 69f); lineTo(50f, 80f); lineTo(34f, 69f); close() }
             oval(blanco, 29f, 38f, 20f, 24f); oval(blanco, 51f, 38f, 20f, 24f)
             oval(oscuro, 38f, 44f, 8f, 13f); oval(oscuro, 54f, 44f, 8f, 13f)
-        }
-        "casco" -> {
-            pol(Color(0xFF92B56B), 28f, 12f, 71f, 12f, 84f, 32f, 80f, 65f, 65f, 78f, 35f, 78f, 20f, 65f, 16f, 32f)
-            pol(oscuro, 22f, 32f, 78f, 32f, 73f, 57f, 27f, 57f)
-            pol(oro, 25f, 34f, 75f, 34f, 68f, 49f, 32f, 49f)
-            linea(blanco.copy(alpha = .65f), 2f, 31f, 37f, 67f, 37f)
-            pol(Color(0xFF566F48), 32f, 61f, 43f, 57f, 57f, 57f, 68f, 61f, 59f, 70f, 41f, 70f)
         }
         "bloques" -> {
             val bloques = listOf(Triple(19f, 15f, azul), Triple(39f, 15f, azul), Triple(39f, 35f, azul), Triple(39f, 55f, azul), Triple(59f, 35f, rojo), Triple(59f, 55f, rojo), Triple(79f, 55f, rojo), Triple(19f, 55f, oro))
@@ -148,14 +98,6 @@ internal fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
                 pol(blanco, 50f, 9f, 57f, 52f, 50f, 62f, 43f, 52f)
                 pol(rojo, 42f, 68f, 50f, 89f, 58f, 68f)
             }
-        }
-        "invasor" -> {
-            val filas = listOf("001000100", "000101000", "001111100", "011010110", "111111111", "101111101", "101000101", "000101000")
-            filas.forEachIndexed { y,f -> f.forEachIndexed { x,c -> if(c == '1') caja(menta, 14f + x * 8, 13f + y * 8, 7f, 7f, 1f) } }
-        }
-        "pacman" -> {
-            forma(oro) { moveTo(48f, 46f); arcTo(Rect(14f, 12f, 82f, 80f), 35f, 290f, false); close() }
-            oval(blanco, 82f, 42f, 7f, 7f); oval(oscuro, 48f, 23f, 6f, 6f)
         }
         "carreras" -> {
             linea(blanco, 4f, 23f, 82f, 23f, 12f)
@@ -195,8 +137,6 @@ internal fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
             oval(oscuro,33f,33f,13f,14f); oval(oscuro,56f,33f,13f,14f)
             if(motivo=="pirata") pol(oscuro,20f,28f,32f,8f,49f,17f,68f,8f,82f,28f)
         }
-        "portal" -> { oval(azul,17f,9f,27f,70f,7f); oval(Color(0xFFFFAE66),60f,9f,27f,70f,7f) }
-        "lambda" -> { linea(oro,9f,26f,77f,50f,16f,75f,77f,85f,77f); linea(oro,7f,36f,16f,50f,16f) }
         "television" -> {
             caja(oro,14f,22f,72f,53f,11f); caja(oscuro,22f,29f,47f,37f,7f)
             linea(blanco,3f,31f,8f,48f,22f,65f,8f); oval(rojo,74f,37f,6f,6f); oval(blanco,74f,51f,6f,6f)
@@ -204,11 +144,6 @@ internal fun construirEmblema(motivo: String): List<TrazoEmblema> = buildList {
         "brujula" -> {
             oval(oro,16f,10f,69f,69f,4f); pol(rojo,65f,21f,57f,50f,36f,68f,44f,40f)
             pol(blanco,65f,21f,57f,50f,44f,40f); oval(oro,47f,41f,8f,8f)
-        }
-        "barril" -> {
-            caja(Color(0xFFBA815A),26f,12f,49f,67f,18f)
-            caja(oro,24f,25f,53f,7f); caja(oro,24f,61f,53f,7f)
-            linea(oscuro,3f,36f,37f,65f,55f); linea(oscuro,3f,36f,55f,65f,37f)
         }
         "pajaro" -> { oval(oro,20f,23f,56f,47f); pol(rojo,70f,43f,91f,50f,70f,56f); oval(blanco,52f,30f,20f,20f); oval(oscuro,63f,36f,7f,8f); oval(Color(0xFFFFA14D),15f,43f,35f,20f) }
         "serpiente" -> { linea(menta,14f,22f,70f,22f,39f,50f,39f,50f,68f,78f,68f,78f,27f); oval(menta,67f,16f,23f,23f); oval(oscuro,79f,20f,4f,4f); oval(rojo,26f,12f,13f,13f) }

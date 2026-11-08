@@ -37,6 +37,15 @@ object Respaldo {
         "gridFilas" to "s", "paginas" to "s",
     )
 
+    /** Carpetas que también viajan en el respaldo: copias manuales de partidas y la música de los temas instalados. */
+    private val CARPETAS_EXTRA = listOf("copias-partida", "temas-comunidad")
+
+    /** Ruta relativa segura (sin «..», sin ocultos, hasta 3 niveles). */
+    private fun rutaSegura(ruta: String): Boolean {
+        val partes = ruta.split('/')
+        return ruta.length <= 300 && partes.size in 1..3 && partes.all { it.isNotBlank() && it != ".." && !it.startsWith(".") && '\\' !in it }
+    }
+
     private fun portable(clave: String) = clave !in soloEquipo && !Almacen.esCredencial(clave)
 
     private fun tipo(valor: Any?) = when (valor) {
@@ -72,6 +81,16 @@ object Respaldo {
                 zip.putNextEntry(ZipEntry("notas/${f.name}"))
                 f.inputStream().use { it.copyTo(zip) }
                 zip.closeEntry()
+            }
+            for (nombre in CARPETAS_EXTRA) {
+                val raiz = File(ctx.filesDir, nombre)
+                raiz.walkTopDown().filter { it.isFile }.forEach { f ->
+                    val rel = f.relativeTo(raiz).invariantSeparatorsPath
+                    if (!rutaSegura(rel)) return@forEach
+                    zip.putNextEntry(ZipEntry("extras/$nombre/$rel"))
+                    f.inputStream().use { it.copyTo(zip) }
+                    zip.closeEntry()
+                }
             }
         }
         return ajustes.length()
@@ -117,7 +136,7 @@ object Respaldo {
         }
     }
 
-    private fun cargarZip(entrada: InputStream, temporal: File): JSONObject {
+    private fun cargarZip(entrada: InputStream, temporal: File, extras: File): JSONObject {
         var total = 0L
         var ajustes: JSONObject? = null
         val vistos = HashSet<String>()
@@ -139,6 +158,17 @@ object Respaldo {
                         val nombre = e.name.removePrefix("notas/")
                         require(nombre.isNotBlank() && nombre.length <= 200 && !nombre.startsWith(".") && '/' !in nombre && '\\' !in nombre)
                         File(temporal, nombre).outputStream().use { copiarLimitado(zip, it, limite) }
+                    }
+                    e.name.startsWith("extras/") -> {
+                        val resto = e.name.removePrefix("extras/")
+                        val carpeta = resto.substringBefore('/')
+                        val rel = resto.substringAfter('/', "")
+                        if (e.isDirectory || rel.isBlank()) copiarLimitado(zip, descartar, 0)
+                        else {
+                            require(carpeta in CARPETAS_EXTRA && rutaSegura(rel))
+                            val destino = File(extras, "$carpeta/$rel").apply { parentFile?.mkdirs() }
+                            destino.outputStream().use { copiarLimitado(zip, it, limite) }
+                        }
                     }
                     else -> error("Entrada de respaldo desconocida")
                 }
@@ -185,6 +215,7 @@ object Respaldo {
         val temporal = java.nio.file.Files.createTempDirectory(ctx.filesDir.toPath(), "restaurar-").toFile()
         val nuevas = File(temporal, "nuevas").apply { mkdir() }
         val anteriores = File(temporal, "anteriores")
+        val extras = File(temporal, "extras").apply { mkdir() }
         val notas = File(ctx.filesDir, "notas")
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val previos = prefs.all
@@ -193,7 +224,7 @@ object Respaldo {
         var intentoAjustes = false
         var conservarTemporal = false
         try {
-            val valores = decodificar(cargarZip(entrada, nuevas), previos)
+            val valores = decodificar(cargarZip(entrada, nuevas, extras), previos)
             guardarCopiaPrevia(ctx)
             // Conserva notas locales que no estaban incluidas en la copia.
             notas.listFiles()?.filter { it.isFile && !File(nuevas, it.name).exists() }?.forEach {
@@ -207,6 +238,8 @@ object Respaldo {
             pusoNotas = true
             intentoAjustes = true
             check(reemplazar(prefs, previos.filterKeys { !portable(it) } + valores))
+            // Copias de partida y música de temas: se suman a lo que ya hay (nunca se borra nada local).
+            try { extras.copyRecursively(ctx.filesDir, overwrite = true) } catch (_: Exception) {}
             return valores.size
         } catch (_: Exception) {
             if (intentoAjustes) reemplazar(prefs, previos)

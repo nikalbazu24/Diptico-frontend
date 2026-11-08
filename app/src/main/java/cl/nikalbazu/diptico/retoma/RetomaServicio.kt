@@ -38,6 +38,7 @@ class RetomaServicio : Service() {
     private val buffer = BufferRetoma()
     private var clave = ""
     private var cerrando = false
+    @Volatile private var destruido = false
     private val pantalla = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) { if (intent?.action == Intent.ACTION_SCREEN_OFF) stopSelf() }
     }
@@ -48,11 +49,8 @@ class RetomaServicio : Service() {
     }
     override fun onBind(intent: Intent?): IBinder? = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "detener") { stopSelf(); return START_NOT_STICKY }
-        if (activa) return START_NOT_STICKY
-        val s = Diptico.estado.value.sesion
-        clave = intent?.getStringExtra("clave").orEmpty()
-        if (s == null || s.clave != clave || s.dosPantallas || s.displayId != 0 || LupaServicio.activa) { stopSelf(); return START_NOT_STICKY }
+        // Android exige llamar a startForeground apenas arranca un servicio iniciado con startForegroundService,
+        // aunque después se detenga: si no, cierra Díptico. Por eso la notificación va antes de cualquier revisión.
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CANAL, "Clip de retoma", NotificationManager.IMPORTANCE_LOW))
         val parar = PendingIntent.getService(this, 9281, Intent(this, RetomaServicio::class.java).setAction("detener"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
@@ -62,9 +60,30 @@ class RetomaServicio : Service() {
             .setContentIntent(parar).setOngoing(true).build()
         try { startForeground(9281, aviso, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION) }
         catch (_: Exception) { stopSelf(); return START_NOT_STICKY }
+        if (intent?.action == "detener") { stopSelf(); return START_NOT_STICKY }
+        if (activa) return START_NOT_STICKY
+        clave = intent?.getStringExtra("clave").orEmpty()
         val codigo = intent?.getIntExtra("codigo", Activity.RESULT_CANCELED) ?: Activity.RESULT_CANCELED
         @Suppress("DEPRECATION") val datos = intent?.getParcelableExtra<Intent>("datos")
         if (codigo != Activity.RESULT_OK || datos == null) { stopSelf(); return START_NOT_STICKY }
+        // El permiso llega justo antes de abrir el juego: la sesión puede tardar un momento en existir.
+        esperarSesion(codigo, datos, intentos = 6)
+        return START_NOT_STICKY
+    }
+
+    private fun esperarSesion(codigo: Int, datos: Intent, intentos: Int) {
+        val s = Diptico.estado.value.sesion
+        val valida = s != null && s.clave == clave && !s.dosPantallas && s.displayId == 0 && !LupaServicio.activa
+        if (!valida) {
+            if (intentos > 0 && s == null && !LupaServicio.activa) {
+                Handler(Looper.getMainLooper()).postDelayed({ if (!destruido && !activa) esperarSesion(codigo, datos, intentos - 1) }, 500)
+            } else stopSelf()
+            return
+        }
+        empezar(codigo, datos)
+    }
+
+    private fun empezar(codigo: Int, datos: Intent) {
         activa = true
         trabajo.post {
             try {
@@ -88,7 +107,6 @@ class RetomaServicio : Service() {
                 vaciar()
             } catch (_: Exception) { Diptico.avisar("El clip de retoma no está disponible en este equipo"); stopSelf() }
         }
-        return START_NOT_STICKY
     }
     private fun vaciar() {
         if (cerrando) return
@@ -137,6 +155,7 @@ class RetomaServicio : Service() {
         } catch (_: Exception) { try { mux?.release() } catch (_: Exception) {}; destino.delete() }
     }
     override fun onDestroy() {
+        destruido = true
         activa = false
         try { unregisterReceiver(pantalla) } catch (_: Exception) {}
         trabajo.post {

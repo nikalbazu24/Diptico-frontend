@@ -16,29 +16,26 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import cl.nikalbazu.diptico.data.Consola
 import kotlin.math.min
 
-/** Arte alrededor del hardware, con referencias adicionales al catálogo de cada familia. */
-internal fun motivosCarpeta(id: String): List<String> {
-    val principal = ReferenciasCarpetas.para(id)?.motivo ?: "coleccion"
-    val secundarios = when (id) {
-        "nes", "famicom", "fds" -> listOf("estrella", "trifuerza", "robot", "barril")
-        "snes", "snesna", "sfc" -> listOf("gorra", "trifuerza", "robot", "bola")
-        "n64", "n64dd" -> listOf("gorra", "estrella", "bola", "barril")
-        "gb", "sgb", "gbc", "gba", "pokemini" -> listOf("bola", "bloques", "estrella", "trifuerza")
-        "gc", "wii", "wiiu", "switch", "switch2" -> listOf("estrella", "trifuerza", "hoja", "calamar")
-        "nds", "n3ds" -> listOf("bola", "hoja", "estrella", "trifuerza")
-        "psx", "ps2", "ps3", "ps4", "psp", "psvita" -> listOf("espadon", "garras", "omega", "brujula")
-        "xbox", "xbox360", "xboxone" -> listOf("casco", "carreras", "espada", "nave")
-        "android", "androidapps", "androidgames" -> listOf("viento", "pajaro", "montana", "bloques")
-        "rpgmaker", "easyrpg" -> listOf("luna", "espada", "castillo", "gema")
-        else -> when (principal) {
-            "anillo" -> listOf("estrella", "carreras", "luna", "anillo")
-            "pacman", "garras", "tanque" -> listOf("pacman", "invasor", "tanque", "carreras")
-            "calavera", "lambda", "portal" -> listOf("portal", "lambda", "calavera", "espada")
-            "nave", "invasor" -> listOf("nave", "invasor", "bloques", "estrella")
-            else -> listOf(principal, "estrella", "gema", "nave")
-        }
-    }
-    return (listOf(principal) + secundarios).distinct()
+/**
+ * Dibujos alrededor del hardware: motivos propios y genéricos según el tipo de consola.
+ * Nunca personajes, objetos ni símbolos de franquicias (Díptico es público).
+ */
+internal fun motivosCarpeta(id: String): List<String> = when (id) {
+    "gb", "sgb", "gbc", "gba", "nds", "n3ds", "pokemini", "gamegear", "ngp", "ngpc", "lynx", "wonderswan",
+    "wonderswancolor", "psp", "psvita", "virtualboy", "gameandwatch", "lcdgames" -> listOf("bloques", "estrella", "hoja", "tablero")
+    "switch", "switch2", "wii", "wiiu" -> listOf("hoja", "carreras", "estrella", "montana")
+    "nes", "famicom", "fds", "snes", "snesna", "sfc", "n64", "n64dd", "satellaview", "sufami",
+    "genesis", "megadrive", "megadrivejp", "mastersystem", "mark3", "sg-1000", "sega32x", "sega32xjp", "sega32xna",
+    "atari2600", "atari5200", "atari7800", "colecovision", "intellivision", "pcengine", "tg16" -> listOf("estrella", "castillo", "nave", "carreras")
+    "psx", "ps2", "ps3", "ps4", "segacd", "megacd", "megacdjp", "saturn", "saturnjp", "dreamcast", "gc",
+    "xbox", "xbox360", "xboxone", "3do", "pcfx", "jaguar" -> listOf("luna", "montana", "brujula", "espada")
+    "arcade", "mame", "mame-advmame", "mess", "fba", "fbneo", "cps", "cps1", "cps2", "cps3", "neogeo", "neogeocd",
+    "neogeocdjp", "naomi", "naomi2", "naomigd", "atomiswave", "model2", "model3", "triforce", "stv",
+    "consolearcade", "pcarcade", "type-x" -> listOf("pinball", "malabares", "tanque", "nave")
+    "android", "androidapps", "androidgames", "ports" -> listOf("viento", "pajaro", "montana", "bloques")
+    "rpgmaker", "easyrpg" -> listOf("luna", "espada", "castillo", "vela")
+    "pc", "dos", "windows", "scummvm", "steam", "amiga", "c64", "msx", "zxspectrum" -> listOf("television", "robot", "tablero", "brujula")
+    else -> listOf("coleccion", "estrella", "hoja", "gema")
 }
 
 /** Portadas propias y vectoriales para todo el catálogo, también Game Boy. */
@@ -53,10 +50,10 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier) {
         val medio = lerp(color, Color.Black, .14f)
         val motivos = motivosCarpeta(id).map(::construirEmblema)
         // Dibujos en la periferia. El centro se reserva para la consola, a cualquier tamaño.
+        // Solo las cuatro esquinas: menos dibujos y más aire alrededor de la consola.
         val posiciones = listOf(
-            Triple(.01f, .02f, .31f), Triple(.67f, -.02f, .33f),
-            Triple(-.06f, .35f, .30f), Triple(.79f, .35f, .27f),
-            Triple(.00f, .70f, .32f), Triple(.34f, .79f, .24f), Triple(.68f, .70f, .34f),
+            Triple(.02f, .02f, .28f), Triple(.70f, .02f, .28f),
+            Triple(.02f, .70f, .28f), Triple(.70f, .70f, .28f),
         )
         val fondo = Brush.linearGradient(listOf(papel, lerp(papel, color, .12f)), Offset.Zero, Offset(s, s))
         val placa = Rect(s * .245f, s * .245f, s * .755f, s * .755f)

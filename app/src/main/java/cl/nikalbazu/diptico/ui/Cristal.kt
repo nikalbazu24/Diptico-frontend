@@ -25,6 +25,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
@@ -147,7 +148,10 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
     val materialBase = tinte?.let { lerp(colorMaterialCristal(p, capa), it, .30f) } ?: colorMaterialCristal(p, capa)
     val material = if (efectos && !entorno.contraste && entorno.colorAmbiente.alpha > 0f)
         lerp(materialBase, entorno.colorAmbiente, .07f) else materialBase
-    val opacidad = opacidadLegibleCristal(p, capa, densidadCristal(capa, efectos, entorno.contraste, entorno.detalle, nivel))
+    // Se calcula una vez por combinación (antes se repetía un bucle de contraste en cada recomposición de cada control).
+    val opacidad = remember(p, capa, efectos, entorno.contraste, entorno.detalle, nivel) {
+        opacidadLegibleCristal(p, capa, densidadCristal(capa, efectos, entorno.contraste, entorno.detalle, nivel))
+    }
     val claro = p.fondo.luminance() > .5f
     var posicion by remember { mutableStateOf(Offset.Zero) }
     var mundo by remember { mutableStateOf(IntSize.Zero) }
@@ -170,12 +174,9 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
     return shadow(if (efectos && !entorno.contraste) (elevacion * intensidad).dp else 0.dp,
         forma, clip = false, ambientColor = Color.Black.copy(alpha = .15f), spotColor = Color.Black.copy(alpha = .24f))
         .clip(forma).then(gesto).onGloballyPositioned {
+            // Solo cambia el estado si de verdad se movió (mismo valor = sin redibujar).
             posicion = it.positionInRoot()
-            mundo = it.parentLayoutCoordinates?.let { parent ->
-                var raiz = parent
-                while (raiz.parentLayoutCoordinates != null) raiz = requireNotNull(raiz.parentLayoutCoordinates)
-                raiz.size
-            } ?: it.size
+            mundo = it.findRootCoordinates().size
         }.drawWithCache {
             val contorno = forma.createOutline(size, layoutDirection, this)
             val borde = .7f.dp.toPx()

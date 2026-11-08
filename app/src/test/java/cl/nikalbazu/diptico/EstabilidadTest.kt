@@ -232,4 +232,29 @@ class EstabilidadTest {
             "Hola. [[bisa_pausa:psx/a|Pausar]] [[menu:BIBLIOTECA|Biblioteca]]")
         assertEquals("menu", mensaje.acciones.single().tipo)
     }
+
+    @Test fun respaldoLlevaCopiasDePartidaYMusicaDeTemas() {
+        preferencias.edit().putString("inicio", "widgets").commit()
+        File(ctx.filesDir, "copias-partida/abc/2026-11-08.srm").apply { parentFile!!.mkdirs(); writeText("partida") }
+        File(ctx.filesDir, "temas-comunidad/aurora.ogg").apply { parentFile!!.mkdirs(); writeText("musica") }
+        val salida = ByteArrayOutputStream()
+        Respaldo.escribir(ctx, salida)
+        File(ctx.filesDir, "copias-partida").deleteRecursively()
+        File(ctx.filesDir, "temas-comunidad").deleteRecursively()
+        assertTrue(Respaldo.restaurar(ctx, salida.toByteArray().inputStream()) > 0)
+        assertEquals("partida", File(ctx.filesDir, "copias-partida/abc/2026-11-08.srm").readText())
+        assertEquals("musica", File(ctx.filesDir, "temas-comunidad/aurora.ogg").readText())
+        val salto = zip("ajustes.json" to """{"inicio":{"t":"s","v":"heroe"}}""", "extras/copias-partida/../../ajeno.txt" to "x")
+        assertEquals(-1, Respaldo.restaurar(ctx, salto.inputStream()))
+        assertFalse(File(ctx.filesDir, "ajeno.txt").exists())
+    }
+
+    @Test fun carpetasSinMotivosDeFranquicias() {
+        val prohibidos = setOf("gorra", "trifuerza", "bola", "anillo", "omega", "calamar", "casco", "pacman", "portal", "lambda", "barril", "garras", "espadon", "invasor")
+        for (id in listOf("nes", "snes", "n64", "gb", "gba", "nds", "psx", "ps2", "xbox", "genesis", "arcade", "android", "rpgmaker", "todo", "otra")) {
+            val motivos = cl.nikalbazu.diptico.ui.motivosCarpeta(id)
+            assertTrue("$id usa ${motivos.filter { it in prohibidos }}", motivos.none { it in prohibidos })
+            motivos.forEach { cl.nikalbazu.diptico.ui.construirEmblema(it) }
+        }
+    }
 }

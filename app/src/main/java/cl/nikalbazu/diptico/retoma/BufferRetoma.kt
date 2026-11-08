@@ -9,9 +9,11 @@ internal class BufferRetoma(private val ventanaUs: Long = 6_000_000L, private va
         if (paquetes.isEmpty() && !p.clave) return
         paquetes.addLast(p); bytes += p.datos.size
         while (paquetes.size > 1) {
-            val siguiente = paquetes.drop(1).indexOfFirst { it.clave }.let { if (it < 0) -1 else it + 1 }
+            // Índice del siguiente fotograma completo (sin copiar la lista en cada paquete).
+            var siguiente = -1
+            for (i in 1 until paquetes.size) if (paquetes[i].clave) { siguiente = i; break }
             if (siguiente < 0) break
-            if (paquetes.elementAt(siguiente).tiempoUs > p.tiempoUs - ventanaUs && bytes <= limiteBytes) break
+            if (paquetes[siguiente].tiempoUs > p.tiempoUs - ventanaUs && bytes <= limiteBytes) break
             repeat(siguiente) { bytes -= paquetes.removeFirst().datos.size }
         }
         if (bytes > limiteBytes) limpiar()

@@ -175,7 +175,7 @@ abstract class BaseActivity : ComponentActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) pantallaCompleta()
+        if (hasFocus) pantallaCompleta() else Teclas.soltarTodo()
     }
 
     fun miDisplay(): Int =

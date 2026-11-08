@@ -270,7 +270,11 @@ object Lanzador {
      * Abre el juego. Devuelve null si salió bien, o un mensaje para mostrar si falló.
      * [raiz] es la carpeta de juegos elegida (para rutas y archivos vecinos).
      */
-    fun lanzar(ctx: Context, juego: Juego, consola: Consola, preferido: String?, displayId: Int?, raiz: Uri?): String? {
+    /**
+     * Abre [juego]. Con [retomar] (el juego ya está abierto) se usa la misma orden pero sin «limpiar la tarea»:
+     * Android trae la partida al frente tal como estaba, en vez de reiniciar el emulador.
+     */
+    fun lanzar(ctx: Context, juego: Juego, consola: Consola, preferido: String?, displayId: Int?, raiz: Uri?, retomar: Boolean = false): String? {
         // URI del juego dentro de la carpeta elegida: es la que Díptico puede compartir con el emulador.
         // (La versión sin "tree" no se puede compartir y por eso Eden decía que no había juego.)
         val rom = juego.uri
@@ -301,6 +305,7 @@ object Lanzador {
             return "No pude preparar ${juego.titulo}: ${e.message ?: "error desconocido"}"
         }
         base.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (retomar) base.flags = base.flags and (Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP).inv()
 
         // Los accesos internos de Díptico (file://) no se comparten: el emulador recibe solo el código del juego.
         val conPermiso = if (juego.uri.scheme == "file") base else Intent(base).apply {

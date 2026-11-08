@@ -52,7 +52,7 @@ class InferiorActivity : BaseActivity() {
                     }
                 }
                 else -> Lienzo(e.oscuro, Modifier.fillMaxSize(), t, z) {
-                    Intercambio(e.intercambiar, esArriba = false) { inter ->
+                    Intercambio(Diptico.intercambioEfectivo(e), esArriba = false) { inter ->
                         if (inter) Raiz(e, Rol.SUPERIOR, mi, rolIntro = Rol.INFERIOR) else Raiz(e, Rol.INFERIOR, mi)
                     }
                 }
@@ -88,7 +88,7 @@ class InferiorActivity : BaseActivity() {
         val usandoBisa = e.panel == cl.nikalbazu.diptico.estado.Panel.ASISTENTE ||
             (e.panel == cl.nikalbazu.diptico.estado.Panel.CLAVE && e.textoPara in setOf("asistente", "bisa_paso"))
         val atenuarJuego = !lupa && s != null && s.displayId != miDisplay() && !s.dosPantallas &&
-            !e.despierta && !e.intercambiar && !usandoBisa
+            !e.despierta && !Diptico.intercambioEfectivo(e) && !usandoBisa
         val valor = when {
             !e.configurado -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
             e.unaPantalla -> 0.01f

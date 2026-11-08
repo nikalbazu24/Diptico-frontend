@@ -1,8 +1,7 @@
-- **Base 153.** Conserva la interfaz y las funciones de la beta 153: dos pantallas, widgets, Bisa, calendario y tienda.
-- **Liquid Glass.** Material opcional para todos los temas. Fondo real desenfocado en carpetas y widgets, borde fino, luz y profundidad. Intensidad independiente de 0 a 100 % para carpetas y widgets; superficies sólidas con Ahorro o alto contraste.
-- **Carpetas.** Iconos propios de cada sistema, etiquetas separadas, filas centradas y orden por nombre o familias. Conserva las portadas personales.
-- **Dos dedos.** Previa de tamaño mientras ajustas, con paradas fijas al soltar. Los juegos conservan la vista y la selección. Un dedo sigue desplazando; cancelar descarta la previa.
-- **Movimiento.** Apertura y cierre de carpetas, ventanas y transiciones suaves. Respeta el ajuste de movimiento reducido.
-- **Mantenimiento.** Gestos, densidades, material y ventana de carpeta en módulos separados. Perfiles visuales anteriores compatibles.
-- **Editor de widgets.** Tamaño, Diseño y Más ajustes separan los controles sin quitar opciones. Catálogo con búsqueda y vista previa en móviles. El contenido adapta escala, distribución y texto al espacio real. Los textos largos conservan una lectura completa al tocarlos.
-- **Hora y batería.** Una barra persistente por pantalla permanece sobre carpetas y paneles; las cabeceras internas dejan de repetirla. Las carpetas reducen los controles para dar más espacio a los juegos.
+- **Tu partida sigue ahí.** Si eliges un juego que ya está abierto, o que dejaste en pausa hace poco, Díptico lo trae al frente en vez de reiniciarlo.
+- **Pantallas intercambiadas.** Las herramientas de la partida aparecen siempre en la pantalla que deja libre el juego.
+- **Más estable.** El clip de retoma ya no puede cerrar Díptico, el aviso de «Díptico se cerró» no vuelve si eliges «Ahora no» y los atajos del mando no se activan solos después de abrir un juego.
+- **Respaldo completo.** Guarda también tus copias de partidas y la música de los temas instalados.
+- **Carpetas con dibujos propios.** Los íconos de las consolas usan motivos originales, con más espacio alrededor.
+- **Menú.** Las opciones de Liquid Glass aparecen bajo su propio subtítulo en Apariencia.
+- **Fluidez.** El material Glass hace menos cálculos al dibujarse.

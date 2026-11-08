@@ -1,0 +1,13 @@
+Arreglos importantes	Important fixes	Correções importantes	重要修复	重要な修正
+Tu partida sigue ahí	Your game is still there	Sua partida continua lá	你的进度还在	プレイはそのまま
+Si eliges un juego que ya está abierto, o que dejaste en pausa hace poco, Díptico vuelve a tu partida en vez de empezarla de cero.	If you pick a game that is already open, or that you paused a moment ago, Díptico takes you back to your game instead of starting over.	Se você escolher um jogo que já está aberto, ou que pausou há pouco, o Díptico volta para a sua partida em vez de começar do zero.	如果你选择一款已经打开或刚暂停的游戏，Díptico 会回到你的进度，而不是从头开始。	すでに開いているゲームや少し前に一時停止したゲームを選ぶと、Díptico は最初からではなく続きに戻ります。
+Pantallas intercambiadas	Swapped screens	Telas trocadas	交换屏幕	画面の入れ替え
+Con las pantallas intercambiadas, las herramientas de la partida aparecen siempre en la pantalla que deja libre el juego.	With the screens swapped, the game tools always appear on the screen the game leaves free.	Com as telas trocadas, as ferramentas da partida aparecem sempre na tela que o jogo deixa livre.	交换屏幕后，游戏工具总会出现在游戏没有占用的那块屏幕上。	画面を入れ替えていても、プレイ中のツールは常にゲームが使っていない画面に表示されます。
+Más estable	More stable	Mais estável	更稳定	より安定
+Arreglos para que Díptico no se cierre con el clip de retoma, para que el aviso de cierre no vuelva siempre y para que los atajos del mando no se activen solos.	Fixes so Díptico doesn't close with the resume clip, the crash notice doesn't keep coming back, and controller shortcuts don't trigger on their own.	Correções para o Díptico não fechar com o clipe de retomada, o aviso de fechamento não voltar sempre e os atalhos do controle não dispararem sozinhos.	修复：Díptico 不会因续玩片段而关闭，崩溃提示不会反复出现，手柄快捷键也不会自行触发。	再開クリップで Díptico が閉じないように、終了の通知が毎回出ないように、コントローラーのショートカットが勝手に動かないように修正しました。
+Respaldo completo y carpetas propias	Full backup and original folder art	Backup completo e pastas próprias	完整备份与原创文件夹图标	完全バックアップとオリジナルのフォルダ
+El respaldo ahora guarda tus copias de partidas y la música de los temas. Los íconos de las carpetas tienen dibujos propios, con más aire.	Backups now include your save copies and theme music. Folder icons use original drawings, with more breathing room.	O backup agora guarda suas cópias de partidas e a música dos temas. Os ícones das pastas têm desenhos próprios, com mais espaço.	备份现在包含你的存档副本和主题音乐。文件夹图标使用原创图案，更加简洁。	バックアップにセーブのコピーとテーマ音楽が含まれるようになりました。フォルダのアイコンはオリジナルの絵で、すっきりしました。
+Material Glass	Glass material	Material Glass	玻璃材质	ガラス素材
+Estilos guardados y colecciones	Saved styles and collections	Estilos salvos e coleções	已保存的风格与合集	保存したスタイルとコレクション
+Más opciones	More options	Mais opções	更多选项	その他のオプション
+Volviendo a tu partida	Going back to your game	Voltando para a sua partida	正在返回你的游戏	ゲームに戻ります

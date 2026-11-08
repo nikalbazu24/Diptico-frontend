@@ -26,6 +26,18 @@ object Teclas {
     private data class ToquePendiente(val tiempo: Long, val tarea: Runnable)
     private val toquesPendientes = mutableMapOf<Int, ToquePendiente>()
 
+    /**
+     * Olvida las teclas apretadas. Se llama al perder el foco (se abrió un juego o una ventana): Android no avisa
+     * cuándo se sueltan esas teclas, y sin esto Start quedaba «apretado» y después R3 o L3 solos disparaban un atajo.
+     */
+    fun soltarTodo() {
+        presionadas.clear()
+        consumidas.clear()
+        toquesPendientes.values.forEach { atajosHandler.removeCallbacks(it.tarea) }
+        toquesPendientes.clear()
+        aLargo = false; selectLargo = false; startLargo = false; bLargo = false
+    }
+
     private fun cancelarToque(tecla: Int) {
         toquesPendientes.remove(tecla)?.let { atajosHandler.removeCallbacks(it.tarea) }
     }

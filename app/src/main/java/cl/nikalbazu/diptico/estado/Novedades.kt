@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "glass-y-densidades-153-11"
-    const val NOMBRE = "Glass y carpetas"
+    const val ID = "arreglos-1.2-12"
+    const val NOMBRE = "Arreglos importantes"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -226,11 +226,17 @@ object Novedades {
             Pagina("Biblioteca más estable", "Si cambias las carpetas durante un escaneo, Díptico vuelve a leerlas con los ajustes nuevos. Si una carpeta no responde, conserva los juegos que ya conocía de ella.", Icono.CARPETA, 0xFFDBB386),
             Pagina("Guía actualizada", "El README de GitHub reúne la instalación y las funciones de Díptico en español e inglés, con enlaces a los temas de la comunidad y a las pruebas de la beta.", Icono.INFO, 0xFF77BDB8),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("glass-y-densidades-153-11", "Glass y carpetas", listOf(
             Pagina("Liquid Glass", "Actívalo en Apariencia. Las carpetas usan el fondo real desenfocado, con bordes finos y luz suave. Regula por separado el nivel de carpetas y widgets.", Icono.ESTRELLA, 0xFF8ECFD4),
             Pagina("Carpetas ordenadas", "Los iconos propios de cada sistema tienen su nombre debajo. Ordena por nombre o por familias desde la biblioteca; tus portadas personales siguen disponibles.", Icono.CARPETA, 0xFFBCA4FF),
             Pagina("Editor de widgets más simple", "Tamaño, Diseño y Más ajustes conservan toda la personalización. Busca widgets en el catálogo. El contenido se adapta al espacio; toca ↗ para leer un texto largo completo.", Icono.EDITAR, 0xFF8ECFD4),
             Pagina("Espacios predeterminados", "Ajusta los juegos con dos dedos: Compacto, Equilibrado, Amplio o Detalle. Al soltar se ajustan a una parada fija y conservan tu vista y tu selección.", Icono.FORMA, 0xFFDBB386),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Tu partida sigue ahí", "Si eliges un juego que ya está abierto, o que dejaste en pausa hace poco, Díptico vuelve a tu partida en vez de empezarla de cero.", Icono.CONTINUAR, 0xFF2EC4A6),
+            Pagina("Pantallas intercambiadas", "Con las pantallas intercambiadas, las herramientas de la partida aparecen siempre en la pantalla que deja libre el juego.", Icono.PANTALLAS, 0xFF3BA8FF),
+            Pagina("Más estable", "Arreglos para que Díptico no se cierre con el clip de retoma, para que el aviso de cierre no vuelva siempre y para que los atajos del mando no se activen solos.", Icono.CHECK, 0xFF8E7CFF),
+            Pagina("Respaldo completo y carpetas propias", "El respaldo ahora guarda tus copias de partidas y la música de los temas. Los íconos de las carpetas tienen dibujos propios, con más aire.", Icono.CARPETA, 0xFFFF7A59),
         )),
     )
 

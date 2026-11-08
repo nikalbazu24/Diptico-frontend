@@ -106,6 +106,8 @@ data class Opcion(
     /** Para los accesos que se encienden y apagan (Wi-Fi, Bluetooth, turbo…): si está encendido ahora. null = no aplica. */
     val activa: Boolean? = null,
     val rango: RangoOpcion? = null,
+    /** Subtítulo bajo el que se muestra en su sección. null = se deduce del título (forma antigua). */
+    val grupo: String? = null,
     val accion: () -> Unit,
 )
 
@@ -1089,6 +1091,8 @@ object Diptico {
                     "La última vez Díptico se cerró solo. Puedes contar qué pasó y enviar el reporte al equipo de Díptico.",
                     Icono.INFO, si = "Preparar reporte", no = "Ahora no",
                 ),
+                // «Ahora no» descarta el aviso: no vuelve a salir en cada arranque por la misma caída.
+                no = { Fallas.olvidar(app) },
             ) { prepararReporte(informe) }
         }
     }
@@ -1567,6 +1571,16 @@ object Diptico {
         actualizar { it.copy(tamTexto = t) }
     }
 
+    /**
+     * Si las pantallas se ven intercambiadas ahora. Mientras juegas, manda dónde está el juego: la pantalla libre
+     * siempre muestra el estante con las herramientas de la partida, estén o no intercambiadas.
+     */
+    fun intercambioEfectivo(e: Estado): Boolean {
+        val s = e.sesion
+        if (s == null || s.dosPantallas || e.unaPantalla) return e.intercambiar
+        return s.displayId != Display.DEFAULT_DISPLAY
+    }
+
     fun intercambiar() {
         val e = estado.value
         if (e.unaPantalla) {
@@ -1983,6 +1997,8 @@ object Diptico {
         val e = estado.value
         val juego = e.seleccionado ?: return
         val consola = Consolas.porId(juego.consolaId) ?: return
+        // El juego ya está abierto: volver a la partida, nunca reiniciarla (muchos emuladores se abren «limpiando la tarea»).
+        e.sesion?.takeIf { it.clave == juego.clave }?.let { s -> volverALaPartida(juego, consola, s); return }
         val destino = pantalla ?: e.datos[juego.clave]?.pantalla ?: if (e.unaPantalla) "arriba" else e.pantallaJuegos
         val inferior = Pantallas.inferior(app)
         // Lupa: antes de abrir el juego se pide el permiso para copiar la pantalla de arriba (una vez).
@@ -2000,7 +2016,10 @@ object Diptico {
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
         else {
             val archivo = archivoParaJugar(juego, e)
-            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(archivo))
+            // Si es el mismo juego que se dejó hace poco (volviste a Díptico con la partida en pausa), el emulador
+            // puede tenerla guardada en memoria: se abre sin «limpiar la tarea» para no reiniciarla.
+            val reciente = ultimaPartida?.let { (clave, cuando) -> clave == juego.clave && System.currentTimeMillis() - cuando < RETOMAR_MS } == true
+            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(archivo), retomar = reciente)
         }
         if (error != null) {
             if (conLupaLista) cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
@@ -2023,6 +2042,23 @@ object Diptico {
             cl.nikalbazu.diptico.bisa.BurbujaBisa.acompanar(app, juego.titulo, atascado, sinPantallaLibre)
             if (atascado && !sinPantallaLibre) prepararAyuda()
         }
+    }
+
+    /** El último juego cuya sesión se cerró y cuándo: si se vuelve a abrir pronto, se intenta retomar la partida. */
+    private var ultimaPartida: Pair<String, Long>? = null
+    private const val RETOMAR_MS = 6 * 60 * 60 * 1000L
+
+    /** Trae al frente la partida que sigue abierta, en su misma pantalla y sin tocar la sesión. */
+    private fun volverALaPartida(juego: Juego, consola: Consola, s: Sesion) {
+        val e = estado.value
+        val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, s.displayId)
+        else {
+            val archivo = archivoParaJugar(juego, e)
+            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], s.displayId, raizDe(archivo), retomar = true)
+        }
+        if (error != null) { avisar(error); return }
+        actualizar { it.copy(panel = Panel.NINGUNO, continuacion = 0L) }
+        avisar("Volviendo a tu partida")
     }
 
     // ---------- Lupa ----------
@@ -2396,6 +2432,7 @@ object Diptico {
 
     fun cerrarSesion(preguntar: Boolean) {
         val s = estado.value.sesion ?: return
+        ultimaPartida = s.clave to System.currentTimeMillis()
         val duracion = (System.currentTimeMillis() - s.inicio) / 1000
         Asistente.intentos += Triple(s.clave, s.inicio, System.currentTimeMillis())
         if (Asistente.intentos.size > 40) Asistente.intentos.removeAt(0)
@@ -3319,6 +3356,9 @@ object Diptico {
 
     /** Las opciones de una sección. Se arman una vez por cada cambio de estado (las dos pantallas las comparten). */
     /** Subtítulo que agrupa las opciones largas de algunas secciones (así es más fácil encontrar algo). "" = sin grupo. */
+    /** El subtítulo de [o] en la sección [s]: el que trae la opción, o el que se deduce de su título. */
+    fun grupoOpcion(s: Seccion, o: Opcion): String = o.grupo ?: grupoOpcion(s, o.titulo)
+
     fun grupoOpcion(s: Seccion, t: String): String = when (s) {
         Seccion.BIBLIOTECA -> when {
             t == "Agregar un juego de Steam" || t.startsWith("Agregar: ") || estado.value.juegosPC.any { it.titulo == t } ||
@@ -3350,7 +3390,7 @@ object Diptico {
             t == "Modo" || t.startsWith("Efecto") || t == "Fluidez" -> "Estilo"
             t.contains("protector", true) -> "Protector de pantalla"
             t.startsWith("Zoom") || t.contains("nimación") -> "Detalles"
-            else -> "Íconos de las consolas"
+            else -> "Más opciones"
         }
         Seccion.MUSICA -> if (t.startsWith("Sonidos") || t.startsWith("Juego de sonidos")) "Sonidos" else "Música de fondo"
         Seccion.ESTANTE -> when {
@@ -3572,7 +3612,7 @@ object Diptico {
                 lista += Opcion(nombre, if (e.idioma == cod) "En uso ✓" else "", Icono.IDIOMA, Idioma.ayuda(cod)) { cambiarIdioma(cod) }
             }
             Seccion.APARIENCIA -> {
-                lista += opcionesGlass(e)
+                lista += opcionesGlass(e).map { it.copy(grupo = it.grupo ?: "Material Glass") }
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
                     "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
@@ -3614,7 +3654,7 @@ object Diptico {
                     almacen.guardarBool("zoomLento", v)
                     actualizar { it.copy(zoomLento = v) }
                 }
-                lista += opcionesIconos(e)
+                lista += opcionesIconos(e).map { it.copy(grupo = it.grupo ?: "Íconos de las consolas") }
                 lista += Opcion(
                     "Animación de entrada", if (e.mostrarIntro) "Sí" else "No", Icono.INTRO,
                     "La animación con el logo de Díptico al encender.",
@@ -3624,7 +3664,7 @@ object Diptico {
                     actualizar { it.copy(mostrarIntro = v) }
                 }
                 lista += Opcion("Ver la animación ahora", icono = Icono.ESTRELLA, ayuda = "Para mostrársela a alguien.") { verIntro() }
-                lista += opcionesPersonalizacion(e)
+                lista += opcionesPersonalizacion(e).map { it.copy(grupo = it.grupo ?: "Estilos guardados y colecciones") }
             }
             Seccion.MUSICA -> {
                 lista += Opcion(
@@ -3793,7 +3833,7 @@ object Diptico {
         }
         // Las opciones de un mismo grupo quedan juntas, bajo un solo subtítulo (en el orden en que aparece cada grupo).
         if (s == Seccion.ESENCIAL || s == Seccion.MAS) return lista
-        return lista.groupBy { grupoOpcion(s, it.titulo) }.values.flatten()
+        return lista.groupBy { grupoOpcion(s, it) }.values.flatten()
     }
 
     // ---------- Emuladores ----------
