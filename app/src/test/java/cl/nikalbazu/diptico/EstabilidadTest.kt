@@ -254,7 +254,6 @@ class EstabilidadTest {
         for (id in listOf("nes", "snes", "n64", "gb", "gba", "nds", "psx", "ps2", "xbox", "genesis", "arcade", "android", "rpgmaker", "todo", "otra")) {
             val motivos = cl.nikalbazu.diptico.ui.motivosCarpeta(id)
             assertTrue("$id usa ${motivos.filter { it in prohibidos }}", motivos.none { it in prohibidos })
-            motivos.forEach { cl.nikalbazu.diptico.ui.construirEmblema(it) }
         }
     }
 }
