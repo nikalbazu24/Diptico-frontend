@@ -157,3 +157,12 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `dippoColor` ("hora"/"dia"/"noche", `coloresDippoAhora(pref)`). Capturas t287–t290. Novedades `dippo-casa-2.0-23`.
   Pendiente: DIPPO pensando mientras responde, celebrando con logros, su menú de acciones y su lugar mientras juegas;
   los mosaicos se ven apretados en una pantalla (captura 288).
+- DIPPO listo + teclado Gboard (9 nov, beta tras la 224, rama `fix/dippo-listo`):
+  DIPPO habla primero al abrirlo (`CentroBisa.saludoInicial`, si el chat está vacío o pasaron 20 min) con botones;
+  `CentroBisa.preguntasListas` (chips de un toque según contexto) + `ideaInicio` (globito Coral en el inicio que se
+  toca para hacer la idea); la IA termina con botones `[[preguntar:…|…]]`; prompt de nube con personalidad del pulpito
+  y «no le pidas que escriba»; `audio/VozDippo.kt` (TTS) responde en voz alta si la pregunta fue por voz (`extra.dippoVoz`).
+  Teclado (`ui/Teclado.kt` + `estado/Palabras.kt`): fila 0 = franja (⋯ / sugerencias «»palabra» / Voz) o herramientas
+  (`extra.tecladoEdicion`); ⇧ doble toque = `extra.mayusFija`; mantener letra = tilde/número (`Palabras.variante`), Y en
+  mando hace lo mismo; mantener ⌫ = borrar palabra; doble espacio = punto. Mosaicos en una fila si el alto < 200 dp
+  (`Teclas.mosaicosUnaFila`). Pendiente: DIPPO celebrando con logros (no hay evento de logro nuevo), su lugar mientras juegas.
