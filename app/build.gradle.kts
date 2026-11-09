@@ -7,7 +7,10 @@ plugins {
 val numero = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
 val rutaFirma = System.getenv("DIPTICO_KEYSTORE")
 val versionBase = if (rutaFirma.isNullOrBlank()) "1.0" else "1.1"
+// Receptor de reportes de Nicolás (Apps Script, solo escribe en su carpeta privada de Drive).
+// Una variable DIPTICO_REPORTES_URL en GitHub, si existe, lo reemplaza.
 val reportesUrl = providers.environmentVariable("DIPTICO_REPORTES_URL").orNull.orEmpty().trim()
+    .ifEmpty { "https://script.google.com/macros/s/AKfycbwGhiuCtOLOTclmEU8f3hukrAMOtHAFw4Y2MJnOdu5bKXPfEGegImctiuI-qpPhCCE/exec" }
 require(reportesUrl.isEmpty() || Regex("""https://script[.]google[.]com/macros/s/[A-Za-z0-9_-]+/exec""").matches(reportesUrl)) {
     "DIPTICO_REPORTES_URL debe ser el enlace /exec de la aplicación web de Apps Script."
 }
