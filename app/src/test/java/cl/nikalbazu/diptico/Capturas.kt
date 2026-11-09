@@ -1205,6 +1205,7 @@ class Capturas {
     @Test fun t301_franja_con_dock() = foto("301_franja_con_dock", base().copy(vista = "mosaicos", appsFijadas = listOf("com.android.settings", "com.android.chrome", "org.ppsspp.ppsspp")), Rol.INFERIOR)
     @Test fun t302_jugando_con_dock() = foto("302_jugando_con_dock", base().copy(appsFijadas = listOf("com.android.settings", "com.android.chrome"), sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
     @Test fun t303_portada_con_puntos() = foto("303_portada_con_puntos", base().copy(vista = "mosaicos"), Rol.SUPERIOR)
+    @Test fun t304_jugando_nuevo_con_hltb() = foto("304_jugando_nuevo", base().copy(appsFijadas = listOf("com.android.settings", "com.android.chrome"), sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true, extra = EstadoExtra(duraciones = mapOf("snes/1" to cl.nikalbazu.diptico.estado.CuantoDura.Duracion(12f, 18f, 30f, 1L)))), Rol.INFERIOR, mi = 1)
     @Test fun t298_vistas_juegos() = foto("298_vistas_juegos", base().copy(panel = Panel.GALERIA, galeria = "vistas_juegos"), Rol.SUPERIOR)
     @Test fun t290_dippo_ajustes_colores() = foto("290_dippo_ajustes_colores", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true, indice = 3), Rol.SUPERIOR)
 

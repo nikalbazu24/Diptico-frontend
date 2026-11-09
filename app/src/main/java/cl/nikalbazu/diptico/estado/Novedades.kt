@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "deslizar-dock-2.0-26"
-    const val NOMBRE = "Desliza a tus widgets y dock de apps"
+    const val ID = "jugando-2.0-27"
+    const val NOMBRE = "Mientras juegas, más simple"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -289,10 +289,14 @@ object Novedades {
             Pagina("¿Cuánto te queda?", "Díptico consulta HowLongToBeat y te dice cuánto dura cada juego y cuánto te falta según lo que llevas. Pregúntaselo también a DIPPO con un toque.", Icono.RELOJ, 0xFF7AA8FF),
             Pagina("Más ordenado", "Quedaron las cuatro vistas de juegos que más se usan, la barra de la hora es una sola y «Pantalla y estilo» tiene solo lo esencial.", Icono.AJUSTES, 0xFF00ACC1),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("deslizar-dock-2.0-26", "Desliza a tus widgets y dock de apps", listOf(
             Pagina("Desliza a tus widgets", "Tus widgets están al lado de la portada: desliza la pantalla de arriba con el dedo y pasas de una a otra. Los puntitos de abajo te dicen dónde estás.", Icono.APPS, 0xFF00ACC1),
             Pagina("Tu dock de apps", "Hasta 5 apps fijas en la pantalla de abajo, también mientras juegas: se abren en esa pantalla y el juego sigue arriba. Fíjalas en el cajón con Y.", Icono.ESTRELLA, 0xFFFF9A6B),
             Pagina("Widget «Tu progreso»", "Cuánto te queda en tu juego, tu racha de días y el próximo logro de DIPPO, todo junto. Prueba el inicio nuevo en Ajustes › Inicio y widgets.", Icono.TROFEO, 0xFFFFC94D),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Mientras juegas, más simple", "La pantalla libre quedó ordenada: DIPPO con un consejo, tu próximo paso con cuánto te queda, la música, tus apps y cuatro botones: Pista, Mi paso, Guías y Más.", Icono.MANDO, 0xFFFF9A6B),
+            Pagina("Sin botón «Terminé»", "Ya no hace falta: cuando sales del juego y vuelves a Díptico, la partida se cierra sola y se guarda tu tiempo.", Icono.CHECK, 0xFF7AA8FF),
         )),
     )
 

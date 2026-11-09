@@ -151,3 +151,19 @@ Tus widgets están al lado de la portada: desliza la pantalla de arriba con el d
 Usar el inicio nuevo	Use the new home	Usar o novo início	使用新主页	新しいホームを使う
 Widget «Tu progreso»	"Your progress" widget	Widget «Seu progresso»	“你的进度”小组件	「進行状況」ウィジェット
 {0} de {1} logros	{0} of {1} achievements	{0} de {1} conquistas	{0}/{1} 个成就	実績 {0}/{1}
+Apagar esta pantalla	Turn off this screen	Apagar esta tela	关闭此屏幕	この画面を消す
+La pantalla libre quedó ordenada: DIPPO con un consejo, tu próximo paso con cuánto te queda, la música, tus apps y cuatro botones: Pista, Mi paso, Guías y Más.	The free screen is now tidy: DIPPO with a tip, your next step with time left, music, your apps and four buttons: Hint, My step, Guides and More.	A tela livre ficou organizada: DIPPO com uma dica, seu próximo passo com quanto falta, a música, seus apps e quatro botões: Dica, Meu passo, Guias e Mais.	空闲屏幕更整洁了：DIPPO 的建议、下一步和剩余时长、音乐、你的应用，以及四个按钮：提示、我的进度、攻略和更多。	空いた画面がすっきり：DIPPO のひとこと、次の目標と残り時間、音楽、アプリ、そしてヒント・次の目標・攻略・その他の 4 ボタン。
+Llevas {0} h {1} min. ¿Una pausa pronto? Estírate un poquito.	You've played {0} h {1} min. Break soon? Stretch a little.	Você jogou {0} h {1} min. Uma pausa logo? Alongue-se um pouco.	你已玩了 {0} 小时 {1} 分钟。要不要休息一下？伸伸懒腰。	{0} 時間 {1} 分プレイ中。そろそろ休憩？少し伸びをしよう。
+Llevas {0} intentos seguidos. ¿Te tiro una pista sin spoilers?	{0} tries in a row. Want a spoiler-free hint?	{0} tentativas seguidas. Quer uma dica sem spoilers?	已连续尝试 {0} 次。要一个无剧透提示吗？	{0} 回連続で挑戦中。ネタバレなしのヒント、いる？
+Marcar como terminada	Mark as finished	Marcar como terminada	标记为已结束	終了にする
+Mientras juegas, más simple	Simpler while you play	Mais simples enquanto joga	游戏时更简洁	プレイ中をシンプルに
+Más herramientas	More tools	Mais ferramentas	更多工具	その他のツール
+Pista	Hint	Dica	提示	ヒント
+Quitar aviso	Remove reminder	Tirar aviso	取消提醒	お知らせを消す
+Sin botón «Terminé»	No "I'm done" button	Sem botão «Terminei»	不再需要“结束”按钮	「終了」ボタンなし
+Te aviso para la pausa en {0} min.	I'll remind you to take a break in {0} min.	Aviso para a pausa em {0} min.	{0} 分钟后提醒你休息。	{0} 分後に休憩をお知らせします。
+Toca para anotar dónde vas	Tap to note where you are	Toque para anotar onde está	点按记下你的进度	タップして今の場所をメモ
+Ya no hace falta: cuando sales del juego y vuelves a Díptico, la partida se cierra sola y se guarda tu tiempo.	Not needed anymore: when you leave the game and return to Díptico, the session ends on its own and your time is saved.	Não precisa mais: quando você sai do jogo e volta ao Díptico, a sessão fecha sozinha e seu tempo é salvo.	不再需要：退出游戏回到 Díptico 时，会话会自动结束并保存时长。	もう不要：ゲームを出て Díptico に戻ると自動で終了し、時間が保存されます。
+¡Aquí estoy! Si te atascas en {0}, toca Pista.	I'm here! If you get stuck in {0}, tap Hint.	Estou aqui! Se travar em {0}, toque em Dica.	我在这儿！在 {0} 卡住了就点“提示”。	ここにいるよ！{0} で詰まったら「ヒント」をタップ。
+¿Anotamos dónde vas? Toca «Mi paso» y la próxima vez te lo recuerdo.	Shall we note where you are? Tap "My step" and I'll remind you next time.	Vamos anotar onde você está? Toque em «Meu passo» e eu lembro da próxima vez.	要记下进度吗？点“我的进度”，下次我会提醒你。	今どこか書いておく？「次の目標」をタップすれば次回教えるよ。
+¿Ya no estás jugando? Díptico lo nota solo al volver al inicio en esa pantalla.	Not playing anymore? Díptico notices on its own when you return home on that screen.	Não está mais jogando? O Díptico percebe sozinho ao voltar ao início nessa tela.	不玩了？在那块屏幕回到主页时 Díptico 会自动察觉。	もう遊んでない？その画面でホームに戻れば Díptico が自動で気づきます。
