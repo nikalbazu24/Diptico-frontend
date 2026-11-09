@@ -88,3 +88,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   vistas `iconos` y `cartuchos`, galería `artes`, barra flotante (`extra.formaBarra`, `extra.coloresBarra`, `barraOcupaEspacio`).
 - Rama de capturas: el commit a cherry-pickear ahora es `2718878` (no `ea478b4`). Traducciones siguientes: `extras15.tsv`.
 - Falta de la 1.3: estilos de carpetas. Luego v1.2 pendiente: reordenar menú y dividir `Diptico.kt`.
+
+## Errores de la beta.195 reportados por Nicolás (8 nov, 22:30) — hacer primero la próxima sesión
+
+- La isla de la barra flotante se monta sobre los botones de la barra de accesos del inicio (arriba a la derecha) y
+  en la pantalla de abajo pasa lo mismo: reservar espacio o mover los accesos cuando la barra es flotante.
+- Todo se siente muy lento (sospechas: `paletaSuave` recompone todo, el lente AGSL por superficie, el escalonado del menú).
+- La app se cierra al cambiar la vista de los juegos (R3 / galería `vistas_juegos`): revisar la vista `cartuchos`/`iconos`
+  y la vista previa `MiniPantalla` con `PantallaInferior` (DockApps dentro de la previa). Pedir el reporte de Drive.
