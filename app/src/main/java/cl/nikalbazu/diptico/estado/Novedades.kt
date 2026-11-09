@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "movimiento-y-vistas-1.3-15"
-    const val NOMBRE = "Movimiento y vistas"
+    const val ID = "mosaicos-2.0-16"
+    const val NOMBRE = "Nuevo Díptico: mosaicos"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -245,6 +245,9 @@ object Novedades {
             Pagina("Vibración", "Un toque de vibración al moverte y elegir, suave, media o fuerte. Nunca vibra mientras juegas. Menú › Música › Vibración.", Icono.CHISPA, 0xFFFF7A59),
         )),
         Version(ID, NOMBRE, listOf(
+            Pagina("Mosaicos, estilo consola", "Tus juegos ahora se ven como en una consola: el primero en un mosaico grande y el resto en cuadrados. El elegido brilla con el color de su consola. Cambia de vista con R3.", Icono.VISTA, 0xFF8B7CF6, "R3"),
+        )),
+        Version("movimiento-y-vistas-1.3-15", "Movimiento y vistas", listOf(
             Pagina("Todo se mueve suave", "El menú, las ventanas y las listas llegan flotando y se posan. Elige Animaciones (apagadas, suaves, normales o intensas) y su velocidad en Menú › Apariencia.", Icono.CHISPA, 0xFF8E7CFF),
             Pagina("Vidrio con lente", "Con Liquid Glass, el vidrio se comporta como una lupa suave: curva lo de atrás en los bordes, brilla en el canto y una luz sigue tu dedo. Menú › Apariencia › Efecto lente.", Icono.BRILLO, 0xFF8ECFD4),
             Pagina("Dos vistas nuevas", "Solo portadas: una cuadrícula sin textos para ver muchos juegos. Cartuchos 3D: cada juego de pie en su cartucho o caja. Cámbialas con R3.", Icono.VISTA, 0xFFFFA726, "R3"),

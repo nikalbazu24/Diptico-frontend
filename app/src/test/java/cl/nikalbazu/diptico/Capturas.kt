@@ -1182,6 +1182,8 @@ class Capturas {
     @Test fun t275_galeria_artes() = foto("275_galeria_artes", base().copy(panel = Panel.GALERIA, galeria = "artes", galeriaPestana = 1, indice = 0), Rol.INFERIOR)
     @Test fun t276_galeria_artes_grande() = foto("276_galeria_artes_en_grande", base().copy(panel = Panel.GALERIA, galeria = "artes", galeriaPestana = 1, indice = 0), Rol.SUPERIOR)
     @Test fun t277_menu_modo_dia_noche() = foto("277_menu_apariencia_modo", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 3), Rol.SUPERIOR)
+    @Test fun t278_mosaicos() = foto("278_vista_mosaicos", base().copy(vista = "mosaicos", indiceSel = 0), Rol.INFERIOR)
+    @Test fun t279_mosaicos_segundo() = foto("279_vista_mosaicos_elegido", base().copy(vista = "mosaicos", indiceSel = 3), Rol.INFERIOR)
 
     @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)
 

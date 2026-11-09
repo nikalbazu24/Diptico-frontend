@@ -417,7 +417,8 @@ object Teclas {
                     code in cruceta -> return true
                 }
             } else if (abajo && ((e.unaPantalla && code in cruceta) || (code == KeyEvent.KEYCODE_DPAD_UP && e.vistaConsolas !in Diptico.MODOS_ELEGIR && e.vistaConsolas !in setOf("lado", "rueda") &&
-                    ((e.vista != "cuadricula" && e.vista != "iconos" && e.vista != "lista") || e.indiceSel < columnasEstante(e))))
+                    (if (e.vista == "mosaicos") e.indiceSel == 0 || (e.indiceSel - 1) % 2 == 0
+                     else (e.vista != "cuadricula" && e.vista != "iconos" && e.vista != "lista") || e.indiceSel < columnasEstante(e))))
             ) {
                 if (Diptico.entrarWidgets()) return true
             }
@@ -456,12 +457,14 @@ object Teclas {
         if (abajo) {
             when (code) {
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> {
-                    if (!hayPanel) Diptico.moverJuego(if (code == KeyEvent.KEYCODE_DPAD_UP && (e.vista == "cuadricula" || e.vista == "iconos" || e.vista == "lista")) -columnasEstante(e) else -1)
+                    if (!hayPanel && e.vista == "mosaicos") Diptico.moverJuego(pasoMosaico(e, if (code == KeyEvent.KEYCODE_DPAD_LEFT) -1 else 0, if (code == KeyEvent.KEYCODE_DPAD_UP) -1 else 0))
+                    else if (!hayPanel) Diptico.moverJuego(if (code == KeyEvent.KEYCODE_DPAD_UP && (e.vista == "cuadricula" || e.vista == "iconos" || e.vista == "lista")) -columnasEstante(e) else -1)
                     else Diptico.moverIndice(-1)
                     return true
                 }
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                    if (!hayPanel) Diptico.moverJuego(if (code == KeyEvent.KEYCODE_DPAD_DOWN && (e.vista == "cuadricula" || e.vista == "iconos" || e.vista == "lista")) columnasEstante(e) else 1)
+                    if (!hayPanel && e.vista == "mosaicos") Diptico.moverJuego(pasoMosaico(e, if (code == KeyEvent.KEYCODE_DPAD_RIGHT) 1 else 0, if (code == KeyEvent.KEYCODE_DPAD_DOWN) 1 else 0))
+                    else if (!hayPanel) Diptico.moverJuego(if (code == KeyEvent.KEYCODE_DPAD_DOWN && (e.vista == "cuadricula" || e.vista == "iconos" || e.vista == "lista")) columnasEstante(e) else 1)
                     else Diptico.moverIndice(1)
                     return true
                 }
@@ -551,6 +554,26 @@ object Teclas {
     /** Columnas de la vista de cuadrícula/lista (la interfaz avisa cuántas hay). */
     @Volatile
     var columnasCuadricula = 4
+
+    /**
+     * Vista Mosaicos: el juego 0 es el mosaico grande (ocupa dos filas); del 1 en adelante van de a dos por
+     * columna (arriba el impar, abajo el par). Devuelve cuánto moverse en la lista para la dirección pedida.
+     */
+    fun pasoMosaico(e: Estado, dx: Int, dy: Int): Int {
+        val i = e.indiceSel
+        val n = e.visibles.size
+        if (n <= 1) return 0
+        if (i == 0) return if (dx > 0) 1 else 0
+        val fila = (i - 1) % 2
+        val destino = when {
+            dx > 0 -> minOf(i + 2, n - 1)
+            dx < 0 -> if (i <= 2) 0 else i - 2
+            dy > 0 -> if (fila == 0 && i + 1 < n) i + 1 else i
+            dy < 0 -> if (fila == 1) i - 1 else i
+            else -> i
+        }
+        return destino - i
+    }
     private fun columnasEstante(e: Estado) = if (e.vista == "lista") 1 else columnasCuadricula
 
     @Volatile
@@ -863,7 +886,7 @@ object Teclas {
         if (enInicio && deJuegos) {
             if (e.widgetFoco >= 0) Diptico.salirWidgets()
             val enGrilla = e.vista == "cuadricula" || e.vista == "iconos" || e.vista == "lista"
-            Diptico.moverJuego(if (dy != 0) (if (enGrilla) dy * columnasEstante(e) else dy) else dx)
+            if (e.vista == "mosaicos") Diptico.moverJuego(pasoMosaico(e, dx, dy)) else Diptico.moverJuego(if (dy != 0) (if (enGrilla) dy * columnasEstante(e) else dy) else dx)
             cl.nikalbazu.diptico.audio.Sonidos.mover()
             return
         }

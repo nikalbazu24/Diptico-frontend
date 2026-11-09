@@ -329,7 +329,7 @@ data class EstadoExtra(
     val dockCantidad: Int = 5,
     val dockAbierto: Boolean = false,
     /** Barra de la hora: "flotante" (islas en las esquinas, sin espacio propio) o "completa" (la franja de siempre). */
-    val formaBarra: String = "flotante",
+    val formaBarra: String = "completa",
     /** Colores de los íconos de la barra: "vivos", "pastel", "neon" o "tema". */
     val coloresBarra: String = "vivos",
 )
@@ -835,7 +835,7 @@ object Diptico {
             widgets = leerWidgets(almacen.texto("widgets")),
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
-            vista = almacen.texto("vista", "estante"),
+            vista = almacen.texto("vista", "mosaicos"),
             vistaConsolas = vistaConsolas,
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
@@ -859,7 +859,7 @@ object Diptico {
                 animaciones = almacen.texto("animaciones", "normales"),
                 velocidadAnim = almacen.texto("velocidadAnim", "normal"),
                 lente = almacen.bool("lenteVidrio", false),
-                formaBarra = almacen.texto("formaBarra", "flotante"),
+                formaBarra = almacen.texto("formaBarra", "completa"),
                 coloresBarra = almacen.texto("coloresBarra", "vivos"),
                 dock = almacen.bool("dock", false),
                 dockLado = almacen.texto("dockLado", "abajo"),
@@ -2414,8 +2414,8 @@ object Diptico {
         }
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
         if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
-        if (e.galeria == "vistas_juegos") return listOf("cuadricula", "iconos", "estante", "lista", "carrusel", "abanico", "cartuchos", "lomos").map { v ->
-            val detalle = when(v) { "cuadricula" -> "Todas las portadas a la vista"; "iconos" -> "Solo las portadas, sin textos: más juegos a la vista"; "cartuchos" -> "Cada juego en su cartucho o caja en 3D"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
+        if (e.galeria == "vistas_juegos") return listOf("mosaicos", "cuadricula", "iconos", "estante", "lista", "carrusel", "abanico", "cartuchos", "lomos").map { v ->
+            val detalle = when(v) { "mosaicos" -> "Estilo consola: un mosaico grande y el resto en cuadrados"; "cuadricula" -> "Todas las portadas a la vista"; "iconos" -> "Solo las portadas, sin textos: más juegos a la vista"; "cartuchos" -> "Cada juego en su cartucho o caja en 3D"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
             ItemGaleria(v, nombreVista(v), detalle, e.vista == v) { almacen.guardarTexto("vista", v); actualizar { it.copy(vista = v) }; cerrarPanel() }
         }
         if (e.galeria == "vistas_consolas") return VISTAS_CONSOLAS.map { v ->
@@ -7395,8 +7395,8 @@ object Diptico {
     }
     // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
 
-    private val VISTAS = listOf("estante", "carrusel", "abanico", "cartuchos", "lomos", "cuadricula", "iconos", "lista")
-    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Galería"; "iconos" -> "Solo portadas"; "cartuchos" -> "Cartuchos 3D"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
+    private val VISTAS = listOf("mosaicos", "estante", "carrusel", "abanico", "cartuchos", "lomos", "cuadricula", "iconos", "lista")
+    fun nombreVista(v: String) = when (v) { "mosaicos" -> "Mosaicos"; "cuadricula" -> "Galería"; "iconos" -> "Solo portadas"; "cartuchos" -> "Cartuchos 3D"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
 
     val VISTAS_CONSOLAS = listOf("carpetas", "mosaico", "vitrina", "arriba", "sistemas", "lado", "rueda", "discos")
     /** Vistas donde primero se elige la consola (en grande) y después se entra a sus juegos. */

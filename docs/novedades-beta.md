@@ -1,10 +1,2 @@
-- **Todo se mueve suave.** El menú, las ventanas, las listas y los menús desplegables llegan flotando y se posan, con una ola suave en las opciones. En Menú › Apariencia eliges Animaciones (apagadas, suaves, normales o intensas) y su velocidad (lenta, normal o rápida).
-- **Vidrio con lente.** Con Liquid Glass en Android 13 o más nuevo, el vidrio curva lo que tiene detrás en los bordes, separa levemente los colores en el canto, brilla como vidrio real y una luz sigue tu dedo. Se apaga en Menú › Apariencia › Efecto lente.
-- **Vista «Solo portadas».** Una cuadrícula sin textos para ver muchos juegos a la vez.
-- **Vista «Cartuchos 3D».** Cada juego de pie en su cartucho (o su caja si es de disco), con la portada de etiqueta; el elegido gira de frente.
-- **Dock de apps.** Una manija en la pantalla de abajo despliega tus apps fijadas (de 3 a 6) y el cajón con todas. Lado y tamaño a elección (Menú › Inicio).
-- **Barra de arriba nueva.** Ya no ocupa una franja: la hora, el wifi, los avisos y la batería flotan en una isla en la esquina, y la pantalla queda entera. Cada ícono tiene su color (batería verde, amarilla o roja según la carga; campana rosada con avisos; wifi azul) en estilo vivos, pastel, neón o del tema. Menú › Pantallas › Forma de la barra y Colores de los íconos.
-- **Interruptores vivos y cambio de ambiente.** Los interruptores se estiran como una gota; el de modo claro/oscuro es un pequeño cielo con sol o luna, y los colores de toda la app se funden suave al cambiar.
-- **Galería de artes.** Menú › Estante › Galería de artes: los artes y portadas de los juegos de la carpeta, con el elegido en grande en la otra pantalla. A te lleva a ese juego.
-- **Carpetas que se abren con resorte.** La ventana de una carpeta crece desde más chica y se posa, siguiendo tu ajuste de animaciones.
-- **Arreglos de la beta.195:** la barra flotante va al centro arriba (sin tapar los accesos) y abajo vuelve a reservar su espacio; el efecto lente viene apagado y ya no cierra la app al cambiar de vista; se quitó el fundido de colores que hacía todo lento.
+- **Nuevo Díptico, paso 1: Mosaicos.** Tus juegos se ven como en una consola (estilo Xbox): el primero en un mosaico grande y el resto en cuadrados de a dos. El elegido lleva borde blanco y un halo del color de su consola. Es la vista nueva por defecto; las demás siguen en R3.
+- **Barra de la hora:** vuelve a ser la franja de siempre por defecto mientras la rediseñamos.

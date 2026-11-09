@@ -240,6 +240,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
             }),
     ) { vista ->
         when (vista) {
+            "mosaicos" -> Mosaicos(e, Modifier.fillMaxSize())
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
             "iconos" -> Cuadricula(e, Modifier.fillMaxSize(), soloPortadas = true)
             "cartuchos" -> CartuchosJuegos(e, Modifier.fillMaxSize())

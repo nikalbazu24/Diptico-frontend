@@ -131,7 +131,7 @@ fun ListaJuegos(e: Estado, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun VacioEstante(e: Estado) {
+internal fun VacioEstante(e: Estado) {
     val esc = LocalEscala.current
     Column(Modifier.fillMaxSize().padding(esc.d(20)), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Texto(
