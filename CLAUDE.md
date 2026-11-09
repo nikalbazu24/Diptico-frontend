@@ -80,3 +80,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Pendiente v1.2: reordenar el menú (menos secciones, sin repetidos) y la limpieza de `Diptico.kt`.
 - v1.3: referencia de Glass/transiciones = video de Nicolás (lente con refracción y dispersión, luz que sigue
   la selección, cambio de ambiente día/noche suave, interruptores-escena). Usar AGSL (Android 13) con respaldo.
+
+## v1.3 «Movimiento y vistas» (8 nov 2026, por Claude, commit 0806726 en main)
+
+- `ui/Movimiento.kt` (AjusteMovimiento, entradaVentana/Flotante/Carpeta), `ui/LenteVidrio.kt` (AGSL, `nuevo()` puede ser null),
+  `ui/Interruptores.kt` (líquido y día/noche), paleta que se funde en `Tema.kt` (`paletaSuave`), `ui/DockApps.kt`,
+  vistas `iconos` y `cartuchos`, galería `artes`, barra flotante (`extra.formaBarra`, `extra.coloresBarra`, `barraOcupaEspacio`).
+- Rama de capturas: el commit a cherry-pickear ahora es `2718878` (no `ea478b4`). Traducciones siguientes: `extras15.tsv`.
+- Falta de la 1.3: estilos de carpetas. Luego v1.2 pendiente: reordenar menú y dividir `Diptico.kt`.
