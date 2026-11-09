@@ -10,7 +10,7 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "movimiento-y-vistas-1.3-14"
+    const val ID = "movimiento-y-vistas-1.3-15"
     const val NOMBRE = "Movimiento y vistas"
 
     /**

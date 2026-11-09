@@ -7,3 +7,4 @@
 - **Interruptores vivos y cambio de ambiente.** Los interruptores se estiran como una gota; el de modo claro/oscuro es un pequeño cielo con sol o luna, y los colores de toda la app se funden suave al cambiar.
 - **Galería de artes.** Menú › Estante › Galería de artes: los artes y portadas de los juegos de la carpeta, con el elegido en grande en la otra pantalla. A te lleva a ese juego.
 - **Carpetas que se abren con resorte.** La ventana de una carpeta crece desde más chica y se posa, siguiendo tu ajuste de animaciones.
+- **Arreglos de la beta.195:** la barra flotante va al centro arriba (sin tapar los accesos) y abajo vuelve a reservar su espacio; el efecto lente viene apagado y ya no cierra la app al cambiar de vista; se quitó el fundido de colores que hacía todo lento.

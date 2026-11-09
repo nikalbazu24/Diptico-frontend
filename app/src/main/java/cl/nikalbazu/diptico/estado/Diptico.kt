@@ -321,7 +321,7 @@ data class EstadoExtra(
     val animaciones: String = "normales",
     val velocidadAnim: String = "normal",
     /** Vidrio con lente (refracción y luz), en Android 13 o más nuevo. */
-    val lente: Boolean = true,
+    val lente: Boolean = false,
     /** Dock de apps fijadas en la pantalla de abajo: si está, dónde, de qué tamaño, cuántas apps y si está desplegado. */
     val dock: Boolean = false,
     val dockLado: String = "abajo",
@@ -858,7 +858,7 @@ object Diptico {
                 vibracion = almacen.texto("vibracion", "apagada").also { cl.nikalbazu.diptico.audio.Vibracion.iniciar(app, it) },
                 animaciones = almacen.texto("animaciones", "normales"),
                 velocidadAnim = almacen.texto("velocidadAnim", "normal"),
-                lente = almacen.bool("lenteVidrio", true),
+                lente = almacen.bool("lenteVidrio", false),
                 formaBarra = almacen.texto("formaBarra", "flotante"),
                 coloresBarra = almacen.texto("coloresBarra", "vivos"),
                 dock = almacen.bool("dock", false),

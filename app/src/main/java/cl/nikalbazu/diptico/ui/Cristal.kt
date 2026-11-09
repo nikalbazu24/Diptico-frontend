@@ -1,5 +1,6 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.ui.graphics.nativeCanvas
 import android.animation.ValueAnimator
 import android.database.ContentObserver
 import android.os.Handler
@@ -213,7 +214,8 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
                     // segunda muestra ligeramente ampliada para sugerir el efecto de lente.
                     val tamano = IntSize(an.roundToInt().coerceAtLeast(1), al.roundToInt().coerceAtLeast(1))
                     val s = sombreador
-                    if (s != null && android.os.Build.VERSION.SDK_INT >= 33) {
+                    // Solo en lienzos con aceleración: la captura del fondo dibuja en software y ahí el sombreador cierra la app.
+                    if (s != null && android.os.Build.VERSION.SDK_INT >= 33 && drawContext.canvas.nativeCanvas.isHardwareAccelerated) {
                         // Vidrio con lente: refracción, dispersión, borde brillante y luz que sigue el dedo, en un solo paso.
                         LenteVidrio.preparar(s, imagen, destino, tamano, size, radioLente, intensidad,
                             Offset(punto.x * size.width, punto.y * size.height), material, opacidad * (if (presionado) 0.85f else 1f))

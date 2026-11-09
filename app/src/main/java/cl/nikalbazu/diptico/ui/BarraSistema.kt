@@ -59,8 +59,8 @@ internal val LocalBarraSistema = staticCompositionLocalOf { false }
 internal const val ALTO_BARRA_SISTEMA = 26f
 
 /** ¿La barra de la hora ocupa su propio espacio aquí? La flotante solo lo reserva con un panel abierto. */
-internal fun barraOcupaEspacio(e: Estado): Boolean =
-    e.extra.formaBarra == "completa" || e.panel != cl.nikalbazu.diptico.estado.Panel.NINGUNO
+internal fun barraOcupaEspacio(e: Estado, arriba: Boolean = true): Boolean =
+    e.extra.formaBarra == "completa" || e.panel != cl.nikalbazu.diptico.estado.Panel.NINGUNO || !arriba
 
 /** Colores de los íconos de la barra: cada uno con el suyo (batería, avisos, wifi, hora). */
 internal data class ColoresBarra(val bateria: (Int, Boolean) -> Color, val avisos: Color, val wifi: Color, val hora: Color)
@@ -143,7 +143,7 @@ private fun BarraFlotanteSistema(e: Estado, modifier: Modifier, estilo: String, 
                 PildoraTrabajos(e.trabajos)
             }
         }
-        Row(Modifier.align(Alignment.TopEnd).height(esc.d(24)).fondoBarra(estilo, forma).border(esc.d(1), borde, forma)
+        Row(Modifier.align(Alignment.TopCenter).height(esc.d(24)).fondoBarra(estilo, forma).border(esc.d(1), borde, forma)
             .padding(horizontal = esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
             IconosEstado(hora, bateria, cargando, red, avisos, c)
         }
