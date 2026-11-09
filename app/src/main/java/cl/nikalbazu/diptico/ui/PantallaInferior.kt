@@ -142,7 +142,6 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                 }
             }
         }
-        DockApps(e)
         Paneles(e, conAyuda = false)
     }
 }
@@ -512,6 +511,11 @@ private fun EnJuego(e: Estado) {
                     Spacer(Modifier.width(esc.d(8)))
                     Detalle(paso, 13.5f, color = Color(0xFFE6E3FA), lineas = 2)
                 }
+                Spacer(Modifier.height(esc.d(8)))
+            }
+            // Tus apps a mano mientras juegas: se abren en esta pantalla y el juego sigue en la otra.
+            if (e.extra.dock && e.appsFijadas.isNotEmpty()) {
+                FilaDock(e, 34f, Modifier.align(Alignment.CenterHorizontally))
                 Spacer(Modifier.height(esc.d(8)))
             }
             // Botones: todos a la vista.

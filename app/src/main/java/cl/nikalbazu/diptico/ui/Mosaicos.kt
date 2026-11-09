@@ -146,9 +146,14 @@ fun FranjaAccesos(e: Estado) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(esc.d(6)),
     ) {
-        BotonFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
-        BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
-        BotonFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, "Ajustes") { Diptico.abrirMenu() }
+        // Con el dock, Buscar y Ajustes quedan como íconos para dejarle espacio a tus apps.
+        val conDock = e.extra.dock
+        BotonFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR, if (conDock) null else "Buscar") { Diptico.abrirBuscar() }
+        BotonFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, if (conDock) null else "Ajustes") { Diptico.abrirMenu() }
+        if (conDock) {
+            Box(Modifier.size(esc.d(1), esc.d(26)).background(p.tinta.copy(alpha = 0.15f)))
+            FilaDock(e, 30f)
+        } else BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
         androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
         DippoInicio(e, 36f)
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(10)))
@@ -164,7 +169,7 @@ fun FranjaAccesos(e: Estado) {
 }
 
 @Composable
-private fun BotonFranja(icono: cl.nikalbazu.diptico.estado.Icono, nombre: String, alPulsar: () -> Unit) {
+private fun BotonFranja(icono: cl.nikalbazu.diptico.estado.Icono, nombre: String?, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     androidx.compose.foundation.layout.Row(
@@ -173,8 +178,10 @@ private fun BotonFranja(icono: cl.nikalbazu.diptico.estado.Icono, nombre: String
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconoDiptico(icono, p.tinta, 15f)
-        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(7)))
-        Texto(nombre, 13f, color = p.tinta, lineas = 1)
+        if (nombre != null) {
+            androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(7)))
+            Texto(nombre, 13f, color = p.tinta, lineas = 1)
+        }
     }
 }
 

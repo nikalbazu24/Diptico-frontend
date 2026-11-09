@@ -49,10 +49,12 @@ fun PantallaUnica(e: Estado) {
     androidx.compose.animation.AnimatedContent(
         targetState = e.inicio == "widgets",
         transitionSpec = {
-            (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(420)) +
-                androidx.compose.animation.scaleIn(androidx.compose.animation.core.tween(480), initialScale = if (targetState) 0.94f else 1.04f)) togetherWith
-                (androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(260)) +
-                    androidx.compose.animation.scaleOut(androidx.compose.animation.core.tween(320), targetScale = if (targetState) 1.04f else 0.96f))
+            // Igual que con dos pantallas: los widgets quedan «al lado» de la portada y entran deslizándose.
+            val ida = if (targetState) 1 else -1
+            (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(300)) +
+                androidx.compose.animation.slideInHorizontally(androidx.compose.animation.core.tween(380)) { ida * it / 3 }) togetherWith
+                (androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(220)) +
+                    androidx.compose.animation.slideOutHorizontally(androidx.compose.animation.core.tween(320)) { -ida * it / 4 })
         },
         label = "inicioUnica",
     ) { w -> PantallaUnicaContenido(e.copy(inicio = if (w) "widgets" else "heroe")) }

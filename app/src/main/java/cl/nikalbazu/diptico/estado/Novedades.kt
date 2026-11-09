@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "logros-dippo-2.0-25"
-    const val NOMBRE = "Logros de DIPPO y cuánto te queda"
+    const val ID = "deslizar-dock-2.0-26"
+    const val NOMBRE = "Desliza a tus widgets y dock de apps"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -284,10 +284,15 @@ object Novedades {
             Pagina("Preguntas con un toque", "¿De qué trata?, trucos, cuánto dura, juegos parecidos… Y después de cada respuesta, DIPPO te deja la siguiente pregunta lista. Si le hablas, te responde con su voz.", Icono.MICROFONO, 0xFF7AA8FF),
             Pagina("Teclado nuevo", "Como el de Google: palabras sugeridas arriba, tildes manteniendo la letra (o con Y), dos espacios ponen punto y ⋯ trae copiar y pegar.", Icono.TEXTO, 0xFF00ACC1),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("logros-dippo-2.0-25", "Logros de DIPPO y cuánto te queda", listOf(
             Pagina("Los logros de DIPPO", "DIPPO tiene sus propios logros: por jugar, por terminar juegos, por rachas de días y por conversar con él. Cuando ganas uno, lo celebra. Míralos en Ajustes › DIPPO.", Icono.TROFEO, 0xFFFFC94D),
             Pagina("¿Cuánto te queda?", "Díptico consulta HowLongToBeat y te dice cuánto dura cada juego y cuánto te falta según lo que llevas. Pregúntaselo también a DIPPO con un toque.", Icono.RELOJ, 0xFF7AA8FF),
             Pagina("Más ordenado", "Quedaron las cuatro vistas de juegos que más se usan, la barra de la hora es una sola y «Pantalla y estilo» tiene solo lo esencial.", Icono.AJUSTES, 0xFF00ACC1),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Desliza a tus widgets", "Tus widgets están al lado de la portada: desliza la pantalla de arriba con el dedo y pasas de una a otra. Los puntitos de abajo te dicen dónde estás.", Icono.APPS, 0xFF00ACC1),
+            Pagina("Tu dock de apps", "Hasta 5 apps fijas en la pantalla de abajo, también mientras juegas: se abren en esa pantalla y el juego sigue arriba. Fíjalas en el cajón con Y.", Icono.ESTRELLA, 0xFFFF9A6B),
+            Pagina("Widget «Tu progreso»", "Cuánto te queda en tu juego, tu racha de días y el próximo logro de DIPPO, todo junto. Prueba el inicio nuevo en Ajustes › Inicio y widgets.", Icono.TROFEO, 0xFFFFC94D),
         )),
     )
 

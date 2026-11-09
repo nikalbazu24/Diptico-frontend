@@ -172,6 +172,11 @@ private fun EncabezadoWidgets(e: Estado) {
                 ) { Texto("$pagina/${e.paginas}", 12f, color = p.tenue, lineas = 1, traducir = false) }
             }
             if (e.sesion == null) BarraFlotante(e, null, Modifier.widthIn(max = anchoBarra), arriba = true)
+            // Con el diseño nuevo arriba no hay barra de la hora: la hora y la batería van aquí, chiquitas.
+            if (nuevoDisenoDosPantallas(e)) {
+                val bat = rememberBateria()
+                Texto(rememberHora() + if (bat >= 0) " · $bat%" else "", 13f, color = LocalPaleta.current.tenue, lineas = 1, traducir = false)
+            }
         }
     }
 }
@@ -500,6 +505,10 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
     // tam: 1 angosto, 2 mediano, 3 ancho. compacto: una sola fila de alto.
     val tam = when { an >= 4 -> 3; an >= 3 -> 2; else -> 1 }
     val compacto = al == 1
+    if (tipo == "progreso") {
+        WidgetProgreso(e, an, al)
+        return
+    }
     if (tipo in planWidgets) {
         WidgetPlanPartida(e, tipo, an, al)
         return
@@ -1345,6 +1354,7 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
     val frases = remember(j?.clave, e.chat.size) {
         buildList {
             add(saludo() + ". ¿En qué te ayudo?")
+            cl.nikalbazu.diptico.estado.CentroBisa.ideaInicio(e)?.let { add(it.first) }
             if (j != null) add("¿Quieres un truco para ${j.titulo}?")
             j?.let { e.datos[it.clave]?.paso }?.takeIf { it.isNotBlank() }?.let { add("Quedaste en: $it") }
             add("¿No sabes qué jugar? Te recomiendo uno.")
@@ -1677,3 +1687,51 @@ private fun WidgetColeccion(e: Estado, id: String, an: Int, al: Int) {
 }
 
 
+
+
+/**
+ * Tu progreso: cuánto te queda en el último juego (HowLongToBeat), tu racha de días y el logro de DIPPO más cerca.
+ * Junta en un solo lugar lo que antes estaba repartido.
+ */
+@Composable
+private fun WidgetProgreso(e: Estado, an: Int, al: Int) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val j = Diptico.ultimoJugado(e) ?: e.seleccionado
+    LaunchedEffect(j?.clave) { j?.let { Diptico.pedirDuracion(it.clave) } }
+    val racha = remember(e.datos) { Diptico.rachaDias() }
+    val logro = remember(e.datos, e.extra.dippoCelebra) { Diptico.proximoLogroDippo(e) }
+    Tarjeta(alPulsar = { Diptico.abrirGaleria("logros_dippo") }) {
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Etiqueta("Tu progreso", Coral, 10.5f)
+                Spacer(Modifier.weight(1f))
+                if (racha > 0) Texto("🔥 $racha ${if (racha == 1) "día" else "días"}", 12f, color = p.tinta, lineas = 1, traducir = false)
+            }
+            if (j != null) {
+                val d = e.extra.duraciones[j.clave]?.takeIf { it.tiene }
+                val jugado = e.datos[j.clave]?.tiempo ?: 0L
+                Texto(j.titulo, if (al >= 2) 16f else 13f, lineas = 1, traducir = false)
+                if (d != null && d.principal > 0f) {
+                    val avance = (jugado / 3600f / d.principal).coerceIn(0f, 1f)
+                    Box(Modifier.fillMaxWidth().height(esc.d(6)).clip(RoundedCornerShape(50)).background(p.tinta.copy(alpha = 0.12f))) {
+                        Box(Modifier.fillMaxWidth(avance).fillMaxHeight().clip(RoundedCornerShape(50))
+                            .background(Brush.horizontalGradient(listOf(Coral, Sol))))
+                    }
+                    cl.nikalbazu.diptico.estado.CuantoDura.teQueda(d, jugado)?.let { Detalle(it, 11.5f, lineas = 1) }
+                } else Detalle(if (jugado > 0) "${formatoTiempo(jugado)} jugadas" else "Aún sin jugar", 11.5f, lineas = 1)
+            }
+            if (al >= 2 && logro != null) {
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(26).value)
+                    Spacer(Modifier.width(esc.d(8)))
+                    Column(Modifier.weight(1f)) {
+                        Texto(logro.first, 12.5f, lineas = 1)
+                        Detalle("${logro.second} de ${logro.third}", 11f, lineas = 1)
+                    }
+                }
+            }
+        }
+    }
+}

@@ -104,24 +104,16 @@ fun PantallaSuperior(e: Estado) {
         PantallaInicio(e)
         return
     }
-    // Carátulas ↔ widgets con una transición suave (y un recordatorio discreto al llegar a los widgets).
-    AnimatedContent(
-        targetState = e.inicio == "widgets",
-        transitionSpec = {
-            val entra = fadeIn(tween(420)) + scaleIn(tween(480, easing = FastOutSlowInEasing), initialScale = if (targetState) 0.94f else 1.04f)
-            val sale = fadeOut(tween(260)) + scaleOut(tween(320), targetScale = if (targetState) 1.04f else 0.96f)
-            entra togetherWith sale
-        },
-        label = "inicio",
+    // Portada ↔ widgets: dos páginas seguidas que se deslizan con el dedo (el botón y el atajo también las mueven).
+    InicioDeslizable(
+        e,
         // Cualquier toque en esta pantalla vuelve a sacar la barra flotante.
-        modifier = Modifier.pointerInput(Unit) {
+        Modifier.pointerInput(Unit) {
             awaitEachGesture { awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial); Diptico.mostrarBarra() }
         },
-    ) { widgets ->
-        if (widgets) Box(Modifier.fillMaxSize()) {
-            PantallaInicio(e)
-        } else Caratulas(e)
-    }
+        portada = { Caratulas(e) },
+        widgets = { PantallaInicio(e) },
+    )
 }
 
 /** El inicio con el juego elegido en grande (carátulas). */

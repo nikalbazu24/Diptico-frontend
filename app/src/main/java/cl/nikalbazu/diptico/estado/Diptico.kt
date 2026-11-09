@@ -244,6 +244,13 @@ object Widgets {
         Widget("proximaPartida", 0, 0, 3, 2, false),
         Widget("colaJuegos", 0, 0, 3, 2, false),
         Widget("tengo20", 0, 0, 3, 1, false),
+        Widget("progreso", 0, 0, 3, 2, false),
+    )
+
+    /** El inicio nuevo (9 nov 2026): seguir jugando, tu progreso, música y lo último que jugaste. */
+    val inicioNuevo = listOf(
+        Widget("proximaPartida", 0, 0, 3, 2), Widget("progreso", 3, 0, 3, 2),
+        Widget("musica", 0, 2, 3, 2), Widget("recientes", 3, 2, 3, 2),
     )
 
     /** Para qué sirve cada widget (en el catálogo del estudio). */
@@ -264,6 +271,7 @@ object Widgets {
         "proximaPartida" -> "Recuerda qué jugaste, tu próximo paso y tu mapa"
         "colaJuegos" -> "Ordena los juegos que quieres empezar o terminar"
         "tengo20" -> "Sugiere juegos que sueles jugar en sesiones breves"
+        "progreso" -> "Cuánto te queda en tu juego, tu racha de días y el próximo logro de DIPPO"
         else -> "Tu imagen o GIF animado"
     }
 
@@ -278,6 +286,7 @@ object Widgets {
         "proximaPartida" -> Icono.CONTINUAR
         "colaJuegos" -> Icono.BIBLIOTECA
         "tengo20" -> Icono.RELOJ
+        "progreso" -> Icono.TROFEO
         else -> Icono.PORTADA
     }
 
@@ -307,6 +316,7 @@ object Widgets {
         "logros" -> "Logros (RetroAchievements)"; "asistente" -> "Asistente con IA"; "apps" -> "Apps"
         "temporizador" -> "Temporizador"; "cronometro" -> "Cronómetro"; "buscar" -> "Buscar juegos"
         "proximaPartida" -> "Mi próxima partida"; "colaJuegos" -> "Cola de juegos"; "tengo20" -> "Tengo 20 minutos"
+        "progreso" -> "Tu progreso"
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -335,7 +345,7 @@ data class EstadoExtra(
     /** Vidrio con lente (refracción y luz), en Android 13 o más nuevo. */
     val lente: Boolean = false,
     /** Dock de apps fijadas en la pantalla de abajo: si está, dónde, de qué tamaño, cuántas apps y si está desplegado. */
-    val dock: Boolean = false,
+    val dock: Boolean = true,
     val dockLado: String = "abajo",
     val dockTam: String = "medio",
     val dockCantidad: Int = 5,
@@ -895,7 +905,7 @@ object Diptico {
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
-                dock = almacen.bool("dock", false),
+                dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
                 dockCantidad = almacen.texto("dockCantidad", "5").toIntOrNull()?.coerceIn(3, 6) ?: 5,
@@ -4802,6 +4812,8 @@ object Diptico {
     // ---------- Inicio personalizado ----------
 
     private fun opcionesInicio(e: Estado): List<Opcion> = listOf(
+        Opcion("Usar el inicio nuevo", "Seguir jugando, progreso, música y recientes", Icono.APPS,
+            "Ordena tus widgets con el diseño nuevo. Tu distribución de ahora queda guardada y vuelves a ella en Temas y decoraciones › Estilos guardados.") { aplicarInicioNuevo() },
         Opcion("Clip al retomar", if (e.clipRetoma) "Activado" else "Desactivado", Icono.CONTINUAR, "En dos pantallas: pide el permiso de grabación de Android al abrir un juego y guarda solo los últimos 6 segundos, sin audio. La lupa tiene prioridad. Puede afectar al rendimiento; se desactiva aquí.") { alternarClipRetoma() },
         Opcion("Preparar clip de esta partida", "Pedir permiso de Android", Icono.CONTINUAR, "Después de bloquear la consola Android puede finalizar la captura. Este botón prepara una nueva para la siguiente retoma.", apagada = e.sesion == null || !e.clipRetoma) { pedirPermisoRetoma(false) },
         Opcion("Retomar después de", "${e.esperaRetoma} segundos", Icono.RELOJ, "Tiempo mínimo con la pantalla apagada para mostrar el recordatorio al abrir la consola.") { cambiarEsperaRetoma() },
@@ -4874,6 +4886,13 @@ object Diptico {
     fun abrirWidgetTipo(tipo: String) {
         val i = estado.value.widgets.indexOfFirst { it.tipo == tipo }
         if (i >= 0) abrirWidget(i)
+    }
+
+    /** Deja el inicio en la portada ("heroe") o en los widgets (al deslizar la pantalla de arriba). */
+    fun fijarInicio(v: String) {
+        if (estado.value.inicio == v || v !in setOf("heroe", "widgets")) return
+        almacen.guardarTexto("inicio", v)
+        actualizar { it.copy(inicio = v, widgetFoco = -1) }
     }
 
     fun alternarInicio() {
@@ -5227,6 +5246,26 @@ object Diptico {
     fun progresoLogrosDippo(e: Estado = estado.value): List<Pair<LogrosDippo.Logro, Int>> = LogrosDippo.progreso(e, contadores())
 
     fun logrosDippoGanados(): Int = hechosDippo().size
+
+    /** Días seguidos jugando (para el widget de progreso). */
+    fun rachaDias(): Int = LogrosDippo.racha(contadores().dias)
+
+    /** El logro de DIPPO más cerca de ganarse: título, avance y meta. */
+    fun proximoLogroDippo(e: Estado = estado.value): Triple<String, Int, Int>? =
+        progresoLogrosDippo(e).filter { (l, v) -> v < l.meta && l.id !in hechosDippo() }
+            .maxByOrNull { (l, v) -> v.toFloat() / l.meta }?.let { (l, v) -> Triple(l.titulo, v, l.meta) }
+
+    /** Ordena los widgets con el diseño nuevo; la distribución de antes queda guardada para volver a ella. */
+    fun aplicarInicioNuevo() {
+        almacen.guardarTexto("perfilVisualAnterior", capturarPerfil().json(local = true).toString())
+        val nuevos = Widgets.inicioNuevo
+        val resto = estado.value.widgets.filter { w -> nuevos.none { it.tipo == w.tipo } }.map { it.copy(visible = false) }
+        guardarWidgets(nuevos.map { it.copy(pagina = 0) } + resto)
+        almacen.guardarTexto("paginas", "1")
+        actualizar { it.copy(paginaInicio = 0, paginas = 1) }
+        fijarInicio("widgets")
+        avisar("Listo: tu inicio nuevo. Puedes volver al de antes en Temas › Estilos guardados")
+    }
 
     // ---------- Cuánto dura cada juego (HowLongToBeat) ----------
 
@@ -8114,6 +8153,17 @@ object Diptico {
     /** Spotify y YouTube Music, si están instalados. */
     fun appsMusica(): List<App> = MUSICA_APPS.filter { (p, _) -> Lanzador.instalado(app, p) }.map { (p, n) -> App(p, n) }
 
+    /** Abre una app en la pantalla [displayId] (la del dock que tocaste); si no se puede, como siempre. */
+    fun abrirPaqueteAqui(paquete: String, displayId: Int?) {
+        val i = app.packageManager.getLaunchIntentForPackage(paquete) ?: run { avisar("Esa app no está instalada"); return }
+        if (displayId == null) { abrirPaquete(paquete); return }
+        cerrarPanel()
+        try {
+            app.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                android.app.ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle())
+        } catch (_: Exception) { abrirPaquete(paquete) }
+    }
+
     fun abrirPaquete(paquete: String) {
         val i = app.packageManager.getLaunchIntentForPackage(paquete)
         if (i == null) avisar("Esa app no está instalada") else {
@@ -9092,28 +9142,19 @@ object Diptico {
         actualizar { it.copy(extra = it.extra.copy(dockAbierto = abrir)) }
     }
 
-    private fun opcionesDock(e: Estado): List<Opcion> = listOfNotNull(
+    private fun opcionesDock(e: Estado): List<Opcion> = listOf(
         Opcion(
             "Dock de apps", if (e.extra.dock) "Sí" else "No", Icono.APPS,
-            "Una manija en la pantalla de abajo que despliega tus apps fijadas y el cajón con todas. Fija apps en el cajón con Y (o mantenlas y elige Fijar).",
+            "Hasta 5 de tus apps fijadas, siempre a la vista en la pantalla de abajo, también mientras juegas: la app se abre en esa pantalla y el juego sigue en la otra. Fija apps en el cajón con Y.",
             grupo = "Dock de apps",
         ) {
             val v = !estado.value.extra.dock
-            almacen.guardarBool("dock", v)
-            actualizar { it.copy(extra = it.extra.copy(dock = v, dockAbierto = false)) }
+            almacen.guardarBool("dock2", v)
+            actualizar { it.copy(extra = it.extra.copy(dock = v)) }
         },
-        if (!e.extra.dock) null else opcionLista(
-            "Lugar del dock", Icono.FORMA, "Dónde vive la manija del dock en la pantalla de abajo.",
-            listOf("abajo", "izquierda", "derecha"), listOf("Abajo", "A la izquierda", "A la derecha"), e.extra.dockLado, grupo = "Dock de apps",
-        ) { v -> almacen.guardarTexto("dockLado", v); actualizar { it.copy(extra = it.extra.copy(dockLado = v)) } },
-        if (!e.extra.dock) null else opcionLista(
-            "Tamaño del dock", Icono.FORMA, "Íconos chicos, medianos o grandes.",
-            listOf("chico", "medio", "grande"), listOf("Chico", "Mediano", "Grande"), e.extra.dockTam, grupo = "Dock de apps",
-        ) { v -> almacen.guardarTexto("dockTam", v); actualizar { it.copy(extra = it.extra.copy(dockTam = v)) } },
-        if (!e.extra.dock) null else opcionLista(
-            "Apps en el dock", Icono.APPS, "Cuántas de tus apps fijadas se muestran (de 3 a 6).",
-            listOf("3", "4", "5", "6"), listOf("3 apps", "4 apps", "5 apps", "6 apps"), e.extra.dockCantidad.toString(), grupo = "Dock de apps",
-        ) { v -> almacen.guardarTexto("dockCantidad", v); actualizar { it.copy(extra = it.extra.copy(dockCantidad = v.toInt())) } },
+        Opcion("Elegir las apps del dock", "${e.appsFijadas.size.coerceAtMost(cl.nikalbazu.diptico.ui.MAX_DOCK)} de ${cl.nikalbazu.diptico.ui.MAX_DOCK}", Icono.ESTRELLA,
+            "Abre el cajón en tus apps fijadas: con Y fijas o sueltas una, y puedes ordenarlas. Las primeras 5 van al dock.",
+            grupo = "Dock de apps") { abrirApps() },
     )
 
     fun alternarFijada(paquete: String) {
@@ -9121,7 +9162,11 @@ object Diptico {
         val n = if (paquete in l) l - paquete else l + paquete
         almacen.guardarTexto("appsFijadas", n.joinToString(","))
         actualizar { it.copy(appsFijadas = n) }
-        avisar(if (paquete in n) "App fijada" else "App soltada")
+        avisar(when {
+            paquete !in n -> "App soltada"
+            n.size > cl.nikalbazu.diptico.ui.MAX_DOCK -> "App fijada · el dock muestra las primeras ${cl.nikalbazu.diptico.ui.MAX_DOCK}"
+            else -> "App fijada en tu dock"
+        })
     }
 
     /** Abre la información de la app en los ajustes de Android (para desinstalar, permisos…). */
