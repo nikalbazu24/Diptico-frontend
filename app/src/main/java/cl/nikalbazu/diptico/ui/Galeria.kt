@@ -161,6 +161,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                             "ia" -> FilaIA(it, activo) { Diptico.elegirIndice(i) }
                             "cajas" -> TarjetaCaja(e, it, activo) { Diptico.elegirIndice(i) }
                             "colecciones" -> FilaCancion(it, activo, Icono.CARPETA, "Aquí ✓") { Diptico.elegirIndice(i) }
+                            "accesos_cortina" -> FilaCancion(it, activo, if (it.enUso) Icono.CHECK else Icono.CERRAR, "Visible") { Diptico.elegirIndice(i) }
                             else -> FilaCancion(it, activo) { Diptico.elegirIndice(i) }
                         }
                     }
