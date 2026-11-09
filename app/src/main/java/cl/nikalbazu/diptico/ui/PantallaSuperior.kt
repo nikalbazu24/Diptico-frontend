@@ -258,13 +258,41 @@ val LocalHeroes = androidx.compose.runtime.staticCompositionLocalOf { emptyMap<S
 @Composable
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false, consola: Boolean = false) {
+    val visible = e.barra || e.barraFija
+    // Escondida: solo una manija discreta que recuerda que se puede sacar (tocarla también la saca).
+    androidx.compose.animation.AnimatedVisibility(
+        visible = !visible, modifier = modifier,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(500, delayMillis = 250)),
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(120)),
+    ) {
+        val esc = LocalEscala.current
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.mostrarBarra() }.padding(horizontal = esc.d(20), vertical = esc.d(10))) {
+                Box(Modifier.size(esc.d(46), esc.d(5)).clip(RoundedCornerShape(50)).background(LocalPaleta.current.tinta.copy(alpha = 0.28f)))
+            }
+        }
+    }
+    androidx.compose.animation.AnimatedVisibility(
+        visible = visible, modifier = modifier,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220)) +
+            androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(260)) { if (arriba) -it / 2 else it / 2 },
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(380)) +
+            androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(380)) { if (arriba) -it / 3 else it / 3 },
+    ) { ContenidoBarra(e, juego, Modifier, arriba, consola) }
+}
+
+@Composable
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+private fun ContenidoBarra(e: Estado, juego: Juego?, modifier: Modifier, arriba: Boolean, consola: Boolean) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val compacta = arriba || esc.angosta
     val widgets = e.inicio == "widgets"
-    val base = if (arriba) modifier else modifier.fillMaxWidth().background(
-        Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.60f), p.fondo)),
-    )
+    // El estilo de la barra de la pantalla de arriba: sólida (como antes), difusa o transparente.
+    val base = if (arriba) modifier else when (e.estiloBarraArriba) {
+        "solida" -> modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.60f), p.fondo)))
+        else -> modifier.fillMaxWidth().fondoBarra(e.estiloBarraArriba)
+    }
     Column(base) {
         if (!arriba) Spacer(Modifier.fillMaxWidth().height(esc.d(1)).background(p.linea.copy(alpha = 0.62f)))
         Row(

@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "arreglos-1.2-12"
-    const val NOMBRE = "Arreglos importantes"
+    const val ID = "orden-y-base-1.2-13"
+    const val NOMBRE = "Orden y base"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -232,11 +232,17 @@ object Novedades {
             Pagina("Editor de widgets más simple", "Tamaño, Diseño y Más ajustes conservan toda la personalización. Busca widgets en el catálogo. El contenido se adapta al espacio; toca ↗ para leer un texto largo completo.", Icono.EDITAR, 0xFF8ECFD4),
             Pagina("Espacios predeterminados", "Ajusta los juegos con dos dedos: Compacto, Equilibrado, Amplio o Detalle. Al soltar se ajustan a una parada fija y conservan tu vista y tu selección.", Icono.FORMA, 0xFFDBB386),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("arreglos-1.2-12", "Arreglos importantes", listOf(
             Pagina("Tu partida sigue ahí", "Si eliges un juego que ya está abierto, o que dejaste en pausa hace poco, Díptico vuelve a tu partida en vez de empezarla de cero.", Icono.CONTINUAR, 0xFF2EC4A6),
             Pagina("Pantallas intercambiadas", "Con las pantallas intercambiadas, las herramientas de la partida aparecen siempre en la pantalla que deja libre el juego.", Icono.PANTALLAS, 0xFF3BA8FF),
             Pagina("Más estable", "Arreglos para que Díptico no se cierre con el clip de retoma, para que el aviso de cierre no vuelva siempre y para que los atajos del mando no se activen solos.", Icono.CHECK, 0xFF8E7CFF),
             Pagina("Respaldo completo y carpetas propias", "El respaldo ahora guarda tus copias de partidas y la música de los temas. Los íconos de las carpetas tienen dibujos propios, con más aire.", Icono.CARPETA, 0xFFFF7A59),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Elige de una lista", "Las opciones con varias alternativas (fluidez, protector, orden, filtros, tamaños, Glass…) abren una lista para elegir directo, sin dar la vuelta completa. Las marcan con ▾.", Icono.MENU, 0xFF8E7CFF, "A · B"),
+            Pagina("Tu barra, a tu manera", "La barra de accesos puede quedar fija o esconderse sola. Y las barras de cada pantalla pueden ser sólidas, difusas o transparentes, por separado. Menú › Inicio y Menú › Pantallas.", Icono.APPS, 0xFF3BA8FF),
+            Pagina("Accesos a tu gusto", "Elige qué accesos aparecen en los ajustes rápidos y en qué orden: toca el lápiz al final de la cortina. A muestra u oculta; X sube un acceso.", Icono.EDITAR, 0xFF2EC4A6, "X"),
+            Pagina("Vibración", "Un toque de vibración al moverte y elegir, suave, media o fuerte. Nunca vibra mientras juegas. Menú › Música › Vibración.", Icono.CHISPA, 0xFFFF7A59),
         )),
     )
 
@@ -286,7 +292,7 @@ object Novedades {
             Icono.EDITAR, 0xFFFFA726, "Y · X",
         ),
         Pagina(
-            "La barra que se esconde", "Arriba flota una barra con jugar, buscar, apps, turbo, el menú y Bisa. A los 5 segundos se esconde para que luzca el juego; vuelve deslizando hacia arriba desde el borde de abajo, tocando o con B.",
+            "Tu barra de accesos", "Abajo del juego hay una barra con jugar, ficha, buscar, apps, Bisa y ajustes. Si prefieres que se esconda sola, cámbialo en Menú › Inicio › Barra de accesos; vuelve deslizando hacia arriba o con B.",
             Icono.APPS, 0xFF3BA8FF, "Desliza ↑ · B",
         ),
         Pagina(

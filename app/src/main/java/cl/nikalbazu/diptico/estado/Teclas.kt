@@ -643,6 +643,7 @@ object Teclas {
                     Panel.ASISTENTE -> Diptico.escribirAlAsistente()
                     Panel.BUSCAR -> if (e.tecladoPropio) Diptico.abrirTexto("buscar_juego", e.busqueda) else Diptico.limpiarBusqueda()
                     Panel.APPS -> Diptico.appsVisibles(e).getOrNull(e.indice)?.let { Diptico.abrirOpcionesApp(it.paquete) }
+                    Panel.GALERIA -> if (e.galeria == "accesos_cortina") Diptico.itemsGaleria(e).getOrNull(e.indice)?.takeIf { it.enUso }?.let { Diptico.subirAcceso(it.id) }
                     else -> Unit
                 }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> when (e.panel) {
@@ -767,8 +768,8 @@ object Teclas {
                 // Columna de secciones a la izquierda y opciones a la derecha.
                 KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(-1)
                 KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(1)
-                KeyEvent.KEYCODE_DPAD_LEFT -> if (e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(false)
-                KeyEvent.KEYCODE_DPAD_RIGHT -> if (!e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(true)
+                KeyEvent.KEYCODE_DPAD_LEFT -> if (e.desplegable >= 0) Unit else if (e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(false)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> if (e.desplegable >= 0) Unit else if (!e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(true)
                 KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.saltarSeccion(-1, envolver = true)
                 KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.saltarSeccion(1, envolver = true)
                 else -> return esA(code) || esB(code) || code in botonesControl

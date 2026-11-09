@@ -56,6 +56,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
         "vistas_juegos" -> "Cómo ver tus juegos" to Icono.VISTA
         "vistas_consolas" -> "Cómo ver tus consolas" to Icono.MANDO
         "filtros" -> "Mostrar juegos" to Icono.BUSCAR
+        "accesos_cortina" -> "Accesos de la cortina" to Icono.EDITAR
         "orden" -> "Orden de los juegos" to Icono.MENU
         "temas" -> "Temas" to Icono.PALETA
         "importar_temas" -> "Temas del archivo" to Icono.DESCARGA

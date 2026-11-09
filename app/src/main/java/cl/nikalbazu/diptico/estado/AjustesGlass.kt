@@ -8,6 +8,10 @@ internal fun opcionesGlass(e: Estado): List<Opcion> = listOf(
         val materiales = listOf("glass", "original", "tema")
         val v = Diptico.estado.value.experiencia
         Diptico.guardarExperiencia(v.copy(materialInterfaz = materiales[(materiales.indexOf(v.materialInterfaz) + 1).mod(materiales.size)]))
+    }.let { o ->
+        val materiales = listOf("glass", "original", "tema")
+        o.copy(alternativas = listOf("Activado", "Desactivado", "Según el tema"), elegida = materiales.indexOf(e.experiencia.materialInterfaz),
+            elegir = { n -> Diptico.guardarExperiencia(Diptico.estado.value.experiencia.copy(materialInterfaz = materiales[n])) })
     },
 ) + ZonaGlass.entries.map { zona ->
     val nivel = e.nivelesGlass.para(zona)

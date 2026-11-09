@@ -127,7 +127,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 val sinIntro = rol == Rol.INFERIOR && rolIntro == Rol.INFERIOR && e.unaPantalla
                 if (e.intro && !sinIntro) Intro(rolIntro)
             }
-            if (barra && !(e.relojGrande && rol != Rol.INFERIOR)) BarraSistema(e, Modifier.align(Alignment.TopCenter))
+            if (barra && !(e.relojGrande && rol != Rol.INFERIOR)) BarraSistema(e, Modifier.align(Alignment.TopCenter),
+                estilo = if (miPantalla == android.view.Display.DEFAULT_DISPLAY) e.estiloBarraArriba else e.estiloBarraAbajo)
         }
     }
 }

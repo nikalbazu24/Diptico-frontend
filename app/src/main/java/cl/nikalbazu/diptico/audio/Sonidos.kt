@@ -82,11 +82,12 @@ object Sonidos {
         val ahora = SystemClock.uptimeMillis()
         if (ahora - ultimoMover < 45) return
         ultimoMover = ahora
+        Vibracion.mover()
         flujoMover = tocar("mover", 0.96f + (ahora % 7) * 0.012f)
     }
 
     fun consola() { tocar("consola") }
-    fun aceptar() { tocar("aceptar") }
+    fun aceptar() { Vibracion.elegir(); tocar("aceptar") }
     fun atras() { tocar("atras") }
     fun abrir() { tocar("abrir") }
     fun jugar() { tocar("jugar") }
@@ -100,6 +101,7 @@ object Sonidos {
         ultimoBorde = ahora
         // En vez del "tic" de moverse, que no llevó a ningún lado.
         if (ahora - ultimoMover < 80 && flujoMover != 0) pool?.stop(flujoMover)
+        Vibracion.borde()
         tocar("borde")
     }
     fun pagina() { tocar("pagina") }
@@ -109,7 +111,7 @@ object Sonidos {
         tocar("tecla", 0.95f + (ahora % 5) * 0.025f)
         Unit
     }
-    fun interruptor(encendido: Boolean) { tocar(if (encendido) "si" else "no") }
+    fun interruptor(encendido: Boolean) { Vibracion.elegir(); tocar(if (encendido) "si" else "no") }
     fun levantar() { tocar("levantar") }
     fun soltar() { tocar("soltar") }
     fun aviso() { tocar("aviso") }

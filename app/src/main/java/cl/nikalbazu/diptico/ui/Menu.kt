@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -102,6 +103,66 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
                 val o = if (e.enOpciones) Diptico.opcionesSeccion(e.seccion).getOrNull(e.indice) else null
                 PreviaAjuste(e, e.seccion, o, Modifier.width(esc.d(220)).fillMaxHeight().padding(start = esc.d(4), end = esc.d(12), top = esc.d(14), bottom = esc.d(14)))
             }
+        }
+        // Menú desplegable de una opción con varias alternativas, encima de todo el menú.
+        androidx.compose.animation.AnimatedVisibility(
+            visible = e.desplegable >= 0 && e.enOpciones,
+            enter = androidx.compose.animation.fadeIn(tween(140)) + androidx.compose.animation.scaleIn(tween(180), initialScale = 0.94f),
+            exit = androidx.compose.animation.fadeOut(tween(120)),
+        ) { VentanaDesplegable(e) }
+    }
+}
+
+/** La lista de alternativas de una opción: se mueve con la cruceta, A elige y B vuelve sin cambiar nada. */
+@Composable
+private fun VentanaDesplegable(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val o = Diptico.opcionesSeccion(e.seccion).getOrNull(e.desplegable) ?: return
+    val nombres = o.alternativas ?: return
+    val color = colorSeccion(e.seccion)
+    val lista = rememberLazyListState()
+    LaunchedEffect(e.desplegableSel) { lista.mostrar(e.desplegableSel) }
+    Box(
+        Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)).clickable(
+            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null,
+        ) { Diptico.cerrarDesplegable() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            Modifier.widthIn(max = esc.d(460)).fillMaxWidth(0.86f).heightIn(max = esc.d(520))
+                .shadow(esc.d(18), RoundedCornerShape(esc.d(24))).clip(RoundedCornerShape(esc.d(24))).background(p.fondo2)
+                .border(esc.d(1.5f), color.copy(alpha = 0.5f), RoundedCornerShape(esc.d(24)))
+                .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {}
+                .padding(vertical = esc.d(14)),
+        ) {
+            Row(Modifier.padding(horizontal = esc.d(18)), verticalAlignment = Alignment.CenterVertically) {
+                o.icono?.let { IconoDiptico(it, color, 20f, acento = color); Spacer(Modifier.width(esc.d(10))) }
+                Texto(o.titulo, 18f, lineas = 1, modifier = Modifier.weight(1f))
+            }
+            if (o.ayuda.isNotBlank()) Detalle(o.ayuda, 12f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(18), vertical = esc.d(6)))
+            LazyColumn(
+                state = lista, modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = esc.d(10), vertical = esc.d(6)),
+                verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+            ) {
+                itemsIndexed(nombres) { i, nombre ->
+                    val marcada = i == e.desplegableSel
+                    val puesta = i == o.elegida
+                    Row(
+                        Modifier.fillMaxWidth().heightIn(min = esc.d(48)).clip(RoundedCornerShape(esc.d(14)))
+                            .background(if (marcada) color.copy(alpha = 0.22f) else Color.Transparent)
+                            .then(if (marcada) Modifier.border(esc.d(1.5f), color, RoundedCornerShape(esc.d(14))) else Modifier)
+                            .clickable { Diptico.elegirDesplegable(i) }
+                            .padding(horizontal = esc.d(14)),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Texto(nombre, 15f, lineas = 2, modifier = Modifier.weight(1f))
+                        if (puesta) IconoDiptico(Icono.CHECK, color, 18f, acento = color)
+                    }
+                }
+            }
+            Pistas("↑ ↓" to "Moverte", "A" to "Elegir", "B" to "Volver", modifier = Modifier.padding(start = esc.d(18), top = esc.d(6)))
         }
     }
 }
@@ -287,8 +348,14 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
                 o.valor.isNotEmpty() && !valorAbajo -> Box(
                     Modifier.clip(RoundedCornerShape(50)).background(if (activa) color.copy(alpha = 0.22f) else p.fondo2.copy(alpha = 0.6f))
                         .padding(horizontal = esc.d(10), vertical = esc.d(4)),
-                ) { Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = ancho * 0.36f)) }
-                valorAbajo -> Unit
+                ) {
+                    // ▾ avisa que al elegirla se abre una lista con todas las alternativas.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = ancho * 0.33f))
+                        if (o.alternativas != null) Texto(" ▾", 12.5f, color = p.tenue, lineas = 1, traducir = false)
+                    }
+                }
+                valorAbajo -> if (o.alternativas != null) Texto("▾", 16f, color = p.tenue, traducir = false)
                 else -> Texto("›", 20f, color = p.tenue)
             }
         }

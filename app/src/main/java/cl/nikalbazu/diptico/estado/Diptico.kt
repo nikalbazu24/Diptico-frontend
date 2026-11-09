@@ -108,6 +108,12 @@ data class Opcion(
     val rango: RangoOpcion? = null,
     /** Subtítulo bajo el que se muestra en su sección. null = se deduce del título (forma antigua). */
     val grupo: String? = null,
+    /** Si tiene varias alternativas: sus nombres. Al elegirla se abre un menú desplegable en vez de pasar de una en una. */
+    val alternativas: List<String>? = null,
+    /** La alternativa que está puesta ahora (índice en [alternativas]). */
+    val elegida: Int = -1,
+    /** Qué hacer al elegir la alternativa número n. */
+    val elegir: ((Int) -> Unit)? = null,
     val accion: () -> Unit,
 )
 
@@ -492,6 +498,16 @@ data class Estado(
     /** La barra flotante del inicio (arriba) está a la vista; se esconde sola salvo que [barraFija]. */
     val barra: Boolean = true,
     val barraFija: Boolean = true,
+    /** Estilo de las barras de cada pantalla: "solida", "difusa" o "transparente". */
+    val estiloBarraArriba: String = "solida",
+    /** Accesos de la cortina elegidos, en orden (vacío = todos). */
+    val accesosCentro: List<String> = emptyList(),
+    /** Vibración al moverse y elegir: "apagada", "suave", "media" o "fuerte". */
+    val vibracion: String = "apagada",
+    val estiloBarraAbajo: String = "solida",
+    /** Menú desplegable abierto sobre la opción número [desplegable] del menú (-1 = cerrado) y la alternativa marcada. */
+    val desplegable: Int = -1,
+    val desplegableSel: Int = 0,
     /** Menú de ajustes simple: solo las secciones de siempre; las avanzadas viven en «Más ajustes». */
     val menuSimple: Boolean = true,
     val turboCerrarApps: Boolean = true,
@@ -803,7 +819,11 @@ object Diptico {
             paqueteSonidos = almacen.texto("paqueteSonidos", "tema"),
             pausaCada = almacen.texto("pausaCada", "0").toIntOrNull() ?: 0,
             turbo = almacen.bool("turbo", true),
-            barraFija = true,
+            barraFija = almacen.bool("barraFija", true),
+            estiloBarraArriba = almacen.texto("estiloBarraArriba", "solida"),
+            accesosCentro = almacen.texto("accesosCentro", "").split("|").filter { it.isNotBlank() },
+            vibracion = almacen.texto("vibracion", "apagada").also { cl.nikalbazu.diptico.audio.Vibracion.iniciar(app, it) },
+            estiloBarraAbajo = almacen.texto("estiloBarraAbajo", "solida"),
             menuSimple = almacen.bool("menuSimple", true),
             turboCerrarApps = almacen.bool("turboCerrarApps", true),
             turboNoMolestar = almacen.bool("turboNoMolestar", false),
@@ -931,11 +951,32 @@ object Diptico {
     // ---------- Barra flotante ----------
 
     /** Vuelve a mostrar la barra de inicio al tocar la pantalla o volver del juego. */
-    fun mostrarBarra() { if (!estado.value.barra) actualizar { it.copy(barra = true) } }
+    private var trabajoBarra: Job? = null
+    const val BARRA_MS = 5_000L
+
+    /** Saca la barra de accesos; si no está fija, se vuelve a esconder a los 5 segundos sin tocar nada. */
+    fun mostrarBarra() {
+        if (!estado.value.barra) actualizar { it.copy(barra = true) }
+        trabajoBarra?.cancel()
+        if (estado.value.barraFija) return
+        trabajoBarra = scope.launch {
+            delay(BARRA_MS)
+            if (!estado.value.barraFija && estado.value.panel == Panel.NINGUNO) actualizar { it.copy(barra = false) }
+        }
+    }
+
+    val ESTILOS_BARRA = listOf("solida", "difusa", "transparente")
+    fun nombreEstiloBarra(v: String) = when (v) { "difusa" -> "Difusa"; "transparente" -> "Transparente"; else -> "Sólida" }
+
+    fun fijarEstiloBarra(arriba: Boolean, v: String) {
+        almacen.guardarTexto(if (arriba) "estiloBarraArriba" else "estiloBarraAbajo", v)
+        actualizar { if (arriba) it.copy(estiloBarraArriba = v) else it.copy(estiloBarraAbajo = v) }
+    }
 
     fun cambiarBarraFija(v: Boolean) {
         almacen.guardarBool("barraFija", v)
         actualizar { it.copy(barraFija = v, barra = true) }
+        if (!v) mostrarBarra()
     }
 
     /** La pantalla de abajo existe ahora (por ejemplo, si se conecta o desconecta una pantalla). */
@@ -2295,6 +2336,15 @@ object Diptico {
                 }
             }
         }
+        if (e.galeria == "accesos_cortina") {
+            val todos = opcionesSistema()
+            val elegidos = e.accesosCentro.ifEmpty { todos.map { it.titulo } }
+            val ordenados = elegidos.mapNotNull { t -> todos.firstOrNull { it.titulo == t } } + todos.filter { it.titulo !in elegidos }
+            return ordenados.map { o ->
+                val visible = o.titulo in elegidos
+                ItemGaleria(o.titulo, o.titulo, if (visible) "Se muestra · X para subirlo" else "Oculto", visible) { alternarAcceso(o.titulo) }
+            }
+        }
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
         if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
         if (e.galeria == "vistas_juegos") return listOf("cuadricula", "estante", "lista", "carrusel", "abanico", "lomos").map { v ->
@@ -2588,6 +2638,7 @@ object Diptico {
     }
 
     fun cerrarPanel() {
+        if (estado.value.desplegable >= 0) actualizar { it.copy(desplegable = -1) }
         if (estado.value.appsMenu != null || estado.value.appsMoviendo != null) { cerrarOpcionesApp(); return }
         if (estado.value.coleccionVisual != null) actualizar { it.copy(coleccionVisual = null) }
         val e = estado.value
@@ -2896,6 +2947,11 @@ object Diptico {
 
     private fun moverIndiceSolo(delta: Int) {
         val e = estado.value
+        if (e.panel == Panel.MENU && e.desplegable >= 0) {
+            val total = opcionesSeccion(e.seccion).getOrNull(e.desplegable)?.alternativas?.size ?: 0
+            if (total > 0) actualizar { it.copy(desplegableSel = (it.desplegableSel + delta).coerceIn(0, total - 1)) }
+            return
+        }
         if (!e.configurado && e.panel == Panel.NINGUNO) {
             val total = opcionesTuto().size
             if (total == 0) return
@@ -2974,12 +3030,51 @@ object Diptico {
 
     /** Izquierda/derecha en el menú: cambia de columna. */
     fun columnaMenu(aOpciones: Boolean) {
-        actualizar { it.copy(enOpciones = aOpciones, indice = if (aOpciones) 0 else it.indice) }
+        actualizar { it.copy(enOpciones = aOpciones, indice = if (aOpciones) 0 else it.indice, desplegable = -1) }
     }
 
     fun elegirSeccion(s: Seccion) {
-        actualizar { it.copy(seccion = s, enOpciones = true, indice = 0) }
+        actualizar { it.copy(seccion = s, enOpciones = true, indice = 0, desplegable = -1) }
     }
+
+    // ---------- Menús desplegables ----------
+
+    /** Abre la lista de alternativas de la opción [i] del menú, con la puesta ahora marcada. */
+    fun abrirDesplegable(i: Int, elegida: Int) {
+        actualizar { it.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0), indice = i) }
+        Sonidos.abrir()
+    }
+
+    fun cerrarDesplegable() {
+        if (estado.value.desplegable >= 0) actualizar { it.copy(desplegable = -1) }
+    }
+
+    /** Pone la alternativa [n] de la opción abierta y cierra la lista. */
+    fun elegirDesplegable(n: Int) {
+        val e = estado.value
+        val o = opcionesSeccion(e.seccion).getOrNull(e.desplegable)
+        actualizar { it.copy(desplegable = -1) }
+        if (o?.elegir != null && n in o.alternativas.orEmpty().indices) o.elegir.invoke(n)
+    }
+
+    /**
+     * Una opción con varias alternativas: muestra la puesta ahora y, al elegirla, abre un menú desplegable con todas.
+     * [accion] sigue pasando a la siguiente (para atajos y para Bisa).
+     */
+    fun opcionLista(
+        titulo: String, icono: Icono?, ayuda: String, ids: List<String>, nombres: List<String>, actual: String,
+        grupo: String? = null, fijar: (String) -> Unit,
+    ): Opcion {
+        val i = ids.indexOf(actual)
+        return Opcion(
+            titulo, nombres.getOrElse(i) { actual }, icono, ayuda, grupo = grupo,
+            alternativas = nombres, elegida = i, elegir = { n -> fijar(ids[n]) },
+        ) { fijar(ids[(i + 1).mod(ids.size)]) }
+    }
+
+    /** Le agrega a una opción la lista de alternativas para el menú desplegable, sin cambiar lo que ya hacía. */
+    fun Opcion.conLista(nombres: List<String>, elegida: Int, elegir: (Int) -> Unit): Opcion =
+        copy(alternativas = nombres, elegida = elegida, elegir = elegir)
 
     fun elegirIndice(i: Int) {
         val e = estado.value
@@ -2996,7 +3091,14 @@ object Diptico {
             return
         }
         when (e.panel) {
-            Panel.MENU -> if (!e.enOpciones) columnaMenu(true) else opcionesSeccion(e.seccion).getOrNull(e.indice)?.accion?.invoke()
+            Panel.MENU -> if (!e.enOpciones) columnaMenu(true) else {
+                val o = opcionesSeccion(e.seccion).getOrNull(e.indice)
+                when {
+                    e.desplegable >= 0 -> elegirDesplegable(e.desplegableSel)
+                    o?.alternativas != null && o.elegir != null -> abrirDesplegable(e.indice, o.elegida)
+                    else -> o?.accion?.invoke()
+                }
+            }
             Panel.RAPIDO -> opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
             Panel.WIDGET -> opcionesWidget(e).getOrNull(e.indice)?.takeIf { !it.apagada }?.accion?.invoke()
             Panel.PORTS -> e.apps.getOrNull(e.indice)?.let { alternarPort(it.paquete) }
@@ -3026,6 +3128,7 @@ object Diptico {
         val e = estado.value
         when {
             !e.configurado && e.panel == Panel.NINGUNO -> pasoAnterior()
+            e.panel == Panel.MENU && e.desplegable >= 0 -> cerrarDesplegable()
             // Una sección avanzada abierta desde «Más ajustes»: B vuelve ahí, con esa sección marcada.
             e.panel == Panel.MENU && e.enOpciones && e.seccion !in seccionesMenu() -> {
                 val i = opcionesMas(e).indexOfFirst { it.titulo == e.seccion.titulo }.coerceAtLeast(0)
@@ -3034,7 +3137,7 @@ object Diptico {
             e.panel == Panel.MENU && e.enOpciones -> columnaMenu(false)
             e.panel != Panel.NINGUNO -> cerrarPanel()
             // En el inicio, B saca la barra flotante (y la esconde si ya estaba a la vista).
-            e.configurado && e.sesion == null && !e.barraFija -> actualizar { it.copy(barra = !it.barra) }
+            e.configurado && e.sesion == null && !e.barraFija -> if (e.barra) { trabajoBarra?.cancel(); actualizar { it.copy(barra = false) } } else mostrarBarra()
         }
     }
 
@@ -3479,11 +3582,21 @@ object Diptico {
                 lista += Opcion(
                     "Tamaño en la pantalla de arriba", nombreZoom(e.zoomArriba), Icono.ARRIBA,
                     "Automático ajusta todo según la forma de la pantalla. Compacto muestra más cosas; grande, todo más grande.",
-                ) { ciclarZoom(true) }
+                ) { ciclarZoom(true) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomArriba) < 0.01f }) { fijarZoom(true, ZOOMS[it]) }
                 if (e.dosDisponibles) lista += Opcion(
                     "Tamaño en la pantalla de abajo", nombreZoom(e.zoomAbajo), Icono.ABAJO,
                     "La pantalla de abajo de la Thor es casi cuadrada: en automático todo se acomoda a esa forma.",
-                ) { ciclarZoom(false) }
+                ) { ciclarZoom(false) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomAbajo) < 0.01f }) { fijarZoom(false, ZOOMS[it]) }
+                lista += opcionLista(
+                    if (e.dosDisponibles && !e.unaPantalla) "Barras de la pantalla de arriba" else "Barras de la pantalla", Icono.ARRIBA,
+                    "Cómo se ven la barra de la hora y la de accesos: sólida (con el color del tema), difusa (esmerilada sobre la imagen) o transparente (casi sin fondo).",
+                    ESTILOS_BARRA, ESTILOS_BARRA.map(::nombreEstiloBarra), e.estiloBarraArriba, grupo = "Barras",
+                ) { fijarEstiloBarra(true, it) }
+                if (e.dosDisponibles && !e.unaPantalla) lista += opcionLista(
+                    "Barra de la pantalla de abajo", Icono.ABAJO,
+                    "La barra de la hora de la pantalla de abajo, por separado: sólida, difusa o transparente.",
+                    ESTILOS_BARRA, ESTILOS_BARRA.map(::nombreEstiloBarra), e.estiloBarraAbajo, grupo = "Barras",
+                ) { fijarEstiloBarra(false, it) }
                 lista += Opcion(
                     "Modo de pantallas", if (e.dosDisponibles) nombreModo(e.modoPantallas) else "Una (no hay otra)", Icono.PANTALLAS,
                     "Dos pantallas: arriba el juego y abajo el estante. Una: todo en la pantalla principal, como en una tele o una Odin.",
@@ -3625,6 +3738,15 @@ object Diptico {
                     almacen.guardarTexto("efecto", v)
                     actualizar { it.copy(efecto = v) }
                     if (experiencia.vidrio) guardarExperiencia(experiencia.copy(vidrio = false)) else aplicarTema()
+                }.let { o ->
+                    val l = listOf("liso", "degradado", "brillo", "vidrio")
+                    o.conLista(l.map(::nombreEfecto), l.indexOf(if (e.experiencia.vidrio) "vidrio" else e.efecto)) { n ->
+                        val v = l[n]
+                        val experiencia = estado.value.experiencia
+                        almacen.guardarTexto("efecto", v)
+                        actualizar { it.copy(efecto = v) }
+                        if (experiencia.vidrio) guardarExperiencia(experiencia.copy(vidrio = false)) else aplicarTema()
+                    }
                 }
                 lista += Opcion(
                     "Fluidez", nombreFluidez(e.fluidez) + if (e.fluidez == "auto") " (${nombreFluidez(e.fluidezDetectada).lowercase()})" else "", Icono.CHISPA,
@@ -3635,6 +3757,13 @@ object Diptico {
                     almacen.guardarTexto("fluidez", v)
                     actualizar { it.copy(fluidez = v) }
                     aplicarFluidez()
+                }.let { o ->
+                    val l = listOf("auto", "alta", "equilibrada", "ahorro")
+                    o.conLista(l.map(::nombreFluidez), l.indexOf(e.fluidez)) { n ->
+                        almacen.guardarTexto("fluidez", l[n])
+                        actualizar { it.copy(fluidez = l[n]) }
+                        aplicarFluidez()
+                    }
                 }
                 lista += Opcion(
                     "Protector de pantalla", if (e.protectorMin == 0) "Nunca" else "A los ${e.protectorMin} min", Icono.RELOJ,
@@ -3644,6 +3773,12 @@ object Diptico {
                     val v = l[(l.indexOf(estado.value.protectorMin) + 1).mod(l.size)]
                     almacen.guardarTexto("protectorMin", v.toString())
                     actualizar { it.copy(protectorMin = v) }
+                }.let { o ->
+                    val l = listOf(2, 5, 10, 20, 0)
+                    o.conLista(l.map { if (it == 0) "Nunca" else "A los $it min" }, l.indexOf(e.protectorMin)) { n ->
+                        almacen.guardarTexto("protectorMin", l[n].toString())
+                        actualizar { it.copy(protectorMin = l[n]) }
+                    }
                 }
                 lista += Opcion("Ver el protector ahora", icono = Icono.RELOJ, ayuda = "Muestra el protector de pantalla ya mismo, para ver cómo queda.") { cerrarPanel(); actualizar { it.copy(protector = true) } }
                 lista += Opcion(
@@ -3667,6 +3802,17 @@ object Diptico {
                 lista += opcionesPersonalizacion(e).map { it.copy(grupo = it.grupo ?: "Estilos guardados y colecciones") }
             }
             Seccion.MUSICA -> {
+                lista += opcionLista(
+                    "Vibración", Icono.CHISPA,
+                    "Un toque de vibración al moverte y al elegir, para sentir cada paso. Suave, media o fuerte. Nunca vibra mientras juegas.",
+                    cl.nikalbazu.diptico.audio.Vibracion.NIVELES, cl.nikalbazu.diptico.audio.Vibracion.NIVELES.map(cl.nikalbazu.diptico.audio.Vibracion::nombre),
+                    e.vibracion, grupo = "Sonidos",
+                ) { v ->
+                    almacen.guardarTexto("vibracion", v)
+                    cl.nikalbazu.diptico.audio.Vibracion.nivel = v
+                    actualizar { it.copy(vibracion = v) }
+                    cl.nikalbazu.diptico.audio.Vibracion.probar()
+                }
                 lista += Opcion(
                     "Música de fondo", if (e.musica) "Sí" else "No", Icono.MUSICA,
                     "Suena mientras eliges. Se calla al abrir un juego o si otra app pone música.",
@@ -4463,9 +4609,9 @@ object Diptico {
             } catch (_: Exception) { avisar("No pude abrir el permiso") }
         },
         Opcion(
-            "Barra de accesos", "Fija · arriba en Widgets", Icono.APPS,
-            "En la imagen del juego queda abajo; al pasar a Widgets sube y reúne los accesos en un solo lugar."
-        ) { avisar("La barra está siempre disponible") },
+            "Barra de accesos", if (e.barraFija) "Siempre visible" else "Se esconde sola", Icono.APPS,
+            "Siempre visible: la barra queda fija. Se esconde sola: desaparece a los 5 segundos para que luzca el juego, y vuelve deslizando hacia arriba desde el borde de abajo, tocando la pantalla o con B.",
+        ) { cambiarBarraFija(!estado.value.barraFija) },
         Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Para que Bisa te salude por tu nombre.") { abrirTexto("nombre", estado.value.nombre) },
         Opcion("Preguntar dónde quedaste", if (e.preguntarQuedaste) "Sí" else "No", Icono.LAPIZ,
             "Al terminar de jugar, una tarjeta para anotar dónde quedaste: escribiendo, con una nota de voz o marcando en el mapa del juego. Siempre se puede pasar de largo.") {
@@ -7468,8 +7614,10 @@ object Diptico {
             Opcion("Forma de las cajas", nombreForma(e.formas[consolaParaCajas()]?.forma ?: "original"), Icono.FORMA,
                 "Elige cómo se ven las cajas (cuadrada, póster, horizontal, disco, cartucho o tarjeta) viendo tus portadas en cada forma. Para una consola o para todas.") { abrirCajas() },
             Opcion("Tamaño de los juegos", nombreTamJuegos(e.tamJuegos), Icono.FORMA, "Cuatro espacios predeterminados. Ajusta con dos dedos o con izquierda y derecha; conserva la vista y el juego elegido.", menos = { cambiarTamJuegos(-1) }) { cambiarTamJuegos(1) },
-            Opcion("Mostrar", nombreFiltro(e.filtro), Icono.CORAZON, "Todos, solo favoritos, jugados hace poco, los más jugados o los que no has jugado.") { cambiarFiltro() },
-            Opcion("Ordenar", nombreOrden(e.orden), Icono.MENU, "A → Z, últimos jugados o más tiempo jugado.") { cambiarOrden() },
+            Opcion("Mostrar", nombreFiltro(e.filtro), Icono.CORAZON, "Todos, solo favoritos, jugados hace poco, los más jugados, los que no has jugado o los ocultos.") { cambiarFiltro() }
+                .conLista(FILTROS.map(::nombreFiltro), FILTROS.indexOf(e.filtro)) { elegirFiltro(FILTROS[it]) },
+            Opcion("Ordenar", nombreOrden(e.orden), Icono.MENU, "A → Z, últimos jugados, más tiempo jugado o en el orden que tú elijas.") { cambiarOrden() }
+                .conLista(ORDENES.map(::nombreOrden), ORDENES.indexOf(e.orden)) { elegirOrden(ORDENES[it]) },
             Opcion("Buscar un juego", icono = Icono.BUSCAR, ayuda = "También con L3 (apretar el stick izquierdo).") { abrirBuscar() },
         )
         if (c != null) {
@@ -7480,6 +7628,11 @@ object Diptico {
         }
         lista += Opcion("Cajas en «Todos»", nombreFormaTodos(e.formaTodos), Icono.FORMA,
             "Cuando ves todos tus juegos juntos: todas las cajas iguales (póster o cuadradas) para que se vea parejo, o cada consola con su forma.") { ciclarFormaTodos() }
+            .conLista(listOf("poster", "cuadrada", "propia").map(::nombreFormaTodos), listOf("poster", "cuadrada", "propia").indexOf(e.formaTodos)) { n ->
+                val v = listOf("poster", "cuadrada", "propia")[n]
+                almacen.guardarTexto("formaTodos", v)
+                actualizar { it.copy(formaTodos = v) }
+            }
         lista += Opcion("Imagen en todas las cajas", nombreImagenCaja(e.formas.values.firstOrNull()?.imagen ?: "portada"), Icono.PORTADA,
             "Portada, captura del juego o logo, para las cajas de todas tus consolas a la vez.") { imagenTodasLasCajas() }
         val mas = Opcion(if (e.estanteAvanzado) "Ver menos opciones" else "Más opciones de cajas", icono = Icono.AJUSTES) { actualizar { it.copy(navegacion = it.navegacion.copy(estanteAvanzado = !it.estanteAvanzado)) } }
@@ -7492,6 +7645,11 @@ object Diptico {
     fun nombreZoom(z: Float) = when {
         kotlin.math.abs(z - 1f) < 0.01f -> "Automático"
         z < 0.9f -> "Muy compacto"; z < 1f -> "Compacto"; z < 1.12f -> "Grande"; else -> "Muy grande"
+    }
+
+    private fun fijarZoom(arriba: Boolean, z: Float) {
+        almacen.guardarTexto(if (arriba) "zoomArriba" else "zoomAbajo", z.toString())
+        actualizar { if (arriba) it.copy(zoomArriba = z) else it.copy(zoomAbajo = z) }
     }
 
     private fun ciclarZoom(arriba: Boolean) {
@@ -7617,9 +7775,43 @@ object Diptico {
         if (nuevo != i) actualizar { it.copy(indice = nuevo) }
     }
 
-    fun opcionesCentro(): List<Opcion> = opcionesSistema() +
+    /** Los accesos de la cortina en el orden y la selección de la persona (vacío = todos, como vienen). */
+    private fun accesosElegidos(): List<Opcion> {
+        val todos = opcionesSistema()
+        val orden = estado.value.accesosCentro
+        if (orden.isEmpty()) return todos
+        return orden.mapNotNull { t -> todos.firstOrNull { it.titulo == t } }
+    }
+
+    private fun guardarAccesos(lista: List<String>) {
+        almacen.guardarTexto("accesosCentro", lista.joinToString("|"))
+        actualizar { it.copy(accesosCentro = lista, centroVersion = it.centroVersion + 1) }
+    }
+
+    /** Muestra u oculta un acceso de la cortina. */
+    fun alternarAcceso(titulo: String) {
+        val todos = opcionesSistema().map { it.titulo }
+        val actual = estado.value.accesosCentro.ifEmpty { todos }
+        val nueva = if (titulo in actual) actual - titulo else actual + titulo
+        if (nueva.isEmpty()) { avisar("Deja al menos un acceso"); return }
+        guardarAccesos(nueva)
+    }
+
+    /** Sube un acceso un lugar en la cortina (X en la lista de accesos). */
+    fun subirAcceso(titulo: String) {
+        val actual = estado.value.accesosCentro.ifEmpty { opcionesSistema().map { it.titulo } }.toMutableList()
+        val i = actual.indexOf(titulo)
+        if (i <= 0) return
+        actual.removeAt(i); actual.add(i - 1, titulo)
+        guardarAccesos(actual)
+        actualizar { it.copy(indice = (it.indice - 1).coerceAtLeast(0)) }
+    }
+
+    fun opcionesCentro(): List<Opcion> = accesosElegidos() +
         appsDeConsola().map { a -> Opcion(a.nombre, "Consola", Icono.MANDO, paquete = a.paquete) { abrirPaquete(a.paquete) } } +
-        appsMusica().map { a -> Opcion(a.nombre, "Música", Icono.MUSICA, paquete = a.paquete) { abrirPaquete(a.paquete) } }
+        appsMusica().map { a -> Opcion(a.nombre, "Música", Icono.MUSICA, paquete = a.paquete) { abrirPaquete(a.paquete) } } +
+        // Siempre al final: el lápiz para elegir y ordenar los accesos, como en los teléfonos.
+        Opcion("Editar accesos", icono = Icono.EDITAR) { abrirGaleria("accesos_cortina") }
 
     /** Cómo están ahora los accesos que se encienden y apagan (para que se note cuáles están activos). */
     private fun wifiEncendido(): Boolean? = try { (app.applicationContext.getSystemService(Context.WIFI_SERVICE) as? android.net.wifi.WifiManager)?.isWifiEnabled } catch (_: Exception) { null }
@@ -7671,6 +7863,10 @@ object Diptico {
     }
 
     private fun opcionesConsola(e: Estado): List<Opcion> = listOf(
+        Opcion(
+            "Accesos de la cortina", if (e.accesosCentro.isEmpty()) "Todos" else "${e.accesosCentro.size} elegidos", Icono.EDITAR,
+            "Elige qué accesos aparecen en los ajustes rápidos (Wi-Fi, Bluetooth, turbo…) y en qué orden. A muestra u oculta; X sube el acceso un lugar.",
+        ) { abrirGaleria("accesos_cortina") },
         Opcion("Ajustes rápidos", "Wi-Fi, Bluetooth, brillo…", Icono.AJUSTES, "Wi-Fi, Bluetooth, volumen, brillo, turbo y apps de la consola. Desliza hacia abajo desde la esquina derecha de arriba, o mantén Start.") { abrirCentro("ajustes") },
         Opcion("Notificaciones", "${Avisos.lista.value.size}", Icono.CAMPANA, "Tus notificaciones. Desliza hacia abajo desde la esquina izquierda de arriba, o toca la campana.") { abrirCentro("avisos") },
         Opcion(

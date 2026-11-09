@@ -19,6 +19,7 @@
     <!-- Actualizaciones desde la misma app (Android pide confirmar cada instalación) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Notas de voz: "¿dónde quedaste?" dicho en voz alta -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 

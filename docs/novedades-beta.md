@@ -1,7 +1,5 @@
-- **Tu partida sigue ahí.** Si eliges un juego que ya está abierto, o que dejaste en pausa hace poco, Díptico lo trae al frente en vez de reiniciarlo.
-- **Pantallas intercambiadas.** Las herramientas de la partida aparecen siempre en la pantalla que deja libre el juego.
-- **Más estable.** El clip de retoma ya no puede cerrar Díptico, el aviso de «Díptico se cerró» no vuelve si eliges «Ahora no» y los atajos del mando no se activan solos después de abrir un juego.
-- **Respaldo completo.** Guarda también tus copias de partidas y la música de los temas instalados.
-- **Carpetas con dibujos propios.** Los íconos de las consolas usan motivos originales, con más espacio alrededor.
-- **Menú.** Las opciones de Liquid Glass aparecen bajo su propio subtítulo en Apariencia.
-- **Fluidez.** El material Glass hace menos cálculos al dibujarse.
+- **Elige de una lista.** Las opciones con varias alternativas (fluidez, protector, orden, filtros, tamaños de pantalla, Liquid Glass, efecto de los botones…) abren un menú desplegable para elegir directo, sin dar la vuelta completa. Se reconocen por la marca ▾.
+- **Barra de accesos opcional.** Puede quedar fija o esconderse sola a los 5 segundos (Menú › Inicio › Barra de accesos). Vuelve deslizando hacia arriba desde el borde de abajo, tocando la pantalla o con B.
+- **Barras sólidas, difusas o transparentes.** Se elige por separado para la pantalla de arriba y la de abajo (Menú › Pantallas).
+- **Accesos de la cortina editables.** Elige qué accesos rápidos se ven y en qué orden, desde el lápiz al final de la cortina o en Menú › Android.
+- **Vibración.** Apagada, suave, media o fuerte al moverte y elegir. Nunca vibra mientras juegas (Menú › Música).
