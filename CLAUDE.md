@@ -166,3 +166,12 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   (`extra.tecladoEdicion`); ⇧ doble toque = `extra.mayusFija`; mantener letra = tilde/número (`Palabras.variante`), Y en
   mando hace lo mismo; mantener ⌫ = borrar palabra; doble espacio = punto. Mosaicos en una fila si el alto < 200 dp
   (`Teclas.mosaicosUnaFila`). Pendiente: DIPPO celebrando con logros (no hay evento de logro nuevo), su lugar mientras juegas.
+- Limpieza + logros DIPPO + HowLongToBeat (9 nov, rama `fix/logros-dippo`): vistas de juegos solo mosaicos, cuadricula,
+  lista, carrusel (las viejas caen en Mosaicos; `Lomos.kt`, Abanico y Cartuchos borrados); consolas: arriba, carpetas,
+  sistemas (`vistaConsolasCompatible` migra); barra flotante borrada (`formaBarra` fijo "completa"); Apariencia sin
+  velocidad/efecto/zoom lento/«ver ahora»; estilos guardados (`opcionesPersonalizacion`) pasaron a TEMAS.
+  `estado/LogrosDippo.kt` (21 logros, contadores en almacén `dippoContadores`/`dippoDias`/`dippoLogros`,
+  `Diptico.sumarDippo`, `revisarLogrosDippo`, `vigilarLogrosDippo` cada 30 s; celebra con `extra.dippoCelebra`).
+  Galería `logros_dippo`. `estado/CuantoDura.kt` (HLTB como howlongtobeatpy: ruta del JS + /init + POST; respaldo DuckDuckGo),
+  `extra.duraciones` (almacén `duraciones`), `Diptico.pedirDuracion`, `LineaDuracion` en la vitrina, chip `bisa_dura`.
+  Siguiente: ficha del juego estilo PS5 (boceto primero), pantalla mientras juegas con DIPPO, partir `Diptico.kt`.
