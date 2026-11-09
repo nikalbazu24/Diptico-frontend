@@ -1199,9 +1199,10 @@ class Capturas {
     @Test fun t292_teclado_herramientas() = foto("292_teclado_herramientas", base().copy(panel = Panel.CLAVE, textoPara = "notas", borrador = "La llave está en el templo", teclaFila = 0, teclaCol = 3, extra = EstadoExtra(tecladoEdicion = true)), Rol.SUPERIOR)
     @Test fun t293_teclado_buscar() = foto("293_teclado_buscar_juego", base().copy(panel = Panel.CLAVE, textoPara = "buscar_juego", borrador = "ley", simbolos = false), Rol.INFERIOR)
     @Test fun t294_dippo_habla_primero() = foto("294_dippo_habla_primero", base().let { b -> b.copy(panel = Panel.ASISTENTE, chat = listOf(cl.nikalbazu.diptico.estado.CentroBisa.saludoInicial(b)), indice = 2) }, Rol.INFERIOR)
-    @Test fun t295_logros_dippo() = foto("295_logros_dippo", base().copy(panel = Panel.GALERIA, galeria = "logros_dippo"), Rol.SUPERIOR)
+    @Test fun t295_logros_dippo() = foto("295_logros_dippo", base().copy(panel = Panel.GALERIA, galeria = "logros_dippo"), Rol.INFERIOR)
     @Test fun t296_vitrina_cuanto_dura() = foto("296_vitrina_cuanto_dura", base().let { b -> b.copy(vista = "mosaicos", extra = EstadoExtra(duraciones = mapOf(b.seleccionado!!.clave to cl.nikalbazu.diptico.estado.CuantoDura.Duracion(12f, 18.5f, 31f, 1L)))) }, Rol.SUPERIOR)
     @Test fun t297_dippo_celebra() = foto("297_dippo_celebra", base().copy(vista = "mosaicos", extra = EstadoExtra(dippoCelebra = System.currentTimeMillis(), dippoLogro = "Semana perfecta")), Rol.INFERIOR)
+    @Test fun t299_logros_dippo_arriba() = foto("299_logros_dippo_arriba", base().copy(panel = Panel.GALERIA, galeria = "logros_dippo", indice = 0), Rol.SUPERIOR)
     @Test fun t298_vistas_juegos() = foto("298_vistas_juegos", base().copy(panel = Panel.GALERIA, galeria = "vistas_juegos"), Rol.SUPERIOR)
     @Test fun t290_dippo_ajustes_colores() = foto("290_dippo_ajustes_colores", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true, indice = 3), Rol.SUPERIOR)
 

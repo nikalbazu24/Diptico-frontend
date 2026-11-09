@@ -478,6 +478,17 @@ fun VistaGaleria(e: Estado) {
                 if (it.detalle.isNotBlank()) Detalle(it.detalle, 14f, lineas = 4)
             }
             e.galeria == "ia" && it != null -> ExplicaIA(it.id)
+            e.galeria == "logros_dippo" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // DIPPO celebra el logro elegido si ya lo ganaste; si no, te anima.
+                cl.nikalbazu.diptico.bisa.AvatarBisa(150f, cara = if (it?.enUso == true) CaraDippo.CELEBRANDO else CaraDippo.FELIZ)
+                Spacer(Modifier.height(esc.d(14)))
+                Texto("${Diptico.logrosDippoGanados()} de ${cl.nikalbazu.diptico.estado.LogrosDippo.LISTA.size} logros", 24f, lineas = 1, traducir = false)
+                if (it != null) {
+                    Spacer(Modifier.height(esc.d(6)))
+                    Texto(it.nombre, 20f, color = if (it.enUso) Sol else p.tinta, lineas = 1)
+                    Detalle(it.detalle.removePrefix("✓ "), 14f, lineas = 2)
+                }
+            }
             e.galeria == "colores" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(cl.nikalbazu.diptico.ui.Estilo.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))

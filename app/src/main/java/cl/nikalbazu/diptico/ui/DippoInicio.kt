@@ -62,6 +62,8 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
     val idea = remember(e.juegos.size, e.datos.size) { cl.nikalbazu.diptico.estado.CentroBisa.ideaInicio(e) }
     LaunchedEffect(e.extra.dippoSaludo) {
         if (!e.extra.dippoSaludo) { fase = 0; return@LaunchedEffect }
+        // Si recién ganó un logro, primero lo celebra.
+        if (System.currentTimeMillis() - e.extra.dippoCelebra < 8000) delay(7200)
         delay(600)
         fase = 1
         delay(2800)
