@@ -502,8 +502,10 @@ private fun CarpetaVisual(e: Estado, id: String, elegida: Boolean, amplia: Boole
     }
     val forma = RoundedCornerShape(esc.d(16))
     Column(
-        Modifier.fillMaxWidth().clip(forma).background(p.superficie)
-            .border(esc.d(if (elegida) 2f else 1f), if (elegida) color else p.linea, forma)
+        Modifier.fillMaxWidth()
+            .then(if (elegida) Modifier.shadow(esc.d(14), forma, ambientColor = color, spotColor = color) else Modifier)
+            .clip(forma).background(p.superficie)
+            .border(esc.d(if (elegida) 3f else 1f), if (elegida) Color.White else p.linea, forma)
             .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) {
                 if (elegida) Diptico.entrarSistema() else Diptico.elegirConsola(id)
             },

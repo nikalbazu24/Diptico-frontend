@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -204,55 +205,103 @@ fun PanelFicha(e: Estado) {
  */
 @Composable
 fun LecturaFicha(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
     if (e.panel == Panel.IMAGENES) { VistaCandidato(e); return }
     val j = e.juegos.firstOrNull { it.clave == e.fichaDe } ?: return
-    // Resumen e Historia: el texto queda en la otra pantalla y aquí pasan las fotos del juego.
-    if (e.pestanaFicha <= 1 && e.fichaImagenes.isNotEmpty()) { Carrusel(e, j.titulo); return }
+    // Logros: el logro elegido en grande.
     if (e.pestanaFicha == 4) { LogroGrande(e, j.titulo); return }
-    Box(Modifier.fillMaxSize().background(p.fondo)) {
-        Heroe(j, if (esc.angosta) 1f else 0.55f)
-        Box(
-            Modifier.fillMaxSize().background(
-                if (esc.angosta) Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.75f), p.fondo))
-                else Brush.horizontalGradient(0f to p.fondo, 0.5f to p.fondo, 0.85f to p.fondo.copy(alpha = 0.3f)),
-            ),
-        )
+    // La ficha (texto y opciones) vive en la otra pantalla. Aquí no se repite: aquí va la vitrina del juego.
+    VitrinaFicha(e, j)
+}
+
+/**
+ * Vitrina de la ficha: complementa lo que lees abajo sin repetirlo. Pasan tus capturas y las fotos del juego
+ * (o su arte, si no hay), y DIPPO va comentando datos que no están en la ficha: tus horas, cuánto te queda,
+ * tu última partida, tus capturas. En «Personalizar» se ve el arte y el logo para que notes los cambios al tiro.
+ */
+@Composable
+private fun VitrinaFicha(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {
+    val esc = LocalEscala.current
+    val d = e.datos[j.clave]
+    // Primero tus capturas (son tuyas), después las fotos de internet.
+    val fotos = remember(j.clave, d?.capturas, e.fichaImagenes) {
+        (d?.capturas.orEmpty().map { it to "Tu captura" } + e.fichaImagenes.map { it.miniatura to it.fuente }).take(16)
+    }
+    val personalizar = e.pestanaFicha == 3
+    var actual by remember(fotos) { mutableIntStateOf(0) }
+    if (!personalizar && fotos.size > 1) LaunchedEffect(fotos) {
+        while (true) { delay(6000); actual = (actual + 1) % fotos.size }
+    }
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
+        if (personalizar || fotos.isEmpty()) {
+            // El arte del juego, grande y quieto, con su logo: lo que personalizas se ve aquí.
+            ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize(), imagen = "arte")
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))))
+            val logo = rememberImagen(j.logo, 900)
+            if (logo != null) Image(logo, j.titulo, Modifier.align(Alignment.Center).heightIn(max = esc.d(150)).widthIn(max = esc.d(460)), contentScale = ContentScale.Fit)
+        } else Crossfade(targetState = actual, animationSpec = tween(900), label = "vitrina") { i ->
+            val (ruta, _) = fotos.getOrNull(i) ?: return@Crossfade
+            val img = rememberImagen(Uri.parse(ruta), 1280)
+            val zoom = remember { Animatable(1f) }
+            LaunchedEffect(i) { zoom.snapTo(1f); zoom.animateTo(1.1f, tween(7000)) }
+            Box(Modifier.fillMaxSize()) {
+                if (img != null) {
+                    Image(img, null, Modifier.fillMaxSize().blur(24.dp).alpha(0.5f), contentScale = ContentScale.Crop)
+                    Image(img, null, Modifier.fillMaxSize().graphicsLayer { scaleX = zoom.value; scaleY = zoom.value }, contentScale = ContentScale.Fit)
+                } else Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Girador(26f) }
+            }
+        }
+        Box(Modifier.fillMaxWidth().height(esc.d(170)).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)))))
+        // DIPPO comenta abajo a la izquierda; a la derecha, de dónde es la foto y los puntitos.
+        Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = esc.d(18), end = esc.d(18), bottom = esc.d(14)),
+            verticalAlignment = Alignment.Bottom) {
+            ComentarioDippo(e, j, Modifier.weight(1f))
+            if (!personalizar && fotos.isNotEmpty()) Column(horizontalAlignment = Alignment.End) {
+                Detalle(fotos.getOrNull(actual)?.second ?: "", 11.5f, color = Color.White.copy(alpha = 0.7f), lineas = 1)
+                Spacer(Modifier.height(esc.d(4)))
+                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                    fotos.indices.take(10).forEach { k ->
+                        Box(Modifier.size(esc.d(if (k == actual) 16f else 6f), esc.d(6)).clip(RoundedCornerShape(50))
+                            .background(if (k == actual) Uva else Color.White.copy(alpha = 0.5f)))
+                    }
+                }
+            }
+        }
         BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
-        Column(
-            Modifier.fillMaxHeight().widthIn(max = esc.d(470)).padding(start = esc.d(30), end = esc.d(20), top = esc.d(54), bottom = esc.d(16)),
-        ) {
-            Etiqueta("Ficha · ${Diptico.PESTANAS_FICHA[e.pestanaFicha]}", Coral, 12.5f)
-            Texto(j.titulo, 30f, lineas = 2, interlineado = 33f)
-            Spacer(Modifier.height(esc.d(10)))
-            if (e.pestanaFicha <= 1) {
-                val scroll = rememberScrollState()
-                DesplazarCon(e.indice, scroll)
-                Column(Modifier.weight(1f).verticalScroll(scroll)) { TextoFicha(e, e.pestanaFicha, 18f) }
-            } else {
-                val o = Diptico.opcionesFicha().getOrNull(e.indice)
-                Detalle(
-                    if (e.pestanaFicha == 2) "Tus notas y las mejores guías de internet. Elige una búsqueda y se abre en el navegador."
-                    else "Cambia el título, las imágenes, el logo y hasta la música que suena con este juego.",
-                    17f,
-                )
-                if (o != null) {
-                    Spacer(Modifier.height(esc.d(14)))
-                    Texto(o.titulo, 24f, color = p.acentoTexto, lineas = 2)
-                    if (o.valor.isNotBlank()) Detalle(o.valor, 16f)
-                }
-                val notas = e.datos[j.clave]?.notas.orEmpty()
-                if (e.pestanaFicha == 2 && notas.isNotBlank()) {
-                    Spacer(Modifier.height(esc.d(14)))
-                    Etiqueta("Mis trucos y notas", Sol, 12f)
-                    Detalle(notas, 16f, color = p.tinta, lineas = 8)
-                }
+    }
+}
+
+/** DIPPO con un dato del juego que cambia cada pocos segundos (nada de lo que ya dice la ficha de abajo). */
+@Composable
+private fun ComentarioDippo(e: Estado, j: cl.nikalbazu.diptico.data.Juego, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val d = e.datos[j.clave]
+    val datos = remember(j.clave, d, e.extra.duraciones[j.clave], e.pestanaFicha) {
+        buildList {
+            if (e.pestanaFicha == 3) add("Lo que cambies abajo se ve aquí al tiro.")
+            if (e.pestanaFicha == 2) add("Si una guía te sirve, anótala en tus notas y te la recuerdo.")
+            val horas = (d?.tiempo ?: 0L)
+            if (horas > 0) add("Llevas ${formatoTiempo(horas)} en ${d?.sesiones ?: 0} partidas.") else add("Todavía no lo juegas conmigo. ¿Le damos?")
+            e.extra.duraciones[j.clave]?.takeIf { it.tiene }?.let { h ->
+                cl.nikalbazu.diptico.estado.CuantoDura.teQueda(h, horas)?.let { add("$it, según HowLongToBeat.") }
+            }
+            if ((d?.ultimo ?: 0L) > 1) add("Tu última partida fue ${haceCuanto(d!!.ultimo).lowercase()}.")
+            val capturas = d?.capturas?.size ?: 0
+            if (capturas > 0) add("Tienes $capturas ${if (capturas == 1) "captura guardada" else "capturas guardadas"} de este juego.")
+            if (d?.favorito == true) add("Es uno de tus favoritos. ♥")
+        }
+    }
+    var k by remember(datos) { mutableIntStateOf(0) }
+    if (datos.size > 1) LaunchedEffect(datos) { while (true) { delay(7000); k = (k + 1) % datos.size } }
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(46).value)
+        Spacer(Modifier.width(esc.d(10)))
+        Crossfade(targetState = datos.getOrNull(k) ?: "", animationSpec = tween(500), label = "dato") { t ->
+            Box(Modifier.clip(RoundedCornerShape(esc.d(14))).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = esc.d(12), vertical = esc.d(8))) {
+                Detalle(t, 14f, color = Color.White, lineas = 2)
             }
         }
     }
 }
-
 
 /** Carrusel de fotos del juego: cada una entra con un fundido y se acerca despacio. */
 @Composable

@@ -35,6 +35,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -282,6 +283,11 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
                 Texto(s.titulo, 20f, lineas = 1)
                 Detalle(s.ayuda, 12f, lineas = 1)
             }
+            // Sin barra de la hora arriba (diseño nuevo): la hora, la batería y los avisos van aquí, chiquitos.
+            if (!LocalBarraSistema.current) {
+                EstadoChico()
+                Spacer(Modifier.width(esc.d(10)))
+            }
             Box(
                 Modifier.size(esc.d(34)).clip(CircleShape).background(p.superficie).clickable { Diptico.cerrarPanel() },
                 contentAlignment = Alignment.Center,
@@ -514,3 +520,31 @@ fun PreviaMusica(e: Estado) {
     }
 }
 
+
+
+/** Hora, batería y avisos en una línea chica, para los paneles de la pantalla de arriba sin barra. */
+@Composable
+fun EstadoChico() {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val hora = rememberHora()
+    val bateria = rememberBateria()
+    val cargando = rememberCargando()
+    val avisos by cl.nikalbazu.diptico.audio.Avisos.lista.collectAsState()
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        if (avisos.isNotEmpty()) Row(
+            Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirCentro("avisos") }.padding(horizontal = esc.d(4), vertical = esc.d(2)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconoDiptico(Icono.CAMPANA, Coral, 13f)
+            Texto("${avisos.size}", 11f, color = p.tinta, traducir = false, lineas = 1)
+        }
+        Texto(hora, 13f, color = p.tinta, traducir = false, lineas = 1, modifier = Modifier.clickable { Diptico.alternarReloj() })
+        val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }
+        Box(Modifier.size(esc.d(20), esc.d(10)).border(esc.d(1.5f), p.tinta.copy(alpha = 0.7f), RoundedCornerShape(esc.d(3))).padding(esc.d(2))) {
+            Box(Modifier.fillMaxHeight().fillMaxWidth(((if (bateria < 0) 50 else bateria) / 100f).coerceIn(0.08f, 1f))
+                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono))
+        }
+        Texto(if (bateria >= 0) "$bateria%" else "—", 12f, color = p.tinta, traducir = false, lineas = 1)
+    }
+}

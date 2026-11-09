@@ -22,6 +22,8 @@ import androidx.compose.ui.platform.testTag
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import kotlin.math.absoluteValue
+import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.dp
 
 /**
  * La pantalla de arriba como dos páginas seguidas: la portada del juego y, deslizando hacia el lado, tus widgets.
@@ -42,10 +44,33 @@ fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composa
     LaunchedEffect(pager.settledPage) {
         Diptico.fijarInicio(if (pager.settledPage == 1) "widgets" else "heroe")
     }
-    Box(modifier.fillMaxSize().testTag("inicio-deslizable")) {
+    val alcance = androidx.compose.runtime.rememberCoroutineScope()
+    // Red de seguridad: si algo de la página se queda con el arrastre, un deslizamiento largo igual cambia de página.
+    val respaldo = Modifier.pointerInput(e.editandoWidgets) {
+        if (e.editandoWidgets) return@pointerInput
+        androidx.compose.foundation.gestures.awaitEachGesture {
+            val inicio = androidx.compose.foundation.gestures.awaitFirstDown(requireUnconsumed = false, pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+            var ultimo = inicio.position
+            while (true) {
+                val ev = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Final)
+                val c = ev.changes.firstOrNull { it.id == inicio.id } ?: break
+                if (c.pressed) { ultimo = c.position; continue }
+                val dx = ultimo.x - inicio.position.x
+                val dy = kotlin.math.abs(ultimo.y - inicio.position.y)
+                if (!pager.isScrollInProgress && kotlin.math.abs(dx) > 110.dp.toPx() && dy < kotlin.math.abs(dx) / 2) {
+                    val destino = if (dx < 0) 1 else 0
+                    if (pager.currentPage != destino) alcance.launch { pager.animateScrollToPage(destino) }
+                }
+                break
+            }
+        }
+    }
+    Box(modifier.fillMaxSize().testTag("inicio-deslizable").then(respaldo)) {
         HorizontalPager(
             state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 0,
-            userScrollEnabled = !e.editandoWidgets && e.sesion == null,
+            userScrollEnabled = !e.editandoWidgets,
+            // Basta con arrastrar un cuarto de la pantalla para cambiar de página.
+            flingBehavior = androidx.compose.foundation.pager.PagerDefaults.flingBehavior(state = pager, snapPositionalThreshold = 0.25f),
         ) { pagina ->
             // Al deslizar, la página que se va se achica y oscurece apenas: se siente como pasar de una tarjeta a otra.
             Box(Modifier.fillMaxSize().graphicsLayer {

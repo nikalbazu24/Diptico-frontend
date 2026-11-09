@@ -296,7 +296,8 @@ private fun ContenidoBarra(e: Estado, juego: Juego?, modifier: Modifier, arriba:
             Modifier.then(if (arriba) Modifier else Modifier.fillMaxWidth())
                 .horizontalScroll(rememberScrollState()).padding(
                     horizontal = esc.d(if (arriba) 0 else if (compacta) 10 else 24),
-                    vertical = esc.d(if (arriba) 0 else 6),
+                    // Arriba también lleva aire: antes el botón marcado se cortaba contra el borde.
+                    vertical = esc.d(if (arriba) 4 else 6),
                 ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(esc.d(if (compacta) 2 else 8)),
@@ -339,7 +340,7 @@ private fun BotonAcceso(
     val pulsar = if (alMantener == null) Modifier.clickable(onClickLabel = texto, onClick = accion)
     else Modifier.combinedClickable(onClickLabel = texto, onLongClickLabel = "Hablar con DIPPO", onLongClick = alMantener, onClick = accion)
     Row(
-        Modifier.clip(forma).then(if (principal) Modifier.background(p.superficie) else Modifier)
+        Modifier.clip(forma).then(if (principal) Modifier.background(p.superficie).border(esc.d(1.5f), p.acentoTexto.copy(alpha = 0.6f), forma) else Modifier)
             .then(pulsar).height(esc.d(36)).padding(horizontal = esc.d(if (compacta) 7 else 8)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(esc.d(5)),

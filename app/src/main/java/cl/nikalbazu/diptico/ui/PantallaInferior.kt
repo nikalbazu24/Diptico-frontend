@@ -115,8 +115,12 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             Box(Modifier.padding(vertical = esc.d(14)).width(esc.d(1)).fillMaxHeight().background(p.linea))
                             VistaJuegos(e, Modifier.weight(1f).fillMaxHeight(), escalaEstante * 0.9f)
                         }
-                        "carpetas" -> VistaCarpetas(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
-                        "sistemas", "mosaico", "vitrina", "discos" -> AnimatedContent(
+                        "carpetas" -> {
+                            VistaCarpetas(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+                            if (e.vista == "mosaicos") FranjaAccesos(e)
+                        }
+                        "sistemas", "mosaico", "vitrina", "discos" -> {
+                        AnimatedContent(
                             targetState = e.enSistemas,
                             transitionSpec = {
                                 (fadeIn(tween(260)) + scaleIn(tween(320), initialScale = if (targetState) 1.06f else 0.94f)) togetherWith fadeOut(tween(160))
@@ -132,6 +136,8 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                                 CabeceraSistema(e)
                                 VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
                             }
+                        }
+                        if (e.vista == "mosaicos") FranjaAccesos(e)
                         }
                         else -> {
                             Cinta(e)
@@ -463,8 +469,9 @@ private fun EnJuego(e: Estado) {
                 TuPartida(e, s.clave)
                 // 4 · La música, solo si suena algo.
                 MusicaEnJuego()
-                Spacer(Modifier.weight(1f))
-                // 5 · Tus apps: se abren aquí y el juego sigue arriba.
+                // 5 · El logo del juego, como en Cocoon: flota suave en el espacio que queda.
+                LogoEnPartida(juego, color, Modifier.weight(1f).fillMaxWidth())
+                // 6 · Tus apps: se abren aquí y el juego sigue arriba.
                 if (e.extra.dock && e.appsFijadas.isNotEmpty()) FilaDock(e, 34f, Modifier.align(Alignment.CenterHorizontally))
             }
             Spacer(Modifier.height(esc.d(8)))
@@ -475,6 +482,29 @@ private fun EnJuego(e: Estado) {
                 AccionCompa(Icono.TUTORIAL, "Guías", Modifier.weight(1f)) { Diptico.abrirFichaDe(s.clave, 2) }
                 AccionCompa(Icono.MENU, "Más", Modifier.weight(1f)) { mas = true }
             }
+        }
+    }
+}
+
+/** El logo del juego (o su nombre en grande) flotando despacio, con un brillo del color de la consola detrás. */
+@Composable
+private fun LogoEnPartida(juego: cl.nikalbazu.diptico.data.Juego?, color: Color, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val anima = Diptico.estado.collectAsState().value.let { it.despierta && it.experiencia.movimiento && Estilo.efectosCompletos }
+    val flotar = if (anima) {
+        val t = rememberInfiniteTransition(label = "logo")
+        val f by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
+        f
+    } else 0f
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Box(Modifier.size(esc.d(260)).background(Brush.radialGradient(listOf(color.copy(alpha = 0.28f), Color.Transparent))))
+        val logo = rememberImagen(juego?.logo, 800)
+        Box(Modifier.graphicsLayer { translationY = flotar * 5f * density }) {
+            if (logo != null) Image(
+                logo, contentDescription = juego?.titulo, contentScale = ContentScale.Fit,
+                modifier = Modifier.heightIn(max = esc.d(110)).widthIn(max = esc.d(340)).padding(esc.d(6)),
+            ) else Texto(juego?.titulo ?: "Jugando", 26f, color = Color.White, lineas = 2, interlineado = 30f, alinear = TextAlign.Center, traducir = false,
+                modifier = Modifier.padding(horizontal = esc.d(20)))
         }
     }
 }
