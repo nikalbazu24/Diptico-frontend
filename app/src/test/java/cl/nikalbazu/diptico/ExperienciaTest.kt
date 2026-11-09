@@ -41,7 +41,7 @@ class ExperienciaTest {
     @Test fun losPerfilesAntiguosAbrenCarpetas() {
         assertEquals("carpetas", Diptico.vistaConsolasCompatible("habitacion"))
         assertEquals("carpetas", Experiencia.leer("""{"sistemasPerfil":"habitacion"}""").sistemasPerfil)
-        assertEquals("vitrina", Experiencia.leer("""{"sistemasPerfil":"vitrina"}""").sistemasPerfil)
+        assertEquals("carpetas", Experiencia.leer("""{"sistemasPerfil":"vitrina"}""").sistemasPerfil)
         assertEquals(false, Diptico.VISTAS_CONSOLAS.contains("habitacion"))
     }
 

@@ -7677,7 +7677,8 @@ object Diptico {
 
     /** Cambia cómo se ven las consolas (arriba, al costado, rueda o sistemas). */
     internal fun vistaConsolasCompatible(vista: String): String = when {
-        vista == "habitacion" -> "carpetas"
+        vista == "habitacion" || vista == "mosaico" || vista == "vitrina" -> "carpetas"
+        vista == "discos" -> "sistemas"
         vista in VISTAS_CONSOLAS -> vista
         else -> "arriba"
     }
