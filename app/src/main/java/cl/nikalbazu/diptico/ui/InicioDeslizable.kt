@@ -55,19 +55,32 @@ fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composa
                 alpha = 1f - 0.4f * d
             }) { if (pagina == 0) portada() else widgets() }
         }
-        // Dos puntitos abajo: dónde estás (se tocan para cambiar).
-        if (!e.editandoWidgets) Row(
-            Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(6)),
-            horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
-        ) {
-            for (k in 0..1) {
-                val activa = (pager.currentPage + pager.currentPageOffsetFraction).let { if (k == 0) it < 0.5f else it >= 0.5f }
-                Box(
-                    Modifier.size(if (activa) esc.d(18) else esc.d(6), esc.d(6)).clip(RoundedCornerShape(50))
-                        .background(Color.White.copy(alpha = if (activa) 0.85f else 0.35f))
-                        .clickable { Diptico.fijarInicio(if (k == 1) "widgets" else "heroe") },
-                )
+        if (!e.editandoWidgets) {
+            val enWidgets = pager.currentPage + pager.currentPageOffsetFraction >= 0.5f
+            // Indicador con nombre abajo: «Portada · Widgets» (se toca para cambiar).
+            Row(
+                Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(6)).clip(RoundedCornerShape(50))
+                    .background(Color.Black.copy(alpha = 0.35f)).padding(horizontal = esc.d(4), vertical = esc.d(3)),
+                horizontalArrangement = Arrangement.spacedBy(esc.d(2)), verticalAlignment = Alignment.CenterVertically,
+            ) {
+                for ((k, nombre) in listOf("Portada", "Widgets").withIndex()) {
+                    val activa = if (k == 0) !enWidgets else enWidgets
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50)).background(if (activa) Color.White.copy(alpha = 0.9f) else Color.Transparent)
+                            .clickable { Diptico.fijarInicio(if (k == 1) "widgets" else "heroe") }
+                            .padding(horizontal = esc.d(10), vertical = esc.d(3)),
+                    ) { Texto(nombre, 11f, color = if (activa) Color(0xFF14111D) else Color.White.copy(alpha = 0.8f), lineas = 1) }
+                }
             }
+            // Una pestaña al costado: tocarla (o deslizar desde el centro de la pantalla) lleva a la otra página.
+            // Ojo: deslizar desde el mismo borde lo toma Android como «volver».
+            Box(
+                Modifier.align(if (enWidgets) Alignment.CenterStart else Alignment.CenterEnd)
+                    .clip(if (enWidgets) RoundedCornerShape(topEnd = esc.d(14), bottomEnd = esc.d(14)) else RoundedCornerShape(topStart = esc.d(14), bottomStart = esc.d(14)))
+                    .background(Color.Black.copy(alpha = 0.35f))
+                    .clickable { Diptico.fijarInicio(if (enWidgets) "heroe" else "widgets") }
+                    .padding(horizontal = esc.d(6), vertical = esc.d(14)),
+            ) { Texto(if (enWidgets) "‹" else "›", 18f, color = Color.White.copy(alpha = 0.85f), lineas = 1, traducir = false) }
         }
     }
 }

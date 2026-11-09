@@ -14,6 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 
@@ -37,9 +40,12 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
     val entrada = duracionMovimiento(260)
     val salida = duracionMovimiento(180)
     Box(modifier) {
-        CarpetasConsolas(e, Modifier.fillMaxSize().then(if (captura) Modifier.fondoDeVentana(fondo, e.nivelesGlass.carpetas) else Modifier), interactiva = !abierta)
+        // Con una carpeta abierta, lo de atrás se desenfoca y oscurece: así se nota que la carpeta va encima.
+        val desenfoque by androidx.compose.animation.core.animateDpAsState(if (abierta && Estilo.efectosCompletos) esc.d(14) else 0.dp, tween(entrada), label = "desenfoque carpeta")
+        CarpetasConsolas(e, Modifier.fillMaxSize().then(if (captura) Modifier.fondoDeVentana(fondo, e.nivelesGlass.carpetas) else Modifier)
+            .then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier), interactiva = !abierta)
         AnimatedVisibility(transicion, enter = fadeIn(tween(entrada)), exit = fadeOut(tween(salida))) {
-            Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = .18f)).clickable { Diptico.volverASistemas() })
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .5f)).clickable { Diptico.volverASistemas() })
         }
         AnimatedVisibility(transicion, Modifier.align(Alignment.Center),
             enter = entradaCarpeta(ajusteMovimiento()), exit = salidaVentana(ajusteMovimiento())) {

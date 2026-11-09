@@ -32,7 +32,9 @@ import cl.nikalbazu.diptico.estado.Estado
  */
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
-    val barra = e.configurado && !(rol == Rol.INFERIOR && (e.unaPantalla || e.vista == "mosaicos")) && !nuevoDisenoDosPantallas(e)
+    // Abajo la hora y la batería van en la franja de accesos. Arriba, con el diseño nuevo, la vitrina va limpia,
+    // pero con un panel abierto (Ajustes, apps, DIPPO…) vuelve la barra con la hora, la batería y los avisos.
+    val barra = e.configurado && rol != Rol.INFERIOR && !(nuevoDisenoDosPantallas(e) && e.panel == Panel.NINGUNO)
     val esc = LocalEscala.current
     CompositionLocalProvider(
         LocalBarraSistema provides barra,

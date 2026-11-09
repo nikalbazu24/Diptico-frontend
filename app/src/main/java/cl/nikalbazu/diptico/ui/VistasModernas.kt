@@ -70,15 +70,17 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Bool
     val foco by androidx.compose.animation.core.animateFloatAsState(if (elegida && interactiva) 1f else 0f,
         androidx.compose.animation.core.tween(duracionMovimiento(180)), label = "foco carpeta")
     Column(Modifier.width(lado), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(lado).graphicsLayer { scaleX = 1f - .035f * (1f - foco); scaleY = scaleX }
-            .shadow(esc.d(3 + 5 * foco), forma, clip = false).clip(forma)
+        // La elegida crece un poco, con borde blanco y un halo del color de la consola; las demás se apagan apenas.
+        Box(Modifier.size(lado).graphicsLayer { scaleX = 1f + .06f * foco - .035f * (1f - foco); scaleY = scaleX }
+            .shadow(esc.d(3 + 14 * foco), forma, clip = false, ambientColor = color, spotColor = color).clip(forma)
             .combinedClickable(enabled = interactiva, onLongClick = { Diptico.abrirEditarConsola(id) }) {
                 if (!elegida) Diptico.elegirConsola(id)
                 Diptico.entrarSistema()
             }, contentAlignment = Alignment.Center) {
             PortadaCarpeta(e, id, Modifier.fillMaxSize(), maxLado = 256, memoriaGrafica = false)
-            Box(Modifier.fillMaxSize().border(esc.d(.8f + .7f * foco),
-                if (elegida) p.tinta.copy(alpha = .85f) else Color.White.copy(alpha = .3f), forma))
+            if (!elegida && interactiva) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .22f)))
+            Box(Modifier.fillMaxSize().border(esc.d(.8f + 2.2f * foco),
+                if (elegida) Color.White else Color.White.copy(alpha = .3f), forma))
         }
         Spacer(Modifier.height(esc.d(6)))
         Texto(consola?.nombre ?: "Todo", 11f, color = if (elegida) p.tinta else p.tenue,

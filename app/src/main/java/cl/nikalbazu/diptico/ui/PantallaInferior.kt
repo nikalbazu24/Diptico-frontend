@@ -137,9 +137,10 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             Cinta(e)
                             Box(Modifier.padding(horizontal = esc.d(16)).fillMaxWidth().height(esc.d(1)).background(p.linea))
                             VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
-                            if (e.vista == "mosaicos") FranjaAccesos(e)
                         }
                     }
+                    // La franja de abajo (buscar, ajustes, tus apps, DIPPO, hora y batería) en todas las vistas.
+                    FranjaAccesos(e)
                 }
             }
         }
@@ -263,8 +264,9 @@ fun Cinta(e: Estado) {
     LaunchedEffect(sel) { estado.animateScrollToItem((sel - 2).coerceAtLeast(0)) }
     LazyRow(
         state = estado,
-        modifier = Modifier.fillMaxWidth().padding(top = esc.d(8)),
-        contentPadding = PaddingValues(horizontal = esc.d(10)),
+        // Espacio arriba y abajo para el brillo y el leve agrandado de la consola elegida (antes se cortaba).
+        modifier = Modifier.fillMaxWidth().padding(top = esc.d(if (e.vista == "mosaicos") 2 else 8)),
+        contentPadding = PaddingValues(horizontal = esc.d(10), vertical = esc.d(if (e.vista == "mosaicos") 10 else 0)),
         horizontalArrangement = Arrangement.spacedBy(esc.d(2)),
     ) {
         itemsIndexed(e.pestanas, key = { _, id -> id }) { _, id ->
@@ -444,7 +446,13 @@ private fun EnJuego(e: Estado) {
             // 1 · Una línea fina: qué juegas, cuánto llevas y la hora.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (c != null) { IconoConsola(c, 18f, Color(0xFF07060C)); Spacer(Modifier.width(esc.d(8))) }
-                Texto(juego?.titulo ?: "En partida", 14f, color = Color.White, lineas = 1, traducir = false, modifier = Modifier.weight(1f))
+                // El logo del juego, como en Cocoon (si no hay logo, el nombre).
+                Box(Modifier.weight(1f).height(esc.d(44)), contentAlignment = Alignment.CenterStart) {
+                    val logo = rememberImagen(juego?.logo, 600)
+                    if (logo != null) Image(logo, contentDescription = juego?.titulo, contentScale = ContentScale.Fit,
+                        alignment = Alignment.CenterStart, modifier = Modifier.fillMaxHeight().widthIn(max = esc.d(240)))
+                    else Texto(juego?.titulo ?: "En partida", 18f, color = Color.White, lineas = 1, traducir = false)
+                }
                 Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.08f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
                     Texto("⏱ $reloj", 13f, color = tenue, traducir = false)
                 }

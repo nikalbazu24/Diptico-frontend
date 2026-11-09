@@ -208,9 +208,14 @@ fun LecturaFicha(e: Estado) {
     val esc = LocalEscala.current
     if (e.panel == Panel.IMAGENES) { VistaCandidato(e); return }
     val j = e.juegos.firstOrNull { it.clave == e.fichaDe } ?: return
-    // Resumen e Historia: el texto queda en la otra pantalla y aquí pasan las fotos del juego.
-    if (e.pestanaFicha <= 1 && e.fichaImagenes.isNotEmpty()) { Carrusel(e, j.titulo); return }
+    // La ficha se lee en la otra pantalla: aquí nunca se repite. Pasan las imágenes del juego y DIPPO cuenta datos
+    // que complementan (tu tiempo, cuánto dura, tus logros, cuándo jugaste). En Logros, el logro elegido en grande.
     if (e.pestanaFicha == 4) { LogroGrande(e, j.titulo); return }
+    Box(Modifier.fillMaxSize()) {
+        if (e.fichaImagenes.isNotEmpty()) Carrusel(e, j.titulo) else ArteEnMovimiento(e, j)
+        DatosDippo(e, j, Modifier.align(Alignment.TopEnd).padding(top = esc.d(52), end = esc.d(20)).widthIn(max = esc.d(330)))
+    }
+    return
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         Heroe(j, if (esc.angosta) 1f else 0.55f)
         Box(
@@ -545,6 +550,64 @@ private fun LogroGrande(e: Estado, titulo: String) {
                     )
                 }
             }
+        }
+    }
+}
+
+
+/** Sin fotos de internet: el arte del juego a pantalla completa, acercándose despacio, con su nombre abajo. */
+@Composable
+private fun ArteEnMovimiento(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {
+    val esc = LocalEscala.current
+    val zoom = remember { Animatable(1f) }
+    LaunchedEffect(j.clave) {
+        while (true) { zoom.animateTo(1.1f, tween(14000)); zoom.animateTo(1f, tween(14000)) }
+    }
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
+        ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = zoom.value; scaleY = zoom.value }, imagen = "arte")
+        Box(Modifier.fillMaxWidth().height(esc.d(150)).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)))))
+        Column(Modifier.align(Alignment.BottomStart).padding(start = esc.d(24), bottom = esc.d(18), end = esc.d(24))) {
+            Etiqueta(cl.nikalbazu.diptico.data.Consolas.porId(j.consolaId)?.nombreLargo ?: "", Coral, 12f)
+            val logo = rememberImagen(j.logo, 700)
+            if (logo != null) Image(logo, j.titulo, Modifier.height(esc.d(70)).widthIn(max = esc.d(360)), contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
+            else Texto(j.titulo, 26f, color = Color.White, lineas = 2)
+        }
+        BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
+    }
+}
+
+/** DIPPO va contando datos del juego que no están en la ficha: cambian solos cada unos segundos. */
+@Composable
+private fun DatosDippo(e: Estado, j: cl.nikalbazu.diptico.data.Juego, modifier: Modifier) {
+    val esc = LocalEscala.current
+    LaunchedEffect(j.clave) { Diptico.pedirDuracion(j.clave) }
+    val d = e.datos[j.clave]
+    val dur = e.extra.duraciones[j.clave]?.takeIf { it.tiene }
+    val datos = remember(j.clave, d, dur, e.logrosFicha) {
+        buildList {
+            val jugado = d?.tiempo ?: 0L
+            if (jugado > 0) add("Llevas ${formatoTiempo(jugado)} en ${d?.sesiones ?: 0} partidas.") else add("¡Todavía no lo juegas! ¿Partimos hoy?")
+            if (dur != null && dur.principal > 0f) add("Según HowLongToBeat, la historia dura ~${cl.nikalbazu.diptico.estado.CuantoDura.horasBonitas(dur.principal)}" +
+                (if (dur.completo > 0f) " y el 100 % ~${cl.nikalbazu.diptico.estado.CuantoDura.horasBonitas(dur.completo)}." else "."))
+            if (dur != null) cl.nikalbazu.diptico.estado.CuantoDura.teQueda(dur, jugado)?.let { add("$it.") }
+            e.logrosFicha?.takeIf { it.total > 0 }?.let { add("Llevas ${it.ganados} de ${it.total} logros de RetroAchievements.") }
+            if ((d?.ultimo ?: 0L) > 1L) add("Lo jugaste por última vez ${haceCuanto(d!!.ultimo)}.")
+            d?.paso?.takeIf { it.isNotBlank() }?.let { add("Tu próximo paso: $it") }
+            if (d?.favorito == true) add("Es uno de tus favoritos. ♥")
+        }
+    }
+    var k by remember(j.clave) { mutableIntStateOf(0) }
+    LaunchedEffect(j.clave, datos.size) { while (true) { delay(7000); k++ } }
+    if (datos.isEmpty()) return
+    Row(
+        modifier.clip(RoundedCornerShape(esc.d(18))).background(Color(0xCC14111D))
+            .border(esc.d(1), Color.White.copy(alpha = 0.1f), RoundedCornerShape(esc.d(18))).padding(esc.d(10)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(40).value)
+        Spacer(Modifier.width(esc.d(10)))
+        AnimatedContent(targetState = datos[k % datos.size], transitionSpec = { fadeIn(tween(500)) togetherWith fadeOut(tween(300)) }, label = "dato") { t ->
+            Detalle(t, 13.5f, color = Color.White, lineas = 3)
         }
     }
 }

@@ -29,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,7 +57,7 @@ private fun Pensando() {
 }
 
 @Composable
-private fun Burbuja(m: MensajeChat) {
+private fun Burbuja(m: MensajeChat, e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val mia = m.rol == "yo"
@@ -73,7 +74,74 @@ private fun Burbuja(m: MensajeChat) {
                 ),
             ).background(if (mia) Uva else p.superficie).padding(horizontal = esc.d(12), vertical = esc.d(8)),
         ) {
-            Detalle(m.texto, 14.5f, color = if (mia) SobreUva else p.tinta)
+            Column {
+                Detalle(m.texto, 14.5f, color = if (mia) SobreUva else p.tinta)
+                // Los juegos que propone DIPPO van en una carpetita: tócala y se abre con todos a mano.
+                val juegos = m.acciones.filter { it.tipo in setOf("jugar", "ver", "ficha") }.mapNotNull { e.juegosPorClave[it.valor] }.distinctBy { it.clave }
+                if (!mia && juegos.size >= 2) {
+                    Spacer(Modifier.height(esc.d(8)))
+                    CarpetaJuegosChat(juegos)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * La carpetita de juegos del chat: cerrada muestra las portadas apiladas; abierta, una grilla donde cada juego
+ * se elige (queda marcado en tu estante) o se juega directo con su botón.
+ */
+@Composable
+private fun CarpetaJuegosChat(juegos: List<cl.nikalbazu.diptico.data.Juego>) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    var abierta by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.compose.animation.AnimatedContent(abierta, label = "carpeta chat") { abrir ->
+        if (!abrir) Row(
+            Modifier.clip(RoundedCornerShape(esc.d(14))).background(Uva.copy(alpha = 0.18f))
+                .border(esc.d(1), Uva.copy(alpha = 0.4f), RoundedCornerShape(esc.d(14)))
+                .clickable { abierta = true }.padding(esc.d(8)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.size(esc.d(58), esc.d(52))) {
+                juegos.take(3).forEachIndexed { i, j ->
+                    Box(Modifier.padding(start = esc.d(i * 9f), top = esc.d(i * 3f)).size(esc.d(36), esc.d(46))
+                        .clip(RoundedCornerShape(esc.d(6))).border(esc.d(1), Color.White.copy(alpha = 0.3f), RoundedCornerShape(esc.d(6)))) {
+                        ArteJuego(j, preferirArte = false, maxLado = 160, modifier = Modifier.fillMaxSize(), imagen = "portada")
+                    }
+                }
+            }
+            Spacer(Modifier.width(esc.d(10)))
+            Column {
+                Texto("${juegos.size} juegos para ti", 13.5f, color = p.tinta, lineas = 1)
+                Detalle("Toca para abrir la carpeta", 11.5f, lineas = 1)
+            }
+        }
+        else Column(
+            Modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.Black.copy(alpha = 0.25f)).padding(esc.d(8)),
+            verticalArrangement = Arrangement.spacedBy(esc.d(6)),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Texto("Juegos que te propongo", 13f, color = p.tinta, lineas = 1, modifier = Modifier.weight(1f))
+                Texto("Cerrar", 12f, color = p.acentoTexto, lineas = 1, modifier = Modifier.clickable { abierta = false }.padding(esc.d(4)))
+            }
+            juegos.chunked(3).forEach { fila ->
+                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    fila.forEach { j ->
+                        Column(Modifier.width(esc.d(104))) {
+                            Box(Modifier.size(esc.d(104), esc.d(132)).clip(RoundedCornerShape(esc.d(10)))
+                                .clickable { Diptico.ejecutarAccion(cl.nikalbazu.diptico.estado.AccionChat("ver", j.clave, j.titulo)) }) {
+                                ArteJuego(j, preferirArte = false, maxLado = 320, modifier = Modifier.fillMaxSize(), imagen = "portada")
+                                // Jugar directo.
+                                Box(Modifier.align(Alignment.BottomEnd).padding(esc.d(6)).size(esc.d(32)).clip(CircleShape).fondoBoton(Uva)
+                                    .clickable { Diptico.ejecutarAccion(cl.nikalbazu.diptico.estado.AccionChat("jugar", j.clave, j.titulo)) },
+                                    contentAlignment = Alignment.Center) { IconoDiptico(Icono.JUGAR, SobreUva, 14f) }
+                            }
+                            Texto(j.titulo, 11.5f, color = p.tinta, lineas = 2, traducir = false)
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -140,7 +208,7 @@ fun PanelAsistente(e: Estado) {
                         )
                     }
                 }
-                itemsIndexed(e.chat) { _, m -> Burbuja(m) }
+                itemsIndexed(e.chat) { _, m -> Burbuja(m, e) }
                 if (e.pensando) item {
                     Row(Modifier.padding(start = esc.d(34), top = esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
                         Pensando()
