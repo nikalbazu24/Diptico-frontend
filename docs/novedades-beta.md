@@ -1,2 +1,1 @@
-- **Nuevo Díptico, paso 1: Mosaicos.** Tus juegos se ven como en una consola (estilo Xbox): el primero en un mosaico grande y el resto en cuadrados de a dos. El elegido lleva borde blanco y un halo del color de su consola. Es la vista nueva por defecto; las demás siguen en R3.
-- **Barra de la hora:** vuelve a ser la franja de siempre por defecto mientras la rediseñamos.
+- **Nuevo Díptico, paso 2: la pantalla de abajo.** Franja fija abajo con Buscar, Apps y Ajustes, y la hora con la batería (ya no hay barra de la hora arriba de esta pantalla). La consola elegida se ilumina con un halo de su color.

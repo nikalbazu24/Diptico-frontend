@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "mosaicos-2.0-16"
-    const val NOMBRE = "Nuevo Díptico: mosaicos"
+    const val ID = "franja-2.0-17"
+    const val NOMBRE = "Nuevo Díptico: la pantalla de abajo"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -253,8 +253,11 @@ object Novedades {
             Pagina("Galería de artes y carpetas que se abren", "Menú › Estante › Galería de artes: mira los artes y portadas de la carpeta, en grande en la otra pantalla. Y las carpetas ahora se abren con un resorte suave.", Icono.PORTADA, 0xFFFF7A9C),
             Pagina("Dock de apps", "Activa el dock en Menú › Inicio: una manija abajo despliega tus apps fijadas y el cajón con todas. Eliges el lado, el tamaño y cuántas apps.", Icono.APPS, 0xFF2EC4A6),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("mosaicos-2.0-16", "Nuevo Díptico: mosaicos", listOf(
             Pagina("Mosaicos, estilo consola", "Tus juegos ahora se ven como en una consola: el primero en un mosaico grande y el resto en cuadrados. El elegido brilla con el color de su consola. Cambia de vista con R3.", Icono.VISTA, 0xFF8B7CF6, "R3"),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Todo a mano abajo", "Abajo tienes una franja fija con Buscar, Apps y Ajustes, y la hora con la batería. La consola elegida se ilumina con su color.", Icono.APPS, 0xFF2EC4A6),
         )),
     )
 

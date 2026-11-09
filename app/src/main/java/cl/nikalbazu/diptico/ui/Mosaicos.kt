@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -97,5 +99,51 @@ private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp) {
             if (grande && jugado) Texto("Continuar", 10.5f, color = Color.White.copy(alpha = 0.75f), lineas = 1)
             Texto(j.titulo, if (grande) 15f else 10.5f, color = Color.White, lineas = if (grande) 2 else 1, traducir = false)
         }
+    }
+}
+
+/**
+ * Franja de abajo del nuevo diseño: accesos fijos (Buscar, Apps, Ajustes) a la izquierda y la hora con la batería a
+ * la derecha. Reemplaza la barra de la hora en la pantalla de abajo, así no se repite ni tapa nada.
+ */
+@Composable
+fun FranjaAccesos(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val hora = rememberHora()
+    val bateria = rememberBateria()
+    val cargando = rememberCargando()
+    androidx.compose.foundation.layout.Row(
+        Modifier.fillMaxWidth().background(p.superficie.copy(alpha = 0.6f)).padding(horizontal = esc.d(12), vertical = esc.d(8)).testTag("franja-accesos"),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(esc.d(6)),
+    ) {
+        BotonFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
+        BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
+        BotonFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, "Ajustes") { Diptico.abrirMenu() }
+        androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+        Texto(hora, 13f, color = p.tinta, traducir = false, lineas = 1)
+        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(4)))
+        val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }
+        Box(Modifier.size(esc.d(22), esc.d(11)).border(esc.d(1.5f), p.tinta.copy(alpha = 0.7f), RoundedCornerShape(esc.d(3))).padding(esc.d(2))) {
+            Box(Modifier.fillMaxHeight().fillMaxWidth(((if (bateria < 0) 50 else bateria) / 100f).coerceIn(0.08f, 1f))
+                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono))
+        }
+        Texto(if (bateria >= 0) "$bateria%" else "—", 13f, color = p.tinta, traducir = false, lineas = 1)
+    }
+}
+
+@Composable
+private fun BotonFranja(icono: cl.nikalbazu.diptico.estado.Icono, nombre: String, alPulsar: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    androidx.compose.foundation.layout.Row(
+        Modifier.height(esc.d(40)).clip(RoundedCornerShape(esc.d(12))).background(Color.White.copy(alpha = 0.07f))
+            .clickable(onClick = alPulsar).padding(horizontal = esc.d(12)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconoDiptico(icono, p.tinta, 15f)
+        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(7)))
+        Texto(nombre, 13f, color = p.tinta, lineas = 1)
     }
 }

@@ -32,7 +32,7 @@ import cl.nikalbazu.diptico.estado.Estado
  */
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
-    val barra = e.configurado && !(rol == Rol.INFERIOR && e.unaPantalla)
+    val barra = e.configurado && !(rol == Rol.INFERIOR && (e.unaPantalla || e.vista == "mosaicos"))
     val esc = LocalEscala.current
     CompositionLocalProvider(
         LocalBarraSistema provides barra,

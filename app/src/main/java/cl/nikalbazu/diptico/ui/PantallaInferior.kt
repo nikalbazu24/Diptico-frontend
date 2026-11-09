@@ -136,6 +136,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             Cinta(e)
                             Box(Modifier.padding(horizontal = esc.d(16)).fillMaxWidth().height(esc.d(1)).background(p.linea))
                             VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+                            if (e.vista == "mosaicos") FranjaAccesos(e)
                         }
                     }
                 }
@@ -277,10 +278,17 @@ fun Cinta(e: Estado) {
         itemsIndexed(e.pestanas, key = { _, id -> id }) { _, id ->
             val c = Consolas.porId(id)
             val activa = id == e.consolaSel
-            val escala by animateFloatAsState(if (activa) 1.14f else 1f, spring(dampingRatio = 0.5f), label = "icono")
+            val nuevo = e.vista == "mosaicos"
+            val tono = c?.color ?: Coral
+            val escala by animateFloatAsState(if (activa) (if (nuevo) 1.06f else 1.14f) else 1f, spring(dampingRatio = 0.5f), label = "icono")
+            val forma = RoundedCornerShape(esc.d(14))
             Column(
                 // Mantener apretada una consola abre su personalización.
-                Modifier.width(esc.d(64)).combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { Diptico.elegirConsola(id) },
+                Modifier.width(esc.d(64))
+                    .then(if (nuevo && activa) Modifier.shadow(esc.d(14), forma, ambientColor = tono, spotColor = tono).clip(forma)
+                        .background(p.superficie).border(esc.d(1), Color.White.copy(alpha = 0.22f), forma) else Modifier)
+                    .padding(vertical = if (nuevo) esc.d(4) else esc.d(0))
+                    .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { Diptico.elegirConsola(id) },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(Modifier.height(esc.d(36)), contentAlignment = Alignment.Center) {
@@ -292,7 +300,7 @@ fun Cinta(e: Estado) {
                 )
                 Spacer(Modifier.height(esc.d(4)))
                 val ancho by animateDpAsState(if (activa) esc.d(22) else esc.d(0), label = "barra")
-                Box(Modifier.width(ancho).height(esc.d(3)).clip(RoundedCornerShape(50)).background(Coral))
+                Box(Modifier.width(ancho).height(esc.d(3)).clip(RoundedCornerShape(50)).background(if (nuevo) tono else Coral))
             }
         }
     }
