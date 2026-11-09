@@ -120,6 +120,7 @@ internal object CentroBisa {
             else -> "Te propongo estos juegos de tu biblioteca. Priorizo tu cola y tus favoritos."
         }, opciones)
     }
+
     // ---------- DIPPO toma la iniciativa: habla primero y deja todo listo para tocar ----------
 
     private fun corto(t: String) = if (t.length <= 22) t else t.take(20).trimEnd() + "…"
@@ -241,5 +242,4 @@ internal object CentroBisa {
             }
         }
     }
-}
 }
