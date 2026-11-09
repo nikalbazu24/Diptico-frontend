@@ -186,3 +186,10 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   (Buscar/Ajustes quedan solo ícono) y en la pantalla compañera mientras juegas; `abrirPaqueteAqui` abre la app en la pantalla
   tocada. Widget nuevo `progreso` (HLTB + racha + próximo logro DIPPO), `Widgets.inicioNuevo` + opción «Usar el inicio
   nuevo» (respaldo en perfilVisualAnterior), hora y batería en el encabezado de widgets con el diseño nuevo.
+- Mientras juegas rediseñado (9 nov, rama `fix/jugando`): `EnJuego` en `ui/PantallaInferior.kt` sin pestañas ni logo con −/+:
+  línea fina (consola, título, ⏱ sesión, hora), `ConsejoDippo` (consejo según reintentos/temporizador/90 min/sin paso),
+  `TuPartida` (paso + barra HLTB), `MusicaEnJuego`, `FilaDock`, botones Pista/Mi paso/Guías/Más; `MasHerramientas`
+  (lupa, mapa, aviso, cronómetro, ficha, DIPPO, apps, apagar pantalla, y «Marcar como terminada» discreto). Sin botón
+  Terminé: la sesión se cierra sola en `Diptico.alVolver` (Díptico vuelve al frente en la pantalla del juego).
+  OJO: el 9 nov GitHub dejó de lanzar el workflow con push en `fix/jugando`; se lanzó a mano con
+  `gh api -X POST repos/Nikalbazu24/diptico-frontend/actions/workflows/402353305/dispatches -f ref=<rama>`.
