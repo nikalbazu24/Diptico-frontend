@@ -147,3 +147,6 @@ private fun BotonFranja(icono: cl.nikalbazu.diptico.estado.Icono, nombre: String
         Texto(nombre, 13f, color = p.tinta, lineas = 1)
     }
 }
+
+/** Nuevo diseño (vista Mosaicos) con las dos pantallas: arriba solo la vitrina, sin barras repetidas. */
+internal fun nuevoDisenoDosPantallas(e: Estado): Boolean = e.vista == "mosaicos" && !e.unaPantalla && e.dosDisponibles

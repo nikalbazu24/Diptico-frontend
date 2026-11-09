@@ -258,6 +258,8 @@ val LocalHeroes = androidx.compose.runtime.staticCompositionLocalOf { emptyMap<S
 @Composable
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 fun BarraFlotante(e: Estado, juego: Juego?, modifier: Modifier = Modifier, arriba: Boolean = false, consola: Boolean = false) {
+    // Nuevo diseño con dos pantallas: los accesos viven en la franja de abajo; arriba no se repiten.
+    if (nuevoDisenoDosPantallas(e)) return
     val visible = e.barra || e.barraFija
     // Escondida: solo una manija discreta que recuerda que se puede sacar (tocarla también la saca).
     androidx.compose.animation.AnimatedVisibility(

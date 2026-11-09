@@ -1,1 +1,1 @@
-- **Nuevo Díptico, paso 2: la pantalla de abajo.** Franja fija abajo con Buscar, Apps y Ajustes, y la hora con la batería (ya no hay barra de la hora arriba de esta pantalla). La consola elegida se ilumina con un halo de su color.
+- **Pantalla de arriba más limpia:** con dos pantallas y la vista Mosaicos, arriba ya no se repiten la barra de la hora ni la barra de accesos; todo eso vive en la franja de abajo.
