@@ -67,3 +67,16 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - `Diptico.intercambioEfectivo(e)`: durante una partida, la pantalla libre muestra el estante con las herramientas.
 - REQUEST_DELETE_PACKAGES se mantiene a propósito (ACTION_DELETE lo exige con targetSdk ≥ 28).
 - Las portadas no usan HARDWARE con Glass a propósito: la captura del fondo dibuja en un lienzo de software.
+
+## v1.1-beta.185 (8 nov 2026, «Orden y base», por Claude)
+
+- `Estado` llegó al límite de 255 datos de Java: todo lo nuevo va en `EstadoExtra` (`e.extra`), con propiedades
+  de extensión para leerlo (`e.desplegable`, `e.vibracion`…; en `ui/` usar `e.extra.x`).
+- Menús desplegables: `Opcion.alternativas/elegida/elegir`, `Diptico.opcionLista(...)` y `Opcion.conLista(...)`.
+- Barra de accesos fija u oculta (`barraFija`, `mostrarBarra` con 5 s), estilos de barra por pantalla
+  (`fondoBarra`), accesos de la cortina (`accesosCentro`, galería `accesos_cortina`), `audio/Vibracion.kt`.
+- Reportes: el receptor de Apps Script de Nicolás va por defecto en `app/build.gradle.kts` (el proxy no deja
+  crear la variable de GitHub). Carpeta Drive «Díptico · Reportes de fallas» (id 1QkbVkAUc6Pg5eyE92BQ9usu33BoJ2gcJ).
+- Pendiente v1.2: reordenar el menú (menos secciones, sin repetidos) y la limpieza de `Diptico.kt`.
+- v1.3: referencia de Glass/transiciones = video de Nicolás (lente con refracción y dispersión, luz que sigue
+  la selección, cambio de ambiente día/noche suave, interruptores-escena). Usar AGSL (Android 13) con respaldo.
