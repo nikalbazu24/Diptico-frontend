@@ -43,6 +43,9 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 
 - Cada versión nueva va con un **reporte de cambios detallado** (qué se agregó, corrigió, cambió y quitó, y qué probar en la Thor).
 - Sus listas de mejoras y errores se ordenan en la bitácora por versiones antes de repartirlas como issues.
+- **Antes de cada instrucción, recomendarle qué modelo usar** (él lo cambia; Claude no puede): Opus para diseño,
+  errores difíciles, rendimiento y versiones grandes; Sonnet para cambios acotados, textos, traducciones y bitácora;
+  Haiku para preguntas rápidas. Decirlo en una línea al comienzo y esperar su visto bueno si conviene cambiar.
 
 ## Plan acordado (8 nov 2026, detalle en la bitácora)
 
