@@ -96,3 +96,16 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Todo se siente muy lento (sospechas: `paletaSuave` recompone todo, el lente AGSL por superficie, el escalonado del menú).
 - La app se cierra al cambiar la vista de los juegos (R3 / galería `vistas_juegos`): revisar la vista `cartuchos`/`iconos`
   y la vista previa `MiniPantalla` con `PantallaInferior` (DockApps dentro de la previa). Pedir el reporte de Drive.
+
+## Beta.197 (8 nov, 22:50): arreglos rápidos y lo que pidió Nicolás para la próxima sesión
+
+- Hecho: la isla de arriba va centrada; abajo la barra reserva su espacio; lente apagado por defecto (`lente=false`) y se salta
+  en lienzos sin aceleración (`isHardwareAccelerated`); se quitó el uso de `paletaSuave` en `Lienzo`.
+- Pedido (23:16), en este orden:
+  1. **Sigue muy lenta.** Medir antes de tocar: escalonado de filas del menú (`Animatable` por fila), `superficieCristal`,
+     `rememberRed`/`PilaBateria`/`collectAsState` de avisos en cada barra, el dock y las vistas nuevas. Considerar volver
+     a `formaBarra = "completa"` por defecto.
+  2. **La barra flotante no combina:** en Ajustes se ve encima y queda mal; abajo «se ve horrible». Rediseñarla integrada
+     (abajo quizá dentro de la fila de consolas o como pie fino), que combine con el tema y no ocupe tanta pantalla.
+  3. **Carpetas:** al marcar una no se nota cuál está elegida; falta un brillo o halo claro en la elegida.
+  4. **Carpetas con efecto Glass** como el resto de la app (`CarpetaBiblioteca`/`CarpetaVisual` en `ui/VistasConsolas.kt`).
