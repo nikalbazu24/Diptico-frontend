@@ -112,3 +112,17 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
      (abajo quizá dentro de la fila de consolas o como pie fino), que combine con el tema y no ocupe tanta pantalla.
   3. **Carpetas:** al marcar una no se nota cuál está elegida; falta un brillo o halo claro en la elegida.
   4. **Carpetas con efecto Glass** como el resto de la app (`CarpetaBiblioteca`/`CarpetaVisual` en `ui/VistasConsolas.kt`).
+
+## NUEVO RUMBO (9 nov 2026, 00:14) — manda sobre el plan por versiones
+
+- Nicolás no está conforme con el rumbo. Desde ahora Claude decide como programador experto; él da ideas y aprueba diseños.
+- Decisiones: no rehacer de cero (el motor sirve); rehacer la interfaz sobre la base actual. Congelar funciones nuevas
+  (v1.4–1.6 y DIPO quedan guardadas). Un solo estilo (arte del juego protagonista + un vidrio oscuro sobrio), Apariencia de
+  ~27 a ~8 opciones, velocidad como regla (efectos caros apagados), una pantalla a la vez, con boceto aprobado ANTES de programar,
+  y partir `Diptico.kt` mientras se rehace cada pantalla.
+- Referencias que le encantan: iiSU (dos pantallas como una sola consola), Cocoon (orden, acento por consola),
+  ES-DE (elegir sistema con logo grande y luego sus juegos), PS5 (arte de fondo, fila de juegos, info + Jugar grande).
+- Propuesta acordada: arriba la vitrina (arte a pantalla completa con degradado, logo/nombre, consola, tiempo, Continuar;
+  hora y batería chicas integradas); abajo el control (fila de logos de consolas, fila de juegos tipo PS5 con borde de luz,
+  franja de accesos Buscar/Apps/Ajustes); una pantalla = vitrina de fondo + controles abajo; Ajustes en ~6 secciones tipo PS5.
+- PRÓXIMO PASO cuando Nicolás avise: boceto visual (Design artifact) de arriba, abajo y ajustes; afinarlo con él y recién ahí programar.
