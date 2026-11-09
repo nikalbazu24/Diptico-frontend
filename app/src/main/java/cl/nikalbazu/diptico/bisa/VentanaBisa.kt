@@ -70,7 +70,8 @@ fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = fa
         infiniteRepeatable(keyframes { durationMillis = 9000; 0f at 6000; 1f at 6400; 0.6f at 6700; 1f at 7000; 0f at 7500 }),
         label = "saludo",
     )
-    val colores = remember { cl.nikalbazu.diptico.ui.coloresDippoAhora() }
+    val pref = Diptico.estado.collectAsState().value.extra.dippoColor
+    val colores = remember(pref) { cl.nikalbazu.diptico.ui.coloresDippoAhora(pref) }
     val gesto = cara ?: cl.nikalbazu.diptico.ui.CaraDippo.NORMAL
     Box(modifier.size(tamDp.dp), contentAlignment = Alignment.Center) {
         Box(

@@ -1,0 +1,84 @@
+package cl.nikalbazu.diptico.ui
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import cl.nikalbazu.diptico.bisa.AvatarBisa
+import cl.nikalbazu.diptico.estado.Diptico
+import cl.nikalbazu.diptico.estado.Estado
+import kotlinx.coroutines.delay
+
+/** El saludo de DIPPO según la hora. */
+internal fun saludoDippo(hora: Int): String = when (hora) {
+    in 6..11 -> "¡Buenos días!"
+    in 12..19 -> "¡Buenas tardes!"
+    else -> "¡Buenas noches!"
+}
+
+/** La cara de DIPPO en el inicio según lo que pasa: contento al saludar, preocupado con poca batería, dormido de madrugada. */
+internal fun caraDippoInicio(saludando: Boolean, bateria: Int, cargando: Boolean, hora: Int): CaraDippo? = when {
+    saludando -> CaraDippo.FELIZ
+    bateria in 0..15 && !cargando -> CaraDippo.PREOCUPADO
+    hora in 1..5 -> CaraDippo.DURMIENDO
+    else -> null
+}
+
+/**
+ * DIPPO siempre a la vista en el inicio. Al llegar saluda con un globito unos segundos y después se queda
+ * flotando. Tocarlo abre su conversación; mantenerlo apretado, el dictado.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
+    if (!e.extra.dippoInicio || !e.configurado) return
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val bateria = rememberBateria()
+    val cargando = rememberCargando()
+    val hora = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    var saludando by remember { mutableStateOf(false) }
+    LaunchedEffect(e.extra.dippoSaludo) {
+        if (!e.extra.dippoSaludo) return@LaunchedEffect
+        delay(600)
+        saludando = true
+        delay(4200)
+        saludando = false
+    }
+    Row(modifier.testTag("dippo-inicio"), verticalAlignment = Alignment.CenterVertically) {
+        AnimatedVisibility(
+            saludando,
+            enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
+            exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
+        ) {
+            Box(
+                Modifier.padding(end = esc.d(6)).clip(RoundedCornerShape(esc.d(12)))
+                    .background(p.superficie.copy(alpha = 0.92f))
+                    .padding(horizontal = esc.d(10), vertical = esc.d(5)),
+            ) { Texto(saludoDippo(hora), 12f, color = p.tinta, lineas = 1) }
+        }
+        AvatarBisa(
+            tam,
+            Modifier.combinedClickable(onLongClick = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() },
+            cara = caraDippoInicio(saludando, bateria, cargando, hora),
+        )
+    }
+}

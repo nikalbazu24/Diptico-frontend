@@ -40,7 +40,7 @@ import kotlin.math.PI
 import kotlin.math.pow
 import kotlin.math.sin
 
-private const val DURACION = 3400f
+private const val DURACION = 3800f
 private val FondoIntro = Color(0xFF0F0D18)
 private val TenueIntro = Color(0xFFA9A5C7)
 
@@ -177,6 +177,8 @@ private fun BoxScope.IntroSuperior(t: Float, px: Float, unica: Boolean) {
                     )
                 }
             }
+            Spacer(Modifier.width(esc.d(14)))
+            DippoIntro(t, px)
         }
         if (unica) {
             Spacer(Modifier.height(esc.d(18)))
@@ -234,6 +236,35 @@ private fun BoxScope.IntroInferior(t: Float, px: Float) {
         FilaIconos(t, 0.68f)
     }
     Bisagra(t, Modifier.align(Alignment.TopCenter).padding(top = esc.d(10)))
+}
+
+/**
+ * DIPPO se asoma junto al nombre cuando las letras terminan de caer: salta con un rebote, parpadea y saluda
+ * con su tentáculo mientras se le encienden las lucecitas una a una.
+ */
+@Composable
+private fun DippoIntro(t: Float, px: Float) {
+    val esc = LocalEscala.current
+    val e = Diptico.estado.value
+    if (!e.extra.dippoInicio) return
+    val colores = remember { coloresDippoAhora(e.extra.dippoColor) }
+    val entra = rebote(tramo(t, 0.66f, 0.78f))
+    val saludo = sin(PI.toFloat() * 2f * tramo(t, 0.76f, 0.92f)).let { if (it > 0f) it else 0f }
+    val luces = tramo(t, 0.7f, 0.86f)
+    val parpadeo = if (t in 0.83f..0.85f) 0.15f else 1f
+    Canvas(
+        Modifier.size(esc.d(84)).graphicsLayer {
+            scaleX = entra
+            scaleY = entra
+            alpha = if (t > 0.66f) 1f else 0f
+            translationY = (1f - entra) * 30f * px
+        },
+    ) {
+        dibujarDippo(
+            size.width / 24f, colores, if (t > 0.76f) CaraDippo.FELIZ else CaraDippo.NORMAL,
+            parpadeo = parpadeo, luces = luces, saludo = saludo,
+        )
+    }
 }
 
 /** Los íconos de cada consola aparecen uno tras otro. */

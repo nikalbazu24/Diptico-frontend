@@ -1197,6 +1197,10 @@ class Capturas {
         } } }
         regla.onRoot().captureRoboImage("capturas/286_dippo_avatar.png")
     }
+    @Test fun t287_dippo_franja() = foto("287_dippo_franja_abajo", base().copy(vista = "mosaicos"), Rol.INFERIOR)
+    @Test fun t288_dippo_una_pantalla() = foto("288_dippo_una_pantalla", base().copy(vista = "mosaicos", unaPantalla = true), Rol.UNICA)
+    @Test fun t289_dippo_ajustes() = foto("289_dippo_ajustes", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true), Rol.SUPERIOR)
+    @Test fun t290_dippo_ajustes_colores() = foto("290_dippo_ajustes_colores", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true, indice = 3), Rol.SUPERIOR)
 
     @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)
 

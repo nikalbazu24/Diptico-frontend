@@ -18,9 +18,14 @@ data class ColoresDippo(val cuerpo: Color, val brillo: Color, val luz: Color, va
 val DippoDia = ColoresDippo(Color(0xFFFF9A6B), Color(0xFFFFD2A8), Color(0xFFFFE08A), Color(0xFF7EF0D8), Color(0xFF7A2E1D))
 val DippoNoche = ColoresDippo(Color(0xFF7AA8FF), Color(0xFFCFE6FF), Color(0xFFCFE6FF), Color(0xFFA9D4FF), Color(0xFF1D2B64))
 
-fun coloresDippoAhora(): ColoresDippo {
-    val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-    return if (h >= 20 || h < 7) DippoNoche else DippoDia
+/** [pref]: "hora" (según la hora), "dia" o "noche" (ajuste «Colores de DIPPO»). */
+fun coloresDippoAhora(pref: String = "hora"): ColoresDippo = when (pref) {
+    "dia" -> DippoDia
+    "noche" -> DippoNoche
+    else -> {
+        val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        if (h >= 20 || h < 7) DippoNoche else DippoDia
+    }
 }
 
 /**

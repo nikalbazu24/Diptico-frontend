@@ -143,6 +143,8 @@ fun FranjaAccesos(e: Estado) {
         BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
         BotonFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, "Ajustes") { Diptico.abrirMenu() }
         androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+        DippoInicio(e, 36f)
+        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(10)))
         Texto(hora, 13f, color = p.tinta, traducir = false, lineas = 1)
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(4)))
         val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }

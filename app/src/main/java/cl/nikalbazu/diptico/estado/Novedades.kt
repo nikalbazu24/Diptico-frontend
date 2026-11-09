@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "dippo-2.0-22"
-    const val NOMBRE = "Llegó DIPPO"
+    const val ID = "dippo-casa-2.0-23"
+    const val NOMBRE = "DIPPO se queda contigo"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -271,9 +271,13 @@ object Novedades {
         Version("temas-aparte-2.0-21", "Temas aparte y movimiento pulido", listOf(
             Pagina("Temas y decoraciones aparte", "Los temas y los adornos tienen su propia sección en Ajustes. Y al cambiar de consola, los mosaicos se deslizan hacia ese lado.", Icono.PALETA, 0xFFB388FF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("dippo-2.0-22", "Llegó DIPPO", listOf(
             Pagina("¡Hola, soy DIPPO!", "Bisa ahora es DIPPO, un pulpito de luz que vive en tu consola. Curioso, servicial y un poquito despistado: conoce tus juegos y celebra tus logros contigo.", Icono.BISA, 0xFFFF9A6B),
             Pagina("De día y de noche", "Las puntas de sus tentáculos son lucecitas que respiran. De día es cálido; de noche se pone azulado. Y cada tanto te saluda.", Icono.ESTRELLA, 0xFF7AA8FF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("DIPPO te espera en el inicio", "Ahora DIPPO vive a la vista: abajo junto a la hora, o en la esquina si usas una pantalla. Te saluda al llegar y pone cara de preocupado si queda poca batería. Tócalo para hablarle.", Icono.BISA, 0xFFFF9A6B),
+            Pagina("Su propio espacio", "DIPPO tiene su sección en Ajustes: si aparece en el inicio, su saludo, sus colores, su IA y cómo te ayuda mientras juegas. Y ahora se asoma en la animación de entrada.", Icono.AJUSTES, 0xFF7AA8FF),
         )),
     )
 

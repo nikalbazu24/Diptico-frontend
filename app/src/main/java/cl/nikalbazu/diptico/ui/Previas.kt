@@ -133,6 +133,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                     MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { VistaSistema(ev.copy(consolaSel = c?.id ?: ev.consolaSel)) }
                 }
                 Seccion.ASISTENTE -> when {
+                    t == "DIPPO en el inicio" || t == "Saludo al llegar" || t == "Colores de DIPPO" -> Marco { PreviaDippo(e) }
                     t == "IA de DIPPO" -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA(Diptico.motorEfectivo(e).let { if (it == "ninguno") "auto" else it }) } }
                     t.startsWith("Clave de") -> {
                         val prov = if (t.contains("Gemini")) "gemini" else "openai"
@@ -154,6 +155,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                 Seccion.RENDIMIENTO -> Marco { PreviaTurbo(ev) }
                 Seccion.IDIOMA -> Marco { PreviaIdioma(t) }
                 Seccion.SISTEMA, Seccion.ESENCIAL, Seccion.MAS, Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_SISTEMA -> Marco { PreviaAcerca() }
+                Seccion.G_DIPPO -> Marco { PreviaDippo(e) }
             }
         }
     }
@@ -266,6 +268,22 @@ private fun PreviaIdioma(titulo: String) {
         Texto(hola, 22f, lineas = 1, traducir = false)
         Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).padding(horizontal = esc.d(22), vertical = esc.d(8))) { Texto("▶  $jugar", 15f, color = SobreUva, traducir = false) }
         Detalle(cl.nikalbazu.diptico.estado.Idioma.ayuda(cod), 12.5f, lineas = 1)
+    }
+}
+
+/** DIPPO en grande con los colores elegidos, saludando como en el inicio. */
+@Composable
+private fun PreviaDippo(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val fondo = if (cl.nikalbazu.diptico.ui.coloresDippoAhora(e.extra.dippoColor) == DippoNoche) Color(0xFF1F3046) else Color(0xFF3A2340)
+    Column(
+        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(fondo, p.fondo2))).padding(esc.d(20)),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(10), Alignment.CenterVertically),
+    ) {
+        cl.nikalbazu.diptico.bisa.AvatarBisa(110f, cara = CaraDippo.FELIZ)
+        Texto(if (e.extra.dippoSaludo) saludoDippo(java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) else "DIPPO", 16f, lineas = 1)
+        Detalle(if (e.extra.dippoInicio) "Te espera en el inicio" else "Escondido del inicio", 12.5f, lineas = 1)
     }
 }
 

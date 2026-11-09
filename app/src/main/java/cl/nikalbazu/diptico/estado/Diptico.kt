@@ -89,7 +89,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     G_JUEGOS("Juegos y emuladores", Icono.EMULADOR, "Con qué se abre cada consola, los logros y el modo turbo al jugar."),
     G_CONTROLES("Controles", Icono.MANDO, "Qué hace cada botón y stick."),
     G_SONIDO("Sonido", Icono.MUSICA, "La música de fondo, los sonidos y la vibración."),
-    G_SISTEMA("Sistema", Icono.INFO, "Respaldo, idioma, Android, la tele, DIPPO y la versión de Díptico."),
+    G_DIPPO("DIPPO", Icono.BISA, "Tu compañero: dónde aparece, sus colores, su IA y cómo te ayuda mientras juegas."),
+    G_SISTEMA("Sistema", Icono.INFO, "Respaldo, idioma, Android, la tele y la versión de Díptico."),
     /** Solo en el modo simple: la puerta a las secciones avanzadas (nada queda escondido). */
     MAS("Más ajustes", Icono.AJUSTES, "Las secciones avanzadas, a un toque. Y para volver al menú completo.", "Avanzado"),
 }
@@ -343,6 +344,12 @@ data class EstadoExtra(
     val formaBarra: String = "completa",
     /** Colores de los íconos de la barra: "vivos", "pastel", "neon" o "tema". */
     val coloresBarra: String = "vivos",
+    /** DIPPO se queda siempre a la vista en el inicio (franja de abajo o esquina en una pantalla). */
+    val dippoInicio: Boolean = true,
+    /** DIPPO saluda con un globito al llegar al inicio. */
+    val dippoSaludo: Boolean = true,
+    /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
+    val dippoColor: String = "hora",
 )
 
 val Estado.estiloBarraArriba get() = extra.estiloBarraArriba
@@ -872,6 +879,9 @@ object Diptico {
                 lente = almacen.bool("lenteVidrio", false),
                 formaBarra = almacen.texto("formaBarra", "completa"),
                 coloresBarra = almacen.texto("coloresBarra", "vivos"),
+                dippoInicio = almacen.bool("dippoInicio", true),
+                dippoSaludo = almacen.bool("dippoSaludo", true),
+                dippoColor = almacen.texto("dippoColor", "hora"),
                 dock = almacen.bool("dock", false),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
@@ -1020,6 +1030,9 @@ object Diptico {
 
     val ESTILOS_BARRA = listOf("solida", "difusa", "transparente")
     fun nombreEstiloBarra(v: String) = when (v) { "difusa" -> "Difusa"; "transparente" -> "Transparente"; else -> "Sólida" }
+
+    val COLORES_DIPPO = listOf("hora", "dia", "noche")
+    fun nombreColorDippo(v: String) = when (v) { "dia" -> "Siempre de día"; "noche" -> "Siempre de noche"; else -> "Según la hora" }
 
     val FORMAS_BARRA = listOf("flotante", "completa")
     fun nombreFormaBarra(v: String) = if (v == "completa") "Franja completa" else "Flotante"
@@ -3510,7 +3523,8 @@ object Diptico {
         Seccion.G_JUEGOS to listOf(Seccion.EMULADORES, Seccion.LOGROS, Seccion.RENDIMIENTO),
         Seccion.G_CONTROLES to listOf(Seccion.CONTROLES),
         Seccion.G_SONIDO to listOf(Seccion.MUSICA),
-        Seccion.G_SISTEMA to listOf(Seccion.SISTEMA, Seccion.IDIOMA, Seccion.CONSOLA, Seccion.SOBREMESA, Seccion.ASISTENTE),
+        Seccion.G_DIPPO to listOf(Seccion.ASISTENTE),
+        Seccion.G_SISTEMA to listOf(Seccion.SISTEMA, Seccion.IDIOMA, Seccion.CONSOLA, Seccion.SOBREMESA),
     )
 
     fun esGrupoAjustes(s: Seccion) = s in GRUPOS_AJUSTES
@@ -3656,7 +3670,7 @@ object Diptico {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
-            Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_SISTEMA -> Unit
+            Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_DIPPO, Seccion.G_SISTEMA -> Unit
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
@@ -3783,6 +3797,30 @@ object Diptico {
             Seccion.MAS -> lista += opcionesMas(e)
             Seccion.ASISTENTE -> {
                 lista += Opcion("Hablar con DIPPO", icono = Icono.BISA, ayuda = "DIPPO es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
+                lista += Opcion(
+                    "DIPPO en el inicio", if (e.extra.dippoInicio) "Sí" else "No", Icono.BISA,
+                    "DIPPO se queda a la vista en el inicio y te saluda al llegar. Tócalo para hablarle; mantenlo apretado para dictarle.",
+                ) {
+                    val v = !estado.value.extra.dippoInicio
+                    almacen.guardarBool("dippoInicio", v)
+                    actualizar { it.copy(extra = it.extra.copy(dippoInicio = v)) }
+                }
+                lista += Opcion(
+                    "Saludo al llegar", if (e.extra.dippoSaludo) "Sí" else "No", Icono.BISA,
+                    "Cuando vuelves al inicio, DIPPO te da los buenos días, las buenas tardes o las buenas noches con un globito.",
+                ) {
+                    val v = !estado.value.extra.dippoSaludo
+                    almacen.guardarBool("dippoSaludo", v)
+                    actualizar { it.copy(extra = it.extra.copy(dippoSaludo = v)) }
+                }
+                lista += opcionLista(
+                    "Colores de DIPPO", Icono.PALETA,
+                    "Según la hora es cálido de día y azulado desde las 8 de la noche. También puedes dejarlo siempre de día o siempre de noche.",
+                    COLORES_DIPPO, COLORES_DIPPO.map(::nombreColorDippo), e.extra.dippoColor,
+                ) { v ->
+                    almacen.guardarTexto("dippoColor", v)
+                    actualizar { it.copy(extra = it.extra.copy(dippoColor = v)) }
+                }
                 lista += Opcion(
                     "DIPPO mientras juegas", if (e.bisaEnJuego) "Sí" else "No", Icono.MANDO,
                     "Mientras juegas deja un aviso para pedir ayuda, y si reintentas varias veces seguidas la misma partida te ofrece una pista. Se abre en la pantalla libre.",

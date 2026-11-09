@@ -102,6 +102,8 @@ private fun PantallaUnicaContenido(e: Estado) {
                 }
                 if (e.sesion == null && !e.carpetaEnVentana) BarraFlotante(e, if (e.enSistemas) null else e.seleccionado, consola = e.enSistemas)
             }
+            if (e.sesion == null && e.panel == Panel.NINGUNO)
+                DippoInicio(e, 48f, Modifier.align(Alignment.TopEnd).padding(top = esc.d(ALTO_BARRA_SISTEMA + 10f), end = esc.d(20)))
             Paneles(e, conAyuda = true)
         }
         return
@@ -163,6 +165,8 @@ private fun PantallaUnicaContenido(e: Estado) {
         }
       }
 
+        if (e.sesion == null && e.panel == Panel.NINGUNO)
+            DippoInicio(e, 52f, Modifier.align(Alignment.TopEnd).padding(top = esc.d(ALTO_BARRA_SISTEMA + 14f), end = esc.d(22)))
         Paneles(e, conAyuda = true)
     }
 }

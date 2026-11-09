@@ -79,6 +79,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.G_JUEGOS -> Color(0xFF3BA8FF)
     Seccion.G_CONTROLES -> Color(0xFFFFA726)
     Seccion.G_SONIDO -> Color(0xFFFF7A59)
+    Seccion.G_DIPPO -> Color(0xFFFF9A6B)
     Seccion.G_SISTEMA -> Color(0xFF8E8AAE)
 }
 
