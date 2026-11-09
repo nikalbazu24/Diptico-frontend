@@ -208,9 +208,10 @@ fun LecturaFicha(e: Estado) {
     val esc = LocalEscala.current
     if (e.panel == Panel.IMAGENES) { VistaCandidato(e); return }
     val j = e.juegos.firstOrNull { it.clave == e.fichaDe } ?: return
-    // Resumen e Historia: el texto queda en la otra pantalla y aquí pasan las fotos del juego.
-    if (e.pestanaFicha <= 1 && e.fichaImagenes.isNotEmpty()) { Carrusel(e, j.titulo); return }
     if (e.pestanaFicha == 4) { LogroGrande(e, j.titulo); return }
+    // Resumen, Historia y Guías: el texto ya está en la otra pantalla. Aquí no se repite: pasan las imágenes del
+    // juego y DIPPO va contando lo que complementa (cuánto dura, tu tiempo, tus logros, tu nota).
+    if (e.pestanaFicha != 3) { GaleriaDippo(e, j); return }
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         Heroe(j, if (esc.angosta) 1f else 0.55f)
         Box(
@@ -544,6 +545,79 @@ private fun LogroGrande(e: Estado, titulo: String) {
                         17f,
                     )
                 }
+            }
+        }
+    }
+}
+
+
+/**
+ * La otra pantalla de la ficha: imágenes del juego que pasan solas (las de internet, su arte y su portada) y DIPPO
+ * abajo con un dato distinto cada pocos segundos. Complementa la ficha en vez de repetirla.
+ */
+@Composable
+private fun GaleriaDippo(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {
+    val esc = LocalEscala.current
+    LaunchedEffect(j.clave) { Diptico.pedirDuracion(j.clave) }
+    val fotos = remember(e.fichaImagenes, j.clave) {
+        (e.fichaImagenes.map { Uri.parse(it.miniatura) } + listOfNotNull(j.arte, j.portada)).distinct()
+    }
+    var actual by remember(fotos) { mutableIntStateOf(0) }
+    LaunchedEffect(fotos) {
+        while (fotos.size > 1) { delay(6500); actual = (actual + 1) % fotos.size }
+    }
+    val datos = e.datos[j.clave]
+    val dura = e.extra.duraciones[j.clave]?.takeIf { it.tiene }
+    val frases = remember(j.clave, datos, dura, e.logrosFicha) {
+        buildList {
+            if (dura != null) {
+                add(buildString {
+                    append("Según HowLongToBeat, la historia dura ~${cl.nikalbazu.diptico.estado.CuantoDura.horasBonitas(dura.principal)}")
+                    if (dura.completo > 0f) append(" y al 100 % ~${cl.nikalbazu.diptico.estado.CuantoDura.horasBonitas(dura.completo)}")
+                    append(".")
+                })
+                cl.nikalbazu.diptico.estado.CuantoDura.teQueda(dura, datos?.tiempo ?: 0L)?.let { add("$it.") }
+            }
+            if ((datos?.tiempo ?: 0L) > 0L) add("Llevas ${formatoTiempo(datos!!.tiempo)} en ${datos.sesiones} ${if (datos.sesiones == 1) "partida" else "partidas"}.")
+            else add("Todavía no lo juegas con Díptico. ¿Le damos una primera vuelta?")
+            e.logrosFicha?.takeIf { it.total > 0 }?.let { add("Tienes ${it.ganados} de ${it.total} logros en RetroAchievements.") }
+            datos?.paso?.takeIf { it.isNotBlank() }?.let { add("La última vez anotaste: «${it.take(80)}».") }
+            if (datos?.favorito == true) add("Es uno de tus favoritos. ¡Buen gusto!")
+            add("¿Te atascaste? En Guías hay trucos, y si me preguntas te doy una pista sin spoilers.")
+        }
+    }
+    var frase by remember(frases) { mutableIntStateOf(0) }
+    LaunchedEffect(frases) {
+        while (frases.size > 1) { delay(7000); frase = (frase + 1) % frases.size }
+    }
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
+        Crossfade(targetState = actual, animationSpec = tween(900), label = "galeria") { i ->
+            val img = rememberImagen(fotos.getOrNull(i), 1280)
+            val zoom = remember { Animatable(1f) }
+            LaunchedEffect(i) { zoom.snapTo(1f); zoom.animateTo(1.1f, tween(7500)) }
+            if (img != null) Box(Modifier.fillMaxSize()) {
+                Image(img, null, Modifier.fillMaxSize().blur(24.dp).alpha(0.5f), contentScale = ContentScale.Crop)
+                Image(img, null, Modifier.fillMaxSize().graphicsLayer { scaleX = zoom.value; scaleY = zoom.value }, contentScale = ContentScale.Fit)
+            } else ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize(), imagen = "arte")
+        }
+        Box(Modifier.fillMaxWidth().height(esc.d(170)).align(Alignment.BottomCenter)
+            .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)))))
+        // DIPPO cuenta algo distinto cada pocos segundos.
+        Row(
+            Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = esc.d(20), end = esc.d(20), bottom = esc.d(16)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(56).value, cara = CaraDippo.FELIZ)
+            Spacer(Modifier.width(esc.d(12)))
+            Box(Modifier.weight(1f).clip(RoundedCornerShape(topStart = esc.d(16), topEnd = esc.d(16), bottomEnd = esc.d(16), bottomStart = esc.d(4)))
+                .background(Color.White.copy(alpha = 0.12f)).padding(horizontal = esc.d(14), vertical = esc.d(10))) {
+                AnimatedContent(frase, transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(250)) }, label = "frase") { k ->
+                    Texto(frases.getOrNull(k) ?: "", 16f, color = Color.White, lineas = 3, traducir = false)
+                }
+            }
+            if (fotos.size > 1) {
+                Spacer(Modifier.width(esc.d(12)))
+                Texto("${actual + 1}/${fotos.size}", 12f, color = Color.White.copy(alpha = 0.7f), lineas = 1, traducir = false)
             }
         }
     }

@@ -45,7 +45,7 @@ fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composa
     Box(modifier.fillMaxSize().testTag("inicio-deslizable")) {
         HorizontalPager(
             state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 0,
-            userScrollEnabled = !e.editandoWidgets && e.sesion == null,
+            userScrollEnabled = !e.editandoWidgets,
         ) { pagina ->
             // Al deslizar, la página que se va se achica y oscurece apenas: se siente como pasar de una tarjeta a otra.
             Box(Modifier.fillMaxSize().graphicsLayer {
@@ -55,18 +55,24 @@ fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composa
                 alpha = 1f - 0.4f * d
             }) { if (pagina == 0) portada() else widgets() }
         }
-        // Dos puntitos abajo: dónde estás (se tocan para cambiar).
+        // Abajo: «Portada · Widgets» con un puntito alargado en la página donde estás (se tocan para cambiar).
         if (!e.editandoWidgets) Row(
-            Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(6)),
-            horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
+            Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(6)).clip(RoundedCornerShape(50))
+                .background(Color.Black.copy(alpha = 0.35f)).padding(horizontal = esc.d(10), vertical = esc.d(4)),
+            horizontalArrangement = Arrangement.spacedBy(esc.d(8)), verticalAlignment = Alignment.CenterVertically,
         ) {
             for (k in 0..1) {
                 val activa = (pager.currentPage + pager.currentPageOffsetFraction).let { if (k == 0) it < 0.5f else it >= 0.5f }
-                Box(
-                    Modifier.size(if (activa) esc.d(18) else esc.d(6), esc.d(6)).clip(RoundedCornerShape(50))
-                        .background(Color.White.copy(alpha = if (activa) 0.85f else 0.35f))
-                        .clickable { Diptico.fijarInicio(if (k == 1) "widgets" else "heroe") },
-                )
+                Row(
+                    Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.fijarInicio(if (k == 1) "widgets" else "heroe") }
+                        .padding(horizontal = esc.d(4), vertical = esc.d(2)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.size(if (activa) esc.d(14) else esc.d(6), esc.d(6)).clip(RoundedCornerShape(50))
+                        .background(Color.White.copy(alpha = if (activa) 0.9f else 0.4f)))
+                    androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(5)))
+                    Texto(if (k == 0) "Portada" else "Widgets", 11f, color = Color.White.copy(alpha = if (activa) 0.9f else 0.5f), lineas = 1)
+                }
             }
         }
     }

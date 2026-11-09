@@ -263,8 +263,9 @@ fun Cinta(e: Estado) {
     LaunchedEffect(sel) { estado.animateScrollToItem((sel - 2).coerceAtLeast(0)) }
     LazyRow(
         state = estado,
-        modifier = Modifier.fillMaxWidth().padding(top = esc.d(8)),
-        contentPadding = PaddingValues(horizontal = esc.d(10)),
+        // El margen va por dentro: así el recuadro y el halo de la consola elegida no se cortan arriba.
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = esc.d(10), vertical = esc.d(if (e.vista == "mosaicos") 10 else 8)),
         horizontalArrangement = Arrangement.spacedBy(esc.d(2)),
     ) {
         itemsIndexed(e.pestanas, key = { _, id -> id }) { _, id ->
@@ -277,8 +278,8 @@ fun Cinta(e: Estado) {
             Column(
                 // Mantener apretada una consola abre su personalización.
                 Modifier.width(esc.d(64))
-                    .then(if (nuevo && activa) Modifier.shadow(esc.d(14), forma, ambientColor = tono, spotColor = tono).clip(forma)
-                        .background(p.superficie).border(esc.d(1), Color.White.copy(alpha = 0.22f), forma) else Modifier)
+                    .then(if (nuevo && activa) Modifier.shadow(esc.d(10), forma, ambientColor = tono, spotColor = tono).clip(forma)
+                        .background(tono.copy(alpha = 0.18f)).border(esc.d(2), tono.copy(alpha = 0.95f), forma) else Modifier)
                     .padding(vertical = if (nuevo) esc.d(4) else esc.d(0))
                     .combinedClickable(onLongClick = { Diptico.abrirEditarConsola(id) }) { Diptico.elegirConsola(id) },
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -454,7 +455,12 @@ private fun EnJuego(e: Estado) {
                     Texto(rememberHora() + if (bat >= 0) " · $bat%" else "", 13f, color = tenue, traducir = false)
                 }
             }
-            Spacer(Modifier.height(esc.d(10)))
+            Spacer(Modifier.height(esc.d(8)))
+            // El logo del juego sobre su arte, como en Cocoon: así se ve qué estás jugando.
+            if (!mas && juego != null) {
+                LogoEnJuego(juego)
+                Spacer(Modifier.height(esc.d(8)))
+            }
             if (mas) MasHerramientas(e, s, Modifier.weight(1f)) { mas = false }
             else Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 // 2 · DIPPO: un consejo según lo que pasa, y la pista a un toque.
@@ -476,6 +482,22 @@ private fun EnJuego(e: Estado) {
                 AccionCompa(Icono.MENU, "Más", Modifier.weight(1f)) { mas = true }
             }
         }
+    }
+}
+
+/** Franja con el arte del juego de fondo y su logo encima (o el nombre, si no hay logo). */
+@Composable
+private fun LogoEnJuego(juego: cl.nikalbazu.diptico.data.Juego) {
+    val esc = LocalEscala.current
+    val forma = RoundedCornerShape(esc.d(18))
+    Box(Modifier.fillMaxWidth().height(esc.d(118)).clip(forma), contentAlignment = Alignment.Center) {
+        ArteJuego(juego, preferirArte = true, maxLado = 640, modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.45f }, imagen = "arte")
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x5507060C), Color(0xCC07060C)))))
+        val logo = rememberImagen(juego.logo, 700)
+        if (logo != null) Image(logo, contentDescription = juego.titulo, contentScale = ContentScale.Fit,
+            modifier = Modifier.padding(esc.d(12)).heightIn(max = esc.d(90)).widthIn(max = esc.d(360)))
+        else Texto(juego.titulo, 26f, color = Color.White, lineas = 2, alinear = TextAlign.Center, traducir = false, sombra = true,
+            modifier = Modifier.padding(horizontal = esc.d(16)))
     }
 }
 
@@ -503,7 +525,7 @@ private fun ConsejoDippo(e: Estado, s: cl.nikalbazu.diptico.estado.Sesion, juego
             .clickable { Diptico.prepararAyuda() }.padding(esc.d(10)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(52).value, cara = cara)
+        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(44).value, cara = cara)
         Spacer(Modifier.width(esc.d(10)))
         Detalle(texto, 14f, color = Color.White, lineas = 3, modifier = Modifier.weight(1f))
     }

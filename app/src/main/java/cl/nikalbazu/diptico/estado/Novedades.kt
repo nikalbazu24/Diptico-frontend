@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "jugando-2.0-27"
-    const val NOMBRE = "Mientras juegas, más simple"
+    const val ID = "ficha-galeria-2.0-28"
+    const val NOMBRE = "La ficha con DIPPO y el logo de vuelta"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -294,9 +294,13 @@ object Novedades {
             Pagina("Tu dock de apps", "Hasta 5 apps fijas en la pantalla de abajo, también mientras juegas: se abren en esa pantalla y el juego sigue arriba. Fíjalas en el cajón con Y.", Icono.ESTRELLA, 0xFFFF9A6B),
             Pagina("Widget «Tu progreso»", "Cuánto te queda en tu juego, tu racha de días y el próximo logro de DIPPO, todo junto. Prueba el inicio nuevo en Ajustes › Inicio y widgets.", Icono.TROFEO, 0xFFFFC94D),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("jugando-2.0-27", "Mientras juegas, más simple", listOf(
             Pagina("Mientras juegas, más simple", "La pantalla libre quedó ordenada: DIPPO con un consejo, tu próximo paso con cuánto te queda, la música, tus apps y cuatro botones: Pista, Mi paso, Guías y Más.", Icono.MANDO, 0xFFFF9A6B),
             Pagina("Sin botón «Terminé»", "Ya no hace falta: cuando sales del juego y vuelves a Díptico, la partida se cierra sola y se guarda tu tiempo.", Icono.CHECK, 0xFF7AA8FF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("La ficha no se repite", "Al abrir la ficha, una pantalla tiene la información y la otra muestra las imágenes del juego mientras DIPPO te cuenta datos: cuánto dura, cuánto llevas y tus logros.", Icono.INFO, 0xFFFF9A6B),
+            Pagina("El logo vuelve", "Mientras juegas, el logo del juego está otra vez arriba, sobre su arte. Y la consola elegida se marca entera con su color.", Icono.PORTADA, 0xFF7AA8FF),
         )),
     )
 
