@@ -82,21 +82,23 @@ private fun Celda(j: Juego, elegido: Boolean, anchoCelda: Float, altoCelda: Floa
 
 /** Todos los juegos en una cuadrícula de carátulas. */
 @Composable
-fun Cuadricula(e: Estado, modifier: Modifier = Modifier) {
+fun Cuadricula(e: Estado, modifier: Modifier = Modifier, soloPortadas: Boolean = false) {
     val esc = LocalEscala.current
     val t = LocalTamJuegos.current
-    val anchoCelda = 96f * t
-    val altoCelda = 112f * t
+    // Solo portadas: celdas más chicas y sin título, para ver muchos juegos de una vez.
+    val anchoCelda = (if (soloPortadas) 78f else 96f) * t
+    val altoCelda = (if (soloPortadas) 78f else 112f) * t
     val lista = e.visibles
     BoxWithConstraints(modifier) {
         val anchoUnidades = maxWidth.value / esc.factor
-        val cols = ((anchoUnidades - 24f) / (anchoCelda + 12f)).toInt().coerceAtLeast(2)
+        val hueco = if (soloPortadas) 8f else 12f
+        val cols = ((anchoUnidades - 24f) / (anchoCelda + hueco)).toInt().coerceAtLeast(2)
         SideEffect { Teclas.columnasCuadricula = cols }
         if (lista.isEmpty()) VacioEstante(e)
-        RejillaCentrada(lista.size, cols, e.indiceSel, esc.d(12), esc.d(14),
+        RejillaCentrada(lista.size, cols, e.indiceSel, esc.d(hueco), esc.d(if (soloPortadas) 8f else 14f),
             PaddingValues(horizontal = esc.d(12), vertical = esc.d(14)), Modifier.fillMaxSize(), clave = { lista[it].clave }) { i ->
             val j = lista[i]
-            Celda(j, i == e.indiceSel, anchoCelda, altoCelda) {
+            Celda(j, i == e.indiceSel, anchoCelda, altoCelda, conTitulo = !soloPortadas) {
                 if (i == e.indiceSel) Diptico.jugar() else Diptico.elegirJuego(j.clave)
             }
         }

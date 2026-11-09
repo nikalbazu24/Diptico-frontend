@@ -91,7 +91,7 @@ data class Experiencia(
             }.distinctBy { it.tipo } } ?: emptyList(),
             o.optInt("columnas", 6).coerceIn(4, 8), o.optInt("filas", 4).coerceIn(3, 8), o.optInt("paginas", 1).coerceIn(1, 256),
             o.optString("inicioPerfil").takeIf { it in setOf("heroe", "widgets") },
-            o.optString("vistaPerfil").takeIf { it in setOf("cuadricula", "lista", "carrusel", "abanico", "lomos", "estante") },
+            o.optString("vistaPerfil").takeIf { it in setOf("cuadricula", "iconos", "lista", "carrusel", "abanico", "cartuchos", "lomos", "estante") },
             o.optString("sistemasPerfil").takeIf { it == "habitacion" || it in Diptico.VISTAS_CONSOLAS }
                 ?.let(Diptico::vistaConsolasCompatible),
             o.optString("vistaPartida").takeIf { valor -> VistaPartida.entries.any { it.name == valor } },

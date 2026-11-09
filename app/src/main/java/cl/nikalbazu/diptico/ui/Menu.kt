@@ -85,14 +85,18 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     conAyudaAngosta = conAyuda && !esc.angosta
-    val entrada = remember { androidx.compose.animation.core.Animatable(if (e.experiencia.movimiento) 0.84f else 1f) }
-    LaunchedEffect(e.experiencia.movimiento) {
-        if (e.experiencia.movimiento) entrada.animateTo(1f, tween(120)) else entrada.snapTo(1f)
+    // El menú llega flotando: sube un poco, crece apenas y se posa (según Animaciones y Velocidad).
+    val mov = ajusteMovimiento()
+    val entrada = remember { androidx.compose.animation.core.Animatable(if (mov.activo) 0f else 1f) }
+    LaunchedEffect(Unit) {
+        if (mov.activo) entrada.animateTo(1f, tween(mov.ms(340), easing = CurvaPosarse)) else entrada.snapTo(1f)
     }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Row(Modifier.fillMaxSize().graphicsLayer {
             alpha = entrada.value
-            translationY = esc.d(12).toPx() * (1f - entrada.value)
+            translationY = esc.d(28).toPx() * mov.intensidad * (1f - entrada.value)
+            val s = 1f - 0.03f * mov.intensidad * (1f - entrada.value)
+            scaleX = s; scaleY = s
         }) {
             // Con una sola pantalla la columna de secciones es más angosta, para dejar lugar a la vista previa.
             ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta || conAyuda) 156f else 196f)).fillMaxHeight())
@@ -107,8 +111,7 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
         // Menú desplegable de una opción con varias alternativas, encima de todo el menú.
         androidx.compose.animation.AnimatedVisibility(
             visible = e.extra.desplegable >= 0 && e.enOpciones,
-            enter = androidx.compose.animation.fadeIn(tween(140)) + androidx.compose.animation.scaleIn(tween(180), initialScale = 0.94f),
-            exit = androidx.compose.animation.fadeOut(tween(120)),
+            enter = entradaFlotante(mov), exit = salidaFlotante(mov),
         ) { VentanaDesplegable(e) }
     }
 }
@@ -283,7 +286,19 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
                     if (g.isNotEmpty() && (i == 0 || Diptico.grupoOpcion(s, opciones[i - 1]) != g)) {
                         Etiqueta(g, color, 10.5f, Modifier.padding(start = esc.d(6), top = esc.d(if (i == 0) 0f else 6f), bottom = esc.d(5)))
                     }
-                    FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) }
+                    // Las filas entran escalonadas al abrir una sección: una ola suave de arriba hacia abajo.
+                    val mov = ajusteMovimiento()
+                    val aparece = remember(s) { androidx.compose.animation.core.Animatable(if (mov.activo) 0f else 1f) }
+                    LaunchedEffect(s) {
+                        if (aparece.value < 1f) {
+                            kotlinx.coroutines.delay(retrasoEscalonado(mov, i).toLong())
+                            aparece.animateTo(1f, tween(mov.ms(280), easing = CurvaPosarse))
+                        }
+                    }
+                    Box(Modifier.graphicsLayer {
+                        alpha = aparece.value
+                        translationY = esc.d(16).toPx() * mov.intensidad * (1f - aparece.value)
+                    }) { FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) } }
                 }
             }
         }

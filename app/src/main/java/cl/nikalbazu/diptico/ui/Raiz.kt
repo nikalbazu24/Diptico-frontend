@@ -43,7 +43,12 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         LocalZoomLento provides (e.zoomLento && e.experiencia.movimiento && e.sesion == null),
         LocalTamJuegos provides e.tamJuegos,
         LocalCristal provides recordarCristal(e),
-        LocalMovimiento provides (e.experiencia.movimiento && Estilo.efectosCompletos && android.animation.ValueAnimator.areAnimatorsEnabled()),
+        LocalMovimiento provides (e.experiencia.movimiento && e.extra.animaciones != "apagadas" && Estilo.efectosCompletos && android.animation.ValueAnimator.areAnimatorsEnabled()),
+        LocalLenteVidrio provides e.extra.lente,
+        LocalAjusteMovimiento provides AjusteMovimiento(
+            intensidad = when (e.extra.animaciones) { "apagadas" -> 0f; "suaves" -> 0.6f; "intensas" -> 1.5f; else -> 1f },
+            duracion = when (e.extra.velocidadAnim) { "lenta" -> 1.45f; "rapida" -> 0.65f; else -> 1f },
+        ),
     ) {
         // El centro de control vive siempre en la pantalla de arriba (la principal), aunque se intercambien.
         val arribaFisica = miPantalla == android.view.Display.DEFAULT_DISPLAY &&
@@ -56,7 +61,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         // Deslizar hacia abajo desde el borde de arriba: por la izquierda, notificaciones; por la derecha, ajustes rápidos.
         val libre by androidx.compose.runtime.rememberUpdatedState(e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro)
         Box(Modifier.fillMaxSize().cortinaDesdeArriba { libre }) {
-            Box(Modifier.fillMaxSize().padding(top = esc.d(if (barra) ALTO_BARRA_SISTEMA else 0f))) {
+            Box(Modifier.fillMaxSize().padding(top = esc.d(if (barra && barraOcupaEspacio(e)) ALTO_BARRA_SISTEMA else 0f))) {
                 if (Estilo.tema.forma == "cristal" && Estilo.efectosCompletos && e.sesion == null &&
                     (e.panel in setOf(Panel.MENU, Panel.APPS, Panel.GALERIA, Panel.ESTUDIO) || (rol == Rol.INFERIOR && e.inicio != "widgets"))) {
                     e.seleccionado?.takeIf { (it.arte ?: it.portada)?.scheme?.let { s -> s != "app" } == true }?.let { juego ->

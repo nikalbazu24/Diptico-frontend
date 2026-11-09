@@ -141,6 +141,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                 }
             }
         }
+        DockApps(e)
         Paneles(e, conAyuda = false)
     }
 }
@@ -167,18 +168,15 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
         }
     }
     // Cada panel entra y sale con su animación: los de pantalla completa suben, los flotantes crecen.
+    val mov = if (animar) ajusteMovimiento() else AjusteMovimiento(0f)
     AnimatedContent(
         targetState = e.panel,
         transitionSpec = {
-            val completo = targetState in setOf(Panel.MENU, Panel.ENCUADRE, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
-            val entra = if (targetState == Panel.MENU || targetState == Panel.ESTUDIO) {
-                fadeIn(tween(if (animar) 100 else 0), initialAlpha = 0.88f)
-            } else if (completo) {
-                fadeIn(tween(if (animar) 260 else 0)) + slideInVertically(tween(if (animar) 340 else 0, easing = FastOutSlowInEasing)) { it / 8 }
-            } else {
-                fadeIn(tween(if (animar) 200 else 0)) + scaleIn(tween(if (animar) 260 else 0, easing = FastOutSlowInEasing), initialScale = 0.92f)
-            }
-            (entra togetherWith fadeOut(tween(if (animar) 160 else 0)) + scaleOut(tween(if (animar) 200 else 0), targetScale = 0.97f)).using(SizeTransform(clip = false))
+            // Los paneles completos suben y se posan; los flotantes crecen con un leve rebote (según Animaciones y Velocidad).
+            val completo = targetState in setOf(Panel.MENU, Panel.ESTUDIO, Panel.ENCUADRE, Panel.APPS, Panel.EDITAR_CONSOLA, Panel.FICHA, Panel.PORTS, Panel.BUSCAR, Panel.CARPETAS, Panel.ESTADISTICAS, Panel.IMAGENES, Panel.ASISTENTE, Panel.GALERIA)
+            val entra = if (completo) entradaVentana(mov) else entradaFlotante(mov)
+            val sale = if (initialState == Panel.NINGUNO) salidaVentana(mov) else salidaFlotante(mov)
+            (entra togetherWith sale).using(SizeTransform(clip = false))
         },
         label = "panel",
         modifier = Modifier.fillMaxSize(),
@@ -243,6 +241,8 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
     ) { vista ->
         when (vista) {
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
+            "iconos" -> Cuadricula(e, Modifier.fillMaxSize(), soloPortadas = true)
+            "cartuchos" -> CartuchosJuegos(e, Modifier.fillMaxSize())
             "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
             "carrusel" -> CarruselJuegos(e, Modifier.fillMaxSize())
             "abanico" -> AbanicoJuegos(e, Modifier.fillMaxSize())

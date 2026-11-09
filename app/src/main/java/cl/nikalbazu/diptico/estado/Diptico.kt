@@ -317,6 +317,21 @@ data class EstadoExtra(
     /** Menú desplegable abierto sobre la opción número [desplegable] del menú (-1 = cerrado) y la alternativa marcada. */
     val desplegable: Int = -1,
     val desplegableSel: Int = 0,
+    /** Animaciones: "apagadas", "suaves", "normales" o "intensas"; y su velocidad: "lenta", "normal" o "rapida". */
+    val animaciones: String = "normales",
+    val velocidadAnim: String = "normal",
+    /** Vidrio con lente (refracción y luz), en Android 13 o más nuevo. */
+    val lente: Boolean = true,
+    /** Dock de apps fijadas en la pantalla de abajo: si está, dónde, de qué tamaño, cuántas apps y si está desplegado. */
+    val dock: Boolean = false,
+    val dockLado: String = "abajo",
+    val dockTam: String = "medio",
+    val dockCantidad: Int = 5,
+    val dockAbierto: Boolean = false,
+    /** Barra de la hora: "flotante" (islas en las esquinas, sin espacio propio) o "completa" (la franja de siempre). */
+    val formaBarra: String = "flotante",
+    /** Colores de los íconos de la barra: "vivos", "pastel", "neon" o "tema". */
+    val coloresBarra: String = "vivos",
 )
 
 val Estado.estiloBarraArriba get() = extra.estiloBarraArriba
@@ -841,6 +856,15 @@ object Diptico {
                 estiloBarraAbajo = almacen.texto("estiloBarraAbajo", "solida"),
                 accesosCentro = almacen.texto("accesosCentro", "").split("|").filter { it.isNotBlank() },
                 vibracion = almacen.texto("vibracion", "apagada").also { cl.nikalbazu.diptico.audio.Vibracion.iniciar(app, it) },
+                animaciones = almacen.texto("animaciones", "normales"),
+                velocidadAnim = almacen.texto("velocidadAnim", "normal"),
+                lente = almacen.bool("lenteVidrio", true),
+                formaBarra = almacen.texto("formaBarra", "flotante"),
+                coloresBarra = almacen.texto("coloresBarra", "vivos"),
+                dock = almacen.bool("dock", false),
+                dockLado = almacen.texto("dockLado", "abajo"),
+                dockTam = almacen.texto("dockTam", "medio"),
+                dockCantidad = almacen.texto("dockCantidad", "5").toIntOrNull()?.coerceIn(3, 6) ?: 5,
             ),
             menuSimple = almacen.bool("menuSimple", true),
             turboCerrarApps = almacen.bool("turboCerrarApps", true),
@@ -985,6 +1009,21 @@ object Diptico {
 
     val ESTILOS_BARRA = listOf("solida", "difusa", "transparente")
     fun nombreEstiloBarra(v: String) = when (v) { "difusa" -> "Difusa"; "transparente" -> "Transparente"; else -> "Sólida" }
+
+    val FORMAS_BARRA = listOf("flotante", "completa")
+    fun nombreFormaBarra(v: String) = if (v == "completa") "Franja completa" else "Flotante"
+    val COLORES_BARRA = listOf("vivos", "pastel", "neon", "tema")
+    fun nombreColoresBarra(v: String) = when (v) { "pastel" -> "Pastel"; "neon" -> "Neón"; "tema" -> "Del tema"; else -> "Vivos" }
+
+    fun fijarFormaBarra(v: String) {
+        almacen.guardarTexto("formaBarra", v)
+        actualizar { it.copy(extra = it.extra.copy(formaBarra = v)) }
+    }
+
+    fun fijarColoresBarra(v: String) {
+        almacen.guardarTexto("coloresBarra", v)
+        actualizar { it.copy(extra = it.extra.copy(coloresBarra = v)) }
+    }
 
     fun fijarEstiloBarra(arriba: Boolean, v: String) {
         almacen.guardarTexto(if (arriba) "estiloBarraArriba" else "estiloBarraAbajo", v)
@@ -2365,8 +2404,8 @@ object Diptico {
         }
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
         if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
-        if (e.galeria == "vistas_juegos") return listOf("cuadricula", "estante", "lista", "carrusel", "abanico", "lomos").map { v ->
-            val detalle = when(v) { "cuadricula" -> "Todas las portadas a la vista"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
+        if (e.galeria == "vistas_juegos") return listOf("cuadricula", "iconos", "estante", "lista", "carrusel", "abanico", "cartuchos", "lomos").map { v ->
+            val detalle = when(v) { "cuadricula" -> "Todas las portadas a la vista"; "iconos" -> "Solo las portadas, sin textos: más juegos a la vista"; "cartuchos" -> "Cada juego en su cartucho o caja en 3D"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
             ItemGaleria(v, nombreVista(v), detalle, e.vista == v) { almacen.guardarTexto("vista", v); actualizar { it.copy(vista = v) }; cerrarPanel() }
         }
         if (e.galeria == "vistas_consolas") return VISTAS_CONSOLAS.map { v ->
@@ -3606,6 +3645,16 @@ object Diptico {
                     "La pantalla de abajo de la Thor es casi cuadrada: en automático todo se acomoda a esa forma.",
                 ) { ciclarZoom(false) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomAbajo) < 0.01f }) { fijarZoom(false, ZOOMS[it]) }
                 lista += opcionLista(
+                    "Forma de la barra de la hora", Icono.ARRIBA,
+                    "Flotante: la hora, la batería y los avisos van en una isla chica en la esquina y la pantalla queda entera para tus juegos. Franja completa: la barra de siempre, de lado a lado.",
+                    FORMAS_BARRA, FORMAS_BARRA.map(::nombreFormaBarra), e.extra.formaBarra, grupo = "Barras",
+                ) { fijarFormaBarra(it) }
+                lista += opcionLista(
+                    "Colores de los íconos", Icono.PALETA,
+                    "Cada ícono con su color: la batería verde, amarilla o roja según la carga (celeste al cargar), la campana rosada cuando hay avisos y el wifi azul. Del tema: como antes, sin colores.",
+                    COLORES_BARRA, COLORES_BARRA.map(::nombreColoresBarra), e.extra.coloresBarra, grupo = "Barras",
+                ) { fijarColoresBarra(it) }
+                lista += opcionLista(
                     if (e.dosDisponibles && !e.unaPantalla) "Barras de la pantalla de arriba" else "Barras de la pantalla", Icono.ARRIBA,
                     "Cómo se ven la barra de la hora y la de accesos: sólida (con el color del tema), difusa (esmerilada sobre la imagen) o transparente (casi sin fondo).",
                     ESTILOS_BARRA, ESTILOS_BARRA.map(::nombreEstiloBarra), e.estiloBarraArriba, grupo = "Barras",
@@ -3672,7 +3721,7 @@ object Diptico {
                     fijarTam(tamanos[(i + 1) % tamanos.size])
                 }
             }
-            Seccion.INICIO -> lista += opcionesInicio(e)
+            Seccion.INICIO -> { lista += opcionesInicio(e); lista += opcionesDock(e) }
             Seccion.TEMAS -> lista += opcionesTemas(e)
             Seccion.DECORACIONES -> {
                 lista += Opcion("Configurar por tema", icono = Icono.PALETA,
@@ -3744,6 +3793,27 @@ object Diptico {
             }
             Seccion.APARIENCIA -> {
                 lista += opcionesGlass(e).map { it.copy(grupo = it.grupo ?: "Material Glass") }
+                if (cl.nikalbazu.diptico.ui.LenteVidrio.disponible) lista += Opcion(
+                    "Efecto lente", if (e.extra.lente) "Sí" else "No", Icono.BRILLO,
+                    "El vidrio se comporta como una lupa suave: lo de atrás se curva en los bordes, el canto brilla con un leve arcoíris y una luz sigue tu dedo. Apágalo si prefieres un vidrio plano.",
+                    grupo = "Material Glass",
+                ) {
+                    val v = !estado.value.extra.lente
+                    almacen.guardarBool("lenteVidrio", v)
+                    actualizar { it.copy(extra = it.extra.copy(lente = v)) }
+                }
+                lista += opcionLista(
+                    "Animaciones", Icono.CHISPA,
+                    "Cómo se mueven el menú, las ventanas y las carpetas al abrirse y cerrarse. Apagadas: todo aparece al instante. Intensas: con un leve rebote.",
+                    listOf("apagadas", "suaves", "normales", "intensas"), listOf("Apagadas", "Suaves", "Normales", "Intensas"),
+                    e.extra.animaciones, grupo = "Movimiento",
+                ) { v -> almacen.guardarTexto("animaciones", v); actualizar { it.copy(extra = it.extra.copy(animaciones = v)) } }
+                lista += opcionLista(
+                    "Velocidad de las animaciones", Icono.RELOJ,
+                    "Lenta se disfruta más; rápida va directo al grano.",
+                    listOf("lenta", "normal", "rapida"), listOf("Lenta", "Normal", "Rápida"),
+                    e.extra.velocidadAnim, grupo = "Movimiento",
+                ) { v -> almacen.guardarTexto("velocidadAnim", v); actualizar { it.copy(extra = it.extra.copy(velocidadAnim = v)) } }
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
                     "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
@@ -7315,8 +7385,8 @@ object Diptico {
     }
     // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
 
-    private val VISTAS = listOf("estante", "carrusel", "abanico", "lomos", "cuadricula", "lista")
-    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Galería"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
+    private val VISTAS = listOf("estante", "carrusel", "abanico", "cartuchos", "lomos", "cuadricula", "iconos", "lista")
+    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Galería"; "iconos" -> "Solo portadas"; "cartuchos" -> "Cartuchos 3D"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
 
     val VISTAS_CONSOLAS = listOf("carpetas", "mosaico", "vitrina", "arriba", "sistemas", "lado", "rueda", "discos")
     /** Vistas donde primero se elige la consola (en grande) y después se entra a sus juegos. */
@@ -8734,6 +8804,36 @@ object Diptico {
     fun elegirPestanaApps(i: Int) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null), appsPestana = i, indice = 0) }
 
     /** Fija (o suelta) una app: las fijadas tienen su pestaña y su widget en el inicio. */
+    /** Despliega o recoge el dock de apps de la pantalla de abajo. */
+    fun abrirDock(abrir: Boolean) {
+        if (abrir && estado.value.appsFijadas.isEmpty()) { avisar("Fija tus apps en el cajón con Y y aparecerán aquí"); abrirApps(); return }
+        actualizar { it.copy(extra = it.extra.copy(dockAbierto = abrir)) }
+    }
+
+    private fun opcionesDock(e: Estado): List<Opcion> = listOfNotNull(
+        Opcion(
+            "Dock de apps", if (e.extra.dock) "Sí" else "No", Icono.APPS,
+            "Una manija en la pantalla de abajo que despliega tus apps fijadas y el cajón con todas. Fija apps en el cajón con Y (o mantenlas y elige Fijar).",
+            grupo = "Dock de apps",
+        ) {
+            val v = !estado.value.extra.dock
+            almacen.guardarBool("dock", v)
+            actualizar { it.copy(extra = it.extra.copy(dock = v, dockAbierto = false)) }
+        },
+        if (!e.extra.dock) null else opcionLista(
+            "Lugar del dock", Icono.FORMA, "Dónde vive la manija del dock en la pantalla de abajo.",
+            listOf("abajo", "izquierda", "derecha"), listOf("Abajo", "A la izquierda", "A la derecha"), e.extra.dockLado, grupo = "Dock de apps",
+        ) { v -> almacen.guardarTexto("dockLado", v); actualizar { it.copy(extra = it.extra.copy(dockLado = v)) } },
+        if (!e.extra.dock) null else opcionLista(
+            "Tamaño del dock", Icono.FORMA, "Íconos chicos, medianos o grandes.",
+            listOf("chico", "medio", "grande"), listOf("Chico", "Mediano", "Grande"), e.extra.dockTam, grupo = "Dock de apps",
+        ) { v -> almacen.guardarTexto("dockTam", v); actualizar { it.copy(extra = it.extra.copy(dockTam = v)) } },
+        if (!e.extra.dock) null else opcionLista(
+            "Apps en el dock", Icono.APPS, "Cuántas de tus apps fijadas se muestran (de 3 a 6).",
+            listOf("3", "4", "5", "6"), listOf("3 apps", "4 apps", "5 apps", "6 apps"), e.extra.dockCantidad.toString(), grupo = "Dock de apps",
+        ) { v -> almacen.guardarTexto("dockCantidad", v); actualizar { it.copy(extra = it.extra.copy(dockCantidad = v.toInt())) } },
+    )
+
     fun alternarFijada(paquete: String) {
         val l = estado.value.appsFijadas
         val n = if (paquete in l) l - paquete else l + paquete

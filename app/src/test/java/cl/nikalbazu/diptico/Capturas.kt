@@ -1171,6 +1171,14 @@ class Capturas {
     @Test fun t264_galeria_accesos() = foto("264_accesos_cortina", base().copy(panel = Panel.GALERIA, galeria = "accesos_cortina", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "Bisa")), indice = 0), Rol.INFERIOR)
     @Test fun t265_cortina_elegida() = foto("265_cortina_con_accesos_elegidos", base().copy(panel = Panel.CENTRO, cortina = "ajustes", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "Bisa"))), Rol.SUPERIOR)
     @Test fun t266_menu_musica_vibracion() = foto("266_menu_musica_vibracion", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true, indice = 0), Rol.SUPERIOR)
+    @Test fun t267_vista_iconos() = foto("267_vista_solo_portadas", base().copy(vista = "iconos"), Rol.INFERIOR)
+    @Test fun t268_vista_cartuchos() = foto("268_vista_cartuchos_3d", base().copy(vista = "cartuchos"), Rol.INFERIOR)
+    @Test fun t269_dock_abierto() = foto("269_dock_abierto", base().copy(appsFijadas = listOf("com.android.settings", "com.android.chrome", "org.ppsspp.ppsspp"), extra = EstadoExtra(dock = true, dockAbierto = true)), Rol.INFERIOR)
+    @Test fun t270_dock_manija() = foto("270_dock_manija", base().copy(extra = EstadoExtra(dock = true)), Rol.INFERIOR)
+    @Test fun t271_menu_apariencia_movimiento() = foto("271_menu_apariencia_movimiento", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 0), Rol.SUPERIOR)
+    @Test fun t272_barra_flotante_arriba() = foto("272_barra_flotante_arriba", base().copy(extra = EstadoExtra(coloresBarra = "vivos")), Rol.SUPERIOR)
+    @Test fun t273_barra_flotante_neon() = foto("273_barra_flotante_neon_abajo", base().copy(extra = EstadoExtra(coloresBarra = "neon", estiloBarraAbajo = "difusa")), Rol.INFERIOR)
+    @Test fun t274_barra_completa() = foto("274_barra_completa_pastel", base().copy(extra = EstadoExtra(formaBarra = "completa", coloresBarra = "pastel")), Rol.SUPERIOR)
 
     @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)
 

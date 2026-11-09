@@ -1,5 +1,5 @@
-- **Elige de una lista.** Las opciones con varias alternativas (fluidez, protector, orden, filtros, tamaños de pantalla, Liquid Glass, efecto de los botones…) abren un menú desplegable para elegir directo, sin dar la vuelta completa. Se reconocen por la marca ▾.
-- **Barra de accesos opcional.** Puede quedar fija o esconderse sola a los 5 segundos (Menú › Inicio › Barra de accesos). Vuelve deslizando hacia arriba desde el borde de abajo, tocando la pantalla o con B.
-- **Barras sólidas, difusas o transparentes.** Se elige por separado para la pantalla de arriba y la de abajo (Menú › Pantallas).
-- **Accesos de la cortina editables.** Elige qué accesos rápidos se ven y en qué orden, desde el lápiz al final de la cortina o en Menú › Android.
-- **Vibración.** Apagada, suave, media o fuerte al moverte y elegir. Nunca vibra mientras juegas (Menú › Música).
+- **Todo se mueve suave.** El menú, las ventanas, las listas y los menús desplegables llegan flotando y se posan, con una ola suave en las opciones. En Menú › Apariencia eliges Animaciones (apagadas, suaves, normales o intensas) y su velocidad (lenta, normal o rápida).
+- **Vidrio con lente.** Con Liquid Glass en Android 13 o más nuevo, el vidrio curva lo que tiene detrás en los bordes, separa levemente los colores en el canto, brilla como vidrio real y una luz sigue tu dedo. Se apaga en Menú › Apariencia › Efecto lente.
+- **Vista «Solo portadas».** Una cuadrícula sin textos para ver muchos juegos a la vez.
+- **Vista «Cartuchos 3D».** Cada juego de pie en su cartucho (o su caja si es de disco), con la portada de etiqueta; el elegido gira de frente.
+- **Dock de apps.** Una manija en la pantalla de abajo despliega tus apps fijadas (de 3 a 6) y el cajón con todas. Lado y tamaño a elección (Menú › Inicio).

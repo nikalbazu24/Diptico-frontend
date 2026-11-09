@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "orden-y-base-1.2-13"
-    const val NOMBRE = "Orden y base"
+    const val ID = "movimiento-y-vistas-1.3-14"
+    const val NOMBRE = "Movimiento y vistas"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -238,11 +238,17 @@ object Novedades {
             Pagina("Más estable", "Arreglos para que Díptico no se cierre con el clip de retoma, para que el aviso de cierre no vuelva siempre y para que los atajos del mando no se activen solos.", Icono.CHECK, 0xFF8E7CFF),
             Pagina("Respaldo completo y carpetas propias", "El respaldo ahora guarda tus copias de partidas y la música de los temas. Los íconos de las carpetas tienen dibujos propios, con más aire.", Icono.CARPETA, 0xFFFF7A59),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("orden-y-base-1.2-13", "Orden y base", listOf(
             Pagina("Elige de una lista", "Las opciones con varias alternativas (fluidez, protector, orden, filtros, tamaños, Glass…) abren una lista para elegir directo, sin dar la vuelta completa. Las marcan con ▾.", Icono.MENU, 0xFF8E7CFF, "A · B"),
             Pagina("Tu barra, a tu manera", "La barra de accesos puede quedar fija o esconderse sola. Y las barras de cada pantalla pueden ser sólidas, difusas o transparentes, por separado. Menú › Inicio y Menú › Pantallas.", Icono.APPS, 0xFF3BA8FF),
             Pagina("Accesos a tu gusto", "Elige qué accesos aparecen en los ajustes rápidos y en qué orden: toca el lápiz al final de la cortina. A muestra u oculta; X sube un acceso.", Icono.EDITAR, 0xFF2EC4A6, "X"),
             Pagina("Vibración", "Un toque de vibración al moverte y elegir, suave, media o fuerte. Nunca vibra mientras juegas. Menú › Música › Vibración.", Icono.CHISPA, 0xFFFF7A59),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Todo se mueve suave", "El menú, las ventanas y las listas llegan flotando y se posan. Elige Animaciones (apagadas, suaves, normales o intensas) y su velocidad en Menú › Apariencia.", Icono.CHISPA, 0xFF8E7CFF),
+            Pagina("Vidrio con lente", "Con Liquid Glass, el vidrio se comporta como una lupa suave: curva lo de atrás en los bordes, brilla en el canto y una luz sigue tu dedo. Menú › Apariencia › Efecto lente.", Icono.BRILLO, 0xFF8ECFD4),
+            Pagina("Dos vistas nuevas", "Solo portadas: una cuadrícula sin textos para ver muchos juegos. Cartuchos 3D: cada juego de pie en su cartucho o caja. Cámbialas con R3.", Icono.VISTA, 0xFFFFA726, "R3"),
+            Pagina("Dock de apps", "Activa el dock en Menú › Inicio: una manija abajo despliega tus apps fijadas y el cajón con todas. Eliges el lado, el tamaño y cuántas apps.", Icono.APPS, 0xFF2EC4A6),
         )),
     )
 

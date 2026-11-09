@@ -253,9 +253,10 @@ class NavegacionTest {
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("arreglos-1.2-12").map { it.id })
-        assertEquals(listOf(Novedades.ID, "arreglos-1.2-12", "glass-y-densidades-153-11"), Novedades.pendientes("mantenimiento-y-estabilidad-10").map { it.id })
-        assertEquals(listOf(Novedades.ID, "arreglos-1.2-12", "glass-y-densidades-153-11", "mantenimiento-y-estabilidad-10", "rendimiento-y-una-pantalla-9", "zoom-y-recorrido-carpetas-8"),
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("orden-y-base-1.2-13").map { it.id })
+        assertEquals(listOf(Novedades.ID, "orden-y-base-1.2-13"), Novedades.pendientes("arreglos-1.2-12").map { it.id })
+        assertEquals(listOf(Novedades.ID, "orden-y-base-1.2-13", "arreglos-1.2-12", "glass-y-densidades-153-11"), Novedades.pendientes("mantenimiento-y-estabilidad-10").map { it.id })
+        assertEquals(listOf(Novedades.ID, "orden-y-base-1.2-13", "arreglos-1.2-12", "glass-y-densidades-153-11", "mantenimiento-y-estabilidad-10", "rendimiento-y-una-pantalla-9", "zoom-y-recorrido-carpetas-8"),
             Novedades.pendientes("desenfoque-carpetas-7").map { it.id })
     }
 
