@@ -302,6 +302,30 @@ object Widgets {
 /** Descarga de portadas en curso. */
 data class Descarga(val hechos: Int, val total: Int, val actual: String, val encontrados: Int)
 
+/**
+ * Lo que se agregó desde la v1.2. Va en su propia clase porque [Estado] ya llegó al máximo de datos que acepta Java;
+ * se lee igual que antes (e.desplegable, e.vibracion…) gracias a las propiedades de abajo.
+ */
+data class EstadoExtra(
+    /** Estilo de las barras de cada pantalla: "solida", "difusa" o "transparente". */
+    val estiloBarraArriba: String = "solida",
+    val estiloBarraAbajo: String = "solida",
+    /** Accesos de la cortina elegidos, en orden (vacío = todos). */
+    val accesosCentro: List<String> = emptyList(),
+    /** Vibración al moverse y elegir: "apagada", "suave", "media" o "fuerte". */
+    val vibracion: String = "apagada",
+    /** Menú desplegable abierto sobre la opción número [desplegable] del menú (-1 = cerrado) y la alternativa marcada. */
+    val desplegable: Int = -1,
+    val desplegableSel: Int = 0,
+)
+
+val Estado.estiloBarraArriba get() = extra.estiloBarraArriba
+val Estado.estiloBarraAbajo get() = extra.estiloBarraAbajo
+val Estado.accesosCentro get() = extra.accesosCentro
+val Estado.vibracion get() = extra.vibracion
+val Estado.desplegable get() = extra.desplegable
+val Estado.desplegableSel get() = extra.desplegableSel
+
 data class Estado(
     val navegacion: NavegacionEstado = NavegacionEstado(),
     val experiencia: Experiencia = Experiencia(),
@@ -498,16 +522,8 @@ data class Estado(
     /** La barra flotante del inicio (arriba) está a la vista; se esconde sola salvo que [barraFija]. */
     val barra: Boolean = true,
     val barraFija: Boolean = true,
-    /** Estilo de las barras de cada pantalla: "solida", "difusa" o "transparente". */
-    val estiloBarraArriba: String = "solida",
-    /** Accesos de la cortina elegidos, en orden (vacío = todos). */
-    val accesosCentro: List<String> = emptyList(),
-    /** Vibración al moverse y elegir: "apagada", "suave", "media" o "fuerte". */
-    val vibracion: String = "apagada",
-    val estiloBarraAbajo: String = "solida",
-    /** Menú desplegable abierto sobre la opción número [desplegable] del menú (-1 = cerrado) y la alternativa marcada. */
-    val desplegable: Int = -1,
-    val desplegableSel: Int = 0,
+    /** Ajustes y estados nuevos agrupados aparte (Java no permite más de 255 datos en un solo constructor). */
+    val extra: EstadoExtra = EstadoExtra(),
     /** Menú de ajustes simple: solo las secciones de siempre; las avanzadas viven en «Más ajustes». */
     val menuSimple: Boolean = true,
     val turboCerrarApps: Boolean = true,
@@ -820,10 +836,12 @@ object Diptico {
             pausaCada = almacen.texto("pausaCada", "0").toIntOrNull() ?: 0,
             turbo = almacen.bool("turbo", true),
             barraFija = almacen.bool("barraFija", true),
-            estiloBarraArriba = almacen.texto("estiloBarraArriba", "solida"),
-            accesosCentro = almacen.texto("accesosCentro", "").split("|").filter { it.isNotBlank() },
-            vibracion = almacen.texto("vibracion", "apagada").also { cl.nikalbazu.diptico.audio.Vibracion.iniciar(app, it) },
-            estiloBarraAbajo = almacen.texto("estiloBarraAbajo", "solida"),
+            extra = EstadoExtra(
+                estiloBarraArriba = almacen.texto("estiloBarraArriba", "solida"),
+                estiloBarraAbajo = almacen.texto("estiloBarraAbajo", "solida"),
+                accesosCentro = almacen.texto("accesosCentro", "").split("|").filter { it.isNotBlank() },
+                vibracion = almacen.texto("vibracion", "apagada").also { cl.nikalbazu.diptico.audio.Vibracion.iniciar(app, it) },
+            ),
             menuSimple = almacen.bool("menuSimple", true),
             turboCerrarApps = almacen.bool("turboCerrarApps", true),
             turboNoMolestar = almacen.bool("turboNoMolestar", false),
@@ -970,7 +988,7 @@ object Diptico {
 
     fun fijarEstiloBarra(arriba: Boolean, v: String) {
         almacen.guardarTexto(if (arriba) "estiloBarraArriba" else "estiloBarraAbajo", v)
-        actualizar { if (arriba) it.copy(estiloBarraArriba = v) else it.copy(estiloBarraAbajo = v) }
+        actualizar { it.copy(extra = if (arriba) it.extra.copy(estiloBarraArriba = v) else it.extra.copy(estiloBarraAbajo = v)) }
     }
 
     fun cambiarBarraFija(v: Boolean) {
@@ -2638,7 +2656,7 @@ object Diptico {
     }
 
     fun cerrarPanel() {
-        if (estado.value.desplegable >= 0) actualizar { it.copy(desplegable = -1) }
+        if (estado.value.desplegable >= 0) actualizar { it.copy(extra = it.extra.copy(desplegable = -1)) }
         if (estado.value.appsMenu != null || estado.value.appsMoviendo != null) { cerrarOpcionesApp(); return }
         if (estado.value.coleccionVisual != null) actualizar { it.copy(coleccionVisual = null) }
         val e = estado.value
@@ -2949,7 +2967,7 @@ object Diptico {
         val e = estado.value
         if (e.panel == Panel.MENU && e.desplegable >= 0) {
             val total = opcionesSeccion(e.seccion).getOrNull(e.desplegable)?.alternativas?.size ?: 0
-            if (total > 0) actualizar { it.copy(desplegableSel = (it.desplegableSel + delta).coerceIn(0, total - 1)) }
+            if (total > 0) actualizar { it.copy(extra = it.extra.copy(desplegableSel = (it.desplegableSel + delta).coerceIn(0, total - 1))) }
             return
         }
         if (!e.configurado && e.panel == Panel.NINGUNO) {
@@ -3030,30 +3048,30 @@ object Diptico {
 
     /** Izquierda/derecha en el menú: cambia de columna. */
     fun columnaMenu(aOpciones: Boolean) {
-        actualizar { it.copy(enOpciones = aOpciones, indice = if (aOpciones) 0 else it.indice, desplegable = -1) }
+        actualizar { it.copy(enOpciones = aOpciones, indice = if (aOpciones) 0 else it.indice, extra = it.extra.copy(desplegable = -1)) }
     }
 
     fun elegirSeccion(s: Seccion) {
-        actualizar { it.copy(seccion = s, enOpciones = true, indice = 0, desplegable = -1) }
+        actualizar { it.copy(seccion = s, enOpciones = true, indice = 0, extra = it.extra.copy(desplegable = -1)) }
     }
 
     // ---------- Menús desplegables ----------
 
     /** Abre la lista de alternativas de la opción [i] del menú, con la puesta ahora marcada. */
     fun abrirDesplegable(i: Int, elegida: Int) {
-        actualizar { it.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0), indice = i) }
+        actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0)), indice = i) }
         Sonidos.abrir()
     }
 
     fun cerrarDesplegable() {
-        if (estado.value.desplegable >= 0) actualizar { it.copy(desplegable = -1) }
+        if (estado.value.desplegable >= 0) actualizar { it.copy(extra = it.extra.copy(desplegable = -1)) }
     }
 
     /** Pone la alternativa [n] de la opción abierta y cierra la lista. */
     fun elegirDesplegable(n: Int) {
         val e = estado.value
         val o = opcionesSeccion(e.seccion).getOrNull(e.desplegable)
-        actualizar { it.copy(desplegable = -1) }
+        actualizar { it.copy(extra = it.extra.copy(desplegable = -1)) }
         if (o?.elegir != null && n in o.alternativas.orEmpty().indices) o.elegir.invoke(n)
     }
 
@@ -3810,7 +3828,7 @@ object Diptico {
                 ) { v ->
                     almacen.guardarTexto("vibracion", v)
                     cl.nikalbazu.diptico.audio.Vibracion.nivel = v
-                    actualizar { it.copy(vibracion = v) }
+                    actualizar { it.copy(extra = it.extra.copy(vibracion = v)) }
                     cl.nikalbazu.diptico.audio.Vibracion.probar()
                 }
                 lista += Opcion(
@@ -7785,7 +7803,7 @@ object Diptico {
 
     private fun guardarAccesos(lista: List<String>) {
         almacen.guardarTexto("accesosCentro", lista.joinToString("|"))
-        actualizar { it.copy(accesosCentro = lista, centroVersion = it.centroVersion + 1) }
+        actualizar { it.copy(extra = it.extra.copy(accesosCentro = lista), centroVersion = it.centroVersion + 1) }
     }
 
     /** Muestra u oculta un acceso de la cortina. */

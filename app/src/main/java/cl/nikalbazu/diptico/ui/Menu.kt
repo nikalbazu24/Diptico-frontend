@@ -106,7 +106,7 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
         }
         // Menú desplegable de una opción con varias alternativas, encima de todo el menú.
         androidx.compose.animation.AnimatedVisibility(
-            visible = e.desplegable >= 0 && e.enOpciones,
+            visible = e.extra.desplegable >= 0 && e.enOpciones,
             enter = androidx.compose.animation.fadeIn(tween(140)) + androidx.compose.animation.scaleIn(tween(180), initialScale = 0.94f),
             exit = androidx.compose.animation.fadeOut(tween(120)),
         ) { VentanaDesplegable(e) }
@@ -118,11 +118,11 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
 private fun VentanaDesplegable(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val o = Diptico.opcionesSeccion(e.seccion).getOrNull(e.desplegable) ?: return
+    val o = Diptico.opcionesSeccion(e.seccion).getOrNull(e.extra.desplegable) ?: return
     val nombres = o.alternativas ?: return
     val color = colorSeccion(e.seccion)
     val lista = rememberLazyListState()
-    LaunchedEffect(e.desplegableSel) { lista.mostrar(e.desplegableSel) }
+    LaunchedEffect(e.extra.desplegableSel) { lista.mostrar(e.extra.desplegableSel) }
     Box(
         Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)).clickable(
             interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null,
@@ -147,7 +147,7 @@ private fun VentanaDesplegable(e: Estado) {
                 verticalArrangement = Arrangement.spacedBy(esc.d(4)),
             ) {
                 itemsIndexed(nombres) { i, nombre ->
-                    val marcada = i == e.desplegableSel
+                    val marcada = i == e.extra.desplegableSel
                     val puesta = i == o.elegida
                     Row(
                         Modifier.fillMaxWidth().heightIn(min = esc.d(48)).clip(RoundedCornerShape(esc.d(14)))

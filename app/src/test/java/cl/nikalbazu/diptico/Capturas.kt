@@ -12,6 +12,7 @@ import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.emu.App
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
+import cl.nikalbazu.diptico.estado.EstadoExtra
 import cl.nikalbazu.diptico.estado.Panel
 import cl.nikalbazu.diptico.estado.PasoTuto
 import cl.nikalbazu.diptico.estado.Seccion
@@ -1162,13 +1163,13 @@ class Capturas {
     @Test fun t256_ventana_juego_ayuda() = foto("256_ventana_juego_con_ayuda", conRecientes(base()).copy(panel = Panel.RAPIDO, indice = 1), Rol.INFERIOR)
     @Test fun t257_novedades_b8() = foto("257_novedades_beta8", base().copy(novedades = 1, novedadesDesde = "1.0-beta.7"), Rol.SUPERIOR)
     // ---------- v1.2 · Orden y base ----------
-    @Test fun t259_desplegable_glass() = foto("259_desplegable_glass", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 0, desplegable = 0, desplegableSel = 2), Rol.SUPERIOR)
-    @Test fun t260_desplegable_abajo() = foto("260_desplegable_abajo", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 0, desplegable = 0, desplegableSel = 1), Rol.INFERIOR)
+    @Test fun t259_desplegable_glass() = foto("259_desplegable_glass", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 0, extra = EstadoExtra(desplegable = 0, desplegableSel = 2)), Rol.SUPERIOR)
+    @Test fun t260_desplegable_abajo() = foto("260_desplegable_abajo", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 0, extra = EstadoExtra(desplegable = 0, desplegableSel = 1)), Rol.INFERIOR)
     @Test fun t261_barra_escondida() = foto("261_barra_escondida", conRecientes(base()).copy(barraFija = false, barra = false), Rol.SUPERIOR)
-    @Test fun t262_barras_difusas_arriba() = foto("262_barras_difusas_arriba", conRecientes(base()).copy(estiloBarraArriba = "difusa"), Rol.SUPERIOR)
-    @Test fun t263_barras_transparentes_arriba() = foto("263_barras_transparentes_arriba", conRecientes(base()).copy(estiloBarraArriba = "transparente"), Rol.SUPERIOR)
-    @Test fun t264_galeria_accesos() = foto("264_accesos_cortina", base().copy(panel = Panel.GALERIA, galeria = "accesos_cortina", accesosCentro = listOf("Turbo", "Wi-Fi", "Bisa"), indice = 0), Rol.INFERIOR)
-    @Test fun t265_cortina_elegida() = foto("265_cortina_con_accesos_elegidos", base().copy(panel = Panel.CENTRO, cortina = "ajustes", accesosCentro = listOf("Turbo", "Wi-Fi", "Bisa")), Rol.SUPERIOR)
+    @Test fun t262_barras_difusas_arriba() = foto("262_barras_difusas_arriba", conRecientes(base()).copy(extra = EstadoExtra(estiloBarraArriba = "difusa")), Rol.SUPERIOR)
+    @Test fun t263_barras_transparentes_arriba() = foto("263_barras_transparentes_arriba", conRecientes(base()).copy(extra = EstadoExtra(estiloBarraArriba = "transparente")), Rol.SUPERIOR)
+    @Test fun t264_galeria_accesos() = foto("264_accesos_cortina", base().copy(panel = Panel.GALERIA, galeria = "accesos_cortina", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "Bisa")), indice = 0), Rol.INFERIOR)
+    @Test fun t265_cortina_elegida() = foto("265_cortina_con_accesos_elegidos", base().copy(panel = Panel.CENTRO, cortina = "ajustes", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "Bisa"))), Rol.SUPERIOR)
     @Test fun t266_menu_musica_vibracion() = foto("266_menu_musica_vibracion", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true, indice = 0), Rol.SUPERIOR)
 
     @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)
