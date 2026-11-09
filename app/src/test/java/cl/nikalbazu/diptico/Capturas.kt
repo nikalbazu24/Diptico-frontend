@@ -1200,6 +1200,10 @@ class Capturas {
     @Test fun t287_dippo_franja() = foto("287_dippo_franja_abajo", base().copy(vista = "mosaicos"), Rol.INFERIOR)
     @Test fun t288_dippo_una_pantalla() = foto("288_dippo_una_pantalla", base().copy(vista = "mosaicos", modoPantallas = "una_negra"), Rol.UNICA)
     @Test fun t289_dippo_ajustes() = foto("289_dippo_ajustes", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true), Rol.SUPERIOR)
+    @Test fun t291_teclado_gboard() = foto("291_teclado_sugerencias", base().copy(panel = Panel.CLAVE, textoPara = "asistente", borrador = "Dame una pis", teclaFila = 2, teclaCol = 3), Rol.SUPERIOR)
+    @Test fun t292_teclado_herramientas() = foto("292_teclado_herramientas", base().copy(panel = Panel.CLAVE, textoPara = "notas", borrador = "La llave está en el templo", teclaFila = 0, teclaCol = 3, extra = EstadoExtra(tecladoEdicion = true)), Rol.SUPERIOR)
+    @Test fun t293_teclado_buscar() = foto("293_teclado_buscar_juego", base().copy(panel = Panel.CLAVE, textoPara = "buscar_juego", borrador = "ley", simbolos = false), Rol.INFERIOR)
+    @Test fun t294_dippo_habla_primero() = foto("294_dippo_habla_primero", base().let { b -> b.copy(panel = Panel.ASISTENTE, chat = listOf(cl.nikalbazu.diptico.estado.CentroBisa.saludoInicial(b)), indice = 2) }, Rol.INFERIOR)
     @Test fun t290_dippo_ajustes_colores() = foto("290_dippo_ajustes_colores", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true, indice = 3), Rol.SUPERIOR)
 
     @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)

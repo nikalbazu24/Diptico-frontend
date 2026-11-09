@@ -92,10 +92,10 @@ fun PanelAsistente(e: Estado) {
         Box(Modifier.align(Alignment.TopEnd).size(esc.d(320)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(8))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(42).value)
+                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(42).value, cara = if (e.pensando) CaraDippo.PENSANDO else null)
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Centro de DIPPO", 20f, lineas = 1)
+                    Texto("DIPPO", 20f, lineas = 1)
                     Detalle(
                         if (e.pensando) e.pensandoQue.ifBlank { "Pensando…" } else when (Diptico.motorEfectivo(e)) {
                             "local" -> "IA de tu consola"
@@ -194,7 +194,7 @@ fun PanelAsistente(e: Estado) {
                 }
             }
             Spacer(Modifier.height(esc.d(6)))
-            Pistas("A" to "Elegir", "X" to "Escribir", "L1" to "Hablar", "B" to "Cerrar")
+            Pistas("A" to "Elegir", "L1" to "Hablar", "X" to "Escribir", "B" to "Cerrar")
         }
     }
 }

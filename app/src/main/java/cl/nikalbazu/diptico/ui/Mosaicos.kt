@@ -71,15 +71,22 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
         if (lista.isEmpty()) { VacioEstante(e); return@BoxWithConstraints }
         val hueco = esc.d(10)
         val alto = maxHeight - esc.d(24)
-        val lado: Dp = ((alto - hueco) / 2).coerceAtLeast(esc.d(60))
+        // Con poco alto (una pantalla, con la vitrina arriba) va una sola fila de mosaicos más grandes.
+        val unaFila = alto < esc.d(200)
+        SideEffect { Teclas.mosaicosUnaFila = unaFila }
+        val lado: Dp = if (unaFila) alto.coerceAtLeast(esc.d(60)) else ((alto - hueco) / 2).coerceAtLeast(esc.d(60))
         LazyHorizontalGrid(
-            rows = GridCells.Fixed(2), state = estado, modifier = Modifier.fillMaxSize(),
+            rows = GridCells.Fixed(if (unaFila) 1 else 2), state = estado, modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = esc.d(18), vertical = esc.d(12)),
             horizontalArrangement = Arrangement.spacedBy(hueco), verticalArrangement = Arrangement.spacedBy(hueco),
         ) {
             items(lista.size, key = { lista[it].clave }, span = { i -> GridItemSpan(if (i == 0) maxLineSpan else 1) }) { i ->
                 val grande = i == 0
-                Mosaico(e, i, grande, if (grande) lado * 2 + hueco else lado)
+                when {
+                    unaFila -> Mosaico(e, i, grande, lado, ancho = if (grande) lado * 1.7f else lado)
+                    grande -> Mosaico(e, i, true, lado * 2 + hueco)
+                    else -> Mosaico(e, i, false, lado)
+                }
             }
         }
     }
@@ -87,7 +94,7 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp) {
+private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp, ancho: Dp = lado) {
     val esc = LocalEscala.current
     val j = e.visibles[i]
     val elegido = i == e.indiceSel
@@ -103,7 +110,7 @@ private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp) {
     val forma = RoundedCornerShape(esc.d(if (grande) 14 else 10))
     val jugado = (e.datos[j.clave]?.tiempo?.toLong() ?: 0L) > 0L
     Box(
-        Modifier.size(lado).graphicsLayer { scaleX = escala; scaleY = escala }
+        Modifier.size(ancho, lado).graphicsLayer { scaleX = escala; scaleY = escala }
             .then(if (elegido) Modifier.shadow(esc.d(18), forma, ambientColor = color, spotColor = color) else Modifier)
             .clip(forma)
             .background(color.copy(alpha = 0.25f))

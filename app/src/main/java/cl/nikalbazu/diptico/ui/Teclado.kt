@@ -39,6 +39,19 @@ import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.Panel
+import cl.nikalbazu.diptico.estado.Palabras
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 
 /**
  * Lo que se está escribiendo, con el cursor donde va y lo seleccionado resaltado
@@ -73,8 +86,10 @@ fun TextoEscrito(
 }
 
 /**
- * Teclado de Díptico: aparece en la mitad de abajo de la pantalla contraria a la del texto,
- * así se sigue viendo lo de arriba. Cruceta + A, o tocando. Tiene cursor, seleccionar, copiar, cortar y pegar.
+ * Teclado de Díptico, a la manera de Gboard: arriba la franja con palabras sugeridas (⋯ cambia a las herramientas
+ * de cursor, copiar y pegar; el micrófono dicta), las letras con ⇧ y ⌫ a los lados, y abajo ?123, coma, espacio,
+ * punto y Listo. Al tocar una letra se ve en grande encima del dedo; manteniéndola sale su tilde o su número.
+ * Con mando: cruceta elige, A escribe, Y pone la tilde, X espacio, B borra.
  */
 @Composable
 fun TecladoDiptico(e: Estado) {
@@ -105,65 +120,146 @@ fun TecladoDiptico(e: Estado) {
         // Arriba se sigue viendo la pantalla, apenas oscurecida.
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.35f to Color.Black.copy(alpha = 0.25f), 0.45f to p.fondo.copy(alpha = 0.9f))))
         Column(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.76f)
-                .clip(RoundedCornerShape(topStart = esc.d(24), topEnd = esc.d(24))).background(p.fondo2.copy(alpha = 0.97f)).sinCerrar()
-                .padding(horizontal = esc.d(12), vertical = esc.d(8)),
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.78f)
+                .clip(RoundedCornerShape(topStart = esc.d(22), topEnd = esc.d(22))).background(p.fondo2.copy(alpha = 0.98f)).sinCerrar()
+                .padding(horizontal = esc.d(8), vertical = esc.d(6)),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconoDiptico(Icono.TEXTO, p.tinta, 16f, acento = Coral)
-                Spacer(Modifier.width(esc.d(6)))
-                Texto(titulo, 14f, lineas = 1, modifier = Modifier.weight(1f))
+            // Lo que se escribe, con su título al lado.
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = esc.d(4))) {
+                Texto(titulo, 12.5f, color = p.tenue, lineas = 1, modifier = Modifier.weight(1f))
                 if (!sel.isEmpty()) Detalle("${sel.last - sel.first + 1} seleccionadas", 11f, color = Uva, lineas = 1)
-                Spacer(Modifier.width(esc.d(8)))
-                Detalle("${e.borrador.length} letras", 11f, lineas = 1)
             }
-            Spacer(Modifier.height(esc.d(4)))
+            Spacer(Modifier.height(esc.d(3)))
             TextoEscrito(
-                e.borrador.takeLast(300), "Escribe con la cruceta y A, toca las teclas, o usa Voz para dictar", 17f, 30f,
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(12))).background(p.superficie)
-                    .border(esc.d(1.5f), Uva.copy(alpha = 0.6f), RoundedCornerShape(esc.d(12))).padding(horizontal = esc.d(10), vertical = esc.d(5)),
+                e.borrador.takeLast(300), "Toca las letras, usa la cruceta o el micrófono para dictar", 17f, 30f,
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(20))).background(p.superficie)
+                    .padding(horizontal = esc.d(14), vertical = esc.d(5)),
                 cursor = e.cursor - maxOf(0, e.borrador.length - 300).let { if (e.cursor < 0) 0 else it },
                 seleccion = sel, oculto = oculto,
             )
-            Spacer(Modifier.height(esc.d(5)))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(4))) {
+            Spacer(Modifier.height(esc.d(4)))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
                 filas.forEachIndexed { f, fila ->
-                    val edicion = f == 0
-                    Row(Modifier.weight(if (edicion) 0.8f else 1f), horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
-                        fila.forEachIndexed { c, t ->
-                            val activa = f == e.teclaFila && c == e.teclaCol
-                            val peso = when (t) { "␣" -> 3.2f; "✓" -> 1.8f; "Voz" -> 1.5f; "⇧", "#", "abc", "⌫" -> 1.4f; else -> 1f }
-                            val especial = f == filas.size - 1 || edicion
-                            val marcada = (t == "⇧" && e.mayus) || (t == "Selec." && e.ancla != null)
-                            val fondo = when {
-                                activa -> Uva
-                                t == "✓" -> Coral.copy(alpha = 0.85f)
-                                marcada -> Sol.copy(alpha = 0.6f)
-                                especial -> p.fondo
-                                else -> p.superficie
-                            }
-                            Box(
-                                Modifier.weight(peso).fillMaxSize().clip(RoundedCornerShape(esc.d(9)))
-                                    .then(if (activa) Modifier.fondoBoton(Uva) else Modifier.background(fondo))
-                                    .clickable { Diptico.pulsarTecla(f, c) },
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                val icono = when (t) { "Copiar", "Cortar" -> Icono.COPIAR; "Pegar" -> Icono.PEGAR; "Voz" -> Icono.MICROFONO; else -> null }
-                                val etiqueta = when (t) { "␣" -> "espacio"; "✓" -> "Listo"; "⌫" -> "⌫"; else -> t }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    if (icono != null && !esc.angosta) {
-                                        IconoDiptico(icono, if (activa) SobreUva else p.tinta, 12f, acento = if (activa) SobreUva else Coral)
-                                        Spacer(Modifier.width(esc.d(3)))
-                                    }
-                                    Texto(etiqueta, if (t.length == 1) 20f else 13f, color = if (activa || t == "✓") SobreUva else p.tinta, lineas = 1)
-                                }
-                            }
-                        }
+                    if (f == 0) FranjaTeclado(e, fila, Modifier.weight(0.8f))
+                    else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                        fila.forEachIndexed { c, t -> Tecla(e, t, f, c) }
                     }
                 }
             }
-            Spacer(Modifier.height(esc.d(4)))
-            Pistas("A" to "Escribir", "B" to "Borrar", "L1 R1" to "Cursor", "L2" to "Seleccionar", "R2" to "Pegar", "Start" to "Listo")
+            Spacer(Modifier.height(esc.d(3)))
+            Pistas("A" to "Escribir", "Y" to "Tilde", "X" to "Espacio", "B" to "Borrar", "Start" to "Listo")
+        }
+    }
+}
+
+/** La franja de arriba: palabras sugeridas como en Gboard, o las herramientas de edición. */
+@Composable
+private fun FranjaTeclado(e: Estado, fila: List<String>, modifier: Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        fila.forEachIndexed { c, t ->
+            val activa = e.teclaFila == 0 && c == e.teclaCol
+            when {
+                t == "⋯" || t == "Voz" -> Box(
+                    Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true).clip(CircleShape)
+                        .then(if (activa) Modifier.fondoBoton(Uva) else if (t == "⋯" && e.extra.tecladoEdicion) Modifier.background(Uva.copy(alpha = 0.3f)) else Modifier)
+                        .clickable { Diptico.pulsarTecla(0, c) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    IconoDiptico(if (t == "Voz") Icono.MICROFONO else Icono.MENU, if (activa) SobreUva else p.tinta, 17f, acento = if (activa) SobreUva else Coral)
+                }
+                t.startsWith("»") -> {
+                    if (c > 1) Box(Modifier.width(esc.d(1)).fillMaxHeight(0.5f).background(p.linea))
+                    Box(
+                        Modifier.weight(1f).fillMaxHeight().padding(horizontal = esc.d(2)).clip(RoundedCornerShape(esc.d(10)))
+                            .then(if (activa) Modifier.fondoBoton(Uva) else Modifier)
+                            .clickable { Diptico.pulsarTecla(0, c) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Texto(t.drop(1), 15f, color = if (activa) SobreUva else p.tinta, lineas = 1, traducir = false,
+                            peso = if (c == 2) FontWeight.Bold else FontWeight.Medium)
+                    }
+                }
+                else -> {
+                    val icono = when (t) { "Copiar", "Cortar" -> Icono.COPIAR; "Pegar" -> Icono.PEGAR; else -> null }
+                    val marcada = t == "Selec." && e.ancla != null
+                    Row(
+                        Modifier.weight(1f).fillMaxHeight().padding(horizontal = esc.d(2)).clip(RoundedCornerShape(esc.d(10)))
+                            .then(if (activa) Modifier.fondoBoton(Uva) else Modifier.background(if (marcada) Sol.copy(alpha = 0.5f) else p.superficie.copy(alpha = 0.6f)))
+                            .clickable { Diptico.pulsarTecla(0, c) },
+                        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (icono != null && !esc.angosta) {
+                            IconoDiptico(icono, if (activa) SobreUva else p.tinta, 12f, acento = if (activa) SobreUva else Coral)
+                            Spacer(Modifier.width(esc.d(3)))
+                        }
+                        Texto(t, if (t.length == 1) 17f else 12f, color = if (activa) SobreUva else p.tinta, lineas = 1)
+                    }
+                }
+            }
+        }
+        // Sin sugerencias, la franja queda limpia (el micrófono sigue a la derecha).
+        if (!e.extra.tecladoEdicion && fila.none { it.startsWith("»") }) Spacer(Modifier.weight(1f))
+    }
+}
+
+/** Una tecla: se agranda en un globito al tocarla y, manteniéndola, escribe su tilde o su número. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun RowScope.Tecla(e: Estado, t: String, f: Int, c: Int) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val activa = f == e.teclaFila && c == e.teclaCol
+    val funcion = t in setOf("⇧", "⌫", "?123", "abc", "✓", "␣") || t.length > 1
+    val peso = when (t) { "␣" -> 4.6f; "✓", "?123", "abc" -> 1.5f; "⇧", "⌫" -> 1.45f; else -> 1f }
+    val toque = remember { MutableInteractionSource() }
+    val apretada by toque.collectIsPressedAsState()
+    val fondo = when {
+        t == "✓" -> Uva
+        t == "⇧" && e.extra.mayusFija -> Sol.copy(alpha = 0.75f)
+        t == "⇧" && e.mayus -> Sol.copy(alpha = 0.4f)
+        funcion -> p.fondo
+        else -> p.superficie
+    }
+    BoxWithConstraints(Modifier.weight(peso).fillMaxHeight().zIndex(if (apretada) 2f else 0f)) {
+        val alto = maxHeight
+        Box(
+            Modifier.fillMaxSize().shadow(esc.d(1), RoundedCornerShape(esc.d(8))).clip(RoundedCornerShape(esc.d(8)))
+                .then(if (activa) Modifier.fondoBoton(Uva) else Modifier.background(fondo))
+                .then(if (activa) Modifier.border(esc.d(2), Color.White, RoundedCornerShape(esc.d(8))) else Modifier)
+                .combinedClickable(
+                    interactionSource = toque, indication = null,
+                    onLongClick = {
+                        when {
+                            t == "⌫" -> Diptico.borrarPalabra()
+                            Palabras.variante(t) != null -> Diptico.escribirLetra(Palabras.variante(t)!!)
+                            else -> Diptico.pulsarTecla(f, c)
+                        }
+                    },
+                ) { Diptico.pulsarTecla(f, c) },
+            contentAlignment = Alignment.Center,
+        ) {
+            val color = if (activa || t == "✓") SobreUva else p.tinta
+            when (t) {
+                "✓" -> IconoDiptico(Icono.CHECK, color, 18f, acento = color)
+                "␣" -> Texto("espacio", 11.5f, color = color.copy(alpha = 0.55f), lineas = 1)
+                "⇧" -> Texto(if (e.extra.mayusFija) "⇪" else "⇧", 20f, color = color, lineas = 1, traducir = false)
+                else -> Texto(t, if (t.length == 1) 21f else 13f, color = color, lineas = 1, traducir = t.length > 1)
+            }
+            Palabras.pista(t)?.takeIf { !e.simbolos }?.let { h ->
+                Texto(h, 9.5f, color = color.copy(alpha = 0.5f), lineas = 1, traducir = false,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(end = esc.d(4), top = esc.d(1)))
+            }
+        }
+        // El globito con la letra en grande, encima del dedo (solo letras y signos).
+        if (apretada && !funcion) {
+            Box(
+                Modifier.align(Alignment.TopCenter).graphicsLayer { translationY = -alto.toPx() * 1.05f; scaleX = 1.15f; scaleY = 1.15f }
+                    .fillMaxWidth().height(alto).shadow(esc.d(6), RoundedCornerShape(esc.d(10)))
+                    .clip(RoundedCornerShape(esc.d(10))).background(p.superficie),
+                contentAlignment = Alignment.Center,
+            ) { Texto(t, 26f, color = p.tinta, lineas = 1, traducir = false) }
         }
     }
 }

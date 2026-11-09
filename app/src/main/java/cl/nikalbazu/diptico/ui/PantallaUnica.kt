@@ -145,7 +145,7 @@ private fun PantallaUnicaContenido(e: Estado) {
         val lateral = e.vistaConsolas == "lado" || e.vistaConsolas == "rueda"
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                .then(if (e.vista == "estante" && !lateral) Modifier else Modifier.fillMaxHeight(0.62f)),
+                .then(if (e.vista == "estante" && !lateral) Modifier else Modifier.fillMaxHeight(if (e.vista == "mosaicos") 0.72f else 0.62f)),
         ) {
             when {
                 lateral -> Row(Modifier.fillMaxWidth().weight(1f)) {

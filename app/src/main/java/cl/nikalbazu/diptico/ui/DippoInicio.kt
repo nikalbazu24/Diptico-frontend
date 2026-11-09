@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -43,8 +45,8 @@ internal fun caraDippoInicio(saludando: Boolean, bateria: Int, cargando: Boolean
 }
 
 /**
- * DIPPO siempre a la vista en el inicio. Al llegar saluda con un globito unos segundos y después se queda
- * flotando. Tocarlo abre su conversación; mantenerlo apretado, el dictado.
+ * DIPPO siempre a la vista en el inicio. Al llegar saluda con un globito, después propone una idea que se hace
+ * tocándola, y se queda flotando. Tocarlo abre su conversación; mantenerlo apretado, el dictado.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -55,30 +57,39 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
     val bateria = rememberBateria()
     val cargando = rememberCargando()
     val hora = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
-    var saludando by remember { mutableStateOf(false) }
+    // Primero saluda, después propone una idea (seguir tu partida, volver a un juego olvidado…). Tocar el globito la hace.
+    var fase by remember { mutableStateOf(0) }
+    val idea = remember(e.juegos.size, e.datos.size) { cl.nikalbazu.diptico.estado.CentroBisa.ideaInicio(e) }
     LaunchedEffect(e.extra.dippoSaludo) {
-        if (!e.extra.dippoSaludo) return@LaunchedEffect
+        if (!e.extra.dippoSaludo) { fase = 0; return@LaunchedEffect }
         delay(600)
-        saludando = true
-        delay(4200)
-        saludando = false
+        fase = 1
+        delay(2800)
+        fase = if (idea != null) 2 else 0
+        delay(7000)
+        fase = 0
     }
+    val saludando = fase == 1
     Row(modifier.testTag("dippo-inicio"), verticalAlignment = Alignment.CenterVertically) {
         AnimatedVisibility(
-            saludando,
+            fase != 0,
             enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
             exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
         ) {
             Box(
                 Modifier.padding(end = esc.d(6)).clip(RoundedCornerShape(esc.d(12)))
-                    .background(p.superficie.copy(alpha = 0.92f))
+                    .background(if (fase == 2) Coral.copy(alpha = 0.92f) else p.superficie.copy(alpha = 0.92f))
+                    .then(if (fase == 2 && idea != null) Modifier.clickable { fase = 0; if (idea.second.tipo.startsWith("bisa_")) Diptico.abrirAsistente(); Diptico.ejecutarAccion(idea.second) } else Modifier)
                     .padding(horizontal = esc.d(10), vertical = esc.d(5)),
-            ) { Texto(saludoDippo(hora), 12f, color = p.tinta, lineas = 1) }
+            ) {
+                if (fase == 2 && idea != null) Texto(idea.first, 12f, color = Color.White, lineas = 1, traducir = false)
+                else Texto(saludoDippo(hora), 12f, color = p.tinta, lineas = 1)
+            }
         }
         AvatarBisa(
             tam,
             Modifier.combinedClickable(onLongClick = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() },
-            cara = caraDippoInicio(saludando, bateria, cargando, hora),
+            cara = if (e.pensando) CaraDippo.PENSANDO else caraDippoInicio(saludando || fase == 2, bateria, cargando, hora),
         )
     }
 }

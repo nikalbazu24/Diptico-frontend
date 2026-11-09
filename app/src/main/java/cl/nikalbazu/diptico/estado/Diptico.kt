@@ -350,6 +350,12 @@ data class EstadoExtra(
     val dippoSaludo: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
     val dippoColor: String = "hora",
+    /** Cuando le hablas a DIPPO, te responde en voz alta. */
+    val dippoVoz: Boolean = true,
+    /** Teclado: la franja de arriba muestra las herramientas (cursor, copiar, pegar) en vez de las sugerencias. */
+    val tecladoEdicion: Boolean = false,
+    /** Teclado: mayúsculas fijas (dos toques a ⇧). */
+    val mayusFija: Boolean = false,
 )
 
 val Estado.estiloBarraArriba get() = extra.estiloBarraArriba
@@ -882,6 +888,7 @@ object Diptico {
                 dippoInicio = almacen.bool("dippoInicio", true),
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
+                dippoVoz = almacen.bool("dippoVoz", true),
                 dock = almacen.bool("dock", false),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
@@ -2837,18 +2844,93 @@ object Diptico {
 
     // ---------- Teclado de Díptico ----------
 
+    /**
+     * Teclado estilo Gboard. Fila 0: la franja de sugerencias (o las herramientas, con ⋯). Luego las letras,
+     * con ⇧ y ⌫ a los lados de la tercera fila, y abajo ?123, coma, espacio, punto y Listo.
+     */
     fun filasTeclado(e: Estado): List<List<String>> {
-        val filas = if (e.simbolos) listOf(
-            "1234567890", "áéíóúüñ@#&", "-_:;/()\"'!", "+=*%\$¿¡?,.",
+        val franja = if (e.extra.tecladoEdicion) listOf("⋯") + EDICION
+        else listOf("⋯") + sugerenciasTeclado(e).map { "»$it" } + listOf("Voz")
+        val m = e.mayus && !e.simbolos
+        fun fila(t: String) = t.map { c -> if (m) c.uppercase() else c.toString() }
+        val cuerpo = if (e.simbolos) listOf(
+            fila("1234567890"), fila("@#$%&-+()/"), listOf("¿", "¡", "*", "\"", "'", ":", ";", "!", "?", "⌫"),
         ) else listOf(
-            "1234567890", "qwertyuiop", "asdfghjklñ", "zxcvbnm,.?",
+            fila("qwertyuiop"), fila("asdfghjklñ"), listOf("⇧") + fila("zxcvbnm") + listOf("⌫"),
         )
-        val letras = filas.map { f -> f.map { c -> if (e.mayus && !e.simbolos) c.uppercase() else c.toString() } }
-        return listOf(EDICION) + letras + listOf(listOf("⇧", if (e.simbolos) "abc" else "#", "Voz", "␣", "⌫", "✓"))
+        return listOf(franja) + cuerpo + listOf(listOf(if (e.simbolos) "abc" else "?123", ",", "␣", ".", "✓"))
     }
 
-    /** Fila de arriba del teclado: mover el cursor, seleccionar, copiar, cortar y pegar. */
+    /** Fila de herramientas del teclado: mover el cursor, seleccionar, copiar, cortar y pegar. */
     val EDICION = listOf("◀", "▶", "Selec.", "Todo", "Copiar", "Cortar", "Pegar")
+
+    /** Las palabras que propone la franja del teclado para lo que se está escribiendo. */
+    fun sugerenciasTeclado(e: Estado): List<String> {
+        if (e.panel == Panel.CLAVE && (e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara.startsWith("ra_") || e.textoPara == "tema_enlace")) return emptyList()
+        val c = cursorDe(e)
+        val para = if (e.panel == Panel.PASO) "paso" else e.textoPara
+        val buscar = para == "buscar_juego" || para == "titulo" || para == "buscar_imagen"
+        return Palabras.sugerir(e.borrador.substring(0, c), para, e.juegos.map { it.titulo }, buscar)
+    }
+
+    /** Pone la sugerencia en lugar de la palabra que se estaba escribiendo (o del texto entero, si es un título). */
+    fun aceptarSugerencia(s: String) {
+        val e = estado.value
+        val c = cursorDe(e)
+        val antes = e.borrador.substring(0, c)
+        val despues = e.borrador.substring(c)
+        val buscar = e.textoPara == "buscar_juego" || e.textoPara == "titulo" || e.textoPara == "buscar_imagen"
+        val base = when {
+            buscar && s.contains(' ') || buscar && Palabras.normal(s).contains(Palabras.normal(antes.trim())) && antes.trim().contains(' ') -> ""
+            else -> antes.dropLast(Palabras.actual(antes).length)
+        }
+        val espacio = if (buscar && base.isEmpty()) "" else " "
+        val nuevo = base + s + espacio
+        cambiarBorrador(nuevo + despues)
+        actualizar { it.copy(cursor = if (despues.isEmpty()) -1 else nuevo.length, ancla = null, mayus = it.extra.mayusFija) }
+    }
+
+    /** Borra la palabra antes del cursor (mantener ⌫). */
+    fun borrarPalabra() {
+        val e = estado.value
+        val c = cursorDe(e)
+        if (c == 0) return
+        val antes = e.borrador.substring(0, c)
+        val sinEspacios = antes.trimEnd()
+        val corte = sinEspacios.length - Palabras.actual(sinEspacios).length.coerceAtLeast(if (sinEspacios.isEmpty()) 0 else 1)
+        val nuevo = antes.substring(0, corte.coerceIn(0, antes.length))
+        cambiarBorrador(nuevo + e.borrador.substring(c))
+        actualizar { it.copy(cursor = if (c >= e.borrador.length) -1 else nuevo.length, ancla = null, mayus = nuevo.isBlank()) }
+    }
+
+    private var ultimoShift = 0L
+
+    /** ⇧: un toque, la siguiente letra en mayúscula; dos toques seguidos, mayúsculas fijas. */
+    private fun pulsarShift() {
+        val e = estado.value
+        val ahora = System.currentTimeMillis()
+        when {
+            e.extra.mayusFija -> actualizar { it.copy(mayus = false, extra = it.extra.copy(mayusFija = false)) }
+            e.mayus && ahora - ultimoShift < 450 -> actualizar { it.copy(mayus = true, extra = it.extra.copy(mayusFija = true)) }
+            else -> actualizar { it.copy(mayus = !it.mayus) }
+        }
+        ultimoShift = ahora
+    }
+
+    /** La tecla elegida con la cruceta, con su otra letra (Y): tildes y números. */
+    fun varianteElegida() {
+        val e = estado.value
+        val t = filasTeclado(e).getOrNull(e.teclaFila)?.getOrNull(e.teclaCol) ?: return
+        val v = Palabras.variante(t)
+        if (v != null) escribirLetra(v) else pulsarValor("⇧")
+    }
+
+    /** Escribe una letra y suelta la mayúscula de una sola vez. */
+    fun escribirLetra(t: String) {
+        val e = estado.value
+        escribir(t)
+        if (e.mayus && !e.simbolos && !e.extra.mayusFija && t != "." && t != "?" && t != "!") actualizar { it.copy(mayus = false) }
+    }
 
     fun moverTecla(dx: Int, dy: Int) {
         val e = estado.value
@@ -2881,9 +2963,17 @@ object Diptico {
     fun pulsarValor(t: String) {
         val e = estado.value
         when (t) {
-            "⇧" -> actualizar { it.copy(mayus = !it.mayus) }
-            "#", "abc" -> actualizar { it.copy(simbolos = !it.simbolos) }
-            "␣" -> escribir(" ")
+            "⇧" -> pulsarShift()
+            "#", "?123", "abc" -> actualizar { it.copy(simbolos = !it.simbolos) }
+            "⋯" -> actualizar { it.copy(extra = it.extra.copy(tecladoEdicion = !it.extra.tecladoEdicion)) }
+            "␣" -> {
+                // Dos espacios seguidos ponen un punto, como en Gboard.
+                val c = cursorDe(e)
+                val antes = e.borrador.substring(0, c)
+                if (antes.length >= 2 && antes.last() == ' ' && antes[antes.length - 2].isLetterOrDigit()) {
+                    borrarLetra(); escribir(". ")
+                } else escribir(" ")
+            }
             "⌫" -> borrarLetra()
             "✓" -> terminarTexto()
             "Voz" -> dictar("teclado")
@@ -2894,10 +2984,7 @@ object Diptico {
             "Copiar" -> copiar(false)
             "Cortar" -> copiar(true)
             "Pegar" -> pegar()
-            else -> {
-                escribir(t)
-                if (e.mayus && !e.simbolos) actualizar { it.copy(mayus = false) }
-            }
+            else -> if (t.startsWith("»")) aceptarSugerencia(t.drop(1)) else escribirLetra(t)
         }
     }
 
@@ -2920,7 +3007,7 @@ object Diptico {
         val nuevo = (antes.length + t.length).coerceAtMost(estado.value.borrador.length)
         actualizar { it.copy(cursor = if (despues.isEmpty()) -1 else nuevo, ancla = null) }
         // Después de un punto, la siguiente va con mayúscula.
-        if (t == "." || t == "?" || t == "!") actualizar { it.copy(mayus = true) }
+        if (t.trimEnd().let { it.endsWith(".") || it.endsWith("?") || it.endsWith("!") }) actualizar { it.copy(mayus = true) }
     }
 
     fun borrarLetra() {
@@ -3806,12 +3893,21 @@ object Diptico {
                     actualizar { it.copy(extra = it.extra.copy(dippoInicio = v)) }
                 }
                 lista += Opcion(
-                    "Saludo al llegar", if (e.extra.dippoSaludo) "Sí" else "No", Icono.BISA,
-                    "Cuando vuelves al inicio, DIPPO te da los buenos días, las buenas tardes o las buenas noches con un globito.",
+                    "Saludo e ideas al llegar", if (e.extra.dippoSaludo) "Sí" else "No", Icono.BISA,
+                    "Cuando vuelves al inicio, DIPPO te saluda con un globito y te propone algo: seguir tu partida, volver a un juego olvidado o elegir por ti. Toca el globito para hacerlo.",
                 ) {
                     val v = !estado.value.extra.dippoSaludo
                     almacen.guardarBool("dippoSaludo", v)
                     actualizar { it.copy(extra = it.extra.copy(dippoSaludo = v)) }
+                }
+                lista += Opcion(
+                    "Responder con voz", if (e.extra.dippoVoz) "Sí" else "No", Icono.MICROFONO,
+                    "Cuando le hablas a DIPPO (mantenlo apretado o toca Hablar), te responde en voz alta. Así no tienes que escribir ni leer.",
+                ) {
+                    val v = !estado.value.extra.dippoVoz
+                    almacen.guardarBool("dippoVoz", v)
+                    actualizar { it.copy(extra = it.extra.copy(dippoVoz = v)) }
+                    if (!v) cl.nikalbazu.diptico.audio.VozDippo.callar()
                 }
                 lista += opcionLista(
                     "Colores de DIPPO", Icono.PALETA,
@@ -5096,8 +5192,27 @@ object Diptico {
         avisar(Idioma.IDIOMAS.firstOrNull { it.first == cod }?.second ?: cod)
     }
 
+    private var ultimaCharla = 0L
+
+    /**
+     * Abre a DIPPO. Si es la primera vez o pasó un rato, él habla primero: te cuenta qué notó (lo último que
+     * jugaste, tu nota, un juego olvidado) y te deja botones listos, así no tienes que escribir nada.
+     */
     fun abrirAsistente() {
+        val e = estado.value
+        val ahora = System.currentTimeMillis()
+        val fresco = e.chat.isEmpty() || ahora - ultimaCharla > 20 * 60_000L
         actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
+        if (fresco && !e.pensando) respuestaBisa(CentroBisa.saludoInicial(estado.value))
+        ultimaCharla = ahora
+    }
+
+    /** Si la última pregunta fue con la voz, DIPPO responde hablando. */
+    private var porVoz = false
+
+    private fun leerSiHablo(texto: String) {
+        if (porVoz && estado.value.extra.dippoVoz && !texto.startsWith("⚠")) cl.nikalbazu.diptico.audio.VozDippo.decir(app, texto, estado.value.idioma)
+        porVoz = false
     }
 
     private var claveParaAsistente = false
@@ -5116,7 +5231,10 @@ object Diptico {
         add(Opcion("Escribir", "texto", Icono.TEXTO) { escribirAlAsistente() })
         val ultima = e.chat.lastOrNull()
         val acciones = if (ultima?.rol == "ia") ultima.acciones else emptyList()
-        (acciones + CentroBisa.acciones(e)).distinctBy { it.tipo to it.valor }.forEach { a ->
+        // Primero lo que propuso DIPPO, luego preguntas listas para tocar según lo que tienes delante, y al final los atajos.
+        val conIA = motorEfectivo(e) != "ninguno"
+        (acciones + CentroBisa.preguntasListas(e, conIA) + CentroBisa.acciones(e)).distinctBy { it.tipo to it.valor }
+            .filterNot { a -> e.chat.any { it.rol == "yo" && it.texto == a.valor } }.forEach { a ->
             add(Opcion(a.etiqueta, a.tipo, Icono.CHISPA) { ejecutarAccion(a) })
         }
         if (!e.pensando && e.chat.any { it.rol == "yo" } && motorEfectivo(e) != "ninguno") {
@@ -5133,6 +5251,7 @@ object Diptico {
     }
 
     private fun respuestaBisa(mensaje: MensajeChat, pregunta: String? = null) {
+        leerSiHablo(mensaje.texto)
         actualizar {
             val nuevo = if (pregunta == null) listOf(mensaje) else listOf(MensajeChat("yo", pregunta), mensaje)
             it.copy(chat = it.chat.takeLast(38) + nuevo, indice = if (mensaje.acciones.isEmpty()) 0 else 2)
@@ -5248,6 +5367,8 @@ object Diptico {
             }
             val msg = r.fold({ Asistente.interpretar(it) }, { MensajeChat("ia", "⚠ " + (it.message ?: "No pude hablar con la IA.")) })
             actualizar { it.copy(chat = chat + msg, pensando = false, pensandoQue = "", indice = if (msg.acciones.isNotEmpty()) 2 else 0) }
+            leerSiHablo(msg.texto)
+            ultimaCharla = System.currentTimeMillis()
         }
     }
 
@@ -5274,6 +5395,7 @@ object Diptico {
 
     /** Las acciones sensibles al juego comprueban de nuevo el contexto al pulsarlas. */
     fun ejecutarAccion(a: AccionChat) {
+        porVoz = false
         val e = estado.value
         val c = CentroBisa.contexto(e)
         if (e.pensando) return
@@ -6302,6 +6424,7 @@ object Diptico {
 
     fun dictar(para: String) {
         vozPara = para
+        cl.nikalbazu.diptico.audio.VozDippo.callar()
         if (pedirVoz?.invoke() != true) avisar("Esta consola no tiene dictado por voz. Instala la app de Google para usarlo.")
     }
 
@@ -6309,7 +6432,11 @@ object Diptico {
         val t = texto.trim()
         if (t.isEmpty()) return
         when (vozPara) {
-            "bisa" -> { if (estado.value.panel != Panel.ASISTENTE) abrirAsistente(); preguntar(t.replaceFirstChar { it.uppercase() }) }
+            "bisa" -> {
+                if (estado.value.panel != Panel.ASISTENTE) abrirAsistente()
+                porVoz = true
+                preguntar(t.replaceFirstChar { it.uppercase() })
+            }
             else -> escribir((if (estado.value.borrador.isNotEmpty() && !estado.value.borrador.endsWith(" ")) " " else "") + t)
         }
     }

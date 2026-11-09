@@ -266,7 +266,7 @@ object Teclas {
 
         // Escribiendo (próximo paso o un texto): el teclado manda, salvo B (cerrar) y Start (guardar).
         if (e.conTeclado) {
-            // Teclado de Díptico: cruceta elige, A escribe, B borra (o cierra si no hay nada), X espacio, Y mayúsculas,
+            // Teclado de Díptico: cruceta elige, A escribe, B borra (o cierra si no hay nada), X espacio, Y tilde o número de la tecla (si no tiene, mayúscula),
             // L1/R1 mueven el cursor, L2 selecciona, R2 pega, Start listo.
             if (abajo) {
                 val d = dir(code)
@@ -282,7 +282,7 @@ object Teclas {
                 code == KeyEvent.KEYCODE_BUTTON_B || code == KeyEvent.KEYCODE_BACK ->
                     if (e.borrador.isEmpty()) Diptico.cerrarPanel() else Diptico.borrarLetra()
                 code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.escribir(" ")
-                code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.pulsarValor("⇧")
+                code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.varianteElegida()
                 code == KeyEvent.KEYCODE_BUTTON_L2 -> Diptico.alternarSeleccion()
                 code == KeyEvent.KEYCODE_BUTTON_R2 -> Diptico.pegar()
                 code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarTexto()
@@ -559,10 +559,15 @@ object Teclas {
      * Vista Mosaicos: el juego 0 es el mosaico grande (ocupa dos filas); del 1 en adelante van de a dos por
      * columna (arriba el impar, abajo el par). Devuelve cuánto moverse en la lista para la dirección pedida.
      */
+    @Volatile
+    var mosaicosUnaFila = false
+
     fun pasoMosaico(e: Estado, dx: Int, dy: Int): Int {
         val i = e.indiceSel
         val n = e.visibles.size
         if (n <= 1) return 0
+        // Con poco alto (una pantalla) los mosaicos van en una sola fila: izquierda y derecha nomás.
+        if (mosaicosUnaFila) return if (dx != 0) (i + dx).coerceIn(0, n - 1) - i else 0
         if (i == 0) return if (dx > 0) 1 else 0
         val fila = (i - 1) % 2
         val destino = when {

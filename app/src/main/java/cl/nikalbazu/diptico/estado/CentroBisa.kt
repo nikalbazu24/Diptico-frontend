@@ -120,4 +120,126 @@ internal object CentroBisa {
             else -> "Te propongo estos juegos de tu biblioteca. Priorizo tu cola y tus favoritos."
         }, opciones)
     }
+    // ---------- DIPPO toma la iniciativa: habla primero y deja todo listo para tocar ----------
+
+    private fun corto(t: String) = if (t.length <= 22) t else t.take(20).trimEnd() + "…"
+
+    private fun hace(ms: Long): String {
+        val dias = ms / 86_400_000L
+        return when {
+            dias <= 0L -> "hoy"
+            dias == 1L -> "ayer"
+            dias < 7L -> "hace $dias días"
+            dias < 30L -> "hace ${dias / 7} semana${if (dias >= 14) "s" else ""}"
+            else -> "hace más de un mes"
+        }
+    }
+
+    private fun visibles(e: Estado) = e.juegos.filter { e.datos[it.clave]?.oculto != true }
+
+    /** El último juego que jugaste. */
+    fun ultimo(e: Estado): Juego? = visibles(e).filter { (e.datos[it.clave]?.ultimo ?: 0L) > 1L }
+        .maxByOrNull { e.datos[it.clave]?.ultimo ?: 0L }
+
+    /** Un juego que te gustaba (favorito o con harto tiempo) y que no tocas hace más de dos semanas. */
+    fun olvidado(e: Estado, salvo: String?): Juego? {
+        val ahora = System.currentTimeMillis()
+        return visibles(e).asSequence().filter { it.clave != salvo }.mapNotNull { j ->
+            val d = e.datos[j.clave] ?: return@mapNotNull null
+            if (d.avance == AvanceJuego.TERMINADO.name || d.ultimo <= 1L || ahora - d.ultimo < 14 * 86_400_000L) return@mapNotNull null
+            if (!d.favorito && d.tiempo < 2 * 3600) return@mapNotNull null
+            j to (d.tiempo + if (d.favorito) 50 * 3600 else 0)
+        }.maxByOrNull { it.second }?.first
+    }
+
+    /** Lo que DIPPO dice apenas lo abres: se fija en lo que estabas haciendo y te deja botones listos. */
+    fun saludoInicial(e: Estado): MensajeChat {
+        val c = contexto(e)
+        val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        val nombre = e.nombre.trim().takeIf { it.isNotEmpty() }?.let { ", $it" } ?: ""
+        val hola = when (h) { in 6..11 -> "¡Buenos días$nombre!"; in 12..19 -> "¡Buenas tardes$nombre!"; else -> "¡Buenas noches$nombre!" }
+        val j = c.juego
+        if (c.jugando && j != null) {
+            val min = (System.currentTimeMillis() - (e.sesion?.inicio ?: System.currentTimeMillis())) / 60_000
+            val r = Asistente.reintentos(j.clave)
+            val texto = when {
+                r >= 2 -> "Llevas $r intentos seguidos en ${j.titulo}. ¿Te tiro una pista sin spoilers?"
+                min >= 90 -> "Llevas ${min / 60} h y ${min % 60} min en ${j.titulo}. ¿Seguimos o te aviso para una pausa?"
+                else -> "Aquí estoy, copiloto. Llevas $min min en ${j.titulo}. Toca lo que necesites."
+            }
+            return MensajeChat("ia", texto, acciones(e).filter { it.tipo in setOf("bisa_pista", "bisa_paso", "bisa_pausa") }.take(3))
+        }
+        val partes = mutableListOf(hola)
+        val botones = mutableListOf<AccionChat>()
+        val ult = ultimo(e)
+        if (ult != null) {
+            val d = e.datos[ult.clave]
+            val paso = d?.paso.orEmpty().trim()
+            partes += if (paso.isNotEmpty()) "La última vez jugaste ${ult.titulo} y anotaste: «${paso.take(90)}»."
+            else "Lo último que jugaste fue ${ult.titulo}, ${hace(System.currentTimeMillis() - (d?.ultimo ?: 0L))}."
+            botones += AccionChat("jugar", ult.clave, "Seguir con ${corto(ult.titulo)}")
+        }
+        val sel = e.seleccionado?.takeIf { it.clave != ult?.clave }
+        val olv = olvidado(e, ult?.clave)
+        when {
+            olv != null -> {
+                val dias = (System.currentTimeMillis() - (e.datos[olv.clave]?.ultimo ?: 0L)) / 86_400_000L
+                partes += "Y hace $dias días que no le das a ${olv.titulo}… ¿una vueltita?"
+                botones += AccionChat("ver", olv.clave, "Ver ${corto(olv.titulo)}")
+            }
+            ult == null -> {
+                partes += "Todavía no te veo jugar nada por aquí. ¿Te elijo algo de tu biblioteca?"
+                botones += AccionChat("bisa_sugerir", "", "Elige por mí")
+            }
+            else -> partes += "¿Seguimos o te sugiero otra cosa?"
+        }
+        if (sel != null) botones += AccionChat("preguntar", "Cuéntame en pocas líneas de qué trata ${sel.titulo}, sin spoilers, y cuánto dura más o menos.", "¿De qué trata ${corto(sel.titulo)}?")
+        if (botones.none { it.tipo == "bisa_sugerir" }) botones += AccionChat("bisa_sugerir", "", "Otra idea")
+        return MensajeChat("ia", partes.joinToString(" "), botones.take(4))
+    }
+
+    /** Una idea corta para el globito de DIPPO en el inicio (y qué hace al tocarla). */
+    fun ideaInicio(e: Estado): Pair<String, AccionChat>? {
+        val ult = ultimo(e)
+        val olv = olvidado(e, ult?.clave)
+        val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        return when {
+            ult != null && (e.datos[ult.clave]?.paso?.isNotBlank() == true) -> "¿Seguimos con ${corto(ult.titulo)}?" to AccionChat("jugar", ult.clave, "")
+            olv != null && h in 10..22 -> "¿Y si vuelves a ${corto(olv.titulo)}?" to AccionChat("ver", olv.clave, "")
+            ult != null -> "¿Otra partida de ${corto(ult.titulo)}?" to AccionChat("jugar", ult.clave, "")
+            e.juegos.isNotEmpty() -> "¿Te elijo un juego?" to AccionChat("bisa_sugerir", "", "")
+            else -> null
+        }
+    }
+
+    /**
+     * Preguntas listas para tocar según lo que tienes delante, para no escribir. [conIA]: si hay una IA que
+     * pueda responder preguntas abiertas (si no, solo las que DIPPO resuelve solo).
+     */
+    fun preguntasListas(e: Estado, conIA: Boolean): List<AccionChat> {
+        val c = contexto(e)
+        val j = c.juego
+        return buildList {
+            if (j != null && c.jugando) {
+                add(AccionChat("bisa_pista", j.clave, "Estoy atascado"))
+                if (conIA) {
+                    add(AccionChat("preguntar", "¿Cuáles son los controles básicos de ${j.titulo} y un truco útil para jugar mejor?", "Controles y trucos"))
+                    add(AccionChat("preguntar", "Llevo ${(e.datos[j.clave]?.tiempo ?: 0) / 3600} horas en ${j.titulo}. ¿Cuánto dura en total y qué me queda más o menos, sin spoilers?", "¿Cuánto me falta?"))
+                }
+            } else if (j != null) {
+                if (conIA) {
+                    add(AccionChat("preguntar", "Cuéntame en pocas líneas de qué trata ${j.titulo}, sin spoilers, y cuánto dura más o menos.", "¿De qué trata?"))
+                    add(AccionChat("preguntar", "Dame 3 trucos o secretos buenos de ${j.titulo}, cortitos y sin arruinar la historia.", "Trucos y secretos"))
+                    add(AccionChat("preguntar", "¿Qué juegos de mi biblioteca se parecen a ${j.titulo}? Proponme hasta 3, con el botón para jugarlos.", "Parecidos en mi biblioteca"))
+                }
+                add(AccionChat("bisa_pista", j.clave, "Estoy atascado"))
+            }
+            if (!c.jugando) {
+                if (conIA) add(AccionChat("preguntar", "Elige por mí un juego de mi biblioteca que me pueda gustar hoy, dime por qué en una línea y dame el botón para jugarlo.", "Sorpréndeme"))
+                add(AccionChat("preguntar", "Quiero algo corto para 20 minutos", "Algo corto"))
+                if (conIA) add(AccionChat("preguntar", "Elige un tema de Díptico que combine con hoy y dame el botón para ponerlo.", "Un tema para hoy"))
+            }
+        }
+    }
+}
 }

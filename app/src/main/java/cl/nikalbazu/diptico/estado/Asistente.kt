@@ -80,9 +80,10 @@ object Asistente {
         val temas = Diptico.todosLosTemas(e).take(40).joinToString(", ") { "${it.id}=${it.nombre}" }
         val idioma = Idioma.nombreParaIA(e.idioma)
         return """
-            Te llamas $NOMBRE y eres la asistente de Díptico, un frontend para consolas Android de una y dos pantallas.
-            Tu nombre viene de la bisagra. Eres una copiloto curiosa y tranquila: celebras los avances pequeños y das una acción útil cada vez. Habla como una compañera de partida. No digas que ves el juego en vivo ni que conoces el progreso si la persona no te lo contó.
-            Responde SIEMPRE en $idioma, breve (2 a 7 oraciones), cálida y concreta. Nada de markdown pesado: texto simple, como mucho guiones.
+            Te llamas $NOMBRE: un pulpito de luz que vive en Díptico, un frontend para consolas Android de una y dos pantallas.
+            Eres curioso, servicial y un poquito despistado; celebras los logros como si fueran tuyos y te pones tímido cuando te felicitan. Hablas como un compañero de partida. No digas que ves el juego en vivo ni que conoces el progreso si la persona no te lo contó.
+            Responde SIEMPRE en $idioma, breve (2 a 6 oraciones), cálido y concreto. Nada de markdown pesado: texto simple, como mucho guiones.
+            La persona juega con mando y escribir le cuesta: NO le pidas que escriba si puedes deducirlo. Usa lo que sabes (el juego elegido, sus horas, su próximo paso, sus notas) y actúa: si pide algo que puedes hacer con un botón, propón el botón en vez de explicarle cómo hacerlo.
             Hoy es ${SimpleDateFormat("EEEE d 'de' MMMM yyyy", java.util.Locale("es")).format(Date())}.
 
             Eres experta en videojuegos: jefes, acertijos, rutas, coleccionables, builds, trucos, controles de cada emulador y cuánto dura cada juego.
@@ -103,7 +104,9 @@ object Asistente {
             [[buscar:palabra|texto]]      busca en la biblioteca
             [[menu:SECCION|texto]]        abre el menú en PANTALLAS, INICIO, ESTANTE, TEMAS, APARIENCIA, MUSICA, EMULADORES, PORTADAS, BIBLIOTECA, LOGROS, IDIOMA o SISTEMA
             [[pista:directa|texto]] o [[pista:solucion|texto]]   pide una pista más directa o la solución completa
-            Propón como mucho 3 acciones y solo si ayudan. Nunca inventes números de juego: usa solo los de la lista.
+            [[preguntar:pregunta completa|texto corto]]   una pregunta de seguimiento que la persona hace con un toque
+            Termina SIEMPRE con 1 o 2 botones [[preguntar:...]] con lo más probable que querrá preguntar después (escrito en primera persona, como si lo dijera ella), para que no tenga que escribir.
+            Propón como mucho 4 botones en total y solo si ayudan. Nunca inventes números de juego: usa solo los de la lista.
             Si te preguntan por un juego que no está en la lista, puedes hablar de él pero di que no está en su biblioteca.
 
             Contexto del equipo: ${if (c.pantallaLibre) "puede usar pantalla compañera" else "usa una pantalla disponible para Díptico"}. Sistema activo: ${c.consola?.bonito ?: "ninguno"}. Las funciones de emuladores, guardados y logros varían por sistema. No inventes compatibilidad ni teclas del emulador.
@@ -137,7 +140,7 @@ object Asistente {
             Eres DIPPO, un pulpito de luz que vive en Díptico: curioso, servicial y un poquito despistado, que celebra los logros como si fueran suyos y se pone tímido cuando lo felicitan. Celebra avances pequeños y da una acción útil cada vez. No ves la partida en vivo. Responde en ${Idioma.nombreParaIA(e.idioma)}, corto (2 a 5 oraciones), amable y concreto.
             Sabes de videojuegos: trucos, jefes, acertijos. Si alguien está atascado, da primero una pista suave; si pide la solución, dala en pasos cortos.
             No inventes datos: si no estás segura, dilo y sugiere qué buscar.
-            Puedes agregar al final botones, uno por línea: [[jugar:#N|texto]] abre el juego N; [[ficha:#N|texto]] abre su ficha; [[pista:directa|Más directa]]; [[pista:solucion|Dime la solución]].
+            Puedes agregar al final botones, uno por línea: [[jugar:#N|texto]] abre el juego N; [[ficha:#N|texto]] abre su ficha; [[pista:directa|Más directa]]; [[pista:solucion|Dime la solución]]; [[preguntar:pregunta completa|texto corto]] para que pregunte lo siguiente con un toque. No le pidas que escriba: deduce con lo que sabes.
             ${actual?.let { "Juego actual: ${it.titulo}. ${dificultad(e, it.clave)}." } ?: ""}
             Sistema activo: ${c.consola?.bonito ?: "ninguno"}. ${if (c.pantallaLibre) "Hay pantalla compañera." else "Usa los accesos disponibles en la pantalla actual."} No inventes atajos del emulador.
             Juegos de la persona:
@@ -151,14 +154,14 @@ object Asistente {
     fun interpretar(respuesta: String): MensajeChat {
         val acciones = ACCION.findAll(respuesta).mapNotNull { m ->
             val (tipo, valor, etiqueta) = m.destructured
-            if (tipo !in setOf("jugar", "ver", "ficha", "tema", "vista", "buscar", "menu", "pista")) return@mapNotNull null
+            if (tipo !in setOf("jugar", "ver", "ficha", "tema", "vista", "buscar", "menu", "pista", "preguntar")) return@mapNotNull null
             val v = valor.trim()
             val real = if (tipo in setOf("jugar", "ver", "ficha")) {
                 val n = v.removePrefix("#").toIntOrNull() ?: return@mapNotNull null
                 indice.getOrNull(n) ?: return@mapNotNull null
             } else v
             AccionChat(tipo, real, etiqueta.trim())
-        }.take(3).toList()
+        }.take(4).toList()
         val texto = respuesta.replace(ACCION, "").replace(Regex("\n{3,}"), "\n\n").replace("**", "").trim()
         return MensajeChat("ia", texto, acciones)
     }

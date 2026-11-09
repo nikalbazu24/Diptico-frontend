@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "dippo-casa-2.0-23"
-    const val NOMBRE = "DIPPO se queda contigo"
+    const val ID = "dippo-listo-2.0-24"
+    const val NOMBRE = "DIPPO más listo y teclado nuevo"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -275,9 +275,14 @@ object Novedades {
             Pagina("¡Hola, soy DIPPO!", "Bisa ahora es DIPPO, un pulpito de luz que vive en tu consola. Curioso, servicial y un poquito despistado: conoce tus juegos y celebra tus logros contigo.", Icono.BISA, 0xFFFF9A6B),
             Pagina("De día y de noche", "Las puntas de sus tentáculos son lucecitas que respiran. De día es cálido; de noche se pone azulado. Y cada tanto te saluda.", Icono.ESTRELLA, 0xFF7AA8FF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("dippo-casa-2.0-23", "DIPPO se queda contigo", listOf(
             Pagina("DIPPO te espera en el inicio", "Ahora DIPPO vive a la vista: abajo junto a la hora, o en la esquina si usas una pantalla. Te saluda al llegar y pone cara de preocupado si queda poca batería. Tócalo para hablarle.", Icono.BISA, 0xFFFF9A6B),
             Pagina("Su propio espacio", "DIPPO tiene su sección en Ajustes: si aparece en el inicio, su saludo, sus colores, su IA y cómo te ayuda mientras juegas. Y ahora se asoma en la animación de entrada.", Icono.AJUSTES, 0xFF7AA8FF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("DIPPO habla primero", "Al abrirlo te cuenta qué notó: lo último que jugaste, lo que anotaste y algún juego olvidado. Todo con botones listos: casi no tendrás que escribir.", Icono.BISA, 0xFFFF9A6B),
+            Pagina("Preguntas con un toque", "¿De qué trata?, trucos, cuánto dura, juegos parecidos… Y después de cada respuesta, DIPPO te deja la siguiente pregunta lista. Si le hablas, te responde con su voz.", Icono.MICROFONO, 0xFF7AA8FF),
+            Pagina("Teclado nuevo", "Como el de Google: palabras sugeridas arriba, tildes manteniendo la letra (o con Y), dos espacios ponen punto y ⋯ trae copiar y pegar.", Icono.TEXTO, 0xFF00ACC1),
         )),
     )
 
