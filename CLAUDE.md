@@ -180,3 +180,9 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   trata/Guías con detalle y opciones al pie) y `Jugando.dc.html` (pantalla libre sin pestañas: DIPPO con globito, próximo
   paso con barra HLTB, botones Pista/Mi paso/Captura/Más y «Terminé por hoy»; a los 5 s se oscurece con DIPPO durmiendo y
   el reloj). Esperando la opinión de Nicolás antes de programar.
+- Deslizar + dock (9 nov, tarde, rama `fix/deslizar-dock`): `ui/InicioDeslizable.kt` (HorizontalPager portada↔widgets
+  arriba con puntitos; `Diptico.fijarInicio`; la página de al lado no se compone hasta deslizar). Una pantalla: transición
+  horizontal. Dock fijo `FilaDock` (máx. 5 = `MAX_DOCK`, `extra.dock` por defecto true, clave `dock2`) en `FranjaAccesos`
+  (Buscar/Ajustes quedan solo ícono) y en la pantalla compañera mientras juegas; `abrirPaqueteAqui` abre la app en la pantalla
+  tocada. Widget nuevo `progreso` (HLTB + racha + próximo logro DIPPO), `Widgets.inicioNuevo` + opción «Usar el inicio
+  nuevo» (respaldo en perfilVisualAnterior), hora y batería en el encabezado de widgets con el diseño nuevo.
