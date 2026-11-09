@@ -140,3 +140,6 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   importar/aportar temas en la cabecera de `tienda_temas` (`importarTemaArchivo`), plantillas borradas, clip de retoma
   apagado para todos (clave `clipRetoma2`). PENDIENTE PEDIDO: reinventar Bisa como **DIPPO** (doble p): boceto con 3
   propuestas de personaje original antes de programar. Luego: recortar Apariencia y partir `Diptico.kt`.
+- Paso 5 (9 nov): `G_TEMAS` («Temas y decoraciones» = TEMAS + DECORACIONES); mosaicos con transición al cambiar de consola
+  y resorte corto; menú sin animación por fila. DIPPO: 6 propuestas en el boceto (Alas, Chispa, Cartucho, Pixel, Cartucho
+  con gorro, Disco); el cartucho gustó más pero ninguna lo convenció del todo. Pedirle referencias de estilo antes de otra ronda.
