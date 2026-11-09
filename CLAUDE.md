@@ -126,3 +126,4 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   hora y batería chicas integradas); abajo el control (fila de logos de consolas, fila de juegos tipo PS5 con borde de luz,
   franja de accesos Buscar/Apps/Ajustes); una pantalla = vitrina de fondo + controles abajo; Ajustes en ~6 secciones tipo PS5.
 - PRÓXIMO PASO cuando Nicolás avise: boceto visual (Design artifact) de arriba, abajo y ajustes; afinarlo con él y recién ahí programar.
+- Boceto (9 nov): https://claude.ai/artifact/42GUSEMnxQhs41gtjLiPAw (Arriba, Abajo, Ajustes en 6 secciones, Una pantalla). Esperando opinión de Nicolás.
