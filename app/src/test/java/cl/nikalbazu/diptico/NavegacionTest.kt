@@ -253,13 +253,14 @@ class NavegacionTest {
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
-        assertEquals(listOf(Novedades.ID), Novedades.pendientes("franja-2.0-18").map { it.id })
-        assertEquals(listOf(Novedades.ID, "franja-2.0-18"), Novedades.pendientes("mosaicos-2.0-16").map { it.id })
-        assertEquals(listOf(Novedades.ID, "franja-2.0-18", "mosaicos-2.0-16"), Novedades.pendientes("movimiento-y-vistas-1.3-15").map { it.id })
-        assertEquals(listOf(Novedades.ID, "franja-2.0-18", "mosaicos-2.0-16", "movimiento-y-vistas-1.3-15"), Novedades.pendientes("orden-y-base-1.2-13").map { it.id })
-        assertEquals(listOf(Novedades.ID, "franja-2.0-18", "mosaicos-2.0-16", "movimiento-y-vistas-1.3-15", "orden-y-base-1.2-13"), Novedades.pendientes("arreglos-1.2-12").map { it.id })
-        assertEquals(listOf(Novedades.ID, "franja-2.0-18", "mosaicos-2.0-16", "movimiento-y-vistas-1.3-15", "orden-y-base-1.2-13", "arreglos-1.2-12", "glass-y-densidades-153-11"), Novedades.pendientes("mantenimiento-y-estabilidad-10").map { it.id })
-        assertEquals(listOf(Novedades.ID, "franja-2.0-18", "mosaicos-2.0-16", "movimiento-y-vistas-1.3-15", "orden-y-base-1.2-13", "arreglos-1.2-12", "glass-y-densidades-153-11", "mantenimiento-y-estabilidad-10", "rendimiento-y-una-pantalla-9", "zoom-y-recorrido-carpetas-8"),
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("vitrina-ajustes-2.0-19").map { it.id })
+        assertEquals(listOf(Novedades.ID, "vitrina-ajustes-2.0-19"), Novedades.pendientes("franja-2.0-18").map { it.id })
+        assertEquals(listOf(Novedades.ID, "vitrina-ajustes-2.0-19", "franja-2.0-18"), Novedades.pendientes("mosaicos-2.0-16").map { it.id })
+        assertEquals(listOf(Novedades.ID, "vitrina-ajustes-2.0-19", "franja-2.0-18", "mosaicos-2.0-16"), Novedades.pendientes("movimiento-y-vistas-1.3-15").map { it.id })
+        assertEquals(listOf(Novedades.ID, "vitrina-ajustes-2.0-19", "franja-2.0-18", "mosaicos-2.0-16", "movimiento-y-vistas-1.3-15"), Novedades.pendientes("orden-y-base-1.2-13").map { it.id })
+        assertEquals(listOf(Novedades.ID, "vitrina-ajustes-2.0-19", "franja-2.0-18", "mosaicos-2.0-16", "movimiento-y-vistas-1.3-15", "orden-y-base-1.2-13"), Novedades.pendientes("arreglos-1.2-12").map { it.id })
+        assertEquals(listOf(Novedades.ID, "vitrina-ajustes-2.0-19", "franja-2.0-18", "mosaicos-2.0-16", "movimiento-y-vistas-1.3-15", "orden-y-base-1.2-13", "arreglos-1.2-12", "glass-y-densidades-153-11"), Novedades.pendientes("mantenimiento-y-estabilidad-10").map { it.id })
+        assertEquals(listOf(Novedades.ID, "vitrina-ajustes-2.0-19", "franja-2.0-18", "mosaicos-2.0-16", "movimiento-y-vistas-1.3-15", "orden-y-base-1.2-13", "arreglos-1.2-12", "glass-y-densidades-153-11", "mantenimiento-y-estabilidad-10", "rendimiento-y-una-pantalla-9", "zoom-y-recorrido-carpetas-8"),
             Novedades.pendientes("desenfoque-carpetas-7").map { it.id })
     }
 

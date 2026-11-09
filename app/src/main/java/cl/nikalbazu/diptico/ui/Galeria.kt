@@ -77,6 +77,11 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                 Spacer(Modifier.width(esc.d(10)))
                 Texto(titulo, 20f, lineas = 1, modifier = Modifier.weight(1f))
                 if (e.galeria == "tienda_temas") {
+                    // Todo lo de traer temas vive en la tienda: desde un archivo, desde un enlace o aportando uno.
+                    AccionTienda("Importar archivo") { Diptico.importarTemaArchivo() }
+                    Spacer(Modifier.width(esc.d(8)))
+                    AccionTienda("Importar enlace") { Diptico.abrirTexto("tema_enlace") }
+                    Spacer(Modifier.width(esc.d(8)))
                     AccionTienda("Aportar un tema") { Diptico.abrirAportesTemas() }
                     Spacer(Modifier.width(esc.d(8)))
                 }

@@ -1186,6 +1186,9 @@ class Capturas {
     @Test fun t279_mosaicos_segundo() = foto("279_vista_mosaicos_elegido", base().let { b -> b.copy(vista = "mosaicos", juegoSel = b.visibles[3].clave) }, Rol.INFERIOR)
     @Test fun t280_vitrina_arriba() = foto("280_vitrina_arriba", base().copy(vista = "mosaicos"), Rol.SUPERIOR)
     @Test fun t281_ajustes_nuevos() = foto("281_ajustes_seis_secciones", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true), Rol.SUPERIOR)
+    @Test fun t282_iconos_desplegable() = foto("282_iconos_desplegable", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 8, extra = EstadoExtra(desplegable = 8, desplegableSel = 1)), Rol.SUPERIOR)
+    @Test fun t283_ajustes_widgets() = foto("283_ajustes_inicio_widgets", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_WIDGETS, enOpciones = true), Rol.SUPERIOR)
+    @Test fun t284_tienda_temas() = foto("284_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "tienda_temas"), Rol.SUPERIOR)
 
     @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)
 

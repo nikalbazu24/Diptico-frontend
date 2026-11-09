@@ -1,3 +1,5 @@
-- **Nuevo Díptico, paso 3: la vitrina de arriba.** Con dos pantallas, arriba ya no hay barras repetidas: el juego elegido luce solo, con dos botones grandes (A Jugar/Continuar y X Ficha del juego).
-- **Ajustes en seis secciones:** Pantalla y estilo, Biblioteca, Juegos y emuladores, Controles, Sonido y Sistema. Las opciones de antes siguen adentro, ordenadas por bloques, con sus mismos íconos.
-- **Liquid Glass apagado:** se sacó por ahora (y el efecto lente) para que todo ande más liviano; se rediseñará más adelante junto con el nuevo estilo.
+- **Jugar sin preguntas:** abrir un juego ya no pide permiso para grabar la pantalla. El clip para retomar queda apagado para todos y solo se activa si lo eliges a propósito.
+- **Íconos de consola con desplegable:** cada estilo muestra un ejemplo con tres consolas para elegir viendo cómo queda.
+- **Tienda de temas:** importar desde archivo, importar por enlace y aportar un tema ahora están arriba, dentro de la tienda.
+- **Inicio y widgets:** tienen su propia sección en Ajustes (ya no van dentro de Pantalla y estilo).
+- **Quitado:** las plantillas «Jugar», «Explorar» y «Ligero».

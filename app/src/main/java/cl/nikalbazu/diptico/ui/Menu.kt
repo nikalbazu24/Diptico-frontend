@@ -73,6 +73,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.RENDIMIENTO -> Color(0xFFFF5252)
     Seccion.MAS -> Color(0xFF9AA4B8)
     Seccion.G_ESTILO -> Color(0xFFFF5D8F)
+    Seccion.G_WIDGETS -> Color(0xFF00ACC1)
     Seccion.G_BIBLIOTECA -> Color(0xFF2EC4A6)
     Seccion.G_JUEGOS -> Color(0xFF3BA8FF)
     Seccion.G_CONTROLES -> Color(0xFFFFA726)
@@ -166,6 +167,15 @@ private fun VentanaDesplegable(e: Estado) {
                             .padding(horizontal = esc.d(14)),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        o.muestrasIconos?.getOrNull(i)?.let { estilo ->
+                            // Una muestra del estilo: tres consolas dibujadas con él.
+                            androidx.compose.runtime.CompositionLocalProvider(LocalIconos provides IconosCfg(estilo, emptyMap(), e.iconosVersion)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
+                                    listOf("snes", "psx", "gba").forEach { id -> IconoConsola(cl.nikalbazu.diptico.data.Consolas.porId(id), 22f, LocalPaleta.current.fondo2) }
+                                }
+                            }
+                            Spacer(Modifier.width(esc.d(12)))
+                        }
                         Texto(nombre, 15f, lineas = 2, modifier = Modifier.weight(1f))
                         if (puesta) IconoDiptico(Icono.CHECK, color, 18f, acento = color)
                     }

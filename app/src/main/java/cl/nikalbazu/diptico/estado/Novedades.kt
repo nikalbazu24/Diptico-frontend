@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "vitrina-ajustes-2.0-19"
-    const val NOMBRE = "Nuevo Díptico: vitrina y ajustes"
+    const val ID = "ajustes-orden-2.0-20"
+    const val NOMBRE = "Nuevo Díptico: ajustes en orden"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -259,9 +259,14 @@ object Novedades {
         Version("franja-2.0-18", "Nuevo Díptico: la pantalla de abajo", listOf(
             Pagina("Todo a mano abajo", "Abajo tienes una franja fija con Buscar, Apps y Ajustes, y la hora con la batería. La consola elegida se ilumina con su color.", Icono.APPS, 0xFF2EC4A6),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("vitrina-ajustes-2.0-19", "Nuevo Díptico: vitrina y ajustes", listOf(
             Pagina("La vitrina", "Arriba, el juego elegido luce a pantalla completa, sin barras encima, con dos botones: A para jugar o continuar y X para su ficha.", Icono.PORTADA, 0xFFFF7A59, "A"),
             Pagina("Ajustes más simples", "Los ajustes ahora son seis secciones: Pantalla y estilo, Biblioteca, Juegos y emuladores, Controles, Sonido y Sistema. Lo de antes sigue adentro, ordenado por bloques.", Icono.AJUSTES, 0xFF8E8AAE),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Jugar sin preguntas", "Abrir un juego ya no pide grabar la pantalla. El clip para retomar es opcional y viene apagado.", Icono.MANDO, 0xFF4ADE80),
+            Pagina("Temas, todo en la tienda", "Importar un tema desde un archivo o un enlace, y aportar uno, ahora están arriba en la Tienda de temas.", Icono.PALETA, 0xFFB388FF),
+            Pagina("Inicio y widgets aparte", "Los widgets y el inicio tienen su propia sección en Ajustes. Y los íconos de las consolas se eligen de una lista con una muestra de cada estilo.", Icono.APPS, 0xFF00ACC1),
         )),
     )
 

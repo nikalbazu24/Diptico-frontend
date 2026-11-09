@@ -82,7 +82,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Respaldo en Google Drive, actualizaciones, reportar un problema, el tutorial y la versión de Díptico."),
     // Ajustes nuevos (9 nov 2026): seis secciones claras, cada una junta varias de las de antes.
-    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Temas, apariencia, el inicio, las pantallas y las decoraciones.", "Ajustes"),
+    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Temas, apariencia, las pantallas y las decoraciones.", "Ajustes"),
+    G_WIDGETS("Inicio y widgets", Icono.APPS, "La pantalla de inicio, tus widgets y el dock de apps."),
     G_BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Cómo se ven tus juegos, tus consolas, tus carpetas y las portadas."),
     G_JUEGOS("Juegos y emuladores", Icono.EMULADOR, "Con qué se abre cada consola, los logros y el modo turbo al jugar."),
     G_CONTROLES("Controles", Icono.MANDO, "Qué hace cada botón y stick."),
@@ -121,6 +122,8 @@ data class Opcion(
     val elegida: Int = -1,
     /** Qué hacer al elegir la alternativa número n. */
     val elegir: ((Int) -> Unit)? = null,
+    /** Si las alternativas son estilos de íconos: sus identificadores, para mostrar una muestra en cada fila. */
+    val muestrasIconos: List<String>? = null,
     val accion: () -> Unit,
 )
 
@@ -786,7 +789,7 @@ object Diptico {
         val vistaConsolas = vistaConsolasCompatible(vistaGuardada)
         if (vistaConsolas != vistaGuardada) almacen.guardarTexto("vistaConsolas", vistaConsolas)
         _estado.value = Estado(
-            navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
+            navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma2", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
             listo = true,
             idioma = idioma,
             configurado = almacen.configurado && carpetas.isNotEmpty(),
@@ -2291,6 +2294,9 @@ object Diptico {
 
     fun abrirAportesTemas() = abrirWeb(TiendaTemas.WEB_APORTES)
 
+    /** Importar un tema descargado (archivo JSON), desde la tienda. */
+    fun importarTemaArchivo() = pedirArchivoPara("temaJson", "*/*")
+
     private fun temasEnTienda(e: Estado): List<TemaComunidad> {
         if (e.galeriaPestana == 0) return e.catalogoTemas
         val categoria = categoriasTienda.getOrNull(e.galeriaPestana)
@@ -3496,7 +3502,8 @@ object Diptico {
 
     /** Qué secciones de antes junta cada una de las seis nuevas. */
     val GRUPOS_AJUSTES: Map<Seccion, List<Seccion>> = linkedMapOf(
-        Seccion.G_ESTILO to listOf(Seccion.APARIENCIA, Seccion.TEMAS, Seccion.INICIO, Seccion.PANTALLAS, Seccion.DECORACIONES),
+        Seccion.G_ESTILO to listOf(Seccion.APARIENCIA, Seccion.TEMAS, Seccion.PANTALLAS, Seccion.DECORACIONES),
+        Seccion.G_WIDGETS to listOf(Seccion.INICIO),
         Seccion.G_BIBLIOTECA to listOf(Seccion.ESTANTE, Seccion.CONSOLAS, Seccion.BIBLIOTECA, Seccion.PORTADAS),
         Seccion.G_JUEGOS to listOf(Seccion.EMULADORES, Seccion.LOGROS, Seccion.RENDIMIENTO),
         Seccion.G_CONTROLES to listOf(Seccion.CONTROLES),
@@ -3647,7 +3654,7 @@ object Diptico {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
-            Seccion.G_ESTILO, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_SISTEMA -> Unit
+            Seccion.G_ESTILO, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_SISTEMA -> Unit
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
@@ -4396,9 +4403,6 @@ object Diptico {
         add(Opcion("Movimiento ambiental", if (v.movimiento) "Suave" else "Reducido", Icono.ESTRELLA, "Apaga el movimiento ambiental y el zoom lento; en partida se mantiene estático.") {
             guardarExperiencia(v.copy(movimiento = !v.movimiento))
         })
-        for (nombre in listOf("Jugar", "Explorar", "Ligero")) {
-            add(Opcion("Plantilla $nombre", "Personalizable", Icono.PALETA) { plantillaVisual(nombre) })
-        }
         if (almacen.texto("perfilVisualAnterior").isNotBlank()) {
             add(Opcion("Volver a mi distribución anterior", icono = Icono.CONTINUAR) {
                 aplicarPerfil(Experiencia.leer(almacen.texto("perfilVisualAnterior")))
@@ -4611,12 +4615,6 @@ object Diptico {
         )
         lista.add(0, Opcion("Tienda de temas", "${TiendaTemas.TOTAL_OFICIAL} temas", Icono.PALETA,
             "Explora e instala temas dentro de Díptico.") { abrirTiendaTemas() })
-        lista.add(3, Opcion("Importar tema", "Archivo JSON", Icono.DESCARGA,
-            "Selecciona un tema que hayas descargado.") { pedirArchivoPara("temaJson", "*/*") })
-        lista.add(4, Opcion("Importar por enlace", "Tema o catálogo", Icono.WEB,
-            "Pega el enlace HTTPS directo al archivo JSON.") { abrirTexto("tema_enlace") })
-        lista += Opcion("Aportar un tema", "Abre el editor web", Icono.WEB,
-            "Crea el archivo de un tema y aprende cómo compartirlo con la comunidad.") { abrirAportesTemas() }
         lista.add(2, Opcion("Mezclar mi tema", "Temas instalados", Icono.PALETA,
             "Elige de qué tema viene cada elemento. Cada cambio se guarda en Mi tema.") { abrirGaleria("mezclar_tema") })
         val mio = e.temasPropios.firstOrNull { it.id == "mio" }
@@ -4645,15 +4643,16 @@ object Diptico {
         val c = Consolas.porId(e.consolaSel)
         val lista = mutableListOf(
 
-            Opcion(
-                "Íconos de consola", nombreEstiloIconos(e.estiloIconos), Icono.EMULADOR,
-                "Estilos de Díptico (formatos, insignias, contornos, píxeles o siglas: todas las consolas con la misma línea), o paquetes de RetroArch (se descargan una vez). Para una sola consola: Menú › Tus consolas.",
-            ) {
-                val l = estilosIconos()
-                val s = l[(l.indexOf(estado.value.estiloIconos) + 1).mod(l.size)]
-                almacen.guardarTexto("estiloIconos", s)
-                actualizar { it.copy(estiloIconos = s) }
-                bajarIconosFaltantes()
+            estilosIconos().let { l ->
+                opcionLista(
+                    "Íconos de consola", Icono.EMULADOR,
+                    "Estilos de Díptico (formatos, insignias, contornos, píxeles o siglas: todas las consolas con la misma línea), o paquetes de RetroArch (se descargan una vez). Para una sola consola: Menú › Tus consolas.",
+                    l, l.map(::nombreEstiloIconos), e.estiloIconos,
+                ) { s ->
+                    almacen.guardarTexto("estiloIconos", s)
+                    actualizar { it.copy(estiloIconos = s) }
+                    bajarIconosFaltantes()
+                }.copy(muestrasIconos = l)
             },
         )
         if (c != null) {
@@ -8738,7 +8737,7 @@ object Diptico {
 
     fun alternarClipRetoma() {
         val v = !estado.value.clipRetoma
-        almacen.guardarBool("clipRetoma", v); actualizar { it.copy(navegacion = it.navegacion.copy(clipRetoma = v)) }
+        almacen.guardarBool("clipRetoma2", v); actualizar { it.copy(navegacion = it.navegacion.copy(clipRetoma = v)) }
         if (!v) { cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app); actualizar { it.copy(navegacion = it.navegacion.copy(retomaVideo = "", retomaVideoClave = "")) } }
     }
     fun cambiarEsperaRetoma() {
