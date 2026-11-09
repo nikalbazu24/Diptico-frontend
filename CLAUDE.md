@@ -193,3 +193,12 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   Terminé: la sesión se cierra sola en `Diptico.alVolver` (Díptico vuelve al frente en la pantalla del juego).
   OJO: el 9 nov GitHub dejó de lanzar el workflow con push en `fix/jugando`; se lanzó a mano con
   `gh api -X POST repos/Nikalbazu24/diptico-frontend/actions/workflows/402353305/dispatches -f ref=<rama>`.
+- 9 nov 16:30 (rama `fix/ficha-carpetas`, SIN COMPILAR/REVISAR aún: se acabó el cupo): pager con red de seguridad
+  (gesto largo cambia de página) y umbral 25 %; `LogoEnPartida` (logo tipo Cocoon) en `EnJuego`; acceso marcado arriba con
+  aire y borde; `EstadoChico` (hora/batería/avisos) en el encabezado de Ajustes sin barra; carpetas con halo de color y
+  borde blanco, desenfoque + oscurecido detrás de la carpeta abierta; `FranjaAccesos` también en carpetas/sistemas;
+  ficha: arriba `VitrinaFicha` (capturas + fotos + `ComentarioDippo`), abajo la ficha; chat: `CarpetaJuegosChat` bajo el
+  mensaje de DIPPO cuando propone juegos. Novedades `ficha-carpetas-2.0-28`. Falta: traducir textos nuevos (extras15),
+  capturas, publicar. Pendientes que pidió: Discord (Social SDK ya tiene Android; investigar), revisar bitácora (desactualizada
+  desde la beta.185: actualizarla con 204–245), «Tu año» antes de diciembre, temperatura, por qué falló un juego, respaldo
+  de partidas, logros RA con aviso al ganarlos.
