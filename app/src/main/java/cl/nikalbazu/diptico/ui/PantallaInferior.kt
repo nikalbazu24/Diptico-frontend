@@ -437,14 +437,14 @@ private fun EnJuego(e: Estado) {
     ) {
         // Un brillo quieto del color del juego (sin animación: no gasta batería mientras juegas).
         Box(
-            Modifier.align(Alignment.TopStart).size(esc.d(460))
-                .background(Brush.radialGradient(listOf(color.copy(alpha = 0.22f), Color.Transparent))),
+            Modifier.align(Alignment.TopCenter).size(esc.d(460))
+                .background(Brush.radialGradient(listOf(color.copy(alpha = 0.26f), Color.Transparent))),
         )
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(16), vertical = esc.d(12))) {
-            // 1 · Una línea fina: qué juegas, cuánto llevas y la hora.
+            // 1 · Una línea fina: la consola, cuánto llevas y la hora.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (c != null) { IconoConsola(c, 18f, Color(0xFF07060C)); Spacer(Modifier.width(esc.d(8))) }
-                Texto(juego?.titulo ?: "En partida", 14f, color = Color.White, lineas = 1, traducir = false, modifier = Modifier.weight(1f))
+                Box(Modifier.weight(1f)) { if (c != null) Etiqueta(c.nombreLargo, color, 11f) }
                 Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.08f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
                     Texto("⏱ $reloj", 13f, color = tenue, traducir = false)
                 }
@@ -453,6 +453,15 @@ private fun EnJuego(e: Estado) {
                     val bat = rememberBateria()
                     Texto(rememberHora() + if (bat >= 0) " · $bat%" else "", 13f, color = tenue, traducir = false)
                 }
+            }
+            // El logo del juego, protagonista y grande (como en Cocoon). Sin logo, el nombre en grande.
+            if (!mas) Box(Modifier.fillMaxWidth().padding(vertical = esc.d(10)), contentAlignment = Alignment.Center) {
+                val logo = rememberImagen(juego?.logo, 800)
+                if (logo != null) Image(
+                    logo, contentDescription = juego?.titulo, contentScale = ContentScale.Fit,
+                    modifier = Modifier.heightIn(max = esc.d(96)).widthIn(max = esc.d(420)),
+                ) else Texto(juego?.titulo ?: "En partida", 28f, color = Color.White, lineas = 2, interlineado = 32f,
+                    alinear = TextAlign.Center, sombra = true, traducir = false)
             }
             Spacer(Modifier.height(esc.d(10)))
             if (mas) MasHerramientas(e, s, Modifier.weight(1f)) { mas = false }
