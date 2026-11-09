@@ -206,7 +206,7 @@ object Cartel {
         }
     }
 
-    /** Si Díptico puede mostrarse encima de los juegos (lo necesitan la continuación en una pantalla y la burbuja de Bisa). */
+    /** Si Díptico puede mostrarse encima de los juegos (lo necesitan la continuación en una pantalla y la burbuja de DIPPO). */
     fun puede(ctx: Context): Boolean = Settings.canDrawOverlays(ctx)
 
     private fun quitar() {

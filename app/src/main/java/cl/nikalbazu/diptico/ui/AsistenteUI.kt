@@ -79,7 +79,7 @@ private fun Burbuja(m: MensajeChat) {
 }
 
 /**
- * Chat con Bisa, pensado para escribir poco: abajo dos botones grandes (Hablar y Escribir)
+ * Chat con DIPPO, pensado para escribir poco: abajo dos botones grandes (Hablar y Escribir)
  * y debajo respuestas y preguntas listas para tocar (o elegir con la cruceta).
  */
 @Composable
@@ -95,7 +95,7 @@ fun PanelAsistente(e: Estado) {
                 cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(42).value)
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Centro de Bisa", 20f, lineas = 1)
+                    Texto("Centro de DIPPO", 20f, lineas = 1)
                     Detalle(
                         if (e.pensando) e.pensandoQue.ifBlank { "Pensando…" } else when (Diptico.motorEfectivo(e)) {
                             "local" -> "IA de tu consola"
@@ -108,7 +108,7 @@ fun PanelAsistente(e: Estado) {
                 }
                 Box(
                     Modifier.size(esc.d(38)).clip(CircleShape).background(p.superficie)
-                        .clickable(onClickLabel = "Cerrar Bisa") { Diptico.cerrarPanel() },
+                        .clickable(onClickLabel = "Cerrar DIPPO") { Diptico.cerrarPanel() },
                     contentAlignment = Alignment.Center,
                 ) { IconoDiptico(Icono.CERRAR, p.tinta, 18f) }
             }
@@ -132,7 +132,7 @@ fun PanelAsistente(e: Estado) {
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 if (e.chat.isEmpty()) item {
                     Column(Modifier.padding(vertical = esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                        Texto(if (contexto.jugando) "Aquí estoy, copiloto." else "Soy Bisa. ¿Qué jugamos?", 20f)
+                        Texto(if (contexto.jugando) "Aquí estoy, copiloto." else "Soy DIPPO. ¿Qué jugamos?", 20f)
                         Detalle(
                             if (Diptico.motorEfectivo(e) == "ninguno") "Puedo recuperar tus notas, sugerirte qué jugar y revisar cómo abre un juego. Elige una acción, habla o escribe."
                             else "Habla, escribe o elige una acción. Puedo ayudarte con el juego que ves en la tarjeta de contexto.",
@@ -215,7 +215,7 @@ fun LecturaAsistente(e: Estado) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(44).value)
                 Spacer(Modifier.width(esc.d(10)))
-                Etiqueta("Bisa · tu asistente", Coral, 13f)
+                Etiqueta("DIPPO · tu asistente", Coral, 13f)
             }
             if (pregunta != null) Detalle("“${pregunta.texto}”", 15f, lineas = 2)
             when {
@@ -237,7 +237,7 @@ fun LecturaAsistente(e: Estado) {
 }
 
 
-/** Acceso a Bisa para el inicio: su cara animada y su nombre. */
+/** Acceso a DIPPO para el inicio: su cara animada y su nombre. */
 @Composable
 fun BotonBisa(modifier: Modifier = Modifier) {
     val p = LocalPaleta.current
@@ -250,7 +250,7 @@ fun BotonBisa(modifier: Modifier = Modifier) {
     ) {
         cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(30).value)
         Spacer(Modifier.width(esc.d(7)))
-        Texto("Bisa", 14f, lineas = 1)
+        Texto("DIPPO", 14f, lineas = 1)
     }
 }
 

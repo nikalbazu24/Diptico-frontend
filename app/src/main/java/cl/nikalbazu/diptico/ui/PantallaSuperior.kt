@@ -325,7 +325,7 @@ private fun ContenidoBarra(e: Estado, juego: Juego?, modifier: Modifier, arriba:
                 Diptico.alternarInicio()
             }
             if (widgets) BotonAcceso(Icono.EDITAR, "Editar widgets", compacta) { Diptico.editarWidgets() }
-            BotonAcceso(Icono.BISA, "Bisa", compacta, alMantener = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() }
+            BotonAcceso(Icono.BISA, "DIPPO", compacta, alMantener = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() }
             BotonAcceso(Icono.AJUSTES, "Ajustes", compacta) { Diptico.abrirMenu() }
         }
     }
@@ -345,7 +345,7 @@ private fun BotonAcceso(
     val esc = LocalEscala.current
     val forma = RoundedCornerShape(esc.d(11))
     val pulsar = if (alMantener == null) Modifier.clickable(onClickLabel = texto, onClick = accion)
-    else Modifier.combinedClickable(onClickLabel = texto, onLongClickLabel = "Hablar con Bisa", onLongClick = alMantener, onClick = accion)
+    else Modifier.combinedClickable(onClickLabel = texto, onLongClickLabel = "Hablar con DIPPO", onLongClick = alMantener, onClick = accion)
     Row(
         Modifier.clip(forma).then(if (principal) Modifier.background(p.superficie) else Modifier)
             .then(pulsar).height(esc.d(36)).padding(horizontal = esc.d(if (compacta) 7 else 8)),

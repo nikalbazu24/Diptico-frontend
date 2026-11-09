@@ -15,7 +15,7 @@ import java.net.URL
 import kotlin.coroutines.resume
 
 /**
- * IA local: Bisa piensa dentro de la consola, sin internet ni créditos de nadie.
+ * IA local: DIPPO piensa dentro de la consola, sin internet ni créditos de nadie.
  * Usa un modelo de lenguaje chico (Qwen 2.5 de 1,5 mil millones de parámetros, libre y multilingüe)
  * que se baja una vez (unos 1,6 GB). Solo ocupa memoria mientras responde: después de un rato se descarga solo.
  */
@@ -140,7 +140,7 @@ object IALocal {
     }
 
     private fun cargar(ctx: Context): LlmInference {
-        val f = archivo(ctx) ?: throw IllegalStateException("Primero baja la IA local en Menú › Bisa.")
+        val f = archivo(ctx) ?: throw IllegalStateException("Primero baja la IA local en Menú › DIPPO.")
         motor?.let { if (rutaCargada == f.absolutePath) return it }
         liberarAhora()
         val opciones = LlmInference.LlmInferenceOptions.builder()

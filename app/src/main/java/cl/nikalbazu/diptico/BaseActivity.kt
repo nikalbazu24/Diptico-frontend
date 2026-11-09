@@ -81,7 +81,7 @@ abstract class BaseActivity : ComponentActivity() {
         if (uri != null) Diptico.archivoElegido(uri) else Diptico.cancelarArchivoVisual()
     }
 
-    // Dictado por voz: Android escucha y devuelve el texto (para Bisa y el teclado).
+    // Dictado por voz: Android escucha y devuelve el texto (para DIPPO y el teclado).
     private val dictado = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val t = r.data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
         if (r.resultCode == RESULT_OK && t != null) Diptico.vozRecibida(t)

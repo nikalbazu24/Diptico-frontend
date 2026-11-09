@@ -6,7 +6,7 @@ import java.net.URL
 import java.net.URLEncoder
 
 /**
- * Bisa busca en internet (sin claves): resultados de DuckDuckGo y artículos de Wikipedia.
+ * DIPPO busca en internet (sin claves): resultados de DuckDuckGo y artículos de Wikipedia.
  * Lo usa la IA de la consola, que no sabe buscar sola; las IA en la nube (Gemini, ChatGPT) buscan con su propia herramienta.
  */
 object Web {

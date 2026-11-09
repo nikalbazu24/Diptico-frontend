@@ -133,7 +133,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                     MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { VistaSistema(ev.copy(consolaSel = c?.id ?: ev.consolaSel)) }
                 }
                 Seccion.ASISTENTE -> when {
-                    t == "IA de Bisa" -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA(Diptico.motorEfectivo(e).let { if (it == "ninguno") "auto" else it }) } }
+                    t == "IA de DIPPO" -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA(Diptico.motorEfectivo(e).let { if (it == "ninguno") "auto" else it }) } }
                     t.startsWith("Clave de") -> {
                         val prov = if (t.contains("Gemini")) "gemini" else "openai"
                         MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA(prov) } }

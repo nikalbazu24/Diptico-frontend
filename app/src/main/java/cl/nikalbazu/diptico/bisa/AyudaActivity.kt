@@ -11,7 +11,7 @@ import cl.nikalbazu.diptico.emu.Pantallas
 import cl.nikalbazu.diptico.estado.Diptico
 
 /**
- * Al tocar el aviso de Bisa mientras juegas: la abre en la pantalla libre si hay una,
+ * Al tocar el aviso de DIPPO mientras juegas: la abre en la pantalla libre si hay una,
  * o como ventana flotante encima del juego (DS, 3DS, modo una pantalla). No se ve: decide y se cierra.
  */
 class AyudaActivity : Activity() {
@@ -36,7 +36,7 @@ class AyudaActivity : Activity() {
             }
             BurbujaBisa.puedeFlotar(this) -> BurbujaBisa.abrir(this)
             else -> {
-                Diptico.avisar("Para ver a Bisa encima del juego, activa su burbuja en Menú › Asistente")
+                Diptico.avisar("Para ver a DIPPO encima del juego, activa su burbuja en Menú › Asistente")
                 startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
         }

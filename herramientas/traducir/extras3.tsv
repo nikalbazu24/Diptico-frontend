@@ -5,9 +5,9 @@ Amplia	Wide	Ampla	宽松	広め
 Así se ve tu interfaz	This is how your interface looks	Assim fica sua interface	你的界面效果	インターフェースの見え方
 Atenuación mientras juegas	Dimming while playing	Escurecer enquanto joga	游戏时调暗	プレイ中の減光
 Auto	Auto	Auto	自动	自動
-Baja su IA local gratis en Menú › Bisa	Download her free local AI in Menu › Bisa	Baixe a IA local grátis em Menu › Bisa	在 菜单 › Bisa 中免费下载本地 AI	メニュー › Bisa で無料のローカル AI をダウンロード
-Bajando la IA de Bisa	Downloading Bisa's AI	Baixando a IA da Bisa	正在下载 Bisa 的 AI	Bisa の AI をダウンロード中
-Bajando la IA de Bisa (1,6 GB). Puedes seguir usando Díptico.	Downloading Bisa's AI (1.6 GB). You can keep using Díptico.	Baixando a IA da Bisa (1,6 GB). Você pode continuar usando o Díptico.	正在下载 Bisa 的 AI（1.6 GB）。你可以继续使用 Díptico。	Bisa の AI をダウンロード中（1.6 GB）。Díptico はそのまま使えます。
+Baja su IA local gratis en Menú › DIPPO	Download her free local AI in Menu › DIPPO	Baixe a IA local grátis em Menu › DIPPO	在 菜单 › DIPPO 中免费下载本地 AI	メニュー › DIPPO で無料のローカル AI をダウンロード
+Bajando la IA de DIPPO	Downloading DIPPO's AI	Baixando a IA da DIPPO	正在下载 DIPPO 的 AI	DIPPO の AI をダウンロード中
+Bajando la IA de DIPPO (1,6 GB). Puedes seguir usando Díptico.	Downloading DIPPO's AI (1.6 GB). You can keep using Díptico.	Baixando a IA da DIPPO (1,6 GB). Você pode continuar usando o Díptico.	正在下载 DIPPO 的 AI（1.6 GB）。你可以继续使用 Díptico。	DIPPO の AI をダウンロード中（1.6 GB）。Díptico はそのまま使えます。
 Bajando…	Downloading…	Baixando…	下载中…	ダウンロード中…
 Bajar (1,6 GB)	Download (1.6 GB)	Baixar (1,6 GB)	下载（1.6 GB）	ダウンロード（1.6 GB）
 Borrar la IA local	Delete local AI	Apagar a IA local	删除本地 AI	ローカル AI を削除
@@ -30,7 +30,7 @@ En tu consola: gratis, sin internet y privada (ocupa memoria solo mientras respo
 Ese archivo no parece un modelo .task	That file doesn't look like a .task model	Esse arquivo não parece um modelo .task	该文件不像是 .task 模型	そのファイルは .task モデルではないようです
 Esquinas	Corners	Cantos	圆角	角
 Estilo	Style	Estilo	样式	スタイル
-IA de Bisa	Bisa's AI	IA da Bisa	Bisa 的 AI	Bisa の AI
+IA de DIPPO	DIPPO's AI	IA da DIPPO	DIPPO 的 AI	DIPPO の AI
 IA en tu consola	AI on your console	IA no seu console	主机上的 AI	本体の AI
 IA en tu consola · sin internet ni créditos	AI on your console · no internet or credits	IA no seu console · sem internet nem créditos	主机上的 AI · 无需网络和额度	本体の AI · ネットもクレジットも不要
 IA local borrada	Local AI deleted	IA local apagada	已删除本地 AI	ローカル AI を削除しました
@@ -51,9 +51,9 @@ Muy redondas	Very round	Muito redondos	很圆	とても丸い
 No hay espacio: se necesitan unos 1,8 GB libres.	Not enough space: about 1.8 GB free is needed.	Sem espaço: são necessários uns 1,8 GB livres.	空间不足：需要约 1.8 GB 可用空间。	空き容量が足りません：約 1.8 GB 必要です。
 No pude copiar el modelo	I couldn't copy the model	Não consegui copiar o modelo	无法复制模型	モデルをコピーできませんでした
 Oscura	Dark	Escura	暗	暗い
-Para hablar con Bisa, baja su IA local (gratis, sin internet) en Menú › Bisa	To talk to Bisa, download her local AI (free, offline) in Menu › Bisa	Para falar com a Bisa, baixe a IA local (grátis, sem internet) em Menu › Bisa	要和 Bisa 聊天，请在 菜单 › Bisa 中下载本地 AI（免费、离线）	Bisa と話すには、メニュー › Bisa でローカル AI（無料・オフライン）をダウンロードしてください
-Para usar Claude pega tu clave, o elige la IA local en Menú › Bisa.	To use Claude paste your key, or choose the local AI in Menu › Bisa.	Para usar o Claude cole sua chave, ou escolha a IA local em Menu › Bisa.	要使用 Claude 请粘贴密钥，或在 菜单 › Bisa 中选择本地 AI。	Claude を使うにはキーを貼り付けるか、メニュー › Bisa でローカル AI を選んでください。
-Primero baja la IA local en Menú › Bisa.	First download the local AI in Menu › Bisa.	Primeiro baixe a IA local em Menu › Bisa.	请先在 菜单 › Bisa 中下载本地 AI。	まずメニュー › Bisa でローカル AI をダウンロードしてください。
+Para hablar con DIPPO, baja su IA local (gratis, sin internet) en Menú › DIPPO	To talk to DIPPO, download her local AI (free, offline) in Menu › DIPPO	Para falar com a DIPPO, baixe a IA local (grátis, sem internet) em Menu › DIPPO	要和 DIPPO 聊天，请在 菜单 › DIPPO 中下载本地 AI（免费、离线）	DIPPO と話すには、メニュー › DIPPO でローカル AI（無料・オフライン）をダウンロードしてください
+Para usar Claude pega tu clave, o elige la IA local en Menú › DIPPO.	To use Claude paste your key, or choose the local AI in Menu › DIPPO.	Para usar o Claude cole sua chave, ou escolha a IA local em Menu › DIPPO.	要使用 Claude 请粘贴密钥，或在 菜单 › DIPPO 中选择本地 AI。	Claude を使うにはキーを貼り付けるか、メニュー › DIPPO でローカル AI を選んでください。
+Primero baja la IA local en Menú › DIPPO.	First download the local AI in Menu › DIPPO.	Primeiro baixe a IA local em Menu › DIPPO.	请先在 菜单 › DIPPO 中下载本地 AI。	まずメニュー › DIPPO でローカル AI をダウンロードしてください。
 Principal	Main	Principal	主色	メイン
 Propio	Custom	Próprio	自定义	カスタム
 Página	Page	Página	页面	ページ
@@ -66,7 +66,7 @@ Se cortó la descarga. Vuelve a intentarlo y sigue donde quedó.	The download wa
 Secundario	Secondary	Secundária	副色	サブ
 Según el tema	By theme	Conforme o tema	跟随主题	テーマに合わせる
 Separación entre widgets	Space between widgets	Espaço entre widgets	小组件间距	ウィジェットの間隔
-Si tienes otro modelo en formato .task de MediaPipe (por ejemplo Gemma), elígelo y Bisa lo usará.	If you have another MediaPipe .task model (for example Gemma), choose it and Bisa will use it.	Se você tem outro modelo .task do MediaPipe (por exemplo Gemma), escolha-o e a Bisa vai usá-lo.	如果你有其他 MediaPipe .task 模型（例如 Gemma），选择它，Bisa 就会使用。	MediaPipe の .task モデル（Gemma など）があれば、選ぶと Bisa が使います。
+Si tienes otro modelo en formato .task de MediaPipe (por ejemplo Gemma), elígelo y DIPPO lo usará.	If you have another MediaPipe .task model (for example Gemma), choose it and DIPPO will use it.	Se você tem outro modelo .task do MediaPipe (por exemplo Gemma), escolha-o e a DIPPO vai usá-lo.	如果你有其他 MediaPipe .task 模型（例如 Gemma），选择它，DIPPO 就会使用。	MediaPipe の .task モデル（Gemma など）があれば、選ぶと DIPPO が使います。
 Sin atenuar	Not dimmed	Sem escurecer	不调暗	減光しない
 Sonando	Playing	Tocando	播放中	再生中
 Suave	Soft	Suave	轻微	やや暗い
@@ -77,10 +77,10 @@ Toda la interfaz	The whole interface	Toda a interface	整个界面	インター�
 Todas las canciones de Díptico en una lista, para escucharlas y elegir.	All of Díptico's songs in one list, to listen and choose.	Todas as músicas do Díptico numa lista, para ouvir e escolher.	Díptico 的所有歌曲都在一个列表里，可以试听和选择。	Díptico の曲を一覧で聴いて選べます。
 Tu carpeta	Your folder	Sua pasta	你的文件夹	あなたのフォルダ
 Tus temas	Your themes	Seus temas	你的主题	あなたのテーマ
-Un modelo de IA libre ({0}) que corre en tu consola. Se baja una vez; después Bisa funciona sin internet y sin gastar créditos, aunque compartas Díptico.	A free AI model ({0}) that runs on your console. Download it once; then Bisa works offline and without credits, even if you share Díptico.	Um modelo de IA livre ({0}) que roda no seu console. Baixa uma vez; depois a Bisa funciona sem internet e sem gastar créditos, mesmo se você compartilhar o Díptico.	一个在你主机上运行的免费 AI 模型（{0}）。下载一次后，Bisa 就能离线使用、不耗额度，即使你分享 Díptico 也一样。	本体で動く無料の AI モデル（{0}）。一度ダウンロードすれば、Díptico を共有してもオフラインでクレジットなしに使えます。
+Un modelo de IA libre ({0}) que corre en tu consola. Se baja una vez; después DIPPO funciona sin internet y sin gastar créditos, aunque compartas Díptico.	A free AI model ({0}) that runs on your console. Download it once; then DIPPO works offline and without credits, even if you share Díptico.	Um modelo de IA livre ({0}) que roda no seu console. Baixa uma vez; depois a DIPPO funciona sem internet e sem gastar créditos, mesmo se você compartilhar o Díptico.	一个在你主机上运行的免费 AI 模型（{0}）。下载一次后，DIPPO 就能离线使用、不耗额度，即使你分享 Díptico 也一样。	本体で動く無料の AI モデル（{0}）。一度ダウンロードすれば、Díptico を共有してもオフラインでクレジットなしに使えます。
 Una galería con todos los temas, separados en pestañas: colores, fiestas del mundo y los tuyos. Se ve cómo queda antes de elegir.	A gallery of all themes in tabs: colors, world holidays and yours. See how it looks before choosing.	Uma galeria com todos os temas em abas: cores, festas do mundo e os seus. Veja como fica antes de escolher.	包含所有主题的图库，按标签分类：颜色、世界节日和你的主题。选择前可先预览。	すべてのテーマをタブで分けたギャラリー：カラー、世界の祝日、あなたのテーマ。選ぶ前に見え方を確認できます。
-¡Listo! Bisa usará tu modelo	Done! Bisa will use your model	Pronto! A Bisa vai usar seu modelo	完成！Bisa 将使用你的模型	完了！Bisa があなたのモデルを使います
-¡Listo! Bisa ya piensa dentro de tu consola, sin internet	Done! Bisa now thinks inside your console, offline	Pronto! A Bisa já pensa dentro do seu console, sem internet	完成！Bisa 现在可以在你的主机里离线思考了	完了！Bisa は本体の中でオフラインで考えられるようになりました
+¡Listo! DIPPO usará tu modelo	Done! DIPPO will use your model	Pronto! A DIPPO vai usar seu modelo	完成！DIPPO 将使用你的模型	完了！DIPPO があなたのモデルを使います
+¡Listo! DIPPO ya piensa dentro de tu consola, sin internet	Done! DIPPO now thinks inside your console, offline	Pronto! A DIPPO já pensa dentro do seu console, sem internet	完成！DIPPO 现在可以在你的主机里离线思考了	完了！DIPPO は本体の中でオフラインで考えられるようになりました
 Guías	Guides	Guias	攻略	攻略
 Fiestas del mundo	World holidays	Festas do mundo	世界节日	世界の祝日
 sin IA aún	no AI yet	sem IA ainda	尚无 AI	AI 未設定

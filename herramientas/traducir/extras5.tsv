@@ -32,7 +32,7 @@ Auto · 	Auto · 	Auto · 	自动 · 	自動 ·
 Ayuda mientras juego	Help while I play	Ajuda enquanto jogo	玩游戏时帮忙	プレイ中のヘルプ
 Ayúdame a seguir donde quedé	Help me continue where I left off	Me ajude a continuar de onde parei	帮我从上次的地方继续	続きから手伝って
 Bajando la imagen…	Downloading the image…	Baixando a imagem…	正在下载图片…	画像をダウンロード中…
-Bisa mira tu partida y te ayuda (con el botón de Bisa en el juego).	Bisa watches your game and helps you (with the Bisa button in the game).	Bisa olha sua partida e ajuda (com o botão da Bisa no jogo).	Bisa 会看你的游戏并帮你（用游戏中的 Bisa 按钮）。	Bisa がプレイを見て手伝います（ゲーム中の Bisa ボタンで）。
+DIPPO mira tu partida y te ayuda (con el botón de DIPPO en el juego).	DIPPO watches your game and helps you (with the DIPPO button in the game).	DIPPO olha sua partida e ajuda (com o botão da DIPPO no jogo).	DIPPO 会看你的游戏并帮你（用游戏中的 DIPPO 按钮）。	DIPPO がプレイを見て手伝います（ゲーム中の DIPPO ボタンで）。
 Botones	Buttons	Botões	按钮	ボタン
 Botones extra	Extra buttons	Botões extras	额外按钮	追加ボタン
 Botón {0}	Button {0}	Botão {0}	按钮 {0}	ボタン {0}
@@ -51,7 +51,7 @@ Centrar	Center	Centralizar	居中	中央に
 ChatGPT · OpenAI	ChatGPT · OpenAI	ChatGPT · OpenAI	ChatGPT · OpenAI	ChatGPT · OpenAI
 Claude · Anthropic	Claude · Anthropic	Claude · Anthropic	Claude · Anthropic	Claude · Anthropic
 Clásicos	Classic	Clássicos	经典	クラシック
-Conversar con Bisa	Chat with Bisa	Conversar com a Bisa	和 Bisa 聊天	Bisa と話す
+Conversar con DIPPO	Chat with DIPPO	Conversar com a DIPPO	和 DIPPO 聊天	DIPPO と話す
 Corre esta consola antes o después (← →). Así quedan en el orden que tú quieras.	Move this console earlier or later (← →), so they're in the order you want.	Mova este console para antes ou depois (← →). Assim ficam na ordem que você quiser.	把这台主机往前或往后移（← →），按你想要的顺序排列。	このゲーム機を前後に動かします（← →）。好きな順番に並べられます。
 Corre este juego con la cruceta y deja tus juegos en el orden que quieras.	Move this game with the D-pad and put your games in the order you want.	Mova este jogo com o direcional e deixe seus jogos na ordem que quiser.	用方向键移动这个游戏，按你想要的顺序排列。	十字キーでこのゲームを動かして、好きな順番に並べます。
 Corre y acerca el hero para que se vea lo importante.	Move and zoom the hero so the important part shows.	Mova e aproxime o hero para mostrar o importante.	移动并放大大图，让重点露出来。	大きな画像を動かしてズームし、大事な部分を見せます。
@@ -62,7 +62,7 @@ Cuándo	When	Quando	何时	いつ
 Cuéntame en pocas líneas de qué trata {0} y por qué vale la pena.	Tell me in a few lines what {0} is about and why it's worth it.	Me conte em poucas linhas do que se trata {0} e por que vale a pena.	用几句话告诉我 {0} 讲什么、为什么值得玩。	{0} がどんなゲームで、なぜ遊ぶ価値があるのか短く教えて。
 Cámbiame el tema	Change my theme	Mude meu tema	帮我换主题	テーマを変えて
 Cámbiame el tema de Díptico por uno que me sorprenda.	Change Díptico's theme to one that surprises me.	Mude o tema do Díptico para um que me surpreenda.	把 Díptico 的主题换成让我惊喜的。	Díptico のテーマを驚くようなものに変えて。
-Dale uso a los botones de atrás (L4 y R4 de la Odin 2 y otras): Bisa, apps, música, un juego al azar…	Put the back buttons to use (L4 and R4 on the Odin 2 and others): Bisa, apps, music, a random game…	Dê uso aos botões traseiros (L4 e R4 do Odin 2 e outros): Bisa, apps, música, um jogo aleatório…	让背键有用（Odin 2 等的 L4 和 R4）：Bisa、应用、音乐、随机游戏…	背面ボタン（Odin 2 などの L4・R4）を活用：Bisa、アプリ、音楽、ランダムなゲーム…
+Dale uso a los botones de atrás (L4 y R4 de la Odin 2 y otras): DIPPO, apps, música, un juego al azar…	Put the back buttons to use (L4 and R4 on the Odin 2 and others): DIPPO, apps, music, a random game…	Dê uso aos botões traseiros (L4 e R4 do Odin 2 e outros): DIPPO, apps, música, um jogo aleatório…	让背键有用（Odin 2 等的 L4 和 R4）：DIPPO、应用、音乐、随机游戏…	背面ボタン（Odin 2 などの L4・R4）を活用：DIPPO、アプリ、音楽、ランダムなゲーム…
 Dame una frase corta y simpática para empezar a jugar hoy.	Give me a short, friendly phrase to start playing today.	Me dê uma frase curta e simpática para começar a jogar hoje.	给我一句简短可爱的话，开始今天的游戏。	今日遊び始めるための短くて楽しい一言をちょうだい。
 Dar permiso para ver la música	Allow seeing the music	Permitir ver a música	允许查看音乐	音楽の表示を許可
 Del tema: cada tema trae los suyos. Clásicos: campanitas suaves. Bloques: madera y pops. Retro: 8 bits. Burbuja: gotitas.	Theme: each theme brings its own. Classic: soft chimes. Blocks: wood and pops. Retro: 8-bit. Bubble: droplets.	Do tema: cada tema traz os seus. Clássicos: sininhos suaves. Blocos: madeira e pops. Retrô: 8 bits. Bolha: gotinhas.	跟随主题：每个主题有自己的。经典：柔和铃声。方块：木头和啵啵声。复古：8 位。泡泡：水滴声。	テーマ：テーマごとの音。クラシック：やさしいチャイム。ブロック：木とポン。レトロ：8ビット。バブル：しずく。
@@ -113,7 +113,7 @@ Juegos de Steam y locales. Díptico los abre directo con su número de Steam.	St
 Juegos de Windows. En Winlator usa "Exportar para frontend" y deja los accesos en la carpeta "windows" de tus juegos.	Windows games. In Winlator use "Export for frontend" and put the shortcuts in the "windows" folder of your games.	Jogos de Windows. No Winlator use "Exportar para frontend" e coloque os atalhos na pasta "windows" dos seus jogos.	Windows 游戏。在 Winlator 中使用"导出给前端"，把快捷方式放进游戏的 "windows" 文件夹。	Windows のゲーム。Winlator で「フロントエンド用にエクスポート」し、ショートカットをゲームの "windows" フォルダに置いてください。
 Juegos de tu PC por streaming. Agrégala a tus Ports.	Your PC games by streaming. Add it to your Ports.	Jogos do seu PC por streaming. Adicione aos seus Ports.	串流玩电脑游戏。把它加入 Ports。	PC のゲームをストリーミングで。Ports に追加してください。
 Jugar con alguien más duplica la diversión.	Playing with someone else doubles the fun.	Jogar com mais alguém dobra a diversão.	和别人一起玩，乐趣加倍。	誰かと遊ぶと楽しさ倍増。
-L4 = Bisa y R4 = música, con las teclas de siempre.	L4 = Bisa and R4 = music, with the usual keys.	L4 = Bisa e R4 = música, com as teclas de sempre.	L4 = Bisa，R4 = 音乐，使用默认按键。	L4 = Bisa、R4 = 音楽、いつものキーで。
+L4 = DIPPO y R4 = música, con las teclas de siempre.	L4 = DIPPO and R4 = music, with the usual keys.	L4 = DIPPO e R4 = música, com as teclas de sempre.	L4 = DIPPO，R4 = 音乐，使用默认按键。	L4 = DIPPO、R4 = 音楽、いつものキーで。
 La app de GameSir para juegos de PC. Agrégala a tus Ports para abrirla desde el estante.	GameSir's app for PC games. Add it to your Ports to open it from the shelf.	O app da GameSir para jogos de PC. Adicione aos seus Ports para abrir pela estante.	GameSir 的电脑游戏应用。加入 Ports 就能从书架打开。	GameSir の PC ゲーム用アプリ。Ports に追加すると棚から開けます。
 La música propia de cada tema.	Each theme's own music.	A música própria de cada tema.	每个主题自己的音乐。	テーマごとの音楽。
 La portada elegida y la imagen grande se acercan muy despacio, como en un documental. Apágalo si prefieres todo quieto.	The selected cover and the big image zoom in very slowly, like in a documentary. Turn it off if you prefer everything still.	A capa escolhida e a imagem grande se aproximam bem devagar, como num documentário. Desligue se preferir tudo parado.	选中的封面和大图会非常缓慢地放大，像纪录片一样。喜欢静止就关掉。	選んだカバーと大きな画像がドキュメンタリーのようにゆっくりズームします。止めたいならオフに。
@@ -161,8 +161,8 @@ Pausar o seguir la música	Pause or resume music	Pausar ou continuar a música	�
 Perder también es parte del juego: se aprende y se vuelve a intentar.	Losing is part of the game too: you learn and try again.	Perder também faz parte do jogo: se aprende e tenta de novo.	输也是游戏的一部分：学到东西再试一次。	負けるのもゲームのうち：学んでまた挑戦。
 Pregúntale lo que quieras: trucos, qué jugar, o cambiar Díptico.	Ask anything: tips, what to play, or changing Díptico.	Pergunte o que quiser: truques, o que jogar ou mudar o Díptico.	问什么都行：技巧、玩什么或改 Díptico。	何でも聞いて：コツ、何を遊ぶか、Díptico の変更。
 Puedo cambiarte el tema, la música o el inicio.	I can change your theme, music or home screen.	Posso mudar seu tema, a música ou o início.	我可以帮你换主题、音乐或主页。	テーマや音楽、ホームを変えられます。
-Pídele una a Bisa	Ask Bisa for one	Peça uma à Bisa	让 Bisa 来一句	Bisa に頼む
-Pídele una recomendación a Bisa	Ask Bisa for a recommendation	Peça uma recomendação à Bisa	让 Bisa 推荐	Bisa におすすめを聞く
+Pídele una a DIPPO	Ask DIPPO for one	Peça uma à DIPPO	让 DIPPO 来一句	DIPPO に頼む
+Pídele una recomendación a DIPPO	Ask DIPPO for a recommendation	Peça uma recomendação à DIPPO	让 DIPPO 推荐	DIPPO におすすめを聞く
 Píxeles	Pixels	Pixels	像素	ピクセル
 Queda en tu estante de Steam, con portada, ficha y tiempo jugado.	It goes on your Steam shelf, with cover, info page and play time.	Fica na sua estante da Steam, com capa, ficha e tempo jogado.	会放进你的 Steam 书架，带封面、资料页和游戏时间。	Steam の棚に入り、カバー・情報ページ・プレイ時間も付きます。
 Quedaste en: {0}	You left off at: {0}	Você parou em: {0}	你上次停在：{0}	前回の続き：{0}
@@ -239,7 +239,7 @@ Este enlace ya no sirve. Vuelve a escanear el código en la consola.	This link n
 Neón	Neon	Neon	霓虹	ネオン
 Contornos	Outlines	Contornos	轮廓	輪郭
 Daite	Daite	Daite	Daite	Daite
-Hablar con Bisa	Talk to Bisa	Falar com a Bisa	和 Bisa 聊天	Bisa と話す
+Hablar con DIPPO	Talk to DIPPO	Falar com a DIPPO	和 DIPPO 聊天	DIPPO と話す
 Abrir el menú	Open the menu	Abrir o menu	打开菜单	メニューを開く
 Buscar un juego	Search for a game	Procurar um jogo	搜索游戏	ゲームを探す
 Centro de control	Control center	Central de controle	控制中心	コントロールセンター

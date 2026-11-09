@@ -10,12 +10,12 @@ Ampliando una parte de la pantalla de arriba en la de abajo	Magnifying part of t
 Apagar lupa	Turn off magnifier	Desligar lupa	关闭放大镜	ルーペをオフ
 Arriba der.	Top right	Em cima dir.	右上	右上
 Arriba izq.	Top left	Em cima esq.	左上	左上
-Bisa busca en internet para darte datos exactos de cada juego. Si tu cuenta de Anthropic no lo permite, responde sin buscar.	Bisa searches the web to give you exact info for each game. If your Anthropic account doesn't allow it, she answers without searching.	A Bisa busca na internet para te dar dados exatos de cada jogo. Se sua conta da Anthropic não permitir, ela responde sem buscar.	Bisa 会上网搜索，给你每款游戏的准确信息。如果你的 Anthropic 账户不支持，她会直接回答。	Bisa はネットで検索して各ゲームの正確な情報を教えます。Anthropic のアカウントが対応していなければ検索せずに答えます。
-Bisa es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.	Bisa is your assistant: she recommends games from your library, helps when you're stuck and can change the theme or view for you.	A Bisa é sua assistente: recomenda jogos da sua biblioteca, ajuda quando você trava e pode mudar o tema ou a visualização por você.	Bisa 是你的助手：推荐你游戏库里的游戏，卡关时帮你，还能帮你更换主题或视图。	Bisa はあなたのアシスタント：ライブラリからおすすめを選び、詰まったときに助け、テーマや表示も変えてくれます。
-Bisa está contigo	Bisa is with you	A Bisa está com você	Bisa 陪着你	Bisa がついています
-Bisa mientras juegas	Bisa while you play	Bisa enquanto você joga	游戏时的 Bisa	プレイ中の Bisa
-Bisa · tu asistente	Bisa · your assistant	Bisa · sua assistente	Bisa · 你的助手	Bisa · あなたのアシスタント
-Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.	Bisa, your AI assistant: she knows your games, helps when you're stuck and changes things in Díptico for you.	Bisa, sua assistente com IA: conhece seus jogos, ajuda quando você trava e muda coisas do Díptico por você.	Bisa，你的 AI 助手：了解你的游戏，卡关时帮你，还能帮你修改 Díptico。	AI アシスタントの Bisa：ゲームを知り尽くし、詰まったら助け、Díptico の設定も変えてくれます。
+DIPPO busca en internet para darte datos exactos de cada juego. Si tu cuenta de Anthropic no lo permite, responde sin buscar.	DIPPO searches the web to give you exact info for each game. If your Anthropic account doesn't allow it, she answers without searching.	A DIPPO busca na internet para te dar dados exatos de cada jogo. Se sua conta da Anthropic não permitir, ela responde sem buscar.	DIPPO 会上网搜索，给你每款游戏的准确信息。如果你的 Anthropic 账户不支持，她会直接回答。	DIPPO はネットで検索して各ゲームの正確な情報を教えます。Anthropic のアカウントが対応していなければ検索せずに答えます。
+DIPPO es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.	DIPPO is your assistant: she recommends games from your library, helps when you're stuck and can change the theme or view for you.	A DIPPO é sua assistente: recomenda jogos da sua biblioteca, ajuda quando você trava e pode mudar o tema ou a visualização por você.	DIPPO 是你的助手：推荐你游戏库里的游戏，卡关时帮你，还能帮你更换主题或视图。	DIPPO はあなたのアシスタント：ライブラリからおすすめを選び、詰まったときに助け、テーマや表示も変えてくれます。
+DIPPO está contigo	DIPPO is with you	A DIPPO está com você	DIPPO 陪着你	DIPPO がついています
+DIPPO mientras juegas	DIPPO while you play	DIPPO enquanto você joga	游戏时的 DIPPO	プレイ中の DIPPO
+DIPPO · tu asistente	DIPPO · your assistant	DIPPO · sua assistente	DIPPO · 你的助手	DIPPO · あなたのアシスタント
+DIPPO, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.	DIPPO, your AI assistant: she knows your games, helps when you're stuck and changes things in Díptico for you.	DIPPO, sua assistente com IA: conhece seus jogos, ajuda quando você trava e muda coisas do Díptico por você.	DIPPO，你的 AI 助手：了解你的游戏，卡关时帮你，还能帮你修改 Díptico。	AI アシスタントの DIPPO：ゲームを知り尽くし、詰まったら助け、Díptico の設定も変えてくれます。
 Burbuja flotante	Floating bubble	Bolha flutuante	悬浮气泡	フローティングバブル
 Buscando: {0}	Searching: {0}	Buscando: {0}	搜索：{0}	検索中：{0}
 Buscar con otro nombre	Search with another name	Buscar com outro nome	用其他名称搜索	別の名前で検索
@@ -49,7 +49,7 @@ Estoy atascado en el juego elegido	I'm stuck in the selected game	Estou travado 
 Filas {0}	Rows {0}	Linhas {0}	行 {0}	行 {0}
 Fondo	Background	Fundo	背景	背景
 Fuente	Source	Fonte	来源	ソース
-Hablar con Bisa	Talk to Bisa	Falar com a Bisa	和 Bisa 聊天	Bisa と話す
+Hablar con DIPPO	Talk to DIPPO	Falar com a DIPPO	和 DIPPO 聊天	DIPPO と話す
 Hace {0} días	{0} days ago	Há {0} dias	{0} 天前	{0} 日前
 Hace {0} meses	{0} months ago	Há {0} meses	{0} 个月前	{0} か月前
 Imagen grande (hero)	Big image (hero)	Imagem grande (hero)	大图（hero）	大きな画像（ヒーロー）
@@ -60,7 +60,7 @@ Jugado hoy	Played today	Jogado hoje	今天玩过	今日プレイ
 La burbuja ya tiene permiso	The bubble already has permission	A bolha já tem permissão	气泡已获得权限	バブルはすでに許可されています
 Listo, volvió la {0} original	Done, the original {0} is back	Pronto, voltou a {0} original	完成，已恢复原来的{0}	元の{0}に戻しました
 Llevas harto en este juego. ¿Te digo qué te falta?	You've played this a lot. Want me to tell you what you're missing?	Você já jogou bastante. Quer que eu diga o que falta?	你已经玩了很久。要我告诉你还差什么吗？	かなり遊んでますね。足りないものを教えましょうか？
-Llevas varios intentos seguidos. Toca y Bisa te da una pista.	You've tried several times in a row. Tap and Bisa will give you a hint.	Você tentou várias vezes seguidas. Toque e a Bisa te dá uma dica.	你已经连续尝试了好几次。点击让 Bisa 给你提示。	何度も続けて挑戦しています。タップすると Bisa がヒントをくれます。
+Llevas varios intentos seguidos. Toca y DIPPO te da una pista.	You've tried several times in a row. Tap and DIPPO will give you a hint.	Você tentou várias vezes seguidas. Toque e a DIPPO te dá uma dica.	你已经连续尝试了好几次。点击让 DIPPO 给你提示。	何度も続けて挑戦しています。タップすると DIPPO がヒントをくれます。
 Lo esencial	Essentials	O essencial	常用	よく使う設定
 Lo que más se cambia, todo junto. Y para buscar cualquier ajuste por su nombre.	The most-changed settings, all together. And a way to search any setting by name.	O que mais se muda, tudo junto. E para buscar qualquer ajuste pelo nome.	最常改的设置都在这里，还能按名称搜索任何设置。	よく変える設定をまとめました。名前で設定を検索することもできます。
 Los juegos que ocultaste desde sus opciones (Y). Desde aquí los ves y los vuelves a mostrar.	Games you hid from their options (Y). See them here and show them again.	Os jogos que você ocultou nas opções (Y). Aqui você os vê e mostra de novo.	你在游戏选项（Y）中隐藏的游戏。可以在这里查看并重新显示。	オプション（Y）で非表示にしたゲーム。ここで確認して再表示できます。
@@ -90,10 +90,10 @@ No pude pedir el permiso de la lupa	I couldn't request the magnifier permission	
 Ocultar este juego	Hide this game	Ocultar este jogo	隐藏这款游戏	このゲームを非表示
 Ocultos	Hidden	Ocultos	已隐藏	非表示
 Otro nombre	Another name	Outro nome	其他名称	別の名前
-Para juegos que usan las dos pantallas (DS, 3DS) o el modo una pantalla: Bisa aparece como una burbuja encima del juego, con su botón para volver.	For games that use both screens (DS, 3DS) or single-screen mode: Bisa appears as a bubble over the game, with a button to go back.	Para jogos que usam as duas telas (DS, 3DS) ou o modo de uma tela: a Bisa aparece como uma bolha sobre o jogo, com um botão para voltar.	适用于使用双屏的游戏（DS、3DS）或单屏模式：Bisa 会以气泡形式出现在游戏上方，并带有返回按钮。	2 画面を使うゲーム（DS、3DS）や 1 画面モード用：Bisa がゲームの上にバブルで現れ、戻るボタンもあります。
-Para ver a Bisa encima del juego, activa su burbuja en Menú › Asistente	To see Bisa over the game, turn on her bubble in Menu › Bisa	Para ver a Bisa sobre o jogo, ative a bolha em Menu › Bisa	要在游戏上方看到 Bisa，请在 菜单 › Bisa 中开启气泡	ゲームの上に Bisa を出すには、メニュー › Bisa でバブルをオンに
-Pedir ayuda a Bisa	Ask Bisa for help	Pedir ajuda à Bisa	向 Bisa 求助	Bisa に助けを求める
-Pregúntale a Bisa	Ask Bisa	Pergunte à Bisa	问问 Bisa	Bisa に聞く
+Para juegos que usan las dos pantallas (DS, 3DS) o el modo una pantalla: DIPPO aparece como una burbuja encima del juego, con su botón para volver.	For games that use both screens (DS, 3DS) or single-screen mode: DIPPO appears as a bubble over the game, with a button to go back.	Para jogos que usam as duas telas (DS, 3DS) ou o modo de uma tela: a DIPPO aparece como uma bolha sobre o jogo, com um botão para voltar.	适用于使用双屏的游戏（DS、3DS）或单屏模式：DIPPO 会以气泡形式出现在游戏上方，并带有返回按钮。	2 画面を使うゲーム（DS、3DS）や 1 画面モード用：DIPPO がゲームの上にバブルで現れ、戻るボタンもあります。
+Para ver a DIPPO encima del juego, activa su burbuja en Menú › Asistente	To see DIPPO over the game, turn on her bubble in Menu › DIPPO	Para ver a DIPPO sobre o jogo, ative a bolha em Menu › DIPPO	要在游戏上方看到 DIPPO，请在 菜单 › DIPPO 中开启气泡	ゲームの上に DIPPO を出すには、メニュー › DIPPO でバブルをオンに
+Pedir ayuda a DIPPO	Ask DIPPO for help	Pedir ajuda à DIPPO	向 DIPPO 求助	DIPPO に助けを求める
+Pregúntale a DIPPO	Ask DIPPO	Pergunte à DIPPO	问问 DIPPO	DIPPO に聞く
 Páginas {0}	Pages {0}	Páginas {0}	页数 {0}	ページ {0}
 Quitar la búsqueda	Clear the search	Limpar a busca	清除搜索	検索をクリア
 Quitar la propia	Remove mine	Remover a própria	移除自定义	自分のものを削除
@@ -115,7 +115,7 @@ Usar	Use	Usar	使用	使う
 Veo que llevas varios intentos seguidos en {0}. ¡Tranqui, nos pasa a todos! ¿Te doy una pista suave o prefieres la solución?	I see you've tried several times in a row in {0}. Don't worry, it happens to everyone! Want a gentle hint or the solution?	Vejo que você tentou várias vezes seguidas em {0}. Calma, acontece com todo mundo! Quer uma dica leve ou prefere a solução?	看来你在{0}里连续尝试了好几次。别担心，大家都会这样！要一个小提示，还是直接看答案？	{0}で何度も続けて挑戦していますね。大丈夫、みんなそうです！やさしいヒントにする？それとも答え？
 Vuelve al estante	Goes back to the shelf	Volta para a estante	回到游戏架	棚に戻ります
 ¡Hola! Estoy aquí mientras juegas {0}. Si algo te cuesta, dime en qué parte vas.	Hi! I'm here while you play {0}. If something's hard, tell me where you are.	Olá! Estou aqui enquanto você joga {0}. Se algo estiver difícil, me diga em que parte está.	你好！你玩{0}时我都在。遇到困难就告诉我你玩到哪里了。	こんにちは！{0}をプレイ中はそばにいます。難しいところがあれば、どこまで進んだか教えてね。
-¡Hola! Soy Bisa. ¿En qué te ayudo?	Hi! I'm Bisa. How can I help?	Olá! Eu sou a Bisa. Como posso ajudar?	你好！我是 Bisa。有什么可以帮你？	こんにちは！Bisa です。何をお手伝いしましょう？
+¡Hola! Soy DIPPO. ¿En qué te ayudo?	Hi! I'm DIPPO. How can I help?	Olá! Eu sou a DIPPO. Como posso ajudar?	你好！我是 DIPPO。有什么可以帮你？	こんにちは！DIPPO です。何をお手伝いしましょう？
 ¿En qué parte vas? Te ayudo con una pista suave, sin arruinarte la sorpresa.	Where are you in the game? I'll give you a gentle hint without spoiling the surprise.	Em que parte você está? Te ajudo com uma dica leve, sem estragar a surpresa.	你玩到哪里了？我给你一个小提示，不剧透。	どこまで進んだ？ネタバレなしでやさしいヒントを出すね。
 ¿Por qué me está costando este juego?	Why is this game so hard for me?	Por que este jogo está difícil para mim?	为什么这款游戏对我来说这么难？	どうしてこのゲームが難しいの？
 ¿Quieres saber de qué se trata {0}?	Want to know what {0} is about?	Quer saber do que se trata {0}?	想知道{0}讲的是什么吗？	{0}がどんなゲームか知りたい？
@@ -124,7 +124,7 @@ Vuelve al estante	Goes back to the shelf	Volta para a estante	回到游戏架	�
 ¿Un truco para {0}?	A tip for {0}?	Uma dica para {0}?	来个{0}的技巧？	{0}のコツはいかが？
 ‹  Volver al juego	‹  Back to the game	‹  Voltar ao jogo	‹  返回游戏	‹  ゲームに戻る
 Lo esencial	Essentials	O essencial	常用	よく使う設定
-Bisa	Bisa	Bisa	Bisa	Bisa
+DIPPO	DIPPO	DIPPO	DIPPO	DIPPO
 Estoy atascado en {0}. Dame una pista suave.	I'm stuck in {0}. Give me a gentle hint.	Estou travado em {0}. Me dá uma dica leve.	我在{0}卡关了。给我一个小提示。	{0}で詰まった。やさしいヒントをちょうだい。
 En {0} me matan una y otra vez en la misma parte. ¿Qué hago?	In {0} I keep dying in the same part. What do I do?	Em {0} eu morro várias vezes na mesma parte. O que faço?	在{0}里我总是死在同一个地方。怎么办？	{0}で同じところで何度もやられる。どうすればいい？
 Dame un buen truco o consejo para {0}.	Give me a good tip for {0}.	Me dá um bom truque ou conselho para {0}.	给我一个{0}的好技巧。	{0}のいいコツを教えて。

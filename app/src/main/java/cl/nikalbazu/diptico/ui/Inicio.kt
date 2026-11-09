@@ -1335,7 +1335,7 @@ private fun FilaCuenta(icono: Icono, titulo: String, valor: String, color: Color
     }
 }
 
-/** Bisa con identidad propia: su morado de siempre, su cara, una burbuja que cambia y accesos directos. */
+/** DIPPO con identidad propia: su morado de siempre, su cara, una burbuja que cambia y accesos directos. */
 @Composable
 private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
     val esc = LocalEscala.current
@@ -1360,13 +1360,13 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
             .border(esc.d(1.5f), Uva.copy(alpha = 0.55f), forma)
             .combinedClickable(onClick = { Diptico.abrirWidgetTipo("asistente") }, onLongClick = { Diptico.editarWidgets() }),
     ) {
-        // Un brillo que respira detrás de Bisa.
+        // Un brillo que respira detrás de DIPPO.
         Box(Modifier.align(Alignment.CenterStart).size(esc.d(140)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.35f), Color.Transparent))))
         Row(Modifier.fillMaxSize().padding(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
             cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(if (compacto) 40f else if (al >= 2) 64f else 48f).value)
             Spacer(Modifier.width(esc.d(10)))
             Column(Modifier.weight(1f)) {
-                if (!compacto) Etiqueta("Bisa", Coral, 10.5f)
+                if (!compacto) Etiqueta("DIPPO", Coral, 10.5f)
                 androidx.compose.animation.AnimatedContent(
                     targetState = frases[k.mod(frases.size)],
                     transitionSpec = { (fadeIn(tween(400)) + androidx.compose.animation.slideInVertically(tween(400)) { it / 3 }) togetherWith fadeOut(tween(250)) },
@@ -1418,7 +1418,7 @@ fun PanelWidget(e: Estado) {
                 }
                 Spacer(Modifier.width(esc.d(10)))
                 Column(Modifier.weight(1f)) {
-                    Texto(if (esBisa) "Bisa" else Widgets.nombre(w.tipo), 18f, lineas = 1)
+                    Texto(if (esBisa) "DIPPO" else Widgets.nombre(w.tipo), 18f, lineas = 1)
                     Detalle(if (esBisa) "Tus accesos rápidos" else Widgets.descripcion(w.tipo), 12f, lineas = 1)
                 }
                 Box(

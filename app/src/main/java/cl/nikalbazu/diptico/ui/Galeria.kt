@@ -65,7 +65,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
         "tienda_temas" -> "Tienda de temas" to Icono.PALETA
         "decoraciones" -> "Decoraciones por tema" to Icono.ESTRELLA
         "colores" -> "Mis colores" to Icono.PALETA
-        "ia" -> "IA de Bisa" to Icono.CHISPA
+        "ia" -> "IA de DIPPO" to Icono.CHISPA
         "cajas" -> "Forma de las cajas" to Icono.FORMA
         "colecciones" -> "Colecciones" to Icono.CARPETA
         else -> "Música" to Icono.MUSICA
@@ -329,7 +329,7 @@ private fun MuestraColor(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () 
     }
 }
 
-/** Una IA para Bisa: su sello de color, nombre y en qué estado está. */
+/** Una IA para DIPPO: su sello de color, nombre y en qué estado está. */
 @Composable
 private fun FilaIA(it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
@@ -513,7 +513,7 @@ fun ExplicaIA(id: String) {
         )
         else -> listOf(
             "Automático", "Díptico elige solo: primero la IA de tu consola y, si no está, la primera IA de la nube con clave.",
-            "Si no tienes ninguna lista, Bisa te pedirá elegir una.",
+            "Si no tienes ninguna lista, DIPPO te pedirá elegir una.",
             "Ideal si compartes Díptico: cada persona usa lo que tenga.",
         )
     }

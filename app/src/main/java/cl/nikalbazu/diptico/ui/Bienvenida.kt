@@ -64,7 +64,7 @@ private fun ausenciaTexto(ms: Long): String {
     }
 }
 
-/** Lo que dice Bisa al recibirte (cambia según la hora y lo que falta por hacer). */
+/** Lo que dice DIPPO al recibirte (cambia según la hora y lo que falta por hacer). */
 private fun fraseBisa(e: Estado, tieneJuego: Boolean): String {
     val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
     val frases = buildList {
@@ -79,7 +79,7 @@ private fun fraseBisa(e: Estado, tieneJuego: Boolean): String {
 
 /**
  * Bienvenida al encender la consola: ocupa la pantalla principal unos segundos con un saludo, la hora,
- * el último juego para seguir y Bisa. Todo lo de fondo sigue funcionando. Cualquier botón la cierra; A sigue jugando.
+ * el último juego para seguir y DIPPO. Todo lo de fondo sigue funcionando. Cualquier botón la cierra; A sigue jugando.
  */
 @Composable
 fun Bienvenida(e: Estado, rol: Rol) {
@@ -205,7 +205,7 @@ private fun BienvenidaCompleta(e: Estado) {
                 }
             }
         }
-        // Bisa abajo a la izquierda con su frase.
+        // DIPPO abajo a la izquierda con su frase.
         Row(Modifier.align(Alignment.BottomStart).padding(start = esc.d(36), bottom = esc.d(22)).entra(t, 0.5f), verticalAlignment = Alignment.CenterVertically) {
             cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(42).value)
             Spacer(Modifier.width(esc.d(10)))
@@ -393,7 +393,7 @@ private fun RelojQueCae(hora: String, tam: Float, color: Color) {
     }
 }
 
-/** Texto que se va escribiendo letra por letra (como si Bisa lo tecleara). */
+/** Texto que se va escribiendo letra por letra (como si DIPPO lo tecleara). */
 @Composable
 private fun TextoQueSeEscribe(texto: String, tam: Float, demora: Long = 0) {
     val texto = Idioma.t(texto)

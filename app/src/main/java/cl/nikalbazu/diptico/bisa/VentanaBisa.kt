@@ -48,12 +48,13 @@ import cl.nikalbazu.diptico.ui.Lienzo
 import cl.nikalbazu.diptico.ui.SobreUva
 import cl.nikalbazu.diptico.ui.Texto
 import cl.nikalbazu.diptico.ui.Uva
-import cl.nikalbazu.diptico.ui.dibujarBisa
+import cl.nikalbazu.diptico.ui.dibujarDippo
+import androidx.compose.runtime.remember
 import cl.nikalbazu.diptico.ui.fondoBoton
 
-/** Bisa animada: parpadea y flota suave. Es su cara en todo Díptico. */
+/** DIPPO animada: parpadea y flota suave. Es su cara en todo Díptico. */
 @Composable
-fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = false) {
+fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = false, cara: cl.nikalbazu.diptico.ui.CaraDippo? = null) {
     val t = rememberInfiniteTransition(label = "bisa")
     val parpadeo by t.animateFloat(
         1f, 1f,
@@ -62,6 +63,15 @@ fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = fa
     )
     val flotar by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "flotar")
     val pulso by t.animateFloat(1f, 1.35f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulso")
+    // Las lucecitas de los tentáculos «respiran»; cada tanto saluda con un tentáculo.
+    val luces by t.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1400), RepeatMode.Reverse), label = "luces")
+    val saludo by t.animateFloat(
+        0f, 0f,
+        infiniteRepeatable(keyframes { durationMillis = 9000; 0f at 6000; 1f at 6400; 0.6f at 6700; 1f at 7000; 0f at 7500 }),
+        label = "saludo",
+    )
+    val colores = remember { cl.nikalbazu.diptico.ui.coloresDippoAhora() }
+    val gesto = cara ?: cl.nikalbazu.diptico.ui.CaraDippo.NORMAL
     Box(modifier.size(tamDp.dp), contentAlignment = Alignment.Center) {
         Box(
             Modifier.fillMaxSize().graphicsLayer { translationY = flotar * tamDp * 0.04f * density }
@@ -70,7 +80,7 @@ fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = fa
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.size((tamDp * 0.86f).dp)) {
-                dibujarBisa(size.width / 24f, Uva, Coral, parpadeo = parpadeo, mirar = flotar * 0.4f)
+                dibujarDippo(size.width / 24f, colores, gesto, parpadeo = parpadeo, mirar = flotar * 0.4f, luces = luces, saludo = saludo)
             }
         }
         if (alerta) {
@@ -109,7 +119,7 @@ fun VentanaBisa(mover: (Float, Float) -> Unit, cerrar: () -> Unit) {
                 AvatarBisa(34f)
                 Spacer(Modifier.width(esc.d(8)))
                 Column(Modifier.weight(1f)) {
-                    Texto("Bisa", 17f, lineas = 1)
+                    Texto("DIPPO", 17f, lineas = 1)
                     Detalle(juego?.titulo ?: "Tu asistente", 11.5f, lineas = 1)
                 }
                 Box(Modifier.size(esc.d(30)).clip(CircleShape).background(p.superficie).clickable { cerrar() }, contentAlignment = Alignment.Center) {

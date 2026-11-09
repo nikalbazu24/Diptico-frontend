@@ -73,11 +73,11 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     PORTADAS("Portadas", Icono.PORTADA, "Descarga portadas, imágenes, logos y títulos de internet."),
     EMULADORES("Emuladores", Icono.EMULADOR, "Con qué emulador, o con qué núcleo de RetroArch, se abre cada consola."),
     LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
-    ASISTENTE("Bisa", Icono.BISA, "Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.", "Asistente"),
+    ASISTENTE("DIPPO", Icono.BISA, "DIPPO, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.", "Asistente"),
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.", "Consola"),
     SOBREMESA("Sobremesa", Icono.VISTA, "Cuando conectas la consola a la tele: una sola pantalla, todo más grande, margen para que nada se corte y más."),
     RENDIMIENTO("Rendimiento", Icono.CHISPA, "Modo turbo al jugar: libera memoria cerrando apps de fondo, pone a Díptico en reposo y, si quieres, activa No molestar."),
-    CONTROLES("Controles", Icono.MANDO, "Qué hace cada stick y los botones de atrás (L4 y R4 de la Odin 2 y otras): Bisa, apps, música, un juego al azar…"),
+    CONTROLES("Controles", Icono.MANDO, "Qué hace cada stick y los botones de atrás (L4 y R4 de la Odin 2 y otras): DIPPO, apps, música, un juego al azar…"),
     CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Respaldo en Google Drive, actualizaciones, reportar un problema, el tutorial y la versión de Díptico."),
@@ -89,7 +89,7 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     G_JUEGOS("Juegos y emuladores", Icono.EMULADOR, "Con qué se abre cada consola, los logros y el modo turbo al jugar."),
     G_CONTROLES("Controles", Icono.MANDO, "Qué hace cada botón y stick."),
     G_SONIDO("Sonido", Icono.MUSICA, "La música de fondo, los sonidos y la vibración."),
-    G_SISTEMA("Sistema", Icono.INFO, "Respaldo, idioma, Android, la tele, Bisa y la versión de Díptico."),
+    G_SISTEMA("Sistema", Icono.INFO, "Respaldo, idioma, Android, la tele, DIPPO y la versión de Díptico."),
     /** Solo en el modo simple: la puerta a las secciones avanzadas (nada queda escondido). */
     MAS("Más ajustes", Icono.AJUSTES, "Las secciones avanzadas, a un toque. Y para volver al menú completo.", "Avanzado"),
 }
@@ -195,7 +195,7 @@ data class BotonExtra(val nombre: String, val tecla: Int, val accion: String, va
         )
         val ACCIONES = listOf("nada", "bisa", "musica", "siguiente", "apps", "buscar", "azar", "widgets", "vista", "centro", "favorito", "ficha", "intercambiar", "menu")
         fun nombreAccion(a: String) = when (a) {
-            "bisa" -> "Hablar con Bisa"; "musica" -> "Pausar o seguir la música"; "siguiente" -> "Siguiente canción"; "apps" -> "Abrir las apps"
+            "bisa" -> "Hablar con DIPPO"; "musica" -> "Pausar o seguir la música"; "siguiente" -> "Siguiente canción"; "apps" -> "Abrir las apps"
             "buscar" -> "Buscar un juego"; "azar" -> "Un juego al azar"; "widgets" -> "Widgets ↔ carátulas"; "vista" -> "Cambiar la vista"
             "centro" -> "Centro de control"; "favorito" -> "Favorito sí / no"; "ficha" -> "Ficha del juego"; "intercambiar" -> "Intercambiar pantallas"
             "menu" -> "Abrir el menú"; else -> "Nada"
@@ -255,7 +255,7 @@ object Widgets {
         "favoritos" -> "Tus juegos favoritos"; "frase" -> "Una frase distinta cada día"; "estadisticas" -> "Tus horas por consola"
         "sugerencia" -> "Un juego al azar para descubrir"; "accesos" -> "Wi-Fi, Bluetooth, brillo y más"
         "notificaciones" -> "Lo último que llegó a tu consola"; "logros" -> "Tus logros de RetroAchievements"
-        "asistente" -> "Un acceso directo para hablar con Bisa"
+        "asistente" -> "Un acceso directo para hablar con DIPPO"
         "apps" -> "Tus apps fijadas y el cajón con todas"
         "temporizador" -> "Cuenta atrás y aviso mientras juegas"
         "cronometro" -> "Mide una partida y pausa cuando quieras"
@@ -426,14 +426,14 @@ data class Estado(
     /** Conversación con el asistente. */
     val chat: List<MensajeChat> = emptyList(),
     val pensando: Boolean = false,
-    /** Bisa puede buscar guías en internet (cuesta un poco más de la clave). */
+    /** DIPPO puede buscar guías en internet (cuesta un poco más de la clave). */
     val bisaWeb: Boolean = true,
-    /** Motor de Bisa: auto, local, gemini u openai. */
+    /** Motor de DIPPO: auto, local, gemini u openai. */
     val motorIA: String = "auto",
     val iaLocalLista: Boolean = false,
-    /** Bisa ofrece ayuda mientras juegas (aviso y burbuja). */
+    /** DIPPO ofrece ayuda mientras juegas (aviso y burbuja). */
     val bisaEnJuego: Boolean = true,
-    /** Burbuja flotante de Bisa: abierta (ventanita) y con aviso. */
+    /** Burbuja flotante de DIPPO: abierta (ventanita) y con aviso. */
     val burbujaAbierta: Boolean = false,
     val burbujaAlerta: Boolean = false,
     /** La lupa está copiando la pantalla de arriba. */
@@ -573,7 +573,7 @@ data class Estado(
     val descargaAct: Float = -1f,
     val actualizarSolo: Boolean = true,
     val buscandoAct: Boolean = false,
-    /** Lo que Bisa está haciendo mientras piensa ("Buscando en internet…"), para mostrarlo. */
+    /** Lo que DIPPO está haciendo mientras piensa ("Buscando en internet…"), para mostrarlo. */
     val pensandoQue: String = "",
     /** Cambia cuando un acceso del centro de control se enciende o apaga (para redibujarlo). */
     val centroVersion: Int = 0,
@@ -667,7 +667,7 @@ data class Estado(
     val continuacion: Long = 0L,
     /** "completa", "breve" o "no". */
     val bienvenidaModo: String = "completa",
-    /** Cómo te llama Bisa (vacío = sin nombre). */
+    /** Cómo te llama DIPPO (vacío = sin nombre). */
     val nombre: String = "",
     /** Díptico es la app de inicio de Android (el botón Inicio trae aquí). */
     val esInicio: Boolean = true,
@@ -865,7 +865,7 @@ object Diptico {
             extra = EstadoExtra(
                 estiloBarraArriba = almacen.texto("estiloBarraArriba", "solida"),
                 estiloBarraAbajo = almacen.texto("estiloBarraAbajo", "solida"),
-                accesosCentro = almacen.texto("accesosCentro", "").split("|").filter { it.isNotBlank() },
+                accesosCentro = almacen.texto("accesosCentro", "").split("|").filter { it.isNotBlank() }.map { if (it == "Bisa") "DIPPO" else it },
                 vibracion = almacen.texto("vibracion", "apagada").also { cl.nikalbazu.diptico.audio.Vibracion.iniciar(app, it) },
                 animaciones = almacen.texto("animaciones", "normales"),
                 velocidadAnim = almacen.texto("velocidadAnim", "normal"),
@@ -1946,7 +1946,7 @@ object Diptico {
             PasoTuto.CONTROLES -> listOf(Opcion("Continuar", "Cuando quieras", Icono.CHECK) { siguientePaso() })
             PasoTuto.LISTO -> listOf(
                 Opcion("¡Empezar a jugar!", icono = Icono.JUGAR) { terminarConfiguracion() },
-                Opcion("¿Cómo te llama Bisa?", e.nombre.ifBlank { "Opcional" }, Icono.BISA) { abrirTexto("nombre", e.nombre) },
+                Opcion("¿Cómo te llama DIPPO?", e.nombre.ifBlank { "Opcional" }, Icono.BISA) { abrirTexto("nombre", e.nombre) },
             )
         }
     }
@@ -2144,7 +2144,7 @@ object Diptico {
         }
         // La pantalla del compañero queda encendida 5 segundos y después se atenúa.
         despertar()
-        // Bisa acompaña el juego. Si se nota que lo reintenta mucho, ofrece ayuda.
+        // DIPPO acompaña el juego. Si se nota que lo reintenta mucho, ofrece ayuda.
         if (e.bisaEnJuego) {
             val atascado = Asistente.reintentos(juego.clave) >= 2
             val sinPantallaLibre = consola.dosPantallas || estado.value.unaPantalla || inferior == null
@@ -2335,7 +2335,7 @@ object Diptico {
         "decoraciones" -> listOf("Instalados", "Tienda de temas", "Calendario")
         "mezclar_tema" -> ComponenteTema.entries.map { it.titulo }
         "colores" -> listOf("Principal", "Secundario", "Detalles", "Fondo", "Letras")
-        "ia" -> listOf("El cerebro de Bisa")
+        "ia" -> listOf("El cerebro de DIPPO")
         "cajas" -> listOf("${Consolas.porId(estado.value.galeriaConsola)?.nombre ?: "Esta consola"}", "Todas las consolas")
         else -> listOf("Canciones")
     }
@@ -2536,7 +2536,7 @@ object Diptico {
         }
     }
 
-    /** Deja a Bisa lista para ayudar con el juego en curso (en la pantalla libre o en la burbuja). */
+    /** Deja a DIPPO listo para ayudar con el juego en curso (en la pantalla libre o en la burbuja). */
     fun prepararAyuda() {
         val c = CentroBisa.contexto(estado.value)
         val saludo = MensajeChat("ia", if (c.juego == null) "Estoy contigo. ¿En qué te ayudo?"
@@ -3140,7 +3140,7 @@ object Diptico {
 
     /**
      * Una opción con varias alternativas: muestra la puesta ahora y, al elegirla, abre un menú desplegable con todas.
-     * [accion] sigue pasando a la siguiente (para atajos y para Bisa).
+     * [accion] sigue pasando a la siguiente (para atajos y para DIPPO).
      */
     fun opcionLista(
         titulo: String, icono: Icono?, ayuda: String, ids: List<String>, nombres: List<String>, actual: String,
@@ -3239,7 +3239,7 @@ object Diptico {
         lista += Opcion("Ficha", icono = Icono.TUTORIAL, ayuda = "Todo del juego: de qué trata, tu tiempo, logros, trucos y notas, y para cambiar sus imágenes. También con X.") { abrirFicha() }
         lista += Opcion("Mi paso", d?.paso?.take(30) ?: "", Icono.LAPIZ, ayuda = "Anota dónde quedaste (texto, voz o un punto en el mapa) para que Díptico te lo recuerde la próxima vez.") { cerrarPanel(); abrirQuedaste() }
         lista += Opcion(if (d?.favorito == true) "Favorito ✓" else "Favorito", icono = Icono.CORAZON, ayuda = "Los favoritos se ven primero con el filtro Favoritos y en el widget de favoritos.") { alternarFavorito(juego.clave) }
-        lista += Opcion("Bisa", icono = Icono.BISA, ayuda = "Le pregunta a Bisa por un buen truco o consejo para este juego.") { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${juego.titulo}.") }
+        lista += Opcion("DIPPO", icono = Icono.BISA, ayuda = "Le pregunta a DIPPO por un buen truco o consejo para este juego.") { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${juego.titulo}.") }
         // Lista de abajo: ajustes de este juego.
         lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA, ayuda = "Cambia el título, la portada, la imagen grande, el logo y la música de este juego.") { abrirFicha(); elegirPestanaFicha(3) }
         lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA, ayuda = "Abre la tienda de imágenes para elegir otra portada de internet.") { abrirFicha(); buscarCandidatos("portada") }
@@ -3568,7 +3568,7 @@ object Diptico {
         Seccion.CONTROLES -> if (t == "Sticks") "Sticks" else if (t.startsWith("Botón") || t.startsWith("Aprender")) "Botones extra" else "Más"
         Seccion.SOBREMESA -> if (t == "Cuándo se activa" || t == "Tele conectada") "Cuándo" else "En la tele"
         Seccion.ASISTENTE -> when {
-            t == "Hablar con Bisa" || t == "Bisa mientras juegas" || t == "Burbuja flotante" -> "Bisa"
+            t == "Hablar con DIPPO" || t == "DIPPO mientras juegas" || t == "Burbuja flotante" -> "DIPPO"
             t.startsWith("Clave de") -> "Claves de IA en la nube"
             t == "Borrar la conversación" -> "Conversación"
             else -> "Su cerebro"
@@ -3635,14 +3635,14 @@ object Diptico {
         }
         val elegidos = listOf(
             "Tienda de temas", "Modo", "Tamaño de letra", "Modo de pantallas", "Intercambiar pantallas", "Teclado", "Música de fondo",
-            "Sonidos al moverte", "Fechas especiales", "Efecto de los botones", "Fluidez", "Bisa mientras juegas",
+            "Sonidos al moverte", "Fechas especiales", "Efecto de los botones", "Fluidez", "DIPPO mientras juegas",
         )
         val lista = mutableListOf(
             Opcion("Buscar un ajuste", "Y", Icono.BUSCAR, "Escribe una palabra (música, tema, teclado…) y te muestro dónde está, aunque esté en una sección avanzada.") { abrirTexto("buscar_ajuste") },
             opcionMenuSimple(e),
             Opcion("Idioma", (Idioma.IDIOMAS.firstOrNull { it.first == e.idioma }?.second ?: e.idioma), Icono.IDIOMA) { abrirMenu(Seccion.IDIOMA) },
             Opcion("Acomodar el inicio", icono = Icono.EDITAR, ayuda = "Mueve, agranda y cambia el estilo de tus widgets. También manteniendo apretado el inicio.") { cerrarPanel(); editarWidgets() },
-            Opcion("Hablar con Bisa", icono = Icono.BISA) { abrirAsistente() },
+            Opcion("Hablar con DIPPO", icono = Icono.BISA) { abrirAsistente() },
         )
         for (t in elegidos) todas.firstOrNull { it.second.titulo == t }?.let { lista += it.second }
         return lista
@@ -3782,9 +3782,9 @@ object Diptico {
             Seccion.ESENCIAL -> lista += opcionesEsenciales(e)
             Seccion.MAS -> lista += opcionesMas(e)
             Seccion.ASISTENTE -> {
-                lista += Opcion("Hablar con Bisa", icono = Icono.BISA, ayuda = "Bisa es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
+                lista += Opcion("Hablar con DIPPO", icono = Icono.BISA, ayuda = "DIPPO es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
                 lista += Opcion(
-                    "Bisa mientras juegas", if (e.bisaEnJuego) "Sí" else "No", Icono.MANDO,
+                    "DIPPO mientras juegas", if (e.bisaEnJuego) "Sí" else "No", Icono.MANDO,
                     "Mientras juegas deja un aviso para pedir ayuda, y si reintentas varias veces seguidas la misma partida te ofrece una pista. Se abre en la pantalla libre.",
                 ) {
                     val v = !estado.value.bisaEnJuego
@@ -3793,15 +3793,15 @@ object Diptico {
                 }
                 lista += Opcion(
                     "Burbuja flotante", if (cl.nikalbazu.diptico.bisa.BurbujaBisa.puedeFlotar(app)) "Activada ✓" else "Dar permiso", Icono.BISA,
-                    "Para juegos que usan las dos pantallas (DS, 3DS) o el modo una pantalla: Bisa aparece como una burbuja encima del juego, con su botón para volver.",
+                    "Para juegos que usan las dos pantallas (DS, 3DS) o el modo una pantalla: DIPPO aparece como una burbuja encima del juego, con su botón para volver.",
                 ) { if (cl.nikalbazu.diptico.bisa.BurbujaBisa.puedeFlotar(app)) avisar("La burbuja ya tiene permiso") else cl.nikalbazu.diptico.bisa.BurbujaBisa.pedirPermisoFlotante(app) }
                 lista += Opcion(
-                    "IA de Bisa", textoMotor(e), Icono.CHISPA,
+                    "IA de DIPPO", textoMotor(e), Icono.CHISPA,
                     "Su cerebro: la IA de tu consola (gratis, sin internet), Gemini (Google, con nivel gratis) o ChatGPT. Cada persona usa su propia clave.",
                 ) { abrirGaleria("ia") }
                 lista += Opcion(
                     "Buscar guías en internet", if (e.bisaWeb) "Sí" else "No", Icono.WEB,
-                    "Con Gemini o ChatGPT, Bisa busca en internet para darte datos exactos de cada juego. La IA de tu consola no busca.",
+                    "Con Gemini o ChatGPT, DIPPO busca en internet para darte datos exactos de cada juego. La IA de tu consola no busca.",
                 ) {
                     val v = !estado.value.bisaWeb
                     almacen.guardarBool("bisaWeb", v)
@@ -3811,7 +3811,7 @@ object Diptico {
                     "IA en tu consola",
                     when { e.iaLocalLista -> "Lista ✓ · ${IALocal.NOMBRE_MODELO}"; trabajosMapa.containsKey("ialocal") -> "Bajando…"; else -> "Bajar (1,6 GB)" },
                     Icono.DESCARGA,
-                    "Un modelo de IA libre (${IALocal.NOMBRE_MODELO}) que corre en tu consola. Se baja una vez; después Bisa funciona sin internet y sin gastar créditos, aunque compartas Díptico.",
+                    "Un modelo de IA libre (${IALocal.NOMBRE_MODELO}) que corre en tu consola. Se baja una vez; después DIPPO funciona sin internet y sin gastar créditos, aunque compartas Díptico.",
                 ) { if (estado.value.iaLocalLista) avisar("La IA local ya está lista") else descargarIALocal() }
                 for (prov in IA.PROVEEDORES) {
                     val clave = claveDe(prov, e)
@@ -3823,14 +3823,14 @@ object Diptico {
                 }
                 lista += Opcion(
                     "Usar un modelo propio", icono = Icono.CARPETA,
-                    ayuda = "Si tienes otro modelo en formato .task de MediaPipe (por ejemplo Gemma), elígelo y Bisa lo usará.",
+                    ayuda = "Si tienes otro modelo en formato .task de MediaPipe (por ejemplo Gemma), elígelo y DIPPO lo usará.",
                 ) { pedirArchivoPara("modeloIA", "*/*") }
-                if (e.iaLocalLista) lista += Opcion("Borrar la IA local", "Libera 1,6 GB", Icono.BORRAR, ayuda = "Borra el modelo de IA que se descargó a la consola. Bisa sigue funcionando con lo básico o con la nube.") {
+                if (e.iaLocalLista) lista += Opcion("Borrar la IA local", "Libera 1,6 GB", Icono.BORRAR, ayuda = "Borra el modelo de IA que se descargó a la consola. DIPPO sigue funcionando con lo básico o con la nube.") {
                     IALocal.borrar(app)
                     actualizar { it.copy(iaLocalLista = false) }
                     avisar("IA local borrada")
                 }
-                lista += Opcion("Borrar la conversación", if (e.chat.isEmpty()) "Vacía" else "${e.chat.size} mensajes", Icono.BORRAR, ayuda = "Borra lo que hablaste con Bisa. No toca tus ajustes ni tus juegos.") { borrarChat(); avisar("Conversación borrada") }
+                lista += Opcion("Borrar la conversación", if (e.chat.isEmpty()) "Vacía" else "${e.chat.size} mensajes", Icono.BORRAR, ayuda = "Borra lo que hablaste con DIPPO. No toca tus ajustes ni tus juegos.") { borrarChat(); avisar("Conversación borrada") }
             }
             Seccion.IDIOMA -> Idioma.IDIOMAS.forEach { (cod, nombre) ->
                 lista += Opcion(nombre, if (e.idioma == cod) "En uso ✓" else "", Icono.IDIOMA, Idioma.ayuda(cod)) { cambiarIdioma(cod) }
@@ -4710,7 +4710,7 @@ object Diptico {
         ) { cambiarArranque(1) },
         Opcion(
             "Bienvenida al encender", nombreBienvenida(e.bienvenidaModo), Icono.CHISPA,
-            "Al prender la consola: un saludo con la hora, tu último juego para seguir y Bisa. Si estabas jugando, un recordatorio de dónde ibas. Nada se detiene mientras tanto.",
+            "Al prender la consola: un saludo con la hora, tu último juego para seguir y DIPPO. Si estabas jugando, un recordatorio de dónde ibas. Nada se detiene mientras tanto.",
         ) { cambiarBienvenidaModo() },
         Opcion(
             "Continuación sobre el juego", if (cl.nikalbazu.diptico.bisa.Cartel.puede(app)) "Lista ✓" else "Dar permiso", Icono.CONTINUAR,
@@ -4725,7 +4725,7 @@ object Diptico {
             "Barra de accesos", if (e.barraFija) "Siempre visible" else "Se esconde sola", Icono.APPS,
             "Siempre visible: la barra queda fija. Se esconde sola: desaparece a los 5 segundos para que luzca el juego, y vuelve deslizando hacia arriba desde el borde de abajo, tocando la pantalla o con B.",
         ) { cambiarBarraFija(!estado.value.barraFija) },
-        Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Para que Bisa te salude por tu nombre.") { abrirTexto("nombre", estado.value.nombre) },
+        Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Para que DIPPO te salude por tu nombre.") { abrirTexto("nombre", estado.value.nombre) },
         Opcion("Preguntar dónde quedaste", if (e.preguntarQuedaste) "Sí" else "No", Icono.LAPIZ,
             "Al terminar de jugar, una tarjeta para anotar dónde quedaste: escribiendo, con una nota de voz o marcando en el mapa del juego. Siempre se puede pasar de largo.") {
             val v = !estado.value.preguntarQuedaste
@@ -4747,7 +4747,7 @@ object Diptico {
             "Estudio de widgets", "${e.widgets.count { it.visible }} a la vista", Icono.LAPIZ,
             "Todo en un lugar: tamaño, forma, estilo, color, diseño y página de cada widget. También manteniendo apretado el inicio.",
         ) { editarWidgets() },
-        Opcion("Agregar widgets", icono = Icono.APPS, ayuda = "El catálogo de widgets: reloj, música, recientes, Bisa y más.") { abrirCatalogoWidgets() },
+        Opcion("Agregar widgets", icono = Icono.APPS, ayuda = "El catálogo de widgets: reloj, música, recientes, DIPPO y más.") { abrirCatalogoWidgets() },
         Opcion("Volver al orden original", icono = Icono.BORRAR, ayuda = "Deja los widgets como vienen de fábrica.") {
             guardarWidgets(Widgets.porDefecto)
             avisar("Widgets como al principio")
@@ -5104,7 +5104,7 @@ object Diptico {
     /** La clave guardada para una IA en la nube. */
     fun claveDe(p: String, e: Estado = estado.value) = when (p) { "gemini" -> e.claveGemini; "openai" -> e.claveOpenAI; else -> "" }
 
-    /** Qué IA usa Bisa ahora: local (en la consola), gemini, openai o "ninguno". */
+    /** Qué IA usa DIPPO ahora: local (en la consola), gemini, openai o "ninguno". */
     fun motorEfectivo(e: Estado = estado.value): String = when (e.motorIA) {
         "local", "gemini", "openai" -> e.motorIA
         else -> when {
@@ -5124,7 +5124,7 @@ object Diptico {
         else -> "Auto · " + nombreMotor(motorEfectivo(e))
     }
 
-    /** Una IA en la nube con clave, para temas y nombres: la de Bisa si es de la nube, si no la primera con clave. */
+    /** Una IA en la nube con clave, para temas y nombres: la de DIPPO si es de la nube, si no la primera con clave. */
     fun llaveNube(e: Estado = estado.value): Llave? {
         val m = motorEfectivo(e)
         if (m in IA.PROVEEDORES && claveDe(m, e).isNotBlank()) return Llave(m, claveDe(m, e))
@@ -5148,7 +5148,7 @@ object Diptico {
         when {
             m == "local" && !IALocal.listo(app) -> { elegirMotor("local"); descargarIALocal() }
             m in IA.PROVEEDORES && claveDe(m, e).isBlank() -> { elegirMotor(m); claveVieneDeGaleria = true; abrirTexto(claveTexto(m)) }
-            else -> { elegirMotor(m); avisar("Bisa ahora usa: ${nombreMotor(m)}") }
+            else -> { elegirMotor(m); avisar("DIPPO ahora usa: ${nombreMotor(m)}") }
         }
     }
 
@@ -5171,7 +5171,7 @@ object Diptico {
         }
         if (motor in IA.PROVEEDORES && claveDe(motor, e).isBlank()) {
             claveParaAsistente = true; abrirTexto(claveTexto(motor))
-            avisar("Para usar ${nombreMotor(motor)} pega tu clave, o elige otra IA en Menú › Bisa.")
+            avisar("Para usar ${nombreMotor(motor)} pega tu clave, o elige otra IA en Menú › DIPPO.")
             return
         }
         val chat = e.chat.takeLast(38) + MensajeChat("yo", texto)
@@ -5217,15 +5217,15 @@ object Diptico {
     fun descargarIALocal() {
         if (IALocal.listo(app)) { avisar("La IA local ya está lista"); return }
         if (trabajosMapa.containsKey("ialocal")) return
-        trabajo("ialocal", "Bajando la IA de Bisa", IALocal.bajado(app) / IALocal.TAMANO.toFloat())
-        avisar("Bajando la IA de Bisa (1,6 GB). Puedes seguir usando Díptico.")
+        trabajo("ialocal", "Bajando la IA de DIPPO", IALocal.bajado(app) / IALocal.TAMANO.toFloat())
+        avisar("Bajando la IA de DIPPO (1,6 GB). Puedes seguir usando Díptico.")
         scope.launch {
             val error = withContext(Dispatchers.IO) {
-                IALocal.descargar(app) { a -> scope.launch { trabajo("ialocal", "Bajando la IA de Bisa", a) } }
+                IALocal.descargar(app) { a -> scope.launch { trabajo("ialocal", "Bajando la IA de DIPPO", a) } }
             }
             terminarTrabajo("ialocal")
             if (error != null) avisar(error) else {
-                avisar("¡Listo! Bisa ya piensa dentro de tu consola, sin internet")
+                avisar("¡Listo! DIPPO ya piensa dentro de tu consola, sin internet")
                 if (estado.value.motorIA != "local") elegirMotor("auto")
             }
             actualizar { it.copy(iaLocalLista = IALocal.listo(app)) }
@@ -5390,7 +5390,7 @@ object Diptico {
             2 -> buildList {
                 add(
                     Opcion(
-                        "Mis trucos y notas", d.notas.lineSequence().firstOrNull()?.take(40)?.ifEmpty { null } ?: "Escribir", Icono.LAPIZ, ayuda = "Tus apuntes de este juego: claves, trucos, lo que no quieres olvidar. Bisa también los lee.",
+                        "Mis trucos y notas", d.notas.lineSequence().firstOrNull()?.take(40)?.ifEmpty { null } ?: "Escribir", Icono.LAPIZ, ayuda = "Tus apuntes de este juego: claves, trucos, lo que no quieres olvidar. DIPPO también los lee.",
                     ) { abrirTexto("notas", d.notas) },
                 )
                 Fichas.enlacesGuias(j.titulo, consola?.bonito ?: "").forEach { (t, url) ->
@@ -5854,7 +5854,7 @@ object Diptico {
     private fun opcionesBotones(e: Estado): List<Opcion> = buildList {
         fun opcionAtajo(bisa: Boolean): Opcion {
             val clave = if (bisa) "atajoBisa" else "atajoApps"
-            val titulo = if (bisa) "Atajo de Bisa" else "Atajo del cajón de apps"
+            val titulo = if (bisa) "Atajo de DIPPO" else "Atajo del cajón de apps"
             val actual = if (bisa) e.atajoBisa else e.atajoApps
             fun cambiar(delta: Int) {
                 val actualEstado = estado.value
@@ -5908,7 +5908,7 @@ object Diptico {
             guardarBotonesExtra(l)
             aprenderBoton(l.size - 1)
         })
-        add(Opcion("Volver a lo original", icono = Icono.BORRAR, ayuda = "L4 = Bisa y R4 = música, con las teclas de siempre.") { guardarBotonesExtra(BotonExtra.PORDEFECTO) })
+        add(Opcion("Volver a lo original", icono = Icono.BORRAR, ayuda = "L4 = DIPPO y R4 = música, con las teclas de siempre.") { guardarBotonesExtra(BotonExtra.PORDEFECTO) })
     }
 
     // ---------- Widgets con vida: foco con la cruceta y contenido al abrirlos ----------
@@ -5965,7 +5965,7 @@ object Diptico {
         Sonidos.pagina()
     }
 
-    /** Abre el widget: unos van directo a su lugar (ficha, estadísticas, Bisa…) y el resto muestra su propio contenido. */
+    /** Abre el widget: unos van directo a su lugar (ficha, estadísticas, DIPPO…) y el resto muestra su propio contenido. */
     fun abrirWidget(i: Int = estado.value.widgetFoco) {
         val e = estado.value
         val w = e.widgets.getOrNull(i) ?: return
@@ -6076,7 +6076,7 @@ object Diptico {
                 if (toca > avisadas) {
                     avisadas = toca
                     cl.nikalbazu.diptico.bisa.Cartel.mostrar(
-                        app, s.displayId, "Bisa", "Llevas $minutos min jugando",
+                        app, s.displayId, "DIPPO", "Llevas $minutos min jugando",
                         listOf("¿Una pausa? Mira a lo lejos unos segundos.", "Estira las manos y toma agua.", "Buen momento para guardar la partida.").random(),
                     )
                 }
@@ -6158,7 +6158,7 @@ object Diptico {
                 .ifEmpty { listOf(Opcion("Marca favoritos con Y sobre un juego", icono = Icono.CORAZON, apagada = true) {}) }
             "sugerencia" -> juegosComo(e.sugeridas.mapNotNull { k -> e.juegosPorClave[k] }) + listOf(
                 Opcion("Otras sugerencias", icono = Icono.DADO, ayuda = "Te muestra otros juegos de tu biblioteca para jugar ahora.") { nuevasSugerencias() },
-                Opcion("Pídele una recomendación a Bisa", icono = Icono.BISA, ayuda = "Bisa elige un juego para ti según lo que te gusta.") { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") },
+                Opcion("Pídele una recomendación a DIPPO", icono = Icono.BISA, ayuda = "DIPPO elige un juego para ti según lo que te gusta.") { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") },
             )
             "fiesta" -> buildList {
                 e.fiesta?.let { f -> add(Opcion("Hoy: ${f.nombre}", f.donde, Icono.MUNDO, f.tema.mensaje) {}) }
@@ -6202,21 +6202,21 @@ object Diptico {
             }
             "frase" -> listOf(
                 Opcion("Otra frase", icono = Icono.CHISPA, ayuda = "Muestra otra frase en el widget.") { actualizar { it.copy(fraseExtra = it.fraseExtra + 1) } },
-                Opcion("Pídele una a Bisa", icono = Icono.BISA, ayuda = "Bisa escribe una frase nueva para el widget.") { abrirAsistente(); preguntar("Dame una frase corta y simpática para empezar a jugar hoy.") },
+                Opcion("Pídele una a DIPPO", icono = Icono.BISA, ayuda = "DIPPO escribe una frase nueva para el widget.") { abrirAsistente(); preguntar("Dame una frase corta y simpática para empezar a jugar hoy.") },
             )
             "notificaciones" -> Avisos.lista.value.map { a -> Opcion(a.titulo.ifBlank { a.app }, a.app, Icono.CAMPANA, a.texto, paquete = a.paquete) { abrirAviso(a) } }
                 .ifEmpty { listOf(Opcion("Todo tranquilo: no hay notificaciones", icono = Icono.CHECK, apagada = true) {}) }
             "asistente" -> buildList {
                 val j = e.seleccionado
-                add(Opcion("Conversar con Bisa", icono = Icono.BISA, ayuda = "Pregúntale lo que quieras: trucos, qué jugar, o cambiar Díptico.") { abrirAsistente() })
+                add(Opcion("Conversar con DIPPO", icono = Icono.BISA, ayuda = "Pregúntale lo que quieras: trucos, qué jugar, o cambiar Díptico.") { abrirAsistente() })
                 if (j != null) {
-                    add(Opcion("Un truco para ${j.titulo}", icono = Icono.CHISPA, ayuda = "Le pregunta a Bisa por un truco para este juego.") { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${j.titulo}.") })
-                    add(Opcion("¿De qué trata ${j.titulo}?", icono = Icono.TUTORIAL, ayuda = "Bisa te cuenta de qué trata este juego, sin spoilers.") { abrirAsistente(); preguntar("Cuéntame en pocas líneas de qué trata ${j.titulo} y por qué vale la pena.") })
-                    e.datos[j.clave]?.paso?.takeIf { it.isNotBlank() }?.let { paso -> add(Opcion("Ayúdame a seguir donde quedé", paso.take(30), Icono.LAPIZ, ayuda = "Bisa te ayuda con lo que anotaste como tu próximo paso.") { abrirAsistente(); preguntar("En ${j.titulo} anoté esto: \"$paso\". ¿Qué me conviene hacer ahora?") }) }
+                    add(Opcion("Un truco para ${j.titulo}", icono = Icono.CHISPA, ayuda = "Le pregunta a DIPPO por un truco para este juego.") { abrirAsistente(); preguntar("Dame un buen truco o consejo para ${j.titulo}.") })
+                    add(Opcion("¿De qué trata ${j.titulo}?", icono = Icono.TUTORIAL, ayuda = "DIPPO te cuenta de qué trata este juego, sin spoilers.") { abrirAsistente(); preguntar("Cuéntame en pocas líneas de qué trata ${j.titulo} y por qué vale la pena.") })
+                    e.datos[j.clave]?.paso?.takeIf { it.isNotBlank() }?.let { paso -> add(Opcion("Ayúdame a seguir donde quedé", paso.take(30), Icono.LAPIZ, ayuda = "DIPPO te ayuda con lo que anotaste como tu próximo paso.") { abrirAsistente(); preguntar("En ${j.titulo} anoté esto: \"$paso\". ¿Qué me conviene hacer ahora?") }) }
                 }
-                add(Opcion("¿Qué juego hoy?", icono = Icono.DADO, ayuda = "Bisa te recomienda qué jugar hoy.") { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") })
-                add(Opcion("Cámbiame el tema", icono = Icono.TEMA, ayuda = "Bisa te cambia el tema de Díptico.") { abrirAsistente(); preguntar("Cámbiame el tema de Díptico por uno que me sorprenda.") })
-                add(Opcion("Ayuda mientras juego", icono = Icono.BISA, ayuda = "Bisa mira tu partida y te ayuda (con el botón de Bisa en el juego).") { prepararAyuda() })
+                add(Opcion("¿Qué juego hoy?", icono = Icono.DADO, ayuda = "DIPPO te recomienda qué jugar hoy.") { abrirAsistente(); preguntar("¿Qué juego de mi colección me recomiendas para hoy? Dame 3 opciones y por qué.") })
+                add(Opcion("Cámbiame el tema", icono = Icono.TEMA, ayuda = "DIPPO te cambia el tema de Díptico.") { abrirAsistente(); preguntar("Cámbiame el tema de Díptico por uno que me sorprenda.") })
+                add(Opcion("Ayuda mientras juego", icono = Icono.BISA, ayuda = "DIPPO mira tu partida y te ayuda (con el botón de DIPPO en el juego).") { prepararAyuda() })
             }
             else -> if (w.tipo.startsWith("coleccion-")) {
                 val id = w.tipo.removePrefix("coleccion-")
@@ -6256,7 +6256,7 @@ object Diptico {
 
     // ---------- Imagen grande del inicio y cajas en "Todos" ----------
 
-    // ---------- Dictado por voz (para Bisa y el teclado) ----------
+    // ---------- Dictado por voz (para DIPPO y el teclado) ----------
 
     /** Abre el reconocimiento de voz de Android (lo registra la pantalla activa). */
     var pedirVoz: (() -> Boolean)? = null
@@ -7131,7 +7131,7 @@ object Diptico {
                 if (claveVieneDeGaleria) {
                     claveVieneDeGaleria = false
                     abrirGaleria("ia")
-                    if (t.isNotEmpty()) avisar("Clave guardada. Bisa ya puede pensar con ${nombreMotor(estado.value.motorIA)}.")
+                    if (t.isNotEmpty()) avisar("Clave guardada. DIPPO ya puede pensar con ${nombreMotor(estado.value.motorIA)}.")
                     return
                 }
                 if (t.isNotEmpty() && claveParaAsistente) {
@@ -7341,7 +7341,7 @@ object Diptico {
             scope.launch {
                 val error = withContext(Dispatchers.IO) { IALocal.usarPropio(app, uri) }
                 terminarTrabajo("ialocal")
-                avisar(error ?: "¡Listo! Bisa usará tu modelo")
+                avisar(error ?: "¡Listo! DIPPO usará tu modelo")
                 actualizar { it.copy(iaLocalLista = IALocal.listo(app)) }
             }
             return
@@ -7959,7 +7959,7 @@ object Diptico {
         Opcion("Todas las apps", icono = Icono.APPS) { abrirApps() },
         Opcion("Archivos", icono = Icono.CARPETA) { abrirArchivos() },
         Opcion("Batería", icono = Icono.BATERIA) { abrirIntent(Intent(Intent.ACTION_POWER_USAGE_SUMMARY), "No pude abrir la batería") },
-        Opcion("Bisa", icono = Icono.BISA) { abrirAsistente() },
+        Opcion("DIPPO", icono = Icono.BISA) { abrirAsistente() },
         Opcion("Estadísticas", icono = Icono.RELOJ) { abrirEstadisticas() },
         Opcion("Protector", icono = Icono.ESTRELLA) { cerrarPanel(); actualizar { it.copy(protector = true) } },
         Opcion("Ajustes", icono = Icono.AJUSTES) { abrirIntent(Intent(android.provider.Settings.ACTION_SETTINGS), "No pude abrir los ajustes") },

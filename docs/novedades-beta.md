@@ -1,2 +1,2 @@
-- **Temas y decoraciones:** ahora tienen su propia sección en Ajustes (ocho secciones en total).
-- **Movimiento pulido:** al cambiar de consola, los mosaicos se deslizan y funden hacia ese lado; el mosaico elegido crece con un resorte corto; las opciones del menú ya no entran una por una (era lo que más pesaba al abrir una sección).
+- **Llegó DIPPO:** Bisa ahora es DIPPO, un pulpito de luz original. Flota, parpadea, las puntas de sus tentáculos son lucecitas que respiran y cada tanto saluda. De día es cálido y de noche azulado. Tiene caras: normal, feliz, pensando, celebrando, sorprendido, preocupado y durmiendo.
+- Todo lo que decía «Bisa» ahora dice «DIPPO» (menú, widget, burbuja mientras juegas, accesos de la cortina).

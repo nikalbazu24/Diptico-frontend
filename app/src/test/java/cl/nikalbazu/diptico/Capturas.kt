@@ -1168,8 +1168,8 @@ class Capturas {
     @Test fun t261_barra_escondida() = foto("261_barra_escondida", conRecientes(base()).copy(barraFija = false, barra = false), Rol.SUPERIOR)
     @Test fun t262_barras_difusas_arriba() = foto("262_barras_difusas_arriba", conRecientes(base()).copy(extra = EstadoExtra(estiloBarraArriba = "difusa")), Rol.SUPERIOR)
     @Test fun t263_barras_transparentes_arriba() = foto("263_barras_transparentes_arriba", conRecientes(base()).copy(extra = EstadoExtra(estiloBarraArriba = "transparente")), Rol.SUPERIOR)
-    @Test fun t264_galeria_accesos() = foto("264_accesos_cortina", base().copy(panel = Panel.GALERIA, galeria = "accesos_cortina", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "Bisa")), indice = 0), Rol.INFERIOR)
-    @Test fun t265_cortina_elegida() = foto("265_cortina_con_accesos_elegidos", base().copy(panel = Panel.CENTRO, cortina = "ajustes", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "Bisa"))), Rol.SUPERIOR)
+    @Test fun t264_galeria_accesos() = foto("264_accesos_cortina", base().copy(panel = Panel.GALERIA, galeria = "accesos_cortina", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "DIPPO")), indice = 0), Rol.INFERIOR)
+    @Test fun t265_cortina_elegida() = foto("265_cortina_con_accesos_elegidos", base().copy(panel = Panel.CENTRO, cortina = "ajustes", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "DIPPO"))), Rol.SUPERIOR)
     @Test fun t266_menu_musica_vibracion() = foto("266_menu_musica_vibracion", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true, indice = 0), Rol.SUPERIOR)
     @Test fun t267_vista_iconos() = foto("267_vista_solo_portadas", base().copy(vista = "iconos"), Rol.INFERIOR)
     @Test fun t268_vista_cartuchos() = foto("268_vista_cartuchos_3d", base().copy(vista = "cartuchos"), Rol.INFERIOR)
@@ -1189,6 +1189,14 @@ class Capturas {
     @Test fun t282_iconos_desplegable() = foto("282_iconos_desplegable", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 8, extra = EstadoExtra(desplegable = 8, desplegableSel = 1)), Rol.SUPERIOR)
     @Test fun t283_ajustes_widgets() = foto("283_ajustes_inicio_widgets", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_WIDGETS, enOpciones = true), Rol.SUPERIOR)
     @Test fun t284_tienda_temas() = foto("284_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "tienda_temas"), Rol.SUPERIOR)
+    @Test fun t285_dippo_novedades() = foto("285_dippo_bienvenida", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_SISTEMA, enOpciones = true), Rol.SUPERIOR)
+    @Test fun t286_dippo_grande() {
+        regla.setContent { Lienzo(true, Modifier.fillMaxSize(), 1f) { androidx.compose.foundation.layout.Row {
+            cl.nikalbazu.diptico.bisa.AvatarBisa(120f); cl.nikalbazu.diptico.bisa.AvatarBisa(120f, cara = cl.nikalbazu.diptico.ui.CaraDippo.FELIZ)
+            cl.nikalbazu.diptico.bisa.AvatarBisa(120f, cara = cl.nikalbazu.diptico.ui.CaraDippo.PENSANDO); cl.nikalbazu.diptico.bisa.AvatarBisa(120f, cara = cl.nikalbazu.diptico.ui.CaraDippo.SORPRENDIDO)
+        } } }
+        regla.onRoot().captureRoboImage("capturas/286_dippo_avatar.png")
+    }
 
     @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)
 

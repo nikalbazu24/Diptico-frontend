@@ -21,7 +21,7 @@ Agregar widgets	Add widgets	Adicionar widgets	添加小组件	ウィジェット
 Ajustes de inicio de Android	Android home settings	Ajustes de início do Android	Android 主屏幕设置	Android のホーム設定
 Al azar	Random	Aleatório	随机	ランダム
 Al costado	On the side	Ao lado	侧边	サイド
-Al prender la consola: un saludo con la hora, tu último juego para seguir y Bisa. Si estabas jugando, un recordatorio de dónde ibas. Nada se detiene mientras tanto.	When you turn on the console: a greeting with the time, your last game to continue and Bisa. If you were playing, a reminder of where you were. Nothing stops in the meantime.	Ao ligar o console: uma saudação com a hora, seu último jogo para continuar e a Bisa. Se você estava jogando, um lembrete de onde parou. Nada para enquanto isso.	开机时：显示问候和时间、可继续的上一款游戏和 Bisa。如果你正在游戏，会提醒你玩到哪里。其间一切照常运行。	電源を入れると：時刻つきのあいさつ、続きを遊べる最後のゲーム、Bisa を表示。ゲーム中だった場合はどこまで進んだかを知らせます。その間も何も止まりません。
+Al prender la consola: un saludo con la hora, tu último juego para seguir y DIPPO. Si estabas jugando, un recordatorio de dónde ibas. Nada se detiene mientras tanto.	When you turn on the console: a greeting with the time, your last game to continue and DIPPO. If you were playing, a reminder of where you were. Nothing stops in the meantime.	Ao ligar o console: uma saudação com a hora, seu último jogo para continuar e a DIPPO. Se você estava jogando, um lembrete de onde parou. Nada para enquanto isso.	开机时：显示问候和时间、可继续的上一款游戏和 DIPPO。如果你正在游戏，会提醒你玩到哪里。其间一切照常运行。	電源を入れると：時刻つきのあいさつ、続きを遊べる最後のゲーム、DIPPO を表示。ゲーム中だった場合はどこまで進んだかを知らせます。その間も何も止まりません。
 Analógico	Analog	Analógico	指针	アナログ
 Anillo	Ring	Anel	圆环	リング
 Aplicar	Apply	Aplicar	应用	適用
@@ -37,8 +37,8 @@ Automático	Automatic	Automático	自动	自動
 Bajar 1,6 GB	Download 1.6 GB	Baixar 1,6 GB	下载 1.6 GB	1.6 GB をダウンロード
 gratis y sin internet	free and offline	grátis e sem internet	免费且离线	無料・オフライン
 Bienvenida al encender	Welcome when turned on	Boas-vindas ao ligar	开机欢迎	起動時のあいさつ
-Bisa ahora usa: {0}	Bisa now uses: {0}	A Bisa agora usa: {0}	Bisa 现在使用：{0}	Bisa の AI：{0}
-Bisa te saluda por tu nombre cuando prendes la consola.	Bisa greets you by name when you turn on the console.	A Bisa te cumprimenta pelo nome quando você liga o console.	开机时 Bisa 会叫你的名字问好。	電源を入れると Bisa が名前であいさつします。
+DIPPO ahora usa: {0}	DIPPO now uses: {0}	A DIPPO agora usa: {0}	DIPPO 现在使用：{0}	DIPPO の AI：{0}
+DIPPO te saluda por tu nombre cuando prendes la consola.	DIPPO greets you by name when you turn on the console.	A DIPPO te cumprimenta pelo nome quando você liga o console.	开机时 DIPPO 会叫你的名字问好。	電源を入れると DIPPO が名前であいさつします。
 Bloques	Blocks	Blocos	方块	ブロック
 Bloques que caen	Falling blocks	Blocos caindo	落下的方块	落ちるブロック
 Breve	Short	Breve	简短	簡易
@@ -57,10 +57,10 @@ Clave de Claude	Claude key	Chave do Claude	Claude 密钥	Claude のキー
 Clave de Gemini (gratis)	Gemini key (free)	Chave do Gemini (grátis)	Gemini 密钥（免费）	Gemini のキー（無料）
 Clave de Gemini	Gemini key	Chave do Gemini	Gemini 密钥	Gemini のキー
 Clave guardada ✓	Key saved ✓	Chave salva ✓	密钥已保存 ✓	キー保存済み ✓
-Clave guardada. Bisa ya puede pensar con {0}.	Key saved. Bisa can now think with {0}.	Chave salva. A Bisa já pode pensar com {0}.	密钥已保存。Bisa 现在可以用 {0} 思考了。	キーを保存しました。Bisa は {0} で考えられます。
+Clave guardada. DIPPO ya puede pensar con {0}.	Key saved. DIPPO can now think with {0}.	Chave salva. A DIPPO já pode pensar com {0}.	密钥已保存。DIPPO 现在可以用 {0} 思考了。	キーを保存しました。DIPPO は {0} で考えられます。
 Columnas	Columns	Colunas	列数	列
 Completa	Full	Completa	完整	フル
-Con Gemini, ChatGPT o Claude, Bisa busca en internet para darte datos exactos de cada juego. La IA de tu consola no busca.	With Gemini, ChatGPT or Claude, Bisa searches the web for exact info on each game. Your console's AI doesn't search.	Com Gemini, ChatGPT ou Claude, a Bisa busca na internet dados exatos de cada jogo. A IA do console não busca.	使用 Gemini、ChatGPT 或 Claude 时，Bisa 会上网查找每款游戏的准确信息。主机上的 AI 不能搜索。	Gemini・ChatGPT・Claude なら Bisa がネットで各ゲームの正確な情報を探します。本体の AI は検索しません。
+Con Gemini, ChatGPT o Claude, DIPPO busca en internet para darte datos exactos de cada juego. La IA de tu consola no busca.	With Gemini, ChatGPT or Claude, DIPPO searches the web for exact info on each game. Your console's AI doesn't search.	Com Gemini, ChatGPT ou Claude, a DIPPO busca na internet dados exatos de cada jogo. A IA do console não busca.	使用 Gemini、ChatGPT 或 Claude 时，DIPPO 会上网查找每款游戏的准确信息。主机上的 AI 不能搜索。	Gemini・ChatGPT・Claude なら DIPPO がネットで各ゲームの正確な情報を探します。本体の AI は検索しません。
 Con caja	With box	Com caixa	带游戏盒	パッケージ付き
 Consolas	Consoles	Consoles	主机	機種
 Consolas: {0}	Consoles: {0}	Consoles: {0}	主机：{0}	機種：{0}
@@ -79,15 +79,15 @@ Díptico como inicio	Díptico as home	Díptico como início	将 Díptico 设为�
 Díptico elige solo: primero la IA de tu consola y, si no está, la primera IA de la nube con clave.	Díptico picks for you: your console's AI first, and if it's not there, the first cloud AI with a key.	O Díptico escolhe sozinho: primeiro a IA do console e, se não houver, a primeira IA da nuvem com chave.	Díptico 自动选择：优先主机上的 AI，没有的话用第一个有密钥的云端 AI。	Díptico が自動で選択：まず本体の AI、なければキーのある最初のクラウド AI。
 Díptico ya es tu pantalla de inicio ✓	Díptico is already your home screen ✓	O Díptico já é sua tela de início ✓	Díptico 已是你的主屏幕 ✓	Díptico はすでにホーム画面です ✓
 Ej: Nico	E.g. Nico	Ex: Nico	例如：Nico	例：Nico
-El catálogo de widgets: reloj, música, recientes, Bisa y más.	The widget catalog: clock, music, recents, Bisa and more.	O catálogo de widgets: relógio, música, recentes, Bisa e mais.	小组件目录：时钟、音乐、最近、Bisa 等。	ウィジェット一覧：時計、音楽、最近、Bisa など。
-El cerebro de Bisa	Bisa's brain	O cérebro da Bisa	Bisa 的大脑	Bisa の頭脳
+El catálogo de widgets: reloj, música, recientes, DIPPO y más.	The widget catalog: clock, music, recents, DIPPO and more.	O catálogo de widgets: relógio, música, recentes, DIPPO e mais.	小组件目录：时钟、音乐、最近、DIPPO 等。	ウィジェット一覧：時計、音楽、最近、DIPPO など。
+El cerebro de DIPPO	DIPPO's brain	O cérebro da DIPPO	DIPPO 的大脑	DIPPO の頭脳
 El juego elegido en grande, listo para jugar	The selected game, big and ready to play	O jogo escolhido em destaque, pronto para jogar	大图显示所选游戏，随时开玩	選んだゲームを大きく、すぐ遊べる
 El nivel gratis tiene un límite de preguntas por día. Necesita internet.	The free tier has a daily question limit. Needs internet.	O nível grátis tem limite de perguntas por dia. Precisa de internet.	免费额度每天有提问上限。需要联网。	無料枠は 1 日の質問数に上限があります。ネット接続が必要です。
 Elegido	Selected	Escolhido	已选	選択中
-Elegir la IA de Bisa	Choose Bisa's AI	Escolher a IA da Bisa	选择 Bisa 的 AI	Bisa の AI を選ぶ
+Elegir la IA de DIPPO	Choose DIPPO's AI	Escolher a IA da DIPPO	选择 DIPPO 的 AI	DIPPO の AI を選ぶ
 Elige Díptico como tu inicio para que siempre vuelvas aquí	Choose Díptico as your home so you always come back here	Escolha o Díptico como seu início para sempre voltar aqui	把 Díptico 设为主屏幕，这样你总会回到这里	Díptico をホームにすると、いつでもここに戻れます
-Elige el cerebro de Bisa: la IA de tu consola (gratis, sin internet) o una en la nube como Gemini	Choose Bisa's brain: your console's AI (free, offline) or a cloud one like Gemini	Escolha o cérebro da Bisa: a IA do console (grátis, sem internet) ou uma na nuvem como o Gemini	选择 Bisa 的大脑：主机上的 AI（免费、离线）或 Gemini 等云端 AI	Bisa の頭脳を選択：本体の AI（無料・オフライン）か Gemini などのクラウド
-Elige su IA en Menú › Bisa	Choose its AI in Menu › Bisa	Escolha a IA em Menu › Bisa	在 菜单 › Bisa 中选择 AI	メニュー › Bisa で AI を選択
+Elige el cerebro de DIPPO: la IA de tu consola (gratis, sin internet) o una en la nube como Gemini	Choose DIPPO's brain: your console's AI (free, offline) or a cloud one like Gemini	Escolha o cérebro da DIPPO: a IA do console (grátis, sem internet) ou uma na nuvem como o Gemini	选择 DIPPO 的大脑：主机上的 AI（免费、离线）或 Gemini 等云端 AI	DIPPO の頭脳を選択：本体の AI（無料・オフライン）か Gemini などのクラウド
+Elige su IA en Menú › DIPPO	Choose its AI in Menu › DIPPO	Escolha a IA em Menu › DIPPO	在 菜单 › DIPPO 中选择 AI	メニュー › DIPPO で AI を選択
 Elígela y se baja sola. Puedes seguir usando Díptico mientras baja.	Choose it and it downloads by itself. You can keep using Díptico meanwhile.	Escolha e ela baixa sozinha. Você pode continuar usando o Díptico enquanto baixa.	选择后会自动下载。下载时可继续使用 Díptico。	選ぶと自動でダウンロード。その間も Díptico を使えます。
 En tu inicio	On your home	No seu início	在主页上	ホームにある
 En tu inicio ✓	On your home ✓	No seu início ✓	已在主页 ✓	ホームにあり ✓
@@ -115,12 +115,12 @@ Gratis para siempre, sin internet y privada: nada sale de tu consola.	Free forev
 Grilla	Grid	Grade	网格	グリッド
 Hacerlo ahora	Do it now	Fazer agora	立即设置	今すぐ設定
 IA para crear temas	AI for creating themes	IA para criar temas	用于创建主题的 AI	テーマ作成用の AI
-IA de Bisa	Bisa's AI	IA da Bisa	Bisa 的 AI	Bisa の AI
+IA de DIPPO	DIPPO's AI	IA da DIPPO	DIPPO 的 AI	DIPPO の AI
 Ideal si compartes Díptico: cada persona usa lo que tenga.	Ideal if you share Díptico: everyone uses what they have.	Ideal se você compartilha o Díptico: cada pessoa usa o que tiver.	适合分享 Díptico：每个人用自己有的。	Díptico を共有するなら最適：各自が持っているものを使います。
 Imagen o GIF propio	Your own image or GIF	Imagem ou GIF próprio	自己的图片或 GIF	自分の画像や GIF
 Inicio como al principio	Home reset to the start	Início como no começo	主页已恢复初始状态	ホームを初期状態に戻しました
 La carga de la consola	The console's battery	A carga do console	主机电量	本体のバッテリー
-La clave de {0} no es válida. Revísala en Menú › Bisa.	The {0} key isn't valid. Check it in Menu › Bisa.	A chave do {0} não é válida. Confira em Menu › Bisa.	{0} 密钥无效。请在 菜单 › Bisa 中检查。	{0} のキーが無効です。メニュー › Bisa で確認してください。
+La clave de {0} no es válida. Revísala en Menú › DIPPO.	The {0} key isn't valid. Check it in Menu › DIPPO.	A chave do {0} não é válida. Confira em Menu › DIPPO.	{0} 密钥无效。请在 菜单 › DIPPO 中检查。	{0} のキーが無効です。メニュー › DIPPO で確認してください。
 La clave de {0} no tiene permiso para esto ({1}).	The {0} key doesn't have permission for this ({1}).	A chave do {0} não tem permissão para isso ({1}).	{0} 密钥没有此权限（{1}）。	{0} のキーにはこの権限がありません（{1}）。
 La fiesta del mundo de hoy o la próxima	Today's world celebration or the next one	A festa do mundo de hoje ou a próxima	今天或下一个世界节日	今日または次の世界のお祭り
 La hora y la fecha (digital, analógico o mínimo)	Time and date (digital, analog or minimal)	Hora e data (digital, analógico ou mínimo)	时间和日期（数字、指针或极简）	時刻と日付（デジタル・アナログ・ミニマル）
@@ -152,10 +152,10 @@ Otra consola	Another console	Outro console	其他主机	別の機種
 Para agregar	To add	Para adicionar	可添加	追加できる
 Para cambiar la app de inicio a mano.	To change the home app manually.	Para mudar o app de início manualmente.	手动更改主屏幕应用。	ホームアプリを手動で変更します。
 Para pensar necesito una IA: la de tu consola (gratis, sin internet) o Gemini, ChatGPT o Claude. Elige "Escribir una pregunta" y te muestro las opciones.	To think I need an AI: your console's (free, offline) or Gemini, ChatGPT or Claude. Choose "Write a question" and I'll show you the options.	Para pensar preciso de uma IA: a do console (grátis, sem internet) ou Gemini, ChatGPT ou Claude. Escolha "Escrever uma pergunta" e te mostro as opções.	我需要一个 AI 才能思考：主机上的（免费、离线），或 Gemini、ChatGPT、Claude。选“写一个问题”，我会给你看选项。	考えるには AI が必要です：本体の AI（無料・オフライン）か Gemini、ChatGPT、Claude。「質問を書く」を選ぶと選択肢を表示します。
-Para que Bisa te salude por tu nombre.	So Bisa greets you by name.	Para a Bisa te cumprimentar pelo nome.	让 Bisa 叫你的名字问好。	Bisa が名前であいさつします。
-Para usar {0} pega tu clave, o elige otra IA en Menú › Bisa.	To use {0} paste your key, or choose another AI in Menu › Bisa.	Para usar o {0} cole sua chave, ou escolha outra IA em Menu › Bisa.	要使用 {0} 请粘贴密钥，或在 菜单 › Bisa 中选其他 AI。	{0} を使うにはキーを貼り付けるか、メニュー › Bisa で別の AI を選んでください。
+Para que DIPPO te salude por tu nombre.	So DIPPO greets you by name.	Para a DIPPO te cumprimentar pelo nome.	让 DIPPO 叫你的名字问好。	DIPPO が名前であいさつします。
+Para usar {0} pega tu clave, o elige otra IA en Menú › DIPPO.	To use {0} paste your key, or choose another AI in Menu › DIPPO.	Para usar o {0} cole sua chave, ou escolha outra IA em Menu › DIPPO.	要使用 {0} 请粘贴密钥，或在 菜单 › DIPPO 中选其他 AI。	{0} を使うにはキーを貼り付けるか、メニュー › DIPPO で別の AI を選んでください。
 Piano tranquilo para construir	Calm piano for building	Piano tranquilo para construir	适合建造的宁静钢琴	ものづくりにぴったりの静かなピアノ
-Primero elige el cerebro de Bisa	First choose Bisa's brain	Primeiro escolha o cérebro da Bisa	先选择 Bisa 的大脑	まず Bisa の頭脳を選んでください
+Primero elige el cerebro de DIPPO	First choose DIPPO's brain	Primeiro escolha o cérebro da DIPPO	先选择 DIPPO 的大脑	まず DIPPO の頭脳を選んでください
 Recién empezaste esta partida	You just started this session	Você acabou de começar esta partida	你刚开始这局	このプレイは始まったばかり
 Reconocer nombres	Recognizing names	Reconhecer nomes	识别名称	名前の認識
 Restablecer	Reset	Restaurar	重置	リセット
@@ -166,7 +166,7 @@ Se paga por uso con saldo en tu cuenta de OpenAI (la suscripción ChatGPT Plus n
 Se saca en {0}. Solo se guarda en tu consola.	Get it at {0}. It's only saved on your console.	Pegue em {0}. Só fica salva no seu console.	在 {0} 获取。只保存在你的主机上。	{0} で取得します。本体にだけ保存されます。
 Seguir jugando	Keep playing	Continuar jogando	继续游戏	続きを遊ぶ
 Separación	Spacing	Espaçamento	间距	間隔
-Si no tienes ninguna lista, Bisa te pedirá elegir una.	If you don't have any ready, Bisa will ask you to pick one.	Se nenhuma estiver pronta, a Bisa vai pedir que você escolha uma.	如果都还没准备好，Bisa 会请你选一个。	準備できているものがなければ、Bisa が選ぶよう案内します。
+Si no tienes ninguna lista, DIPPO te pedirá elegir una.	If you don't have any ready, DIPPO will ask you to pick one.	Se nenhuma estiver pronta, a DIPPO vai pedir que você escolha uma.	如果都还没准备好，DIPPO 会请你选一个。	準備できているものがなければ、DIPPO が選ぶよう案内します。
 Sigues jugando	Still playing	Você continua jogando	继续游戏中	プレイ中
 Sin IA aún	No AI yet	Sem IA ainda	尚无 AI	AI 未設定
 Sin nombre	No name	Sem nome	未设置	名前なし
@@ -189,7 +189,7 @@ Tus horas por consola	Your hours per console	Suas horas por console	各主机的
 Tus juegos favoritos	Your favorite games	Seus jogos favoritos	你喜欢的游戏	お気に入りのゲーム
 Tus logros de RetroAchievements	Your RetroAchievements achievements	Suas conquistas do RetroAchievements	你的 RetroAchievements 成就	RetroAchievements の実績
 Tus últimos juegos, a un toque	Your latest games, one tap away	Seus últimos jogos, a um toque	最近玩的游戏，一触即达	最近のゲームにワンタップで
-Un acceso directo para hablar con Bisa	A shortcut to talk to Bisa	Um atalho para falar com a Bisa	和 Bisa 对话的快捷方式	Bisa と話すショートカット
+Un acceso directo para hablar con DIPPO	A shortcut to talk to DIPPO	Um atalho para falar com a DIPPO	和 DIPPO 对话的快捷方式	DIPPO と話すショートカット
 Un juego al azar para descubrir	A random game to discover	Um jogo aleatório para descobrir	随机推荐一款游戏	ランダムなゲームを発見
 Una foto o un GIF animado de tu consola como widget.	A photo or animated GIF from your console as a widget.	Uma foto ou GIF animado do console como widget.	把主机里的照片或动图作为小组件。	本体の写真やアニメ GIF をウィジェットに。
 Una frase distinta cada día	A different phrase every day	Uma frase diferente a cada dia	每天一句不同的话	毎日ちがうひとこと
@@ -290,7 +290,7 @@ La música de fondo y los sonidos. Se calla sola al abrir un juego o si pones Sp
 Tus carpetas de juegos, ports, juegos de Android y las imágenes que ya tengas de ES-DE.	Your game folders, ports, Android games and any images you already have from ES-DE.	Suas pastas de jogos, ports, jogos de Android e as imagens que você já tem do ES-DE.	你的游戏文件夹、移植版、Android 游戏和已有的 ES-DE 图片。	ゲームフォルダ、移植作、Android ゲーム、ES-DE の既存画像。
 Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.	How many screens Díptico uses, what goes on each, text size and dimming while playing.	Quantas telas o Díptico usa, o que vai em cada uma, o tamanho da letra e o escurecimento ao jogar.	Díptico 使用几块屏幕、每块显示什么、字体大小和游戏时变暗。	Díptico が使う画面の数、それぞれの内容、文字サイズ、プレイ中の減光。
 Díptico como inicio, notificaciones y accesos rápidos de Android.	Díptico as home, notifications and Android shortcuts.	Díptico como início, notificações e atalhos do Android.	将 Díptico 设为主屏幕、通知和 Android 快捷方式。	Díptico をホームに、通知、Android のショートカット。
-Bisa, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.	Bisa, your AI assistant: knows your games, helps when you're stuck and changes things in Díptico for you.	Bisa, sua assistente com IA: conhece seus jogos, ajuda quando você trava e muda coisas no Díptico por você.	Bisa 是你的 AI 助手：了解你的游戏，卡关时帮你，还能帮你调整 Díptico。	Bisa はあなたの AI アシスタント：ゲームを知り、詰まったら助け、Díptico の設定も変えてくれます。
+DIPPO, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.	DIPPO, your AI assistant: knows your games, helps when you're stuck and changes things in Díptico for you.	DIPPO, sua assistente com IA: conhece seus jogos, ajuda quando você trava e muda coisas no Díptico por você.	DIPPO 是你的 AI 助手：了解你的游戏，卡关时帮你，还能帮你调整 Díptico。	DIPPO はあなたの AI アシスタント：ゲームを知り、詰まったら助け、Díptico の設定も変えてくれます。
 Vista previa en vivo	Live preview	Prévia ao vivo	实时预览	ライブプレビュー
 Toca un widget para elegirlo, o arrástralo	Tap a widget to select it, or drag it	Toque num widget para escolher, ou arraste	点按小组件选择，或拖动它	ウィジェットをタップで選択、またはドラッグ
 Android	Android	Android	Android	Android

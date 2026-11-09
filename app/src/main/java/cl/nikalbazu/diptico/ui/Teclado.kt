@@ -91,7 +91,7 @@ fun TecladoDiptico(e: Estado) {
         e.textoPara == "ra_usuario" -> "Tu usuario de RetroAchievements"
         e.textoPara.startsWith("ras_") -> Diptico.tituloRaspador(e.textoPara) ?: "Escribe"
         e.textoPara == "nombre" -> "¿Cómo te llamas?"
-        e.textoPara == "asistente" -> "Pregúntale a Bisa"
+        e.textoPara == "asistente" -> "Pregúntale a DIPPO"
         e.textoPara == "buscar_ajuste" -> "Buscar un ajuste"
         e.textoPara == "buscar_imagen" -> "Buscar con otro nombre"
         e.textoPara == "buscar_juego" -> "Buscar un juego"

@@ -525,7 +525,7 @@ private fun EnJuego(e: Estado) {
             // Botones: todos a la vista.
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
                 AccionCompa(Icono.LAPIZ, "Mi paso", Modifier.weight(1f)) { Diptico.abrirPaso() }
-                AccionCompa(Icono.BISA, "Bisa", Modifier.weight(1f)) { Diptico.prepararAyuda() }
+                AccionCompa(Icono.BISA, "DIPPO", Modifier.weight(1f)) { Diptico.prepararAyuda() }
                 if (s.displayId == android.view.Display.DEFAULT_DISPLAY) AccionCompa(Icono.BUSCAR, "Lupa", Modifier.weight(1f)) { Diptico.alternarLupaJuego(s.clave, true) }
                 AccionCompa(Icono.TUTORIAL, "Guías", Modifier.weight(1f)) { Diptico.abrirFichaDe(s.clave, 2) }
                 AccionCompa(Icono.NEGRO, "Atenuar", Modifier.weight(1f)) { Diptico.atenuar() }
@@ -749,7 +749,7 @@ internal fun PanelClave(e: Estado) {
             verticalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
             val (icono, titulo, ayuda, ejemplo) = when (e.textoPara) {
-                "nombre" -> listOf(Icono.TEXTO, "¿Cómo te llamas?", "Bisa te saluda por tu nombre cuando prendes la consola.", "Ej: Nico")
+                "nombre" -> listOf(Icono.TEXTO, "¿Cómo te llamas?", "DIPPO te saluda por tu nombre cuando prendes la consola.", "Ej: Nico")
                 "ia_clave_gemini" -> listOf(Icono.CLAVE, "Clave de Gemini (gratis)", "Entra a aistudio.google.com/apikey con tu cuenta de Google, toca \"Create API key\" y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
                 "ia_clave_openai" -> listOf(Icono.CLAVE, "Clave de ChatGPT", "Entra a platform.openai.com/api-keys, crea una clave y pégala aquí. Usa el saldo de tu cuenta de OpenAI. Solo se guarda en tu consola.", "Pega tu clave")
                 "ra_usuario" -> listOf(Icono.TROFEO, "Usuario de RetroAchievements", "Tu nombre de usuario en retroachievements.org (no tu correo).", "Ej: Nikalbazu")
@@ -757,7 +757,7 @@ internal fun PanelClave(e: Estado) {
                 "buscar_imagen" -> listOf(Icono.BUSCAR, "Buscar con otro nombre", "Escribe el nombre del juego como se conoce en inglés o su nombre completo.", "Ej: The Legend of Zelda")
                 "pc_steam" -> listOf(Icono.BUSCAR, "Agregar un juego de Steam", "Escribe su nombre como aparece en Steam. Lo abrirá GameNative o GameHub Lite.", "Ej: Hollow Knight")
                 "reporte_fallas" -> listOf(Icono.INFO, "Reportar un problema", "Cuéntanos qué pasó. El reporte incluye la versión, el modelo y el diagnóstico técnico. Se comparte al confirmar.", "Ej: la pantalla inferior se quedó en negro")
-                "bisa_paso" -> listOf(Icono.LAPIZ, "Mi próximo paso", "Bisa lo recuerda para este juego.", "Ej: volver al puente")
+                "bisa_paso" -> listOf(Icono.LAPIZ, "Mi próximo paso", "DIPPO lo recuerda para este juego.", "Ej: volver al puente")
                 "asistente" -> listOf(Icono.ASISTENTE, "Pregúntale al asistente", "Lo que quieras: qué jugar, cómo pasar una parte, trucos, o que cambie algo de Díptico.", "Ej: ¿qué juego corto me recomiendas?")
                 "tema_enlace" -> listOf(Icono.WEB, "Importar un tema por enlace", "Pega el enlace HTTPS al JSON que quieras instalar.", "https://…/temas.json")
                 "titulo" -> listOf(Icono.TITULO, "Título del juego", "Así se verá el nombre en todo Díptico.", "Escribe el título")

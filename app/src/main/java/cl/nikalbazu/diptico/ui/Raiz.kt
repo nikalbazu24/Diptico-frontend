@@ -81,7 +81,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                     }
                 }
                 AnimatedVisibility(visible = centroAqui, enter = fadeIn(tween(160)), exit = fadeOut(tween(200))) { PanelCentro(e) }
-                // Mientras juegas: Bisa se abre en la pantalla libre (la que no tiene el juego).
+                // Mientras juegas: DIPPO se abre en la pantalla libre (la que no tiene el juego).
                 val s = e.sesion
                 val companeraLibre = s != null && !e.unaPantalla && !s.dosPantallas && miPantalla != s.displayId
                 if (companeraLibre && e.panel == Panel.ASISTENTE) PanelAsistente(e)

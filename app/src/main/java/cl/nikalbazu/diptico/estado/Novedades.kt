@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "temas-aparte-2.0-21"
-    const val NOMBRE = "Temas aparte y movimiento pulido"
+    const val ID = "dippo-2.0-22"
+    const val NOMBRE = "Llegó DIPPO"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -268,8 +268,12 @@ object Novedades {
             Pagina("Temas, todo en la tienda", "Importar un tema desde un archivo o un enlace, y aportar uno, ahora están arriba en la Tienda de temas.", Icono.PALETA, 0xFFB388FF),
             Pagina("Inicio y widgets aparte", "Los widgets y el inicio tienen su propia sección en Ajustes. Y los íconos de las consolas se eligen de una lista con una muestra de cada estilo.", Icono.APPS, 0xFF00ACC1),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("temas-aparte-2.0-21", "Temas aparte y movimiento pulido", listOf(
             Pagina("Temas y decoraciones aparte", "Los temas y los adornos tienen su propia sección en Ajustes. Y al cambiar de consola, los mosaicos se deslizan hacia ese lado.", Icono.PALETA, 0xFFB388FF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("¡Hola, soy DIPPO!", "Bisa ahora es DIPPO, un pulpito de luz que vive en tu consola. Curioso, servicial y un poquito despistado: conoce tus juegos y celebra tus logros contigo.", Icono.BISA, 0xFFFF9A6B),
+            Pagina("De día y de noche", "Las puntas de sus tentáculos son lucecitas que respiran. De día es cálido; de noche se pone azulado. Y cada tanto te saluda.", Icono.ESTRELLA, 0xFF7AA8FF),
         )),
     )
 

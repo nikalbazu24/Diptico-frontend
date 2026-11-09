@@ -27,7 +27,7 @@ import cl.nikalbazu.diptico.R
 import cl.nikalbazu.diptico.estado.Diptico
 
 /**
- * Bisa mientras juegas: un aviso fijo ("toca si te atascas") y, si el juego usa las dos pantallas
+ * DIPPO mientras juegas: un aviso fijo ("toca si te atascas") y, si el juego usa las dos pantallas
  * (DS, 3DS) o estás en modo una pantalla, una burbuja flotante encima del juego con su ventanita de ayuda.
  */
 class BurbujaBisa : Service(), LifecycleOwner, SavedStateRegistryOwner {
@@ -67,8 +67,8 @@ class BurbujaBisa : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
         private fun canales(ctx: Context) {
             val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
-            nm.createNotificationChannel(NotificationChannel(CANAL_FIJO, "Bisa mientras juegas", NotificationManager.IMPORTANCE_LOW))
-            nm.createNotificationChannel(NotificationChannel(CANAL_AYUDA, "Bisa: ofrecer ayuda", NotificationManager.IMPORTANCE_HIGH))
+            nm.createNotificationChannel(NotificationChannel(CANAL_FIJO, "DIPPO mientras juegas", NotificationManager.IMPORTANCE_LOW))
+            nm.createNotificationChannel(NotificationChannel(CANAL_AYUDA, "DIPPO: ofrecer ayuda", NotificationManager.IMPORTANCE_HIGH))
         }
 
         private fun alTocar(ctx: Context): PendingIntent = PendingIntent.getActivity(
@@ -103,7 +103,7 @@ class BurbujaBisa : Service(), LifecycleOwner, SavedStateRegistryOwner {
                 flotante = intent.getBooleanExtra("flotante", false)
                 val fija = Notification.Builder(this, CANAL_FIJO)
                     .setSmallIcon(R.drawable.ic_bisa)
-                    .setContentTitle(cl.nikalbazu.diptico.estado.Idioma.t("Bisa está contigo"))
+                    .setContentTitle(cl.nikalbazu.diptico.estado.Idioma.t("DIPPO está contigo"))
                     .setContentText(cl.nikalbazu.diptico.estado.Idioma.t(if (titulo.isNotBlank()) "Toca si te atascas en $titulo" else "Toca si te atascas"))
                     .setContentIntent(alTocar(this))
                     .setOngoing(true)
@@ -119,7 +119,7 @@ class BurbujaBisa : Service(), LifecycleOwner, SavedStateRegistryOwner {
                     val aviso = Notification.Builder(this, CANAL_AYUDA)
                         .setSmallIcon(R.drawable.ic_bisa)
                         .setContentTitle(cl.nikalbazu.diptico.estado.Idioma.t("¿Te está costando $titulo?"))
-                        .setContentText(cl.nikalbazu.diptico.estado.Idioma.t("Llevas varios intentos seguidos. Toca y Bisa te da una pista."))
+                        .setContentText(cl.nikalbazu.diptico.estado.Idioma.t("Llevas varios intentos seguidos. Toca y DIPPO te da una pista."))
                         .setContentIntent(alTocar(this))
                         .setAutoCancel(true)
                         .build()

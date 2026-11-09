@@ -10,7 +10,7 @@ data class Llave(val proveedor: String, val clave: String)
 
 /**
  * IA en la nube con la clave de cada persona: Gemini (Google, tiene nivel gratis) o ChatGPT (OpenAI).
- * Se usa para Bisa, los temas con IA y reconocer los nombres de los juegos.
+ * Se usa para DIPPO, los temas con IA y reconocer los nombres de los juegos.
  */
 object IA {
     /** Proveedores en la nube, en el orden en que se ofrecen. */
@@ -39,7 +39,7 @@ object IA {
 
     /**
      * Conversación con instrucciones de sistema e historial ("user"/"assistant", texto).
-     * [listos]: usar los modelos más capaces (para Bisa). [buscarWeb]: dejar que la IA busque guías en internet
+     * [listos]: usar los modelos más capaces (para DIPPO). [buscarWeb]: dejar que la IA busque guías en internet
      * (si la cuenta no lo permite, sigue sin buscar).
      */
     fun conversar(
@@ -72,7 +72,7 @@ object IA {
         } catch (e: Exception) { cuerpo.take(140) }
         val n = nombre(p)
         return when {
-            codigo == 401 || (codigo == 400 && detalle.contains("API key", true)) -> "La clave de $n no es válida. Revísala en Menú › Bisa."
+            codigo == 401 || (codigo == 400 && detalle.contains("API key", true)) -> "La clave de $n no es válida. Revísala en Menú › DIPPO."
             codigo == 403 -> "La clave de $n no tiene permiso para esto ($detalle)."
             codigo == 429 && p == "gemini" -> "Llegaste al límite gratis de Gemini por ahora. Prueba en un rato."
             codigo == 429 && (detalle.contains("quota", true) || detalle.contains("billing", true)) -> "Tu cuenta de $n no tiene saldo. Agrega créditos en ${dondeClave(p)}."

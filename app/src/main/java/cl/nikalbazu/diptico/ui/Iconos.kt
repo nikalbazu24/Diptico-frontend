@@ -360,32 +360,6 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
 }
 
 
-/** Bisa lleva una visera de dos pantallas y una antena que señala que está lista para jugar. */
-fun DrawScope.dibujarBisa(k: Float, c: Color, a: Color, parpadeo: Float = 1f, mirar: Float = 0f) {
-    fun p(x: Float, y: Float) = Offset(x * k, y * k)
-    fun s(w: Float, h: Float) = Size(w * k, h * k)
-    val noche = Color(0xFF16152D)
-    val menta = Color(0xFF9FF9E5)
-    val radio = androidx.compose.ui.geometry.CornerRadius(5f * k)
-    drawLine(menta, p(16.5f, 7f), p(19f, 3.8f), 1.1f * k, StrokeCap.Round)
-    drawCircle(menta, 1.2f * k, p(19f, 3.8f))
-    drawRoundRect(c, p(2f, 6f), s(20f, 15f), radio)
-    drawRoundRect(a, p(3.3f, 16.7f), s(17.4f, 5.8f), androidx.compose.ui.geometry.CornerRadius(2.8f * k))
-    drawRoundRect(noche, p(4f, 8f), s(16f, 9.3f), androidx.compose.ui.geometry.CornerRadius(3f * k))
-    drawLine(Color.White.copy(alpha = 0.42f), p(7f, 7f), p(15f, 7f), 0.7f * k, StrokeCap.Round)
-    drawLine(noche.copy(alpha = 0.6f), p(11.1f, 18.3f), p(12.9f, 18.3f), 1f * k, StrokeCap.Round)
-    val altoOjo = (3.7f * parpadeo.coerceIn(0.15f, 1f)) * k
-    val dx = mirar.coerceIn(-1f, 1f) * 0.6f * k
-    for (ojo in listOf(8f, 16f)) {
-        drawRoundRect(menta, Offset(ojo * k - k + dx, 12.2f * k - altoOjo / 2), Size(2f * k, altoOjo),
-            androidx.compose.ui.geometry.CornerRadius(k))
-    }
-    drawPath(Path().apply {
-        moveTo(10.7f * k, 14.1f * k)
-        quadraticBezierTo(12f * k, 15.7f * k, 13.3f * k, 14.1f * k)
-    }, menta, style = Stroke(0.65f * k, cap = StrokeCap.Round))
-    drawLine(noche, p(5.6f, 19.8f), p(8f, 19.8f), 0.8f * k, StrokeCap.Round)
-    drawLine(noche, p(6.8f, 18.7f), p(6.8f, 20.9f), 0.8f * k, StrokeCap.Round)
-    drawCircle(menta, 0.55f * k, p(16.9f, 19.8f))
-    drawCircle(Color.White, 0.55f * k, p(18.7f, 19.8f))
-}
+/** El ícono de DIPPO: el pulpito de luz con los colores del ícono. */
+fun DrawScope.dibujarBisa(k: Float, c: Color, a: Color, parpadeo: Float = 1f, mirar: Float = 0f) =
+    dibujarDippo(k, ColoresDippo(c, Color.White, a, Color(0xFF9FF9E5), Color(0xFF15121D)), CaraDippo.NORMAL, parpadeo, mirar)
