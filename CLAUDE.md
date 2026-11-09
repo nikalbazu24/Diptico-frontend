@@ -150,3 +150,10 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   (Novedades viejas sin tocar); accesos de la cortina migran "Bisa"→"DIPPO". Pendiente DIPPO: caras según contexto
   (pensando mientras responde, preocupado con batería baja, celebrando con logros, durmiendo de noche sin uso),
   su widget propio con menú de acciones y su lugar en la pantalla de abajo mientras juegas.
+- DIPPO en casa (9 nov, beta.224): `ui/DippoInicio.kt` (`DippoInicio(e, tam)` con globito de saludo según la hora y caras
+  por contexto: feliz al saludar, preocupado con batería ≤15 %, dormido de 1 a 5 AM). Va en `FranjaAccesos` (abajo, junto
+  a la hora) y en `PantallaUnica` (esquina de arriba a la derecha). Se asoma en la `Intro` (`DippoIntro`, DURACION 3800).
+  Sección propia `G_DIPPO` en Ajustes (antes ASISTENTE estaba en Sistema): nuevas `extra.dippoInicio`, `dippoSaludo`,
+  `dippoColor` ("hora"/"dia"/"noche", `coloresDippoAhora(pref)`). Capturas t287–t290. Novedades `dippo-casa-2.0-23`.
+  Pendiente: DIPPO pensando mientras responde, celebrando con logros, su menú de acciones y su lugar mientras juegas;
+  los mosaicos se ven apretados en una pantalla (captura 288).
