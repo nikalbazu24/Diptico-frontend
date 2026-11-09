@@ -244,9 +244,6 @@ object Novedades {
             Pagina("Accesos a tu gusto", "Elige qué accesos aparecen en los ajustes rápidos y en qué orden: toca el lápiz al final de la cortina. A muestra u oculta; X sube un acceso.", Icono.EDITAR, 0xFF2EC4A6, "X"),
             Pagina("Vibración", "Un toque de vibración al moverte y elegir, suave, media o fuerte. Nunca vibra mientras juegas. Menú › Música › Vibración.", Icono.CHISPA, 0xFFFF7A59),
         )),
-        Version(ID, NOMBRE, listOf(
-            Pagina("Mosaicos, estilo consola", "Tus juegos ahora se ven como en una consola: el primero en un mosaico grande y el resto en cuadrados. El elegido brilla con el color de su consola. Cambia de vista con R3.", Icono.VISTA, 0xFF8B7CF6, "R3"),
-        )),
         Version("movimiento-y-vistas-1.3-15", "Movimiento y vistas", listOf(
             Pagina("Todo se mueve suave", "El menú, las ventanas y las listas llegan flotando y se posan. Elige Animaciones (apagadas, suaves, normales o intensas) y su velocidad en Menú › Apariencia.", Icono.CHISPA, 0xFF8E7CFF),
             Pagina("Vidrio con lente", "Con Liquid Glass, el vidrio se comporta como una lupa suave: curva lo de atrás en los bordes, brilla en el canto y una luz sigue tu dedo. Menú › Apariencia › Efecto lente.", Icono.BRILLO, 0xFF8ECFD4),
@@ -255,6 +252,9 @@ object Novedades {
             Pagina("Interruptores vivos", "Los interruptores se estiran como una gota al cambiar, y el de modo claro u oscuro es un pequeño cielo: sale el sol o la luna, y los colores de toda la app se funden suave.", Icono.TEMA, 0xFFFFD54A),
             Pagina("Galería de artes y carpetas que se abren", "Menú › Estante › Galería de artes: mira los artes y portadas de la carpeta, en grande en la otra pantalla. Y las carpetas ahora se abren con un resorte suave.", Icono.PORTADA, 0xFFFF7A9C),
             Pagina("Dock de apps", "Activa el dock en Menú › Inicio: una manija abajo despliega tus apps fijadas y el cajón con todas. Eliges el lado, el tamaño y cuántas apps.", Icono.APPS, 0xFF2EC4A6),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Mosaicos, estilo consola", "Tus juegos ahora se ven como en una consola: el primero en un mosaico grande y el resto en cuadrados. El elegido brilla con el color de su consola. Cambia de vista con R3.", Icono.VISTA, 0xFF8B7CF6, "R3"),
         )),
     )
 
