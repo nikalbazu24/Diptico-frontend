@@ -145,3 +145,8 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   con gorro, Disco); el cartucho gustó más pero ninguna lo convenció del todo. Pedirle referencias de estilo antes de otra ronda.
   Ronda 3 (12 ideas): le gustaron Pulpito, Fantasmita y Chispa. Ronda 4 en el boceto (Dippo4): A Pulpito fantasma, B Pulpito de luz, C Fantasmita de luz.
   ELEGIDO (9 nov 09:34): **Pulpito de luz** (naranjo cálido de día, azulado de noche; visor oscuro con ojos de luz celeste; puntas de tentáculos = lucecitas). Ficha en el boceto (Dippo5): pose saludando, caras pensando/celebrando/sorprendido/preocupado/durmiendo; personalidad curioso, servicial, algo despistado.
+- DIPPO hecho (9 nov, beta tras la 217): `ui/Dippo.kt` (`dibujarDippo`, `CaraDippo`, `DippoDia`/`DippoNoche`), `AvatarBisa(cara=)`
+  con luces que respiran y saludo cada ~9 s; `dibujarBisa` (ícono) delega en el pulpito. «Bisa»→«DIPPO» en textos y TSV
+  (Novedades viejas sin tocar); accesos de la cortina migran "Bisa"→"DIPPO". Pendiente DIPPO: caras según contexto
+  (pensando mientras responde, preocupado con batería baja, celebrando con logros, durmiendo de noche sin uso),
+  su widget propio con menú de acciones y su lugar en la pantalla de abajo mientras juegas.
