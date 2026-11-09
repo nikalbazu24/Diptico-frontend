@@ -2405,7 +2405,8 @@ object Diptico {
         }
         if (e.galeria == "artes") {
             val conArte = e.galeriaPestana == 0
-            return e.visibles.filter { if (conArte) it.arte != null else it.portada != null }.map { j ->
+            // Portadas: todos (los que no tienen, muestran la de Díptico); Artes: solo los que tienen uno.
+            return e.visibles.filter { !conArte || it.arte != null }.map { j ->
                 ItemGaleria(j.clave, j.titulo, Consolas.porId(j.consolaId)?.nombre ?: "", e.juegoSel == j.clave) {
                     elegirJuego(j.clave); cerrarPanel()
                 }

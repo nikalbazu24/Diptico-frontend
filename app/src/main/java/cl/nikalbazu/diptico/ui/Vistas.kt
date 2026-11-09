@@ -86,8 +86,8 @@ fun Cuadricula(e: Estado, modifier: Modifier = Modifier, soloPortadas: Boolean =
     val esc = LocalEscala.current
     val t = LocalTamJuegos.current
     // Solo portadas: celdas más chicas y sin título, para ver muchos juegos de una vez.
-    val anchoCelda = (if (soloPortadas) 78f else 96f) * t
-    val altoCelda = (if (soloPortadas) 78f else 112f) * t
+    val anchoCelda = (if (soloPortadas) 74f else 96f) * t
+    val altoCelda = (if (soloPortadas) 98f else 112f) * t
     val lista = e.visibles
     BoxWithConstraints(modifier) {
         val anchoUnidades = maxWidth.value / esc.factor
