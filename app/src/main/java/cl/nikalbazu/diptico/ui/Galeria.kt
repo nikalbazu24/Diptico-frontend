@@ -54,6 +54,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
         "variantes_juego" -> "Versión del juego" to Icono.FORMA
         "copias_srm" -> "Copias de RetroArch" to Icono.COPIAR
         "vistas_juegos" -> "Cómo ver tus juegos" to Icono.VISTA
+        "artes" -> "Galería de artes" to Icono.PORTADA
         "vistas_consolas" -> "Cómo ver tus consolas" to Icono.MANDO
         "filtros" -> "Mostrar juegos" to Icono.BUSCAR
         "accesos_cortina" -> "Accesos de la cortina" to Icono.EDITAR
@@ -122,6 +123,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                 "colores" -> if (esc.angosta) 8 else 12
                 "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> if (esc.angosta) 2 else 3
                 "cajas" -> if (esc.angosta) 3 else 4
+                "artes" -> if (esc.angosta) 3 else 4
                 else -> 1
             }
             SideEffect { Teclas.columnasGaleria = cols }
@@ -144,6 +146,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                                 else MiniCaptura(it.nombre, uri, activo) { Diptico.elegirIndice(i) }
                             }
                             "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
+                            "artes" -> MiniArte(e, it, activo, e.galeriaPestana == 0) { Diptico.elegirIndice(i) }
                             "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
                             "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
                             "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> TarjetaTema(it, activo, e.oscuro) {
@@ -388,6 +391,18 @@ private fun FilaCancion(it: Diptico.ItemGaleria, activo: Boolean, icono: Icono =
 }
 
 @Composable
+private fun MiniArte(e: Estado, it: Diptico.ItemGaleria, activo: Boolean, arte: Boolean, alPulsar: () -> Unit) {
+    val esc = LocalEscala.current
+    val j = remember(it.id, e.juegos) { e.juegos.firstOrNull { g -> g.clave == it.id } }
+    val forma = RoundedCornerShape(esc.d(12))
+    Box(Modifier.fillMaxWidth().aspectRatio(if (arte) 1.6f else 0.75f).clip(forma)
+        .then(if (activo) Modifier.border(esc.d(3), Uva, forma) else Modifier)
+        .clickable(onClick = alPulsar)) {
+        if (j != null) ArteJuego(j, preferirArte = arte, maxLado = 320, modifier = Modifier.fillMaxSize(), imagen = if (arte) "arte" else "portada")
+    }
+}
+
+@Composable
 private fun MiniCaptura(nombre: String, uri: android.net.Uri, activo: Boolean, alPulsar: () -> Unit) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
@@ -414,6 +429,27 @@ fun VistaGaleria(e: Estado) {
     val it = remember(e) { Diptico.itemsGaleria(e).getOrNull(e.indice) }
     Box(Modifier.fillMaxSize().background(p.fondo).padding(esc.d(30)), contentAlignment = Alignment.Center) {
         when {
+            e.galeria == "artes" -> {
+                val j = it?.let { item -> e.juegos.firstOrNull { g -> g.clave == item.id } }
+                if (j == null) Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconoDiptico(Icono.PORTADA, p.tenue, 40f)
+                    Spacer(Modifier.height(esc.d(10)))
+                    Texto(if (e.galeriaPestana == 0) "Esta carpeta aún no tiene artes" else "Esta carpeta aún no tiene portadas", 22f, lineas = 2)
+                    Detalle("Descárgalos en Menú › Portadas.", 14f, lineas = 2)
+                } else androidx.compose.animation.Crossfade(j, animationSpec = androidx.compose.animation.core.tween(duracionMovimiento(380)), label = "arte") { g ->
+                    Box(Modifier.fillMaxSize().clip(RoundedCornerShape(esc.d(22)))) {
+                        ArteJuego(g, preferirArte = e.galeriaPestana == 0, maxLado = 1280, modifier = Modifier.fillMaxSize(), imagen = if (e.galeriaPestana == 0) "arte" else "portada")
+                        Box(Modifier.align(Alignment.BottomStart).fillMaxWidth()
+                            .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(androidx.compose.ui.graphics.Color.Transparent, androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f))))
+                            .padding(esc.d(18))) {
+                            Column {
+                                Texto(g.titulo, 24f, color = androidx.compose.ui.graphics.Color.White, lineas = 2, traducir = false)
+                                Detalle(cl.nikalbazu.diptico.data.Consolas.porId(g.consolaId)?.nombre ?: "", 13f, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f), lineas = 1)
+                            }
+                        }
+                    }
+                }
+            }
             e.galeria in setOf("capturas_juego", "captura_acciones") -> {
                 val uri = it?.let { item -> Diptico.imagenCaptura(e, item.id) }
                 val imagen = rememberImagen(uri, 1000)

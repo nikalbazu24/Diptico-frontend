@@ -69,3 +69,12 @@ internal fun salidaFlotante(m: AjusteMovimiento): ExitTransition {
 
 /** Desplazamiento vertical de una fila que entra escalonada (la fila [i] de una lista). */
 internal fun retrasoEscalonado(m: AjusteMovimiento, i: Int): Int = if (!m.activo || i > 9) 0 else m.ms(28 * i)
+
+/** Una carpeta que se abre: crece desde más chica con un resorte, como si saliera de su ícono. */
+internal fun entradaCarpeta(m: AjusteMovimiento): EnterTransition {
+    if (!m.activo) return EnterTransition.None
+    val rebote = if (m.intensidad > 1.2f) Spring.DampingRatioLowBouncy else 0.85f
+    return fadeIn(tween(m.ms(200))) +
+        scaleIn(spring(dampingRatio = rebote, stiffness = Spring.StiffnessMediumLow / m.duracion.coerceAtLeast(0.3f)), initialScale = 1f - 0.12f * m.intensidad.coerceAtMost(1.5f)) +
+        slideInVertically(tween(m.ms(300), easing = CurvaPosarse)) { (it * 0.04f * m.intensidad).toInt() }
+}

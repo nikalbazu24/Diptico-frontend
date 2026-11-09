@@ -42,8 +42,7 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
             Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = .18f)).clickable { Diptico.volverASistemas() })
         }
         AnimatedVisibility(transicion, Modifier.align(Alignment.Center),
-            enter = fadeIn(tween(entrada)) + scaleIn(tween(entrada), initialScale = .955f),
-            exit = fadeOut(tween(salida)) + scaleOut(tween(salida), targetScale = .975f)) {
+            enter = entradaCarpeta(ajusteMovimiento()), exit = salidaVentana(ajusteMovimiento())) {
             CompositionLocalProvider(LocalFondoVentanaCristal provides fondo,
                 LocalPaleta provides paletaLecturaCristal(p, e.nivelesGlass.carpetas)) {
                 val forma = androidx.compose.foundation.shape.RoundedCornerShape(esc.d(26))

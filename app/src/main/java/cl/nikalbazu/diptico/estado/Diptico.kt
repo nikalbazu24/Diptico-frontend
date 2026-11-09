@@ -2314,6 +2314,7 @@ object Diptico {
         "orden" -> listOf("Ordenar juegos")
         "vistas_consolas" -> listOf("Tus consolas")
         "vistas_juegos" -> listOf("Tus juegos")
+        "artes" -> listOf("Artes", "Portadas")
         "temas" -> listOf("Incluidos", "Mis temas")
         "importar_temas" -> listOf("Importar temas")
         "tienda_temas" -> categoriasTienda
@@ -2400,6 +2401,14 @@ object Diptico {
             return ordenados.map { o ->
                 val visible = o.titulo in elegidos
                 ItemGaleria(o.titulo, o.titulo, if (visible) "Se muestra · X para subirlo" else "Oculto", visible) { alternarAcceso(o.titulo) }
+            }
+        }
+        if (e.galeria == "artes") {
+            val conArte = e.galeriaPestana == 0
+            return e.visibles.filter { if (conArte) it.arte != null else it.portada != null }.map { j ->
+                ItemGaleria(j.clave, j.titulo, Consolas.porId(j.consolaId)?.nombre ?: "", e.juegoSel == j.clave) {
+                    elegirJuego(j.clave); cerrarPanel()
+                }
             }
         }
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
@@ -7686,6 +7695,9 @@ object Diptico {
     private fun opcionesEstante(e: Estado): List<Opcion> {
         val c = Consolas.porId(e.consolaSel)
         val lista = mutableListOf(
+            Opcion("Galería de artes", "${e.visibles.count { it.arte != null }} artes", Icono.PORTADA,
+                "Los artes y portadas de los juegos de esta carpeta, en grande en la otra pantalla. Elige uno con A para ir a ese juego.",
+            ) { abrirGaleria("artes") },
             Opcion(
                 "Vista de consolas", nombreVistaConsolas(e.vistaConsolas), Icono.MANDO,
                 "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande), Carpetas (cuadrícula de íconos que abren sus juegos) o Discos (cada consola es un vinilo en su funda, y la elegida saca su disco girando). En Sistemas, Carpetas y Discos primero eliges la consola y después entras a sus juegos.",

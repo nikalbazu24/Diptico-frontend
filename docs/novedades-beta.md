@@ -5,3 +5,5 @@
 - **Dock de apps.** Una manija en la pantalla de abajo despliega tus apps fijadas (de 3 a 6) y el cajón con todas. Lado y tamaño a elección (Menú › Inicio).
 - **Barra de arriba nueva.** Ya no ocupa una franja: la hora, el wifi, los avisos y la batería flotan en una isla en la esquina, y la pantalla queda entera. Cada ícono tiene su color (batería verde, amarilla o roja según la carga; campana rosada con avisos; wifi azul) en estilo vivos, pastel, neón o del tema. Menú › Pantallas › Forma de la barra y Colores de los íconos.
 - **Interruptores vivos y cambio de ambiente.** Los interruptores se estiran como una gota; el de modo claro/oscuro es un pequeño cielo con sol o luna, y los colores de toda la app se funden suave al cambiar.
+- **Galería de artes.** Menú › Estante › Galería de artes: los artes y portadas de los juegos de la carpeta, con el elegido en grande en la otra pantalla. A te lleva a ese juego.
+- **Carpetas que se abren con resorte.** La ventana de una carpeta crece desde más chica y se posa, siguiendo tu ajuste de animaciones.
