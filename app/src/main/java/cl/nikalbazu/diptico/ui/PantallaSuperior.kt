@@ -385,6 +385,7 @@ fun InfoJuego(e: Estado, j: Juego, tamTitulo: Float, conPaso: Boolean = true) {
             if ((datos?.tiempo ?: 0L) > 0) "${formatoTiempo(datos!!.tiempo)} jugadas" else "Aún sin jugar con Díptico",
             14f,
         )
+        LineaDuracion(e, j)
         // Datos rápidos del juego.
         val chips = buildList {
             if ((datos?.sesiones ?: 0) > 0) add("${datos!!.sesiones} partidas")
@@ -452,3 +453,25 @@ fun haceCuanto(ms: Long): String {
 }
 
 
+
+
+/** Cuánto dura el juego según HowLongToBeat y cuánto te queda (lo busca solo si el juego se queda elegido un rato). */
+@Composable
+fun LineaDuracion(e: Estado, j: Juego) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    androidx.compose.runtime.LaunchedEffect(j.clave) {
+        kotlinx.coroutines.delay(1500)
+        Diptico.pedirDuracion(j.clave)
+    }
+    val d = e.extra.duraciones[j.clave]?.takeIf { it.tiene } ?: return
+    val jugado = (e.datos[j.clave]?.tiempo ?: 0L).toLong()
+    val texto = cl.nikalbazu.diptico.estado.CuantoDura.teQueda(d, jugado) ?: return
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconoDiptico(Icono.RELOJ, p.acentoTexto, 13f)
+        Spacer(Modifier.width(esc.d(6)))
+        Texto(if (jugado > 0 || d.principal <= 0f) texto else "Dura ~${cl.nikalbazu.diptico.estado.CuantoDura.horasBonitas(d.principal)} la historia", 13f, color = p.tinta, lineas = 1, traducir = false)
+        Spacer(Modifier.width(esc.d(6)))
+        Texto("HowLongToBeat", 10f, color = p.tenue, lineas = 1, traducir = false)
+    }
+}

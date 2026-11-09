@@ -356,6 +356,11 @@ data class EstadoExtra(
     val tecladoEdicion: Boolean = false,
     /** Teclado: mayúsculas fijas (dos toques a ⇧). */
     val mayusFija: Boolean = false,
+    /** Cuánto dura cada juego según HowLongToBeat (por clave de juego). */
+    val duraciones: Map<String, CuantoDura.Duracion> = emptyMap(),
+    /** Cuándo DIPPO ganó un logro (para que celebre unos segundos) y cuál. */
+    val dippoCelebra: Long = 0L,
+    val dippoLogro: String = "",
 )
 
 val Estado.estiloBarraArriba get() = extra.estiloBarraArriba
@@ -859,7 +864,7 @@ object Diptico {
             widgets = leerWidgets(almacen.texto("widgets")),
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
-            vista = almacen.texto("vista", "mosaicos"),
+            vista = almacen.texto("vista", "mosaicos").let { if (it in setOf("mosaicos", "cuadricula", "lista", "carrusel")) it else "mosaicos" },
             vistaConsolas = vistaConsolas,
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
@@ -883,12 +888,13 @@ object Diptico {
                 animaciones = almacen.texto("animaciones", "normales"),
                 velocidadAnim = almacen.texto("velocidadAnim", "normal"),
                 lente = almacen.bool("lenteVidrio", false),
-                formaBarra = almacen.texto("formaBarra", "completa"),
+                formaBarra = "completa",
                 coloresBarra = almacen.texto("coloresBarra", "vivos"),
                 dippoInicio = almacen.bool("dippoInicio", true),
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
+                duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 dock = almacen.bool("dock", false),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
@@ -954,6 +960,7 @@ object Diptico {
         vigilarReposo()
         vigilarBateria()
         vigilarActualizaciones()
+        vigilarLogrosDippo()
         // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
         if (!estado.value.configurado) almacen.guardarTexto("novedadesVistas", Novedades.ID)
         // Recién actualizado: el tour sale al tiro, sin esperar la animación de entrada.
@@ -2348,6 +2355,7 @@ object Diptico {
         "orden" -> listOf("Ordenar juegos")
         "vistas_consolas" -> listOf("Tus consolas")
         "vistas_juegos" -> listOf("Tus juegos")
+        "logros_dippo" -> listOf("Logros de DIPPO")
         "artes" -> listOf("Artes", "Portadas")
         "temas" -> listOf("Incluidos", "Mis temas")
         "importar_temas" -> listOf("Importar temas")
@@ -2384,6 +2392,10 @@ object Diptico {
             ItemGaleria("orden", "Ordenar juegos", nombreOrden(e.orden), false) { abrirGaleria("orden") },
             ItemGaleria("vista", "Vista de juegos", nombreVista(e.vista), false) { abrirGaleria("vistas_juegos") },
         )
+        if (e.galeria == "logros_dippo") return progresoLogrosDippo(e).map { (l, v) ->
+            val hecho = l.id in hechosDippo()
+            ItemGaleria(l.id, l.titulo, if (hecho) "✓ " + l.descripcion else "${l.descripcion} · $v de ${l.meta}", hecho, color = if (hecho) 0xFFFFC94DL else 0L) {}
+        }
         if (e.galeria == "orden_carpetas") return listOf(
             ItemGaleria("alfabetico", "Nombre · A → Z", "Orden alfabético", false) { ordenarCarpetas(true); cerrarPanel() },
             ItemGaleria("sistemas", "Familias de consolas", "Orden del catálogo", false) { ordenarCarpetas(false); cerrarPanel() },
@@ -2448,7 +2460,7 @@ object Diptico {
         }
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
         if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
-        if (e.galeria == "vistas_juegos") return listOf("mosaicos", "cuadricula", "iconos", "estante", "lista", "carrusel", "abanico", "cartuchos", "lomos").map { v ->
+        if (e.galeria == "vistas_juegos") return VISTAS.map { v ->
             val detalle = when(v) { "mosaicos" -> "Estilo consola: un mosaico grande y el resto en cuadrados"; "cuadricula" -> "Todas las portadas a la vista"; "iconos" -> "Solo las portadas, sin textos: más juegos a la vista"; "cartuchos" -> "Cada juego en su cartucho o caja en 3D"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
             ItemGaleria(v, nombreVista(v), detalle, e.vista == v) { almacen.guardarTexto("vista", v); actualizar { it.copy(vista = v) }; cerrarPanel() }
         }
@@ -3790,25 +3802,10 @@ object Diptico {
                     "La pantalla de abajo de la Thor es casi cuadrada: en automático todo se acomoda a esa forma.",
                 ) { ciclarZoom(false) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomAbajo) < 0.01f }) { fijarZoom(false, ZOOMS[it]) }
                 lista += opcionLista(
-                    "Forma de la barra de la hora", Icono.ARRIBA,
-                    "Flotante: la hora, la batería y los avisos van en una isla chica en la esquina y la pantalla queda entera para tus juegos. Franja completa: la barra de siempre, de lado a lado.",
-                    FORMAS_BARRA, FORMAS_BARRA.map(::nombreFormaBarra), e.extra.formaBarra, grupo = "Barras",
-                ) { fijarFormaBarra(it) }
-                lista += opcionLista(
-                    "Colores de los íconos", Icono.PALETA,
-                    "Cada ícono con su color: la batería verde, amarilla o roja según la carga (celeste al cargar), la campana rosada cuando hay avisos y el wifi azul. Del tema: como antes, sin colores.",
-                    COLORES_BARRA, COLORES_BARRA.map(::nombreColoresBarra), e.extra.coloresBarra, grupo = "Barras",
-                ) { fijarColoresBarra(it) }
-                lista += opcionLista(
                     if (e.dosDisponibles && !e.unaPantalla) "Barras de la pantalla de arriba" else "Barras de la pantalla", Icono.ARRIBA,
                     "Cómo se ven la barra de la hora y la de accesos: sólida (con el color del tema), difusa (esmerilada sobre la imagen) o transparente (casi sin fondo).",
                     ESTILOS_BARRA, ESTILOS_BARRA.map(::nombreEstiloBarra), e.estiloBarraArriba, grupo = "Barras",
                 ) { fijarEstiloBarra(true, it) }
-                if (e.dosDisponibles && !e.unaPantalla) lista += opcionLista(
-                    "Barra de la pantalla de abajo", Icono.ABAJO,
-                    "La barra de la hora de la pantalla de abajo, por separado: sólida, difusa o transparente.",
-                    ESTILOS_BARRA, ESTILOS_BARRA.map(::nombreEstiloBarra), e.estiloBarraAbajo, grupo = "Barras",
-                ) { fijarEstiloBarra(false, it) }
                 lista += Opcion(
                     "Modo de pantallas", if (e.dosDisponibles) nombreModo(e.modoPantallas) else "Una (no hay otra)", Icono.PANTALLAS,
                     "Dos pantallas: arriba el juego y abajo el estante. Una: todo en la pantalla principal, como en una tele o una Odin.",
@@ -3867,7 +3864,11 @@ object Diptico {
                 }
             }
             Seccion.INICIO -> { lista += opcionesInicio(e); lista += opcionesDock(e) }
-            Seccion.TEMAS -> lista += opcionesTemas(e)
+            Seccion.TEMAS -> {
+                lista += opcionesTemas(e)
+                // Los estilos guardados viven con los temas (antes alargaban «Pantalla y estilo»).
+                lista += opcionesPersonalizacion(e).map { it.copy(grupo = it.grupo ?: "Estilos guardados y colecciones") }
+            }
             Seccion.DECORACIONES -> {
                 lista += Opcion("Configurar por tema", icono = Icono.PALETA,
                     ayuda = "Despliega un tema para elegir su adorno y la intensidad.") { abrirDecoraciones() }
@@ -3884,6 +3885,10 @@ object Diptico {
             Seccion.MAS -> lista += opcionesMas(e)
             Seccion.ASISTENTE -> {
                 lista += Opcion("Hablar con DIPPO", icono = Icono.BISA, ayuda = "DIPPO es tu asistente: te recomienda juegos de tu biblioteca, te ayuda cuando te atascas y puede cambiar el tema o la vista por ti.") { abrirAsistente() }
+                lista += Opcion(
+                    "Logros de DIPPO", "${logrosDippoGanados()} de ${LogrosDippo.LISTA.size}", Icono.TROFEO,
+                    "Los logros propios de DIPPO: por jugar, por terminar juegos, por rachas de días y por conversar con él. Cuando ganas uno, DIPPO lo celebra.",
+                ) { abrirGaleria("logros_dippo") }
                 lista += Opcion(
                     "DIPPO en el inicio", if (e.extra.dippoInicio) "Sí" else "No", Icono.BISA,
                     "DIPPO se queda a la vista en el inicio y te saluda al llegar. Tócalo para hablarle; mantenlo apretado para dictarle.",
@@ -3976,34 +3981,7 @@ object Diptico {
                     listOf("apagadas", "suaves", "normales", "intensas"), listOf("Apagadas", "Suaves", "Normales", "Intensas"),
                     e.extra.animaciones, grupo = "Movimiento",
                 ) { v -> almacen.guardarTexto("animaciones", v); actualizar { it.copy(extra = it.extra.copy(animaciones = v)) } }
-                lista += opcionLista(
-                    "Velocidad de las animaciones", Icono.RELOJ,
-                    "Lenta se disfruta más; rápida va directo al grano.",
-                    listOf("lenta", "normal", "rapida"), listOf("Lenta", "Normal", "Rápida"),
-                    e.extra.velocidadAnim, grupo = "Movimiento",
-                ) { v -> almacen.guardarTexto("velocidadAnim", v); actualizar { it.copy(extra = it.extra.copy(velocidadAnim = v)) } }
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
-                lista += Opcion(
-                    "Efecto de los botones", nombreEfecto(if (e.experiencia.vidrio) "vidrio" else e.efecto), Icono.ESTRELLA,
-                    "Liso, degradado, con un brillo que pasa, o de vidrio. Se ve en el botón Jugar, el menú y las opciones elegidas.",
-                ) {
-                    val l = listOf("liso", "degradado", "brillo", "vidrio")
-                    val experiencia = estado.value.experiencia
-                    val actual = if (experiencia.vidrio) "vidrio" else estado.value.efecto
-                    val v = l[(l.indexOf(actual) + 1).mod(l.size)]
-                    almacen.guardarTexto("efecto", v)
-                    actualizar { it.copy(efecto = v) }
-                    if (experiencia.vidrio) guardarExperiencia(experiencia.copy(vidrio = false)) else aplicarTema()
-                }.let { o ->
-                    val l = listOf("liso", "degradado", "brillo", "vidrio")
-                    o.conLista(l.map(::nombreEfecto), l.indexOf(if (e.experiencia.vidrio) "vidrio" else e.efecto)) { n ->
-                        val v = l[n]
-                        val experiencia = estado.value.experiencia
-                        almacen.guardarTexto("efecto", v)
-                        actualizar { it.copy(efecto = v) }
-                        if (experiencia.vidrio) guardarExperiencia(experiencia.copy(vidrio = false)) else aplicarTema()
-                    }
-                }
                 lista += Opcion(
                     "Fluidez", nombreFluidez(e.fluidez) + if (e.fluidez == "auto") " (${nombreFluidez(e.fluidezDetectada).lowercase()})" else "", Icono.CHISPA,
                     "Automática elige según tu consola. Alta usa la máxima tasa de refresco y todos los efectos; ahorro apaga difuminados y decoraciones para ir más liviano.",
@@ -4036,15 +4014,6 @@ object Diptico {
                         actualizar { it.copy(protectorMin = l[n]) }
                     }
                 }
-                lista += Opcion("Ver el protector ahora", icono = Icono.RELOJ, ayuda = "Muestra el protector de pantalla ya mismo, para ver cómo queda.") { cerrarPanel(); actualizar { it.copy(protector = true) } }
-                lista += Opcion(
-                    "Zoom lento en las portadas", if (e.zoomLento) "Sí" else "No", Icono.PORTADA,
-                    "La portada elegida y la imagen grande se acercan muy despacio, como en un documental. Apágalo si prefieres todo quieto.",
-                ) {
-                    val v = !estado.value.zoomLento
-                    almacen.guardarBool("zoomLento", v)
-                    actualizar { it.copy(zoomLento = v) }
-                }
                 lista += opcionesIconos(e).map { it.copy(grupo = it.grupo ?: "Íconos de las consolas") }
                 lista += Opcion(
                     "Animación de entrada", if (e.mostrarIntro) "Sí" else "No", Icono.INTRO,
@@ -4054,8 +4023,6 @@ object Diptico {
                     almacen.mostrarIntro = v
                     actualizar { it.copy(mostrarIntro = v) }
                 }
-                lista += Opcion("Ver la animación ahora", icono = Icono.ESTRELLA, ayuda = "Para mostrársela a alguien.") { verIntro() }
-                lista += opcionesPersonalizacion(e).map { it.copy(grupo = it.grupo ?: "Estilos guardados y colecciones") }
             }
             Seccion.MUSICA -> {
                 lista += opcionLista(
@@ -4457,7 +4424,7 @@ object Diptico {
             almacen.guardarTexto("inicio", inicio)
             actualizar { it.copy(inicio = inicio) }
         }
-        v.vistaPerfil?.let { vista ->
+        v.vistaPerfil?.takeIf { it in VISTAS }?.let { vista ->
             almacen.guardarTexto("vista", vista)
             actualizar { it.copy(vista = vista) }
         }
@@ -4651,6 +4618,7 @@ object Diptico {
     }
 
     fun elegirTema(id: String) {
+        if (id != estado.value.tema) sumarDippo("temas")
         almacen.guardarTexto("tema", id)
         actualizar { it.copy(tema = id) }
         aplicarTema()
@@ -5192,6 +5160,117 @@ object Diptico {
         avisar(Idioma.IDIOMAS.firstOrNull { it.first == cod }?.second ?: cod)
     }
 
+    // ---------- Logros de DIPPO ----------
+
+    private var contadoresDippo: LogrosDippo.Contadores? = null
+    private var logrosDippoHechos: MutableSet<String>? = null
+
+    private fun contadores(): LogrosDippo.Contadores = contadoresDippo ?: if (!::almacen.isInitialized) LogrosDippo.Contadores() else LogrosDippo.Contadores(
+        LogrosDippo.leerNumeros(almacen.texto("dippoContadores")),
+        almacen.texto("dippoDias").split(',').filter { it.isNotBlank() }.toSet(),
+    ).also { contadoresDippo = it }
+
+    private fun hechosDippo(): MutableSet<String> = logrosDippoHechos
+        ?: if (!::almacen.isInitialized) mutableSetOf() else almacen.texto("dippoLogros").split(',').filter { it.isNotBlank() }.toMutableSet().also { logrosDippoHechos = it }
+
+    /** Suma a un contador de DIPPO (preguntas, voz, pistas, ideas, temas…) y revisa si ganó algún logro. */
+    fun sumarDippo(k: String, n: Int = 1) {
+        if (!::almacen.isInitialized) return
+        val c = contadores()
+        val m = c.numeros + (k to c.n(k) + n)
+        contadoresDippo = c.copy(numeros = m)
+        almacen.guardarTexto("dippoContadores", LogrosDippo.escribirNumeros(m))
+        revisarLogrosDippo()
+    }
+
+    /** Si se cumplió la meta de algún logro, lo guarda y DIPPO lo celebra. */
+    fun revisarLogrosDippo() {
+        val e = estado.value
+        if (!e.configurado) return
+        val c = contadores()
+        val hechos = hechosDippo()
+        val nuevos = LogrosDippo.LISTA.filter { it.id !in hechos && it.valor(e, c) >= it.meta }
+        if (nuevos.isEmpty()) return
+        hechos += nuevos.map { it.id }
+        almacen.guardarTexto("dippoLogros", hechos.joinToString(","))
+        val titulo = if (nuevos.size == 1) nuevos.first().titulo else "${nuevos.size} logros nuevos"
+        actualizar { it.copy(extra = it.extra.copy(dippoCelebra = System.currentTimeMillis(), dippoLogro = titulo)) }
+        if (e.sesion == null) cuandoHayaLugar("logro-dippo") { avisar("🏆 Logro de DIPPO: $titulo"); Sonidos.aviso() }
+    }
+
+    /** Cada medio minuto: anota los días jugados (para las rachas) y si juegas de noche o de madrugada. */
+    private fun vigilarLogrosDippo() {
+        scope.launch {
+            delay(8000)
+            while (true) {
+                val e = estado.value
+                if (e.sesion != null) {
+                    val hoy = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ROOT).format(java.util.Date())
+                    val c = contadores()
+                    if (hoy !in c.dias) {
+                        val dias = (c.dias + hoy).sorted().takeLast(60).toSet()
+                        contadoresDippo = c.copy(dias = dias)
+                        almacen.guardarTexto("dippoDias", dias.joinToString(","))
+                    }
+                    when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
+                        in 1..4 -> if (contadores().n("noche") == 0) sumarDippo("noche")
+                        in 5..6 -> if (contadores().n("madrugada") == 0) sumarDippo("madrugada")
+                    }
+                }
+                revisarLogrosDippo()
+                delay(30_000)
+            }
+        }
+    }
+
+    /** Los logros de DIPPO con su avance, para la galería y para que DIPPO los cuente. */
+    fun progresoLogrosDippo(e: Estado = estado.value): List<Pair<LogrosDippo.Logro, Int>> = LogrosDippo.progreso(e, contadores())
+
+    fun logrosDippoGanados(): Int = hechosDippo().size
+
+    // ---------- Cuánto dura cada juego (HowLongToBeat) ----------
+
+    private val buscandoDuracion = HashSet<String>()
+
+    /** Busca cuánto dura el juego si todavía no se sabe (o si la última búsqueda falló hace más de una semana). */
+    fun pedirDuracion(clave: String, alTerminar: ((CuantoDura.Duracion?) -> Unit)? = null) {
+        val e = estado.value
+        val j = e.juegosPorClave[clave] ?: return
+        val ya = e.extra.duraciones[clave]
+        if (ya != null && (ya.tiene || System.currentTimeMillis() - ya.buscado < 7 * 86_400_000L)) { alTerminar?.invoke(ya.takeIf { it.tiene }); return }
+        if (!buscandoDuracion.add(clave)) return
+        scope.launch {
+            val d = withContext(Dispatchers.IO) { runCatching { CuantoDura.buscar(j.titulo) }.getOrNull() }
+                ?: CuantoDura.Duracion(0f, 0f, 0f, System.currentTimeMillis())
+            buscandoDuracion.remove(clave)
+            actualizar { it.copy(extra = it.extra.copy(duraciones = it.extra.duraciones + (clave to d))) }
+            almacen.guardarTexto("duraciones", CuantoDura.escribir(estado.value.extra.duraciones))
+            alTerminar?.invoke(d.takeIf { it.tiene })
+        }
+    }
+
+    /** DIPPO responde cuánto dura el juego y cuánto te queda, sin IA. */
+    private fun responderDuracion(clave: String) {
+        val j = estado.value.juegosPorClave[clave] ?: return
+        actualizar { it.copy(pensando = true, pensandoQue = "Mirando HowLongToBeat…") }
+        pedirDuracion(clave) { d ->
+            actualizar { it.copy(pensando = false, pensandoQue = "") }
+            val jugado = estado.value.datos[clave]?.tiempo?.toLong() ?: 0L
+            val texto = if (d == null) "No encontré cuánto dura ${j.titulo} en HowLongToBeat. Puede que esté con otro nombre allá."
+            else buildString {
+                append("Según HowLongToBeat, ${j.titulo} dura")
+                if (d.principal > 0f) append(" ~${CuantoDura.horasBonitas(d.principal)} la historia")
+                if (d.extras > 0f) append(", ~${CuantoDura.horasBonitas(d.extras)} con extras")
+                if (d.completo > 0f) append(" y ~${CuantoDura.horasBonitas(d.completo)} al 100 %")
+                append(". ")
+                if (jugado > 0) append("Llevas ${formatoTiempoCorto(jugado)}. ")
+                CuantoDura.teQueda(d, jugado)?.let { append(it).append(".") }
+            }
+            respuestaBisa(MensajeChat("ia", texto, if (d == null && motorEfectivo() != "ninguno")
+                listOf(AccionChat("preguntar", "¿Cuánto dura más o menos ${j.titulo}?", "Pregúntale a la IA")) else emptyList()))
+        }
+    }
+
     private var ultimaCharla = 0L
 
     /**
@@ -5204,6 +5283,7 @@ object Diptico {
         val fresco = e.chat.isEmpty() || ahora - ultimaCharla > 20 * 60_000L
         actualizar { it.copy(panel = Panel.ASISTENTE, indice = 0) }
         if (fresco && !e.pensando) respuestaBisa(CentroBisa.saludoInicial(estado.value))
+        if (contadores().n("abrir") == 0) sumarDippo("abrir")
         ultimaCharla = ahora
     }
 
@@ -5331,6 +5411,7 @@ object Diptico {
             avisar("Para usar ${nombreMotor(motor)} pega tu clave, o elige otra IA en Menú › DIPPO.")
             return
         }
+        sumarDippo("preguntas")
         val chat = e.chat.takeLast(38) + MensajeChat("yo", texto)
         // La respuesta aparece mientras se escribe (con la IA local).
         actualizar { it.copy(chat = chat, pensando = true, indice = 0) }
@@ -5430,7 +5511,10 @@ object Diptico {
                 }
             }
             "bisa_logros" -> if (c.juego?.clave == a.valor) abrirFichaDe(a.valor, 4)
-            "bisa_pista" -> CentroBisa.prepararPista(e, a.valor)?.let { respuestaBisa(it) }
+            "bisa_pista" -> { sumarDippo("pistas"); CentroBisa.prepararPista(e, a.valor)?.let { respuestaBisa(it) } }
+            "bisa_dura" -> responderDuracion(a.valor)
+            "bisa_logros_ver" -> abrirGaleria("logros_dippo")
+            "bisa_logros_dippo" -> respuestaBisa(CentroBisa.contarLogros(progresoLogrosDippo(e)))
             "bisa_escribir" -> if (c.juego?.clave == a.valor) escribirAlAsistente()
             "bisa_pausa" -> if (c.jugando && c.juego?.clave == a.valor) {
                 if (e.temporizadorFin > 0L) {
@@ -5449,6 +5533,7 @@ object Diptico {
             "pista" -> preguntar(if (a.valor == "solucion") "Dime la solución completa, paso a paso." else "Dame una pista más directa.")
             "jugar", "ver", "ficha" -> {
                 if (e.juegos.none { it.clave == a.valor } || e.datos[a.valor]?.oculto == true) { avisar("No encontré ese juego"); return }
+                sumarDippo("ideas")
                 if (a.tipo == "jugar") jugarDesdeWidget(a.valor)
                 else {
                     actualizar { it.copy(consolaSel = "todo", juegoSel = a.valor, panel = Panel.NINGUNO) }
@@ -6435,6 +6520,7 @@ object Diptico {
             "bisa" -> {
                 if (estado.value.panel != Panel.ASISTENTE) abrirAsistente()
                 porVoz = true
+                sumarDippo("voz")
                 preguntar(t.replaceFirstChar { it.uppercase() })
             }
             else -> escribir((if (estado.value.borrador.isNotEmpty() && !estado.value.borrador.endsWith(" ")) " " else "") + t)
@@ -7575,10 +7661,12 @@ object Diptico {
     }
     // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
 
-    private val VISTAS = listOf("mosaicos", "estante", "carrusel", "abanico", "cartuchos", "lomos", "cuadricula", "iconos", "lista")
-    fun nombreVista(v: String) = when (v) { "mosaicos" -> "Mosaicos"; "cuadricula" -> "Galería"; "iconos" -> "Solo portadas"; "cartuchos" -> "Cartuchos 3D"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; "abanico" -> "Abanico"; "lomos" -> "Lomos"; else -> "Estante" }
+    /** Las vistas de juegos (9 nov 2026: de nueve a cuatro, las que de verdad se usan). */
+    private val VISTAS = listOf("mosaicos", "cuadricula", "lista", "carrusel")
+    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Galería"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; else -> "Mosaicos" }
 
-    val VISTAS_CONSOLAS = listOf("carpetas", "mosaico", "vitrina", "arriba", "sistemas", "lado", "rueda", "discos")
+    /** Cómo se eligen las consolas: la fila de logos (el diseño nuevo), carpetas o sistemas en grande. */
+    val VISTAS_CONSOLAS = listOf("arriba", "carpetas", "sistemas")
     /** Vistas donde primero se elige la consola (en grande) y después se entra a sus juegos. */
     val VISTAS_CARPETAS = setOf("carpetas", "mosaico", "vitrina")
     val MODOS_ELEGIR = VISTAS_CARPETAS + setOf("sistemas", "discos")

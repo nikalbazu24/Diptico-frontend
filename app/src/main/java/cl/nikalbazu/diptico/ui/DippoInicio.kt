@@ -69,6 +69,10 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
         delay(7000)
         fase = 0
     }
+    // Al ganar un logro, el globito lo anuncia (fase 3) unos segundos.
+    LaunchedEffect(e.extra.dippoCelebra) {
+        if (System.currentTimeMillis() - e.extra.dippoCelebra < 8000) { fase = 3; delay(7000); fase = 0 }
+    }
     val saludando = fase == 1
     Row(modifier.testTag("dippo-inicio"), verticalAlignment = Alignment.CenterVertically) {
         AnimatedVisibility(
@@ -78,11 +82,12 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
         ) {
             Box(
                 Modifier.padding(end = esc.d(6)).clip(RoundedCornerShape(esc.d(12)))
-                    .background(if (fase == 2) Coral.copy(alpha = 0.92f) else p.superficie.copy(alpha = 0.92f))
-                    .then(if (fase == 2 && idea != null) Modifier.clickable { fase = 0; if (idea.second.tipo.startsWith("bisa_")) Diptico.abrirAsistente(); Diptico.ejecutarAccion(idea.second) } else Modifier)
+                    .background(when (fase) { 2 -> Coral.copy(alpha = 0.92f); 3 -> Sol.copy(alpha = 0.95f); else -> p.superficie.copy(alpha = 0.92f) })
+                    .then(if (fase == 3) Modifier.clickable { fase = 0; Diptico.abrirGaleria("logros_dippo") } else if (fase == 2 && idea != null) Modifier.clickable { fase = 0; if (idea.second.tipo.startsWith("bisa_")) Diptico.abrirAsistente(); Diptico.ejecutarAccion(idea.second) } else Modifier)
                     .padding(horizontal = esc.d(10), vertical = esc.d(5)),
             ) {
-                if (fase == 2 && idea != null) Texto(idea.first, 12f, color = Color.White, lineas = 1, traducir = false)
+                if (fase == 3) Texto("🏆 " + e.extra.dippoLogro, 12f, color = Color(0xFF2A1E05), lineas = 1, traducir = false)
+                else if (fase == 2 && idea != null) Texto(idea.first, 12f, color = Color.White, lineas = 1, traducir = false)
                 else Texto(saludoDippo(hora), 12f, color = p.tinta, lineas = 1)
             }
         }

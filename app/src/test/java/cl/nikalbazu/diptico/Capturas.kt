@@ -827,9 +827,7 @@ class Capturas {
     @Test fun t161_cajas() = foto("161_galeria_de_cajas", base().copy(panel = Panel.GALERIA, galeria = "cajas", galeriaConsola = "snes", indice = 4), Rol.INFERIOR)
 
     @Config(qualifiers = ABAJO)
-    @Test fun t162_lomos() = foto("162_vista_lomos", conRecientes(base()).copy(vista = "lomos"), Rol.INFERIOR)
 
-    @Test fun t163_lomos_una() = foto("163_vista_lomos_una_pantalla", conRecientes(base()).copy(vista = "lomos", modoPantallas = "una_negra"), Rol.UNICA)
 
     @Test fun t164_turbo() = foto("164_menu_rendimiento", base().copy(panel = Panel.MENU, seccion = Seccion.RENDIMIENTO, enOpciones = true, indice = 0, turboUltimo = "2140 MB libres (+380 MB)"), Rol.SUPERIOR)
 
@@ -1154,7 +1152,6 @@ class Capturas {
     @Test fun t247_discos() = foto("247_vista_discos", conRecientes(base()).copy(vistaConsolas = "discos", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR)
     @Test fun t248_discos_arriba() = foto("248_discos_arriba", conRecientes(base()).copy(vistaConsolas = "discos", enSistemas = true, consolaSel = "snes"), Rol.SUPERIOR)
     @Test fun t249_discos_una() = foto("249_discos_una_pantalla", conRecientes(base()).copy(vistaConsolas = "discos", enSistemas = true, consolaSel = "gba", modoPantallas = "una_negra"), Rol.UNICA)
-    @Test fun t250_abanico() = foto("250_juegos_en_abanico", conRecientes(base()).copy(vista = "abanico", juegoSel = "psx/3"), Rol.INFERIOR)
     @Test fun t251_menu_simple() = foto("251_menu_simple_mas_ajustes", base().copy(panel = Panel.MENU, seccion = Seccion.MAS, enOpciones = true, indice = 2, menuSimple = true), Rol.SUPERIOR)
     @Test fun t252_menu_simple_esencial() = foto("252_menu_simple_esencial", base().copy(panel = Panel.MENU, seccion = Seccion.ESENCIAL, enOpciones = false, menuSimple = true), Rol.SUPERIOR)
     @Test fun t253_menu_completo_grupos() = foto("253_menu_completo_apariencia", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 0, menuSimple = false), Rol.SUPERIOR)
@@ -1171,8 +1168,6 @@ class Capturas {
     @Test fun t264_galeria_accesos() = foto("264_accesos_cortina", base().copy(panel = Panel.GALERIA, galeria = "accesos_cortina", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "DIPPO")), indice = 0), Rol.INFERIOR)
     @Test fun t265_cortina_elegida() = foto("265_cortina_con_accesos_elegidos", base().copy(panel = Panel.CENTRO, cortina = "ajustes", extra = EstadoExtra(accesosCentro = listOf("Turbo", "Wi-Fi", "DIPPO"))), Rol.SUPERIOR)
     @Test fun t266_menu_musica_vibracion() = foto("266_menu_musica_vibracion", base().copy(panel = Panel.MENU, seccion = Seccion.MUSICA, enOpciones = true, indice = 0), Rol.SUPERIOR)
-    @Test fun t267_vista_iconos() = foto("267_vista_solo_portadas", base().copy(vista = "iconos"), Rol.INFERIOR)
-    @Test fun t268_vista_cartuchos() = foto("268_vista_cartuchos_3d", base().copy(vista = "cartuchos"), Rol.INFERIOR)
     @Test fun t269_dock_abierto() = foto("269_dock_abierto", base().copy(appsFijadas = listOf("com.android.settings", "com.android.chrome", "org.ppsspp.ppsspp"), extra = EstadoExtra(dock = true, dockAbierto = true)), Rol.INFERIOR)
     @Test fun t270_dock_manija() = foto("270_dock_manija", base().copy(extra = EstadoExtra(dock = true)), Rol.INFERIOR)
     @Test fun t271_menu_apariencia_movimiento() = foto("271_menu_apariencia_movimiento", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 0), Rol.SUPERIOR)
@@ -1204,6 +1199,10 @@ class Capturas {
     @Test fun t292_teclado_herramientas() = foto("292_teclado_herramientas", base().copy(panel = Panel.CLAVE, textoPara = "notas", borrador = "La llave está en el templo", teclaFila = 0, teclaCol = 3, extra = EstadoExtra(tecladoEdicion = true)), Rol.SUPERIOR)
     @Test fun t293_teclado_buscar() = foto("293_teclado_buscar_juego", base().copy(panel = Panel.CLAVE, textoPara = "buscar_juego", borrador = "ley", simbolos = false), Rol.INFERIOR)
     @Test fun t294_dippo_habla_primero() = foto("294_dippo_habla_primero", base().let { b -> b.copy(panel = Panel.ASISTENTE, chat = listOf(cl.nikalbazu.diptico.estado.CentroBisa.saludoInicial(b)), indice = 2) }, Rol.INFERIOR)
+    @Test fun t295_logros_dippo() = foto("295_logros_dippo", base().copy(panel = Panel.GALERIA, galeria = "logros_dippo"), Rol.SUPERIOR)
+    @Test fun t296_vitrina_cuanto_dura() = foto("296_vitrina_cuanto_dura", base().let { b -> b.copy(vista = "mosaicos", extra = EstadoExtra(duraciones = mapOf(b.seleccionado!!.clave to cl.nikalbazu.diptico.estado.CuantoDura.Duracion(12f, 18.5f, 31f, 1L)))) }, Rol.SUPERIOR)
+    @Test fun t297_dippo_celebra() = foto("297_dippo_celebra", base().copy(vista = "mosaicos", extra = EstadoExtra(dippoCelebra = System.currentTimeMillis(), dippoLogro = "Semana perfecta")), Rol.INFERIOR)
+    @Test fun t298_vistas_juegos() = foto("298_vistas_juegos", base().copy(panel = Panel.GALERIA, galeria = "vistas_juegos"), Rol.SUPERIOR)
     @Test fun t290_dippo_ajustes_colores() = foto("290_dippo_ajustes_colores", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true, indice = 3), Rol.SUPERIOR)
 
     @Test fun t258_menu_inicio_barra() = foto("258_menu_inicio_barra", base().copy(panel = Panel.MENU, seccion = Seccion.INICIO, enOpciones = true, indice = 4), Rol.SUPERIOR)

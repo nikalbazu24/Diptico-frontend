@@ -70,9 +70,12 @@ fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = fa
         infiniteRepeatable(keyframes { durationMillis = 9000; 0f at 6000; 1f at 6400; 0.6f at 6700; 1f at 7000; 0f at 7500 }),
         label = "saludo",
     )
-    val pref = Diptico.estado.collectAsState().value.extra.dippoColor
+    val extra = Diptico.estado.collectAsState().value.extra
+    val pref = extra.dippoColor
     val colores = remember(pref) { cl.nikalbazu.diptico.ui.coloresDippoAhora(pref) }
-    val gesto = cara ?: cl.nikalbazu.diptico.ui.CaraDippo.NORMAL
+    // Recién ganó un logro: celebra unos segundos (salvo que alguien le pida otra cara).
+    val celebrando = System.currentTimeMillis() - extra.dippoCelebra < 8000
+    val gesto = cara ?: if (celebrando) cl.nikalbazu.diptico.ui.CaraDippo.CELEBRANDO else cl.nikalbazu.diptico.ui.CaraDippo.NORMAL
     Box(modifier.size(tamDp.dp), contentAlignment = Alignment.Center) {
         Box(
             Modifier.fillMaxSize().graphicsLayer { translationY = flotar * tamDp * 0.04f * density }
@@ -81,7 +84,7 @@ fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = fa
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.size((tamDp * 0.86f).dp)) {
-                dibujarDippo(size.width / 24f, colores, gesto, parpadeo = parpadeo, mirar = flotar * 0.4f, luces = luces, saludo = saludo)
+                dibujarDippo(size.width / 24f, colores, gesto, parpadeo = parpadeo, mirar = flotar * 0.4f, luces = if (celebrando) 1f else luces, saludo = if (celebrando) (pulso - 1f) / 0.35f else saludo)
             }
         }
         if (alerta) {

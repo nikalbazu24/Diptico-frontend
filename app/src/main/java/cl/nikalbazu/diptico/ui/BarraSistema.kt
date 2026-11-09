@@ -109,8 +109,7 @@ internal fun BarraSistema(e: Estado, modifier: Modifier = Modifier, estilo: Stri
     val red = rememberRed()
     val avisos by cl.nikalbazu.diptico.audio.Avisos.lista.collectAsState()
     val c = coloresBarra(e.extra.coloresBarra)
-    if (e.extra.formaBarra == "completa") BarraCompleta(e, modifier, estilo, hora, bateria, cargando, red, avisos.size, c)
-    else BarraFlotanteSistema(e, modifier, estilo, hora, bateria, cargando, red, avisos.size, c)
+    BarraCompleta(e, modifier, estilo, hora, bateria, cargando, red, avisos.size, c)
 }
 
 /** La barra de siempre: una franja de lado a lado con su propio espacio. */
@@ -124,29 +123,6 @@ private fun BarraCompleta(e: Estado, modifier: Modifier, estilo: String, hora: S
         PildoraTrabajos(e.trabajos)
         Spacer(Modifier.weight(1f))
         IconosEstado(hora, bateria, cargando, red, avisos, c)
-    }
-}
-
-/**
- * La barra nueva: dos islas flotantes en las esquinas que no se comen la pantalla. A la izquierda, solo si hay
- * algo en curso (descargas, copias…); a la derecha, los avisos, la red, la hora y la batería, cada uno con su color.
- */
-@Composable
-private fun BarraFlotanteSistema(e: Estado, modifier: Modifier, estilo: String, hora: String, bateria: Int, cargando: Boolean, red: Int, avisos: Int, c: ColoresBarra) {
-    val esc = LocalEscala.current
-    val forma = RoundedCornerShape(50)
-    val borde = Color.White.copy(alpha = if (estilo == "transparente") 0.06f else 0.1f)
-    Box(modifier.fillMaxWidth().padding(horizontal = esc.d(10), vertical = esc.d(5)).testTag("barra-sistema")) {
-        AnimatedVisibility(e.trabajos.isNotEmpty(), Modifier.align(Alignment.TopStart),
-            enter = entradaFlotante(ajusteMovimiento()), exit = salidaFlotante(ajusteMovimiento())) {
-            Box(Modifier.fondoBarra(estilo, forma).border(esc.d(1), borde, forma).padding(horizontal = esc.d(6), vertical = esc.d(2))) {
-                PildoraTrabajos(e.trabajos)
-            }
-        }
-        Row(Modifier.align(Alignment.TopCenter).height(esc.d(24)).fondoBarra(estilo, forma).border(esc.d(1), borde, forma)
-            .padding(horizontal = esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
-            IconosEstado(hora, bateria, cargando, red, avisos, c)
-        }
     }
 }
 

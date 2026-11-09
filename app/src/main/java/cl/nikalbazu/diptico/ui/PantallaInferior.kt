@@ -243,18 +243,10 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
         when (vista) {
             "mosaicos" -> Mosaicos(e, Modifier.fillMaxSize())
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
-            "iconos" -> Cuadricula(e, Modifier.fillMaxSize(), soloPortadas = true)
-            "cartuchos" -> CartuchosJuegos(e, Modifier.fillMaxSize())
             "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
             "carrusel" -> CarruselJuegos(e, Modifier.fillMaxSize())
-            "abanico" -> AbanicoJuegos(e, Modifier.fillMaxSize())
-            "lomos" -> VistaLomos(e, Modifier.fillMaxSize())
-            // El estante y su información quedan centrados en el espacio disponible.
-            else -> Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-                Estante(e, alto = (if (esc.angosta) 192f else 214f) * t.coerceAtMost(1.25f), escala = escalaEstante * t)
-                Info(e)
-                Spacer(Modifier.height(esc.d(8)))
-            }
+            // Vistas que ya no existen (estante, abanico, lomos…): se ven como mosaicos.
+            else -> Mosaicos(e, Modifier.fillMaxSize())
         }
     }
     }

@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "dippo-listo-2.0-24"
-    const val NOMBRE = "DIPPO más listo y teclado nuevo"
+    const val ID = "logros-dippo-2.0-25"
+    const val NOMBRE = "Logros de DIPPO y cuánto te queda"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -279,10 +279,15 @@ object Novedades {
             Pagina("DIPPO te espera en el inicio", "Ahora DIPPO vive a la vista: abajo junto a la hora, o en la esquina si usas una pantalla. Te saluda al llegar y pone cara de preocupado si queda poca batería. Tócalo para hablarle.", Icono.BISA, 0xFFFF9A6B),
             Pagina("Su propio espacio", "DIPPO tiene su sección en Ajustes: si aparece en el inicio, su saludo, sus colores, su IA y cómo te ayuda mientras juegas. Y ahora se asoma en la animación de entrada.", Icono.AJUSTES, 0xFF7AA8FF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("dippo-listo-2.0-24", "DIPPO más listo y teclado nuevo", listOf(
             Pagina("DIPPO habla primero", "Al abrirlo te cuenta qué notó: lo último que jugaste, lo que anotaste y algún juego olvidado. Todo con botones listos: casi no tendrás que escribir.", Icono.BISA, 0xFFFF9A6B),
             Pagina("Preguntas con un toque", "¿De qué trata?, trucos, cuánto dura, juegos parecidos… Y después de cada respuesta, DIPPO te deja la siguiente pregunta lista. Si le hablas, te responde con su voz.", Icono.MICROFONO, 0xFF7AA8FF),
             Pagina("Teclado nuevo", "Como el de Google: palabras sugeridas arriba, tildes manteniendo la letra (o con Y), dos espacios ponen punto y ⋯ trae copiar y pegar.", Icono.TEXTO, 0xFF00ACC1),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Los logros de DIPPO", "DIPPO tiene sus propios logros: por jugar, por terminar juegos, por rachas de días y por conversar con él. Cuando ganas uno, lo celebra. Míralos en Ajustes › DIPPO.", Icono.TROFEO, 0xFFFFC94D),
+            Pagina("¿Cuánto te queda?", "Díptico consulta HowLongToBeat y te dice cuánto dura cada juego y cuánto te falta según lo que llevas. Pregúntaselo también a DIPPO con un toque.", Icono.RELOJ, 0xFF7AA8FF),
+            Pagina("Más ordenado", "Quedaron las cuatro vistas de juegos que más se usan, la barra de la hora es una sola y «Pantalla y estilo» tiene solo lo esencial.", Icono.AJUSTES, 0xFF00ACC1),
         )),
     )
 

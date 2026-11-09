@@ -54,6 +54,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
         "variantes_juego" -> "Versión del juego" to Icono.FORMA
         "copias_srm" -> "Copias de RetroArch" to Icono.COPIAR
         "vistas_juegos" -> "Cómo ver tus juegos" to Icono.VISTA
+        "logros_dippo" -> "Logros de DIPPO" to Icono.TROFEO
         "artes" -> "Galería de artes" to Icono.PORTADA
         "vistas_consolas" -> "Cómo ver tus consolas" to Icono.MANDO
         "filtros" -> "Mostrar juegos" to Icono.BUSCAR

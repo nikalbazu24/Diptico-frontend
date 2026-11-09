@@ -36,6 +36,9 @@ object Asistente {
             if (r >= 2) append(", y acaba de reintentar $r veces seguidas en poco rato (probablemente está atascada o muriendo en la misma parte)")
             if (d.paso.isNotBlank()) append(". Su próximo paso anotado: \"${d.paso}\"")
             if (d.notas.isNotBlank()) append(". Sus notas: \"${d.notas.take(200)}\"")
+            e.extra.duraciones[clave]?.takeIf { it.tiene }?.let { h ->
+                append(". Según HowLongToBeat dura ~${CuantoDura.horasBonitas(h.principal)} la historia y ~${CuantoDura.horasBonitas(h.completo)} al 100 %")
+            }
         }
     }
     /** Juegos que se mandan como contexto (por número, para que la IA proponga botones). */

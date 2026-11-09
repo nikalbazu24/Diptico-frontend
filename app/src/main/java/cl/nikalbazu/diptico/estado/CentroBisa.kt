@@ -223,23 +223,35 @@ internal object CentroBisa {
         return buildList {
             if (j != null && c.jugando) {
                 add(AccionChat("bisa_pista", j.clave, "Estoy atascado"))
-                if (conIA) {
-                    add(AccionChat("preguntar", "¿Cuáles son los controles básicos de ${j.titulo} y un truco útil para jugar mejor?", "Controles y trucos"))
-                    add(AccionChat("preguntar", "Llevo ${(e.datos[j.clave]?.tiempo ?: 0) / 3600} horas en ${j.titulo}. ¿Cuánto dura en total y qué me queda más o menos, sin spoilers?", "¿Cuánto me falta?"))
-                }
+                add(AccionChat("bisa_dura", j.clave, "¿Cuánto me falta?"))
+                if (conIA) add(AccionChat("preguntar", "¿Cuáles son los controles básicos de ${j.titulo} y un truco útil para jugar mejor?", "Controles y trucos"))
             } else if (j != null) {
                 if (conIA) {
-                    add(AccionChat("preguntar", "Cuéntame en pocas líneas de qué trata ${j.titulo}, sin spoilers, y cuánto dura más o menos.", "¿De qué trata?"))
+                    add(AccionChat("preguntar", "Cuéntame en pocas líneas de qué trata ${j.titulo}, sin spoilers.", "¿De qué trata?"))
                     add(AccionChat("preguntar", "Dame 3 trucos o secretos buenos de ${j.titulo}, cortitos y sin arruinar la historia.", "Trucos y secretos"))
                     add(AccionChat("preguntar", "¿Qué juegos de mi biblioteca se parecen a ${j.titulo}? Proponme hasta 3, con el botón para jugarlos.", "Parecidos en mi biblioteca"))
                 }
+                add(AccionChat("bisa_dura", j.clave, if ((e.datos[j.clave]?.tiempo ?: 0L) > 0L) "¿Cuánto me falta?" else "¿Cuánto dura?"))
                 add(AccionChat("bisa_pista", j.clave, "Estoy atascado"))
             }
             if (!c.jugando) {
                 if (conIA) add(AccionChat("preguntar", "Elige por mí un juego de mi biblioteca que me pueda gustar hoy, dime por qué en una línea y dame el botón para jugarlo.", "Sorpréndeme"))
                 add(AccionChat("preguntar", "Quiero algo corto para 20 minutos", "Algo corto"))
                 if (conIA) add(AccionChat("preguntar", "Elige un tema de Díptico que combine con hoy y dame el botón para ponerlo.", "Un tema para hoy"))
+                add(AccionChat("bisa_logros_dippo", "", "Mis logros"))
             }
         }
+    }
+
+    /** DIPPO cuenta cómo van sus logros: cuántos llevas y cuál está más cerca. */
+    fun contarLogros(progreso: List<Pair<LogrosDippo.Logro, Int>>): MensajeChat {
+        val ganados = progreso.count { (l, v) -> v >= l.meta }
+        val cerca = progreso.filter { (l, v) -> v < l.meta }.maxByOrNull { (l, v) -> v.toFloat() / l.meta }
+        val texto = buildString {
+            append("¡Llevamos $ganados de ${progreso.size} logros juntos!")
+            if (cerca != null) append(" El más cerquita: «${cerca.first.titulo}» (${cerca.first.descripcion.trimEnd('.').replaceFirstChar { it.lowercase() }}), vas ${cerca.second} de ${cerca.first.meta}.")
+            else append(" ¡Los tienes todos! Estoy que brillo.")
+        }
+        return MensajeChat("ia", texto, listOf(AccionChat("bisa_logros_ver", "", "Ver todos")))
     }
 }
