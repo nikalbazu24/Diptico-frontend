@@ -130,3 +130,4 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Paso 1 hecho (9 nov): vista `mosaicos` (ui/Mosaicos.kt, `Teclas.pasoMosaico`) por defecto; barra `completa` por defecto.
   Novedades: las versiones van en orden cronológico (la nueva AL FINAL de la lista). Siguiente: franja de abajo con
   Buscar/Apps/Ajustes + hora/batería y fila de consolas con halo; luego vitrina de arriba; luego ajustes en 6 secciones.
+- Paso 2 hecho (9 nov): `FranjaAccesos` abajo (Buscar/Apps/Ajustes + hora/batería; la barra de la hora no se dibuja abajo con mosaicos), consola elegida con halo en `Cinta`. Siguiente: vitrina de arriba.
