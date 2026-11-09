@@ -144,3 +144,4 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   y resorte corto; menú sin animación por fila. DIPPO: 6 propuestas en el boceto (Alas, Chispa, Cartucho, Pixel, Cartucho
   con gorro, Disco); el cartucho gustó más pero ninguna lo convenció del todo. Pedirle referencias de estilo antes de otra ronda.
   Ronda 3 (12 ideas): le gustaron Pulpito, Fantasmita y Chispa. Ronda 4 en el boceto (Dippo4): A Pulpito fantasma, B Pulpito de luz, C Fantasmita de luz.
+  ELEGIDO (9 nov 09:34): **Pulpito de luz** (naranjo cálido de día, azulado de noche; visor oscuro con ojos de luz celeste; puntas de tentáculos = lucecitas). Ficha en el boceto (Dippo5): pose saludando, caras pensando/celebrando/sorprendido/preocupado/durmiendo; personalidad curioso, servicial, algo despistado.
