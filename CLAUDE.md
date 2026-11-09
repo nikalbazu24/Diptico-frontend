@@ -136,3 +136,7 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   (`GRUPOS_AJUSTES`, `armarOpciones` las arma juntando las de antes con su título como grupo). Liquid Glass apagado
   (`Estilo.glass = false`), sin opciones Glass ni lente (`LenteVidrio.kt` borrado). Pendiente: recortar opciones de
   «Pantalla y estilo» (aún larga) y seguir partiendo `Diptico.kt`.
+- Paso 4 hecho (9 nov): `Opcion.muestrasIconos` (desplegable de íconos con muestra), `G_WIDGETS` («Inicio y widgets» = INICIO),
+  importar/aportar temas en la cabecera de `tienda_temas` (`importarTemaArchivo`), plantillas borradas, clip de retoma
+  apagado para todos (clave `clipRetoma2`). PENDIENTE PEDIDO: reinventar Bisa como **DIPPO** (doble p): boceto con 3
+  propuestas de personaje original antes de programar. Luego: recortar Apariencia y partir `Diptico.kt`.
