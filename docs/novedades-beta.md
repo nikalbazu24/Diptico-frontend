@@ -1,1 +1,3 @@
-- **Pantalla de arriba más limpia:** con dos pantallas y la vista Mosaicos, arriba ya no se repiten la barra de la hora ni la barra de accesos; todo eso vive en la franja de abajo.
+- **Nuevo Díptico, paso 3: la vitrina de arriba.** Con dos pantallas, arriba ya no hay barras repetidas: el juego elegido luce solo, con dos botones grandes (A Jugar/Continuar y X Ficha del juego).
+- **Ajustes en seis secciones:** Pantalla y estilo, Biblioteca, Juegos y emuladores, Controles, Sonido y Sistema. Las opciones de antes siguen adentro, ordenadas por bloques, con sus mismos íconos.
+- **Liquid Glass apagado:** se sacó por ahora (y el efecto lente) para que todo ande más liviano; se rediseñará más adelante junto con el nuevo estilo.

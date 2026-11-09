@@ -1,6 +1,5 @@
 package cl.nikalbazu.diptico.ui
 
-import androidx.compose.ui.graphics.nativeCanvas
 import android.animation.ValueAnimator
 import android.database.ContentObserver
 import android.os.Handler
@@ -171,9 +170,6 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
             } finally { presionado = false }
         }
     }
-    // Lente (Android 13+): un sombreador por superficie, creado una sola vez.
-    val lente = LocalLenteVidrio.current && LenteVidrio.disponible && capa != CapaCristal.CONTENIDO
-    val sombreador = remember(lente) { if (lente && android.os.Build.VERSION.SDK_INT >= 33) LenteVidrio.nuevo() else null }
     val elevacion = when (capa) { CapaCristal.PANEL, CapaCristal.CARPETA -> 20; CapaCristal.CONTROL -> 10; CapaCristal.WIDGET -> 4; CapaCristal.CONTENIDO -> 2 }
     return shadow(if (efectos && !entorno.contraste) (elevacion * intensidad).dp else 0.dp,
         forma, clip = false, ambientColor = Color.Black.copy(alpha = .15f), spotColor = Color.Black.copy(alpha = .24f))
@@ -196,8 +192,6 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
                 dentro.translate(Offset(6.dp.toPx(), 6.dp.toPx()))
                 Path.combine(PathOperation.Difference, Path().apply { addOutline(contorno) }, dentro)
             } else null
-            val radioLente = (contorno as? androidx.compose.ui.graphics.Outline.Rounded)?.roundRect?.topLeftCornerRadius?.x
-                ?: (if (contorno is androidx.compose.ui.graphics.Outline.Generic) size.minDimension / 2f else 0f)
             onDrawWithContent {
                 drawRect(material.copy(alpha = fraccion))
                 val captura = fondoVentana?.imagen
@@ -213,14 +207,6 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
                     // La misma escena continúa bajo el panel; la máscara de borde concentra una
                     // segunda muestra ligeramente ampliada para sugerir el efecto de lente.
                     val tamano = IntSize(an.roundToInt().coerceAtLeast(1), al.roundToInt().coerceAtLeast(1))
-                    val s = sombreador
-                    // Solo en lienzos con aceleración: la captura del fondo dibuja en software y ahí el sombreador cierra la app.
-                    if (s != null && android.os.Build.VERSION.SDK_INT >= 33 && drawContext.canvas.nativeCanvas.isHardwareAccelerated) {
-                        // Vidrio con lente: refracción, dispersión, borde brillante y luz que sigue el dedo, en un solo paso.
-                        LenteVidrio.preparar(s, imagen, destino, tamano, size, radioLente, intensidad,
-                            Offset(punto.x * size.width, punto.y * size.height), material, opacidad * (if (presionado) 0.85f else 1f))
-                        drawRect(androidx.compose.ui.graphics.ShaderBrush(s), alpha = fraccion)
-                    } else {
                     drawImage(imagen, dstOffset = destino, dstSize = tamano, filterQuality = FilterQuality.Medium, alpha = fraccion)
                     if (captura != null && anillo != null) {
                         clipPath(anillo) {
@@ -230,7 +216,6 @@ internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCr
                         }
                     }
                     drawRect(material.copy(alpha = opacidad * fraccion))
-                    }
                 }
                 if (efectos && !entorno.contraste && capa != CapaCristal.CONTENIDO) {
                     drawRect(reflejo)

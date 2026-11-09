@@ -68,7 +68,8 @@ val PaletaClara = Paleta(
 object Estilo {
     var tema by mutableStateOf(Temas.incluidos[0])
     var materialInterfaz by mutableStateOf("glass")
-    val glass: Boolean get() = materialInterfaz == "glass" || (materialInterfaz == "tema" && tema.forma == "cristal")
+    /** Liquid Glass quedó apagado mientras se rediseña junto con el nuevo Díptico (9 nov 2026). */
+    val glass: Boolean get() = false
     var decoraciones by mutableStateOf(true)
     /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
     var efecto by mutableStateOf("degradado")

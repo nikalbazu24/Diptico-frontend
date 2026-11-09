@@ -92,7 +92,7 @@ private fun seccionDe(o: Opcion?, s: Seccion): Seccion {
     // En «Más ajustes», cada opción es una sección: se muestra la vista previa de esa sección.
     if (s == Seccion.MAS) return Seccion.values().firstOrNull { it.titulo == o.titulo } ?: Seccion.SISTEMA
     if (s != Seccion.ESENCIAL) return s
-    return Seccion.values().firstOrNull { sec -> sec != Seccion.ESENCIAL && sec != Seccion.MAS && Diptico.opcionesSeccion(sec).any { it.titulo == o.titulo } } ?: s
+    return Seccion.values().firstOrNull { sec -> sec != Seccion.ESENCIAL && sec != Seccion.MAS && !Diptico.esGrupoAjustes(sec) && Diptico.opcionesSeccion(sec).any { it.titulo == o.titulo } } ?: s
 }
 
 /** La vista previa de la opción [o] de la sección [s]. Siempre dibuja algo útil, aunque no haya opción elegida. */

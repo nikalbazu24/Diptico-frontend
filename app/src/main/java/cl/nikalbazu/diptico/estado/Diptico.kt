@@ -81,6 +81,13 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     CONSOLA("Android", Icono.CAMPANA, "Díptico como inicio, notificaciones y accesos rápidos de Android."),
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Respaldo en Google Drive, actualizaciones, reportar un problema, el tutorial y la versión de Díptico."),
+    // Ajustes nuevos (9 nov 2026): seis secciones claras, cada una junta varias de las de antes.
+    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Temas, apariencia, el inicio, las pantallas y las decoraciones.", "Ajustes"),
+    G_BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Cómo se ven tus juegos, tus consolas, tus carpetas y las portadas."),
+    G_JUEGOS("Juegos y emuladores", Icono.EMULADOR, "Con qué se abre cada consola, los logros y el modo turbo al jugar."),
+    G_CONTROLES("Controles", Icono.MANDO, "Qué hace cada botón y stick."),
+    G_SONIDO("Sonido", Icono.MUSICA, "La música de fondo, los sonidos y la vibración."),
+    G_SISTEMA("Sistema", Icono.INFO, "Respaldo, idioma, Android, la tele, Bisa y la versión de Díptico."),
     /** Solo en el modo simple: la puerta a las secciones avanzadas (nada queda escondido). */
     MAS("Más ajustes", Icono.AJUSTES, "Las secciones avanzadas, a un toque. Y para volver al menú completo.", "Avanzado"),
 }
@@ -2621,7 +2628,7 @@ object Diptico {
         if (estado.value.panel != Panel.MENU) Sonidos.abrir()
         actualizar {
             it.copy(
-                panel = Panel.MENU, seccion = seccion ?: it.seccion,
+                panel = Panel.MENU, seccion = seccion ?: it.seccion.takeIf { s -> esGrupoAjustes(s) } ?: Seccion.G_ESTILO,
                 enOpciones = seccion != null, indice = 0,
             )
         }
@@ -3487,8 +3494,21 @@ object Diptico {
         Seccion.BIBLIOTECA, Seccion.EMULADORES, Seccion.ASISTENTE, Seccion.PANTALLAS, Seccion.SISTEMA,
     )
 
-    fun seccionesMenu(simple: Boolean = estado.value.menuSimple): List<Seccion> =
-        if (simple) SECCIONES_SIMPLES + Seccion.MAS else Seccion.values().filter { it != Seccion.MAS }
+    /** Qué secciones de antes junta cada una de las seis nuevas. */
+    val GRUPOS_AJUSTES: Map<Seccion, List<Seccion>> = linkedMapOf(
+        Seccion.G_ESTILO to listOf(Seccion.APARIENCIA, Seccion.TEMAS, Seccion.INICIO, Seccion.PANTALLAS, Seccion.DECORACIONES),
+        Seccion.G_BIBLIOTECA to listOf(Seccion.ESTANTE, Seccion.CONSOLAS, Seccion.BIBLIOTECA, Seccion.PORTADAS),
+        Seccion.G_JUEGOS to listOf(Seccion.EMULADORES, Seccion.LOGROS, Seccion.RENDIMIENTO),
+        Seccion.G_CONTROLES to listOf(Seccion.CONTROLES),
+        Seccion.G_SONIDO to listOf(Seccion.MUSICA),
+        Seccion.G_SISTEMA to listOf(Seccion.SISTEMA, Seccion.IDIOMA, Seccion.CONSOLA, Seccion.SOBREMESA, Seccion.ASISTENTE),
+    )
+
+    fun esGrupoAjustes(s: Seccion) = s in GRUPOS_AJUSTES
+
+    /** El menú ahora muestra solo las seis secciones nuevas; las de antes siguen abriéndose por dentro y con Buscar. */
+    @Suppress("UNUSED_PARAMETER")
+    fun seccionesMenu(simple: Boolean = estado.value.menuSimple): List<Seccion> = GRUPOS_AJUSTES.keys.toList()
 
     /** L1/R1 y la cruceta en la columna de secciones: la anterior o la siguiente de las que se ven. */
     fun saltarSeccion(delta: Int, envolver: Boolean) {
@@ -3516,7 +3536,7 @@ object Diptico {
     private fun opcionesMas(e: Estado): List<Opcion> {
         val lista = mutableListOf(opcionMenuSimple(e))
         for (s in Seccion.values()) {
-            if (s in SECCIONES_SIMPLES || s == Seccion.MAS) continue
+            if (s in SECCIONES_SIMPLES || s == Seccion.MAS || esGrupoAjustes(s)) continue
             lista += Opcion(s.titulo, "", s.icono, s.ayuda) { actualizar { it.copy(seccion = s, enOpciones = true, indice = 0) } }
         }
         return lista
@@ -3596,7 +3616,7 @@ object Diptico {
 
     /** Ajustes que más se usan, sacados de todas las secciones. O, si se buscó algo, lo que coincide. */
     private fun opcionesEsenciales(e: Estado): List<Opcion> {
-        val todas = Seccion.values().filter { it != Seccion.ESENCIAL && it != Seccion.MAS }.flatMap { s -> armarOpciones(s).map { s to it } }
+        val todas = Seccion.values().filter { it != Seccion.ESENCIAL && it != Seccion.MAS && !esGrupoAjustes(it) }.flatMap { s -> armarOpciones(s).map { s to it } }
         if (e.buscarAjuste.isNotBlank()) {
             val q = Busqueda.normalizar(e.buscarAjuste)
             val res = todas.filter { (s, o) ->
@@ -3620,9 +3640,14 @@ object Diptico {
     }
 
     private fun armarOpciones(s: Seccion): List<Opcion> {
+        GRUPOS_AJUSTES[s]?.let { partes ->
+            // Cada parte con su nombre de título, para que la sección larga se lea por bloques.
+            return partes.flatMap { sub -> armarOpciones(sub).map { o -> o.copy(grupo = if (partes.size == 1) o.grupo else sub.titulo) } }
+        }
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
+            Seccion.G_ESTILO, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_SISTEMA -> Unit
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
@@ -3802,16 +3827,6 @@ object Diptico {
                 lista += Opcion(nombre, if (e.idioma == cod) "En uso ✓" else "", Icono.IDIOMA, Idioma.ayuda(cod)) { cambiarIdioma(cod) }
             }
             Seccion.APARIENCIA -> {
-                lista += opcionesGlass(e).map { it.copy(grupo = it.grupo ?: "Material Glass") }
-                if (cl.nikalbazu.diptico.ui.LenteVidrio.disponible) lista += Opcion(
-                    "Efecto lente", if (e.extra.lente) "Sí" else "No", Icono.BRILLO,
-                    "El vidrio se comporta como una lupa suave: lo de atrás se curva en los bordes, el canto brilla con un leve arcoíris y una luz sigue tu dedo. Apágalo si prefieres un vidrio plano.",
-                    grupo = "Material Glass",
-                ) {
-                    val v = !estado.value.extra.lente
-                    almacen.guardarBool("lenteVidrio", v)
-                    actualizar { it.copy(extra = it.extra.copy(lente = v)) }
-                }
                 lista += opcionLista(
                     "Animaciones", Icono.CHISPA,
                     "Cómo se mueven el menú, las ventanas y las carpetas al abrirse y cerrarse. Apagadas: todo aparece al instante. Intensas: con un leve rebote.",
@@ -4565,7 +4580,6 @@ object Diptico {
 
     private fun opcionesTemas(e: Estado): List<Opcion> {
         val lista = mutableListOf<Opcion>()
-        lista += opcionesGlass(e)
         val prox = Temas.proxima()
         lista += Opcion(
             "Fechas especiales", if (e.temaFestivo) "Sí" else "No", Icono.MUNDO,

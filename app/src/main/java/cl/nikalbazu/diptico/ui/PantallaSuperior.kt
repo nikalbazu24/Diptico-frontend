@@ -179,6 +179,9 @@ private fun Caratulas(e: Estado) {
 
         // Todo lo de abajo va en una barra flotante que se esconde sola: así luce el juego.
         if (e.sesion == null) BarraFlotante(e, juego, Modifier.align(Alignment.BottomCenter))
+        // Nuevo diseño: la vitrina lleva sus dos botones grandes, estilo consola.
+        if (e.sesion == null && juego != null && nuevoDisenoDosPantallas(e)) BotonesVitrina(e, juego,
+            Modifier.align(Alignment.BottomStart).padding(start = esc.d(margen), bottom = esc.d(34)))
         if (e.sesion != null) {
             Etiqueta(
                 "Jugando ahora", Coral, 13f,

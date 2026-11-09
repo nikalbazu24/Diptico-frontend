@@ -44,7 +44,6 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         LocalTamJuegos provides e.tamJuegos,
         LocalCristal provides recordarCristal(e),
         LocalMovimiento provides (e.experiencia.movimiento && e.extra.animaciones != "apagadas" && Estilo.efectosCompletos && android.animation.ValueAnimator.areAnimatorsEnabled()),
-        LocalLenteVidrio provides e.extra.lente,
         LocalAjusteMovimiento provides AjusteMovimiento(
             intensidad = when (e.extra.animaciones) { "apagadas" -> 0f; "suaves" -> 0.6f; "intensas" -> 1.5f; else -> 1f },
             duracion = when (e.extra.velocidadAnim) { "lenta" -> 1.45f; "rapida" -> 0.65f; else -> 1f },

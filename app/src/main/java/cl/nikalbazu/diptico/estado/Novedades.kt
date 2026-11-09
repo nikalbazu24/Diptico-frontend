@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "franja-2.0-18"
-    const val NOMBRE = "Nuevo Díptico: la pantalla de abajo"
+    const val ID = "vitrina-ajustes-2.0-19"
+    const val NOMBRE = "Nuevo Díptico: vitrina y ajustes"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -256,8 +256,12 @@ object Novedades {
         Version("mosaicos-2.0-16", "Nuevo Díptico: mosaicos", listOf(
             Pagina("Mosaicos, estilo consola", "Tus juegos ahora se ven como en una consola: el primero en un mosaico grande y el resto en cuadrados. El elegido brilla con el color de su consola. Cambia de vista con R3.", Icono.VISTA, 0xFF8B7CF6, "R3"),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("franja-2.0-18", "Nuevo Díptico: la pantalla de abajo", listOf(
             Pagina("Todo a mano abajo", "Abajo tienes una franja fija con Buscar, Apps y Ajustes, y la hora con la batería. La consola elegida se ilumina con su color.", Icono.APPS, 0xFF2EC4A6),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("La vitrina", "Arriba, el juego elegido luce a pantalla completa, sin barras encima, con dos botones: A para jugar o continuar y X para su ficha.", Icono.PORTADA, 0xFFFF7A59, "A"),
+            Pagina("Ajustes más simples", "Los ajustes ahora son seis secciones: Pantalla y estilo, Biblioteca, Juegos y emuladores, Controles, Sonido y Sistema. Lo de antes sigue adentro, ordenado por bloques.", Icono.AJUSTES, 0xFF8E8AAE),
         )),
     )
 
