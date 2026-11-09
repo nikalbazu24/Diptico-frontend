@@ -1,6 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,7 +55,19 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
     LaunchedEffect(e.indiceSel, lista.size) {
         if (lista.isNotEmpty()) estado.animateScrollToItem(e.indiceSel.coerceIn(0, lista.lastIndex), -margen)
     }
-    BoxWithConstraints(modifier.testTag("vista-mosaicos")) {
+    // Al cambiar de consola, los mosaicos se deslizan y funden hacia el lado de la consola nueva.
+    val mov = ajusteMovimiento()
+    androidx.compose.animation.AnimatedContent(
+        targetState = e.consolaSel,
+        transitionSpec = {
+            val ida = if (e.pestanas.indexOf(targetState) >= e.pestanas.indexOf(initialState)) 1 else -1
+            if (!mov.activo) androidx.compose.animation.EnterTransition.None togetherWith androidx.compose.animation.ExitTransition.None
+            else (androidx.compose.animation.fadeIn(tween(mov.ms(220))) + androidx.compose.animation.slideInHorizontally(tween(mov.ms(300), easing = CurvaPosarse)) { ida * it / 8 }) togetherWith
+                (androidx.compose.animation.fadeOut(tween(mov.ms(140))) + androidx.compose.animation.slideOutHorizontally(tween(mov.ms(200))) { -ida * it / 12 })
+        },
+        label = "mosaicos-consola", modifier = modifier,
+    ) { _ ->
+    BoxWithConstraints(Modifier.fillMaxSize().testTag("vista-mosaicos")) {
         if (lista.isEmpty()) { VacioEstante(e); return@BoxWithConstraints }
         val hueco = esc.d(10)
         val alto = maxHeight - esc.d(24)
@@ -70,6 +83,7 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
             }
         }
     }
+    }
 }
 
 @Composable
@@ -78,7 +92,14 @@ private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp) {
     val j = e.visibles[i]
     val elegido = i == e.indiceSel
     val color = Consolas.porId(j.consolaId)?.color ?: Uva
-    val escala by animateFloatAsState(if (elegido) 1.04f else 1f, tween(duracionMovimiento(160)), label = "mosaico")
+    // El elegido crece con un resorte corto (sin rebote largo) y vuelve suave: se siente como consola.
+    val mov = ajusteMovimiento()
+    val escala by animateFloatAsState(
+        if (elegido) 1.05f else 1f,
+        if (mov.activo) androidx.compose.animation.core.spring(dampingRatio = 0.7f, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow / mov.duracion.coerceAtLeast(0.3f))
+        else androidx.compose.animation.core.snap(),
+        label = "mosaico",
+    )
     val forma = RoundedCornerShape(esc.d(if (grande) 14 else 10))
     val jugado = (e.datos[j.clave]?.tiempo?.toLong() ?: 0L) > 0L
     Box(

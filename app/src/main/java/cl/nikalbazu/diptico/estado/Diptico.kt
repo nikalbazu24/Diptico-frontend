@@ -82,7 +82,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Respaldo en Google Drive, actualizaciones, reportar un problema, el tutorial y la versión de Díptico."),
     // Ajustes nuevos (9 nov 2026): seis secciones claras, cada una junta varias de las de antes.
-    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Temas, apariencia, las pantallas y las decoraciones.", "Ajustes"),
+    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Claro u oscuro, animaciones, íconos y las pantallas.", "Ajustes"),
+    G_TEMAS("Temas y decoraciones", Icono.PALETA, "La tienda de temas, tus colores, las fechas especiales y los adornos animados."),
     G_WIDGETS("Inicio y widgets", Icono.APPS, "La pantalla de inicio, tus widgets y el dock de apps."),
     G_BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Cómo se ven tus juegos, tus consolas, tus carpetas y las portadas."),
     G_JUEGOS("Juegos y emuladores", Icono.EMULADOR, "Con qué se abre cada consola, los logros y el modo turbo al jugar."),
@@ -3502,7 +3503,8 @@ object Diptico {
 
     /** Qué secciones de antes junta cada una de las seis nuevas. */
     val GRUPOS_AJUSTES: Map<Seccion, List<Seccion>> = linkedMapOf(
-        Seccion.G_ESTILO to listOf(Seccion.APARIENCIA, Seccion.TEMAS, Seccion.PANTALLAS, Seccion.DECORACIONES),
+        Seccion.G_ESTILO to listOf(Seccion.APARIENCIA, Seccion.PANTALLAS),
+        Seccion.G_TEMAS to listOf(Seccion.TEMAS, Seccion.DECORACIONES),
         Seccion.G_WIDGETS to listOf(Seccion.INICIO),
         Seccion.G_BIBLIOTECA to listOf(Seccion.ESTANTE, Seccion.CONSOLAS, Seccion.BIBLIOTECA, Seccion.PORTADAS),
         Seccion.G_JUEGOS to listOf(Seccion.EMULADORES, Seccion.LOGROS, Seccion.RENDIMIENTO),
@@ -3654,7 +3656,7 @@ object Diptico {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
-            Seccion.G_ESTILO, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_SISTEMA -> Unit
+            Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_SISTEMA -> Unit
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)

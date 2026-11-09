@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "ajustes-orden-2.0-20"
-    const val NOMBRE = "Nuevo Díptico: ajustes en orden"
+    const val ID = "temas-aparte-2.0-21"
+    const val NOMBRE = "Temas aparte y movimiento pulido"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -263,10 +263,13 @@ object Novedades {
             Pagina("La vitrina", "Arriba, el juego elegido luce a pantalla completa, sin barras encima, con dos botones: A para jugar o continuar y X para su ficha.", Icono.PORTADA, 0xFFFF7A59, "A"),
             Pagina("Ajustes más simples", "Los ajustes ahora son seis secciones: Pantalla y estilo, Biblioteca, Juegos y emuladores, Controles, Sonido y Sistema. Lo de antes sigue adentro, ordenado por bloques.", Icono.AJUSTES, 0xFF8E8AAE),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("ajustes-orden-2.0-20", "Nuevo Díptico: ajustes en orden", listOf(
             Pagina("Jugar sin preguntas", "Abrir un juego ya no pide grabar la pantalla. El clip para retomar es opcional y viene apagado.", Icono.MANDO, 0xFF4ADE80),
             Pagina("Temas, todo en la tienda", "Importar un tema desde un archivo o un enlace, y aportar uno, ahora están arriba en la Tienda de temas.", Icono.PALETA, 0xFFB388FF),
             Pagina("Inicio y widgets aparte", "Los widgets y el inicio tienen su propia sección en Ajustes. Y los íconos de las consolas se eligen de una lista con una muestra de cada estilo.", Icono.APPS, 0xFF00ACC1),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Temas y decoraciones aparte", "Los temas y los adornos tienen su propia sección en Ajustes. Y al cambiar de consola, los mosaicos se deslizan hacia ese lado.", Icono.PALETA, 0xFFB388FF),
         )),
     )
 

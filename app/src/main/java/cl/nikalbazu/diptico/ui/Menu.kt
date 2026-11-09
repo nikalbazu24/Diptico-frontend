@@ -74,6 +74,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.MAS -> Color(0xFF9AA4B8)
     Seccion.G_ESTILO -> Color(0xFFFF5D8F)
     Seccion.G_WIDGETS -> Color(0xFF00ACC1)
+    Seccion.G_TEMAS -> Color(0xFFB388FF)
     Seccion.G_BIBLIOTECA -> Color(0xFF2EC4A6)
     Seccion.G_JUEGOS -> Color(0xFF3BA8FF)
     Seccion.G_CONTROLES -> Color(0xFFFFA726)
@@ -302,19 +303,8 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
                     if (g.isNotEmpty() && (i == 0 || Diptico.grupoOpcion(s, opciones[i - 1]) != g)) {
                         Etiqueta(g, color, 10.5f, Modifier.padding(start = esc.d(6), top = esc.d(if (i == 0) 0f else 6f), bottom = esc.d(5)))
                     }
-                    // Las filas entran escalonadas al abrir una sección: una ola suave de arriba hacia abajo.
-                    val mov = ajusteMovimiento()
-                    val aparece = remember(s) { androidx.compose.animation.core.Animatable(if (mov.activo) 0f else 1f) }
-                    LaunchedEffect(s) {
-                        if (aparece.value < 1f) {
-                            kotlinx.coroutines.delay(retrasoEscalonado(mov, i).toLong())
-                            aparece.animateTo(1f, tween(mov.ms(280), easing = CurvaPosarse))
-                        }
-                    }
-                    Box(Modifier.graphicsLayer {
-                        alpha = aparece.value
-                        translationY = esc.d(16).toPx() * mov.intensidad * (1f - aparece.value)
-                    }) { FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) } }
+                    // Sin animación por fila (era lo que más pesaba al abrir una sección): la sección entera se funde.
+                    FilaOpcion(o, e.enOpciones && i == e.indice, color) { Diptico.elegirIndice(i) }
                 }
             }
         }
