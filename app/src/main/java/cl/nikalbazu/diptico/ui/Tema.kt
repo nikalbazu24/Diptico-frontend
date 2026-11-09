@@ -213,6 +213,19 @@ class Escala(val factor: Float, val ancho: Float = 711f, val texto: Float = 1f) 
 }
 
 val LocalEscala = staticCompositionLocalOf { Escala(1f) }
+
+/**
+ * Cambio de ambiente suave: al pasar de claro a oscuro (o cambiar de tema) los colores se funden en vez de saltar,
+ * como cuando cae la tarde. Sin efectos completos o con las animaciones del sistema apagadas, cambia al instante.
+ */
+@Composable
+private fun paletaSuave(destino: Paleta): Paleta {
+    if (!Estilo.efectosCompletos || !android.animation.ValueAnimator.areAnimatorsEnabled()) return destino
+    val t = androidx.compose.animation.core.tween<Color>(650, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+    @Composable fun c(x: Color) = androidx.compose.animation.animateColorAsState(x, t, label = "ambiente").value
+    return Paleta(c(destino.fondo), c(destino.fondo2), c(destino.superficie), c(destino.tinta), c(destino.tenue),
+        c(destino.linea), c(destino.acentoTexto), c(destino.estante))
+}
 val LocalPaleta = staticCompositionLocalOf { PaletaOscura }
 
 /**
@@ -221,7 +234,7 @@ val LocalPaleta = staticCompositionLocalOf { PaletaOscura }
  */
 @Composable
 fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f, zoom: Float = 1f, contenido: @Composable () -> Unit) {
-    val paleta = paletaDe(Estilo.tema, oscuro)
+    val paleta = paletaSuave(paletaDe(Estilo.tema, oscuro))
     BoxWithConstraints(modifier.background(paleta.fondo)) {
         val alto = if (maxHeight.value > 0f) maxHeight.value else 1f
         // En pantallas verticales (un teléfono) manda el ancho, para que nada quede fuera.

@@ -3,3 +3,5 @@
 - **Vista «Solo portadas».** Una cuadrícula sin textos para ver muchos juegos a la vez.
 - **Vista «Cartuchos 3D».** Cada juego de pie en su cartucho (o su caja si es de disco), con la portada de etiqueta; el elegido gira de frente.
 - **Dock de apps.** Una manija en la pantalla de abajo despliega tus apps fijadas (de 3 a 6) y el cajón con todas. Lado y tamaño a elección (Menú › Inicio).
+- **Barra de arriba nueva.** Ya no ocupa una franja: la hora, el wifi, los avisos y la batería flotan en una isla en la esquina, y la pantalla queda entera. Cada ícono tiene su color (batería verde, amarilla o roja según la carga; campana rosada con avisos; wifi azul) en estilo vivos, pastel, neón o del tema. Menú › Pantallas › Forma de la barra y Colores de los íconos.
+- **Interruptores vivos y cambio de ambiente.** Los interruptores se estiran como una gota; el de modo claro/oscuro es un pequeño cielo con sol o luna, y los colores de toda la app se funden suave al cambiar.

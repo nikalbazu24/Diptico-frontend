@@ -51,10 +51,10 @@ internal object LenteVidrio {
             m = centro + (m - centro) * (1.0 - 0.05 * fuerza);
             // Dispersión: rojo y azul se separan un poco solo en el canto.
             float sep = curva * 2.2 * fuerza;
-            half rr = fondo.eval(m + dir * sep).r;
-            half gg = fondo.eval(m).g;
-            half bb = fondo.eval(m - dir * sep).b;
-            half3 col = half3(rr, gg, bb);
+            half4 ca = fondo.eval(m + dir * sep);
+            half4 cb = fondo.eval(m);
+            half4 cc = fondo.eval(m - dir * sep);
+            half3 col = half3(ca.r, cb.g, cc.b);
             col = mix(col, tinte.rgb, half(opacidad));
             // Fresnel: el canto brilla más que el centro.
             col += half3(smoothstep(0.35, 1.0, 1.0 - dentro) * 0.22 * fuerza);
@@ -65,8 +65,9 @@ internal object LenteVidrio {
         }
     """
 
+    /** null si este equipo no logra compilar el sombreador: entonces se usa el vidrio de siempre. */
     @RequiresApi(33)
-    fun nuevo(): RuntimeShader = RuntimeShader(CODIGO)
+    fun nuevo(): RuntimeShader? = runCatching { RuntimeShader(CODIGO) }.getOrNull()
 
     /**
      * Prepara el sombreador para dibujar una superficie de [tam] con esquinas [radio], sobre [imagen] ubicada en

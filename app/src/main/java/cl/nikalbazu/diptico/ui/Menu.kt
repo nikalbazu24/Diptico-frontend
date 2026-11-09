@@ -353,13 +353,8 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
             }
             Spacer(Modifier.width(esc.d(8)))
             when {
-                interruptor -> {
-                    val si = o.valor == "Sí"
-                    Box(
-                        Modifier.size(esc.d(46), esc.d(26)).clip(RoundedCornerShape(50)).background(if (si) color else p.linea),
-                        contentAlignment = if (si) Alignment.CenterEnd else Alignment.CenterStart,
-                    ) { Box(Modifier.padding(esc.d(3)).size(esc.d(20)).clip(CircleShape).background(Color.White)) }
-                }
+                interruptor -> InterruptorLiquido(o.valor == "Sí", color)
+                o.titulo == "Modo" && (o.valor == "Oscuro" || o.valor == "Claro") -> InterruptorDiaNoche(o.valor == "Oscuro")
                 o.valor.isNotEmpty() && !valorAbajo -> Box(
                     Modifier.clip(RoundedCornerShape(50)).background(if (activa) color.copy(alpha = 0.22f) else p.fondo2.copy(alpha = 0.6f))
                         .padding(horizontal = esc.d(10), vertical = esc.d(4)),

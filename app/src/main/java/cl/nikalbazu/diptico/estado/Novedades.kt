@@ -248,6 +248,8 @@ object Novedades {
             Pagina("Todo se mueve suave", "El menú, las ventanas y las listas llegan flotando y se posan. Elige Animaciones (apagadas, suaves, normales o intensas) y su velocidad en Menú › Apariencia.", Icono.CHISPA, 0xFF8E7CFF),
             Pagina("Vidrio con lente", "Con Liquid Glass, el vidrio se comporta como una lupa suave: curva lo de atrás en los bordes, brilla en el canto y una luz sigue tu dedo. Menú › Apariencia › Efecto lente.", Icono.BRILLO, 0xFF8ECFD4),
             Pagina("Dos vistas nuevas", "Solo portadas: una cuadrícula sin textos para ver muchos juegos. Cartuchos 3D: cada juego de pie en su cartucho o caja. Cámbialas con R3.", Icono.VISTA, 0xFFFFA726, "R3"),
+            Pagina("Barra nueva", "La hora, el wifi, los avisos y la batería flotan en una isla en la esquina, cada uno con su color, y la pantalla queda entera. Menú › Pantallas › Forma de la barra.", Icono.ARRIBA, 0xFF60A5FA),
+            Pagina("Interruptores vivos", "Los interruptores se estiran como una gota al cambiar, y el de modo claro u oscuro es un pequeño cielo: sale el sol o la luna, y los colores de toda la app se funden suave.", Icono.TEMA, 0xFFFFD54A),
             Pagina("Dock de apps", "Activa el dock en Menú › Inicio: una manija abajo despliega tus apps fijadas y el cajón con todas. Eliges el lado, el tamaño y cuántas apps.", Icono.APPS, 0xFF2EC4A6),
         )),
     )
