@@ -58,7 +58,11 @@ class Revision153Test {
     @Test fun recorridoHorizontal() { abrir(horizontal = true); foto("horizontal") }
     @Test fun laHoraYBateriaSonUnicasYPermanecenAlAbrirPaneles() {
         abrir(ventana = true)
-        for (panel in listOf(Panel.NINGUNO, Panel.MENU, Panel.ESTUDIO, Panel.APPS, Panel.GALERIA)) {
+        // Abajo, sin paneles, la hora y la batería van en la franja de accesos (no en la barra).
+        regla.onAllNodesWithTag("barra-sistema").assertCountEquals(0)
+        regla.onNodeWithTag("franja-accesos").assertIsDisplayed()
+        // Con un panel abierto vuelve la barra con la hora, la batería y los avisos, una sola vez.
+        for (panel in listOf(Panel.MENU, Panel.ESTUDIO, Panel.APPS, Panel.GALERIA)) {
             regla.runOnIdle { Diptico.actualizar { it.copy(panel = panel) } }
             regla.onAllNodesWithTag("barra-sistema").assertCountEquals(1)
             regla.onAllNodesWithTag("hora-sistema", useUnmergedTree = true).assertCountEquals(1)
