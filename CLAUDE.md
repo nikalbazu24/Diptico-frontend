@@ -175,3 +175,8 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   Galería `logros_dippo`. `estado/CuantoDura.kt` (HLTB como howlongtobeatpy: ruta del JS + /init + POST; respaldo DuckDuckGo),
   `extra.duraciones` (almacén `duraciones`), `Diptico.pedirDuracion`, `LineaDuracion` en la vitrina, chip `bisa_dura`.
   Siguiente: ficha del juego estilo PS5 (boceto primero), pantalla mientras juegas con DIPPO, partir `Diptico.kt`.
+- Boceto (9 nov, 13:30, versión 14 del Design): tableros `Ficha.dc.html` (arriba: arte grande, chips de tiempo/logros, barra
+  de historia con HLTB, próximo paso, A Continuar + Y Preguntar a DIPPO; abajo: tarjetas tipo PS5 Tu progreso/Logros/De qué
+  trata/Guías con detalle y opciones al pie) y `Jugando.dc.html` (pantalla libre sin pestañas: DIPPO con globito, próximo
+  paso con barra HLTB, botones Pista/Mi paso/Captura/Más y «Terminé por hoy»; a los 5 s se oscurece con DIPPO durmiendo y
+  el reloj). Esperando la opinión de Nicolás antes de programar.
