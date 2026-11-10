@@ -211,6 +211,14 @@ object Teclas {
 
         // Tour de novedades: A o → sigue, ← vuelve, B o Start lo cierran.
         if (e.novedades >= 0) {
+            // En el recorrido de DIPPO, los demás botones le hacen reaccionar (y algunos cumplen el «pruébalo»).
+            if (e.recorrido && abajo && ev.repeatCount == 0) when (code) {
+                KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> RecorridoVivo.avisar("gatillo")
+                KeyEvent.KEYCODE_BUTTON_X -> RecorridoVivo.avisar("x")
+                KeyEvent.KEYCODE_BUTTON_Y -> RecorridoVivo.avisar("y")
+                KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> RecorridoVivo.avisar("gatillo2")
+                KeyEvent.KEYCODE_BUTTON_THUMBL, KeyEvent.KEYCODE_BUTTON_THUMBR -> RecorridoVivo.avisar("stick")
+            }
             if (abajo && ev.repeatCount == 0) when (code) {
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverNovedades(-1)
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverNovedades(1)

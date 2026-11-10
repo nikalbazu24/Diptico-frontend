@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "dippo-guia-2.0-39"
-    const val NOMBRE = "DIPPO te guía"
+    const val ID = "dippo-vivo-2.0-40"
+    const val NOMBRE = "DIPPO se mueve"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -358,9 +358,13 @@ object Novedades {
             Pagina("Tema Díptico por defecto", "Ahora parte con el tema de Díptico. Los temas de fechas especiales se activan en Temas si los quieres.", Icono.PALETA, 0xFF9B6BFF),
             Pagina("Fondo difuminado", "Toda ventana que se abre (opciones, galerías, ficha, búsqueda, amigos) deja el fondo difuminado detrás.", Icono.FORMA, 0xFF38BDF8),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("dippo-guia-2.0-39", "DIPPO te guía", listOf(
             Pagina("DIPPO te muestra Díptico", "El recorrido de bienvenida ahora lo cuenta DIPPO, grande y al centro, con un globo que se escribe letra a letra. Puedes verlo de nuevo en Ajustes.", Icono.BISA, 0xFFFF7A59),
             Pagina("Trucos escondidos", "De vez en cuando DIPPO te cuenta en su globito una función que quizás no conocías. Se apaga en Ajustes › DIPPO › Trucos y datos escondidos.", Icono.CHISPA, 0xFF9B6BFF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("DIPPO cobra vida", "En el recorrido DIPPO entra saltando, mira hacia lo que explica, flota y da un saltito en cada paso. Tócalo y gira de sorpresa.", Icono.BISA, 0xFFFF7A59),
+            Pagina("Pruébalo con DIPPO", "Algunos pasos te piden probar: aprieta L1 o R1, o toca a DIPPO. Él celebra y sigue solo. Si aprietas otros botones, te cuenta para qué sirven.", Icono.MANDO, 0xFF2EC4A6),
         )),
     )
 
