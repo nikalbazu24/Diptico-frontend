@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "marcos-dippo-2.0-37"
-    const val NOMBRE = "Marcos, Discord y DIPPO"
+    const val ID = "primera-vez-2.0-38"
+    const val NOMBRE = "Empezar es más fácil"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -340,7 +340,7 @@ object Novedades {
             Pagina("Perfil con el mando", "Mantén Start y aprieta A en el inicio: se abre tu perfil. Con el mismo gesto se cierra, y B también.", Icono.PERFIL, 0xFFFF7A59),
             Pagina("Tu foto en el inicio", "Tu foto también está junto a la hora en el inicio con widgets, para abrir tu perfil con un toque.", Icono.BISA, 0xFFE64FA0),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("marcos-dippo-2.0-37", "Marcos, Discord y DIPPO", listOf(
             Pagina("Un marco que se mueve", "Tu foto lleva un aro de luz en movimiento: una estela que da vueltas sin parar. Se cambia en Ajustes › Mi perfil › Marco de la foto. Si apagas los efectos, queda quieto.", Icono.ESTRELLA, 0xFF9B6BFF),
             Pagina("Marcos que se ganan", "Con los logros de DIPPO se desbloquean marcos nuevos: chispas, latido, llama, noche estrellada, aurora, arcoíris y oro. Ahora piden logros difíciles (250 o 500 horas, 25 finales, 14 días seguidos…). Los que faltan se ven con un candado y te dicen qué logro piden.", Icono.TROFEO, 0xFFFFC94D),
             Pagina("Títulos y más logros", "Hay 12 logros difíciles nuevos y títulos que se muestran bajo tu nombre en la tarjeta: Maratonista, Coleccionista, Constante, Leyenda y más. Se eligen en Mi perfil › Título.", Icono.TROFEO, 0xFFFFC94D),
@@ -349,6 +349,14 @@ object Novedades {
             Pagina("Logros en tu tarjeta", "Tu tarjeta muestra tus logros de DIPPO (con los últimos trofeos) y los de RetroAchievements (usuario, puntos e insignias recientes).", Icono.TROFEO, 0xFFFF7A59),
             Pagina("DIPPO sobre su cabeza", "Los mensajes de DIPPO salen como globitos justo arriba de su cabeza. Deslízalos hacia arriba o a un lado y se van, sin molestar la vista.", Icono.BISA, 0xFFFF7A59),
             Pagina("Barra de abajo deslizable", "La franja de accesos de abajo se desliza hacia el lado cuando hay muchas apps. Tu foto, DIPPO, la hora y la batería quedan fijos a la derecha.", Icono.APPS, 0xFF38BDF8),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Primera vez más corta", "La configuración ahora pide solo lo justo: pantallas, tus juegos, emuladores si faltan y el estilo. Las portadas se bajan solas.", Icono.CHECK, 0xFF2EC4A6),
+            Pagina("Recorrido en 5 pasos", "El recorrido de bienvenida ahora es corto y al día: dos pantallas, jugar, DIPPO, tu perfil y Ajustes.", Icono.CHISPA, 0xFF6B4EFF),
+            Pagina("Sin cierres de sorpresa", "Al elegir Díptico como inicio, te avisa antes que Android lo reinicia un segundo, y al volver te confirma que quedó listo.", Icono.APPS, 0xFF3BA8FF),
+            Pagina("Directo a tus juegos", "Al abrir Díptico vas directo al inicio. El recordatorio de tu partida sale solo si dejaste un juego en pausa.", Icono.JUGAR, 0xFFFF7A59),
+            Pagina("Tema Díptico por defecto", "Ahora parte con el tema de Díptico. Los temas de fechas especiales se activan en Temas si los quieres.", Icono.PALETA, 0xFF9B6BFF),
+            Pagina("Fondo difuminado", "Toda ventana que se abre (opciones, galerías, ficha, búsqueda, amigos) deja el fondo difuminado detrás.", Icono.FORMA, 0xFF38BDF8),
         )),
     )
 
@@ -376,54 +384,27 @@ object Novedades {
     }
 
     /** Recorrido por las opciones y funciones: se muestra la primera vez, al terminar de configurar Díptico. */
+    /** El recorrido de la primera vez: cinco pasos cortos, uno por idea. Se puede ver de nuevo en Ajustes. */
     val RECORRIDO = listOf(
         Pagina(
-            "¡Bienvenido a Díptico!", "Te muestro en un minuto cómo se usa. A o → para seguir, ← para volver, B para saltarlo. Puedes verlo otra vez en Menú › Acerca de.",
-            Icono.CHISPA, 0xFF6B4EFF,
+            "Una consola, dos pantallas", "Arriba se luce tu juego. Abajo eliges consola y juego. A para seguir, B para saltar.",
+            Icono.PANTALLAS, 0xFF6B4EFF, "A · B",
         ),
         Pagina(
-            "Dos pantallas, un díptico", "Arriba se luce el juego elegido, con su arte grande y su logo. Abajo eliges consola y juego. Mantén Select para intercambiarlas.",
-            Icono.PANTALLAS, 0xFF3BA8FF, "Mantener Select",
-        ),
-        Pagina(
-            "Elegir y jugar", "Muévete con la cruceta o el stick, cambia de consola con L1 y R1, y salta de letra con L2 y R2. A para jugar.",
+            "Elige y juega", "Cruceta o stick para moverte, L1 y R1 cambian de consola, A juega. X abre la ficha del juego.",
             Icono.JUGAR, 0xFF2EC4A6, "L1 · R1 · A",
         ),
         Pagina(
-            "¿En qué pantalla?", "Mantén A sobre un juego o app para elegir en qué pantalla se abre, y si quieres, que lo recuerde.",
-            Icono.INTERCAMBIAR, 0xFF00BFA5, "Mantener A",
+            "DIPPO te acompaña", "Tócalo para preguntarle qué jugar o cómo pasar una parte. Sus mensajes salen sobre su cabeza y se sacan deslizando.",
+            Icono.BISA, 0xFFFF7A59, "Tócalo",
         ),
         Pagina(
-            "La ventana del juego", "Y abre las opciones rápidas del juego: imágenes, colecciones, acceso directo y más. X abre su ficha, con su historia, tus notas y trucos.",
-            Icono.EDITAR, 0xFFFFA726, "Y · X",
+            "Tu perfil", "Tu foto está en la esquina: tócala para ver tus horas y logros. Con Start + A la abres con el mando.",
+            Icono.PERFIL, 0xFFE64FA0, "Start + A",
         ),
         Pagina(
-            "Tu barra de accesos", "Abajo del juego hay una barra con jugar, ficha, buscar, apps, Bisa y ajustes. Si prefieres que se esconda sola, cámbialo en Menú › Inicio › Barra de accesos; vuelve deslizando hacia arriba o con B.",
-            Icono.APPS, 0xFF3BA8FF, "Desliza ↑ · B",
-        ),
-        Pagina(
-            "Buscar y cambiar la vista", "Presiona el stick izquierdo para buscar un juego. El stick derecho cambia la forma de ver los juegos: estante, grilla, carrusel y más.",
-            Icono.BUSCAR, 0xFF8E7CFF, "L3 · R3",
-        ),
-        Pagina(
-            "Tu inicio de widgets", "Select cambia entre tus juegos y el inicio de widgets: reloj, música, batería, tiempo de juego, colecciones y más. Ahí puedes acomodarlos a tu gusto.",
-            Icono.FORMA, 0xFFFF7A59, "Select",
-        ),
-        Pagina(
-            "Centro de control", "Mantén Start para el Wi-Fi, el Bluetooth, el brillo, el turbo y No molestar. Lo que está encendido se pinta de verde.",
-            Icono.WIFI, 0xFF2EC4A6, "Mantener Start",
-        ),
-        Pagina(
-            "Bisa, tu ayudante", "Pregúntale qué jugar, cómo pasar una parte o que cambie algo de Díptico. Puedes hablarle en vez de escribir, y busca en internet por ti.",
-            Icono.BISA, 0xFFFF7A59, "Hablar",
-        ),
-        Pagina(
-            "Continúa donde lo dejaste", "Al salir de un juego, Díptico te pregunta dónde quedaste: puedes escribirlo, grabar una nota de voz o marcarlo en el mapa. La próxima vez te lo recuerda.",
-            Icono.CONTINUAR, 0xFFB388FF,
-        ),
-        Pagina(
-            "El menú", "Start abre el menú: lo de todos los días a la vista y lo avanzado junto en «Más ajustes». Cada opción explica qué hace, y con Y buscas cualquier ajuste por su nombre. ¡Que lo disfrutes!",
-            Icono.MENU, 0xFF6B4EFF, "Start",
+            "Todo en Ajustes", "Start abre Ajustes. Cada opción explica qué hace. ¡A jugar!",
+            Icono.AJUSTES, 0xFF3BA8FF, "Start",
         ),
     )
 }

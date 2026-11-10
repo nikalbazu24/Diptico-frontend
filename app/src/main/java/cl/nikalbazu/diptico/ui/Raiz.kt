@@ -66,7 +66,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         val centroAqui = e.panel == Panel.CENTRO && arribaFisica
         val tienda = e.panel == Panel.GALERIA && e.galeria == "tienda_temas"
         // Desenfoque detrás de lo que se abre encima: el centro de control, la bienvenida, el reloj grande o la continuación.
-        val encima = centroAqui || e.extra.perfilEn == miPantalla || e.dialogo != null || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
+        val encima = centroAqui || e.extra.perfilEn == miPantalla || e.extra.amigosEn == miPantalla || e.extra.discordLogin != null || e.dialogo != null || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
         val desenfoque by animateDpAsState(if (encima && Estilo.efectosCompletos) 18.dp else 0.dp, tween(300), label = "desenfoque")
         // Deslizar hacia abajo desde el borde de arriba: por la izquierda, notificaciones; por la derecha, ajustes rápidos.
         val libre by androidx.compose.runtime.rememberUpdatedState(e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro)

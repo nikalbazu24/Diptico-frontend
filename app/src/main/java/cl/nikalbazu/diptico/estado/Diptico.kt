@@ -486,7 +486,7 @@ data class Estado(
     /** Para qué es el cuadro de texto: "sgdb", "ia_clave_gemini", "titulo" o "notas". */
     val textoPara: String = "sgdb",
     val tema: String = "diptico",
-    val temaFestivo: Boolean = true,
+    val temaFestivo: Boolean = false,
     val decoraciones: Boolean = true,
     val temasPropios: List<Tema> = emptyList(),
     val adornosPorTema: Map<String, String> = emptyMap(),
@@ -745,7 +745,7 @@ data class Estado(
     /** Mensaje de continuación al encender en medio de un juego (0 = no está a la vista). */
     val continuacion: Long = 0L,
     /** "completa", "breve" o "no". */
-    val bienvenidaModo: String = "completa",
+    val bienvenidaModo: String = "no",
     /** Cómo te llama DIPPO (vacío = sin nombre). */
     val nombre: String = "",
     /** Díptico es la app de inicio de Android (el botón Inicio trae aquí). */
@@ -896,7 +896,7 @@ object Diptico {
             ports = almacen.ports,
             android = almacen.android ?: emptyList(),
             tema = almacen.texto("tema", "diptico"),
-            temaFestivo = almacen.bool("temaFestivo", true),
+            temaFestivo = almacen.bool("temaFestivo2", false),
             decoraciones = almacen.bool("decoraciones", true),
             modoCarpeta = almacen.texto("modoCarpeta", "ventana"),
             carpetasHorizontal = almacen.bool("carpetasHorizontal", false),
@@ -1014,7 +1014,7 @@ object Diptico {
             gridFilas = almacen.texto("gridFilas", "4").toIntOrNull() ?: 4,
             paginas = almacen.texto("paginas", "1").toIntOrNull() ?: 1,
             fondoInicio = almacen.texto("fondoInicio").ifEmpty { null },
-            bienvenidaModo = almacen.texto("bienvenidaModo", "completa"),
+            bienvenidaModo = almacen.texto("bienvenidaModo2", "no"),
             nombre = almacen.texto("nombre"),
             esInicio = Inicio.esPredeterminado(app),
         )
@@ -1022,6 +1022,7 @@ object Diptico {
         Inicio.vigilarPantalla(app)
         Inicio.inicioAbajo(app, !(almacen.modoElegido && almacen.modoPantallas == "una_libre"))
         bienvenidaPendiente = true
+        revisarPedidoInicio()
         Widgets.COLUMNAS = estado.value.gridCols
         Widgets.FILAS = estado.value.gridFilas
         Sonidos.iniciar(app)
@@ -1535,7 +1536,7 @@ object Diptico {
     fun cambiarBienvenidaModo() {
         val l = listOf("completa", "breve", "no")
         val v = l[(l.indexOf(estado.value.bienvenidaModo) + 1).mod(l.size)]
-        almacen.guardarTexto("bienvenidaModo", v)
+        almacen.guardarTexto("bienvenidaModo2", v)
         actualizar { it.copy(bienvenidaModo = v) }
         if (v != "no") mostrarBienvenida(3 * 3_600_000L)
     }
@@ -1740,8 +1741,30 @@ object Diptico {
     /** Para que Díptico sea siempre lo primero: se ofrece como app de inicio de Android. */
     private fun ofrecerInicio() {
         scope.launch {
-            delay(900)
-            if (!Inicio.esPredeterminado(app)) { avisar("Elige Díptico como tu inicio para que siempre vuelvas aquí"); hacerInicio() }
+            delay(600)
+            if (Inicio.esPredeterminado(app)) return@launch
+            // Android cierra y vuelve a abrir la app al cambiar el inicio: se avisa antes para que no parezca una caída.
+            mostrarDialogo(
+                Dialogo(
+                    "ser-inicio", "¿Díptico como tu inicio?",
+                    "Así el botón Inicio siempre te trae aquí. Al aceptarlo, Android cierra Díptico un segundo y lo vuelve a abrir solo: no es una falla.",
+                    Icono.APPS, si = "Sí, hacerlo", no = "Ahora no",
+                ),
+            ) {
+                almacen.guardarTexto("pidioInicio", System.currentTimeMillis().toString())
+                hacerInicio()
+            }
+        }
+    }
+
+    /** Al abrir: si se acaba de pedir ser el inicio (y Android reinició la app), se confirma con calma. */
+    private fun revisarPedidoInicio() {
+        val t = almacen.texto("pidioInicio").toLongOrNull() ?: return
+        almacen.guardarTexto("pidioInicio", "")
+        if (System.currentTimeMillis() - t > 10 * 60_000L) return
+        scope.launch {
+            delay(1200)
+            if (Inicio.esPredeterminado(app)) avisar("¡Listo! Díptico es tu inicio: el botón Inicio siempre te trae aquí")
         }
     }
 
@@ -1835,21 +1858,13 @@ object Diptico {
 
     // ---------- Tutorial guiado ----------
 
+    /** La configuración de la primera vez: solo lo que hace falta para jugar. Lo demás tiene buenos valores y se cambia en Ajustes. */
     fun pasosTuto(e: Estado = estado.value): List<PasoTuto> = buildList {
         add(PasoTuto.BIENVENIDA)
-        add(PasoTuto.PANTALLAS)
-        add(PasoTuto.TEXTO)
-        if (e.dosDisponibles && e.modoPantallas == "dos") {
-            add(PasoTuto.DISPOSICION)
-            add(PasoTuto.JUEGOS)
-        }
+        if (e.dosDisponibles) add(PasoTuto.PANTALLAS)
         add(PasoTuto.CARPETA)
-        add(PasoTuto.EMULADORES)
-        add(PasoTuto.PORTS)
-        add(PasoTuto.PORTADAS)
-        add(PasoTuto.MUSICA)
+        if (e.consolasConJuegos.any { !emuladorListo(it) }) add(PasoTuto.EMULADORES)
         add(PasoTuto.APARIENCIA)
-        add(PasoTuto.CONTROLES)
         add(PasoTuto.LISTO)
     }
 
@@ -1969,7 +1984,11 @@ object Diptico {
                     Opcion("Continuar sin juegos", icono = Icono.CONTINUAR) { siguientePaso() },
                 )
                 else -> listOf(
-                    Opcion("Continuar", "${e.juegos.size} juegos encontrados", Icono.CHECK) { siguientePaso() },
+                    Opcion("Continuar", "${e.juegos.size} juegos encontrados · las portadas se bajan solas", Icono.CHECK) {
+                        // Las portadas se bajan de fondo (antes era un paso aparte).
+                        if (estado.value.descarga == null && estado.value.sinPortada > 0) descargarPortadas(todo = false)
+                        siguientePaso()
+                    },
                     Opcion("Elegir otra carpeta", icono = Icono.CARPETA) { pedirCarpeta?.invoke(Carpeta.JUEGOS) },
                 )
             }
@@ -2042,7 +2061,6 @@ object Diptico {
             PasoTuto.APARIENCIA -> listOf(
                 Opcion("Díptico de noche", "Estante y tonos oscuros", Icono.TEMA) { elegirAparienciaInicial(0); siguientePaso() },
                 Opcion("Díptico de día", "Estante y tonos claros", Icono.TEMA) { elegirAparienciaInicial(1); siguientePaso() },
-                Opcion("Díptico Cristal", "Vidrio y un inicio con widgets", Icono.PALETA) { elegirAparienciaInicial(2); siguientePaso() },
             )
             PasoTuto.CONTROLES -> listOf(Opcion("Continuar", "Cuando quieras", Icono.CHECK) { siguientePaso() })
             PasoTuto.LISTO -> listOf(
@@ -5165,7 +5183,7 @@ object Diptico {
                 "Fiestas Patrias, Navidad y más." + (prox?.let { " La próxima: ${it.first.nombre} (${it.first.donde})." } ?: ""),
         ) {
             val v = !estado.value.temaFestivo
-            almacen.guardarBool("temaFestivo", v)
+            almacen.guardarBool("temaFestivo2", v)
             actualizar { it.copy(temaFestivo = v) }
             aplicarTema()
             estado.value.fiesta?.let { f -> avisar(f.tema.mensaje.ifBlank { "¡Hoy es ${f.nombre}!" }) }
@@ -6939,7 +6957,7 @@ object Diptico {
                 Temas.proximas(6).forEach { (f, d) -> add(Opcion(f.nombre, "${d.dayOfMonth}/${d.monthValue}", Icono.MUNDO, f.donde) { avisar("${f.nombre}: ${f.donde}") }) }
                 add(Opcion("Temas de fiestas", if (e.temaFestivo) "Sí" else "No", Icono.TEMA, "Díptico se viste solo para cada celebración.") {
                     val v = !estado.value.temaFestivo
-                    almacen.guardarBool("temaFestivo", v)
+                    almacen.guardarBool("temaFestivo2", v)
                     actualizar { it.copy(temaFestivo = v) }
                     aplicarTema()
                 })

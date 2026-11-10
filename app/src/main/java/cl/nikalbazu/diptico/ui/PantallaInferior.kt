@@ -218,9 +218,17 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     Aviso(e.aviso, Modifier.align(Alignment.BottomCenter), abajo = if (e.panel == Panel.NINGUNO) 70f else 16f)
 }
 
-/** Con una ventana encima (opciones del juego, textos), lo de atrás se difumina. */
+/** Con cualquier ventana encima (opciones, galerías, ficha, búsqueda, textos…), lo de atrás se difumina. */
 fun Modifier.difuminar(e: Estado): Modifier =
-    if (Estilo.efectosCompletos && e.panel in setOf(Panel.RAPIDO, Panel.PASO, Panel.CLAVE, Panel.TRABAJOS, Panel.ENCUADRE)) this.blur(18.dp) else this
+    if (Estilo.efectosCompletos && ventanaEncima(e)) this.blur(18.dp) else this
+
+/** Hay una ventana abierta sobre el estante (no cuentan el centro de control ni lo que se dibuja en la otra pantalla). */
+fun ventanaEncima(e: Estado): Boolean = when (e.panel) {
+    Panel.NINGUNO, Panel.CENTRO -> false
+    Panel.ASISTENTE -> e.sesion == null
+    Panel.WIDGET -> e.intercambiar
+    else -> true
+} || e.extra.amigosEn >= 0 || e.extra.perfilEn >= 0
 
 /** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
 @Composable
