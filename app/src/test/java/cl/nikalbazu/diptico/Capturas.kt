@@ -1227,6 +1227,22 @@ class Capturas {
     @Test fun t319_cuentas() = foto("319_cuentas", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_CUENTAS, enOpciones = true,
         extra = EstadoExtra(discordUsuario = "Nico")), Rol.SUPERIOR)
     @Test fun t320_estuches_integrales() = foto("320_estuches_integrales", base().copy(vista = "mosaicos", juegos = juegosVarios, juegoSel = "snes/1"), Rol.SUPERIOR)
+    private fun fotoGiro(nombre: String, grados: Float, sel: String) {
+        cl.nikalbazu.diptico.ui.vitrinaSinGiro = true
+        cl.nikalbazu.diptico.ui.vitrinaGiroPrueba = grados
+        try {
+            foto(nombre, base().copy(vista = "mosaicos", juegos = juegosVarios, juegoSel = sel,
+                datos = mapOf(sel to DatosJuego(tiempo = 5 * 3600 + 12 * 60, ultimo = 1L)),
+                extra = EstadoExtra(duraciones = mapOf(sel to cl.nikalbazu.diptico.estado.CuantoDura.Duracion(14f, 20f, 35f, 1L)))), Rol.SUPERIOR)
+        } finally { cl.nikalbazu.diptico.ui.vitrinaSinGiro = false; cl.nikalbazu.diptico.ui.vitrinaGiroPrueba = 0f }
+    }
+    @Test fun t321_caja3d_frente() = fotoGiro("321_caja3d_frente", 0f, "ps2/3")
+    @Test fun t322_caja3d_tres_cuartos() = fotoGiro("322_caja3d_tres_cuartos", 38f, "snes/1")
+    @Test fun t323_caja3d_lomo() = fotoGiro("323_caja3d_lomo", 82f, "ps2/3")
+    @Test fun t324_caja3d_reverso() = fotoGiro("324_caja3d_reverso", 180f, "snes/1")
+    @Test fun t325_caja3d_reverso_dvd() = fotoGiro("325_caja3d_reverso_dvd", 160f, "genesis/6")
+    @Config(qualifiers = ABAJO)
+    @Test fun t326_clave_discord() = foto("326_clave_discord", base().copy(vista = "mosaicos", panel = Panel.CLAVE, textoPara = "discord_app"), Rol.INFERIOR, mi = 1)
     @Test fun t307_carga_arriba() = foto("307_carga_arriba", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.SUPERIOR, avance = 600)
     @Config(qualifiers = ABAJO)
     @Test fun t308_carga_abajo() = foto("308_carga_abajo", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.INFERIOR, mi = 1, avance = 600)

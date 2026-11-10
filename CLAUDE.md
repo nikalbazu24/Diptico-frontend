@@ -225,3 +225,20 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `DiscordCuenta`, `extra.discordLogin` → `PanelDiscord` en Raiz; tokens en credenciales). FALTA el Application ID:
   Nicolás debe crear la app en discord.com/developers (OAuth2 › Public Client ON) y pasar el ID → `DIPTICO_DISCORD_APP`
   en build.gradle (por defecto vacío). Presencia «Jugando a…» sigue pendiente del Social SDK. Novedades `cajas-3d-2.0-31`.
+
+## Cajas reales + rapidez (10 nov, rama `fix/cajas-reales`, Opus)
+- Nicolás: las cajas 3D de la beta.274 «feísimas»; quería cajas reales girables completas que al abrirse lleven a la carga y al juego.
+- `ui/Caja3D.kt`: caja con perspectiva real en un Canvas (8 esquinas proyectadas, `Matrix.setPolyToPoly` por cara, luz por normal,
+  sombra en el piso). Caras: frente = portada (si no, `FabricaCaras` arma una), reverso y lomo reales (`extra.caras`,
+  `CarasGuardadas`, `Diptico.pedirCaras` con `Raspadores.caras`: ScreenScraper box-2D-back/side, TheGamesDB back) o armados
+  con ficha guardada (`Fichas.guardada`), tu tiempo y HLTB. `grosorDe(estuche)` da el grosor real.
+- Vitrina: giro libre en Y (dedo, stick derecho vía `GiroCaja` desde `Teclas.movimiento` si `vitrinaActiva`, botón «Girar»),
+  se acomoda a frente/reverso al soltar; vecinas a 50° mostrando el lomo. `vitrinaGiroPrueba` para capturas t321–t325.
+  `CargaJuego` usa la misma `Caja3D`.
+- Discord: `PanelClave` tenía `discord_app`/`discord_webhook` cayendo en el texto de SteamGridDB (era el «me tira a steamgriddb»).
+  App ID por defecto 1569677228269117580 en build.gradle; la opción «App de Díptico» solo aparece si falta o es propia.
+  OJO: la guía de consolas de Discord sugiere Public Client apagado + client secret; probar si el device flow funciona sin secreto.
+- Rendimiento: `desenfoqueAnimado {}` (Componentes.kt) en Raiz y VentanaCarpeta, `zoomLento` devuelve State, logo en partida
+  lee el flotar al dibujar, `Estilo.decorQuieta` (decoraciones quietas con sesión). Pendiente: `Estado` entero pasa a todo
+  (cada `actualizar` recompone mucho); medir en la Thor antes de partir eso.
+- Novedades `cajas-reales-2.0-32`.

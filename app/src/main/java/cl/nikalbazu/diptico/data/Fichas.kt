@@ -59,6 +59,12 @@ object Fichas {
         "en" -> "video game"; "pt" -> "jogo eletrônico"; "zh" -> "电子游戏"; "ja" -> "ゲーム"; else -> "videojuego"
     }
 
+    /** La ficha ya guardada en la consola (sin internet), o null si todavía no se buscó. */
+    fun guardada(ctx: Context, titulo: String, consola: String, idioma: String = cl.nikalbazu.diptico.estado.Idioma.actual): FichaInfo? {
+        val cache = File(File(ctx.filesDir, "fichas"), hash("v2|$idioma|$titulo|$consola") + ".json")
+        return if (cache.exists()) try { leer(cache.readText()) } catch (_: Exception) { null } else null
+    }
+
     fun buscar(ctx: Context, titulo: String, consola: String, idioma: String = cl.nikalbazu.diptico.estado.Idioma.actual): FichaInfo? {
         val cache = File(File(ctx.filesDir, "fichas").apply { mkdirs() }, hash("v2|$idioma|$titulo|$consola") + ".json")
         if (cache.exists()) {

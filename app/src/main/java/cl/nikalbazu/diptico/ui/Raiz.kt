@@ -68,7 +68,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                             modifier = Modifier.fillMaxSize().blur(24.dp).graphicsLayer { alpha = 0.24f })
                     }
                 }
-                Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
+                Box(Modifier.fillMaxSize().desenfoqueAnimado { desenfoque }) {
                     when {
                         !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
                         tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)

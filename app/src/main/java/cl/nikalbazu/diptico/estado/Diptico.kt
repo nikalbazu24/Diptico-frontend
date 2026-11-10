@@ -369,6 +369,10 @@ data class EstadoExtra(
     val mayusFija: Boolean = false,
     /** Cuánto dura cada juego según HowLongToBeat (por clave de juego). */
     val duraciones: Map<String, CuantoDura.Duracion> = emptyMap(),
+    /** Reverso y lomo reales de cada caja (enlaces de ScreenScraper o TheGamesDB), por clave de juego. */
+    val caras: Map<String, CarasGuardadas> = emptyMap(),
+    /** Las cajas llevan arriba la franja con el logo (o el nombre) de su consola, como las cajas de verdad. */
+    val bandaCaja: Boolean = true,
     /** Cuándo DIPPO ganó un logro (para que celebre unos segundos) y cuál. */
     val dippoCelebra: Long = 0L,
     val dippoLogro: String = "",
@@ -949,6 +953,8 @@ object Diptico {
                 discordUsuario = almacen.texto("discordUsuario", ""),
                 discordAvatar = almacen.texto("discordAvatar", ""),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
+                caras = CarasGuardadas.leer(almacen.texto("carasCaja")),
+                bandaCaja = almacen.bool("bandaCaja", true),
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
@@ -2316,6 +2322,8 @@ object Diptico {
                 "Aparece un código QR: escanéalo con tu teléfono y aprueba en Discord. O entra a discord.com/activate y escribe el código. Nunca escribes tu contraseña en la consola.",
                 grupo = "Discord") { iniciarDiscord() })
         }
+        // Viene lista con la app; solo se muestra si falta o si alguien puso la suya.
+        if (cl.nikalbazu.diptico.BuildConfig.DISCORD_APP.isBlank() || x.discordApp.isNotBlank())
         add(Opcion("App de Díptico en Discord", appDiscord().ifBlank { "Falta" }, Icono.CLAVE,
             "El Application ID de Díptico en discord.com/developers (con «Public Client» activado). Viene listo; cámbialo solo si usas tu propia app.",
             grupo = "Discord") { abrirTexto("discord_app", estado.value.extra.discordApp) })
@@ -4219,6 +4227,15 @@ object Diptico {
                     listOf("cajas", "arte"), listOf("Vitrina de cajas", "Arte del juego"), e.extra.portada, grupo = "Movimiento",
                 ) { v -> almacen.guardarTexto("portadaArriba", v); actualizar { it.copy(extra = it.extra.copy(portada = v)) } }
                 lista += Opcion(
+                    "Logo de la consola en las cajas", if (e.extra.bandaCaja) "Sí" else "No", Icono.PORTADA,
+                    "Una franja arriba del frente con el logo de la consola, como en las cajas de PS2 o Switch. Usa el logo que elijas para la consola (Editar consola › Logo); si no hay, su nombre. Apágalo si tus portadas ya traen la franja.",
+                    grupo = "Movimiento",
+                ) {
+                    val v = !estado.value.extra.bandaCaja
+                    almacen.guardarBool("bandaCaja", v)
+                    actualizar { it.copy(extra = it.extra.copy(bandaCaja = v)) }
+                }
+                lista += Opcion(
                     "Pantalla de carga", if (e.extra.cargaJuego) "Sí" else "No", Icono.JUGAR,
                     "Al abrir un juego, la pantalla se tiñe del color de su consola, aparece su caja y se funde a negro antes de empezar. Si la apagas, el juego se abre al instante.",
                     grupo = "Movimiento",
@@ -5522,6 +5539,29 @@ object Diptico {
             actualizar { it.copy(extra = it.extra.copy(duraciones = it.extra.duraciones + (clave to d))) }
             almacen.guardarTexto("duraciones", CuantoDura.escribir(estado.value.extra.duraciones))
             alTerminar?.invoke(d.takeIf { it.tiene })
+        }
+    }
+
+    private val buscandoCaras = HashSet<String>()
+
+    /**
+     * Busca el reverso y el lomo reales de la caja (solo con ScreenScraper o TheGamesDB conectados). Se pregunta una
+     * vez por juego; si no aparece, se vuelve a intentar a la semana. Sin fuentes, la caja usa el reverso armado con la ficha.
+     */
+    fun pedirCaras(clave: String) {
+        val e = estado.value
+        val c = e.raspadores
+        if (!c.screenscraper && !c.conTgdb) return
+        val j = e.juegosPorClave[clave] ?: return
+        val ya = e.extra.caras[clave]
+        if (ya != null && (ya.reverso != null || System.currentTimeMillis() - ya.buscado < 7 * 86_400_000L)) return
+        if (!buscandoCaras.add(clave)) return
+        scope.launch {
+            val r = withContext(Dispatchers.IO) { runCatching { cl.nikalbazu.diptico.data.Raspadores.caras(c, j.titulo, j.archivo, j.consolaId) }.getOrNull() }
+            buscandoCaras.remove(clave)
+            val g = CarasGuardadas(r?.reverso, r?.lomo, System.currentTimeMillis())
+            actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras + (clave to g))) }
+            almacen.guardarTexto("carasCaja", CarasGuardadas.escribir(estado.value.extra.caras))
         }
     }
 
@@ -8771,6 +8811,8 @@ object Diptico {
         cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = efectos
         // Las decoraciones se ven en todo momento, también mientras juegas (salvo con el reposo del modo turbo, que apaga los efectos).
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = efectos && e.decoraciones && e.experiencia.movimiento
+        // Con un juego abierto se dibujan quietas: ninguna animación le roba cuadros al emulador.
+        cl.nikalbazu.diptico.ui.Estilo.decorQuieta = e.sesion != null
     }
 
     private var ultimaActividad = SystemClock.uptimeMillis()
@@ -9663,3 +9705,23 @@ object Diptico {
 }
 
 
+
+
+/** Las caras reales de una caja que se encontraron en internet (enlaces) y cuándo se buscaron. */
+data class CarasGuardadas(val reverso: String?, val lomo: String?, val buscado: Long) {
+    companion object {
+        fun leer(t: String): Map<String, CarasGuardadas> = try {
+            val o = org.json.JSONObject(t.ifBlank { "{}" })
+            o.keys().asSequence().associateWith { k ->
+                val v = o.getJSONObject(k)
+                CarasGuardadas(v.optString("r").ifBlank { null }, v.optString("l").ifBlank { null }, v.optLong("b"))
+            }
+        } catch (_: Exception) { emptyMap() }
+
+        fun escribir(m: Map<String, CarasGuardadas>): String {
+            val o = org.json.JSONObject()
+            for ((k, v) in m) o.put(k, org.json.JSONObject().put("r", v.reverso.orEmpty()).put("l", v.lomo.orEmpty()).put("b", v.buscado))
+            return o.toString()
+        }
+    }
+}

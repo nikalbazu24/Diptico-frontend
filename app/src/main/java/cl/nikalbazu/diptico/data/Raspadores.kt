@@ -175,6 +175,52 @@ object Raspadores {
         } catch (_: Exception) { null }
     }
 
+    /** El reverso y el lomo reales de la caja (enlaces), si alguna fuente conectada los tiene. */
+    data class Caras(val reverso: String?, val lomo: String?)
+
+    /**
+     * Busca la caja completa: ScreenScraper trae reverso («box-2D-back») y lomo («box-2D-side»); TheGamesDB, el
+     * reverso («back»). Si no hay ninguna fuente conectada o no aparece, Díptico arma el reverso con la ficha del juego.
+     */
+    fun caras(c: Claves, titulo: String, archivo: String, consola: String): Caras {
+        var reverso: String? = null
+        var lomo: String? = null
+        if (c.screenscraper) try {
+            val base = "devid=${cod(c.ssDevId.trim())}&devpassword=${cod(c.ssDevClave.trim())}&softname=Diptico&output=json" +
+                (if (c.ssUsuario.isNotBlank()) "&ssid=${cod(c.ssUsuario.trim())}&sspassword=${cod(c.ssClave.trim())}" else "")
+            val sistema = SISTEMA_SS[consola]?.let { "&systemeid=$it" } ?: ""
+            val jeu = pedir("https://api.screenscraper.fr/api2/jeuInfos.php?$base$sistema&romtype=rom&romnom=${cod(archivo)}")
+                ?.let { try { JSONObject(it).getJSONObject("response").getJSONObject("jeu") } catch (_: Exception) { null } }
+                ?: pedir("https://api.screenscraper.fr/api2/jeuRecherche.php?$base$sistema&recherche=${cod(titulo)}")
+                    ?.let { try { JSONObject(it).getJSONObject("response").getJSONArray("jeux").optJSONObject(0) } catch (_: Exception) { null } }
+            jeu?.optJSONArray("medias")?.let { medias ->
+                val orden = listOf("wor", "us", "ss", "eu", "jp")
+                fun una(tipo: String) = (0 until medias.length()).map { medias.getJSONObject(it) }
+                    .filter { it.optString("type") == tipo && it.optString("url").isNotBlank() }
+                    .minByOrNull { orden.indexOf(it.optString("region")).let { p -> if (p < 0) 9 else p } }?.optString("url")
+                reverso = una("box-2D-back")
+                lomo = una("box-2D-side")
+            }
+        } catch (_: Exception) {}
+        if (reverso == null && c.conTgdb) try {
+            val k = cod(c.tgdb.trim())
+            pedir("https://api.thegamesdb.net/v1.1/Games/ByGameName?apikey=$k&name=${cod(titulo)}&include=boxart")?.let { r ->
+                val o = JSONObject(r)
+                val juegos = o.getJSONObject("data").getJSONArray("games")
+                if (juegos.length() > 0) {
+                    val id = juegos.getJSONObject(0).getInt("id")
+                    o.optJSONObject("include")?.optJSONObject("boxart")?.let { b ->
+                        val base = b.getJSONObject("base_url").getString("large")
+                        b.optJSONObject("data")?.optJSONArray("$id")?.let { l ->
+                            for (i in 0 until l.length()) l.getJSONObject(i).takeIf { it.optString("side") == "back" }?.let { reverso = base + it.getString("filename") }
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+        return Caras(reverso, lomo)
+    }
+
     /** Busca en todas las fuentes conectadas. */
     fun buscar(c: Claves, titulo: String, archivo: String, consola: String): Hallazgo {
         val todos = listOfNotNull(

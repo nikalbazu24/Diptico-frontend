@@ -495,15 +495,15 @@ private fun LogoEnPartida(juego: cl.nikalbazu.diptico.data.Juego?, color: Color,
     val esc = LocalEscala.current
     // Flota solo con la pantalla despierta (sin escuchar todo el estado: así no se redibuja con cada cambio).
     val anima = moverse && Estilo.efectosCompletos
-    val flotar = if (anima) {
+    // Se guarda el estado y se lee solo al dibujar: flota sin recomponer la pantalla cada cuadro mientras juegas.
+    val flotar: androidx.compose.runtime.State<Float> = if (anima) {
         val t = rememberInfiniteTransition(label = "logo")
-        val f by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
-        f
-    } else 0f
+        t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
+    } else remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
     Box(modifier, contentAlignment = Alignment.Center) {
         Box(Modifier.size(esc.d(340)).background(Brush.radialGradient(listOf(color.copy(alpha = 0.32f), Color.Transparent))))
         val logo = rememberImagen(juego?.logo, 800)
-        Box(Modifier.graphicsLayer { translationY = flotar * 5f * density }) {
+        Box(Modifier.graphicsLayer { translationY = flotar.value * 5f * density }) {
             if (logo != null) Image(
                 logo, contentDescription = juego?.titulo, contentScale = ContentScale.Fit,
                 modifier = Modifier.heightIn(max = esc.d(170)).widthIn(max = esc.d(420)).padding(esc.d(6)),
@@ -844,6 +844,8 @@ internal fun PanelClave(e: Estado) {
                 "ras_ssDevId", "ras_ssDevClave" -> listOf(Icono.CLAVE, Diptico.tituloRaspador(e.textoPara)!!, "ScreenScraper pide credenciales de desarrollador para apps como Díptico. Se piden gratis en su foro, sección «API». Te llegan un devid y un devpassword.", "Pégalo aquí")
                 "ras_rawg" -> listOf(Icono.CLAVE, "Clave de RAWG", "Gratis: crea una cuenta en rawg.io, entra a rawg.io/apidocs, toca «Get API Key» y copia la clave.", "Pega tu clave")
                 "ras_tgdb" -> listOf(Icono.CLAVE, "Clave de TheGamesDB", "Gratis: se pide en el foro de thegamesdb.net (sección «API Key Requests»). Te llega una clave pública.", "Pega tu clave")
+                "discord_app" -> listOf(Icono.MUNDO, "Application ID de Discord", "Solo si usas tu propia app de Discord: el número largo de «General Information» en discord.com/developers. Díptico ya trae el suyo.", "Ej: 1569677228269117580")
+                "discord_webhook" -> listOf(Icono.MUNDO, "Canal de Discord", "En tu servidor: Editar canal › Integraciones › Webhooks › Nuevo webhook › Copiar URL, y pégala aquí.", "https://discord.com/api/webhooks/…")
                 "notas" -> listOf(Icono.LAPIZ, "Mis trucos y notas", "Claves, trucos, coleccionables, lo que quieras recordar de este juego.", "Ej: el código del cofre es 4-2-1")
                 else -> listOf(Icono.CLAVE, "Clave de SteamGridDB", "Es gratis: entra a steamgriddb.com, inicia sesión, ve a Preferencias › API y copia tu clave aquí.", "Pega tu clave")
             }
