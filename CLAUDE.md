@@ -202,3 +202,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   capturas, publicar. Pendientes que pidió: Discord (Social SDK ya tiene Android; investigar), revisar bitácora (desactualizada
   desde la beta.185: actualizarla con 204–245), «Tu año» antes de diciembre, temperatura, por qué falló un juego, respaldo
   de partidas, logros RA con aviso al ganarlos.
+- Cajas y carga (9 nov, noche, rama `fix/cajas-carga`, Opus): `ui/CargaJuego.kt` (`PantallaCarga`: color de consola, caja,
+  «INICIANDO», consola, título, barrita, fundido a negro; B cancela) — `jugarComprobado(conCarga)` muestra `extra.carga`
+  (`CargaJuego`) y lanza a los `CARGA_MS` (1250); `terminarCarga` la quita 1,2 s después; `Teclas` traga teclas durante la carga.
+  Ajuste `extra.cargaJuego` (clave `cargaJuego`). `ui/VitrinaCajas.kt` (`VitrinaCajas`, `CajaVitrina`): portada de arriba con
+  diseño nuevo, `extra.portada` "cajas"/"arte" (clave `portadaArriba`), forma real de cada consola (`LocalFormas provides e.formas`).
+  OJO: en Robolectric con zIndex + translationX en graphicsLayer las vecinas no salían; quedó con offset + orden por cercanía + key.
+  El giro rotationY no se ve en las capturas (sí en el equipo). Capturas t305–t310. Novedades `cajas-carga-2.0-29`.
+  Pendiente: la «caja que se abre» con librito (opcional, apagable) para la ficha; Nicolás eligió color y forma por consola.
