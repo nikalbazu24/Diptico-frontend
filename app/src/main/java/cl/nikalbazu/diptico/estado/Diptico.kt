@@ -72,7 +72,7 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Tus carpetas de juegos, ports, juegos de Android y las imágenes que ya tengas de ES-DE."),
     PORTADAS("Portadas", Icono.PORTADA, "Descarga portadas, imágenes, logos y títulos de internet."),
     EMULADORES("Emuladores", Icono.EMULADOR, "Con qué emulador, o con qué núcleo de RetroArch, se abre cada consola."),
-    LOGROS("Logros", Icono.TROFEO, "Conecta tu cuenta de RetroAchievements para ver tus logros y puntos en cada juego."),
+    LOGROS("Cuentas y conexiones", Icono.MUNDO, "Discord, RetroAchievements y las fuentes de portadas e imágenes: todo lo que se conecta a una cuenta."),
     ASISTENTE("DIPPO", Icono.BISA, "DIPPO, tu asistente con IA: conoce tus juegos, te ayuda cuando te atascas y cambia cosas de Díptico por ti.", "Asistente"),
     PANTALLAS("Pantallas", Icono.PANTALLAS, "Cuántas pantallas usa Díptico, qué va en cada una, el tamaño de la letra y la atenuación al jugar.", "Consola"),
     SOBREMESA("Sobremesa", Icono.VISTA, "Cuando conectas la consola a la tele: una sola pantalla, todo más grande, margen para que nada se corte y más."),
@@ -86,7 +86,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     G_TEMAS("Temas y decoraciones", Icono.PALETA, "La tienda de temas, tus colores, las fechas especiales y los adornos animados."),
     G_WIDGETS("Inicio y widgets", Icono.APPS, "La pantalla de inicio, tus widgets y el dock de apps."),
     G_BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Cómo se ven tus juegos, tus consolas, tus carpetas y las portadas."),
-    G_JUEGOS("Juegos y emuladores", Icono.EMULADOR, "Con qué se abre cada consola, los logros y el modo turbo al jugar."),
+    G_JUEGOS("Juegos y emuladores", Icono.EMULADOR, "Con qué se abre cada consola y el modo turbo al jugar."),
+    G_CUENTAS("Cuentas y conexiones", Icono.MUNDO, "Discord, RetroAchievements, SteamGridDB, ScreenScraper y las demás fuentes: todo lo que se conecta, en un solo lugar."),
     G_CONTROLES("Controles", Icono.MANDO, "Qué hace cada botón y stick."),
     G_SONIDO("Sonido", Icono.MUSICA, "La música de fondo, los sonidos y la vibración."),
     G_DIPPO("DIPPO", Icono.BISA, "Tu compañero: dónde aparece, sus colores, su IA y cómo te ayuda mientras juegas."),
@@ -383,7 +384,23 @@ data class EstadoExtra(
     val discordWebhook: String = "",
     val discordEmpezar: Boolean = true,
     val discordTerminar: Boolean = true,
+    /** Discord con tu cuenta: el Application ID de Díptico (si cambias el de fábrica), tu nombre y foto, y el inicio de sesión en curso. */
+    val discordApp: String = "",
+    val discordUsuario: String = "",
+    val discordAvatar: String = "",
+    val discordLogin: LoginDiscord? = null,
 )
+
+/** El inicio de sesión con Discord en curso: el código y el QR para el teléfono, o el error. */
+data class LoginDiscord(
+    val codigo: String = "",
+    val url: String = "",
+    val urlCompleta: String = "",
+    val expira: Long = 0L,
+    val error: String? = null,
+) {
+    val cargando get() = codigo.isBlank() && error == null
+}
 
 /** Un juego que se está abriendo: cuál, en qué pantalla y desde cuándo (para la animación de carga). */
 data class CargaJuego(val clave: String, val displayId: Int, val inicio: Long)
@@ -928,6 +945,9 @@ object Diptico {
                 discordWebhook = almacen.texto("discordWebhook", ""),
                 discordEmpezar = almacen.bool("discordEmpezar", true),
                 discordTerminar = almacen.bool("discordTerminar", true),
+                discordApp = almacen.texto("discordApp", ""),
+                discordUsuario = almacen.texto("discordUsuario", ""),
+                discordAvatar = almacen.texto("discordAvatar", ""),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
@@ -2285,28 +2305,95 @@ object Diptico {
     }
 
     private fun opcionesDiscord(e: Estado): List<Opcion> = buildList {
-        val conectado = e.extra.discordWebhook.isNotBlank()
+        val x = e.extra
+        if (x.discordUsuario.isNotBlank()) {
+            add(Opcion("Tu cuenta de Discord", x.discordUsuario + " ✓", Icono.MUNDO,
+                "Díptico está conectado a tu cuenta. Cuando llegue el kit de Discord para apps, tu perfil mostrará «Jugando a…» con el juego que abras.",
+                grupo = "Discord") { avisar("Conectado como ${estado.value.extra.discordUsuario}") })
+            add(Opcion("Cerrar sesión de Discord", "", Icono.BORRAR, "Díptico olvida tu cuenta de Discord en esta consola.", grupo = "Discord") { salirDiscord() })
+        } else {
+            add(Opcion("Iniciar sesión con Discord", "Con un código QR", Icono.MUNDO,
+                "Aparece un código QR: escanéalo con tu teléfono y aprueba en Discord. O entra a discord.com/activate y escribe el código. Nunca escribes tu contraseña en la consola.",
+                grupo = "Discord") { iniciarDiscord() })
+        }
+        add(Opcion("App de Díptico en Discord", appDiscord().ifBlank { "Falta" }, Icono.CLAVE,
+            "El Application ID de Díptico en discord.com/developers (con «Public Client» activado). Viene listo; cámbialo solo si usas tu propia app.",
+            grupo = "Discord") { abrirTexto("discord_app", estado.value.extra.discordApp) })
+        val conectado = x.discordWebhook.isNotBlank()
         add(Opcion(
-            "Enlace del canal (webhook)", if (conectado) "Conectado ✓" else "Pegar enlace", Icono.MUNDO,
-            "En Discord: abre tu servidor › Editar canal › Integraciones › Webhooks › Nuevo webhook › Copiar URL. Pégala aquí o mándala desde tu teléfono con el código QR. Díptico no pide tu cuenta ni tu contraseña.",
-            grupo = "Discord",
+            "Publicar en un canal", if (conectado) "Conectado ✓" else "Opcional", Icono.CAMPANA,
+            "Además puedes avisar a tus amigos en un canal de tu servidor: Editar canal › Integraciones › Webhooks › Nuevo webhook › Copiar URL, y pégala aquí (o mándala con el QR).",
+            grupo = "Discord · canal",
         ) { abrirTexto("discord_webhook", estado.value.extra.discordWebhook) })
         if (!conectado) return@buildList
-        add(Opcion("Avisar cuando empiezo a jugar", if (e.extra.discordEmpezar) "Sí" else "No", Icono.JUGAR,
-            "Publica en el canal qué juego abriste, con su portada y dónde vas.", grupo = "Discord") {
+        add(Opcion("Avisar cuando empiezo a jugar", if (x.discordEmpezar) "Sí" else "No", Icono.JUGAR,
+            "Publica en el canal qué juego abriste, con su portada y dónde vas.", grupo = "Discord · canal") {
             val v = !estado.value.extra.discordEmpezar
             almacen.guardarBool("discordEmpezar", v); actualizar { it.copy(extra = it.extra.copy(discordEmpezar = v)) }
         })
-        add(Opcion("Avisar cuando termino", if (e.extra.discordTerminar) "Sí" else "No", Icono.RELOJ,
-            "Al salir del juego publica cuánto jugaste esta vez y en total (solo si fue más de un minuto).", grupo = "Discord") {
+        add(Opcion("Avisar cuando termino", if (x.discordTerminar) "Sí" else "No", Icono.RELOJ,
+            "Al salir del juego publica cuánto jugaste esta vez y en total (solo si fue más de un minuto).", grupo = "Discord · canal") {
             val v = !estado.value.extra.discordTerminar
             almacen.guardarBool("discordTerminar", v); actualizar { it.copy(extra = it.extra.copy(discordTerminar = v)) }
         })
-        add(Opcion("Mandar una prueba", "", Icono.CHISPA, "Publica una tarjeta de prueba en tu canal para ver que todo funciona.", grupo = "Discord") { probarDiscord() })
-        add(Opcion("Desconectar Discord", "", Icono.BORRAR, "Olvida el enlace: Díptico deja de publicar en tu canal.", grupo = "Discord") {
+        add(Opcion("Mandar una prueba", "", Icono.CHISPA, "Publica una tarjeta de prueba en tu canal para ver que todo funciona.", grupo = "Discord · canal") { probarDiscord() })
+        add(Opcion("Quitar el canal", "", Icono.BORRAR, "Olvida el enlace: Díptico deja de publicar en tu canal.", grupo = "Discord · canal") {
             almacen.guardarTexto("discordWebhook", ""); actualizar { it.copy(extra = it.extra.copy(discordWebhook = "")) }
-            avisar("Discord desconectado")
+            avisar("Canal de Discord quitado")
         })
+    }
+
+    /** El Application ID de Díptico en Discord: el que pegaste o el que viene con la app. */
+    fun appDiscord(): String = estado.value.extra.discordApp.ifBlank { cl.nikalbazu.diptico.BuildConfig.DISCORD_APP }
+
+    private var loginDiscordJob: Job? = null
+
+    /** Inicia sesión con Discord: pide el código, lo muestra con su QR y espera a que apruebes en el teléfono. */
+    fun iniciarDiscord() {
+        val app = appDiscord()
+        if (app.isBlank()) {
+            abrirTexto("discord_app", "")
+            avisar("Primero pega el Application ID de la app de Díptico en Discord")
+            return
+        }
+        loginDiscordJob?.cancel()
+        actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord())) }
+        loginDiscordJob = scope.launch {
+            val (c, error) = DiscordCuenta.pedirCodigo(app)
+            if (c == null) { actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(error = error ?: "No pude pedir el código"))) }; return@launch }
+            actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(c.usuario, c.url, c.urlCompleta, c.expira))) }
+            while (System.currentTimeMillis() < c.expira) {
+                delay(c.intervalo * 1000)
+                if (estado.value.extra.discordLogin == null) return@launch
+                val (token, falla) = DiscordCuenta.revisar(app, c)
+                if (token != null) {
+                    almacen.guardarTexto("discordToken", token.acceso)
+                    almacen.guardarTexto("discordRefresh", token.refresco)
+                    almacen.guardarTexto("discordVence", token.vence.toString())
+                    val yo = DiscordCuenta.quienSoy(token.acceso)
+                    val nombre = yo?.nombre ?: "tu cuenta"
+                    almacen.guardarTexto("discordUsuario", nombre)
+                    almacen.guardarTexto("discordAvatar", yo?.avatar.orEmpty())
+                    actualizar { it.copy(extra = it.extra.copy(discordLogin = null, discordUsuario = nombre, discordAvatar = yo?.avatar.orEmpty())) }
+                    avisar("¡Listo! Conectado a Discord como $nombre")
+                    return@launch
+                }
+                if (falla != null) { actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(error = falla))) }; return@launch }
+            }
+            actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(error = "El código venció; pide uno nuevo"))) }
+        }
+    }
+
+    /** Cierra el panel del QR sin conectar. */
+    fun cancelarDiscord() {
+        loginDiscordJob?.cancel()
+        actualizar { it.copy(extra = it.extra.copy(discordLogin = null)) }
+    }
+
+    fun salirDiscord() {
+        for (k in listOf("discordToken", "discordRefresh", "discordVence", "discordUsuario", "discordAvatar")) almacen.guardarTexto(k, "")
+        actualizar { it.copy(extra = it.extra.copy(discordUsuario = "", discordAvatar = "")) }
+        avisar("Cerraste la sesión de Discord")
     }
 
     /** El último juego cuya sesión se cerró y cuándo: si se vuelve a abrir pronto, se intenta retomar la partida. */
@@ -2858,7 +2945,7 @@ object Diptico {
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave_gemini", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
         if (estado.value.panel != Panel.CLAVE) claveDesde = regresoActual()
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace" && para != "discord_webhook") }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace" && para != "discord_webhook" && para != "discord_app") }
         // Para las claves: el teléfono puede mandarla directo (QR con la página de la consola en tu Wi-Fi).
         val oficial = urlClave(para)
         if (oficial != null && para != "ra_usuario") {
@@ -2866,6 +2953,7 @@ object Diptico {
                 "ia_clave_gemini" -> "Clave de Gemini"; "ia_clave_openai" -> "Clave de ChatGPT"
                 "sgdb" -> "Clave de SteamGridDB"
                 "discord_webhook" -> "Enlace de Discord"
+                "discord_app" -> "Application ID de Discord"
                 else -> tituloRaspador(para) ?: "Clave de RetroAchievements"
             }
             val url = Enlace.iniciar(titulo, oficial) { clave -> recibirClaveRemota(para, clave) }
@@ -2926,7 +3014,7 @@ object Diptico {
         if (e.panel == Panel.CLAVE && e.configurado) {
             if (volverA(claveDesde.also { claveDesde = null })) return
             val s = when {
-                e.textoPara.startsWith("ra_") -> Seccion.LOGROS
+                e.textoPara.startsWith("ra_") || e.textoPara.startsWith("ras_") || e.textoPara.startsWith("discord") || e.textoPara == "sgdb" -> Seccion.LOGROS
                 e.textoPara == "nombre" -> Seccion.INICIO
                 e.textoPara.startsWith("ia") && e.seccion == Seccion.ASISTENTE -> Seccion.ASISTENTE
                 e.textoPara.startsWith("ia") -> Seccion.TEMAS
@@ -3755,7 +3843,8 @@ object Diptico {
         Seccion.G_TEMAS to listOf(Seccion.TEMAS, Seccion.DECORACIONES),
         Seccion.G_WIDGETS to listOf(Seccion.INICIO),
         Seccion.G_BIBLIOTECA to listOf(Seccion.ESTANTE, Seccion.CONSOLAS, Seccion.BIBLIOTECA, Seccion.PORTADAS),
-        Seccion.G_JUEGOS to listOf(Seccion.EMULADORES, Seccion.LOGROS, Seccion.RENDIMIENTO),
+        Seccion.G_JUEGOS to listOf(Seccion.EMULADORES, Seccion.RENDIMIENTO),
+        Seccion.G_CUENTAS to listOf(Seccion.LOGROS),
         Seccion.G_CONTROLES to listOf(Seccion.CONTROLES),
         Seccion.G_SONIDO to listOf(Seccion.MUSICA),
         Seccion.G_DIPPO to listOf(Seccion.ASISTENTE),
@@ -3905,7 +3994,7 @@ object Diptico {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
-            Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_DIPPO, Seccion.G_SISTEMA -> Unit
+            Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CUENTAS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_DIPPO, Seccion.G_SISTEMA -> Unit
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
@@ -4016,7 +4105,14 @@ object Diptico {
                     aplicarTema()
                 }
             }
-            Seccion.LOGROS -> { lista += opcionesLogros(e); lista += opcionesDiscord(e) }
+            Seccion.LOGROS -> {
+                lista += opcionesDiscord(e)
+                lista += opcionesLogros(e).map { if (it.grupo.isBlank()) it.copy(grupo = "RetroAchievements") else it }
+                lista += (listOf(Opcion(
+                    "Clave de SteamGridDB", if (e.claveSgdb.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
+                    "Gratis en steamgriddb.com: entra, ve a Preferencias › API y copia tu clave. Trae arte grande y logos.",
+                ) { abrirClave() }) + opcionesRaspadores(e)).map { if (it.grupo.isBlank()) it.copy(grupo = "Portadas e imágenes") else it }
+            }
             Seccion.ESENCIAL -> lista += opcionesEsenciales(e)
             Seccion.MAS -> lista += opcionesMas(e)
             Seccion.ASISTENTE -> {
@@ -4269,10 +4365,9 @@ object Diptico {
                     "Vuelve a buscar títulos, arte y logos para todos los juegos.",
                 ) { if (estado.value.descarga == null) descargarPortadas(todo = true) }
                 lista += Opcion(
-                    "Clave de SteamGridDB", if (e.claveSgdb.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
-                    "Gratis en steamgriddb.com: entra, ve a Preferencias › API y copia tu clave. Trae arte grande y logos.",
-                ) { abrirClave() }
-                lista += opcionesRaspadores(e)
+                    "Fuentes y claves", "En Cuentas y conexiones", Icono.CLAVE,
+                    "SteamGridDB, ScreenScraper, IGDB y las demás fuentes de imágenes están en Ajustes › Cuentas y conexiones.",
+                ) { abrirMenu(Seccion.G_CUENTAS) }
                 lista += Opcion(
                     "Títulos de libretro", if (e.titulosBonitos) "Sí" else "No", Icono.TITULO,
                     "Muestra el nombre oficial del juego en vez del nombre del archivo.",
@@ -4757,7 +4852,9 @@ object Diptico {
             ?: Temas.fiestas.firstOrNull { it.tema.id == e.tema }?.tema
             ?: Temas.incluidos[0]
         val baseVisual = conAdorno(e, fiesta?.tema ?: elegido)
-        val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso, decor = "nada") else baseVisual
+        // El color de la consola elegida tiñe el acento, pero las decoraciones del tema se quedan siempre (antes se apagaban
+        // al entrar a una consola con color propio, y por eso solo se veían en algunas carpetas).
+        val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso) else baseVisual
         cl.nikalbazu.diptico.ui.Estilo.tema = activo
         cl.nikalbazu.diptico.ui.Estilo.materialInterfaz = e.experiencia.materialInterfaz
         cl.nikalbazu.diptico.ui.Estilo.efecto = activo.acabado.ifBlank { if (e.experiencia.vidrio) "vidrio" else e.efecto }
@@ -7462,6 +7559,7 @@ object Diptico {
         "sgdb" -> "https://www.steamgriddb.com/profile/preferences/api"
         "ra_clave", "ra_usuario" -> "https://retroachievements.org/settings"
         "discord_webhook" -> Discord.AYUDA
+        "discord_app" -> "https://discord.com/developers/applications"
         else -> null
     }
 
@@ -7571,6 +7669,15 @@ object Diptico {
                     avisar("Clave guardada. Ahora escribe tu pregunta.")
                     return
                 }
+            }
+            "discord_app" -> {
+                val id = t.trim()
+                if (id.isNotEmpty() && !Regex("[0-9]{15,22}").matches(id)) { avisar("El Application ID son solo números (15 a 22)"); return }
+                almacen.guardarTexto("discordApp", id)
+                actualizar { it.copy(extra = it.extra.copy(discordApp = id)) }
+                cerrarPanel()
+                if (id.isNotEmpty() && estado.value.extra.discordUsuario.isBlank()) iniciarDiscord()
+                return
             }
             "discord_webhook" -> {
                 val url = t.trim()
@@ -8662,7 +8769,8 @@ object Diptico {
         val ahorro = fluidezEfectiva(e) == "ahorro" && !(e.sobremesa && e.sobremesaEfectos)
         val efectos = !ahorro && !(e.sesion != null && e.turbo && e.turboReposo)
         cl.nikalbazu.diptico.ui.Estilo.efectosCompletos = efectos
-        cl.nikalbazu.diptico.ui.Estilo.decoraciones = efectos && e.decoraciones && e.experiencia.movimiento && e.sesion == null
+        // Las decoraciones se ven en todo momento, también mientras juegas (salvo con el reposo del modo turbo, que apaga los efectos).
+        cl.nikalbazu.diptico.ui.Estilo.decoraciones = efectos && e.decoraciones && e.experiencia.movimiento
     }
 
     private var ultimaActividad = SystemClock.uptimeMillis()

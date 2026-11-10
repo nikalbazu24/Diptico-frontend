@@ -82,6 +82,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.G_SONIDO -> Color(0xFFFF7A59)
     Seccion.G_DIPPO -> Color(0xFFFF9A6B)
     Seccion.G_SISTEMA -> Color(0xFF8E8AAE)
+    Seccion.G_CUENTAS -> Color(0xFF5865F2)
 }
 
 private fun tintaSobre(c: Color) = if (c.luminance() > 0.55f) Tinta else Color.White

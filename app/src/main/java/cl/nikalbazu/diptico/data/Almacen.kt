@@ -13,6 +13,7 @@ class Almacen(ctx: Context) {
             "claveSgdb", "claveGemini", "claveOpenAI", "claveIa", "claveRA", "usuarioRA",
             "ras_igdbId", "ras_igdbSecreto", "ras_ssUsuario", "ras_ssClave",
             "ras_ssDevId", "ras_ssDevClave", "ras_rawg", "ras_tgdb",
+            "discordToken", "discordRefresh", "discordWebhook",
         )
 
         internal fun esCredencial(clave: String) = clave in credencialesLocales || clave.startsWith("ras_")

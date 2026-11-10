@@ -129,6 +129,12 @@ object Teclas {
         if (abajo) presionadas += code else if (arriba) presionadas -= code
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
         // Abriendo un juego con la pantalla de carga: B la cancela; lo demás espera.
+        // Iniciando sesión con Discord: B cierra el panel; A pide otro código si hubo un error.
+        e.extra.discordLogin?.let { l ->
+            if (arriba && esB(code)) Diptico.cancelarDiscord()
+            else if (arriba && esA(code) && l.error != null) Diptico.iniciarDiscord()
+            return true
+        }
         if (e.extra.carga != null) { if (arriba && esB(code)) Diptico.cancelarCarga(); return true }
 
         // Aprendiendo un botón extra: el primero que se apriete (que no sea A, B ni la cruceta) queda guardado.

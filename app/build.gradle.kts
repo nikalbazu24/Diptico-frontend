@@ -11,6 +11,10 @@ val versionBase = if (rutaFirma.isNullOrBlank()) "1.0" else "1.1"
 // Una variable DIPTICO_REPORTES_URL en GitHub, si existe, lo reemplaza.
 val reportesUrl = providers.environmentVariable("DIPTICO_REPORTES_URL").orNull.orEmpty().trim()
     .ifEmpty { "https://script.google.com/macros/s/AKfycbwGhiuCtOLOTclmEU8f3hukrAMOtHAFw4Y2MJnOdu5bKXPfEGegImctiuI-qpPhCCE/exec" }
+// App de Discord de Díptico (Application ID del portal de Discord, con «Public Client» activado).
+// Vacía = cada uno pega la suya en Ajustes › Cuentas y conexiones › Discord.
+val discordApp = providers.environmentVariable("DIPTICO_DISCORD_APP").orNull.orEmpty().trim()
+require(discordApp.isEmpty() || Regex("""[0-9]{15,22}""").matches(discordApp)) { "DIPTICO_DISCORD_APP debe ser el Application ID (solo números)." }
 require(reportesUrl.isEmpty() || Regex("""https://script[.]google[.]com/macros/s/[A-Za-z0-9_-]+/exec""").matches(reportesUrl)) {
     "DIPTICO_REPORTES_URL debe ser el enlace /exec de la aplicación web de Apps Script."
 }
@@ -26,6 +30,7 @@ android {
         versionCode = numero
         versionName = "$versionBase-beta.$numero"
         buildConfigField("String", "REPORTES_URL", "\"$reportesUrl\"")
+        buildConfigField("String", "DISCORD_APP", "\"$discordApp\"")
         // La Thor (y casi todas las consolas Android) es arm64: así el APK no carga librerías que no usa.
         ndk { abiFilters += "arm64-v8a" }
     }

@@ -56,10 +56,14 @@ fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composa
         awaitEachGesture {
             val inicio = awaitFirstDown(requireUnconsumed = false, pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
             var ultimo = inicio.position
+            var usado = false
             while (true) {
                 val ev = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Final)
                 val c = ev.changes.firstOrNull { it.id == inicio.id } ?: break
+                // Si algo de la página usó el arrastre (por ejemplo, girar la caja), no se cambia de página.
+                if (c.isConsumed) usado = true
                 if (c.pressed) { ultimo = c.position; continue }
+                if (usado) break
                 val dx = ultimo.x - inicio.position.x
                 val dy = kotlin.math.abs(ultimo.y - inicio.position.y)
                 if (!pager.isScrollInProgress && kotlin.math.abs(dx) > umbral && dy < kotlin.math.abs(dx) / 2) {

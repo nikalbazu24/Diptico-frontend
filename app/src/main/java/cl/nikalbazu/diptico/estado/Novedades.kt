@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "estuches-discord-2.0-30"
-    const val NOMBRE = "Estuches, Discord y tu logo al jugar"
+    const val ID = "cajas-3d-2.0-31"
+    const val NOMBRE = "Cajas en 3D y tus cuentas"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -306,10 +306,15 @@ object Novedades {
             Pagina("Pantalla de carga", "Al abrir un juego, todo se tiñe del color de su consola, entra su caja y se funde a negro antes de empezar. B la cancela. Se apaga en Ajustes › Pantalla y estilo.", Icono.JUGAR, 0xFFE60012),
             Pagina("Vitrina de cajas", "Arriba, la caja del juego elegido luce al centro con las de al lado asomándose inclinadas. Toca una caja de al lado para elegirla, o la del centro para jugar.", Icono.PORTADA, 0xFFFF9A6B),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("estuches-discord-2.0-30", "Estuches, Discord y tu logo al jugar", listOf(
             Pagina("Cada consola, su estuche", "Las cajas de la vitrina y de la carga ahora parecen de su consola: el cartón con rejilla de los 8 bits, la franja de 16 bits, el estuche de CD con bisagra, el DVD, la tarjeta, el UMD y la marquesina de arcade.", Icono.PORTADA, 0xFFFF9A6B),
             Pagina("Discord", "Conecta un canal de tu servidor en Ajustes › Juegos › Discord: Díptico publica qué juegas, con la portada, y cuánto jugaste al terminar.", Icono.MUNDO, 0xFF5865F2),
             Pagina("Tu logo al jugar", "Mientras juegas, el logo del juego luce en grande abajo y lo que te queda cabe en una línea. En la franja, las apps se esconden con su botoncito.", Icono.MANDO, 0xFF7AA8FF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Cajas en 3D", "La caja del juego flota en la vitrina y la puedes girar con el dedo: se le ve el lomo y el brillo del plástico. Al soltarla vuelve sola. El estuche ahora va alrededor de la portada, sin taparla.", Icono.PORTADA, 0xFFFF9A6B),
+            Pagina("Inicia sesión con Discord", "En Ajustes › Cuentas y conexiones: aparece un código QR, lo escaneas con tu teléfono y apruebas. Sin escribir contraseñas en la consola.", Icono.MUNDO, 0xFF5865F2),
+            Pagina("Tus cuentas, juntas", "Discord, RetroAchievements, SteamGridDB, ScreenScraper y las demás fuentes ahora viven en una sola sección: Cuentas y conexiones. Y las decoraciones del tema se ven en toda la consola, siempre.", Icono.CLAVE, 0xFF7AA8FF),
         )),
     )
 

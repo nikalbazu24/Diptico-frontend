@@ -61,6 +61,32 @@ fun estucheDe(c: Consola): Estuche = when (c.id) {
     }
 }
 
+/**
+ * Cuánto ocupa el estuche en cada borde, como fracción del tamaño final de la caja. El arte va completo en el
+ * hueco que queda (la caja crece para hacerle espacio): así ninguna franja tapa la portada.
+ */
+data class MargenesEstuche(val arriba: Float = 0f, val izq: Float = 0f, val abajo: Float = 0f, val der: Float = 0f) {
+    val ancho get() = 1f - izq - der
+    val alto get() = 1f - arriba - abajo
+}
+
+fun margenesDe(t: Estuche): MargenesEstuche = when (t) {
+    Estuche.CARTON_REJILLA -> MargenesEstuche(arriba = 0.15f, izq = 0.1f)
+    Estuche.CARTON_FRANJA -> MargenesEstuche(abajo = 0.19f)
+    Estuche.CARTON_LOMO -> MargenesEstuche(izq = 0.15f)
+    Estuche.CARTON_PORTATIL -> MargenesEstuche(arriba = 0.15f)
+    Estuche.CLAMSHELL_REJILLA -> MargenesEstuche(arriba = 0.19f)
+    Estuche.REJILLA_BLANCA -> MargenesEstuche(arriba = 0.06f, izq = 0.07f, abajo = 0.12f, der = 0.07f)
+    Estuche.JEWEL, Estuche.JEWEL_BLANCO -> MargenesEstuche(izq = 0.11f)
+    Estuche.DVD -> MargenesEstuche(arriba = 0.145f)
+    Estuche.BLURAY -> MargenesEstuche(arriba = 0.11f)
+    Estuche.TARJETA -> MargenesEstuche(arriba = 0.11f)
+    Estuche.UMD -> MargenesEstuche(arriba = 0.11f, izq = 0.03f, abajo = 0.03f, der = 0.05f)
+    Estuche.MARQUESINA -> MargenesEstuche(arriba = 0.17f)
+    Estuche.CAJA_PC -> MargenesEstuche(izq = 0.09f, abajo = 0.11f)
+    Estuche.NINGUNO -> MargenesEstuche()
+}
+
 /** Color de la franja de cada consola (algunas usan el blanco o el negro de sus cajas en vez de su color). */
 private fun franja(c: Consola): Color = when (c.id) {
     "nds", "wii", "dreamcast", "pcengine" -> Color(0xFFF2F3F5)
@@ -114,7 +140,7 @@ private fun DrawScope.dibujarEstuche(tipo: Estuche, color: Color, banda: Color, 
             drawRect(Color(0xFF0E0E12), Offset(0f, a), Size(l, h - a))
             rejilla(0f, 0f, w, a, u * 3f, Color.White.copy(alpha = 0.16f))
             rejilla(0f, a, l, h - a, u * 3f, Color.White.copy(alpha = 0.12f))
-            drawRect(color, Offset(l, a), Size(w - l, u * 1.4f))
+            drawRect(color, Offset(l, a - u * 1.4f), Size(w - l, u * 1.4f))
             drawRect(color, Offset(u * 2.5f, h - u * 2.5f - l * 0.8f), Size(l * 0.8f - u * 2.5f, l * 0.8f - u * 2.5f))
             drawText(nombre, color = Color.White, topLeft = Offset(l + u * 2f, (a - nombre.size.height) / 2f))
         }
@@ -141,15 +167,13 @@ private fun DrawScope.dibujarEstuche(tipo: Estuche, color: Color, banda: Color, 
             drawRect(Color(0xFF2FB35A), Offset(x + c / 2, y), Size(c / 2, c / 2))
             drawRect(Color(0xFFF5C518), Offset(x, y + c / 2), Size(c / 2, c / 2))
             drawRect(Color(0xFF3B6FE0), Offset(x + c / 2, y + c / 2), Size(c / 2, c / 2))
-            drawRect(color, Offset(l, 0f), Size(w - l, u * 1.6f))
+            drawRect(color, Offset(l - u * 1.6f, 0f), Size(u * 1.6f, h))
             rotate(-90f, Offset(l / 2f, h - u * 6f)) { drawText(nombre, color = Color.White, topLeft = Offset(l / 2f, h - u * 6f - nombre.size.height / 2f)) }
         }
         // Portátiles: franja de color arriba y una esquina del mismo color.
         Estuche.CARTON_PORTATIL -> {
             val a = bandaArriba(h * 0.14f, color)
-            drawRect(Color.White.copy(alpha = 0.35f), Offset(0f, a), Size(w, u * 0.8f))
-            val t = Path().apply { moveTo(w, h); lineTo(w - w * 0.22f, h); lineTo(w, h - w * 0.22f); close() }
-            drawPath(t, color)
+            drawRect(Color.White.copy(alpha = 0.35f), Offset(0f, a - u * 0.8f), Size(w, u * 0.8f))
         }
         // Estuche de plástico negro con cuadritos arriba y una línea roja.
         Estuche.CLAMSHELL_REJILLA -> {
@@ -162,18 +186,20 @@ private fun DrawScope.dibujarEstuche(tipo: Estuche, color: Color, banda: Color, 
                 while (x < w - paso * 0.6f) { drawRect(Color.White.copy(alpha = 0.07f), Offset(x, y), Size(paso * 0.7f, paso * 0.7f)); x += paso }
                 y += paso
             }
-            drawRect(Color(0xFFE23B3B), Offset(0f, a), Size(w, u * 1.2f))
+            drawRect(Color(0xFFE23B3B), Offset(0f, h * 0.19f - u * 1.2f), Size(w, u * 1.2f))
             drawText(nombre, color = Color.White, topLeft = Offset(u * 4f, (a - nombre.size.height) / 2f))
         }
         // Marco blanco con cuadrícula fina.
         Estuche.REJILLA_BLANCA -> {
-            val b = u * 7f
             val blanco = Color(0xFFF4F4F6)
-            drawRect(blanco, Offset.Zero, Size(w, b)); drawRect(blanco, Offset(0f, h - b * 1.8f), Size(w, b * 1.8f))
-            drawRect(blanco, Offset.Zero, Size(b, h)); drawRect(blanco, Offset(w - b, 0f), Size(b, h))
-            var x = b; while (x < w - b) { drawLine(Color.White.copy(alpha = 0.35f), Offset(x, b), Offset(x, h - b * 1.8f), u * 0.4f); x += u * 8f }
-            var y = b; while (y < h - b * 1.8f) { drawLine(Color.White.copy(alpha = 0.35f), Offset(b, y), Offset(w - b, y), u * 0.4f); y += u * 8f }
-            drawText(nombre, color = Color(0xFF222228), topLeft = Offset(b + u * 2f, h - b * 1.8f + (b * 1.8f - nombre.size.height) / 2f))
+            val bl = w * 0.07f
+            val ba = h * 0.06f
+            val bb = h * 0.12f
+            drawRect(blanco, Offset.Zero, Size(w, ba)); drawRect(blanco, Offset(0f, h - bb), Size(w, bb))
+            drawRect(blanco, Offset.Zero, Size(bl, h)); drawRect(blanco, Offset(w - bl, 0f), Size(bl, h))
+            // La cuadrícula fina va solo en el marco blanco.
+            var y = u * 2f; while (y < h) { drawLine(Color.Black.copy(alpha = 0.07f), Offset(0f, y), Offset(bl, y), u * 0.3f); drawLine(Color.Black.copy(alpha = 0.07f), Offset(w - bl, y), Offset(w, y), u * 0.3f); y += u * 2.5f }
+            drawText(nombre, color = Color(0xFF222228), topLeft = Offset(bl + u * 2f, h - bb + (bb - nombre.size.height) / 2f))
         }
         // Estuche de CD: bisagra con estrías a la izquierda y borde de plástico transparente.
         Estuche.JEWEL, Estuche.JEWEL_BLANCO -> {
@@ -182,8 +208,8 @@ private fun DrawScope.dibujarEstuche(tipo: Estuche, color: Color, banda: Color, 
             drawRect(if (blanco) Color(0xFFF2F3F5) else Color(0xFF0D0D10), Offset.Zero, Size(l, h))
             for (k in 0..3) drawRect((if (blanco) Color.Black else Color.White).copy(alpha = 0.12f), Offset(l * 0.18f + k * l * 0.2f, 0f), Size(u * 0.5f, h))
             if (blanco) drawRect(color, Offset(l, 0f), Size(u * 1.2f, h))
-            drawRect(Color.White.copy(alpha = 0.28f), Offset(l, 0f), Size(w - l, h), style = Stroke(u * 1.6f))
-            drawRect(Color.White.copy(alpha = 0.12f), Offset(l + u * 2f, u * 2f), Size(w - l - u * 4f, h - u * 4f), style = Stroke(u * 0.5f))
+            // El canto del plástico transparente, fino para no tapar la portada.
+            drawRect(Color.White.copy(alpha = 0.22f), Offset(l, 0f), Size(w - l, h), style = Stroke(u * 0.9f))
             rotate(-90f, Offset(l / 2f, h - u * 5f)) {
                 drawText(nombre, color = if (blanco) color else Color.White, topLeft = Offset(l / 2f, h - u * 5f - nombre.size.height / 2f))
             }
@@ -191,35 +217,35 @@ private fun DrawScope.dibujarEstuche(tipo: Estuche, color: Color, banda: Color, 
         // DVD: franja arriba con el color de la consola y dos broches al costado.
         Estuche.DVD -> {
             val a = bandaArriba(h * 0.13f)
-            drawRect(lerp(banda, color, 0.5f), Offset(0f, a), Size(w, u * 1.2f))
-            drawRoundRect(Color.Black.copy(alpha = 0.35f), Offset(-u, h * 0.3f), Size(u * 2.5f, h * 0.08f), CornerRadius(u))
-            drawRoundRect(Color.Black.copy(alpha = 0.35f), Offset(-u, h * 0.62f), Size(u * 2.5f, h * 0.08f), CornerRadius(u))
-            drawRect(Color.White.copy(alpha = 0.18f), Offset.Zero, size, style = Stroke(u * 1.2f))
+            drawRect(lerp(banda, color, 0.5f), Offset(0f, h * 0.145f - u * 1.2f), Size(w, u * 1.2f))
+            drawRect(Color.White.copy(alpha = 0.16f), Offset.Zero, size, style = Stroke(u * 0.9f))
         }
         // Blu-ray: franja más fina y borde azulado.
         Estuche.BLURAY -> {
-            val a = bandaArriba(h * 0.1f)
-            drawRect(Color.White.copy(alpha = 0.25f), Offset(0f, a), Size(w, u * 0.6f))
+            val a = bandaArriba(h * 0.11f)
+            drawRect(Color.White.copy(alpha = 0.25f), Offset(0f, a - u * 0.6f), Size(w, u * 0.6f))
             drawRect(Color(0xFF8EC5FF).copy(alpha = 0.3f), Offset.Zero, size, style = Stroke(u * 1.4f))
         }
         // Tarjeta: franja de color arriba (blanca en las portátiles de dos pantallas, con una línea de color).
         Estuche.TARJETA -> {
             val a = bandaArriba(h * 0.11f)
             if (banda != color) drawRect(color, Offset(0f, a - u * 1.4f), Size(w, u * 1.4f))
-            drawRect(Color.White.copy(alpha = 0.2f), Offset.Zero, size, style = Stroke(u * 1.2f))
+            drawRect(Color.White.copy(alpha = 0.18f), Offset.Zero, size, style = Stroke(u * 0.9f))
         }
         // UMD: marco oscuro translúcido y canto con muescas.
         Estuche.UMD -> {
-            val a = bandaArriba(h * 0.1f)
-            drawRect(Color.Black.copy(alpha = 0.45f), Offset.Zero, size, style = Stroke(u * 4f))
+            val a = bandaArriba(h * 0.11f, Color(0xFF15151B))
+            drawRect(Color(0xFF15151B), Offset(0f, a), Size(w * 0.03f, h - a))
+            drawRect(Color(0xFF15151B), Offset(0f, h - h * 0.03f), Size(w, h * 0.03f))
+            drawRect(Color(0xFF15151B), Offset(w - w * 0.05f, a), Size(w * 0.05f, h - a))
             var y = a + u * 4f
-            while (y < h - u * 4f) { drawRect(Color.White.copy(alpha = 0.18f), Offset(w - u * 3.5f, y), Size(u * 2f, u * 0.8f)); y += u * 3f }
+            while (y < h - u * 4f) { drawRect(Color.White.copy(alpha = 0.18f), Offset(w - w * 0.038f, y), Size(w * 0.024f, u * 0.8f)); y += u * 3f }
         }
         // Arcade: marquesina con luz de neón y foquitos.
         Estuche.MARQUESINA -> {
             val a = h * 0.15f
             drawRect(Color(0xFF09090D), Offset.Zero, Size(w, a))
-            drawRect(Brush.horizontalGradient(listOf(color, Color(0xFFFF4FA3), color)), Offset(0f, a), Size(w, u * 1.6f))
+            drawRect(Brush.horizontalGradient(listOf(color, Color(0xFFFF4FA3), color)), Offset(0f, h * 0.17f - u * 1.6f), Size(w, u * 1.6f))
             val n = 7
             for (k in 0 until n) drawCircle(Color(0xFFFFE08A).copy(alpha = 0.9f), u * 0.9f, Offset(w * (k + 0.5f) / n, a * 0.18f))
             drawText(nombre, color = lerp(color, Color.White, 0.35f), topLeft = Offset(u * 4f, a * 0.32f + (a * 0.68f - nombre.size.height) / 2f))
@@ -239,7 +265,7 @@ private fun DrawScope.dibujarEstuche(tipo: Estuche, color: Color, banda: Color, 
     }
     // Brillo de plástico en diagonal, igual para todas.
     drawRect(Brush.linearGradient(
-        0f to Color.White.copy(alpha = 0.16f), 0.35f to Color.White.copy(alpha = 0.04f), 0.36f to Color.Transparent, 1f to Color.Transparent,
+        0f to Color.White.copy(alpha = 0.11f), 0.35f to Color.White.copy(alpha = 0.03f), 0.36f to Color.Transparent, 1f to Color.Transparent,
         start = Offset.Zero, end = Offset(w, h),
     ))
 }

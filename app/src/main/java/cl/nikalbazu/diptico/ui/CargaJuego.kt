@@ -94,8 +94,10 @@ private fun ContenidoCarga(e: Estado, miPantalla: Int, unica: Boolean) {
             val vertical = ancho / alto < 1.15f
             // La caja ocupa cerca de la mitad del alto (un poco menos si va arriba del texto).
             val base = cajaDe(consola)
+            // El estuche agranda la caja: se calcula para que el total (arte + estuche) quepa.
+            val m = margenesDe(estucheDe(consola))
             val objetivo = (alto * (if (vertical) 0.40f else 0.56f)) / esc.factor
-            val escala = minOf(objetivo / base.alto, (ancho * 0.4f / esc.factor) / base.ancho)
+            val escala = minOf(objetivo * m.alto / base.alto, (ancho * 0.4f / esc.factor) * m.ancho / base.ancho)
             val caja = @Composable {
                 val c = suave(tramo(v, 0.06f, 0.38f))
                 Box(

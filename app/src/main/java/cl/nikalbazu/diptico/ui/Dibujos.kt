@@ -223,12 +223,21 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
         else -> juego.portada != null && juego.portada.scheme != "app"
     }
     val disco = cfg?.forma == "disco"
+    // Con estuche, la caja crece para que el estuche vaya alrededor del arte y no encima.
+    val conEstuche = estuche && !disco && cfg?.forma.let { it == null || it == "original" } && estucheDe(consola) != Estuche.NINGUNO
+    val m = if (conEstuche) margenesDe(estucheDe(consola)) else MargenesEstuche()
+    val anchoTotal = f.ancho / m.ancho
+    val altoTotal = f.alto / m.alto
     Box(
         modifier
-            .size(esc.d(f.ancho), esc.d(f.alto))
+            .size(esc.d(anchoTotal), esc.d(altoTotal))
             .clip(if (disco) CircleShape else RoundedCornerShape(esc.d(f.radio))),
     ) {
-        ArteJuego(juego, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize(), imagen = imagen, vivo = vivo)
+        ArteJuego(juego, preferirArte = false, maxLado = 360, imagen = imagen, vivo = vivo,
+            modifier = Modifier.fillMaxSize().padding(
+                start = esc.d(anchoTotal * m.izq), top = esc.d(altoTotal * m.arriba),
+                end = esc.d(anchoTotal * m.der), bottom = esc.d(altoTotal * m.abajo),
+            ))
         if (disco) {
             // Como un CD: brillo de arcoíris suave, anillo central y el agujero.
             Canvas(Modifier.fillMaxSize()) {
@@ -241,7 +250,7 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
             }
         }
         // Con estuche (vitrina y carga): el detalle propio de cada consola en vez de la banda simple.
-        if (estuche && !disco && cfg?.forma.let { it == null || it == "original" }) CapaEstuche(consola)
+        if (conEstuche) CapaEstuche(consola)
         else when (f.banda) {
             Banda.NINGUNA -> Unit
             Banda.BISAGRA -> Box(Modifier.fillMaxHeight().width(esc.d(11 * k)).background(Color.Black.copy(alpha = 0.3f)))
@@ -262,7 +271,9 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
         if (!tieneImagen && !disco) {
             Texto(
                 juego.titulo, if (f.ancho < 70) 9.5f else if (f.ancho < 90) 10.5f else if (f.ancho < 130) 11.5f else 13f,
-                modifier = Modifier.align(Alignment.BottomStart).padding(start = esc.d(8), end = esc.d(8), bottom = esc.d(7)),
+                modifier = Modifier.align(Alignment.BottomStart).padding(
+                    start = esc.d(8 + anchoTotal * m.izq), end = esc.d(8 + anchoTotal * m.der), bottom = esc.d(7 + altoTotal * m.abajo),
+                ),
                 color = Color.White, lineas = 3, interlineado = if (f.ancho < 130) 13f else 15f, sombra = true,
             )
         }

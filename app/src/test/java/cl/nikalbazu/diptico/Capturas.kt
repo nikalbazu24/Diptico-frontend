@@ -1219,9 +1219,14 @@ class Capturas {
     @Test fun t314_franja_dock_escondido() = foto("314_franja_dock_escondido", base().copy(vista = "mosaicos", appsFijadas = listOf("com.android.settings"), extra = EstadoExtra(dockVisible = false)), Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
     @Test fun t315_jugando_logo() = foto("315_jugando_logo", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true, extra = EstadoExtra(duraciones = mapOf("snes/1" to cl.nikalbazu.diptico.estado.CuantoDura.Duracion(12f, 18f, 30f, 1L)))), Rol.INFERIOR, mi = 1)
-    @Test fun t316_ajustes_discord() = foto("316_ajustes_discord", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_JUEGOS, enOpciones = true, extra = EstadoExtra(discordWebhook = "https://discord.com/api/webhooks/1/abc")), Rol.SUPERIOR)
+    @Test fun t316_ajustes_discord() = foto("316_ajustes_discord", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_CUENTAS, enOpciones = true, extra = EstadoExtra(discordWebhook = "https://discord.com/api/webhooks/1/abc")), Rol.SUPERIOR)
     @Config(qualifiers = ABAJO)
     @Test fun t317_menu_intercambiado() = foto("317_menu_intercambiado", base().copy(vista = "mosaicos", intercambiar = true, panel = Panel.MENU), Rol.INFERIOR, mi = 0)
+    @Test fun t318_discord_qr() = foto("318_discord_qr", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_CUENTAS, enOpciones = true,
+        extra = EstadoExtra(discordLogin = cl.nikalbazu.diptico.estado.LoginDiscord("ABCD-EFGH", "https://discord.com/activate", "https://discord.com/activate?user_code=ABCDEFGH", System.currentTimeMillis() + 240_000))), Rol.SUPERIOR)
+    @Test fun t319_cuentas() = foto("319_cuentas", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_CUENTAS, enOpciones = true,
+        extra = EstadoExtra(discordUsuario = "Nico")), Rol.SUPERIOR)
+    @Test fun t320_estuches_integrales() = foto("320_estuches_integrales", base().copy(vista = "mosaicos", juegos = juegosVarios, juegoSel = "snes/1"), Rol.SUPERIOR)
     @Test fun t307_carga_arriba() = foto("307_carga_arriba", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.SUPERIOR, avance = 600)
     @Config(qualifiers = ABAJO)
     @Test fun t308_carga_abajo() = foto("308_carga_abajo", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.INFERIOR, mi = 1, avance = 600)
