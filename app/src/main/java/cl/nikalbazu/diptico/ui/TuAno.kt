@@ -217,9 +217,8 @@ private fun Nota(r: TuAno.Resumen) {
                 java.time.LocalDate.parse(r.desde).format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM))
             } catch (_: Exception) { r.desde }
         }
-        Row {
+        Column {
             Detalle("Cuento tus partidas del año desde", 12f, color = TextoSuave, lineas = 2)
-            Spacer(Modifier.width(esc.d(4)))
             Texto(fecha, 12f, color = TextoSuave, lineas = 1, traducir = false)
         }
     } else Detalle("Todavía no hay partidas anotadas este año. Desde ahora Díptico las va contando.", 12f, color = TextoSuave, lineas = 2)
@@ -233,7 +232,7 @@ private fun Dato(etiqueta: String, valor: String, color: Color, modifier: Modifi
         modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f)).padding(horizontal = esc.d(12), vertical = esc.d(7)),
     ) {
         Texto(etiqueta, 10.5f, color = TextoSuave, lineas = 1)
-        Texto(valor, tam, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = traducirValor)
+        Texto(valor, tam, color = TextoClaro, peso = FontWeight.Black, lineas = if (tam < 18f) 2 else 1, traducir = traducirValor)
         sub()
     }
 }
