@@ -371,6 +371,8 @@ data class EstadoExtra(
     val duraciones: Map<String, CuantoDura.Duracion> = emptyMap(),
     /** Reverso y lomo reales de cada caja (enlaces de ScreenScraper o TheGamesDB), por clave de juego. */
     val caras: Map<String, CarasGuardadas> = emptyMap(),
+    /** Las cajas llevan arriba la franja con el logo (o el nombre) de su consola, como las cajas de verdad. */
+    val bandaCaja: Boolean = true,
     /** Cuándo DIPPO ganó un logro (para que celebre unos segundos) y cuál. */
     val dippoCelebra: Long = 0L,
     val dippoLogro: String = "",
@@ -952,6 +954,7 @@ object Diptico {
                 discordAvatar = almacen.texto("discordAvatar", ""),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 caras = CarasGuardadas.leer(almacen.texto("carasCaja")),
+                bandaCaja = almacen.bool("bandaCaja", true),
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
@@ -4223,6 +4226,15 @@ object Diptico {
                     "Vitrina de cajas: la caja del juego al centro, con las de al lado asomándose inclinadas. Arte del juego: la imagen del juego en grande con su información.",
                     listOf("cajas", "arte"), listOf("Vitrina de cajas", "Arte del juego"), e.extra.portada, grupo = "Movimiento",
                 ) { v -> almacen.guardarTexto("portadaArriba", v); actualizar { it.copy(extra = it.extra.copy(portada = v)) } }
+                lista += Opcion(
+                    "Logo de la consola en las cajas", if (e.extra.bandaCaja) "Sí" else "No", Icono.PORTADA,
+                    "Una franja arriba del frente con el logo de la consola, como en las cajas de PS2 o Switch. Usa el logo que elijas para la consola (Editar consola › Logo); si no hay, su nombre. Apágalo si tus portadas ya traen la franja.",
+                    grupo = "Movimiento",
+                ) {
+                    val v = !estado.value.extra.bandaCaja
+                    almacen.guardarBool("bandaCaja", v)
+                    actualizar { it.copy(extra = it.extra.copy(bandaCaja = v)) }
+                }
                 lista += Opcion(
                     "Pantalla de carga", if (e.extra.cargaJuego) "Sí" else "No", Icono.JUGAR,
                     "Al abrir un juego, la pantalla se tiñe del color de su consola, aparece su caja y se funde a negro antes de empezar. Si la apagas, el juego se abre al instante.",

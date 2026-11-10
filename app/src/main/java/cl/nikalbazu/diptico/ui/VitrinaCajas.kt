@@ -154,10 +154,11 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             val ancho = maxWidth.value
             val alto = maxHeight.value
             // 1. Fondo: el arte del juego, chiquito y estirado (suave como difuminado, sin el costo de un desenfoque en vivo).
-            Crossfade(juego, animationSpec = tween(if (Estilo.efectosCompletos) 450 else 0), label = "fondo-cajas") { j ->
+            // La portada del juego elegido, chiquita y estirada: queda desenfocada sin el costo de un desenfoque en vivo.
+            Crossfade(juego, animationSpec = tween(if (Estilo.efectosCompletos) 520 else 0), label = "fondo-cajas") { j ->
                 ArteJuego(
-                    j, preferirArte = true, maxLado = 72,
-                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.5f; scaleX = 1.1f; scaleY = 1.1f },
+                    j, preferirArte = false, maxLado = 40, imagen = "portada",
+                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.62f; scaleX = 1.15f; scaleY = 1.15f },
                 )
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to color.copy(alpha = 0.4f))))

@@ -76,6 +76,8 @@ data class InfoFrente(
     val logo: Uri?,
     val aspecto: Float,
     val ancho: Int,
+    /** Alto de la franja (0 = sin franja, si la persona la apagó). */
+    val franja: Float = franjaDe(estuche),
 )
 
 /** Cajas de plástico blanco (Dreamcast, Master System): el reverso y el lomo van claros. */
@@ -133,7 +135,7 @@ internal object FabricaCaras {
         val h = (w / f.aspecto).roundToInt().coerceIn(200, 1600)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = android.graphics.Canvas(bmp)
-        val franja = (h * franjaDe(f.estuche)).roundToInt()
+        val franja = (h * f.franja).roundToInt()
         val base = Color(f.color)
         val claro = estucheClaro(f.estuche)
         val fondoFranja = when {
@@ -400,11 +402,11 @@ fun Caja3D(
     val estuche = estucheDe(consola)
     val grosor = grosorDe(estuche)
     // La franja de la consola va arriba de la portada: la caja crece un poco para que la portada se vea entera.
-    val franja = franjaDe(estuche)
+    val franja = if (e.extra.bandaCaja) franjaDe(estuche) else 0f
     val aspecto = aspectoCaja(frenteReal, consola) * (1f - franja)
     val info = infoReverso(e, juego, consola, aspecto)
     val logo = e.consolasPropias[consola.id]?.logo?.let { Uri.parse(it) }
-    val datosFrente = InfoFrente(juego.titulo, consola.bonito, consola.color.toArgb(), estuche, juego.portada, logo, aspecto, if (detalle) 640 else 360)
+    val datosFrente = InfoFrente(juego.titulo, consola.bonito, consola.color.toArgb(), estuche, juego.portada, logo, aspecto, if (detalle) 640 else 360, franja)
     // Las caras reales (si aparecieron) o las armadas por Díptico.
     val reversoReal = if (detalle) rememberImagen(caras?.reverso?.let { Uri.parse(it) }, 900) else null
     val lomoReal = rememberImagen(caras?.lomo?.let { Uri.parse(it) }, 720)
