@@ -257,11 +257,21 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - `VentanaJuego` (opciones del juego): todo dentro del LazyColumn; `PanelFicha`: cabecera se esconde con indice > 0.
 - Novedades `cajas-exactas-2.0-33`. Capturas t327–t330.
 
-## Discord con el Social SDK (10 nov, en curso, rama `fix/discord-amigos`, SIN publicar)
+## Discord con el Social SDK (10 nov, rama `fix/discord-amigos`, publicado)
 - La vía HTTP (device flow) falla aun con Client Secret («No pude conectar» = 401 sin desafío en Android) y no da amigos.
   Decisión: usar el **Social SDK** (`discord_partner_sdk.aar`, C++ por NDK/Prefab, licencia NO permite subirlo al repo
   público → guardarlo como asset de un release borrador y que el CI lo baje). Auth con Public Client sin secreto,
   amigos con `GetRelationships`, presencia «Jugando a…».
 - Hecho en la rama: `estado/Social.kt` (`SocialDiscord`, `AmigoDiscord`), `ui/Amigos.kt` (`MarcaDiscord` dibujo propio,
   `BotonDiscord` en `EstadoChico` y `FranjaAccesos`, `PanelAmigos` desde el costado derecho, `extra.amigosEn`),
-  Teclas (B cierra). Capturas t331–t332. ESPERANDO el .zip del SDK que Nicolás baja del portal (Social SDK › Downloads).
+  Teclas (B cierra). Capturas t331–t332. Kit recibido de Nicolás el 10 nov.
+- Kit integrado (10 nov, commit 3298dc9): `app/src/main/cpp/puente_discord.cpp` (JNI, textos como bytes UTF-8, todo en el
+  hilo «discord» con `RunCallbacks` cada 200 ms) + `PuenteDiscord`/`SocialDiscord` en `estado/Social.kt` (`conexion`,
+  `conectarAqui` = `Client::Authorize`, `usarToken`, `renovar`, `jugando`/`sinJuego`). `BaseActivity.onResume` →
+  `SocialDiscord.alFrente` (setEngineActivity por reflexión; la 1.ª vez `Diptico.reconectarDiscord`). QR por HTTP sin
+  secreto (Public Client) con permisos del kit (`PERMISOS_KIT`); su token pasa al kit. `extra.discordPresencia`.
+  Solo se ve la actividad de amigos en Díptico (el kit no muestra otros juegos). Novedades `discord-amigos-2.0-34`, captura t333.
+- El .aar NO va al repo (ni cifrado: lo bloquea la sesión). CI lo baja del borrador privado `kit-discord`
+  (asset `discord_partner_sdk.aar`, job `apk` con contents: write); sin borrador compila sin kit (`BuildConfig.DISCORD_KIT`).
+  Nicolás ya creó el borrador (11:24). Portal: activar Public Client + Redirect `discord-1569677228269117580:/authorize/callback`.
+

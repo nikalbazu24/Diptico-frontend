@@ -135,6 +135,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 estilo = if (miPantalla == android.view.Display.DEFAULT_DISPLAY) e.extra.estiloBarraArriba else e.extra.estiloBarraAbajo)
             // Abriendo un juego: la pantalla de carga tapa todo (también la barra) en las dos pantallas.
             if (e.extra.carga != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PantallaCarga(e, miPantalla, rol == Rol.UNICA)
+            // La ventana de amigos de Discord, desde el costado de la pantalla donde se abrió.
+            PanelAmigos(e, miPantalla)
             // Iniciando sesión con Discord: el QR va encima de todo (en las dos pantallas, para encontrarlo donde mires).
             if (e.extra.discordLogin != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PanelDiscord(e)
         }

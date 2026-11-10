@@ -373,6 +373,8 @@ data class EstadoExtra(
     val caras: Map<String, CarasGuardadas> = emptyMap(),
     /** Las cajas llevan arriba la franja con el logo (o el nombre) de su consola, como las cajas de verdad. */
     val bandaCaja: Boolean = true,
+    /** La ventana de amigos de Discord está abierta en esta pantalla (id de la pantalla; -1 = cerrada). */
+    val amigosEn: Int = -1,
     /** Cuándo DIPPO ganó un logro (para que celebre unos segundos) y cuál. */
     val dippoCelebra: Long = 0L,
     val dippoLogro: String = "",
@@ -393,6 +395,8 @@ data class EstadoExtra(
     val discordUsuario: String = "",
     val discordAvatar: String = "",
     val discordLogin: LoginDiscord? = null,
+    /** Con el kit de Discord: tu perfil muestra «Jugando a…» con el juego que abres. */
+    val discordPresencia: Boolean = true,
 )
 
 /** El inicio de sesión con Discord en curso: el código y el QR para el teléfono, o el error. */
@@ -951,6 +955,7 @@ object Diptico {
                 discordTerminar = almacen.bool("discordTerminar", true),
                 discordApp = almacen.texto("discordApp", ""),
                 discordUsuario = almacen.texto("discordUsuario", ""),
+                discordPresencia = almacen.bool("discordPresencia", true),
                 discordAvatar = almacen.texto("discordAvatar", ""),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 caras = CarasGuardadas.leer(almacen.texto("carasCaja2")),
@@ -2239,6 +2244,7 @@ object Diptico {
         }
         if (e.turbo) turboAlJugar(juego, displayId)
         if (e.extra.discordEmpezar) avisarDiscord(juego, consola, inicio = true, sesionSeg = 0L)
+        presenciaDiscord(juego, consola, System.currentTimeMillis())
         actualizar {
             it.copy(navegacion = it.navegacion.copy(retomaVideo = "", retomaVideoClave = ""), sesion = Sesion(juego.clave, System.currentTimeMillis(), displayId, consola.dosPantallas), panel = Panel.NINGUNO, despierta = false, burbujaAbierta = false, burbujaAlerta = false)
         }
@@ -2314,16 +2320,26 @@ object Diptico {
         val x = e.extra
         if (x.discordUsuario.isNotBlank()) {
             add(Opcion("Tu cuenta de Discord", x.discordUsuario + " ✓", Icono.MUNDO,
-                "Díptico está conectado a tu cuenta. Cuando llegue el kit de Discord para apps, tu perfil mostrará «Jugando a…» con el juego que abras.",
-                grupo = "Discord") { avisar("Conectado como ${estado.value.extra.discordUsuario}") })
+                "Díptico está conectado a tu cuenta: tus amigos aparecen en el botón de Discord de la barra.",
+                grupo = "Discord") { abrirAmigos(0) })
+            if (SocialDiscord.disponible) add(Opcion("Mostrar «Jugando a…» en Discord", if (x.discordPresencia) "Sí" else "No", Icono.JUGAR,
+                "Tu perfil de Discord muestra el juego que abriste en Díptico, la consola y cuánto llevas.", grupo = "Discord") {
+                val v = !estado.value.extra.discordPresencia
+                almacen.guardarBool("discordPresencia", v); actualizar { it.copy(extra = it.extra.copy(discordPresencia = v)) }
+                if (!v) SocialDiscord.sinJuego()
+            })
             add(Opcion("Cerrar sesión de Discord", "", Icono.BORRAR, "Díptico olvida tu cuenta de Discord en esta consola.", grupo = "Discord") { salirDiscord() })
         } else {
             add(Opcion("Iniciar sesión con Discord", "Con un código QR", Icono.MUNDO,
                 "Aparece un código QR: escanéalo con tu teléfono y aprueba en Discord. O entra a discord.com/activate y escribe el código. Nunca escribes tu contraseña en la consola.",
                 grupo = "Discord") { iniciarDiscord() })
+            if (SocialDiscord.disponible) add(Opcion("Iniciar sesión en esta consola", "Abre Discord", Icono.MUNDO,
+                "Se abre la app de Discord (o el navegador) en esta pantalla: tocas «Autorizar» y vuelves solo a Díptico.",
+                grupo = "Discord") { conectarDiscordAqui() })
         }
+        // Ya no hace falta con «Public Client»; queda a mano solo para quien la había puesto.
         val conSecreto = almacen.texto("discordSecreto", "").isNotBlank()
-        add(Opcion("Clave secreta de la app (Client Secret)", if (conSecreto) "Puesta ✓" else "Falta", Icono.CLAVE,
+        if (conSecreto) add(Opcion("Clave secreta de la app (Client Secret)", if (conSecreto) "Puesta ✓" else "Falta", Icono.CLAVE,
             "Discord la pide para iniciar sesión desde una consola. En discord.com/developers › tu app › OAuth2 › Client Secret › Reset Secret, cópiala y pégala aquí (o mándala con el QR). Solo se guarda en tu consola.",
             grupo = "Discord") { abrirTexto("discord_secreto", "") })
         // Viene lista con la app; solo se muestra si falta o si alguien puso la suya.
@@ -2368,16 +2384,13 @@ object Diptico {
             avisar("Primero pega el Application ID de la app de Díptico en Discord")
             return
         }
+        // Con «Public Client» activado no hace falta la clave secreta; si alguien la puso, se usa.
         val secreto = almacen.texto("discordSecreto", "")
-        if (secreto.isBlank()) {
-            abrirTexto("discord_secreto", "")
-            avisar("Falta la clave secreta de la app de Discord (Client Secret)")
-            return
-        }
+        val permisos = if (SocialDiscord.disponible) SocialDiscord.permisos()?.let { "identify $it" } ?: DiscordCuenta.PERMISOS_KIT else DiscordCuenta.PERMISOS
         loginDiscordJob?.cancel()
         actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord())) }
         loginDiscordJob = scope.launch {
-            val (c, error) = DiscordCuenta.pedirCodigo(app, secreto)
+            val (c, error) = DiscordCuenta.pedirCodigo(app, secreto, permisos)
             if (c == null) { actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(error = error ?: "No pude pedir el código"))) }; return@launch }
             actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(c.usuario, c.url, c.urlCompleta, c.expira))) }
             while (System.currentTimeMillis() < c.expira) {
@@ -2388,6 +2401,7 @@ object Diptico {
                     almacen.guardarTexto("discordToken", token.acceso)
                     almacen.guardarTexto("discordRefresh", token.refresco)
                     almacen.guardarTexto("discordVence", token.vence.toString())
+                    SocialDiscord.usarToken(token.acceso)
                     val yo = DiscordCuenta.quienSoy(token.acceso)
                     val nombre = yo?.nombre ?: "tu cuenta"
                     almacen.guardarTexto("discordUsuario", nombre)
@@ -2402,16 +2416,79 @@ object Diptico {
         }
     }
 
+    /** Abre (o cierra, si ya estaba) la ventana de amigos de Discord en la pantalla [pantalla]. */
+    fun abrirAmigos(pantalla: Int) {
+        actualizar { it.copy(extra = it.extra.copy(amigosEn = if (it.extra.amigosEn == pantalla) -1 else pantalla)) }
+    }
+
+    fun cerrarAmigos() {
+        if (estado.value.extra.amigosEn >= 0) actualizar { it.copy(extra = it.extra.copy(amigosEn = -1)) }
+    }
+
     /** Cierra el panel del QR sin conectar. */
     fun cancelarDiscord() {
         loginDiscordJob?.cancel()
+        if (SocialDiscord.conexion.value == "conectando" && estado.value.extra.discordUsuario.isBlank()) SocialDiscord.cancelar()
         actualizar { it.copy(extra = it.extra.copy(discordLogin = null)) }
     }
 
     fun salirDiscord() {
+        SocialDiscord.salir()
         for (k in listOf("discordToken", "discordRefresh", "discordVence", "discordUsuario", "discordAvatar")) almacen.guardarTexto(k, "")
         actualizar { it.copy(extra = it.extra.copy(discordUsuario = "", discordAvatar = "")) }
         avisar("Cerraste la sesión de Discord")
+    }
+
+    /** Inicia sesión en esta misma consola con el kit: se abre Discord (o el navegador), tocas «Autorizar» y vuelves. */
+    fun conectarDiscordAqui() {
+        if (!SocialDiscord.disponible) { iniciarDiscord(); return }
+        loginDiscordJob?.cancel()
+        actualizar { it.copy(extra = it.extra.copy(discordLogin = null, amigosEn = -1)) }
+        avisar("Se abre Discord: toca «Autorizar» y vuelves solo")
+        SocialDiscord.conectarAqui()
+    }
+
+    /** Al abrir Díptico (o cuando el permiso vence): conecta el kit con la cuenta guardada, renovando si hace falta. */
+    fun reconectarDiscord(forzarRenovar: Boolean = false) {
+        val acceso = almacen.texto("discordToken", "")
+        val refresco = almacen.texto("discordRefresh", "")
+        if (acceso.isBlank() && refresco.isBlank()) return
+        val vence = almacen.texto("discordVence", "").toLongOrNull() ?: 0L
+        val pronto = vence - System.currentTimeMillis() < 24 * 60 * 60 * 1000L
+        if ((forzarRenovar || pronto || acceso.isBlank()) && refresco.isNotBlank()) SocialDiscord.renovar(refresco)
+        else if (acceso.isNotBlank()) SocialDiscord.usarToken(acceso)
+    }
+
+    /** El kit entregó un permiso nuevo (al autorizar o al renovar): se guarda para la próxima vez. */
+    fun tokenDiscord(acceso: String, refresco: String, venceSeg: Long) {
+        if (acceso.isBlank()) return
+        almacen.guardarTexto("discordToken", acceso)
+        if (refresco.isNotBlank()) almacen.guardarTexto("discordRefresh", refresco)
+        almacen.guardarTexto("discordVence", (System.currentTimeMillis() + (if (venceSeg > 0) venceSeg else 604800L) * 1000).toString())
+    }
+
+    /** El kit dice quién eres: nombre y foto para la barra y la ventana de amigos. */
+    fun cuentaDiscord(nombre: String, avatar: String) {
+        if (nombre.isBlank()) return
+        val antes = estado.value.extra.discordUsuario
+        almacen.guardarTexto("discordUsuario", nombre)
+        almacen.guardarTexto("discordAvatar", avatar)
+        actualizar { it.copy(extra = it.extra.copy(discordUsuario = nombre, discordAvatar = avatar, discordLogin = null)) }
+        if (antes.isBlank()) avisar("¡Listo! Conectado a Discord como $nombre")
+        // Si estabas jugando cuando se conectó, el «Jugando a…» aparece igual.
+        estado.value.sesion?.let { s -> estado.value.juegosPorClave[s.clave]?.let { j -> Consolas.porId(j.consolaId)?.let { c -> presenciaDiscord(j, c, s.inicio) } } }
+    }
+
+    fun errorDiscord(motivo: String) {
+        // Si el permiso guardado ya no sirve, se olvida para no reintentar en cada arranque.
+        if ("venció" in motivo) for (k in listOf("discordToken", "discordRefresh", "discordVence")) almacen.guardarTexto(k, "")
+        avisar(motivo)
+    }
+
+    /** «Jugando a…» en tu perfil de Discord (si lo tienes encendido). */
+    private fun presenciaDiscord(juego: Juego, consola: Consola, inicio: Long) {
+        if (!estado.value.extra.discordPresencia) return
+        SocialDiscord.jugando(juego.titulo, consola.bonito, null, inicio)
     }
 
     /** El último juego cuya sesión se cerró y cuándo: si se vuelve a abrir pronto, se intenta retomar la partida. */
@@ -2844,6 +2921,7 @@ object Diptico {
             sesiones = d.sesiones + if (duracion >= 15) 1 else 0,
         )
         almacen.guardarDatos(datos)
+        SocialDiscord.sinJuego()
         if (duracion >= 60 && estado.value.extra.discordTerminar) {
             val j = estado.value.juegosPorClave[s.clave]
             val c = j?.let { Consolas.porId(it.consolaId) }

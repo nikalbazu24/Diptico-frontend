@@ -115,6 +115,8 @@ abstract class BaseActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Diptico.revisarActualizacionAlVolver()
+        // El kit de Discord abre «Autorizar» sobre la pantalla que está al frente (y la primera vez reconecta tu cuenta).
+        cl.nikalbazu.diptico.estado.SocialDiscord.alFrente(this)
         Diptico.pedirCarpeta = { tipo ->
             try {
                 when (tipo) {

@@ -22,6 +22,9 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    # Escribir solo para poder leer el borrador privado con el kit de Discord (GitHub no deja leer borradores con menos).
+    permissions:
+      contents: write
     env:
       DIPTICO_REPORTES_URL: ${{ vars.DIPTICO_REPORTES_URL }}
       FIRMAR: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/153-liquid-glass') && (github.event_name == 'push' || inputs.preparar_firma) }}
@@ -38,6 +41,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+
+      # El kit de Discord no va en el repositorio (su licencia no deja publicarlo): Nicolás lo guarda como archivo
+      # de un borrador privado de GitHub («kit-discord»), que solo ven los dueños del repositorio y GitHub Actions.
+      - name: Traer el kit de Discord
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[] | select(.tag_name == "kit-discord") | .assets[] | select(.name == "discord_partner_sdk.aar") | .id][0] // empty' || true)
+          if [ -z "$id" ]; then echo "::warning::Sin el borrador kit-discord: Díptico se compila sin el kit de Discord."; exit 0; fi
+          mkdir -p app/discord
+          gh api -H "Accept: application/octet-stream" "repos/$GITHUB_REPOSITORY/releases/assets/$id" > app/discord/discord_partner_sdk.aar
+          ls -la app/discord
 
       - name: Probar perfiles, navegación y estabilidad
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --no-daemon

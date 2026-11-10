@@ -1247,6 +1247,28 @@ class Capturas {
     @Test fun t328_clave_secreta_discord() = foto("328_clave_secreta_discord", base().copy(vista = "mosaicos", panel = Panel.CLAVE, textoPara = "discord_secreto"), Rol.INFERIOR, mi = 1)
     @Test fun t329_estante_abajo() = foto("329_estante_abajo", base().copy(vista = "mosaicos", juegos = juegosVarios, juegoSel = "ps2/3"), Rol.INFERIOR, mi = 1)
     @Test fun t330_ficha_bajando() = foto("330_ficha_bajando", base().copy(vista = "mosaicos", panel = Panel.FICHA, fichaDe = "snes/1", pestanaFicha = 3, indice = 4), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t331_amigos_sin_conectar() = foto("331_amigos_sin_conectar", base().copy(vista = "mosaicos", extra = EstadoExtra(amigosEn = 1)), Rol.INFERIOR, mi = 1)
+    @Test fun t332_amigos_conectado() {
+        val s = cl.nikalbazu.diptico.estado.SocialDiscord
+        s.disponible = true
+        s.publicar(listOf(
+            cl.nikalbazu.diptico.estado.AmigoDiscord("1", "Cata", estado = "jugando", actividad = "Leyenda del Bosque", detalle = "Templo del agua", enDiptico = true),
+            cl.nikalbazu.diptico.estado.AmigoDiscord("2", "Benja", estado = "jugando", actividad = "Pixel Kart 64"),
+            cl.nikalbazu.diptico.estado.AmigoDiscord("3", "Javi", estado = "conectado"),
+            cl.nikalbazu.diptico.estado.AmigoDiscord("4", "Fran", estado = "ausente"),
+            cl.nikalbazu.diptico.estado.AmigoDiscord("5", "Tomi", estado = "desconectado"),
+        ))
+        try { foto("332_amigos_conectado", base().copy(vista = "mosaicos", extra = EstadoExtra(amigosEn = 0, discordUsuario = "Nico")), Rol.SUPERIOR, mi = 0) }
+        finally { s.disponible = false; s.publicar(emptyList()) }
+    }
+    @Test fun t333_discord_qr_con_kit() {
+        val s = cl.nikalbazu.diptico.estado.SocialDiscord
+        s.disponible = true
+        try { foto("333_discord_qr_con_kit", base().copy(vista = "mosaicos", extra = EstadoExtra(discordLogin = cl.nikalbazu.diptico.estado.LoginDiscord(
+            "ABCD-1234", "https://discord.com/activate", "https://discord.com/activate?user_code=ABCD1234", System.currentTimeMillis() + 300_000))), Rol.SUPERIOR) }
+        finally { s.disponible = false }
+    }
     @Test fun t307_carga_arriba() = foto("307_carga_arriba", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.SUPERIOR, avance = 600)
     @Config(qualifiers = ABAJO)
     @Test fun t308_carga_abajo() = foto("308_carga_abajo", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.INFERIOR, mi = 1, avance = 600)

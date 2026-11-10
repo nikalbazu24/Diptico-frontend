@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cajas-exactas-2.0-33"
-    const val NOMBRE = "Cajas exactas y estante en línea"
+    const val ID = "discord-amigos-2.0-34"
+    const val NOMBRE = "Discord con tus amigos"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -321,10 +321,15 @@ object Novedades {
             Pagina("Del estante al juego", "Las cajas de los costados muestran su lomo, como en un estante. Toca la del centro (o A) y se abre la pantalla de carga con la misma caja, y luego el juego.", Icono.JUGAR, 0xFF6B4EFF),
             Pagina("Más rápido", "Menos trabajo en cada cuadro: los difuminados, el zoom de las portadas y el logo al jugar ya no rearman la pantalla entera. Mientras juegas, las decoraciones se quedan quietas para no quitarle fluidez al juego.", Icono.CHISPA, 0xFF3BD18A),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("cajas-exactas-2.0-33", "Cajas exactas y estante en línea", listOf(
             Pagina("Cajas exactas", "Con TheGamesDB o ScreenScraper conectados, el frente y el reverso son el escaneo de la caja original. En DS y 3DS la franja del logo va al costado, como en sus cajas.", Icono.PORTADA, 0xFFFF9A6B),
             Pagina("Estante en línea", "Con la vitrina de cajas, abajo los juegos van en una sola fila en el mismo orden que arriba: avanzas uno a uno, sin saltos. El fondo es la portada desenfocada de verdad.", Icono.JUGAR, 0xFF6B4EFF),
             Pagina("Más espacio en las opciones", "En las opciones del juego y en su ficha, todo se desliza junto: lo de arriba se va al bajar y las opciones usan toda la ventana.", Icono.MENU, 0xFF3BD18A),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Conéctate en un toque", "Toca el botón de Discord de la barra: escanea el código con tu teléfono, o ábrelo en esta consola y toca «Autorizar». Sin claves ni contraseñas.", Icono.MUNDO, 0xFF5865F2),
+            Pagina("Tus amigos al lado", "El botón de Discord, arriba y abajo, muestra si estás conectado y cuántos amigos juegan. Tócalo y se desliza una ventana con quién está conectado y quién juega en Díptico.", Icono.CORAZON, 0xFF23A55A),
+            Pagina("Jugando a…", "Al abrir un juego, tu perfil de Discord muestra cuál es, en qué consola y cuánto llevas. Se apaga en Ajustes › Cuentas y conexiones.", Icono.JUGAR, 0xFFFF9A6B),
         )),
     )
 
