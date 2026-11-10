@@ -325,3 +325,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   costado, salto por paso, vaivén, giro al tocarlo; `retoDe(k)` (paso 2: L1/R1; paso 3: tocarlo) → celebra y avanza solo.
   `estado/RecorridoVivo.kt` (Teclas avisa L1/R1/X/Y/L2/R2/sticks durante el recorrido; `fraseDe` explica cada botón). Novedades `dippo-vivo-2.0-40`.
 
+
+## Temperatura y consejos (10 nov, rama `fix/temperatura`, Sonnet)
+- `estado/Termica.kt`: `Termica.leer(ctx)` (temperatura de batería, `PowerManager.currentThermalStatus`, `getThermalHeadroom`, y CPU/GPU desde
+  `/sys/class/thermal` si Android deja; todo sin permisos) → `Lectura` con `Nivel` FRESCA/TIBIA/CALIENTE/MUY_CALIENTE (manda el más alto);
+  `consejoUrgente(l)` (calor, enchufada, batería ≤15 %) y `consejoDeTurno(n)` (5 consejos de cuidado, rotan). `pruebaLectura` fuerza una lectura en capturas/tests.
+  No se puede cambiar el ventilador ni la potencia (permisos de sistema): solo informa y aconseja.
+- `EnJuego` (`ui/PantallaInferior.kt`): lee cada 15 s en IO; chip de grados en la línea fina (verde/amarillo/naranjo/rojo, colores fijos);
+  `ConsejoDippo` pone primero lo físico, luego lo de antes, y alterna con un consejo de cuidado cada ~40 s. Al pasar a «caliente» despierta la pantalla una vez.
+- Ajuste `extra.termica` (clave `termica`, G_DIPPO › «Temperatura y consejos al jugar»). Novedades `temperatura-2.0-41`. Capturas t348–t349, test `TermicaTest`.
+- Pendiente (Opus): historial de temperatura por juego, aviso en el inicio si la consola ya viene caliente, consejos según el juego (p. ej. 60 fps), y confirmar en la Thor qué sensores deja leer Android.

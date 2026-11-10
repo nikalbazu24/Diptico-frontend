@@ -1323,6 +1323,23 @@ class Capturas {
     @Test fun t346_recorrido_dippo_una() = foto("346_recorrido_dippo_una", base().copy(novedades = 2, recorrido = true), Rol.UNICA)
     @Config(qualifiers = ABAJO)
     @Test fun t347_recorrido_dippo_abajo() = foto("347_recorrido_dippo_abajo", base().copy(novedades = 1, recorrido = true), Rol.INFERIOR, mi = 1)
+    // Temperatura mientras juegas: caliente y enchufada, y muy caliente (la lectura se fuerza; en la captura no hay sensores).
+    @Config(qualifiers = ABAJO)
+    @Test fun t348_abajo_juego_caliente() {
+        val T = cl.nikalbazu.diptico.estado.Termica
+        T.pruebaLectura = T.Lectura(43f, 0f, 2, Float.NaN, true, 55, T.Nivel.CALIENTE)
+        try {
+            foto("348_abajo_juego_caliente", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
+        } finally { T.pruebaLectura = null }
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t349_abajo_juego_muy_caliente() {
+        val T = cl.nikalbazu.diptico.estado.Termica
+        T.pruebaLectura = T.Lectura(45f, 0f, 3, Float.NaN, false, 40, T.Nivel.MUY_CALIENTE)
+        try {
+            foto("349_abajo_juego_muy_caliente", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
+        } finally { T.pruebaLectura = null }
+    }
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)

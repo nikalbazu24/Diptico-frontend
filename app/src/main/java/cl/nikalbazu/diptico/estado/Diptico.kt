@@ -364,6 +364,8 @@ data class EstadoExtra(
     val dippoSaludo: Boolean = true,
     /** DIPPO cuenta trucos y funciones escondidas de vez en cuando. */
     val dippoDatos: Boolean = true,
+    /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
+    val termica: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
     val dippoColor: String = "hora",
     /** Cuando le hablas a DIPPO, te responde en voz alta. */
@@ -956,6 +958,7 @@ object Diptico {
                 dippoInicio = almacen.bool("dippoInicio", true),
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoDatos = almacen.bool("dippoDatos", true),
+                termica = almacen.bool("termica", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
                 cargaJuego = almacen.bool("cargaJuego", true),
@@ -4387,6 +4390,14 @@ object Diptico {
                     val v = !estado.value.extra.dippoDatos
                     almacen.guardarBool("dippoDatos", v)
                     actualizar { it.copy(extra = it.extra.copy(dippoDatos = v)) }
+                }
+                lista += Opcion(
+                    "Temperatura y consejos al jugar", if (e.extra.termica) "Sí" else "No", Icono.BATERIA,
+                    "Mientras juegas, la pantalla compañera muestra qué tan caliente está la consola (verde a rojo) y DIPPO te aconseja si se calienta, si queda poca batería o si llevas mucho rato. Solo informa: Android no deja controlar el ventilador.",
+                ) {
+                    val v = !estado.value.extra.termica
+                    almacen.guardarBool("termica", v)
+                    actualizar { it.copy(extra = it.extra.copy(termica = v)) }
                 }
                 lista += Opcion(
                     "Responder con voz", if (e.extra.dippoVoz) "Sí" else "No", Icono.MICROFONO,

@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "dippo-vivo-2.0-40"
-    const val NOMBRE = "DIPPO se mueve"
+    const val ID = "temperatura-2.0-41"
+    const val NOMBRE = "Temperatura y consejos"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -362,9 +362,13 @@ object Novedades {
             Pagina("DIPPO te muestra Díptico", "El recorrido de bienvenida ahora lo cuenta DIPPO, grande y al centro, con un globo que se escribe letra a letra. Puedes verlo de nuevo en Ajustes.", Icono.BISA, 0xFFFF7A59),
             Pagina("Trucos escondidos", "De vez en cuando DIPPO te cuenta en su globito una función que quizás no conocías. Se apaga en Ajustes › DIPPO › Trucos y datos escondidos.", Icono.CHISPA, 0xFF9B6BFF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("dippo-vivo-2.0-40", "DIPPO se mueve", listOf(
             Pagina("DIPPO cobra vida", "En el recorrido DIPPO entra saltando, mira hacia lo que explica, flota y da un saltito en cada paso. Tócalo y gira de sorpresa.", Icono.BISA, 0xFFFF7A59),
             Pagina("Pruébalo con DIPPO", "Algunos pasos te piden probar: aprieta L1 o R1, o toca a DIPPO. Él celebra y sigue solo. Si aprietas otros botones, te cuenta para qué sirven.", Icono.MANDO, 0xFF2EC4A6),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Cuánto se calienta", "Mientras juegas, la pantalla compañera muestra la temperatura de la consola: verde si está fresca, amarilla si está tibia y roja si se calienta mucho.", Icono.BATERIA, 0xFFFF7A59),
+            Pagina("Consejos de DIPPO", "DIPPO te avisa si se calienta o queda poca batería, y entre partidas te recuerda cuidar tus ojos y tus manos, y tomar agua. Se apaga en Ajustes › DIPPO.", Icono.BISA, 0xFF2EC4A6),
         )),
     )
 

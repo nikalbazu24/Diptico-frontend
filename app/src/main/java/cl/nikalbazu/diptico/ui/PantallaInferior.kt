@@ -440,6 +440,25 @@ private fun EnJuego(e: Estado) {
             delay(1000)
         }
     }
+    // Temperatura: se mide cada 15 s fuera del hilo principal. Si sube a «caliente», despierta la pantalla una vez para que se vea el consejo.
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var termica by remember { mutableStateOf(cl.nikalbazu.diptico.estado.Termica.pruebaLectura) }
+    LaunchedEffect(s.inicio, e.extra.termica) {
+        if (!e.extra.termica) { termica = null; return@LaunchedEffect }
+        var avisado = false
+        while (true) {
+            val l = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                try { cl.nikalbazu.diptico.estado.Termica.leer(ctx) } catch (_: Exception) { null }
+            }
+            termica = l
+            if (l != null) {
+                if (l.nivel >= cl.nikalbazu.diptico.estado.Termica.Nivel.CALIENTE) {
+                    if (!avisado) { avisado = true; Diptico.despertar() }
+                } else if (l.nivel <= cl.nikalbazu.diptico.estado.Termica.Nivel.TIBIA) avisado = false
+            }
+            delay(15_000)
+        }
+    }
     val seg = (ahora - s.inicio) / 1000
     val reloj = if (seg >= 3600) "${seg / 3600}:${((seg % 3600) / 60).toString().padStart(2, '0')}:${(seg % 60).toString().padStart(2, '0')}"
     else "${seg / 60}:${(seg % 60).toString().padStart(2, '0')}"
@@ -462,6 +481,18 @@ private fun EnJuego(e: Estado) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (c != null) { IconoConsola(c, 18f, Color(0xFF07060C)); Spacer(Modifier.width(esc.d(8))) }
                 Texto(juego?.titulo ?: "En partida", 14f, color = Color.White, lineas = 1, traducir = false, modifier = Modifier.weight(1f))
+                termica?.takeIf { it.grados > 0f }?.let { t ->
+                    val tono = when (t.nivel) {
+                        cl.nikalbazu.diptico.estado.Termica.Nivel.FRESCA -> Color(0xFF2EC4A6)
+                        cl.nikalbazu.diptico.estado.Termica.Nivel.TIBIA -> Color(0xFFFFC93C)
+                        cl.nikalbazu.diptico.estado.Termica.Nivel.CALIENTE -> Color(0xFFFF7A59)
+                        else -> Color(0xFFFF4D4D)
+                    }
+                    Box(Modifier.clip(RoundedCornerShape(50)).background(tono.copy(alpha = 0.18f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
+                        Texto("${"%.0f".format(t.grados)} °C", 13f, color = tono, traducir = false)
+                    }
+                    Spacer(Modifier.width(esc.d(6)))
+                }
                 Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.08f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
                     Texto("⏱ $reloj", 13f, color = tenue, traducir = false)
                 }
@@ -477,7 +508,7 @@ private fun EnJuego(e: Estado) {
                 // 2 · El logo del juego manda, como en Cocoon: grande y flotando suave en el espacio que queda.
                 LogoEnPartida(juego, color, e.despierta && e.experiencia.movimiento, Modifier.weight(1f).fillMaxWidth())
                 // 3 · DIPPO: un consejo según lo que pasa, y la pista a un toque.
-                ConsejoDippo(e, s, juego, (seg / 60).toInt())
+                ConsejoDippo(e, s, juego, (seg / 60).toInt(), termica, (seg / 40).toInt())
                 // 4 · Tu partida, compacta: el próximo paso en una línea y una barrita fina de cuánto te queda.
                 TuPartida(e, s.clave)
                 // 5 · La música, solo si suena algo.
@@ -529,15 +560,27 @@ private fun pedirPista(clave: String) {
 
 /** DIPPO con un consejo que cambia según lo que pasa (reintentos, mucho rato, sin nota…). */
 @Composable
-private fun ConsejoDippo(e: Estado, s: cl.nikalbazu.diptico.estado.Sesion, juego: cl.nikalbazu.diptico.data.Juego?, min: Int) {
+private fun ConsejoDippo(
+    e: Estado, s: cl.nikalbazu.diptico.estado.Sesion, juego: cl.nikalbazu.diptico.data.Juego?, min: Int,
+    termica: cl.nikalbazu.diptico.estado.Termica.Lectura?, turno: Int,
+) {
     val esc = LocalEscala.current
     val reintentos = remember(s.clave, min) { cl.nikalbazu.diptico.estado.Asistente.reintentos(s.clave) }
     val paso = e.datos[s.clave]?.paso.orEmpty()
+    // Lo físico manda: calor y batería baja van antes que cualquier otro consejo.
+    val fisico = if (e.extra.termica) cl.nikalbazu.diptico.estado.Termica.consejoUrgente(termica) else null
     val (texto, cara) = when {
+        fisico != null -> fisico.texto to when (fisico.animo) {
+            cl.nikalbazu.diptico.estado.Termica.Animo.PREOCUPADO -> CaraDippo.PREOCUPADO
+            cl.nikalbazu.diptico.estado.Termica.Animo.PENSANDO -> CaraDippo.PENSANDO
+            cl.nikalbazu.diptico.estado.Termica.Animo.CONTENTO -> CaraDippo.FELIZ
+        }
         reintentos >= 2 -> "Llevas $reintentos intentos seguidos. ¿Te tiro una pista sin spoilers?" to CaraDippo.PREOCUPADO
         e.temporizadorFin > 0L -> "Te aviso para la pausa en ${((e.temporizadorFin - System.currentTimeMillis()).coerceAtLeast(0L) + 59_999) / 60_000} min." to null
         min >= 90 -> "Llevas ${min / 60} h ${min % 60} min. ¿Una pausa pronto? Estírate un poquito." to CaraDippo.PENSANDO
         paso.isBlank() -> "¿Anotamos dónde vas? Toca «Mi paso» y la próxima vez te lo recuerdo." to null
+        // Sin nada urgente, DIPPO va turnando: el de siempre y, si la temperatura está activa, un consejo de cuidado cada ~40 s.
+        e.extra.termica && turno % 2 == 1 -> cl.nikalbazu.diptico.estado.Termica.consejoDeTurno(turno / 2) to CaraDippo.FELIZ
         else -> "¡Aquí estoy! Si te atascas en ${juego?.titulo ?: "el juego"}, toca Pista." to CaraDippo.FELIZ
     }
     Row(
