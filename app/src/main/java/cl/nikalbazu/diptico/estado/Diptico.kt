@@ -4399,6 +4399,10 @@ object Diptico {
                     almacen.guardarBool("termica", v)
                     actualizar { it.copy(extra = it.extra.copy(termica = v)) }
                 }
+                if (e.extra.termica) lista += Opcion(
+                    "Sensores de temperatura", try { Termica.resumenSensores(Termica.leer(app)) } catch (_: Exception) { "Sin datos" }, Icono.INFO,
+                    "Qué temperaturas deja leer este equipo. La batería casi siempre se ve; el procesador, solo si Android lo permite. Con lo que haya, DIPPO te avisa.",
+                ) {}
                 lista += Opcion(
                     "Responder con voz", if (e.extra.dippoVoz) "Sí" else "No", Icono.MICROFONO,
                     "Cuando le hablas a DIPPO (mantenlo apretado o toca Hablar), te responde en voz alta. Así no tienes que escribir ni leer.",
@@ -6474,8 +6478,20 @@ object Diptico {
     private fun vigilarBateria() {
         scope.launch {
             var avisado = false
+            var calorAvisado = false
             while (true) {
                 delay(60_000)
+                // Calor fuera de partida: si ya viene caliente (por cargar o por el último juego), un aviso hasta que se enfríe.
+                if (estado.value.extra.termica && estado.value.sesion == null) {
+                    val t = try { withContext(Dispatchers.IO) { Termica.leer(app) } } catch (_: Exception) { null }
+                    if (t != null) {
+                        if (t.nivel <= Termica.Nivel.TIBIA) calorAvisado = false
+                        else if (!calorAvisado && estado.value.aLaVista > 0) {
+                            calorAvisado = true
+                            avisar("La consola está caliente: déjala descansar un ratito antes de jugar algo pesado")
+                        }
+                    }
+                }
                 val b = try { infoBateria() } catch (_: Exception) { continue }
                 val cargando = b.estado == "Cargando" || b.estado == "Llena"
                 if (cargando || b.nivel > 20) avisado = false

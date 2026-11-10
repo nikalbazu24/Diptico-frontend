@@ -369,6 +369,7 @@ object Novedades {
         Version(ID, NOMBRE, listOf(
             Pagina("Cuánto se calienta", "Mientras juegas, la pantalla compañera muestra la temperatura de la consola: verde si está fresca, amarilla si está tibia y roja si se calienta mucho.", Icono.BATERIA, 0xFFFF7A59),
             Pagina("Consejos de DIPPO", "DIPPO te avisa si se calienta o queda poca batería, y entre partidas te recuerda cuidar tus ojos y tus manos, y tomar agua. Se apaga en Ajustes › DIPPO.", Icono.BISA, 0xFF2EC4A6),
+            Pagina("DIPPO conoce tus juegos", "Si un juego suele calentarla, DIPPO te avisa al empezar, y con emuladores pesados te dice qué bajar. Si la consola ya viene caliente, te avisa en el inicio.", Icono.MANDO, 0xFFFFC93C),
         )),
     )
 

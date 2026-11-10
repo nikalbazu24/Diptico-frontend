@@ -452,6 +452,7 @@ private fun EnJuego(e: Estado) {
             }
             termica = l
             if (l != null) {
+                cl.nikalbazu.diptico.estado.Termica.registrar(s.clave, l)
                 if (l.nivel >= cl.nikalbazu.diptico.estado.Termica.Nivel.CALIENTE) {
                     if (!avisado) { avisado = true; Diptico.despertar() }
                 } else if (l.nivel <= cl.nikalbazu.diptico.estado.Termica.Nivel.TIBIA) avisado = false
@@ -568,7 +569,11 @@ private fun ConsejoDippo(
     val reintentos = remember(s.clave, min) { cl.nikalbazu.diptico.estado.Asistente.reintentos(s.clave) }
     val paso = e.datos[s.clave]?.paso.orEmpty()
     // Lo físico manda: calor y batería baja van antes que cualquier otro consejo.
-    val fisico = if (e.extra.termica) cl.nikalbazu.diptico.estado.Termica.consejoUrgente(termica) else null
+    // Lo físico manda; si no hay nada urgente y la partida recién empieza, DIPPO previene si este juego suele calentarla.
+    val T = cl.nikalbazu.diptico.estado.Termica
+    val exigente = T.exigente(juego?.consolaId)
+    val fisico = if (!e.extra.termica) null
+    else T.consejoUrgente(termica, exigente) ?: if (min < 3) remember(s.clave) { T.consejoAlEmpezar(s.clave, juego?.consolaId) } else null
     val (texto, cara) = when {
         fisico != null -> fisico.texto to when (fisico.animo) {
             cl.nikalbazu.diptico.estado.Termica.Animo.PREOCUPADO -> CaraDippo.PREOCUPADO

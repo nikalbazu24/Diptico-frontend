@@ -334,4 +334,4 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - `EnJuego` (`ui/PantallaInferior.kt`): lee cada 15 s en IO; chip de grados en la línea fina (verde/amarillo/naranjo/rojo, colores fijos);
   `ConsejoDippo` pone primero lo físico, luego lo de antes, y alterna con un consejo de cuidado cada ~40 s. Al pasar a «caliente» despierta la pantalla una vez.
 - Ajuste `extra.termica` (clave `termica`, G_DIPPO › «Temperatura y consejos al jugar»). Novedades `temperatura-2.0-41`. Capturas t348–t349, test `TermicaTest`.
-- Pendiente (Opus): historial de temperatura por juego, aviso en el inicio si la consola ya viene caliente, consejos según el juego (p. ej. 60 fps), y confirmar en la Thor qué sensores deja leer Android.
+- Opus (misma rama): `Termica.registrar` guarda el pico por juego (almacén `termicaPicos`), `consejoAlEmpezar` (min < 3, pico ≥ 41 °C), `exigente(consolaId)` cambia el consejo de calor (bajar resolución interna), aviso en el inicio si ya viene caliente (`vigilarBateria`), opción «Sensores de temperatura» (`resumenSensores`) para ver qué deja leer la Thor.

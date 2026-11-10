@@ -126,11 +126,13 @@ object Termica {
      * El consejo que toca ahora, o null si no hay nada de calor ni de batería que decir (ahí manda el de siempre).
      * Solo habla de lo físico; los avisos de reintentos y descansos los pone la pantalla.
      */
-    fun consejoUrgente(l: Lectura?): Consejo? {
+    fun consejoUrgente(l: Lectura?, exigente: Boolean = false): Consejo? {
         if (l == null) return null
         return when {
             l.nivel == Nivel.MUY_CALIENTE ->
                 Consejo("Está muy caliente. Haz una pausa, baja el brillo y sácale la funda para que respire.", Animo.PREOCUPADO)
+            l.nivel == Nivel.CALIENTE && exigente ->
+                Consejo("Este emulador exige harto. Baja la resolución interna a 1x o 2x en sus ajustes y se va a enfriar.", Animo.PENSANDO)
             l.nivel == Nivel.CALIENTE && l.cargando ->
                 Consejo("Jugar enchufado la calienta más. Desenchúfala un rato o apóyala en un lugar ventilado.", Animo.PENSANDO)
             l.nivel == Nivel.CALIENTE ->
@@ -143,4 +145,63 @@ object Termica {
 
     /** Un consejo tranquilo del turno, que cambia cada vez que sube [bloque]. */
     fun consejoDeTurno(bloque: Int): String = TURNO[Math.floorMod(bloque, TURNO.size)]
+
+    // ---------- Según el juego ----------
+
+    /** Consolas cuyos emuladores le exigen harto al procesador (las que más calientan). */
+    private val EXIGENTES = setOf("switch", "ps3", "ps2", "wiiu", "xbox", "xbox360", "psvita", "n3ds", "gc", "wii", "dreamcast", "saturn")
+
+    fun exigente(consolaId: String?): Boolean = consolaId != null && consolaId.lowercase() in EXIGENTES
+
+    /** Grados desde los que un juego queda marcado como «suele calentarla». */
+    const val CALIENTA = 41f
+
+    /** El punto más caliente al que llegó cada juego (clave → °C), guardado entre partidas. */
+    private var picos: MutableMap<String, Float>? = null
+
+    private fun cargarPicos(): MutableMap<String, Float> {
+        picos?.let { return it }
+        val m = HashMap<String, Float>()
+        try {
+            Diptico.almacen.texto("termicaPicos").split('\n').forEach { linea ->
+                val i = linea.lastIndexOf('\t')
+                if (i > 0) linea.substring(i + 1).toFloatOrNull()?.let { m[linea.substring(0, i)] = it }
+            }
+        } catch (_: Exception) {
+        }
+        picos = m
+        return m
+    }
+
+    /** Lo más caliente que llegó este juego (0 si nunca se midió). */
+    fun picoDe(clave: String): Float = cargarPicos()[clave] ?: 0f
+
+    /** Anota la lectura de la partida: si es la más caliente de ese juego, se guarda. */
+    fun registrar(clave: String, l: Lectura) {
+        val g = l.grados
+        if (g <= 0f) return
+        val m = cargarPicos()
+        if (g <= (m[clave] ?: 0f) + 0.4f) return
+        m[clave] = g
+        try {
+            Diptico.almacen.guardarTexto("termicaPicos", m.entries.sortedByDescending { it.value }.take(300).joinToString("\n") { "${it.key}\t${"%.1f".format(java.util.Locale.US, it.value)}" })
+        } catch (_: Exception) {
+        }
+    }
+
+    /** Al empezar la partida: si el juego suele calentarla, un consejo para prevenir (sin esperar a que se caliente). */
+    fun consejoAlEmpezar(clave: String, consolaId: String?): Consejo? {
+        if (picoDe(clave) < CALIENTA) return null
+        return if (exigente(consolaId))
+            Consejo("Este juego suele calentarla. Juega sin la funda y, si puedes, baja la resolución interna del emulador.", Animo.PENSANDO)
+        else Consejo("Este juego suele calentarla. Juega sin la funda y en un lugar ventilado.", Animo.PENSANDO)
+    }
+
+    /** Resumen para Ajustes: qué sensores deja leer este equipo (sirve para saber si la lectura es completa). */
+    fun resumenSensores(l: Lectura): String = buildString {
+        append(if (l.bateria > 0f) "Batería ${"%.0f".format(l.bateria)} °C" else "Batería sin dato")
+        append(" · ")
+        append(if (l.procesador > 0f) "Procesador ${"%.0f".format(l.procesador)} °C" else "Procesador bloqueado")
+        if (l.estadoSistema >= 0) append(" · Sistema ${l.estadoSistema}/6")
+    }
 }

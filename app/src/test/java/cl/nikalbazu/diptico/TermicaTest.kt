@@ -48,4 +48,19 @@ class TermicaTest {
         // Un turno negativo tampoco debe romper.
         assertEquals(Termica.consejoDeTurno(-1), Termica.consejoDeTurno(4))
     }
+
+    @Test fun conEmuladorPesadoDiceQueBajar() {
+        assertEquals(true, Termica.exigente("ps2"))
+        assertEquals(true, Termica.exigente("Switch"))
+        assertEquals(false, Termica.exigente("snes"))
+        assertEquals(false, Termica.exigente(null))
+        val c = Termica.consejoUrgente(lectura(Nivel.CALIENTE), exigente = true)!!
+        assertEquals(true, c.texto.contains("resolución interna"))
+        // Muy caliente sigue mandando aunque sea un emulador pesado.
+        assertEquals(Animo.PREOCUPADO, Termica.consejoUrgente(lectura(Nivel.MUY_CALIENTE), exigente = true)!!.animo)
+    }
+
+    @Test fun elResumenDiceQueSensorEstaBloqueado() {
+        assertEquals("Batería 40 °C · Procesador bloqueado · Sistema 0/6", Termica.resumenSensores(lectura(Nivel.FRESCA)))
+    }
 }
