@@ -133,6 +133,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             }
             if (barra && !(e.relojGrande && rol != Rol.INFERIOR)) BarraSistema(e, Modifier.align(Alignment.TopCenter),
                 estilo = if (miPantalla == android.view.Display.DEFAULT_DISPLAY) e.extra.estiloBarraArriba else e.extra.estiloBarraAbajo)
+            // Abriendo un juego: la pantalla de carga tapa todo (también la barra) en las dos pantallas.
+            if (e.extra.carga != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PantallaCarga(e, miPantalla, rol == Rol.UNICA)
         }
     }
 }

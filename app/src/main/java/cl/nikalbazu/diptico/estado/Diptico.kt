@@ -371,7 +371,17 @@ data class EstadoExtra(
     /** Cuándo DIPPO ganó un logro (para que celebre unos segundos) y cuál. */
     val dippoCelebra: Long = 0L,
     val dippoLogro: String = "",
+    /** Pantalla de carga al abrir un juego: el color de la consola, la caja y un fundido a negro. */
+    val cargaJuego: Boolean = true,
+    /** El juego que se está abriendo con la pantalla de carga (null = ninguno). */
+    val carga: CargaJuego? = null,
 )
+
+/** Un juego que se está abriendo: cuál, en qué pantalla y desde cuándo (para la animación de carga). */
+data class CargaJuego(val clave: String, val displayId: Int, val inicio: Long)
+
+/** Cuánto dura la pantalla de carga antes de abrir el juego (el fundido a negro termina justo ahí). */
+const val CARGA_MS = 1250L
 
 val Estado.estiloBarraArriba get() = extra.estiloBarraArriba
 val Estado.estiloBarraAbajo get() = extra.estiloBarraAbajo
@@ -904,6 +914,7 @@ object Diptico {
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
+                cargaJuego = almacen.bool("cargaJuego", true),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
@@ -2139,9 +2150,11 @@ object Diptico {
         }
     }
 
-    private fun jugarComprobado(pantalla: String?, conLupaLista: Boolean, conRetomaLista: Boolean) {
+    private fun jugarComprobado(pantalla: String?, conLupaLista: Boolean, conRetomaLista: Boolean, conCarga: Boolean = false) {
         val e = estado.value
         val juego = e.seleccionado ?: return
+        // Durante la carga cambiaste de juego o la cancelaste: no se abre nada.
+        if (conCarga && e.extra.carga?.clave != juego.clave) return
         val consola = Consolas.porId(juego.consolaId) ?: return
         // El juego ya está abierto: volver a la partida, nunca reiniciarla (muchos emuladores se abren «limpiando la tarea»).
         e.sesion?.takeIf { it.clave == juego.clave }?.let { s -> volverALaPartida(juego, consola, s); return }
@@ -2159,6 +2172,15 @@ object Diptico {
             pedirPermisoRetoma(true, pantalla); return
         }
         val displayId = if (destino == "abajo" && inferior != null) inferior.displayId else Display.DEFAULT_DISPLAY
+        // Pantalla de carga: el color de la consola y la caja; el juego se abre recién cuando termina el fundido a negro.
+        if (!conCarga && e.extra.cargaJuego && e.extra.animaciones != "apagadas" && e.configurado) {
+            actualizar { it.copy(extra = it.extra.copy(carga = CargaJuego(juego.clave, displayId, System.currentTimeMillis())), panel = Panel.NINGUNO) }
+            scope.launch {
+                delay(CARGA_MS)
+                if (estado.value.extra.carga?.clave == juego.clave) jugarComprobado(pantalla, conLupaLista, conRetomaLista, conCarga = true)
+            }
+            return
+        }
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, displayId)
         else {
             val archivo = archivoParaJugar(juego, e)
@@ -2167,6 +2189,7 @@ object Diptico {
             val reciente = ultimaPartida?.let { (clave, cuando) -> clave == juego.clave && System.currentTimeMillis() - cuando < RETOMAR_MS } == true
             Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(archivo), retomar = reciente)
         }
+        if (conCarga) terminarCarga(juego.clave, if (error != null) 0L else 1200L)
         if (error != null) {
             if (conLupaLista) cl.nikalbazu.diptico.lupa.LupaServicio.detener(app)
             if (conRetomaLista) cl.nikalbazu.diptico.retoma.RetomaServicio.detener(app)
@@ -2188,6 +2211,20 @@ object Diptico {
             cl.nikalbazu.diptico.bisa.BurbujaBisa.acompanar(app, juego.titulo, atascado, sinPantallaLibre)
             if (atascado && !sinPantallaLibre) prepararAyuda()
         }
+    }
+
+    /** Quita la pantalla de carga de [clave] después de [espera] ms (el juego ya la tapó). */
+    private fun terminarCarga(clave: String, espera: Long) {
+        scope.launch {
+            if (espera > 0) delay(espera)
+            if (estado.value.extra.carga?.clave == clave) actualizar { it.copy(extra = it.extra.copy(carga = null)) }
+        }
+    }
+
+    /** B durante la carga: no se abre el juego. */
+    fun cancelarCarga() {
+        if (estado.value.extra.carga == null) return
+        actualizar { it.copy(extra = it.extra.copy(carga = null)) }
     }
 
     /** El último juego cuya sesión se cerró y cuándo: si se vuelve a abrir pronto, se intenta retomar la partida. */
@@ -3991,6 +4028,15 @@ object Diptico {
                     listOf("apagadas", "suaves", "normales", "intensas"), listOf("Apagadas", "Suaves", "Normales", "Intensas"),
                     e.extra.animaciones, grupo = "Movimiento",
                 ) { v -> almacen.guardarTexto("animaciones", v); actualizar { it.copy(extra = it.extra.copy(animaciones = v)) } }
+                lista += Opcion(
+                    "Pantalla de carga", if (e.extra.cargaJuego) "Sí" else "No", Icono.JUGAR,
+                    "Al abrir un juego, la pantalla se tiñe del color de su consola, aparece su caja y se funde a negro antes de empezar. Si la apagas, el juego se abre al instante.",
+                    grupo = "Movimiento",
+                ) {
+                    val v = !estado.value.extra.cargaJuego
+                    almacen.guardarBool("cargaJuego", v)
+                    actualizar { it.copy(extra = it.extra.copy(cargaJuego = v)) }
+                }
                 lista += Opcion("Modo", if (e.oscuro) "Oscuro" else "Claro", Icono.TEMA, "El oscuro ahorra batería en pantallas OLED. Algunos temas usan siempre el suyo.") { alternarTema() }
                 lista += Opcion(
                     "Fluidez", nombreFluidez(e.fluidez) + if (e.fluidez == "auto") " (${nombreFluidez(e.fluidezDetectada).lowercase()})" else "", Icono.CHISPA,
