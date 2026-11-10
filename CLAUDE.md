@@ -321,4 +321,7 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Trucos escondidos: `estado/DatosDippo.kt` (24), `Diptico.siguienteDatoDippo()` (almacén `dippoDato`, rota), fase 4 del globito en
   `DippoInicio` (a los 45 s y luego cada 4 min, 11 s visible, color Uva). Ajuste `extra.dippoDatos` (clave `dippoDatos`) en G_DIPPO.
 - Novedades `dippo-guia-2.0-39`. Capturas t346–t347.
+- Beta.317 publicó lo anterior. DIPPO vivo (rama `fix/dippo-vivo`): `poseDe(k)` (se corre/inclina hacia lo que explica), entrada desde el
+  costado, salto por paso, vaivén, giro al tocarlo; `retoDe(k)` (paso 2: L1/R1; paso 3: tocarlo) → celebra y avanza solo.
+  `estado/RecorridoVivo.kt` (Teclas avisa L1/R1/X/Y/L2/R2/sticks durante el recorrido; `fraseDe` explica cada botón). Novedades `dippo-vivo-2.0-40`.
 
