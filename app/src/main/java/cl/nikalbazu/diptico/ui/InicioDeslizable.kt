@@ -24,6 +24,10 @@ import cl.nikalbazu.diptico.estado.Estado
 import kotlin.math.absoluteValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 
 /**
  * La pantalla de arriba como dos páginas seguidas: la portada del juego y, deslizando hacia el lado, tus widgets.
@@ -48,8 +52,9 @@ fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composa
     // Red de seguridad: si algo de la página se queda con el arrastre, un deslizamiento largo igual cambia de página.
     val respaldo = Modifier.pointerInput(e.editandoWidgets) {
         if (e.editandoWidgets) return@pointerInput
-        androidx.compose.foundation.gestures.awaitEachGesture {
-            val inicio = androidx.compose.foundation.gestures.awaitFirstDown(requireUnconsumed = false, pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+        val umbral = 110.dp.toPx()
+        awaitEachGesture {
+            val inicio = awaitFirstDown(requireUnconsumed = false, pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
             var ultimo = inicio.position
             while (true) {
                 val ev = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Final)
@@ -57,7 +62,7 @@ fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composa
                 if (c.pressed) { ultimo = c.position; continue }
                 val dx = ultimo.x - inicio.position.x
                 val dy = kotlin.math.abs(ultimo.y - inicio.position.y)
-                if (!pager.isScrollInProgress && kotlin.math.abs(dx) > 110.dp.toPx() && dy < kotlin.math.abs(dx) / 2) {
+                if (!pager.isScrollInProgress && kotlin.math.abs(dx) > umbral && dy < kotlin.math.abs(dx) / 2) {
                     val destino = if (dx < 0) 1 else 0
                     if (pager.currentPage != destino) alcance.launch { pager.animateScrollToPage(destino) }
                 }
