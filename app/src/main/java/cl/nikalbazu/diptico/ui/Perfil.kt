@@ -134,25 +134,26 @@ private fun ContenidoPerfil(e: Estado) {
     val r = remember(e.datos, e.juegos, pf, e.consolasConJuegos) { Diptico.resumenPerfil(e) }
     val nombre = e.nombre.ifBlank { pf.apodo.ifBlank { "Jugador" } }
     val angosta = esc.angosta
-    Column(Modifier.fillMaxSize().padding(esc.d(if (angosta) 16 else 28))) {
+    Column(Modifier.fillMaxSize().padding(esc.d(if (angosta) 16 else 22))) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
             if (angosta) {
+                // Pantalla casi cuadrada: arriba tu foto y tu nombre, y abajo las pastillas y los números (sin favoritos, para que quepa todo).
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                    FotoPerfil(pf, 92f)
+                    FotoPerfil(pf, 78f)
                     Column(Modifier.weight(1f)) { Encabezado(e, nombre, 26f) }
                 }
-                Spacer(Modifier.height(esc.d(10)))
+                Spacer(Modifier.height(esc.d(8)))
                 Fichas(e, r, color)
-                Spacer(Modifier.height(esc.d(12)))
-                Numeros(e, r, color)
+                Spacer(Modifier.height(esc.d(10)))
+                Numeros(e, r, color, conFavoritos = false)
             } else {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(30))) {
-                    Column(Modifier.width(esc.d(210)), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                        FotoPerfil(pf, 160f)
-                        Encabezado(e, nombre, 36f)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(26))) {
+                    Column(Modifier.width(esc.d(196)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                        FotoPerfil(pf, 104f)
+                        Encabezado(e, nombre, 30f)
                         Fichas(e, r, color)
                     }
-                    Column(Modifier.weight(1f)) { Numeros(e, r, color) }
+                    Column(Modifier.weight(1f)) { Numeros(e, r, color, conFavoritos = true) }
                 }
             }
         }
@@ -160,12 +161,12 @@ private fun ContenidoPerfil(e: Estado) {
         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
             Box(
                 Modifier.clip(RoundedCornerShape(50)).background(color).clickable { Diptico.editarPerfil() }
-                    .padding(horizontal = esc.d(18), vertical = esc.d(9)),
-            ) { Texto("A · Editar perfil", 14f, color = if (color.luminance2() > 0.55f) Color(0xFF14101A) else Color.White, lineas = 1) }
+                    .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+            ) { Texto("A · Editar perfil", 13.5f, color = if (color.luminance2() > 0.55f) Color(0xFF14101A) else Color.White, lineas = 1) }
             Box(
                 Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).clickable { Diptico.cerrarPerfil() }
-                    .padding(horizontal = esc.d(18), vertical = esc.d(9)),
-            ) { Texto("B · Cerrar", 14f, color = TextoClaro, lineas = 1) }
+                    .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+            ) { Texto("B · Cerrar", 13.5f, color = TextoClaro, lineas = 1) }
         }
     }
 }
@@ -190,11 +191,11 @@ private fun Encabezado(e: Estado, nombre: String, tam: Float) {
 private fun Fichas(e: Estado, r: ResumenPerfil, color: Color) {
     val esc = LocalEscala.current
     val pf = e.extra.perfil
-    Column(verticalArrangement = Arrangement.spacedBy(esc.d(7))) {
-        if (pf.cumpleHoy()) Pastilla(color.copy(alpha = 0.3f), color) { Texto("🎂 ¡Hoy es tu cumpleaños${pf.edad()?.let { " · $it" } ?: ""}!", 13.5f, color = TextoClaro, lineas = 2, traducir = false) }
-        if (e.extra.discordUsuario.isNotBlank()) Pastilla(Color(0x385865F2), Color(0xFF23A55A)) { Texto("Discord: ${e.extra.discordUsuario}", 13.5f, color = TextoClaro, lineas = 1, traducir = false) }
-        if (r.consola.isNotBlank()) Pastilla(Color.White.copy(alpha = 0.08f), color) { Texto("Consola favorita: ${r.consola}", 13.5f, color = TextoClaro, lineas = 1, traducir = false) }
-        pf.edad()?.takeIf { !pf.cumpleHoy() }?.let { Pastilla(Color.White.copy(alpha = 0.08f), color) { Texto("$it años", 13.5f, color = TextoClaro, lineas = 1, traducir = false) } }
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+        if (pf.cumpleHoy()) Pastilla(color.copy(alpha = 0.3f), color) { Texto("🎂 ¡Hoy es tu cumpleaños${pf.edad()?.let { " · $it" } ?: ""}!", 12.5f, color = TextoClaro, lineas = 2, traducir = false) }
+        if (e.extra.discordUsuario.isNotBlank()) Pastilla(Color(0x385865F2), Color(0xFF23A55A)) { Texto("Discord: ${e.extra.discordUsuario}", 12.5f, color = TextoClaro, lineas = 1, traducir = false) }
+        if (r.consola.isNotBlank()) Pastilla(Color.White.copy(alpha = 0.08f), color) { Texto("Consola favorita: ${r.consola}", 12.5f, color = TextoClaro, lineas = 1, traducir = false) }
+        pf.edad()?.takeIf { !pf.cumpleHoy() }?.let { Pastilla(Color.White.copy(alpha = 0.08f), color) { Texto("$it años", 12.5f, color = TextoClaro, lineas = 1, traducir = false) } }
     }
 }
 
@@ -202,37 +203,37 @@ private fun Fichas(e: Estado, r: ResumenPerfil, color: Color) {
 private fun Pastilla(fondo: Color, punto: Color, contenido: @Composable () -> Unit) {
     val esc = LocalEscala.current
     Row(
-        Modifier.clip(RoundedCornerShape(50)).background(fondo).padding(horizontal = esc.d(12), vertical = esc.d(7)),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8)),
+        Modifier.clip(RoundedCornerShape(50)).background(fondo).padding(horizontal = esc.d(11), vertical = esc.d(4)),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(7)),
     ) {
-        Box(Modifier.size(esc.d(9)).clip(CircleShape).background(punto))
+        Box(Modifier.size(esc.d(8)).clip(CircleShape).background(punto))
         contenido()
     }
 }
 
 /** Tus números (horas, juego más jugado, racha, logros) y tus juegos favoritos. */
 @Composable
-private fun Numeros(e: Estado, r: ResumenPerfil, color: Color) {
+private fun Numeros(e: Estado, r: ResumenPerfil, color: Color, conFavoritos: Boolean) {
     val esc = LocalEscala.current
     val pf = e.extra.perfil
-    Column(verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
-        Texto("TU ACTIVIDAD", 12.5f, color = TextoSuave, espaciado = 1.6f, lineas = 1)
-        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        Texto("TU ACTIVIDAD", 12f, color = TextoSuave, espaciado = 1.6f, lineas = 1)
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
             Dato("Horas jugadas", if (pf.mostrarHoras) horas(r.segundos) else "Oculto", if (pf.mostrarHoras) "${r.juegosJugados} juegos distintos" else "Se cambia en tu perfil", color, Modifier.weight(1f))
             Dato("Más jugado", r.masJugado?.titulo ?: "Aún nada", r.masJugado?.let { if (pf.mostrarHoras) horas(r.masJugadoSeg) else "" }.orEmpty(), color, Modifier.weight(1f), traducirValor = r.masJugado == null)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
             Dato("Racha", if (r.racha == 1) "1 día" else "${r.racha} días", if (r.racha > 0) "jugando seguido" else "juega hoy para empezar", color, Modifier.weight(1f))
             Dato("Logros de DIPPO", "${r.logros} de ${r.logrosTotal}", "", color, Modifier.weight(1f))
         }
-        Texto("MIS FAVORITOS", 12.5f, color = TextoSuave, espaciado = 1.6f, lineas = 1)
-        if (r.favoritos.isEmpty()) Detalle("Marca juegos como favoritos y aparecen aquí.", 13f, color = TextoSuave, lineas = 2)
-        else Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-            for (j in r.favoritos) Box(
-                Modifier.weight(1f).aspectRatio(0.78f).clip(RoundedCornerShape(esc.d(12))).background(Color.White.copy(alpha = 0.06f)),
-            ) { ArteJuego(j, preferirArte = false, maxLado = 220, modifier = Modifier.fillMaxSize()) }
-            // Para que las portadas no se estiren cuando hay menos de cuatro.
-            repeat(4 - r.favoritos.size) { Spacer(Modifier.weight(1f)) }
+        if (conFavoritos) {
+            Texto("MIS FAVORITOS", 12f, color = TextoSuave, espaciado = 1.6f, lineas = 1)
+            if (r.favoritos.isEmpty()) Detalle("Marca juegos como favoritos y aparecen aquí.", 12.5f, color = TextoSuave, lineas = 2)
+            else Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                for (j in r.favoritos) Box(
+                    Modifier.height(esc.d(62)).aspectRatio(0.78f).clip(RoundedCornerShape(esc.d(10))).background(Color.White.copy(alpha = 0.06f)),
+                ) { ArteJuego(j, preferirArte = false, maxLado = 200, modifier = Modifier.fillMaxSize()) }
+            }
         }
     }
 }
@@ -241,12 +242,12 @@ private fun Numeros(e: Estado, r: ResumenPerfil, color: Color) {
 private fun Dato(etiqueta: String, valor: String, sub: String, color: Color, modifier: Modifier, traducirValor: Boolean = false) {
     val esc = LocalEscala.current
     Column(
-        modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f)).padding(horizontal = esc.d(14), vertical = esc.d(11)),
-        verticalArrangement = Arrangement.spacedBy(esc.d(1)),
+        modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f)).padding(horizontal = esc.d(12), vertical = esc.d(7)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(0)),
     ) {
-        Texto(etiqueta, 12.5f, color = TextoSuave, lineas = 1)
-        Texto(valor, 21f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = traducirValor || valor == "Oculto")
-        if (sub.isNotBlank()) Texto(sub, 12f, color = color, lineas = 1, traducir = sub == "jugando seguido" || sub == "juega hoy para empezar" || sub == "Se cambia en tu perfil")
+        Texto(etiqueta, 11.5f, color = TextoSuave, lineas = 1)
+        Texto(valor, 19f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = traducirValor || valor == "Oculto")
+        if (sub.isNotBlank()) Texto(sub, 11.5f, color = color, lineas = 1, traducir = sub == "jugando seguido" || sub == "juega hoy para empezar" || sub == "Se cambia en tu perfil")
     }
 }
 

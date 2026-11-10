@@ -1286,7 +1286,22 @@ class Capturas {
     @Test fun t334_perfil_tarjeta_arriba() = foto("334_perfil_tarjeta_arriba", conPerfil(abierto = 0), Rol.SUPERIOR)
     @Config(qualifiers = ABAJO)
     @Test fun t335_perfil_tarjeta_abajo() = foto("335_perfil_tarjeta_abajo", conPerfil(abierto = 1, personaje = "zorro", color = 0xFF23C486), Rol.INFERIOR, mi = 1)
-    @Test fun t336_perfil_zoom_a_medias() = foto("336_perfil_zoom_a_medias", conPerfil(abierto = 0, personaje = "robot", color = 0xFF5865F2), Rol.SUPERIOR, avance = 110)
+    @Test fun t336_perfil_zoom_a_medias() {
+        val cerrado = conPerfil(abierto = -1, personaje = "robot", color = 0xFF5865F2)
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(cerrado)
+        Estilo.tema = Temas.incluidos[0]
+        cl.nikalbazu.diptico.estado.Idioma.fijar(ApplicationProvider.getApplicationContext(), cerrado.idioma)
+        val actual = androidx.compose.runtime.mutableStateOf(cerrado)
+        regla.mainClock.autoAdvance = false
+        regla.setContent { Lienzo(true, Modifier.fillMaxSize(), 1f) { Raiz(actual.value, Rol.SUPERIOR, 0) } }
+        regla.mainClock.advanceTimeBy(1600)
+        actual.value = cerrado.copy(extra = cerrado.extra.copy(perfilEn = 0))
+        regla.mainClock.advanceTimeBy(140)
+        regla.onRoot().captureRoboImage("capturas/336_perfil_zoom_a_medias.png")
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t341_perfil_galeria_personajes_abajo() = foto("341_perfil_galeria_personajes_abajo", conPerfil(personaje = "zorro", color = 0xFF9B6BFF).copy(panel = Panel.GALERIA, galeria = "personajes", indice = 2), Rol.INFERIOR, mi = 1)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)
