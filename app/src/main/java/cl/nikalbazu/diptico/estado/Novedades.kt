@@ -339,6 +339,7 @@ object Novedades {
         Version("perfil-mando-2.0-36", "Perfil con el mando", listOf(
             Pagina("Perfil con el mando", "Mantén Start y aprieta A en el inicio: se abre tu perfil. Con el mismo gesto se cierra, y B también.", Icono.PERFIL, 0xFFFF7A59),
             Pagina("Tu foto en el inicio", "Tu foto también está junto a la hora en el inicio con widgets, para abrir tu perfil con un toque.", Icono.BISA, 0xFFE64FA0),
+        )),
         Version(ID, NOMBRE, listOf(
             Pagina("Un marco que se mueve", "Tu foto lleva un aro de luz en movimiento: una estela que da vueltas sin parar. Se cambia en Ajustes › Mi perfil › Marco de la foto. Si apagas los efectos, queda quieto.", Icono.ESTRELLA, 0xFF9B6BFF),
             Pagina("Marcos que se ganan", "Con los logros de DIPPO se desbloquean marcos nuevos: chispas, latido, llama, noche estrellada, aurora, arcoíris y oro. Los que faltan se ven con un candado y te dicen qué logro piden.", Icono.TROFEO, 0xFFFFC94D),
