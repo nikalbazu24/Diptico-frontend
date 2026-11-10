@@ -136,6 +136,12 @@ object Teclas {
             return true
         }
         if (e.extra.carga != null) { if (arriba && esB(code)) Diptico.cancelarCarga(); return true }
+        // Ventana de amigos de Discord: B la cierra; A conecta si todavía no hay cuenta.
+        if (e.extra.amigosEn >= 0) {
+            if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BACK)) Diptico.cerrarAmigos()
+            else if (arriba && esA(code) && e.extra.discordUsuario.isBlank()) { Diptico.cerrarAmigos(); Diptico.iniciarDiscord() }
+            return true
+        }
 
         // Aprendiendo un botón extra: el primero que se apriete (que no sea A, B ni la cruceta) queda guardado.
         if (e.aprendiendoBoton >= 0) {

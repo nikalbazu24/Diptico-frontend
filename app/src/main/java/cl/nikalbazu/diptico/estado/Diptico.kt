@@ -373,6 +373,8 @@ data class EstadoExtra(
     val caras: Map<String, CarasGuardadas> = emptyMap(),
     /** Las cajas llevan arriba la franja con el logo (o el nombre) de su consola, como las cajas de verdad. */
     val bandaCaja: Boolean = true,
+    /** La ventana de amigos de Discord está abierta en esta pantalla (id de la pantalla; -1 = cerrada). */
+    val amigosEn: Int = -1,
     /** Cuándo DIPPO ganó un logro (para que celebre unos segundos) y cuál. */
     val dippoCelebra: Long = 0L,
     val dippoLogro: String = "",
@@ -2400,6 +2402,15 @@ object Diptico {
             }
             actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(error = "El código venció; pide uno nuevo"))) }
         }
+    }
+
+    /** Abre (o cierra, si ya estaba) la ventana de amigos de Discord en la pantalla [pantalla]. */
+    fun abrirAmigos(pantalla: Int) {
+        actualizar { it.copy(extra = it.extra.copy(amigosEn = if (it.extra.amigosEn == pantalla) -1 else pantalla)) }
+    }
+
+    fun cerrarAmigos() {
+        if (estado.value.extra.amigosEn >= 0) actualizar { it.copy(extra = it.extra.copy(amigosEn = -1)) }
     }
 
     /** Cierra el panel del QR sin conectar. */

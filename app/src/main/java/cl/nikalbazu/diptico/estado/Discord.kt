@@ -145,7 +145,11 @@ object DiscordCuenta {
                 j.optString("verification_uri_complete", "$url?user_code=${j.getString("user_code")}"),
                 System.currentTimeMillis() + j.optLong("expires_in", 300) * 1000, j.optLong("interval", 5).coerceAtLeast(3),
             ) to null
-        } catch (_: Exception) { null to "No pude conectar con Discord" }
+        } catch (ex: Exception) {
+            // Android lanza este error cuando Discord responde 401 (rechaza la app) sin decir cómo identificarse.
+            if (ex.message?.contains("authentication challenge", ignoreCase = true) == true) null to motivo("{\"error\":\"invalid_client\"}", 401)
+            else null to "No pude conectar con Discord (${ex.javaClass.simpleName}${ex.message?.let { ": " + it.take(80) } ?: ""})"
+        }
     }
 
     /** Paso 2: preguntar si ya aprobaste. null + null = todavía no; Token = listo; null + texto = falló. */

@@ -168,6 +168,8 @@ fun FranjaAccesos(e: Estado) {
             BotonRepliegue(e.extra.dockVisible) { Diptico.alternarDockVisible() }
         } else BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
         androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+        BotonDiscord(26f)
+        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
         DippoInicio(e, 36f)
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(10)))
         Texto(hora, 13f, color = p.tinta, traducir = false, lineas = 1)
