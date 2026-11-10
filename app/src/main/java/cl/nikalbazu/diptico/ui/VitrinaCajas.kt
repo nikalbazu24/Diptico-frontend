@@ -115,8 +115,11 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
     }
     // El stick derecho gira la caja mientras se mantiene; al soltarlo, se acomoda.
     LaunchedEffect(Unit) {
+        var antesMovia = false
         snapshotFlow { abs(GiroCaja.x) > 0.15f || abs(GiroCaja.y) > 0.15f }.collect { moviendo ->
-            if (!moviendo) { if (abs(giroY.value % 180f) > 0.5f || abs(giroX.value) > 0.5f) acomodar(); return@collect }
+            // Solo se acomoda al soltar el stick (no al abrir la vitrina).
+            if (!moviendo) { if (antesMovia) acomodar(); antesMovia = false; return@collect }
+            antesMovia = true
             var antes = withFrameNanos { it }
             while (abs(GiroCaja.x) > 0.15f || abs(GiroCaja.y) > 0.15f) {
                 val ahora = withFrameNanos { it }
@@ -213,12 +216,12 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                             ) {
                                 Caja3D(
                                     e, j, c, Modifier.fillMaxSize(),
-                                    // Las vecinas se giran hacia el centro y muestran su lomo; la del centro, lo que tú le hagas.
+                                    // Las vecinas quedan giradas igual que en un estante de tienda: se les ve el lomo y parte
+                                    // del frente. La del centro mira de frente y gira con lo que tú le hagas.
                                     giroY = {
-                                        val r = r()
-                                        val k = (1f - abs(r)).coerceIn(0f, 1f)
+                                        val k = (1f - abs(r())).coerceIn(0f, 1f)
                                         val balanceo = ola?.value?.let { kotlin.math.sin(it) * 5f } ?: 0f
-                                        -r.coerceIn(-1f, 1f) * 42f + k * (balanceo + if (esElegida) giroY.value else 0f)
+                                        (1f - k) * 50f + k * (balanceo + if (esElegida) giroY.value else 0f)
                                     },
                                     giroX = { -7f + if (esElegida) (1f - abs(r()).coerceAtMost(1f)) * giroX.value else 0f },
                                     penumbra = { (abs(r()) * 0.45f).coerceAtMost(0.7f) },
