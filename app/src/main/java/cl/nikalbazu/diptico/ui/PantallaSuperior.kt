@@ -237,14 +237,14 @@ fun Heroe(juego: Juego, ancho: Float) {
                     ArteJuego(
                         j, preferirArte = false, maxLado = 1100,
                         modifier = Modifier.align(Alignment.CenterEnd).padding(end = LocalEscala.current.d(40), top = LocalEscala.current.d(54), bottom = LocalEscala.current.d(30))
-                            .fillMaxHeight().aspectRatio(0.72f).graphicsLayer { scaleX = zoom; scaleY = zoom }
+                            .fillMaxHeight().aspectRatio(0.72f).graphicsLayer { scaleX = zoom.value; scaleY = zoom.value }
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(LocalEscala.current.d(14))),
                     )
                 }
             } else {
                 ArteJuego(
                     j, preferirArte = true, maxLado = 1600,
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho).graphicsLayer { scaleX = zoom; scaleY = zoom },
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ancho).graphicsLayer { scaleX = zoom.value; scaleY = zoom.value },
                 )
             }
         }

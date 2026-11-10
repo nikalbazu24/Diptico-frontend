@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cajas-3d-2.0-31"
-    const val NOMBRE = "Cajas en 3D y tus cuentas"
+    const val ID = "cajas-reales-2.0-32"
+    const val NOMBRE = "Cajas de verdad y más rapidez"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -311,10 +311,15 @@ object Novedades {
             Pagina("Discord", "Conecta un canal de tu servidor en Ajustes › Juegos › Discord: Díptico publica qué juegas, con la portada, y cuánto jugaste al terminar.", Icono.MUNDO, 0xFF5865F2),
             Pagina("Tu logo al jugar", "Mientras juegas, el logo del juego luce en grande abajo y lo que te queda cabe en una línea. En la franja, las apps se esconden con su botoncito.", Icono.MANDO, 0xFF7AA8FF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("cajas-3d-2.0-31", "Cajas en 3D y tus cuentas", listOf(
             Pagina("Cajas en 3D", "La caja del juego flota en la vitrina y la puedes girar con el dedo: se le ve el lomo y el brillo del plástico. Al soltarla vuelve sola. El estuche ahora va alrededor de la portada, sin taparla.", Icono.PORTADA, 0xFFFF9A6B),
             Pagina("Inicia sesión con Discord", "En Ajustes › Cuentas y conexiones: aparece un código QR, lo escaneas con tu teléfono y apruebas. Sin escribir contraseñas en la consola.", Icono.MUNDO, 0xFF5865F2),
             Pagina("Tus cuentas, juntas", "Discord, RetroAchievements, SteamGridDB, ScreenScraper y las demás fuentes ahora viven en una sola sección: Cuentas y conexiones. Y las decoraciones del tema se ven en toda la consola, siempre.", Icono.CLAVE, 0xFF7AA8FF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Cajas de verdad", "Cada caja tiene frente, lomo y reverso, con su grosor real. Gírala completa con el dedo, el stick derecho o el botón Girar: atrás está la historia del juego, tu tiempo y cuánto dura. Con ScreenScraper o TheGamesDB conectados, trae el reverso original.", Icono.PORTADA, 0xFFFF9A6B),
+            Pagina("Del estante al juego", "Las cajas de los costados muestran su lomo, como en un estante. Toca la del centro (o A) y se abre la pantalla de carga con la misma caja, y luego el juego.", Icono.JUGAR, 0xFF6B4EFF),
+            Pagina("Más rápido", "Menos trabajo en cada cuadro: los difuminados, el zoom de las portadas y el logo al jugar ya no rearman la pantalla entera. Mientras juegas, las decoraciones se quedan quietas para no quitarle fluidez al juego.", Icono.CHISPA, 0xFF3BD18A),
         )),
     )
 

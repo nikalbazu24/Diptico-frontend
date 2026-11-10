@@ -587,3 +587,14 @@ suspend fun androidx.compose.foundation.lazy.grid.LazyGridState.mostrar(i: Int, 
     val destino = if (lineaI <= primera) (lineaI - 1).coerceAtLeast(0) else (lineaI - n + 2).coerceIn(0, lineaI)
     animateScrollToItem(destino * porLinea)
 }
+
+
+/**
+ * Desenfoque que se anima sin recomponer: [radio] se lee solo al dibujar la capa, así la pantalla entera no se vuelve
+ * a armar en cada cuadro del difuminado (antes eso trababa al abrir menús y carpetas).
+ */
+fun Modifier.desenfoqueAnimado(radio: () -> androidx.compose.ui.unit.Dp): Modifier = this.graphicsLayer {
+    val px = radio().toPx()
+    renderEffect = if (px > 0.5f) androidx.compose.ui.graphics.BlurEffect(px, px, androidx.compose.ui.graphics.TileMode.Clamp) else null
+    clip = px > 0.5f
+}

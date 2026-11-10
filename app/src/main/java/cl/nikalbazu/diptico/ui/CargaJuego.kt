@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -92,25 +93,27 @@ private fun ContenidoCarga(e: Estado, miPantalla: Int, unica: Boolean) {
             val ancho = maxWidth.value
             val alto = maxHeight.value
             val vertical = ancho / alto < 1.15f
-            // La caja ocupa cerca de la mitad del alto (un poco menos si va arriba del texto).
-            val base = cajaDe(consola)
-            // El estuche agranda la caja: se calcula para que el total (arte + estuche) quepa.
-            val m = margenesDe(estucheDe(consola))
-            val objetivo = (alto * (if (vertical) 0.40f else 0.56f)) / esc.factor
-            val escala = minOf(objetivo * m.alto / base.alto, (ancho * 0.4f / esc.factor) * m.ancho / base.ancho)
+            // La caja en 3D ocupa cerca de la mitad del alto (un poco menos si va arriba del texto).
+            val altoCaja = alto * (if (vertical) 0.46f else 0.7f)
+            val anchoCaja = minOf(ancho * (if (vertical) 0.7f else 0.42f), altoCaja * 1.1f)
             val caja = @Composable {
                 val c = suave(tramo(v, 0.06f, 0.38f))
                 Box(
-                    Modifier.graphicsLayer {
+                    Modifier.size(anchoCaja.dp, altoCaja.dp).graphicsLayer {
                         alpha = c
                         translationX = (1f - c) * -60.dp.toPx()
                         val s = 0.9f + 0.1f * c
                         scaleX = s; scaleY = s
-                        // Gira apenas al llegar: se siente como una caja de verdad que se acomoda.
-                        rotationY = 22f * (1f - c) + 6f
-                        cameraDistance = 14f * density
-                    }.shadow(esc.d(24), RoundedCornerShape(esc.d(6)), ambientColor = Color.Black, spotColor = Color.Black),
-                ) { CajaJuego(juego, consola, escala = escala, estuche = true) }
+                    },
+                ) {
+                    // Llega girando y se acomoda de tres cuartos, como una caja de verdad que dejas sobre la mesa.
+                    Caja3D(
+                        e, juego, consola, Modifier.fillMaxSize(),
+                        giroY = { val k = suave(tramo(t.value, 0.06f, 0.5f)); 70f * (1f - k) + 16f },
+                        giroX = { -8f },
+                        caras = e.extra.caras[juego.clave],
+                    )
+                }
             }
             val textos = @Composable {
                 val c = suave(tramo(v, 0.18f, 0.46f))

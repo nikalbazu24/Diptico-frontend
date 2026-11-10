@@ -3,10 +3,12 @@ package cl.nikalbazu.diptico.ui
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,54 +17,69 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.foundation.layout.offset
-import androidx.compose.ui.unit.IntOffset
-import kotlin.math.roundToInt
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.input.pointer.pointerInput
-import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.floor
+import kotlin.math.roundToInt
 
-/** Solo para las capturas de prueba: dibuja la vitrina sin el giro 3D (para comparar). */
+/** Solo para las capturas de prueba: deja la caja del centro de frente, sin balanceo. */
 internal var vitrinaSinGiro = false
+
+/** Solo para las capturas de prueba: con cuántos grados parte girada la caja del centro. */
+internal var vitrinaGiroPrueba = 0f
 
 /** La portada de arriba: "cajas" (la vitrina con las cajas de los juegos) o "arte" (el arte del juego en grande). */
 val Estado.portadaCajas: Boolean get() = extra.portada == "cajas"
 
 /**
- * La vitrina de cajas: el arte del juego elegido de fondo (difuminado, con la luz del color de su consola), su caja
- * grande al centro y las de al lado asomándose inclinadas, como en un estante. Al cambiar de juego las cajas se
- * deslizan con un resorte suave. Tocar la caja del centro abre el juego; tocar una de al lado la elige.
+ * El stick derecho mientras se ve la vitrina: gira la caja del centro (lo escribe [cl.nikalbazu.diptico.estado.Teclas]).
+ * [x] y [y] van de -1 a 1.
+ */
+object GiroCaja {
+    var x by mutableFloatStateOf(0f)
+    var y by mutableFloatStateOf(0f)
+    /** Un pedido de vuelta completa (botón «Girar»): cuántas medias vueltas faltan dar. */
+    var vueltas by mutableFloatStateOf(0f)
+}
+
+/** La vitrina está en pantalla y puede recibir el stick derecho. */
+fun vitrinaActiva(e: Estado): Boolean =
+    e.portadaCajas && e.sesion == null && nuevoDisenoDosPantallas(e) && e.panel == cl.nikalbazu.diptico.estado.Panel.NINGUNO &&
+        e.inicio != "widgets" && e.extra.carga == null
+
+/**
+ * La vitrina de cajas: el arte del juego elegido de fondo, su caja en 3D al centro (se gira completa con el dedo o el
+ * stick derecho: frente, lomo y reverso con su historia y tus datos) y las vecinas a los costados mostrando su lomo,
+ * como en un estante. Tocar la caja del centro (o A) abre la pantalla de carga y el juego.
  */
 @Composable
 fun VitrinaCajas(e: Estado, juego: Juego) {
@@ -75,55 +92,141 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
     val pos = remember { Animatable(indice.toFloat()) }
     LaunchedEffect(indice, lista.size) {
         if (abs(pos.value - indice) > 6f) pos.snapTo(indice.toFloat())
-        pos.animateTo(indice.toFloat(), spring(dampingRatio = 0.82f, stiffness = Spring.StiffnessMediumLow))
+        pos.animateTo(indice.toFloat(), spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow))
     }
-    // La caja del centro: flota y se balancea sola; con el dedo se gira en 3D y vuelve a su lugar al soltarla.
+    // El giro de la caja del centro: libre (vuelta completa) en Y, limitado en X.
     val giroY = remember { Animatable(0f) }
     val giroX = remember { Animatable(0f) }
-    LaunchedEffect(juego.clave) { giroY.snapTo(0f); giroX.snapTo(0f) }
-    val moverse = e.experiencia.movimiento && Estilo.efectosCompletos
-    val ola = androidx.compose.animation.core.rememberInfiniteTransition(label = "flotar").animateFloat(
+    val alcance = rememberCoroutineScope()
+    LaunchedEffect(juego.clave) {
+        giroY.snapTo(vitrinaGiroPrueba); giroX.snapTo(0f)
+        // Si hay ScreenScraper o TheGamesDB, se busca el reverso real de la caja (una vez por juego).
+        delay(700)
+        Diptico.pedirCaras(juego.clave)
+    }
+    // Al soltar, la caja se acomoda en la cara más cercana (frente o reverso), con un resorte suave.
+    suspend fun acomodar() {
+        val destino = (giroY.value / 180f).roundToInt() * 180f
+        alcance.launch { giroX.animateTo(0f, spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessLow)) }
+        giroY.animateTo(destino, spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessLow))
+        // Se vuelve a dejar entre -180 y 180 para que no crezca sin fin (se ve igual).
+        val normal = ((destino % 360f) + 540f) % 360f - 180f
+        giroY.snapTo(if (normal == -180f) 180f else normal)
+    }
+    // El stick derecho gira la caja mientras se mantiene; al soltarlo, se acomoda.
+    LaunchedEffect(Unit) {
+        snapshotFlow { abs(GiroCaja.x) > 0.15f || abs(GiroCaja.y) > 0.15f }.collect { moviendo ->
+            if (!moviendo) { if (abs(giroY.value % 180f) > 0.5f || abs(giroX.value) > 0.5f) acomodar(); return@collect }
+            var antes = withFrameNanos { it }
+            while (abs(GiroCaja.x) > 0.15f || abs(GiroCaja.y) > 0.15f) {
+                val ahora = withFrameNanos { it }
+                val dt = ((ahora - antes) / 1e9f).coerceAtMost(0.05f)
+                antes = ahora
+                giroY.snapTo(giroY.value + GiroCaja.x * 220f * dt)
+                giroX.snapTo((giroX.value + (-GiroCaja.y * 34f - giroX.value) * (dt * 8f).coerceAtMost(1f)).coerceIn(-38f, 30f))
+            }
+        }
+    }
+    // El botón «Girar»: media vuelta (del frente al reverso y de vuelta).
+    LaunchedEffect(Unit) {
+        snapshotFlow { GiroCaja.vueltas }.collect { v ->
+            if (v == 0f) return@collect
+            GiroCaja.vueltas = 0f
+            val destino = (giroY.value / 180f).roundToInt() * 180f + 180f * v
+            giroY.animateTo(destino, spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessLow))
+            val normal = ((destino % 360f) + 540f) % 360f - 180f
+            giroY.snapTo(if (normal == -180f) 180f else normal)
+        }
+    }
+    val moverse = e.experiencia.movimiento && Estilo.efectosCompletos && !vitrinaSinGiro
+    // Un balanceo muy leve cuando nadie la toca: se siente viva, sin marear.
+    val ola = if (moverse) androidx.compose.animation.core.rememberInfiniteTransition(label = "flotar").animateFloat(
         initialValue = 0f, targetValue = (2 * Math.PI).toFloat(),
-        animationSpec = androidx.compose.animation.core.infiniteRepeatable(tween(7000, easing = androidx.compose.animation.core.LinearEasing)), label = "ola",
-    )
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(tween(9000, easing = androidx.compose.animation.core.LinearEasing)), label = "ola",
+    ) else null
     // La vitrina siempre es oscura (las cajas lucen sobre la penumbra), así que la letra va clara en cualquier tema.
     val paleta = LocalPaleta.current
     CompositionLocalProvider(LocalPaleta provides paleta.copy(tinta = Color.White, tenue = Color.White.copy(alpha = 0.66f))) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Color(0xFF09080D)).testTag("vitrina-cajas")) {
             val ancho = maxWidth.value
             val alto = maxHeight.value
-            // 1. Fondo: el arte del juego difuminado y oscurecido, con la luz de su consola desde abajo.
+            // 1. Fondo: el arte del juego, chiquito y estirado (suave como difuminado, sin el costo de un desenfoque en vivo).
             Crossfade(juego, animationSpec = tween(if (Estilo.efectosCompletos) 450 else 0), label = "fondo-cajas") { j ->
-                // Una versión chiquita del arte, estirada: queda suave como desenfocada sin el costo de un desenfoque en vivo.
                 ArteJuego(
                     j, preferirArte = true, maxLado = 72,
-                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.55f; scaleX = 1.1f; scaleY = 1.1f },
+                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.5f; scaleX = 1.1f; scaleY = 1.1f },
                 )
             }
-            // La luz de la consola sube desde abajo, como el foco de una vitrina.
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to color.copy(alpha = 0.4f))))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                0.35f to Color.Transparent, 1f to color.copy(alpha = 0.45f),
-            )))
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                0f to Color.Black.copy(alpha = 0.5f), 0.3f to Color.Transparent, 0.62f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.88f),
+                0f to Color.Black.copy(alpha = 0.55f), 0.3f to Color.Transparent, 0.6f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.9f),
             )))
 
-            // 2. Las cajas: la elegida al centro y hasta dos a cada lado.
-            // Cada caja con la forma de su consola (la vitrina ignora la forma «para todas» del estante).
+            // 2. El estante: la caja elegida al centro y hasta tres a cada lado.
             if (consola != null && lista.isNotEmpty()) CompositionLocalProvider(LocalFormas provides e.formas) {
-                // Qué cajas se dibujan depende del juego elegido (no de cada cuadro de la animación): así no se recompone todo
-                // mientras se deslizan; el deslizamiento se lee solo al dibujar.
-                val desde = (indice - 4).coerceAtLeast(0)
-                val hasta = (indice + 4).coerceAtMost(lista.lastIndex)
-                val altoCaja = alto * 0.5f
-                val paso1 = ancho * 0.27f
-                val paso2 = ancho * 0.12f
-                Box(Modifier.fillMaxSize().padding(bottom = (alto * 0.12f).dp), contentAlignment = Alignment.Center) {
+                val desde = (indice - 3).coerceAtLeast(0)
+                val hasta = (indice + 3).coerceAtMost(lista.lastIndex)
+                val altoCaja = alto * 0.66f
+                val anchoCaja = ancho * 0.44f
+                val paso1 = ancho * 0.3f
+                val paso2 = ancho * 0.13f
+                Box(Modifier.fillMaxSize().padding(bottom = (alto * 0.16f).dp), contentAlignment = Alignment.Center) {
                     // De la más lejana a la más cercana: la del centro se dibuja al final, encima de todas.
                     val orden = (desde..hasta).sortedByDescending { abs(it - indice) }
                     for (i in orden) {
                         val j = lista[i]
-                        key(j.clave) { CajaVitrina(j, i, pos, juego.clave, altoCaja, paso1, paso2, ancho, giroY, giroX, if (moverse) ola else null) }
+                        val c = Consolas.porId(j.consolaId) ?: continue
+                        key(j.clave) {
+                            val esElegida = j.clave == juego.clave
+                            fun r() = i - pos.value
+                            Box(
+                                Modifier.size(anchoCaja.dp, altoCaja.dp)
+                                    .offset {
+                                        val r = r()
+                                        val ar = abs(r)
+                                        val dx = (if (r < 0) -1f else 1f) * (ar.coerceAtMost(1f) * paso1 + (ar - 1f).coerceAtLeast(0f) * paso2)
+                                        val dy = if (esElegida) (ola?.value?.let { kotlin.math.sin(it * 2f) * 4f } ?: 0f) else 0f
+                                        IntOffset((dx * density).roundToInt(), (dy * density).roundToInt())
+                                    }
+                                    .graphicsLayer {
+                                        val ar = abs(r())
+                                        val s = 1f - 0.3f * ar.coerceAtMost(1f) - 0.08f * (ar - 1f).coerceAtLeast(0f)
+                                        scaleX = s; scaleY = s
+                                        alpha = if (ar > 3.4f) 0f else (1f - 0.35f * (ar - 2f).coerceAtLeast(0f)).coerceIn(0f, 1f)
+                                    }
+                                    .then(if (esElegida) Modifier.pointerInput(j.clave) {
+                                        // Girar la caja con el dedo, como si la tuvieras en la mano: da la vuelta completa.
+                                        detectDragGestures(
+                                            onDragEnd = { alcance.launch { acomodar() } },
+                                            onDragCancel = { alcance.launch { acomodar() } },
+                                        ) { cambio, arrastre ->
+                                            cambio.consume()
+                                            alcance.launch {
+                                                giroY.snapTo(giroY.value + arrastre.x / density * 0.6f)
+                                                giroX.snapTo((giroX.value - arrastre.y / density * 0.35f).coerceIn(-38f, 30f))
+                                            }
+                                        }
+                                    } else Modifier)
+                                    .clickable(remember { MutableInteractionSource() }, indication = null) {
+                                        if (esElegida) Diptico.jugar() else Diptico.elegirJuego(j.clave)
+                                    },
+                            ) {
+                                Caja3D(
+                                    e, j, c, Modifier.fillMaxSize(),
+                                    // Las vecinas se giran hacia el centro y muestran su lomo; la del centro, lo que tú le hagas.
+                                    giroY = {
+                                        val r = r()
+                                        val k = (1f - abs(r)).coerceIn(0f, 1f)
+                                        val balanceo = ola?.value?.let { kotlin.math.sin(it) * 5f } ?: 0f
+                                        -r.coerceIn(-1f, 1f) * 42f + k * (balanceo + if (esElegida) giroY.value else 0f)
+                                    },
+                                    giroX = { -7f + if (esElegida) (1f - abs(r()).coerceAtMost(1f)) * giroX.value else 0f },
+                                    penumbra = { (abs(r()) * 0.45f).coerceAtMost(0.7f) },
+                                    caras = e.extra.caras[j.clave],
+                                    detalle = esElegida,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -141,7 +244,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(esc.d(4)),
             ) {
-                Crossfade(juego, animationSpec = tween(260), label = "nombre-caja") { j ->
+                Crossfade(juego, animationSpec = tween(220), label = "nombre-caja") { j ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Texto(j.titulo, 22f, color = Color.White, lineas = 1, traducir = false, alinear = TextAlign.Center)
                         val seg = e.datos[j.clave]?.tiempo?.toLong() ?: 0L
@@ -156,131 +259,11 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                 Row(Modifier.padding(top = esc.d(8)), horizontalArrangement = Arrangement.spacedBy(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
                     val jugado = (e.datos[juego.clave]?.tiempo?.toLong() ?: 0L) > 0L
                     BotonVitrina("A", if (jugado) "Continuar" else "Jugar", lleno = true) { Diptico.jugar() }
+                    BotonVitrina("⟳", "Girar", lleno = false) { GiroCaja.vueltas = 1f }
                     BotonVitrina("X", "Ficha", lleno = false) { Diptico.abrirFicha() }
                     BotonVitrina("Y", "DIPPO", lleno = false) { Diptico.abrirAsistente() }
                 }
             }
-        }
-    }
-}
-
-/**
- * Una caja del estante en el lugar [i]; [pos] es la posición animada del estante (se lee solo al dibujar).
- * La elegida flota con [ola], se gira con el dedo ([giroY]/[giroX]) y muestra su lomo y un brillo que se mueve al girar.
- */
-@Composable
-private fun CajaVitrina(
-    j: Juego, i: Int, pos: Animatable<Float, *>, elegida: String, altoCaja: Float, paso1: Float, paso2: Float, ancho: Float,
-    giroY: Animatable<Float, *>, giroX: Animatable<Float, *>, ola: androidx.compose.runtime.State<Float>?,
-) {
-    val esc = LocalEscala.current
-    val c = Consolas.porId(j.consolaId) ?: return
-    val base = cajaDe(c)
-    val m = margenesDe(estucheDe(c))
-    // La caja con estuche es un poco más grande que el arte: se calcula para que el total quepa en el alto pedido.
-    val escala = minOf(altoCaja * m.alto / base.alto, (ancho * 0.3f) * m.ancho / base.ancho) / esc.factor
-    val anchoCaja = base.ancho * escala / m.ancho
-    val altoTotal = base.alto * escala / m.alto
-    val grosor = anchoCaja * (if (estucheDe(c) == Estuche.DVD || estucheDe(c) == Estuche.BLURAY || estucheDe(c) == Estuche.TARJETA) 0.12f else 0.2f)
-    val lomo = lerp(c.color, Color.Black, 0.45f)
-    val sombra = esc.d(10)
-    val esElegida = j.clave == elegida
-    val alalcance = androidx.compose.runtime.rememberCoroutineScope()
-    // Cuánto pesa lo propio de la elegida (flotar, girar): nada en las de los costados.
-    fun centro(r: Float) = (1f - abs(r)).coerceIn(0f, 1f)
-    fun angulo(r: Float): Float {
-        val k = centro(r)
-        val balanceo = (ola?.value?.let { kotlin.math.sin(it) * 7f } ?: 0f)
-        return -r.coerceIn(-1f, 1f) * 34f + k * (balanceo + if (esElegida) giroY.value else 0f)
-    }
-    Box(
-        Modifier
-            .offset {
-                val r = i - pos.value
-                val ar = abs(r)
-                val dx = (if (r < 0) -1f else 1f) * (ar.coerceAtMost(1f) * paso1 + (ar - 1f).coerceAtLeast(0f) * paso2)
-                val dy = centro(r) * (ola?.value?.let { kotlin.math.sin(it * 2f) * 6f } ?: 0f)
-                IntOffset((dx * density).roundToInt(), (dy * density).roundToInt())
-            }
-            .graphicsLayer {
-                val r = i - pos.value
-                val ar = abs(r)
-                val cerca = ar.coerceAtMost(1f)
-                val lejos = (ar - 1f).coerceAtLeast(0f)
-                val s = 1f - 0.26f * cerca - 0.1f * lejos
-                scaleX = s; scaleY = s
-                alpha = if (ar > 2.6f) 0f else (1f - 0.15f * cerca - 0.55f * lejos).coerceIn(0f, 1f)
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        // El lomo: se asoma por el costado que gira hacia ti, más ancho mientras más giras.
-        if (!vitrinaSinGiro) Box(
-            Modifier.size(esc.d(grosor), esc.d(altoTotal)).graphicsLayer {
-                val a = angulo(i - pos.value)
-                val rad = Math.toRadians(a.toDouble())
-                val visible = abs(kotlin.math.sin(rad)).toFloat()
-                scaleX = visible.coerceAtLeast(0.001f)
-                val borde = esc.d(anchoCaja).toPx() / 2f * kotlin.math.cos(rad).toFloat()
-                val lado = if (a > 0f) -1f else 1f
-                translationX = lado * (borde + esc.d(grosor).toPx() * visible / 2f)
-                alpha = if (visible < 0.03f) 0f else 1f
-                shape = RoundedCornerShape(esc.d(3))
-                clip = true
-            }.background(Brush.horizontalGradient(listOf(lomo, lerp(lomo, Color.White, 0.18f), lomo))),
-        )
-        Box(
-            Modifier
-                .graphicsLayer {
-                    val r = i - pos.value
-                    if (!vitrinaSinGiro) {
-                        rotationY = angulo(r)
-                        rotationX = if (esElegida) centro(r) * giroX.value else 0f
-                        cameraDistance = 12f * density
-                    }
-                    shadowElevation = sombra.toPx() * (1f - 0.5f * abs(r).coerceAtMost(1f))
-                    shape = RoundedCornerShape(esc.d(6))
-                    clip = true
-                }
-                .then(if (esElegida) Modifier.pointerInput(j.clave) {
-                    // Girar la caja con el dedo, como si la tuvieras en la mano. Al soltarla vuelve con un resorte.
-                    detectDragGestures(
-                        onDragEnd = {
-                            alalcance.launch { giroY.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
-                            alalcance.launch { giroX.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
-                        },
-                        onDragCancel = {
-                            alalcance.launch { giroY.animateTo(0f, spring()) }
-                            alalcance.launch { giroX.animateTo(0f, spring()) }
-                        },
-                    ) { cambio, arrastre ->
-                        cambio.consume()
-                        alalcance.launch { giroY.snapTo((giroY.value + arrastre.x / density * 0.45f).coerceIn(-75f, 75f)) }
-                        alalcance.launch { giroX.snapTo((giroX.value - arrastre.y / density * 0.3f).coerceIn(-28f, 28f)) }
-                    }
-                } else Modifier)
-                .clickable(remember { MutableInteractionSource() }, indication = null) {
-                    if (esElegida) Diptico.jugar() else Diptico.elegirJuego(j.clave)
-                },
-        ) {
-            CajaJuego(j, c, escala = escala, estuche = true)
-            Box(Modifier.matchParentSize().drawBehind {
-                val r = i - pos.value
-                val ar = abs(r)
-                // Las de los costados quedan en penumbra para que mande la del centro.
-                val a = 0.38f * ar.coerceAtMost(1f) + 0.2f * (ar - 1f).coerceAtLeast(0f)
-                if (a > 0.01f) drawRect(Color.Black.copy(alpha = a))
-                // Un reflejo que cruza el plástico mientras la caja gira.
-                val giro = angulo(r) / 75f
-                val k = centro(r)
-                if (k > 0.05f) {
-                    val x = size.width * (0.5f - giro * 1.2f)
-                    drawRect(Brush.linearGradient(
-                        listOf(Color.Transparent, Color.White.copy(alpha = 0.16f * k), Color.Transparent),
-                        start = androidx.compose.ui.geometry.Offset(x - size.width * 0.35f, 0f),
-                        end = androidx.compose.ui.geometry.Offset(x + size.width * 0.35f, size.height),
-                    ))
-                }
-            })
         }
     }
 }

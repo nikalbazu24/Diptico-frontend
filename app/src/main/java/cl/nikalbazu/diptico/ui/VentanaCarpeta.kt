@@ -42,7 +42,7 @@ internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) 
     Box(modifier) {
         // Detrás de la carpeta abierta, las demás quedan difuminadas y oscuras: así no se confunden con los juegos.
         val desenfoque by animateDpAsState(if (abierta && Estilo.efectosCompletos) 16.dp else 0.dp, tween(entrada), label = "desenfoque carpetas")
-        CarpetasConsolas(e, Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)
+        CarpetasConsolas(e, Modifier.fillMaxSize().desenfoqueAnimado { desenfoque }
             .then(if (captura) Modifier.fondoDeVentana(fondo, e.nivelesGlass.carpetas) else Modifier), interactiva = !abierta)
         AnimatedVisibility(transicion, enter = fadeIn(tween(entrada)), exit = fadeOut(tween(salida))) {
             Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = .55f)).clickable { Diptico.volverASistemas() })

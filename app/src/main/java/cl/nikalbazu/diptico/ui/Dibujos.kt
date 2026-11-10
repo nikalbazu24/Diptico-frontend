@@ -127,15 +127,18 @@ val LocalZoomLento = staticCompositionLocalOf { true }
 
 /** Acercamiento lento de ida y vuelta (1 → [hasta]), o 1 si está apagado o en modo ahorro. */
 @Composable
-fun zoomLento(activo: Boolean, hasta: Float = 1.08f, ms: Int = 12000): Float {
-    if (!activo || !LocalZoomLento.current || !Estilo.efectosCompletos) return 1f
+fun zoomLento(activo: Boolean, hasta: Float = 1.08f, ms: Int = 12000): androidx.compose.runtime.State<Float> {
+    if (!activo || !LocalZoomLento.current || !Estilo.efectosCompletos) return SIN_ZOOM
     val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "zoomLento")
+    // Se devuelve el estado (no el valor): quien lo lee en graphicsLayer solo redibuja, sin recomponer cada cuadro.
     return t.animateFloat(
         1f, hasta,
         androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(ms, easing = androidx.compose.animation.core.LinearEasing), androidx.compose.animation.core.RepeatMode.Reverse),
         label = "z",
-    ).value
+    )
 }
+
+private val SIN_ZOOM: androidx.compose.runtime.State<Float> = androidx.compose.runtime.mutableFloatStateOf(1f)
 
 /** Arte de un juego: su imagen real o, si no hay, el dibujo de ejemplo. [vivo]: se acerca despacio (si está activado). */
 @Composable
@@ -164,13 +167,15 @@ fun ArteJuego(juego: Juego, preferirArte: Boolean, maxLado: Int, modifier: Modif
             // El encuadre propio: hacia dónde se corre la foto y cuánto se acerca.
             val tipo = if ((preferirArte || imagen == "arte") && juego.arte != null) "arte" else "portada"
             val enc = LocalEncuadres.current["${juego.clave}|$tipo"]
-            val z = (enc?.zoom ?: 1f) * zoomLento(vivo)
+            val zEnc = enc?.zoom ?: 1f
+            val zVivo = zoomLento(vivo)
             val ex = enc?.x ?: 0f
             val ey = enc?.y ?: 0f
             Image(
                 img, contentDescription = null, contentScale = ContentScale.Crop,
                 alignment = androidx.compose.ui.BiasAlignment(ex, ey),
                 modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
+                    val z = zEnc * zVivo.value
                     scaleX = z; scaleY = z
                     transformOrigin = androidx.compose.ui.graphics.TransformOrigin((ex + 1f) / 2f, (ey + 1f) / 2f)
                 },

@@ -918,7 +918,17 @@ object Teclas {
     fun movimiento(ev: MotionEvent): Boolean {
         if (ev.source and InputDevice.SOURCE_JOYSTICK != InputDevice.SOURCE_JOYSTICK || ev.action != MotionEvent.ACTION_MOVE) return false
         stickIzq.cambiar(direccion(ev.getAxisValue(MotionEvent.AXIS_X), ev.getAxisValue(MotionEvent.AXIS_Y)))
-        stickDer.cambiar(direccion(ev.getAxisValue(MotionEvent.AXIS_Z), ev.getAxisValue(MotionEvent.AXIS_RZ)))
+        // En la vitrina de cajas el stick derecho gira la caja del centro (de forma continua, como tenerla en la mano).
+        if (cl.nikalbazu.diptico.ui.vitrinaActiva(Diptico.estado.value)) {
+            val gx = ev.getAxisValue(MotionEvent.AXIS_Z)
+            val gy = ev.getAxisValue(MotionEvent.AXIS_RZ)
+            cl.nikalbazu.diptico.ui.GiroCaja.x = if (kotlin.math.abs(gx) > 0.15f) gx else 0f
+            cl.nikalbazu.diptico.ui.GiroCaja.y = if (kotlin.math.abs(gy) > 0.15f) gy else 0f
+            stickDer.cambiar(null)
+        } else {
+            if (cl.nikalbazu.diptico.ui.GiroCaja.x != 0f || cl.nikalbazu.diptico.ui.GiroCaja.y != 0f) { cl.nikalbazu.diptico.ui.GiroCaja.x = 0f; cl.nikalbazu.diptico.ui.GiroCaja.y = 0f }
+            stickDer.cambiar(direccion(ev.getAxisValue(MotionEvent.AXIS_Z), ev.getAxisValue(MotionEvent.AXIS_RZ)))
+        }
         val hat = direccion(ev.getAxisValue(MotionEvent.AXIS_HAT_X), ev.getAxisValue(MotionEvent.AXIS_HAT_Y))
         if (hat != null && hat != dirHat) pulsar(hat, 0)
         dirHat = hat
