@@ -419,7 +419,8 @@ fun Caja3D(
     val frenteHecho by produceState(FabricaCaras.enCacheFrente(datosFrente), datosFrente) {
         if (value == null) value = withContext(Dispatchers.IO) { runCatching { FabricaCaras.hacerFrente(ctx, datosFrente) }.getOrNull() }
     }
-    val frente = frenteHecho ?: frenteReal?.asAndroidBitmap()
+    // Mientras se arma el frente grande, se usa el chico de la vecina (si ya está) para que nunca se vea en blanco.
+    val frente = frenteHecho ?: FabricaCaras.enCacheFrente(datosFrente.copy(ancho = 360)) ?: frenteReal?.asAndroidBitmap()
     val reverso = reversoReal?.asAndroidBitmap() ?: reversoHecho
     val lomo = lomoReal?.asAndroidBitmap() ?: lomoHecho
     // El color de los cantos: cartón impreso (el de la consola) o plástico.
