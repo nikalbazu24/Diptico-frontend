@@ -1327,7 +1327,7 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t348_abajo_juego_caliente() {
         val T = cl.nikalbazu.diptico.estado.Termica
-        T.pruebaLectura = T.Lectura(43f, 0f, 2, Float.NaN, true, 55, T.Nivel.CALIENTE)
+        T.pruebaLectura = cl.nikalbazu.diptico.estado.Termica.Lectura(43f, 0f, 2, Float.NaN, true, 55, cl.nikalbazu.diptico.estado.Termica.Nivel.CALIENTE)
         try {
             foto("348_abajo_juego_caliente", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
         } finally { T.pruebaLectura = null }
@@ -1335,7 +1335,7 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t349_abajo_juego_muy_caliente() {
         val T = cl.nikalbazu.diptico.estado.Termica
-        T.pruebaLectura = T.Lectura(45f, 0f, 3, Float.NaN, false, 40, T.Nivel.MUY_CALIENTE)
+        T.pruebaLectura = cl.nikalbazu.diptico.estado.Termica.Lectura(45f, 0f, 3, Float.NaN, false, 40, cl.nikalbazu.diptico.estado.Termica.Nivel.MUY_CALIENTE)
         try {
             foto("349_abajo_juego_muy_caliente", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
         } finally { T.pruebaLectura = null }
