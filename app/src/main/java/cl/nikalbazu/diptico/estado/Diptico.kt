@@ -4107,11 +4107,11 @@ object Diptico {
             }
             Seccion.LOGROS -> {
                 lista += opcionesDiscord(e)
-                lista += opcionesLogros(e).map { if (it.grupo.isBlank()) it.copy(grupo = "RetroAchievements") else it }
+                lista += opcionesLogros(e).map { if (it.grupo.isNullOrBlank()) it.copy(grupo = "RetroAchievements") else it }
                 lista += (listOf(Opcion(
                     "Clave de SteamGridDB", if (e.claveSgdb.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
                     "Gratis en steamgriddb.com: entra, ve a Preferencias › API y copia tu clave. Trae arte grande y logos.",
-                ) { abrirClave() }) + opcionesRaspadores(e)).map { if (it.grupo.isBlank()) it.copy(grupo = "Portadas e imágenes") else it }
+                ) { abrirClave() }) + opcionesRaspadores(e)).map { if (it.grupo.isNullOrBlank()) it.copy(grupo = "Portadas e imágenes") else it }
             }
             Seccion.ESENCIAL -> lista += opcionesEsenciales(e)
             Seccion.MAS -> lista += opcionesMas(e)

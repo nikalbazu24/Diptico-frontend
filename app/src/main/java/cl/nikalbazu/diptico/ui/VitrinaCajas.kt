@@ -32,6 +32,8 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.launch
@@ -81,8 +83,8 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
     LaunchedEffect(juego.clave) { giroY.snapTo(0f); giroX.snapTo(0f) }
     val moverse = e.experiencia.movimiento && Estilo.efectosCompletos
     val ola = androidx.compose.animation.core.rememberInfiniteTransition(label = "flotar").animateFloat(
-        0f, (2 * Math.PI).toFloat(),
-        androidx.compose.animation.core.infiniteRepeatable(tween(7000, easing = androidx.compose.animation.core.LinearEasing)), label = "ola",
+        initialValue = 0f, targetValue = (2 * Math.PI).toFloat(),
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(tween(7000, easing = androidx.compose.animation.core.LinearEasing)), label = "ola",
     )
     // La vitrina siempre es oscura (las cajas lucen sobre la penumbra), así que la letra va clara en cualquier tema.
     val paleta = LocalPaleta.current
@@ -241,7 +243,7 @@ private fun CajaVitrina(
                 }
                 .then(if (esElegida) Modifier.pointerInput(j.clave) {
                     // Girar la caja con el dedo, como si la tuvieras en la mano. Al soltarla vuelve con un resorte.
-                    androidx.compose.foundation.gestures.detectDragGestures(
+                    detectDragGestures(
                         onDragEnd = {
                             alalcance.launch { giroY.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
                             alalcance.launch { giroX.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow)) }
