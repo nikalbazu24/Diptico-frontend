@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "tu-ano-2.0-42"
-    const val NOMBRE = "Tu año"
+    const val ID = "tu-ano-2.0-43"
+    const val NOMBRE = "Tu año completo"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -371,10 +371,13 @@ object Novedades {
             Pagina("Consejos de DIPPO", "DIPPO te avisa si se calienta o queda poca batería, y entre partidas te recuerda cuidar tus ojos y tus manos, y tomar agua. Se apaga en Ajustes › DIPPO.", Icono.BISA, 0xFF2EC4A6),
             Pagina("DIPPO conoce tus juegos", "Si un juego suele calentarla, DIPPO te avisa al empezar, y con emuladores pesados te dice qué bajar. Si la consola ya viene caliente, te avisa en el inicio.", Icono.MANDO, 0xFFFFC93C),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("tu-ano-2.0-42", "Tu año", listOf(
             Pagina("Tu año con Díptico", "Un resumen de lo que jugaste: horas, días, tus juegos más jugados, tu mejor mes y tu racha, con un comentario de DIPPO. Ábrelo desde tu perfil (Y) o en Ajustes › Tu perfil. En diciembre te aviso solo.", Icono.ESTRELLA, 0xFFFFC93C),
             Pagina("Logros en plena partida", "Si ganas un logro de DIPPO mientras juegas, se celebra en la pantalla de abajo en el momento, sin esperar a que termines.", Icono.TROFEO, 0xFFFF7A59),
             Pagina("Desde ahora, cada partida cuenta", "Díptico empezó a anotar tus partidas con su fecha, para que «Tu año» sea cada vez más completo. Se guarda solo en tu consola.", Icono.RELOJ, 0xFF2EC4A6),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("«Tu año» se ve completo", "En la pantalla ancha, tus números van a la izquierda y el mes a mes con tus cinco juegos más jugados a la derecha, todo a la vista sin deslizar. Y los plurales salen bien («1 partida»).", Icono.ESTRELLA, 0xFFFFC93C),
         )),
     )
 

@@ -107,7 +107,7 @@ private fun ContenidoTuAno(e: Estado, color: Color) {
         } else {
             // Pantalla ancha: a la izquierda tus números y a la derecha el mes a mes y tus más jugados, para verlo todo sin deslizar.
             Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(22))) {
-                Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Column(Modifier.weight(1.3f).fillMaxHeight().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
                     Cabecera(r, anio, color)
                     Tarjetas(e, r, color)
                     Totales(total.segundos, partidasTotal, total.juegosJugados, color)
@@ -131,7 +131,7 @@ private fun ContenidoTuAno(e: Estado, color: Color) {
 private fun Cabecera(r: TuAno.Resumen, anio: Int, color: Color) {
     val esc = LocalEscala.current
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(if (esc.angosta) 64 else 84).value, cara = CaraDippo.CELEBRANDO)
+        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(if (esc.angosta) 56 else 64).value, cara = CaraDippo.CELEBRANDO)
         Column(Modifier.weight(1f)) {
             Etiqueta("Tu año", color, 12f)
             Texto("$anio", 34f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = false)
@@ -183,12 +183,14 @@ private fun Grafico(e: Estado, r: TuAno.Resumen, color: Color) {
 @Composable
 private fun Totales(segundos: Long, partidas: Int, juegos: Int, color: Color) {
     val esc = LocalEscala.current
-    Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(4))) {
         Etiqueta("En total contigo", TextoSuave, 11.5f)
-        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-            Dato("Horas", horas(segundos), color, Modifier.weight(1f)) {}
-            Dato("Partidas", "$partidas", color, Modifier.weight(1f)) {}
-            Dato("Juegos", "$juegos", color, Modifier.weight(1f)) {}
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+            Texto(horas(segundos), 15f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = false)
+            Texto("·", 15f, color = TextoSuave, lineas = 1, traducir = false)
+            Conteo(partidas, if (partidas == 1) "partida" else "partidas", color)
+            Texto("·", 15f, color = TextoSuave, lineas = 1, traducir = false)
+            Conteo(juegos, "juegos", color)
         }
     }
 }
@@ -244,7 +246,7 @@ private fun Conteo(n: Int, etiqueta: String, color: Color, numeroAlFinal: Boolea
 private fun Meses(r: TuAno.Resumen, color: Color) {
     val esc = LocalEscala.current
     val max = (r.porMes.maxOrNull() ?: 0L).coerceAtLeast(1L)
-    Row(Modifier.fillMaxWidth().height(esc.d(92)), horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
+    Row(Modifier.fillMaxWidth().height(esc.d(70)), horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
         for (m in 1..12) {
             val v = r.porMes[m - 1]
             val fraccion = if (v > 0) (0.08f + 0.92f * v / max).coerceIn(0.08f, 1f) else 0.04f
@@ -265,12 +267,12 @@ private fun Meses(r: TuAno.Resumen, color: Color) {
 private fun Top(e: Estado, r: TuAno.Resumen, color: Color) {
     val esc = LocalEscala.current
     val max = (r.top.firstOrNull()?.second ?: 1L).coerceAtLeast(1L)
-    Column(verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
         r.top.forEachIndexed { i, (clave, seg) ->
             val juego = e.juegosPorClave[clave]
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 Texto("${i + 1}", 14f, color = color, peso = FontWeight.Black, lineas = 1, traducir = false, modifier = Modifier.width(esc.d(16)))
-                Box(Modifier.size(esc.d(34)).clip(RoundedCornerShape(esc.d(8))).background(Color.White.copy(alpha = 0.06f))) {
+                Box(Modifier.size(esc.d(30)).clip(RoundedCornerShape(esc.d(7))).background(Color.White.copy(alpha = 0.06f))) {
                     if (juego != null) ArteJuego(juego, preferirArte = false, maxLado = 120, modifier = Modifier.fillMaxSize())
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(3))) {
