@@ -92,59 +92,31 @@ private fun ContenidoTuAno(e: Estado, color: Color) {
     val total = remember(e.datos, e.juegos, e.consolasConJuegos) { Diptico.resumenPerfil(e) }
     val partidasTotal = remember(e.datos) { e.datos.values.sumOf { it.sesiones } }
     Column(Modifier.fillMaxSize().padding(esc.d(if (esc.angosta) 16 else 22))) {
-        Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(esc.d(10)),
-        ) {
-            // DIPPO celebra y comenta el año.
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(if (esc.angosta) 64 else 84).value, cara = CaraDippo.CELEBRANDO)
-                Column(Modifier.weight(1f)) {
-                    Etiqueta("Tu año", color, 12f)
-                    Texto("$anio", 34f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = false)
-                    Detalle(TuAno.comentario(r), 14f, color = TextoClaro, lineas = 3)
+        if (esc.angosta) {
+            // Pantalla casi cuadrada: todo en una columna que se desliza con el dedo.
+            Column(
+                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(esc.d(10)),
+            ) {
+                Cabecera(r, anio, color)
+                Tarjetas(e, r, color)
+                Grafico(e, r, color)
+                Totales(total.segundos, partidasTotal, total.juegosJugados, color)
+                Nota(r)
+            }
+        } else {
+            // Pantalla ancha: a la izquierda tus números y a la derecha el mes a mes y tus más jugados, para verlo todo sin deslizar.
+            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(22))) {
+                Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                    Cabecera(r, anio, color)
+                    Tarjetas(e, r, color)
+                    Totales(total.segundos, partidasTotal, total.juegosJugados, color)
+                }
+                Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                    Grafico(e, r, color)
+                    Nota(r)
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                Dato("Horas jugadas", horas(r.segundos), color, Modifier.weight(1f)) { Conteo(r.partidas, "partidas", color) }
-                Dato("Días jugados", "${r.dias}", color, Modifier.weight(1f)) { Conteo(r.rachaMax, "días seguidos como máximo", color) }
-                Dato("Juegos distintos", "${r.juegos}", color, Modifier.weight(1f)) {}
-            }
-            if (r.hayDatos) {
-                val primero = r.top.firstOrNull()
-                val juego = primero?.let { e.juegosPorClave[it.first] }
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                    Dato("Juego del año", juego?.titulo ?: "—", color, Modifier.weight(1f), traducirValor = false) {
-                        primero?.let { Texto(horas(it.second), 11.5f, color = color, lineas = 1, traducir = false) }
-                    }
-                    Dato("Consola del año", r.consola.ifBlank { "—" }, color, Modifier.weight(1f), traducirValor = false) {}
-                    Dato("Mejor mes", if (r.mejorMes > 0) TuAno.nombreMes(r.mejorMes) else "—", color, Modifier.weight(1f), traducirValor = false) {
-                        if (r.mejorMes > 0) Texto(horas(r.porMes[r.mejorMes - 1]), 11.5f, color = color, lineas = 1, traducir = false)
-                    }
-                }
-                Etiqueta("Mes a mes", TextoSuave, 11.5f)
-                Meses(r, color)
-                Etiqueta("Tus más jugados", TextoSuave, 11.5f)
-                Top(e, r, color)
-            }
-            Etiqueta("En total contigo", TextoSuave, 11.5f)
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                Dato("Horas", horas(total.segundos), color, Modifier.weight(1f)) {}
-                Dato("Partidas", "$partidasTotal", color, Modifier.weight(1f)) {}
-                Dato("Juegos", "${total.juegosJugados}", color, Modifier.weight(1f)) {}
-            }
-            if (r.desde.isNotBlank()) {
-                val fecha = remember(r.desde) {
-                    try {
-                        java.time.LocalDate.parse(r.desde).format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM))
-                    } catch (_: Exception) { r.desde }
-                }
-                Row {
-                    Detalle("Cuento tus partidas del año desde", 12f, color = TextoSuave, lineas = 2)
-                    Spacer(Modifier.width(esc.d(4)))
-                    Texto(fecha, 12f, color = TextoSuave, lineas = 1, traducir = false)
-                }
-            } else Detalle("Todavía no hay partidas anotadas este año. Desde ahora Díptico las va contando.", 12f, color = TextoSuave, lineas = 2)
         }
         Spacer(Modifier.height(esc.d(10)))
         Box(
@@ -152,6 +124,91 @@ private fun ContenidoTuAno(e: Estado, color: Color) {
                 .padding(horizontal = esc.d(16), vertical = esc.d(7)),
         ) { Texto("B · Cerrar", 13.5f, color = TextoClaro, lineas = 1) }
     }
+}
+
+/** DIPPO celebra y comenta el año. */
+@Composable
+private fun Cabecera(r: TuAno.Resumen, anio: Int, color: Color) {
+    val esc = LocalEscala.current
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
+        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(if (esc.angosta) 64 else 84).value, cara = CaraDippo.CELEBRANDO)
+        Column(Modifier.weight(1f)) {
+            Etiqueta("Tu año", color, 12f)
+            Texto("$anio", 34f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = false)
+            Detalle(TuAno.comentario(r), 14f, color = TextoClaro, lineas = 3)
+        }
+    }
+}
+
+/** Las seis tarjetas del año: horas, días, juegos, juego, consola y mejor mes. */
+@Composable
+private fun Tarjetas(e: Estado, r: TuAno.Resumen, color: Color) {
+    val esc = LocalEscala.current
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            Dato("Horas jugadas", horas(r.segundos), color, Modifier.weight(1f)) { Conteo(r.partidas, if (r.partidas == 1) "partida" else "partidas", color) }
+            Dato("Días jugados", "${r.dias}", color, Modifier.weight(1f)) { Conteo(r.rachaMax, "Racha máxima", color, numeroAlFinal = true) }
+            Dato("Juegos distintos", "${r.juegos}", color, Modifier.weight(1f)) {}
+        }
+        if (r.hayDatos) {
+            val primero = r.top.firstOrNull()
+            val juego = primero?.let { e.juegosPorClave[it.first] }
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                Dato("Juego del año", juego?.titulo ?: "—", color, Modifier.weight(1f)) {
+                    primero?.let { Texto(horas(it.second), 11.5f, color = color, lineas = 1, traducir = false) }
+                }
+                Dato("Consola del año", r.consola.ifBlank { "—" }, color, Modifier.weight(1f)) {}
+                Dato("Mejor mes", if (r.mejorMes > 0) TuAno.nombreMes(r.mejorMes) else "—", color, Modifier.weight(1f)) {
+                    if (r.mejorMes > 0) Texto(horas(r.porMes[r.mejorMes - 1]), 11.5f, color = color, lineas = 1, traducir = false)
+                }
+            }
+        }
+    }
+}
+
+/** El mes a mes y los cinco más jugados (solo si hay partidas del año). */
+@Composable
+private fun Grafico(e: Estado, r: TuAno.Resumen, color: Color) {
+    val esc = LocalEscala.current
+    if (!r.hayDatos) return
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+        Etiqueta("Mes a mes", TextoSuave, 11.5f)
+        Meses(r, color)
+        Etiqueta("Tus más jugados", TextoSuave, 11.5f)
+        Top(e, r, color)
+    }
+}
+
+/** Lo de siempre: horas, partidas y juegos en total. */
+@Composable
+private fun Totales(segundos: Long, partidas: Int, juegos: Int, color: Color) {
+    val esc = LocalEscala.current
+    Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        Etiqueta("En total contigo", TextoSuave, 11.5f)
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            Dato("Horas", horas(segundos), color, Modifier.weight(1f)) {}
+            Dato("Partidas", "$partidas", color, Modifier.weight(1f)) {}
+            Dato("Juegos", "$juegos", color, Modifier.weight(1f)) {}
+        }
+    }
+}
+
+/** Desde cuándo se cuentan las partidas del año (o que todavía no hay). */
+@Composable
+private fun Nota(r: TuAno.Resumen) {
+    val esc = LocalEscala.current
+    if (r.desde.isNotBlank()) {
+        val fecha = remember(r.desde) {
+            try {
+                java.time.LocalDate.parse(r.desde).format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM))
+            } catch (_: Exception) { r.desde }
+        }
+        Row {
+            Detalle("Cuento tus partidas del año desde", 12f, color = TextoSuave, lineas = 2)
+            Spacer(Modifier.width(esc.d(4)))
+            Texto(fecha, 12f, color = TextoSuave, lineas = 1, traducir = false)
+        }
+    } else Detalle("Todavía no hay partidas anotadas este año. Desde ahora Díptico las va contando.", 12f, color = TextoSuave, lineas = 2)
 }
 
 /** Una tarjetita con un título, un valor grande y, si hace falta, una línea de abajo. */
@@ -169,10 +226,16 @@ private fun Dato(etiqueta: String, valor: String, color: Color, modifier: Modifi
 
 /** «12 partidas»: el número aparte para que el texto se pueda traducir. */
 @Composable
-private fun Conteo(n: Int, etiqueta: String, color: Color) {
-    Row {
-        Texto("$n ", 11.5f, color = color, lineas = 1, traducir = false)
-        Texto(etiqueta, 11.5f, color = color, lineas = 1)
+private fun Conteo(n: Int, etiqueta: String, color: Color, numeroAlFinal: Boolean = false) {
+    val esc = LocalEscala.current
+    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
+        if (numeroAlFinal) {
+            Texto(etiqueta, 11.5f, color = color, lineas = 1)
+            Texto("$n", 11.5f, color = color, peso = FontWeight.Black, lineas = 1, traducir = false)
+        } else {
+            Texto("$n", 11.5f, color = color, peso = FontWeight.Black, lineas = 1, traducir = false)
+            Texto(etiqueta, 11.5f, color = color, lineas = 1)
+        }
     }
 }
 
