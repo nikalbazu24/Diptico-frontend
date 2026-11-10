@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "temperatura-2.0-41"
-    const val NOMBRE = "Temperatura y consejos"
+    const val ID = "tu-ano-2.0-42"
+    const val NOMBRE = "Tu año"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -366,10 +366,15 @@ object Novedades {
             Pagina("DIPPO cobra vida", "En el recorrido DIPPO entra saltando, mira hacia lo que explica, flota y da un saltito en cada paso. Tócalo y gira de sorpresa.", Icono.BISA, 0xFFFF7A59),
             Pagina("Pruébalo con DIPPO", "Algunos pasos te piden probar: aprieta L1 o R1, o toca a DIPPO. Él celebra y sigue solo. Si aprietas otros botones, te cuenta para qué sirven.", Icono.MANDO, 0xFF2EC4A6),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("temperatura-2.0-41", "Temperatura y consejos", listOf(
             Pagina("Cuánto se calienta", "Mientras juegas, la pantalla compañera muestra la temperatura de la consola: verde si está fresca, amarilla si está tibia y roja si se calienta mucho.", Icono.BATERIA, 0xFFFF7A59),
             Pagina("Consejos de DIPPO", "DIPPO te avisa si se calienta o queda poca batería, y entre partidas te recuerda cuidar tus ojos y tus manos, y tomar agua. Se apaga en Ajustes › DIPPO.", Icono.BISA, 0xFF2EC4A6),
             Pagina("DIPPO conoce tus juegos", "Si un juego suele calentarla, DIPPO te avisa al empezar, y con emuladores pesados te dice qué bajar. Si la consola ya viene caliente, te avisa en el inicio.", Icono.MANDO, 0xFFFFC93C),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Tu año con Díptico", "Un resumen de lo que jugaste: horas, días, tus juegos más jugados, tu mejor mes y tu racha, con un comentario de DIPPO. Ábrelo desde tu perfil (Y) o en Ajustes › Tu perfil. En diciembre te aviso solo.", Icono.ESTRELLA, 0xFFFFC93C),
+            Pagina("Logros en plena partida", "Si ganas un logro de DIPPO mientras juegas, se celebra en la pantalla de abajo en el momento, sin esperar a que termines.", Icono.TROFEO, 0xFFFF7A59),
+            Pagina("Desde ahora, cada partida cuenta", "Díptico empezó a anotar tus partidas con su fecha, para que «Tu año» sea cada vez más completo. Se guarda solo en tu consola.", Icono.RELOJ, 0xFF2EC4A6),
         )),
     )
 

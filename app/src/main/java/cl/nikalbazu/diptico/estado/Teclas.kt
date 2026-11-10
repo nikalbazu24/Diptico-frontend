@@ -138,10 +138,16 @@ object Teclas {
             return true
         }
         if (e.extra.carga != null) { if (arriba && esB(code)) Diptico.cancelarCarga(); return true }
-        // Tu perfil: B lo cierra; A abre los ajustes para cambiar tus datos.
+        // Tu año: B lo cierra.
+        if (e.extra.anioEn >= 0) {
+            if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BACK)) Diptico.cerrarTuAno()
+            return true
+        }
+        // Tu perfil: B lo cierra; A abre los ajustes para cambiar tus datos; Y abre «Tu año».
         if (e.extra.perfilEn >= 0) {
             if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BACK)) Diptico.cerrarPerfil()
             else if (arriba && esA(code)) Diptico.editarPerfil()
+            else if (arriba && esY(code)) Diptico.abrirTuAno(e.extra.perfilEn)
             return true
         }
         // Ventana de amigos de Discord: B la cierra; A conecta si todavía no hay cuenta.

@@ -188,6 +188,10 @@ private fun ContenidoPerfil(e: Estado) {
                     .padding(horizontal = esc.d(16), vertical = esc.d(7)),
             ) { Texto("A · Editar perfil", 13.5f, color = if (color.luminance2() > 0.55f) Color(0xFF14101A) else Color.White, lineas = 1) }
             Box(
+                Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).clickable { Diptico.abrirTuAno(e.extra.perfilEn) }
+                    .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+            ) { Texto("Y · Tu año", 13.5f, color = TextoClaro, lineas = 1) }
+            Box(
                 Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).clickable { Diptico.cerrarPerfil() }
                     .padding(horizontal = esc.d(16), vertical = esc.d(7)),
             ) { Texto("B · Cerrar", 13.5f, color = TextoClaro, lineas = 1) }

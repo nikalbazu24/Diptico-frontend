@@ -228,7 +228,7 @@ fun ventanaEncima(e: Estado): Boolean = when (e.panel) {
     Panel.ASISTENTE -> e.sesion == null
     Panel.WIDGET -> e.intercambiar
     else -> true
-} || e.extra.amigosEn >= 0 || e.extra.perfilEn >= 0
+} || e.extra.amigosEn >= 0 || e.extra.perfilEn >= 0 || e.extra.anioEn >= 0
 
 /** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
 @Composable
@@ -460,6 +460,11 @@ private fun EnJuego(e: Estado) {
             delay(15_000)
         }
     }
+    // Un logro de DIPPO recién ganado: se celebra unos segundos y despierta la pantalla para que lo veas.
+    val logroNuevo = e.extra.dippoLogro.takeIf { e.extra.dippoCelebra > 0L && ahora - e.extra.dippoCelebra in 0..10_000L && it.isNotBlank() }
+    LaunchedEffect(e.extra.dippoCelebra) {
+        if (e.extra.dippoCelebra > 0L && System.currentTimeMillis() - e.extra.dippoCelebra < 10_000L) Diptico.despertar()
+    }
     val seg = (ahora - s.inicio) / 1000
     val reloj = if (seg >= 3600) "${seg / 3600}:${((seg % 3600) / 60).toString().padStart(2, '0')}:${(seg % 60).toString().padStart(2, '0')}"
     else "${seg / 60}:${(seg % 60).toString().padStart(2, '0')}"
@@ -509,7 +514,7 @@ private fun EnJuego(e: Estado) {
                 // 2 · El logo del juego manda, como en Cocoon: grande y flotando suave en el espacio que queda.
                 LogoEnPartida(juego, color, e.despierta && e.experiencia.movimiento, Modifier.weight(1f).fillMaxWidth())
                 // 3 · DIPPO: un consejo según lo que pasa, y la pista a un toque.
-                ConsejoDippo(e, s, juego, (seg / 60).toInt(), termica, (seg / 40).toInt())
+                ConsejoDippo(e, s, juego, (seg / 60).toInt(), termica, (seg / 40).toInt(), logroNuevo)
                 // 4 · Tu partida, compacta: el próximo paso en una línea y una barrita fina de cuánto te queda.
                 TuPartida(e, s.clave)
                 // 5 · La música, solo si suena algo.
@@ -563,7 +568,7 @@ private fun pedirPista(clave: String) {
 @Composable
 private fun ConsejoDippo(
     e: Estado, s: cl.nikalbazu.diptico.estado.Sesion, juego: cl.nikalbazu.diptico.data.Juego?, min: Int,
-    termica: cl.nikalbazu.diptico.estado.Termica.Lectura?, turno: Int,
+    termica: cl.nikalbazu.diptico.estado.Termica.Lectura?, turno: Int, logro: String? = null,
 ) {
     val esc = LocalEscala.current
     val reintentos = remember(s.clave, min) { cl.nikalbazu.diptico.estado.Asistente.reintentos(s.clave) }
@@ -593,9 +598,12 @@ private fun ConsejoDippo(
             .clickable { Diptico.prepararAyuda() }.padding(esc.d(10)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(52).value, cara = cara)
+        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(52).value, cara = if (logro != null) CaraDippo.CELEBRANDO else cara)
         Spacer(Modifier.width(esc.d(10)))
-        Detalle(texto, 14f, color = Color.White, lineas = 3, modifier = Modifier.weight(1f))
+        if (logro != null) Column(Modifier.weight(1f)) {
+            Detalle("¡Logro de DIPPO desbloqueado!", 13f, color = Sol, lineas = 1)
+            Texto("🏆 $logro", 17f, color = Color.White, peso = FontWeight.Black, lineas = 2, traducir = false)
+        } else Detalle(texto, 14f, color = Color.White, lineas = 3, modifier = Modifier.weight(1f))
     }
 }
 

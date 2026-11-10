@@ -1340,6 +1340,28 @@ class Capturas {
             foto("349_abajo_juego_muy_caliente", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
         } finally { T.pruebaLectura = null }
     }
+    // Tu año (con partidas de ejemplo repartidas por los meses) y un logro de DIPPO celebrado en plena partida.
+    @Test fun t350_tu_ano_arriba() {
+        val anio = java.time.LocalDate.now().year
+        fun f(mes: Int, clave: String, h: Double, n: Int) = cl.nikalbazu.diptico.estado.TuAno.Fila("$anio-%02d-10".format(mes), clave, (h * 3600).toLong(), n)
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = listOf(
+            f(1, "snes/1", 12.0, 9), f(2, "snes/1", 8.0, 6), f(2, "ps2/3", 15.0, 7), f(3, "ps2/3", 22.0, 10), f(4, "n64/7", 6.5, 5),
+            f(5, "snes/1", 4.0, 3), f(6, "genesis/6", 3.0, 3), f(8, "ps2/3", 18.0, 8), f(9, "n64/7", 9.0, 6), f(10, "ps2/3", 14.0, 6), f(11, "snes/1", 5.0, 4),
+        )
+        try {
+            val c = conPerfil()
+            foto("350_tu_ano_arriba", c.copy(extra = c.extra.copy(anioEn = 0)), Rol.SUPERIOR)
+        } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t351_abajo_logro_en_partida() = foto(
+        "351_abajo_logro_en_partida",
+        base().copy(
+            sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true,
+            extra = EstadoExtra(dippoCelebra = System.currentTimeMillis(), dippoLogro = "Maratón"),
+        ),
+        Rol.INFERIOR, mi = 1,
+    )
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)

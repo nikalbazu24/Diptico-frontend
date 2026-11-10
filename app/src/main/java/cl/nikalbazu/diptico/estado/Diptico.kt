@@ -407,6 +407,8 @@ data class EstadoExtra(
     /** Tu perfil, y si su tarjeta está abierta (id de la pantalla; -1 = cerrada) con el punto de donde crece (fracción del ancho y del alto). */
     val perfil: Perfil = Perfil(),
     val perfilEn: Int = -1,
+    /** «Tu año» abierto en esta pantalla (-1 = cerrado). */
+    val anioEn: Int = -1,
     val perfilOx: Float = 0.92f,
     val perfilOy: Float = 0.07f,
 )
@@ -1040,6 +1042,7 @@ object Diptico {
         vigilarTele()
         vigilarReposo()
         vigilarBateria()
+        vigilarTuAno()
         vigilarActualizaciones()
         vigilarLogrosDippo()
         // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
@@ -2483,6 +2486,33 @@ object Diptico {
         if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1)) }
     }
 
+    // ---------- Tu año ----------
+
+    /** Abre «Tu año» (el resumen de lo que jugaste) en [pantalla]; cierra el perfil y los amigos si estaban abiertos. */
+    fun abrirTuAno(pantalla: Int = android.view.Display.DEFAULT_DISPLAY) {
+        actualizar { it.copy(extra = it.extra.copy(anioEn = pantalla, perfilEn = -1, amigosEn = -1)) }
+    }
+
+    fun cerrarTuAno() {
+        if (estado.value.extra.anioEn >= 0) actualizar { it.copy(extra = it.extra.copy(anioEn = -1)) }
+    }
+
+    /** En diciembre, avisa una sola vez por año que «Tu año» ya está listo. */
+    private fun vigilarTuAno() {
+        scope.launch {
+            delay(20_000)
+            while (true) {
+                val c = java.util.Calendar.getInstance()
+                val anio = c.get(java.util.Calendar.YEAR)
+                if (TuAno.tocaAvisar(c.get(java.util.Calendar.MONTH) + 1, anio, almacen.texto("tuAnoAvisado")) && estado.value.configurado && estado.value.sesion == null) {
+                    almacen.guardarTexto("tuAnoAvisado", anio.toString())
+                    cuandoHayaLugar("tu-ano") { avisar("🎁 Tu año $anio con Díptico está listo: ábrelo desde tu perfil o en Ajustes"); Sonidos.aviso() }
+                }
+                delay(6 * 3_600_000L)
+            }
+        }
+    }
+
     /** Desde la tarjeta: cierra y abre «Mi perfil» en los ajustes para cambiar los datos. */
     fun editarPerfil() {
         cerrarPerfil()
@@ -2522,6 +2552,9 @@ object Diptico {
         val lista = mutableListOf(
             Opcion("Ver mi perfil", "Abrir mi tarjeta", Icono.PERFIL, "Tu tarjeta con tus horas, tu racha, tus logros y tus juegos favoritos.", grupo = "Tu perfil") {
                 cerrarPanel(); abrirPerfil(android.view.Display.DEFAULT_DISPLAY, 0.5f, 0.14f)
+            },
+            Opcion("Tu año", "Ver mi resumen del año", Icono.ESTRELLA, "Tus horas, tus juegos más jugados, tu mejor mes y tu racha del año, con un comentario de DIPPO. En diciembre te aviso solo.", grupo = "Tu perfil") {
+                cerrarPanel(); abrirTuAno(android.view.Display.DEFAULT_DISPLAY)
             },
             Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Así te saluda DIPPO y así se ve en tu perfil.", grupo = "Tus datos") { abrirTexto("nombre", estado.value.nombre) },
             Opcion("Apodo", if (pf.apodo.isBlank()) "Sin apodo" else "@${pf.apodo}", Icono.TEXTO, "Cómo te dicen tus amigos. Se ve como @apodo.", grupo = "Tus datos") { abrirTexto("perfil_apodo", estado.value.extra.perfil.apodo) },
@@ -3069,6 +3102,7 @@ object Diptico {
             sesiones = d.sesiones + if (duracion >= 15) 1 else 0,
         )
         almacen.guardarDatos(datos)
+        TuAno.registrar(s.clave, duracion)
         SocialDiscord.sinJuego()
         if (duracion >= 60 && estado.value.extra.discordTerminar) {
             val j = estado.value.juegosPorClave[s.clave]
@@ -5716,8 +5750,16 @@ object Diptico {
 
     /** Si se cumplió la meta de algún logro, lo guarda y DIPPO lo celebra. */
     fun revisarLogrosDippo() {
-        val e = estado.value
-        if (!e.configurado) return
+        val base = estado.value
+        if (!base.configurado) return
+        // Mientras juegas, el tiempo y la partida en curso ya cuentan: así los logros de horas y partidas se celebran en vivo.
+        val e = base.sesion?.let { s ->
+            val seg = (System.currentTimeMillis() - s.inicio) / 1000
+            if (seg < 15) base else {
+                val d = base.datos[s.clave] ?: DatosJuego()
+                base.copy(datos = base.datos + (s.clave to d.copy(tiempo = d.tiempo + seg, sesiones = d.sesiones + 1)))
+            }
+        } ?: base
         val c = contadores()
         val hechos = hechosDippo()
         val nuevos = LogrosDippo.LISTA.filter { it.id !in hechos && it.valor(e, c) >= it.meta }

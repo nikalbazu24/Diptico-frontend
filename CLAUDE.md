@@ -335,3 +335,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `ConsejoDippo` pone primero lo físico, luego lo de antes, y alterna con un consejo de cuidado cada ~40 s. Al pasar a «caliente» despierta la pantalla una vez.
 - Ajuste `extra.termica` (clave `termica`, G_DIPPO › «Temperatura y consejos al jugar»). Novedades `temperatura-2.0-41`. Capturas t348–t349, test `TermicaTest`.
 - Opus (misma rama): `Termica.registrar` guarda el pico por juego (almacén `termicaPicos`), `consejoAlEmpezar` (min < 3, pico ≥ 41 °C), `exigente(consolaId)` cambia el consejo de calor (bajar resolución interna), aviso en el inicio si ya viene caliente (`vigilarBateria`), opción «Sensores de temperatura» (`resumenSensores`) para ver qué deja leer la Thor.
+
+## Tu año + logros en vivo (10 nov, rama `fix/tu-ano`, Sonnet)
+- `estado/TuAno.kt`: historial de partidas (almacén `historialAnio`, líneas `fecha<TAB>clave<TAB>seg<TAB>partidas`, máx. 4000, se suma por día y juego;
+  `TuAno.registrar` se llama en `cerrarSesion` con partidas de ≥15 s). `resumenDe(filas, anio)` (horas, partidas, días, racha máxima, top 5, meses, mejor mes,
+  consola, desde cuándo) + `comentario(r)` de DIPPO + `tocaAvisar(mes, anio, yaAvisado)`. El historial parte en esta versión: lo anterior solo está en los totales de siempre.
+  `pruebaFilas` fuerza datos en capturas.
+- `ui/TuAno.kt` (`PanelTuAno`, tarjeta sobre el fondo difuminado), `extra.anioEn`, `Diptico.abrirTuAno/cerrarTuAno`. Se abre con Y desde la tarjeta de perfil, desde
+  Ajustes › Tu perfil, y `vigilarTuAno` avisa una vez en diciembre. Teclas: B cierra. Raiz y `ventanaEncima` la cuentan como ventana (desenfoque).
+- Logros en vivo: `revisarLogrosDippo` cuenta el tiempo y la partida en curso (antes solo se sumaban al cerrar la sesión); `EnJuego` muestra «Logro de DIPPO
+  desbloqueado» 10 s con DIPPO celebrando y despierta la pantalla. Novedades `tu-ano-2.0-42`. Capturas t350–t351, test `TuAnoTest`.
