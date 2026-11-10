@@ -256,3 +256,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Con vitrina de cajas, `Mosaicos` va en una fila (`estante`), mismo orden que arriba (+1 por paso).
 - `VentanaJuego` (opciones del juego): todo dentro del LazyColumn; `PanelFicha`: cabecera se esconde con indice > 0.
 - Novedades `cajas-exactas-2.0-33`. Capturas t327–t330.
+- Kit integrado (10 nov, commit 3298dc9): `app/src/main/cpp/puente_discord.cpp` (JNI, textos como bytes UTF-8, todo en el
+  hilo «discord» con `RunCallbacks` cada 200 ms) + `PuenteDiscord`/`SocialDiscord` en `estado/Social.kt` (`conexion`,
+  `conectarAqui` = `Client::Authorize`, `usarToken`, `renovar`, `jugando`/`sinJuego`). `BaseActivity.onResume` →
+  `SocialDiscord.alFrente` (setEngineActivity por reflexión; la 1.ª vez `Diptico.reconectarDiscord`). QR por HTTP sin
+  secreto (Public Client) con permisos del kit (`PERMISOS_KIT`); su token pasa al kit. `extra.discordPresencia`.
+  Solo se ve la actividad de amigos en Díptico (el kit no muestra otros juegos). Novedades `discord-amigos-2.0-34`, captura t333.
+- El .aar NO va al repo (ni cifrado: lo bloquea la sesión). CI lo baja del borrador privado `kit-discord`
+  (asset `discord_partner_sdk.aar`, job `apk` con contents: write); sin borrador compila sin kit (`BuildConfig.DISCORD_KIT`).
+  Nicolás debe: crear ese borrador, y en el portal activar Public Client + Redirect `discord-1569677228269117580:/authorize/callback`.
+
