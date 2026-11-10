@@ -362,6 +362,8 @@ data class EstadoExtra(
     val dippoInicio: Boolean = true,
     /** DIPPO saluda con un globito al llegar al inicio. */
     val dippoSaludo: Boolean = true,
+    /** DIPPO cuenta trucos y funciones escondidas de vez en cuando. */
+    val dippoDatos: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
     val dippoColor: String = "hora",
     /** Cuando le hablas a DIPPO, te responde en voz alta. */
@@ -953,6 +955,7 @@ object Diptico {
                 coloresBarra = almacen.texto("coloresBarra", "vivos"),
                 dippoInicio = almacen.bool("dippoInicio", true),
                 dippoSaludo = almacen.bool("dippoSaludo", true),
+                dippoDatos = almacen.bool("dippoDatos", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
                 cargaJuego = almacen.bool("cargaJuego", true),
@@ -1766,6 +1769,14 @@ object Diptico {
             delay(1200)
             if (Inicio.esPredeterminado(app)) avisar("¡Listo! Díptico es tu inicio: el botón Inicio siempre te trae aquí")
         }
+    }
+
+    /** El siguiente truco escondido que cuenta DIPPO (da la vuelta a la lista sin repetir). */
+    fun siguienteDatoDippo(): String {
+        val lista = DatosDippo.LISTA
+        val i = ((almacen.texto("dippoDato").toIntOrNull() ?: -1) + 1).mod(lista.size)
+        almacen.guardarTexto("dippoDato", i.toString())
+        return lista[i]
     }
 
     /** Vuelve a mostrar el recorrido de la primera vez. */
@@ -4368,6 +4379,14 @@ object Diptico {
                     val v = !estado.value.extra.dippoSaludo
                     almacen.guardarBool("dippoSaludo", v)
                     actualizar { it.copy(extra = it.extra.copy(dippoSaludo = v)) }
+                }
+                lista += Opcion(
+                    "Trucos y datos escondidos", if (e.extra.dippoDatos) "Sí" else "No", Icono.CHISPA,
+                    "De vez en cuando DIPPO te cuenta, en su globito, una función de Díptico que quizás no conocías. Desliza el globito para sacarlo.",
+                ) {
+                    val v = !estado.value.extra.dippoDatos
+                    almacen.guardarBool("dippoDatos", v)
+                    actualizar { it.copy(extra = it.extra.copy(dippoDatos = v)) }
                 }
                 lista += Opcion(
                     "Responder con voz", if (e.extra.dippoVoz) "Sí" else "No", Icono.MICROFONO,

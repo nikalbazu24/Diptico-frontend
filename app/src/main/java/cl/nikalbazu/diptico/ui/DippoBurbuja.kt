@@ -96,8 +96,8 @@ private fun Globito(m: DippoBurbuja.Mensaje, colaX: FloatArray, p: Paleta, esc: 
     val ox = remember(m.id) { Animatable(0f) }
     val oy = remember(m.id) { Animatable(0f) }
     val alcance = rememberCoroutineScope()
-    val fondo = when (m.tipo) { 2 -> Coral.copy(alpha = 0.95f); 3 -> Sol.copy(alpha = 0.97f); else -> p.superficie.copy(alpha = 0.96f) }
-    val tinta = when (m.tipo) { 2 -> Color.White; 3 -> Color(0xFF2A1E05); else -> p.tinta }
+    val fondo = when (m.tipo) { 2 -> Coral.copy(alpha = 0.95f); 4 -> Uva.copy(alpha = 0.96f); 3 -> Sol.copy(alpha = 0.97f); else -> p.superficie.copy(alpha = 0.96f) }
+    val tinta = when (m.tipo) { 2, 4 -> Color.White; 3 -> Color(0xFF2A1E05); else -> p.tinta }
     Column(
         Modifier
             .graphicsLayer { translationX = ox.value; translationY = oy.value; alpha = (1f - (abs(ox.value) / 260f + (-oy.value).coerceAtLeast(0f) / 160f)).coerceIn(0.1f, 1f) }

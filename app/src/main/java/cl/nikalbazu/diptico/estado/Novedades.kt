@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "primera-vez-2.0-38"
-    const val NOMBRE = "Empezar es más fácil"
+    const val ID = "dippo-guia-2.0-39"
+    const val NOMBRE = "DIPPO te guía"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -350,13 +350,17 @@ object Novedades {
             Pagina("DIPPO sobre su cabeza", "Los mensajes de DIPPO salen como globitos justo arriba de su cabeza. Deslízalos hacia arriba o a un lado y se van, sin molestar la vista.", Icono.BISA, 0xFFFF7A59),
             Pagina("Barra de abajo deslizable", "La franja de accesos de abajo se desliza hacia el lado cuando hay muchas apps. Tu foto, DIPPO, la hora y la batería quedan fijos a la derecha.", Icono.APPS, 0xFF38BDF8),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("primera-vez-2.0-38", "Empezar es más fácil", listOf(
             Pagina("Primera vez más corta", "La configuración ahora pide solo lo justo: pantallas, tus juegos, emuladores si faltan y el estilo. Las portadas se bajan solas.", Icono.CHECK, 0xFF2EC4A6),
             Pagina("Recorrido en 5 pasos", "El recorrido de bienvenida ahora es corto y al día: dos pantallas, jugar, DIPPO, tu perfil y Ajustes.", Icono.CHISPA, 0xFF6B4EFF),
             Pagina("Sin cierres de sorpresa", "Al elegir Díptico como inicio, te avisa antes que Android lo reinicia un segundo, y al volver te confirma que quedó listo.", Icono.APPS, 0xFF3BA8FF),
             Pagina("Directo a tus juegos", "Al abrir Díptico vas directo al inicio. El recordatorio de tu partida sale solo si dejaste un juego en pausa.", Icono.JUGAR, 0xFFFF7A59),
             Pagina("Tema Díptico por defecto", "Ahora parte con el tema de Díptico. Los temas de fechas especiales se activan en Temas si los quieres.", Icono.PALETA, 0xFF9B6BFF),
             Pagina("Fondo difuminado", "Toda ventana que se abre (opciones, galerías, ficha, búsqueda, amigos) deja el fondo difuminado detrás.", Icono.FORMA, 0xFF38BDF8),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("DIPPO te muestra Díptico", "El recorrido de bienvenida ahora lo cuenta DIPPO, grande y al centro, con un globo que se escribe letra a letra. Puedes verlo de nuevo en Ajustes.", Icono.BISA, 0xFFFF7A59),
+            Pagina("Trucos escondidos", "De vez en cuando DIPPO te cuenta en su globito una función que quizás no conocías. Se apaga en Ajustes › DIPPO › Trucos y datos escondidos.", Icono.CHISPA, 0xFF9B6BFF),
         )),
     )
 
@@ -384,26 +388,30 @@ object Novedades {
     }
 
     /** Recorrido por las opciones y funciones: se muestra la primera vez, al terminar de configurar Díptico. */
-    /** El recorrido de la primera vez: cinco pasos cortos, uno por idea. Se puede ver de nuevo en Ajustes. */
+    /** El recorrido de la primera vez, contado por DIPPO: seis pasos cortos. Se puede ver de nuevo en Ajustes. */
     val RECORRIDO = listOf(
         Pagina(
-            "Una consola, dos pantallas", "Arriba se luce tu juego. Abajo eliges consola y juego. A para seguir, B para saltar.",
-            Icono.PANTALLAS, 0xFF6B4EFF, "A · B",
+            "¡Hola! Soy DIPPO", "Soy el pulpito que vive en tu Díptico. Te muestro lo importante en un ratito. A para seguir, B para saltar.",
+            Icono.BISA, 0xFFFF7A59, "A · B",
         ),
         Pagina(
-            "Elige y juega", "Cruceta o stick para moverte, L1 y R1 cambian de consola, A juega. X abre la ficha del juego.",
+            "Una consola, dos pantallas", "Arriba se luce tu juego, con su arte grande. Abajo eliges la consola y el juego.",
+            Icono.PANTALLAS, 0xFF6B4EFF,
+        ),
+        Pagina(
+            "Elige y juega", "Muévete con la cruceta o el stick. L1 y R1 cambian de consola, A juega y X abre la ficha del juego.",
             Icono.JUGAR, 0xFF2EC4A6, "L1 · R1 · A",
         ),
         Pagina(
-            "DIPPO te acompaña", "Tócalo para preguntarle qué jugar o cómo pasar una parte. Sus mensajes salen sobre su cabeza y se sacan deslizando.",
-            Icono.BISA, 0xFFFF7A59, "Tócalo",
+            "Yo te ayudo", "Tócame para preguntarme qué jugar o cómo pasar una parte. Mis mensajes salen sobre mi cabeza: deslízalos si molestan.",
+            Icono.BISA, 0xFFFF7A59, "Tócame",
         ),
         Pagina(
-            "Tu perfil", "Tu foto está en la esquina: tócala para ver tus horas y logros. Con Start + A la abres con el mando.",
+            "Tu perfil", "Tu foto está en la esquina: ahí ves tus horas y logros. Con Start + A la abres con el mando.",
             Icono.PERFIL, 0xFFE64FA0, "Start + A",
         ),
         Pagina(
-            "Todo en Ajustes", "Start abre Ajustes. Cada opción explica qué hace. ¡A jugar!",
+            "¡A jugar!", "Start abre Ajustes y cada opción explica qué hace. De vez en cuando te contaré trucos escondidos. ¡Nos vemos!",
             Icono.AJUSTES, 0xFF3BA8FF, "Start",
         ),
     )

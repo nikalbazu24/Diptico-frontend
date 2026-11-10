@@ -68,6 +68,21 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
         delay(7000)
         fase = 0
     }
+    // Cada tanto, si está tranquilo, cuenta un truco escondido de Díptico (fase 4).
+    var dato by remember { mutableStateOf("") }
+    LaunchedEffect(e.extra.dippoDatos) {
+        if (!e.extra.dippoDatos) return@LaunchedEffect
+        delay(45_000)
+        while (true) {
+            if (fase == 0) {
+                dato = Diptico.siguienteDatoDippo()
+                fase = 4
+                delay(11_000)
+                if (fase == 4) fase = 0
+            }
+            delay(4 * 60_000L)
+        }
+    }
     // Al ganar un logro, el globito lo anuncia (fase 3) unos segundos.
     LaunchedEffect(e.extra.dippoCelebra) {
         if (System.currentTimeMillis() - e.extra.dippoCelebra < 8000) { fase = 3; delay(7000); fase = 0 }
@@ -76,6 +91,7 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
     val pantalla = pantallaActual()
     // El globito sale arriba de su cabeza, en la capa de Raiz (así no empuja ni tapa los accesos de abajo).
     val texto = when (fase) {
+        4 -> "💡 " + cl.nikalbazu.diptico.estado.Idioma.t(dato)
         3 -> "🏆 " + e.extra.dippoLogro
         2 -> idea?.first
         1 -> saludoDippo(hora)

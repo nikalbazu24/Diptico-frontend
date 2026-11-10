@@ -1045,7 +1045,7 @@ class Capturas {
 
     @Test fun t226_recorrido_inicio() = foto("226_recorrido_1", base().copy(novedades = 0, recorrido = true), Rol.SUPERIOR)
     @Test fun t227_recorrido_paso() = foto("227_recorrido_paso", base().copy(novedades = 3, recorrido = true), Rol.SUPERIOR)
-    @Test fun t228_recorrido_final() = foto("228_recorrido_final", base().copy(novedades = 4, recorrido = true), Rol.SUPERIOR)
+    @Test fun t228_recorrido_final() = foto("228_recorrido_final", base().copy(novedades = 5, recorrido = true), Rol.SUPERIOR)
     @Test fun t229_novedades_b6() = foto("229_novedades_beta6", base().copy(novedades = 1), Rol.SUPERIOR)
 
     @Test fun t230_novedades_juntas() = foto("230_novedades_juntas_inicio", base().copy(novedades = 0, novedadesDesde = "1.0-beta.3"), Rol.SUPERIOR)
@@ -1320,6 +1320,9 @@ class Capturas {
     }
     @Config(qualifiers = ABAJO)
     @Test fun t345_abajo_franja_y_globito_dippo() = foto("345_abajo_franja_y_globito_dippo", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.INFERIOR, mi = 1)
+    @Test fun t346_recorrido_dippo_una() = foto("346_recorrido_dippo_una", base().copy(novedades = 2, recorrido = true), Rol.UNICA)
+    @Config(qualifiers = ABAJO)
+    @Test fun t347_recorrido_dippo_abajo() = foto("347_recorrido_dippo_abajo", base().copy(novedades = 1, recorrido = true), Rol.INFERIOR, mi = 1)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)

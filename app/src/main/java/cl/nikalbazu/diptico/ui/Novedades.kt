@@ -52,6 +52,8 @@ import cl.nikalbazu.diptico.estado.Novedades
  */
 @Composable
 fun TourNovedades(e: Estado) {
+    // La primera vez el recorrido lo cuenta DIPPO.
+    if (e.recorrido) { RecorridoDippo(e); return }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val paginas = Diptico.paginasTour(e)
@@ -124,7 +126,7 @@ fun TourNovedades(e: Estado) {
 }
 
 @Composable
-private fun PuntosAvance(k: Int, n: Int, color: Color) {
+internal fun PuntosAvance(k: Int, n: Int, color: Color) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
@@ -146,7 +148,7 @@ fun NovedadesCompania(e: Estado) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             IconoDiptico(Icono.ARRIBA, Color(paginas[k].color), 30f)
             Spacer(Modifier.height(esc.d(8)))
-            Texto(if (e.recorrido) "Mira el recorrido arriba" else "Mira las novedades arriba", 20f, lineas = 1)
+            Texto(if (e.recorrido) "DIPPO te cuenta arriba" else "Mira las novedades arriba", 20f, lineas = 1)
             Spacer(Modifier.height(esc.d(12)))
             PuntosAvance(k, paginas.size, Color(paginas[k].color))
             Spacer(Modifier.height(esc.d(14)))
