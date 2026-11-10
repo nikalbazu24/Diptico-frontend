@@ -48,7 +48,8 @@ internal fun caraDippoInicio(saludando: Boolean, bateria: Int, cargando: Boolean
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
-    if (!e.extra.dippoInicio || !e.configurado) return
+    // Durante el recorrido o las novedades, DIPPO está al centro de la escena: aquí no se duplica.
+    if (!e.extra.dippoInicio || !e.configurado || e.novedades >= 0) return
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val bateria = rememberBateria()
