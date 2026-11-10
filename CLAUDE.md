@@ -246,3 +246,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `FabricaCaras.hacerFrente`; logo = `consolasPropias[id].logo` o el nombre), apagable con `extra.bandaCaja` (clave
   `bandaCaja`); fondo de la vitrina = portada del elegido a 40 px estirada. El «video de anoche» de Nicolás NO está en esta
   sesión (no se puede ver): pedirle que lo vuelva a adjuntar o lo describa para afinar fluidez y estilo.
+
+## Beta.288 (10 nov, rama `fix/cajas-exactas`)
+- Discord: el flujo de dispositivos exige Client ID + **Client Secret** con Basic auth (docs de consolas). La clave la pega
+  Nicolás en Ajustes (`discord_secreto`, almacén credencial `discordSecreto`); `PERMISOS = "identify"`. Sin el secreto daba invalid_client.
+- Cajas exactas: `Raspadores.caras` trae `frente` (TGDB front / SS box-2D) con filtro de plataforma (`PLATAFORMA_TGDB`);
+  `CarasGuardadas.frente`, almacén `carasCaja2`. Con frente exacto no se agrega franja. DS/3DS: franja lateral (`franjaLateral`).
+- Fondo de la vitrina: `Imagenes.desenfocada` (240 px + 3 pasadas de desenfoque de caja) + `rememberDesenfocada`.
+- Con vitrina de cajas, `Mosaicos` va en una fila (`estante`), mismo orden que arriba (+1 por paso).
+- `VentanaJuego` (opciones del juego): todo dentro del LazyColumn; `PanelFicha`: cabecera se esconde con indice > 0.
+- Novedades `cajas-exactas-2.0-33`. Capturas t327–t330.
