@@ -10,7 +10,7 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "tu-ano-2.0-43"
+    const val ID = "tu-ano-2.0-44"
     const val NOMBRE = "Tu año completo"
 
     /**
@@ -376,8 +376,11 @@ object Novedades {
             Pagina("Logros en plena partida", "Si ganas un logro de DIPPO mientras juegas, se celebra en la pantalla de abajo en el momento, sin esperar a que termines.", Icono.TROFEO, 0xFFFF7A59),
             Pagina("Desde ahora, cada partida cuenta", "Díptico empezó a anotar tus partidas con su fecha, para que «Tu año» sea cada vez más completo. Se guarda solo en tu consola.", Icono.RELOJ, 0xFF2EC4A6),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("tu-ano-2.0-43", "Tu año completo", listOf(
             Pagina("«Tu año» se ve completo", "En la pantalla ancha, tus números van a la izquierda y el mes a mes con tus cinco juegos más jugados a la derecha, todo a la vista sin deslizar. Y los plurales salen bien («1 partida»).", Icono.ESTRELLA, 0xFFFFC93C),
+        )),
+        Version(ID, "Tu año, bien ajustado", listOf(
+            Pagina("Todo a la vista", "«Tu año» ahora cabe entero en la pantalla de arriba: el botón de cerrar pasó a la esquina y las tarjetas son más compactas.", Icono.ESTRELLA, 0xFFFFC93C),
         )),
     )
 

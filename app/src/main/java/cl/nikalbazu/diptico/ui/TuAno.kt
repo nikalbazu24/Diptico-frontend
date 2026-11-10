@@ -106,7 +106,8 @@ private fun ContenidoTuAno(e: Estado, color: Color) {
             }
         } else {
             // Pantalla ancha: a la izquierda tus números y a la derecha el mes a mes y tus más jugados, para verlo todo sin deslizar.
-            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(22))) {
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(esc.d(22))) {
                 Column(Modifier.weight(1.3f).fillMaxHeight().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
                     Cabecera(r, anio, color)
                     Tarjetas(e, r, color)
@@ -117,13 +118,24 @@ private fun ContenidoTuAno(e: Estado, color: Color) {
                     Nota(r)
                 }
             }
+            // En la pantalla ancha el botón va arriba a la derecha, para dejarle todo el alto al contenido.
+            BotonCerrar(Modifier.align(Alignment.TopEnd))
+            }
         }
-        Spacer(Modifier.height(esc.d(10)))
-        Box(
-            Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).clickable { Diptico.cerrarTuAno() }
-                .padding(horizontal = esc.d(16), vertical = esc.d(7)),
-        ) { Texto("B · Cerrar", 13.5f, color = TextoClaro, lineas = 1) }
+        if (esc.angosta) {
+            Spacer(Modifier.height(esc.d(10)))
+            BotonCerrar(Modifier)
+        }
     }
+}
+
+@Composable
+private fun BotonCerrar(modifier: Modifier) {
+    val esc = LocalEscala.current
+    Box(
+        modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).clickable { Diptico.cerrarTuAno() }
+            .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+    ) { Texto("B · Cerrar", 13.5f, color = TextoClaro, lineas = 1) }
 }
 
 /** DIPPO celebra y comenta el año. */
@@ -154,11 +166,11 @@ private fun Tarjetas(e: Estado, r: TuAno.Resumen, color: Color) {
             val primero = r.top.firstOrNull()
             val juego = primero?.let { e.juegosPorClave[it.first] }
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                Dato("Juego del año", juego?.titulo ?: "—", color, Modifier.weight(1f)) {
+                Dato("Juego del año", juego?.titulo ?: "—", color, Modifier.weight(1f), tam = 14f) {
                     primero?.let { Texto(horas(it.second), 11.5f, color = color, lineas = 1, traducir = false) }
                 }
-                Dato("Consola del año", r.consola.ifBlank { "—" }, color, Modifier.weight(1f)) {}
-                Dato("Mejor mes", if (r.mejorMes > 0) TuAno.nombreMes(r.mejorMes) else "—", color, Modifier.weight(1f)) {
+                Dato("Consola del año", r.consola.ifBlank { "—" }, color, Modifier.weight(1f), tam = 14f) {}
+                Dato("Mejor mes", if (r.mejorMes > 0) TuAno.nombreMes(r.mejorMes) else "—", color, Modifier.weight(1f), tam = 14f) {
                     if (r.mejorMes > 0) Texto(horas(r.porMes[r.mejorMes - 1]), 11.5f, color = color, lineas = 1, traducir = false)
                 }
             }
@@ -215,13 +227,13 @@ private fun Nota(r: TuAno.Resumen) {
 
 /** Una tarjetita con un título, un valor grande y, si hace falta, una línea de abajo. */
 @Composable
-private fun Dato(etiqueta: String, valor: String, color: Color, modifier: Modifier, traducirValor: Boolean = false, sub: @Composable () -> Unit) {
+private fun Dato(etiqueta: String, valor: String, color: Color, modifier: Modifier, traducirValor: Boolean = false, tam: Float = 18f, sub: @Composable () -> Unit) {
     val esc = LocalEscala.current
     Column(
         modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f)).padding(horizontal = esc.d(12), vertical = esc.d(7)),
     ) {
-        Texto(etiqueta, 11.5f, color = TextoSuave, lineas = 1)
-        Texto(valor, 18f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = traducirValor)
+        Texto(etiqueta, 10.5f, color = TextoSuave, lineas = 1)
+        Texto(valor, tam, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = traducirValor)
         sub()
     }
 }
