@@ -30,11 +30,22 @@ import cl.nikalbazu.diptico.estado.Estado
  * Lo que muestra una pantalla: el tutorial si falta configurar, o el inicio que le toca.
  * Encima van el reloj grande y la animación de entrada.
  */
+/** El número de la pantalla que está dibujando [Raiz] (−1 fuera de ella). */
+val LocalPantallaId = androidx.compose.runtime.compositionLocalOf { -1 }
+
+/** La pantalla donde está este composable: la de [Raiz], o la de su ventana si no hay. */
+@Composable
+fun pantallaActual(): Int {
+    val id = LocalPantallaId.current
+    return if (id >= 0) id else androidx.compose.ui.platform.LocalView.current.display?.displayId ?: 0
+}
+
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     val barra = e.configurado && !(rol == Rol.INFERIOR && (e.unaPantalla || e.vista == "mosaicos")) && !nuevoDisenoDosPantallas(e)
     val esc = LocalEscala.current
     CompositionLocalProvider(
+        LocalPantallaId provides miPantalla,
         LocalBarraSistema provides barra,
         LocalIconos provides IconosCfg(e.estiloIconos, e.iconosPropios, e.iconosVersion),
         LocalFormas provides remember(e.formas, e.formaTodos, e.consolaSel) { cl.nikalbazu.diptico.estado.Diptico.formasVisibles(e) },

@@ -67,6 +67,7 @@ private val TextoSuave = Color(0xFFA5A8BD)
 @Composable
 fun BotonPerfil(tam: Float = 26f) {
     val vista = LocalView.current
+    val pantalla = pantallaActual()
     val esc = LocalEscala.current
     val pf by remember { Diptico.estado.map { it.extra.perfil }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.extra.perfil)
     val cuenta by remember { Diptico.estado.map { it.extra.discordUsuario.isNotBlank() }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.extra.discordUsuario.isNotBlank())
@@ -85,7 +86,7 @@ fun BotonPerfil(tam: Float = 26f) {
                     centro[1] = (p.y + c.size.height / 2f) / h
                 }
                 .clip(CircleShape)
-                .clickable { Diptico.abrirPerfil(vista.display?.displayId ?: 0, centro[0], centro[1]) }
+                .clickable { Diptico.abrirPerfil(pantalla, centro[0], centro[1]) }
                 .testTag("boton-perfil"),
         ) { FotoPerfil(pf, tam) }
         // La insignia de Discord: un toque abre la ventana de amigos. El puntito verde dice si estás conectado.
@@ -93,7 +94,7 @@ fun BotonPerfil(tam: Float = 26f) {
         Box(
             Modifier.align(Alignment.BottomEnd).offset(x = esc.d(insignia * 0.25f), y = esc.d(insignia * 0.2f)).size(esc.d(insignia))
                 .clip(CircleShape).background(Color(0xFF1E1F24)).padding(esc.d(insignia * 0.1f))
-                .clickable { Diptico.abrirAmigos(vista.display?.displayId ?: 0) }
+                .clickable { Diptico.abrirAmigos(pantalla) }
                 .testTag("boton-discord"),
             contentAlignment = Alignment.Center,
         ) { MarcaDiscord(insignia * 0.8f, listo) }
@@ -239,7 +240,6 @@ private fun Numeros(e: Estado, r: ResumenPerfil, color: Color, conFavoritos: Boo
     val esc = LocalEscala.current
     val pf = e.extra.perfil
     Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
-        Texto("TU ACTIVIDAD", 12f, color = TextoSuave, espaciado = 1.6f, lineas = 1)
         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
             Dato("Horas jugadas", if (pf.mostrarHoras) horas(r.segundos) else "Oculto", if (pf.mostrarHoras) "${r.juegosJugados} juegos distintos" else "Se cambia en tu perfil", color, Modifier.weight(1f))
             Dato("Más jugado", r.masJugado?.titulo ?: "Aún nada", r.masJugado?.let { if (pf.mostrarHoras) horas(r.masJugadoSeg) else "" }.orEmpty(), color, Modifier.weight(1f), traducirValor = r.masJugado == null)
@@ -254,7 +254,7 @@ private fun Numeros(e: Estado, r: ResumenPerfil, color: Color, conFavoritos: Boo
             if (r.favoritos.isEmpty()) Detalle("Marca juegos como favoritos y aparecen aquí.", 12.5f, color = TextoSuave, lineas = 2)
             else Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 for (j in r.favoritos) Box(
-                    Modifier.height(esc.d(62)).aspectRatio(0.78f).clip(RoundedCornerShape(esc.d(10))).background(Color.White.copy(alpha = 0.06f)),
+                    Modifier.height(esc.d(48)).aspectRatio(0.78f).clip(RoundedCornerShape(esc.d(10))).background(Color.White.copy(alpha = 0.06f)),
                 ) { ArteJuego(j, preferirArte = false, maxLado = 200, modifier = Modifier.fillMaxSize()) }
             }
         }
@@ -270,7 +270,7 @@ private fun LogrosDippoTile(r: ResumenPerfil, color: Color, modifier: Modifier) 
     Column(
         modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f))
             .clickable { Diptico.cerrarPerfil(); Diptico.abrirGaleria("logros_dippo") }
-            .padding(horizontal = esc.d(12), vertical = esc.d(7)),
+            .padding(horizontal = esc.d(12), vertical = esc.d(5)),
     ) {
         Texto("Logros de DIPPO", 11.5f, color = TextoSuave, lineas = 1)
         Texto("${r.logros} de ${r.logrosTotal}", 19f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = false)
@@ -290,7 +290,7 @@ private fun LogrosRATile(e: Estado, color: Color) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f))
             .clickable { Diptico.cerrarPerfil(); Diptico.abrirMenu(Seccion.G_PERFIL) }
-            .padding(horizontal = esc.d(12), vertical = esc.d(7)),
+            .padding(horizontal = esc.d(12), vertical = esc.d(5)),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
     ) {
         IconoDiptico(Icono.TROFEO, Sol, 22f)
@@ -317,11 +317,11 @@ private fun LogrosRATile(e: Estado, color: Color) {
 private fun Dato(etiqueta: String, valor: String, sub: String, color: Color, modifier: Modifier, traducirValor: Boolean = false) {
     val esc = LocalEscala.current
     Column(
-        modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f)).padding(horizontal = esc.d(12), vertical = esc.d(7)),
+        modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f)).padding(horizontal = esc.d(12), vertical = esc.d(5)),
         verticalArrangement = Arrangement.spacedBy(esc.d(0)),
     ) {
         Texto(etiqueta, 11.5f, color = TextoSuave, lineas = 1)
-        Texto(valor, 19f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = traducirValor || valor == "Oculto")
+        Texto(valor, 17.5f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = traducirValor || valor == "Oculto")
         if (sub.isNotBlank()) Texto(sub, 11.5f, color = color, lineas = 1, traducir = sub == "jugando seguido" || sub == "juega hoy para empezar" || sub == "Se cambia en tu perfil")
     }
 }

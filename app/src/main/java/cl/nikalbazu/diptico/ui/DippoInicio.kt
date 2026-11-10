@@ -73,8 +73,7 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
         if (System.currentTimeMillis() - e.extra.dippoCelebra < 8000) { fase = 3; delay(7000); fase = 0 }
     }
     val saludando = fase == 1
-    val vista = androidx.compose.ui.platform.LocalView.current
-    val pantalla = vista.display?.displayId ?: 0
+    val pantalla = pantallaActual()
     // El globito sale arriba de su cabeza, en la capa de Raiz (así no empuja ni tapa los accesos de abajo).
     val texto = when (fase) {
         3 -> "🏆 " + e.extra.dippoLogro
