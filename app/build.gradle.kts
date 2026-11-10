@@ -16,6 +16,12 @@ val reportesUrl = providers.environmentVariable("DIPTICO_REPORTES_URL").orNull.o
 val discordApp = providers.environmentVariable("DIPTICO_DISCORD_APP").orNull.orEmpty().trim()
     .ifEmpty { "1569677228269117580" }
 require(discordApp.isEmpty() || Regex("""[0-9]{15,22}""").matches(discordApp)) { "DIPTICO_DISCORD_APP debe ser el Application ID (solo números)." }
+// Kit oficial de Discord (Social SDK): su licencia no deja subirlo al repositorio público, así que GitHub Actions
+// lo descifra en app/discord/ antes de compilar. Sin el kit, Díptico compila igual (sin amigos ni «Jugando a…»).
+val kitDiscord = file("discord/discord_partner_sdk.aar")
+val conKitDiscord = kitDiscord.exists()
+val carpetaKitDiscord = layout.buildDirectory.dir("kit-discord").get().asFile
+if (conKitDiscord) copy { from(zipTree(kitDiscord)) { include("prefab/**") }; into(carpetaKitDiscord) }
 require(reportesUrl.isEmpty() || Regex("""https://script[.]google[.]com/macros/s/[A-Za-z0-9_-]+/exec""").matches(reportesUrl)) {
     "DIPTICO_REPORTES_URL debe ser el enlace /exec de la aplicación web de Apps Script."
 }
@@ -32,6 +38,10 @@ android {
         versionName = "$versionBase-beta.$numero"
         buildConfigField("String", "REPORTES_URL", "\"$reportesUrl\"")
         buildConfigField("String", "DISCORD_APP", "\"$discordApp\"")
+        buildConfigField("boolean", "DISCORD_KIT", "$conKitDiscord")
+        // Para volver de «Autorizar» en Discord a Díptico (discord-<Application ID>:/authorize/callback).
+        manifestPlaceholders["discordEsquema"] = "discord-$discordApp"
+        if (conKitDiscord) externalNativeBuild { cmake { arguments += "-DKIT=${carpetaKitDiscord.absolutePath}" } }
         // La Thor (y casi todas las consolas Android) es arm64: así el APK no carga librerías que no usa.
         ndk { abiFilters += "arm64-v8a" }
     }
@@ -62,6 +72,8 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    if (conKitDiscord) externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt") } }
 
     buildFeatures {
         buildConfig = true
@@ -112,6 +124,9 @@ dependencies {
     implementation("com.google.mediapipe:tasks-genai:0.10.27")
     // Códigos QR (para abrir en el teléfono las páginas de las claves)
     implementation("com.google.zxing:core:3.5.3")
+    // Kit de Discord: amigos, inicio de sesión y «Jugando a…». El kit usa androidx.browser para «Autorizar».
+    if (conKitDiscord) implementation(files(kitDiscord))
+    implementation("androidx.browser:browser:1.8.0")
 
     // Capturas automáticas de las pantallas (solo para revisar el diseño, no van en la app)
     testImplementation("junit:junit:4.13.2")

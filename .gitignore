@@ -11,3 +11,4 @@ __pycache__/
 
 .kotlin/
 app/capturas/
+app/discord/

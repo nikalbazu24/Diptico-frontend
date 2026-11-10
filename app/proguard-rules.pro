@@ -12,3 +12,9 @@
 -dontwarn com.google.protobuf.**
 -dontwarn com.google.auto.value.**
 -dontwarn javax.annotation.**
+
+# Kit de Discord (Social SDK): su parte en C++ llama a estas clases por nombre.
+-keep class com.discord.** { *; }
+-keep class org.webrtc.** { *; }
+-dontwarn com.discord.**
+-dontwarn org.webrtc.**

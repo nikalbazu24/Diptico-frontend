@@ -84,6 +84,11 @@ fun PanelDiscord(e: Estado) {
                                     val quedan = ((l.expira - ahora) / 1000).coerceAtLeast(0)
                                     Texto("Esperando que apruebes… (el código dura ${quedan / 60}:${"%02d".format(quedan % 60)})", 11.5f,
                                         color = Color.White.copy(alpha = 0.6f), traducir = false)
+                                    if (cl.nikalbazu.diptico.estado.SocialDiscord.disponible) Box(Modifier.clip(RoundedCornerShape(50))
+                                        .background(Color.White.copy(alpha = 0.1f)).clickable { Diptico.conectarDiscordAqui() }
+                                        .padding(horizontal = esc.d(14), vertical = esc.d(7))) {
+                                        Texto("Y  O ábrelo en esta consola", 12.5f, color = Color.White, lineas = 1)
+                                    }
                                 }
                             }
                             if (ancho) Row(horizontalArrangement = Arrangement.spacedBy(esc.d(22)), verticalAlignment = Alignment.CenterVertically) { qr(); pasos() }

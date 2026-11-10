@@ -96,7 +96,9 @@ fun BotonDiscord(tam: Float = 22f) {
     val vista = LocalView.current
     val e by Diptico.estado.collectAsState()
     val amigos by SocialDiscord.amigos.collectAsState()
-    val conectado = e.extra.discordUsuario.isNotBlank()
+    val conexion by SocialDiscord.conexion.collectAsState()
+    // Con el kit, el puntito verde es la conexión real; sin él, basta con la cuenta guardada.
+    val conectado = e.extra.discordUsuario.isNotBlank() && (!SocialDiscord.disponible || conexion == "listo")
     val jugando = amigos.count { it.estado == "jugando" }
     Row(
         Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirAmigos(vista.display?.displayId ?: 0) }
@@ -136,8 +138,10 @@ fun PanelAmigos(e: Estado, miPantalla: Int) {
 private fun ContenidoAmigos(e: Estado, modifier: Modifier) {
     val esc = LocalEscala.current
     val amigos by SocialDiscord.amigos.collectAsState()
+    val conexion by SocialDiscord.conexion.collectAsState()
     val x = e.extra
     val conectado = x.discordUsuario.isNotBlank()
+    val enLineaYo = !SocialDiscord.disponible || conexion == "listo"
     Column(
         modifier.padding(vertical = esc.d(10)).padding(end = esc.d(10))
             .clip(RoundedCornerShape(esc.d(22))).background(Color(0xF21E1F24))
@@ -150,10 +154,16 @@ private fun ContenidoAmigos(e: Estado, modifier: Modifier) {
             Modifier.fillMaxWidth().background(ColorDiscord.copy(alpha = 0.22f)).padding(horizontal = esc.d(14), vertical = esc.d(12)),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
-            Avatar(x.discordAvatar.takeIf { it.isNotBlank() }, x.discordUsuario.ifBlank { "?" }, 38f, if (conectado) "conectado" else "desconectado")
+            Avatar(x.discordAvatar.takeIf { it.isNotBlank() }, x.discordUsuario.ifBlank { "?" }, 38f,
+                if (conectado && enLineaYo) "conectado" else if (conectado && conexion == "conectando") "ausente" else "desconectado")
             Column(Modifier.weight(1f)) {
                 Texto(if (conectado) x.discordUsuario else "Discord", 15f, color = Color.White, peso = FontWeight.Bold, lineas = 1, traducir = !conectado)
-                Texto(if (conectado) "Conectado" else "Sin conectar", 11.5f, color = Color.White.copy(alpha = 0.65f), lineas = 1)
+                Texto(when {
+                    !conectado -> "Sin conectar"
+                    enLineaYo -> "Conectado"
+                    conexion == "conectando" -> "Conectando…"
+                    else -> "Sin conexión con Discord"
+                }, 11.5f, color = Color.White.copy(alpha = 0.65f), lineas = 1)
             }
             Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.12f)).clickable { Diptico.cerrarAmigos() }
                 .padding(horizontal = esc.d(10), vertical = esc.d(5))) { Texto("B", 11f, color = Color.White, traducir = false, lineas = 1) }
@@ -170,13 +180,25 @@ private fun ContenidoAmigos(e: Estado, modifier: Modifier) {
                 }
                 Texto("Aparece un código: lo escaneas con tu teléfono y listo.", 11.5f, color = Color.White.copy(alpha = 0.6f),
                     alinear = androidx.compose.ui.text.style.TextAlign.Center)
+                if (SocialDiscord.disponible) Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f))
+                    .clickable { Diptico.conectarDiscordAqui() }.padding(vertical = esc.d(9)), contentAlignment = Alignment.Center) {
+                    Texto("Y  Abrir Discord en esta consola", 12.5f, color = Color.White, lineas = 1)
+                }
             }
             !SocialDiscord.disponible -> Column(Modifier.fillMaxWidth().padding(esc.d(16)), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 Texto("Tus amigos", 13f, color = Color.White.copy(alpha = 0.7f), peso = FontWeight.Bold, lineas = 1)
                 Texto("La lista de amigos llega con el kit oficial de Discord, que estamos sumando a Díptico.", 12.5f, color = Color.White.copy(alpha = 0.75f))
             }
-            amigos.isEmpty() -> Box(Modifier.fillMaxWidth().padding(esc.d(16))) {
-                Texto("Todavía no aparecen tus amigos.", 13f, color = Color.White.copy(alpha = 0.75f))
+            amigos.isEmpty() -> Column(Modifier.fillMaxWidth().padding(esc.d(16)), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                Texto(when (conexion) {
+                    "conectando" -> "Conectando con Discord…"
+                    "listo" -> "Todavía no tienes amigos en Discord."
+                    else -> "No pude conectar con Discord."
+                }, 13f, color = Color.White.copy(alpha = 0.75f))
+                if (conexion != "conectando" && conexion != "listo") Box(Modifier.clip(RoundedCornerShape(50)).background(ColorDiscord)
+                    .clickable { Diptico.reconectarDiscord() }.padding(horizontal = esc.d(16), vertical = esc.d(8))) {
+                    Texto("Reintentar", 13f, color = Color.White, peso = FontWeight.Bold, lineas = 1)
+                }
             }
             else -> {
                 val lista = remember(amigos) { SocialDiscord.ordenar(amigos) }

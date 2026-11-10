@@ -105,8 +105,10 @@ object DiscordCuenta {
     data class Token(val acceso: String, val refresco: String, val vence: Long)
     data class Usuario(val id: String, val nombre: String, val avatar: String?)
 
-    /** Los permisos que se piden: saber quién eres y mostrar tu actividad (para el «Jugando a…»). */
+    /** Los permisos que se piden sin el kit: saber quién eres. */
     const val PERMISOS = "identify"
+    /** Con el kit de Discord: además tus amigos y el «Jugando a…» (los mismos que pide el kit). */
+    const val PERMISOS_KIT = "identify openid sdk.social_layer_presence"
     private const val API = "https://discord.com/api/v10"
 
     /**
@@ -134,9 +136,9 @@ object DiscordCuenta {
     }
 
     /** Paso 1: el código para el QR. Devuelve el código o el motivo del error. */
-    suspend fun pedirCodigo(app: String, secreto: String = ""): Pair<Codigo?, String?> = withContext(Dispatchers.IO) {
+    suspend fun pedirCodigo(app: String, secreto: String = "", permisos: String = PERMISOS): Pair<Codigo?, String?> = withContext(Dispatchers.IO) {
         try {
-            val (n, t) = formulario("$API/oauth2/device/authorize", mapOf("client_id" to app, "scope" to PERMISOS), app, secreto)
+            val (n, t) = formulario("$API/oauth2/device/authorize", mapOf("client_id" to app, "scope" to permisos), app, secreto)
             if (n !in 200..299) return@withContext null to motivo(t, n)
             val j = JSONObject(t)
             val url = j.optString("verification_uri", "https://discord.com/activate")
@@ -202,7 +204,7 @@ object DiscordCuenta {
         val j = try { JSONObject(t) } catch (_: Exception) { null }
         val e = j?.optString("error").orEmpty()
         return when {
-            e == "invalid_client" || n == 401 -> "Discord no aceptó la app: revisa la clave secreta (Client Secret) en Ajustes › Cuentas y conexiones › Discord"
+            e == "invalid_client" || n == 401 -> "Discord no aceptó la app: en su portal falta activar «Public Client» (OAuth2)"
             e == "invalid_scope" -> "Discord no aceptó los permisos pedidos"
             e.isNotBlank() -> "Discord respondió: " + (j?.optString("error_description")?.takeIf { it.isNotBlank() } ?: e)
             else -> "Discord respondió $n"
