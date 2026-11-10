@@ -1206,6 +1206,7 @@ class Capturas {
     @Test fun t302_jugando_con_dock() = foto("302_jugando_con_dock", base().copy(appsFijadas = listOf("com.android.settings", "com.android.chrome"), sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
     @Test fun t305_vitrina_cajas() = foto("305_vitrina_cajas", base().copy(vista = "mosaicos"), Rol.SUPERIOR)
     @Test fun t306_vitrina_cajas_psx() = foto("306_vitrina_cajas_psx", base().copy(vista = "mosaicos", juegoSel = "psx/3"), Rol.SUPERIOR)
+    @Test fun t310_vitrina_sin_giro() { cl.nikalbazu.diptico.ui.vitrinaSinGiro = true; try { foto("310_vitrina_sin_giro", base().copy(vista = "mosaicos", juegoSel = "psx/3"), Rol.SUPERIOR) } finally { cl.nikalbazu.diptico.ui.vitrinaSinGiro = false } }
     @Test fun t307_carga_arriba() = foto("307_carga_arriba", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.SUPERIOR, avance = 600)
     @Config(qualifiers = ABAJO)
     @Test fun t308_carga_abajo() = foto("308_carga_abajo", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.INFERIOR, mi = 1, avance = 600)

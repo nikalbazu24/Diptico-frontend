@@ -43,6 +43,9 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 
+/** Solo para las capturas de prueba: dibuja la vitrina sin el giro 3D (para comparar). */
+internal var vitrinaSinGiro = false
+
 /** La portada de arriba: "cajas" (la vitrina con las cajas de los juegos) o "arte" (el arte del juego en grande). */
 val Estado.portadaCajas: Boolean get() = extra.portada == "cajas"
 
@@ -88,7 +91,8 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             )))
 
             // 2. Las cajas: la elegida al centro y hasta dos a cada lado.
-            if (consola != null && lista.isNotEmpty()) {
+            // Cada caja con la forma de su consola (la vitrina ignora la forma «para todas» del estante).
+            if (consola != null && lista.isNotEmpty()) CompositionLocalProvider(LocalFormas provides e.formas) {
                 val v = pos.value
                 val desde = (floor(v).toInt() - 3).coerceAtLeast(0)
                 val hasta = (ceil(v).toInt() + 3).coerceAtMost(lista.lastIndex)
@@ -112,8 +116,10 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                             Modifier.zIndex(-ar)
                                 .graphicsLayer {
                                     translationX = signo * (cerca * paso1 + lejos * paso2) * density
-                                    rotationY = -r.coerceIn(-1f, 1f) * 34f
-                                    cameraDistance = 16f * density
+                                    if (!vitrinaSinGiro) {
+                                        rotationY = -r.coerceIn(-1f, 1f) * 34f
+                                        cameraDistance = 12f * density
+                                    }
                                     val s = 1f - 0.26f * cerca - 0.1f * lejos
                                     scaleX = s; scaleY = s
                                     alpha = (1f - 0.15f * cerca - 0.55f * lejos).coerceIn(0f, 1f)
