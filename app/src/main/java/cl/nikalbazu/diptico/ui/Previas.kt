@@ -156,6 +156,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                 Seccion.IDIOMA -> Marco { PreviaIdioma(t) }
                 Seccion.SISTEMA, Seccion.ESENCIAL, Seccion.MAS, Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CUENTAS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_SISTEMA -> Marco { PreviaAcerca() }
                 Seccion.G_DIPPO -> Marco { PreviaDippo(e) }
+                Seccion.G_PERFIL, Seccion.PERFIL -> Marco { PreviaPerfil(e) }
             }
         }
     }

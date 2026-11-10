@@ -169,6 +169,8 @@ fun FranjaAccesos(e: Estado) {
         } else BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
         androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
         BotonDiscord(26f)
+        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(8)))
+        BotonPerfil(30f)
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
         DippoInicio(e, 36f)
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(10)))

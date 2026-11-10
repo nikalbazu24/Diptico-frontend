@@ -158,7 +158,7 @@ internal object CentroBisa {
         val c = contexto(e)
         val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         val nombre = e.nombre.trim().takeIf { it.isNotEmpty() }?.let { ", $it" } ?: ""
-        val hola = when (h) { in 6..11 -> "¡Buenos días$nombre!"; in 12..19 -> "¡Buenas tardes$nombre!"; else -> "¡Buenas noches$nombre!" }
+        val hola = if (e.extra.perfil.cumpleHoy()) "¡Feliz cumpleaños$nombre! 🎂" else when (h) { in 6..11 -> "¡Buenos días$nombre!"; in 12..19 -> "¡Buenas tardes$nombre!"; else -> "¡Buenas noches$nombre!" }
         val j = c.juego
         if (c.jugando && j != null) {
             val min = (System.currentTimeMillis() - (e.sesion?.inicio ?: System.currentTimeMillis())) / 60_000

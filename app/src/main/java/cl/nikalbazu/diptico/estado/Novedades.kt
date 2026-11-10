@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "discord-amigos-2.0-34"
-    const val NOMBRE = "Discord con tus amigos"
+    const val ID = "perfil-2.0-35"
+    const val NOMBRE = "Tu perfil"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -326,10 +326,15 @@ object Novedades {
             Pagina("Estante en línea", "Con la vitrina de cajas, abajo los juegos van en una sola fila en el mismo orden que arriba: avanzas uno a uno, sin saltos. El fondo es la portada desenfocada de verdad.", Icono.JUGAR, 0xFF6B4EFF),
             Pagina("Más espacio en las opciones", "En las opciones del juego y en su ficha, todo se desliza junto: lo de arriba se va al bajar y las opciones usan toda la ventana.", Icono.MENU, 0xFF3BD18A),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("discord-amigos-2.0-34", "Discord con tus amigos", listOf(
             Pagina("Conéctate en un toque", "Toca el botón de Discord de la barra: escanea el código con tu teléfono, o ábrelo en esta consola y toca «Autorizar». Sin claves ni contraseñas.", Icono.MUNDO, 0xFF5865F2),
             Pagina("Tus amigos al lado", "El botón de Discord, arriba y abajo, muestra si estás conectado y cuántos amigos juegan. Tócalo y se desliza una ventana con quién está conectado y quién juega en Díptico.", Icono.CORAZON, 0xFF23A55A),
             Pagina("Jugando a…", "Al abrir un juego, tu perfil de Discord muestra cuál es, en qué consola y cuánto llevas. Se apaga en Ajustes › Cuentas y conexiones.", Icono.JUGAR, 0xFFFF9A6B),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Tu perfil", "Toca tu foto, arriba a la derecha (o abajo, junto a la hora): se abre tu tarjeta con tus horas, tu racha, tus logros de DIPPO y tus juegos favoritos. Crece desde tu foto sobre el fondo difuminado.", Icono.PERFIL, 0xFFFF7A59),
+            Pagina("Foto o personaje", "Pon una foto de tu consola o elige uno de ocho personajes de Díptico: Misu, Robotín, Moquito, Dragoncito, Fantasmita, Caballerito, Zorrito y Pixelito. Todos son originales.", Icono.BISA, 0xFFE64FA0),
+            Pagina("Tus datos", "En Ajustes › Mi perfil: tu nombre, un apodo, tu fecha de nacimiento (DIPPO te felicita ese día), tu color y tu consola favorita. Si quieres, puedes ocultar tus horas.", Icono.EDITAR, 0xFF23C486),
         )),
     )
 
