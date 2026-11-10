@@ -302,3 +302,15 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   el mensaje y la posición de su cabeza. `LocalPantallaId`/`pantallaActual()` en `Raiz.kt`.
 - `FranjaAccesos`: grupo izquierdo con `horizontalScroll`, derecha fija. Novedades `marcos-dippo-2.0-37`. Capturas t342–t345.
 - Pendiente (próxima semana): conexión completa de Discord (llamadas de voz/chat, Comms Access, puerta de edad con la fecha de nacimiento).
+
+## Primera vez (10 nov, rama `fix/primera-vez`, Opus)
+- `pasosTuto`: BIENVENIDA, PANTALLAS (solo con dos), CARPETA (al continuar baja portadas sola), EMULADORES (solo si faltan), APARIENCIA
+  (noche/día, sin Cristal), LISTO. El enum `PasoTuto` sigue completo (lo usan capturas viejas).
+- `Novedades.RECORRIDO` en 5 páginas al día. Novedades `primera-vez-2.0-38`.
+- El cierre al terminar el tutorial = Android reinicia la app al darle el rol de inicio (no había reportes en Drive). `ofrecerInicio` ahora
+  pregunta con `Dialogo("ser-inicio")` explicando el reinicio; guarda `pidioInicio` y `revisarPedidoInicio()` confirma al volver.
+- Bienvenida al encender apagada por defecto (clave `bienvenidaModo2`, "no"): solo sale `Continuacion` si había partida en pausa.
+- Tema de fechas apagado por defecto (clave `temaFestivo2`).
+- `difuminar`/`ventanaEncima(e)` en `PantallaInferior.kt`: todo panel abierto (menos CENTRO/NINGUNO), amigos o perfil difuminan el estante;
+  `Raiz.encima` suma `amigosEn` y `discordLogin`.
+
