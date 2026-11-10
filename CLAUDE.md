@@ -217,3 +217,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   primero y grande, `TuPartida` compacta. Discord por webhook (`estado/Discord.kt`, `extra.discordWebhook/Empezar/Terminar`,
   `avisarDiscord` al lanzar y en `cerrarSesion`, opciones en Seccion.LOGROS grupo «Discord», texto `discord_webhook` con QR).
   Rich Presence real necesita Discord Social SDK (no descargable desde la sesión). Novedades `estuches-discord-2.0-30`. Capturas t311–t317.
+- Cajas 3D + cuentas (10 nov, rama `fix/cajas-3d`): estuche ALREDEDOR del arte (`MargenesEstuche`/`margenesDe`, la caja crece
+  y el arte va en el hueco). Vitrina: la elegida flota (`ola`), se gira con el dedo (`giroY`/`giroX`, resorte al soltar),
+  lomo que se asoma (2,5D) y reflejo; el respaldo del pager ignora arrastres consumidos. Decoraciones: ya no se apagan con
+  el color de la consola (`aplicarTema`) ni al jugar (`aplicarFluidez`). Sección `G_CUENTAS` («Cuentas y conexiones» =
+  Seccion.LOGROS: Discord + RA + SteamGridDB + raspadores). Discord con login por QR (flujo device de OAuth2:
+  `DiscordCuenta`, `extra.discordLogin` → `PanelDiscord` en Raiz; tokens en credenciales). FALTA el Application ID:
+  Nicolás debe crear la app en discord.com/developers (OAuth2 › Public Client ON) y pasar el ID → `DIPTICO_DISCORD_APP`
+  en build.gradle (por defecto vacío). Presencia «Jugando a…» sigue pendiente del Social SDK. Novedades `cajas-3d-2.0-31`.
