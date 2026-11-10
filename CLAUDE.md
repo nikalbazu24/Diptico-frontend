@@ -242,3 +242,7 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   lee el flotar al dibujar, `Estilo.decorQuieta` (decoraciones quietas con sesión). Pendiente: `Estado` entero pasa a todo
   (cada `actualizar` recompone mucho); medir en la Thor antes de partir eso.
 - Novedades `cajas-reales-2.0-32`.
+- Publicado como **v1.1-beta.285** (main a93292f). Además: franja de la consola arriba del frente (`franjaDe`, `InfoFrente`,
+  `FabricaCaras.hacerFrente`; logo = `consolasPropias[id].logo` o el nombre), apagable con `extra.bandaCaja` (clave
+  `bandaCaja`); fondo de la vitrina = portada del elegido a 40 px estirada. El «video de anoche» de Nicolás NO está en esta
+  sesión (no se puede ver): pedirle que lo vuelva a adjuntar o lo describa para afinar fluidez y estilo.
