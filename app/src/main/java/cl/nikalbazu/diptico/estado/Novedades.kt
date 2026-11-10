@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "perfil-2.0-35"
-    const val NOMBRE = "Tu perfil"
+    const val ID = "perfil-mando-2.0-36"
+    const val NOMBRE = "Perfil con el mando"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -331,10 +331,14 @@ object Novedades {
             Pagina("Tus amigos al lado", "El botón de Discord, arriba y abajo, muestra si estás conectado y cuántos amigos juegan. Tócalo y se desliza una ventana con quién está conectado y quién juega en Díptico.", Icono.CORAZON, 0xFF23A55A),
             Pagina("Jugando a…", "Al abrir un juego, tu perfil de Discord muestra cuál es, en qué consola y cuánto llevas. Se apaga en Ajustes › Cuentas y conexiones.", Icono.JUGAR, 0xFFFF9A6B),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("perfil-2.0-35", "Tu perfil", listOf(
             Pagina("Tu perfil", "Toca tu foto, arriba a la derecha (o abajo, junto a la hora): se abre tu tarjeta con tus horas, tu racha, tus logros de DIPPO y tus juegos favoritos. Crece desde tu foto sobre el fondo difuminado.", Icono.PERFIL, 0xFFFF7A59),
             Pagina("Foto o personaje", "Pon una foto de tu consola o elige uno de ocho personajes de Díptico: Misu, Robotín, Moquito, Dragoncito, Fantasmita, Caballerito, Zorrito y Pixelito. Todos son originales.", Icono.BISA, 0xFFE64FA0),
             Pagina("Tus datos", "En Ajustes › Mi perfil: tu nombre, un apodo, tu fecha de nacimiento (DIPPO te felicita ese día), tu color y tu consola favorita. Si quieres, puedes ocultar tus horas.", Icono.EDITAR, 0xFF23C486),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Perfil con el mando", "Mantén Start y aprieta A en el inicio: se abre tu perfil. Con el mismo gesto se cierra, y B también.", Icono.PERFIL, 0xFFFF7A59),
+            Pagina("Tu foto en el inicio", "Tu foto también está junto a la hora en el inicio con widgets, para abrir tu perfil con un toque.", Icono.BISA, 0xFFE64FA0),
         )),
     )
 
