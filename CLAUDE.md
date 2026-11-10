@@ -275,3 +275,16 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   (asset `discord_partner_sdk.aar`, job `apk` con contents: write); sin borrador compila sin kit (`BuildConfig.DISCORD_KIT`).
   Nicolás ya creó el borrador (11:24). Portal: activar Public Client + Redirect `discord-1569677228269117580:/authorize/callback`.
 
+
+## Perfil de usuario (10 nov, rama `fix/perfil`, Sonnet)
+- Pedido de Nicolás: perfil con foto y datos, acceso en una esquina y en Ajustes, fondo difuminado, personajes propios más finos y
+  zoom desde el ícono. Boceto aprobado: https://claude.ai/artifact/AuoPvX9VZhuDYFPcMwcwao (versión 4). Un solo perfil; con fecha de nacimiento.
+- `estado/Perfil.kt` (`Perfil` en JSON, clave `perfil`; `Perfil.fecha()` valida «12/03/1990»; `PERSONAJES` = 8 originales; `ResumenPerfil`).
+  `EstadoExtra.perfil/perfilEn/perfilOx/perfilOy`. `Diptico.abrirPerfil(pantalla, ox, oy)`, `cerrarPerfil`, `editarPerfil` (→ Ajustes › Mi perfil),
+  `cambiarPerfil{}`, `resumenPerfil(e)`, `opcionesPerfil`. Sección `G_PERFIL` (primera de Ajustes) que junta `PERFIL`. El nombre sigue siendo `e.nombre`.
+- `ui/Personajes.kt` (`dibujarPersonaje(id)` en Canvas: Misu, Robotín, Moquito, Dragoncito, Fantasmita, Caballerito, Zorrito, Pixelito;
+  `FotoPerfil(perfil, tam, personaje=)`). `ui/Perfil.kt`: `BotonPerfil` (guarda su centro en la ventana), `PanelPerfil` (tarjeta que se
+  escala desde ese punto con `TransformOrigin`; Raiz desenfoca el fondo con `encima`), `PreviaPerfil`. Botón en `EstadoChico` y `FranjaAccesos`.
+- Teclas: con la tarjeta abierta, B/Atrás cierra y A abre Ajustes › Mi perfil. DIPPO felicita el día del cumpleaños (`CentroBisa.saludoInicial`).
+- Foto: `pedirImagen("perfilFoto")`. Galería `personajes`. Novedades `perfil-2.0-35` (la de Discord pasó a id literal). Capturas t334–t340.
+- Pendiente: Start+A para abrir el perfil con el mando; el botón también en el encabezado del inicio con widgets; estadísticas «esta semana».

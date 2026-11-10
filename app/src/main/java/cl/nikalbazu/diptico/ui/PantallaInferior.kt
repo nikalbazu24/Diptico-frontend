@@ -825,6 +825,8 @@ internal fun PanelClave(e: Estado) {
         ) {
             val (icono, titulo, ayuda, ejemplo) = when (e.textoPara) {
                 "nombre" -> listOf(Icono.TEXTO, "¿Cómo te llamas?", "DIPPO te saluda por tu nombre cuando prendes la consola.", "Ej: Nico")
+                "perfil_apodo" -> listOf(Icono.PERFIL, "Tu apodo", "Cómo te dicen tus amigos. Se ve como @apodo, sin espacios.", "Ej: nikalbazu")
+                "perfil_nacimiento" -> listOf(Icono.RELOJ, "Tu fecha de nacimiento", "Día, mes y año, así: 12/03/1990. Déjala vacía para quitarla.", "dd/mm/aaaa")
                 "ia_clave_gemini" -> listOf(Icono.CLAVE, "Clave de Gemini (gratis)", "Entra a aistudio.google.com/apikey con tu cuenta de Google, toca \"Create API key\" y pégala aquí. Solo se guarda en tu consola.", "Pega tu clave")
                 "ia_clave_openai" -> listOf(Icono.CLAVE, "Clave de ChatGPT", "Entra a platform.openai.com/api-keys, crea una clave y pégala aquí. Usa el saldo de tu cuenta de OpenAI. Solo se guarda en tu consola.", "Pega tu clave")
                 "ra_usuario" -> listOf(Icono.TROFEO, "Usuario de RetroAchievements", "Tu nombre de usuario en retroachievements.org (no tu correo).", "Ej: Nikalbazu")

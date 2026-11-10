@@ -1269,6 +1269,37 @@ class Capturas {
             "ABCD-1234", "https://discord.com/activate", "https://discord.com/activate?user_code=ABCD1234", System.currentTimeMillis() + 300_000))), Rol.SUPERIOR) }
         finally { s.disponible = false }
     }
+    // ---------- Perfil de usuario ----------
+    private fun conPerfil(abierto: Int = -1, personaje: String = "gato", color: Long = 0xFFFF7A59, extra: EstadoExtra = EstadoExtra()): Estado = base().copy(
+        vista = "mosaicos", nombre = "Nico", juegos = juegosVarios,
+        datos = mapOf(
+            "snes/1" to DatosJuego(tiempo = 84 * 3600L, ultimo = 1L, favorito = true),
+            "ps2/3" to DatosJuego(tiempo = 51 * 3600L + 600, ultimo = 1L, favorito = true),
+            "n64/7" to DatosJuego(tiempo = 38 * 3600L, ultimo = 1L, favorito = true),
+            "genesis/6" to DatosJuego(tiempo = 12 * 3600L, ultimo = 1L),
+        ),
+        extra = extra.copy(
+            perfilEn = abierto, perfilOx = 0.93f, perfilOy = 0.07f, discordUsuario = "Nico",
+            perfil = cl.nikalbazu.diptico.estado.Perfil(apodo = "nikalbazu", nacimiento = "1992-03-12", personaje = personaje, color = color, desde = 1_793_000_000_000L),
+        ),
+    )
+    @Test fun t334_perfil_tarjeta_arriba() = foto("334_perfil_tarjeta_arriba", conPerfil(abierto = 0), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t335_perfil_tarjeta_abajo() = foto("335_perfil_tarjeta_abajo", conPerfil(abierto = 1, personaje = "zorro", color = 0xFF23C486), Rol.INFERIOR, mi = 1)
+    @Test fun t336_perfil_zoom_a_medias() = foto("336_perfil_zoom_a_medias", conPerfil(abierto = 0, personaje = "robot", color = 0xFF5865F2), Rol.SUPERIOR, avance = 110)
+    @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
+    @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
+    @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)
+    @Test fun t340_perfil_personajes_grandes() {
+        regla.setContent { Lienzo(true, Modifier.fillMaxSize(), 1f) { androidx.compose.foundation.layout.Column {
+            for (fila in cl.nikalbazu.diptico.estado.PERSONAJES.chunked(4)) androidx.compose.foundation.layout.Row {
+                for ((id, _) in fila) cl.nikalbazu.diptico.ui.FotoPerfil(
+                    cl.nikalbazu.diptico.estado.Perfil(personaje = id, color = cl.nikalbazu.diptico.estado.Perfil.COLORES[cl.nikalbazu.diptico.estado.PERSONAJES.indexOfFirst { it.first == id }].second), 150f)
+            }
+        } } }
+        regla.onRoot().captureRoboImage("capturas/340_personajes_grandes.png")
+    }
+
     @Test fun t307_carga_arriba() = foto("307_carga_arriba", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.SUPERIOR, avance = 600)
     @Config(qualifiers = ABAJO)
     @Test fun t308_carga_abajo() = foto("308_carga_abajo", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.INFERIOR, mi = 1, avance = 600)

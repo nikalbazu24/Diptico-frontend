@@ -83,6 +83,7 @@ fun colorSeccion(s: Seccion): Color = when (s) {
     Seccion.G_DIPPO -> Color(0xFFFF9A6B)
     Seccion.G_SISTEMA -> Color(0xFF8E8AAE)
     Seccion.G_CUENTAS -> Color(0xFF5865F2)
+    Seccion.G_PERFIL, Seccion.PERFIL -> Color(0xFFFF7A59)
 }
 
 private fun tintaSobre(c: Color) = if (c.luminance() > 0.55f) Tinta else Color.White
@@ -541,6 +542,7 @@ fun EstadoChico() {
             Texto("${avisos.size}", 11f, color = p.tinta, traducir = false, lineas = 1)
         }
         BotonDiscord(20f)
+        BotonPerfil(24f)
         Texto(hora, 13f, color = p.tinta, traducir = false, lineas = 1, modifier = Modifier.clickable { Diptico.alternarReloj() })
         val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }
         Box(Modifier.size(esc.d(20), esc.d(10)).border(esc.d(1.5f), p.tinta.copy(alpha = 0.7f), RoundedCornerShape(esc.d(3))).padding(esc.d(2))) {

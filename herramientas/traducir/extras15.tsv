@@ -319,3 +319,79 @@ Todavía no tienes amigos en Discord.	You don't have friends on Discord yet.	Voc
 No pude conectar con Discord.	I couldn't connect to Discord.	Não consegui conectar ao Discord.	无法连接 Discord。	Discord に接続できませんでした。
 Reintentar	Retry	Tentar de novo	重试	再試行
 Díptico está conectado a tu cuenta.	Díptico is connected to your account.	O Díptico está conectado à sua conta.	Díptico 已连接你的账户。	Díptico はアカウントに接続済みです。
+Mi perfil	My profile	Meu perfil	我的资料	マイプロフィール
+Tu foto o personaje, tu nombre, tu color y tus datos: para que Díptico sea más tuyo.	Your photo or character, your name, your color and your details: to make Díptico more yours.	Sua foto ou personagem, seu nome, sua cor e seus dados: para o Díptico ser mais seu.	你的照片或角色、名字、颜色和资料：让 Díptico 更像你自己。	写真やキャラクター、名前、色、情報：Díptico をもっと自分らしく。
+Tu foto o personaje, tu nombre, tu color y tus datos.	Your photo or character, your name, your color and your details.	Sua foto ou personagem, seu nome, sua cor e seus dados.	你的照片或角色、名字、颜色和资料。	写真やキャラクター、名前、色、情報。
+Ver mi perfil	See my profile	Ver meu perfil	查看我的资料	プロフィールを見る
+Abrir mi tarjeta	Open my card	Abrir meu cartão	打开我的名片	カードを開く
+Tu tarjeta con tus horas, tu racha, tus logros y tus juegos favoritos.	Your card with your hours, your streak, your achievements and your favorite games.	Seu cartão com suas horas, sua sequência, suas conquistas e seus jogos favoritos.	你的名片：游戏时长、连续天数、成就和最爱的游戏。	プレイ時間、連続日数、実績、お気に入りのゲームが載ったカード。
+Sin nombre	No name	Sem nome	没有名字	名前なし
+Así te saluda DIPPO y así se ve en tu perfil.	This is how DIPPO greets you and how it looks on your profile.	É assim que o DIPPO te cumprimenta e como aparece no seu perfil.	DIPPO 会这样称呼你，也会显示在你的资料里。	DIPPO があなたを呼ぶ名前で、プロフィールにも表示されます。
+Apodo	Nickname	Apelido	昵称	ニックネーム
+Sin apodo	No nickname	Sem apelido	没有昵称	ニックネームなし
+Cómo te dicen tus amigos. Se ve como @apodo.	What your friends call you. It shows as @nickname.	Como seus amigos te chamam. Aparece como @apelido.	朋友怎么称呼你。显示为 @昵称。	友だちがあなたを呼ぶ名前。@ニックネーム と表示されます。
+Fecha de nacimiento	Date of birth	Data de nascimento	出生日期	生年月日
+Sin fecha	No date	Sem data	未设置	未設定
+Escríbela así: 12/03/1990. DIPPO te felicita en tu cumpleaños, y más adelante servirá para las llamadas con amigos.	Write it like this: 12/03/1990. DIPPO wishes you a happy birthday, and later it will be used for calls with friends.	Escreva assim: 12/03/1990. O DIPPO te dá parabéns no seu aniversário e, mais adiante, servirá para as chamadas com amigos.	按这样写：12/03/1990。DIPPO 会在你生日时祝福你，以后也会用于和朋友通话。	12/03/1990 のように入力してください。誕生日に DIPPO がお祝いします。今後は友だちとの通話にも使います。
+Mi foto	My photo	Minha foto	我的照片	マイ写真
+Usar un personaje	Use a character	Usar um personagem	使用角色	キャラクターを使う
+Cambiar mi foto	Change my photo	Trocar minha foto	更换照片	写真を変更
+Elige una imagen de tu consola. Si no, se usa el personaje.	Pick an image from your console. Otherwise, your character is used.	Escolha uma imagem do seu console. Se não, usa-se o personagem.	从你的主机里选一张图片。否则使用角色。	本体から画像を選びます。なければキャラクターを使います。
+Quitar mi foto	Remove my photo	Remover minha foto	移除我的照片	写真を削除
+Volver al personaje	Back to the character	Voltar ao personagem	改回角色	キャラクターに戻す
+Tu foto se quita de Díptico (la imagen original no se toca).	Your photo is removed from Díptico (the original image is untouched).	Sua foto é removida do Díptico (a imagem original não é alterada).	你的照片会从 Díptico 移除（原图不受影响）。	写真は Díptico から外れます（元の画像はそのままです）。
+Foto quitada	Photo removed	Foto removida	照片已移除	写真を削除しました
+Mi personaje	My character	Meu personagem	我的角色	マイキャラクター
+Ocho amigos de Díptico para elegir. Se ve cuando no tienes foto.	Eight Díptico friends to choose from. Shown when you have no photo.	Oito amigos do Díptico para escolher. Aparece quando você não tem foto.	八位 Díptico 朋友任你选。没有照片时显示。	Díptico の仲間 8 人から選べます。写真がないときに表示されます。
+Mi color	My color	Minha cor	我的颜色	マイカラー
+El color del borde de tu foto y de los detalles de tu tarjeta.	The color of your photo's border and your card's details.	A cor da borda da sua foto e dos detalhes do seu cartão.	照片边框和名片细节的颜色。	写真のふちとカードの飾りの色。
+Menta	Mint	Menta	薄荷	ミント
+Rosa	Pink	Rosa	粉红	ピンク
+Sol	Sun	Sol	阳光	サン
+Cielo	Sky	Céu	天空	スカイ
+Uva	Grape	Uva	葡萄	グレープ
+Lima	Lime	Lima	青柠	ライム
+Consola favorita	Favorite console	Console favorito	最爱主机	お気に入りの機種
+La que se muestra en tu tarjeta. «La más jugada» la elige sola según tus horas.	The one shown on your card. “Most played” picks it by itself from your hours.	A que aparece no seu cartão. «A mais jogada» escolhe sozinha pelas suas horas.	显示在名片上的主机。“玩得最多”会按你的时长自动选择。	カードに表示される機種。「いちばん遊んだ」は時間から自動で選びます。
+La más jugada	Most played	A mais jogada	玩得最多	いちばん遊んだ
+Mostrar mis horas	Show my hours	Mostrar minhas horas	显示我的时长	プレイ時間を表示
+Si lo apagas, tu tarjeta no muestra cuántas horas has jugado.	If you turn it off, your card doesn't show how many hours you've played.	Se desligar, seu cartão não mostra quantas horas você jogou.	关闭后，名片不会显示你玩了多少小时。	オフにすると、カードにプレイ時間が表示されません。
+Tus datos	Your details	Seus dados	你的资料	あなたの情報
+Tu imagen	Your image	Sua imagem	你的形象	あなたの画像
+Tu tarjeta	Your card	Seu cartão	你的名片	あなたのカード
+No entendí la fecha. Escríbela así: 12/03/1990	I didn't understand the date. Write it like this: 12/03/1990	Não entendi a data. Escreva assim: 12/03/1990	没看懂这个日期。请这样写：12/03/1990	日付がわかりません。12/03/1990 のように入力してください
+Fecha quitada	Date removed	Data removida	日期已移除	日付を削除しました
+Fecha guardada	Date saved	Data salva	日期已保存	日付を保存しました
+¡Listo! Esta es tu foto	Done! This is your photo	Pronto! Esta é a sua foto	好了！这是你的照片	できました！これがあなたの写真です
+Tu apodo	Your nickname	Seu apelido	你的昵称	ニックネーム
+Cómo te dicen tus amigos. Se ve como @apodo, sin espacios.	What your friends call you. It shows as @nickname, no spaces.	Como seus amigos te chamam. Aparece como @apelido, sem espaços.	朋友怎么称呼你。显示为 @昵称，不含空格。	友だちがあなたを呼ぶ名前。@ニックネーム と表示され、スペースは使えません。
+Tu fecha de nacimiento	Your date of birth	Sua data de nascimento	你的出生日期	あなたの生年月日
+Día, mes y año, así: 12/03/1990. Déjala vacía para quitarla.	Day, month and year, like this: 12/03/1990. Leave it empty to remove it.	Dia, mês e ano, assim: 12/03/1990. Deixe vazio para remover.	日、月、年，如：12/03/1990。留空即可移除。	日・月・年の順で 12/03/1990 のように。空にすると削除されます。
+dd/mm/aaaa	dd/mm/yyyy	dd/mm/aaaa	日/月/年	日/月/年
+Ej: nikalbazu	E.g.: nikalbazu	Ex.: nikalbazu	例如：nikalbazu	例：nikalbazu
+TU ACTIVIDAD	YOUR ACTIVITY	SUA ATIVIDADE	你的动态	アクティビティ
+MIS FAVORITOS	MY FAVORITES	MEUS FAVORITOS	我的最爱	お気に入り
+Horas jugadas	Hours played	Horas jogadas	游戏时长	プレイ時間
+Más jugado	Most played	Mais jogado	玩得最多	いちばん遊んだ
+Racha	Streak	Sequência	连续天数	連続日数
+Oculto	Hidden	Oculto	已隐藏	非表示
+Aún nada	Nothing yet	Nada ainda	暂无	まだありません
+jugando seguido	playing in a row	jogando seguido	连续游玩	連続プレイ中
+juega hoy para empezar	play today to start	jogue hoje para começar	今天玩一下就开始	今日遊べば始まります
+Se cambia en tu perfil	Change it in your profile	Mude no seu perfil	可在你的资料中更改	プロフィールで変更できます
+Marca juegos como favoritos y aparecen aquí.	Mark games as favorites and they appear here.	Marque jogos como favoritos e eles aparecem aqui.	把游戏标为最爱，它们就会出现在这里。	ゲームをお気に入りにすると、ここに表示されます。
+A · Editar perfil	A · Edit profile	A · Editar perfil	A · 编辑资料	A · プロフィールを編集
+B · Cerrar	B · Close	B · Fechar	B · 关闭	B · 閉じる
+Jugador	Player	Jogador	玩家	プレイヤー
+Tu nombre	Your name	Seu nome	你的名字	あなたの名前
+Elige tu personaje	Choose your character	Escolha seu personagem	选择你的角色	キャラクターを選ぶ
+Personajes	Characters	Personagens	角色	キャラクター
+Un amigo de Díptico	A Díptico friend	Um amigo do Díptico	Díptico 的朋友	Díptico の仲間
+Es tu personaje ✓	This is your character ✓	É o seu personagem ✓	这是你的角色 ✓	あなたのキャラクター ✓
+A para elegirlo	A to choose it	A para escolher	按 A 选择	A で選ぶ
+Tu personaje ✓	Your character ✓	Seu personagem ✓	你的角色 ✓	あなたのキャラ ✓
+Tu perfil	Your profile	Seu perfil	你的资料	あなたのプロフィール
+Toca tu foto, arriba a la derecha (o abajo, junto a la hora): se abre tu tarjeta con tus horas, tu racha, tus logros de DIPPO y tus juegos favoritos. Crece desde tu foto sobre el fondo difuminado.	Tap your photo, top right (or at the bottom, next to the time): your card opens with your hours, your streak, your DIPPO achievements and your favorite games. It grows out of your photo over a blurred background.	Toque na sua foto, no alto à direita (ou embaixo, junto à hora): abre-se seu cartão com suas horas, sua sequência, suas conquistas do DIPPO e seus jogos favoritos. Ele cresce a partir da sua foto sobre o fundo desfocado.	点按右上角（或底部时间旁）的照片：会打开名片，显示你的游戏时长、连续天数、DIPPO 成就和最爱的游戏。它从照片处放大展开，背景模糊。	右上（または下の時刻の横）の写真をタップすると、プレイ時間、連続日数、DIPPO の実績、お気に入りのゲームが載ったカードが開きます。写真から広がり、背景はぼかされます。
+Foto o personaje	Photo or character	Foto ou personagem	照片或角色	写真かキャラクター
+Pon una foto de tu consola o elige uno de ocho personajes de Díptico: Misu, Robotín, Moquito, Dragoncito, Fantasmita, Caballerito, Zorrito y Pixelito. Todos son originales.	Use a photo from your console or pick one of eight Díptico characters: Misu, Robotín, Moquito, Dragoncito, Fantasmita, Caballerito, Zorrito and Pixelito. All are original.	Use uma foto do seu console ou escolha um de oito personagens do Díptico: Misu, Robotín, Moquito, Dragoncito, Fantasmita, Caballerito, Zorrito e Pixelito. Todos são originais.	用主机里的照片，或从八个 Díptico 角色中选一个：Misu、Robotín、Moquito、Dragoncito、Fantasmita、Caballerito、Zorrito 和 Pixelito。全部原创。	本体の写真か、Díptico の 8 キャラから選べます：Misu、Robotín、Moquito、Dragoncito、Fantasmita、Caballerito、Zorrito、Pixelito。すべてオリジナルです。
+En Ajustes › Mi perfil: tu nombre, un apodo, tu fecha de nacimiento (DIPPO te felicita ese día), tu color y tu consola favorita. Si quieres, puedes ocultar tus horas.	In Settings › My profile: your name, a nickname, your date of birth (DIPPO congratulates you that day), your color and your favorite console. If you like, you can hide your hours.	Em Ajustes › Meu perfil: seu nome, um apelido, sua data de nascimento (o DIPPO te dá parabéns nesse dia), sua cor e seu console favorito. Se quiser, pode ocultar suas horas.	在 设置 › 我的资料：名字、昵称、出生日期（当天 DIPPO 会祝福你）、颜色和最爱主机。你也可以隐藏游戏时长。	設定 › マイプロフィール：名前、ニックネーム、生年月日（その日に DIPPO がお祝い）、色、お気に入りの機種。プレイ時間は非表示にもできます。

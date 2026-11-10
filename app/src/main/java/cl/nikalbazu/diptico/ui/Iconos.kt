@@ -303,6 +303,10 @@ private fun DrawScope.dibujarIcono(icono: Icono, c: Color, a: Color) {
             linea(13.5f, 7f, 17f, 10.5f, a)
         }
         Icono.BISA -> dibujarBisa(k, c, a)
+        Icono.PERFIL -> {
+            circulo(12f, 8f, 3.8f)
+            camino { m(4.5f, 20f); quadraticBezierTo(4.5f * k, 13f * k, 12f * k, 13f * k); quadraticBezierTo(19.5f * k, 13f * k, 19.5f * k, 20f * k) }
+        }
         Icono.TROFEO -> {
             camino {
                 m(7f, 4f); l(17f, 4f); l(17f, 9f)

@@ -53,7 +53,7 @@ enum class Icono {
     PORTADA, DESCARGA, CLAVE, TITULO, BORRAR, BIBLIOTECA, BUSCAR, TUTORIAL, INFO, CERRAR, JUGAR, DADO, LAPIZ,
     CONTINUAR, MENU, CHECK, ARRIBA, ABAJO, ESTRELLA, APPS, RELOJ, PALETA, MOVIL, CHISPA, CORAZON, MUNDO, WEB,
     CAMPANA, VISTA, WIFI, BLUETOOTH, BRILLO, AJUSTES, FORMA, MANDO, BATERIA, TROFEO, ASISTENTE, IDIOMA, OCULTAR,
-    COPIAR, PEGAR, BISA, EDITAR, MICROFONO,
+    COPIAR, PEGAR, BISA, EDITAR, MICROFONO, PERFIL,
 }
 
 /**
@@ -82,7 +82,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     IDIOMA("Idioma", Icono.IDIOMA, "El idioma de Díptico: español, inglés, portugués, chino o japonés."),
     SISTEMA("Acerca de", Icono.INFO, "Respaldo en Google Drive, actualizaciones, reportar un problema, el tutorial y la versión de Díptico."),
     // Ajustes nuevos (9 nov 2026): seis secciones claras, cada una junta varias de las de antes.
-    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Claro u oscuro, animaciones, íconos y las pantallas.", "Ajustes"),
+    G_PERFIL("Mi perfil", Icono.PERFIL, "Tu foto o personaje, tu nombre, tu color y tus datos: para que Díptico sea más tuyo.", "Ajustes"),
+    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Claro u oscuro, animaciones, íconos y las pantallas."),
     G_TEMAS("Temas y decoraciones", Icono.PALETA, "La tienda de temas, tus colores, las fechas especiales y los adornos animados."),
     G_WIDGETS("Inicio y widgets", Icono.APPS, "La pantalla de inicio, tus widgets y el dock de apps."),
     G_BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Cómo se ven tus juegos, tus consolas, tus carpetas y las portadas."),
@@ -92,6 +93,8 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     G_SONIDO("Sonido", Icono.MUSICA, "La música de fondo, los sonidos y la vibración."),
     G_DIPPO("DIPPO", Icono.BISA, "Tu compañero: dónde aparece, sus colores, su IA y cómo te ayuda mientras juegas."),
     G_SISTEMA("Sistema", Icono.INFO, "Respaldo, idioma, Android, la tele y la versión de Díptico."),
+    /** Las opciones de tu perfil (dentro de «Mi perfil»). */
+    PERFIL("Mi perfil", Icono.PERFIL, "Tu foto o personaje, tu nombre, tu color y tus datos."),
     /** Solo en el modo simple: la puerta a las secciones avanzadas (nada queda escondido). */
     MAS("Más ajustes", Icono.AJUSTES, "Las secciones avanzadas, a un toque. Y para volver al menú completo.", "Avanzado"),
 }
@@ -397,6 +400,11 @@ data class EstadoExtra(
     val discordLogin: LoginDiscord? = null,
     /** Con el kit de Discord: tu perfil muestra «Jugando a…» con el juego que abres. */
     val discordPresencia: Boolean = true,
+    /** Tu perfil, y si su tarjeta está abierta (id de la pantalla; -1 = cerrada) con el punto de donde crece (fracción del ancho y del alto). */
+    val perfil: Perfil = Perfil(),
+    val perfilEn: Int = -1,
+    val perfilOx: Float = 0.92f,
+    val perfilOy: Float = 0.07f,
 )
 
 /** El inicio de sesión con Discord en curso: el código y el QR para el teléfono, o el error. */
@@ -956,6 +964,7 @@ object Diptico {
                 discordApp = almacen.texto("discordApp", ""),
                 discordUsuario = almacen.texto("discordUsuario", ""),
                 discordPresencia = almacen.bool("discordPresencia", true),
+                perfil = cargarPerfil(),
                 discordAvatar = almacen.texto("discordAvatar", ""),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 caras = CarasGuardadas.leer(almacen.texto("carasCaja2")),
@@ -2425,6 +2434,79 @@ object Diptico {
         if (estado.value.extra.amigosEn >= 0) actualizar { it.copy(extra = it.extra.copy(amigosEn = -1)) }
     }
 
+    // ---------- Tu perfil ----------
+
+    /** Lee tu perfil guardado; la primera vez lo crea (con la fecha de hoy como «desde»). */
+    private fun cargarPerfil(): Perfil {
+        val t = almacen.texto("perfil")
+        return Perfil.leer(t).also { if (t.isBlank()) almacen.guardarTexto("perfil", it.json()) }
+    }
+
+    /** Abre la tarjeta de tu perfil en [pantalla]; crece desde el punto ([ox], [oy]) = fracción del ancho y del alto donde está tu foto. */
+    fun abrirPerfil(pantalla: Int = android.view.Display.DEFAULT_DISPLAY, ox: Float = 0.92f, oy: Float = 0.07f) {
+        actualizar { it.copy(extra = it.extra.copy(perfilEn = pantalla, perfilOx = ox.coerceIn(0f, 1f), perfilOy = oy.coerceIn(0f, 1f), amigosEn = -1)) }
+    }
+
+    fun cerrarPerfil() {
+        if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1)) }
+    }
+
+    /** Desde la tarjeta: cierra y abre «Mi perfil» en los ajustes para cambiar los datos. */
+    fun editarPerfil() {
+        cerrarPerfil()
+        abrirMenu(Seccion.G_PERFIL)
+    }
+
+    fun guardarPerfil(nuevo: Perfil) {
+        almacen.guardarTexto("perfil", nuevo.json())
+        actualizar { it.copy(extra = it.extra.copy(perfil = nuevo)) }
+    }
+
+    fun cambiarPerfil(f: (Perfil) -> Perfil) = guardarPerfil(f(estado.value.extra.perfil))
+
+    /** Lo que se muestra en la tarjeta: tus horas, tu juego más jugado, la racha, los logros de DIPPO y tus favoritos. */
+    fun resumenPerfil(e: Estado): ResumenPerfil {
+        val jugados = e.datos.filterValues { it.tiempo > 0 }
+        val top = jugados.maxByOrNull { it.value.tiempo }
+        val porClave = e.juegos.associateBy { it.clave }
+        val favoritos = e.datos.filterValues { it.favorito }.keys.mapNotNull { porClave[it] }.take(4)
+            .ifEmpty { jugados.entries.sortedByDescending { it.value.tiempo }.mapNotNull { porClave[it.key] }.take(4) }
+        val porConsola = jugados.entries.groupBy { porClave[it.key]?.consolaId.orEmpty() }.filterKeys { it.isNotEmpty() }
+            .mapValues { (_, v) -> v.sumOf { it.value.tiempo } }
+        val idConsola = e.extra.perfil.consolaFav.ifBlank { porConsola.maxByOrNull { it.value }?.key.orEmpty() }
+        return ResumenPerfil(
+            segundos = jugados.values.sumOf { it.tiempo },
+            masJugado = top?.let { porClave[it.key] }, masJugadoSeg = top?.value?.tiempo ?: 0L,
+            racha = rachaDias(), logros = logrosDippoGanados(), logrosTotal = LogrosDippo.LISTA.size,
+            favoritos = favoritos, juegosJugados = jugados.size,
+            consola = if (idConsola.isEmpty()) "" else (e.consolasConJuegos.firstOrNull { it.id == idConsola }?.bonito ?: Consolas.porId(idConsola)?.bonito.orEmpty()),
+        )
+    }
+
+    private fun opcionesPerfil(e: Estado): List<Opcion> {
+        val pf = e.extra.perfil
+        val consolas = e.consolasConJuegos
+        val fechaEscrita = pf.nacimiento.split("-").takeIf { it.size == 3 }?.reversed()?.joinToString("/").orEmpty()
+        val lista = mutableListOf(
+            Opcion("Ver mi perfil", "Abrir mi tarjeta", Icono.PERFIL, "Tu tarjeta con tus horas, tu racha, tus logros y tus juegos favoritos.", grupo = "Tu perfil") {
+                cerrarPanel(); abrirPerfil(android.view.Display.DEFAULT_DISPLAY, 0.5f, 0.14f)
+            },
+            Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Así te saluda DIPPO y así se ve en tu perfil.", grupo = "Tus datos") { abrirTexto("nombre", estado.value.nombre) },
+            Opcion("Apodo", if (pf.apodo.isBlank()) "Sin apodo" else "@${pf.apodo}", Icono.TEXTO, "Cómo te dicen tus amigos. Se ve como @apodo.", grupo = "Tus datos") { abrirTexto("perfil_apodo", estado.value.extra.perfil.apodo) },
+            Opcion("Fecha de nacimiento", pf.nacimientoBonito().ifBlank { "Sin fecha" }, Icono.RELOJ,
+                "Escríbela así: 12/03/1990. DIPPO te felicita en tu cumpleaños, y más adelante servirá para las llamadas con amigos.", grupo = "Tus datos") { abrirTexto("perfil_nacimiento", fechaEscrita) },
+            Opcion("Mi foto", if (pf.foto.isBlank()) "Usar un personaje" else "Cambiar mi foto", Icono.PORTADA, "Elige una imagen de tu consola. Si no, se usa el personaje.", grupo = "Tu imagen") { pedirImagen("perfilFoto") },
+        )
+        if (pf.foto.isNotBlank()) lista += Opcion("Quitar mi foto", "Volver al personaje", Icono.BORRAR, "Tu foto se quita de Díptico (la imagen original no se toca).", grupo = "Tu imagen") { cambiarPerfil { it.copy(foto = "") }; avisar("Foto quitada") }
+        lista += Opcion("Mi personaje", nombrePersonaje(pf.personaje), Icono.BISA, "Ocho amigos de Díptico para elegir. Se ve cuando no tienes foto.", grupo = "Tu imagen") { abrirGaleria("personajes") }
+        lista += opcionLista("Mi color", Icono.PALETA, "El color del borde de tu foto y de los detalles de tu tarjeta.",
+            Perfil.COLORES.map { it.second.toString() }, Perfil.COLORES.map { it.first }, pf.color.toString(), grupo = "Tu imagen") { id -> cambiarPerfil { it.copy(color = id.toLong()) } }
+        lista += opcionLista("Consola favorita", Icono.MANDO, "La que se muestra en tu tarjeta. «La más jugada» la elige sola según tus horas.",
+            listOf("") + consolas.map { it.id }, listOf("La más jugada") + consolas.map { it.bonito }, pf.consolaFav, grupo = "Tu tarjeta") { id -> cambiarPerfil { it.copy(consolaFav = id) } }
+        lista += Opcion("Mostrar mis horas", if (pf.mostrarHoras) "Sí" else "No", Icono.RELOJ, "Si lo apagas, tu tarjeta no muestra cuántas horas has jugado.", grupo = "Tu tarjeta") { cambiarPerfil { it.copy(mostrarHoras = !it.mostrarHoras) } }
+        return lista
+    }
+
     /** Cierra el panel del QR sin conectar. */
     fun cancelarDiscord() {
         loginDiscordJob?.cancel()
@@ -2667,6 +2749,7 @@ object Diptico {
         "vistas_consolas" -> listOf("Tus consolas")
         "vistas_juegos" -> listOf("Tus juegos")
         "logros_dippo" -> listOf("Logros de DIPPO")
+        "personajes" -> listOf("Personajes")
         "artes" -> listOf("Artes", "Portadas")
         "temas" -> listOf("Incluidos", "Mis temas")
         "importar_temas" -> listOf("Importar temas")
@@ -2703,6 +2786,13 @@ object Diptico {
             ItemGaleria("orden", "Ordenar juegos", nombreOrden(e.orden), false) { abrirGaleria("orden") },
             ItemGaleria("vista", "Vista de juegos", nombreVista(e.vista), false) { abrirGaleria("vistas_juegos") },
         )
+        if (e.galeria == "personajes") return PERSONAJES.map { (id, nombre) ->
+            ItemGaleria(id, nombre, "Un amigo de Díptico", id == e.extra.perfil.personaje && e.extra.perfil.foto.isBlank()) {
+                cambiarPerfil { it.copy(personaje = id, foto = "") }
+                avisar("¡Ahora eres $nombre!")
+                cerrarPanel()
+            }
+        }
         if (e.galeria == "logros_dippo") return progresoLogrosDippo(e).map { (l, v) ->
             val hecho = l.id in hechosDippo()
             ItemGaleria(l.id, l.titulo, if (hecho) "✓ " + l.descripcion else "${l.descripcion} · $v de ${l.meta}", hecho, color = if (hecho) 0xFFFFC94DL else 0L) {}
@@ -3041,7 +3131,7 @@ object Diptico {
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave_gemini", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
         if (estado.value.panel != Panel.CLAVE) claveDesde = regresoActual()
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace" && para != "discord_webhook" && para != "discord_app" && para != "discord_secreto") }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = para == "perfil_nacimiento", cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace" && para != "discord_webhook" && para != "discord_app" && para != "discord_secreto" && para != "perfil_nacimiento") }
         // Para las claves: el teléfono puede mandarla directo (QR con la página de la consola en tu Wi-Fi).
         val oficial = urlClave(para)
         if (oficial != null && para != "ra_usuario") {
@@ -3112,7 +3202,7 @@ object Diptico {
             if (volverA(claveDesde.also { claveDesde = null })) return
             val s = when {
                 e.textoPara.startsWith("ra_") || e.textoPara.startsWith("ras_") || e.textoPara.startsWith("discord") || e.textoPara == "sgdb" -> Seccion.LOGROS
-                e.textoPara == "nombre" -> Seccion.INICIO
+                e.textoPara == "nombre" || e.textoPara.startsWith("perfil_") -> Seccion.G_PERFIL
                 e.textoPara.startsWith("ia") && e.seccion == Seccion.ASISTENTE -> Seccion.ASISTENTE
                 e.textoPara.startsWith("ia") -> Seccion.TEMAS
                 else -> Seccion.PORTADAS
@@ -3936,6 +4026,7 @@ object Diptico {
 
     /** Qué secciones de antes junta cada una de las seis nuevas. */
     val GRUPOS_AJUSTES: Map<Seccion, List<Seccion>> = linkedMapOf(
+        Seccion.G_PERFIL to listOf(Seccion.PERFIL),
         Seccion.G_ESTILO to listOf(Seccion.APARIENCIA, Seccion.PANTALLAS),
         Seccion.G_TEMAS to listOf(Seccion.TEMAS, Seccion.DECORACIONES),
         Seccion.G_WIDGETS to listOf(Seccion.INICIO),
@@ -4091,7 +4182,8 @@ object Diptico {
         val e = estado.value
         val lista = mutableListOf<Opcion>()
         when (s) {
-            Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CUENTAS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_DIPPO, Seccion.G_SISTEMA -> Unit
+            Seccion.G_PERFIL, Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CUENTAS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_DIPPO, Seccion.G_SISTEMA -> Unit
+            Seccion.PERFIL -> lista += opcionesPerfil(e)
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
@@ -7763,6 +7855,17 @@ object Diptico {
                 actualizar { it.copy(panel = Panel.EDITAR_CONSOLA) }
                 return
             }
+            "perfil_apodo" -> {
+                val apodo = t.removePrefix("@").replace(" ", "").take(20)
+                cambiarPerfil { it.copy(apodo = apodo) }
+                if (apodo.isNotEmpty()) avisar("Tu apodo es @$apodo")
+            }
+            "perfil_nacimiento" -> {
+                val f = Perfil.fecha(t)
+                if (f == null) { avisar("No entendí la fecha. Escríbela así: 12/03/1990"); return }
+                cambiarPerfil { it.copy(nacimiento = f) }
+                avisar(if (f.isEmpty()) "Fecha quitada" else "Fecha guardada")
+            }
             "nombre" -> {
                 almacen.guardarTexto("nombre", t.take(24))
                 actualizar { it.copy(nombre = t.take(24)) }
@@ -8035,6 +8138,10 @@ object Diptico {
         }
         val u = uri.toString()
         when {
+            archivoPara == "perfilFoto" -> {
+                cambiarPerfil { it.copy(foto = u) }
+                avisar("¡Listo! Esta es tu foto")
+            }
             archivoPara == "fondoInicio" -> {
                 almacen.guardarTexto("fondoInicio", u)
                 actualizar { it.copy(fondoInicio = u) }
