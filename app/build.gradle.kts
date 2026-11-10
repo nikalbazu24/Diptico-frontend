@@ -12,8 +12,9 @@ val versionBase = if (rutaFirma.isNullOrBlank()) "1.0" else "1.1"
 val reportesUrl = providers.environmentVariable("DIPTICO_REPORTES_URL").orNull.orEmpty().trim()
     .ifEmpty { "https://script.google.com/macros/s/AKfycbwGhiuCtOLOTclmEU8f3hukrAMOtHAFw4Y2MJnOdu5bKXPfEGegImctiuI-qpPhCCE/exec" }
 // App de Discord de Díptico (Application ID del portal de Discord, con «Public Client» activado).
-// Vacía = cada uno pega la suya en Ajustes › Cuentas y conexiones › Discord.
+// Por defecto, la app «Díptico» de Nicolás. Si la variable está, manda ella.
 val discordApp = providers.environmentVariable("DIPTICO_DISCORD_APP").orNull.orEmpty().trim()
+    .ifEmpty { "1569677228269117580" }
 require(discordApp.isEmpty() || Regex("""[0-9]{15,22}""").matches(discordApp)) { "DIPTICO_DISCORD_APP debe ser el Application ID (solo números)." }
 require(reportesUrl.isEmpty() || Regex("""https://script[.]google[.]com/macros/s/[A-Za-z0-9_-]+/exec""").matches(reportesUrl)) {
     "DIPTICO_REPORTES_URL debe ser el enlace /exec de la aplicación web de Apps Script."
