@@ -59,6 +59,25 @@ fun grosorDe(t: Estuche): Float = when (t) {
     Estuche.NINGUNO -> 0.1f
 }
 
+/** Alto de la franja de la consola arriba del frente (fracción del alto total), como en las cajas reales. */
+fun franjaDe(t: Estuche): Float = when (t) {
+    Estuche.NINGUNO, Estuche.MARQUESINA, Estuche.CAJA_PC -> 0f
+    Estuche.CARTON_PORTATIL, Estuche.TARJETA -> 0.1f
+    else -> 0.085f
+}
+
+/** Lo que va en el frente: la portada (o una armada) con la franja de la consola y su logo arriba. */
+data class InfoFrente(
+    val titulo: String,
+    val consola: String,
+    val color: Int,
+    val estuche: Estuche,
+    val portada: Uri?,
+    val logo: Uri?,
+    val aspecto: Float,
+    val ancho: Int,
+)
+
 /** Cajas de plástico blanco (Dreamcast, Master System): el reverso y el lomo van claros. */
 private fun estucheClaro(t: Estuche) = t == Estuche.JEWEL_BLANCO || t == Estuche.REJILLA_BLANCA
 
@@ -85,7 +104,7 @@ data class InfoReverso(
  * necesitan, en segundo plano. Quedan guardadas en memoria: girar la caja después no cuesta nada.
  */
 internal object FabricaCaras {
-    private val cache = object : LruCache<String, Bitmap>(28 * 1024 * 1024) {
+    private val cache = object : LruCache<String, Bitmap>(48 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
     }
 
@@ -102,6 +121,61 @@ internal object FabricaCaras {
         }
         cache.put(k, b)
         return b
+    }
+
+    fun enCacheFrente(f: InfoFrente): Bitmap? = cache.get("f|${f.hashCode()}")
+
+    /** El frente completo: franja de la consola (con su logo o su nombre) y debajo la portada entera, sin recortes. */
+    fun hacerFrente(ctx: Context, f: InfoFrente): Bitmap {
+        val k = "f|${f.hashCode()}"
+        cache.get(k)?.let { return it }
+        val w = f.ancho
+        val h = (w / f.aspecto).roundToInt().coerceIn(200, 1600)
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val c = android.graphics.Canvas(bmp)
+        val franja = (h * franjaDe(f.estuche)).roundToInt()
+        val base = Color(f.color)
+        val claro = estucheClaro(f.estuche)
+        val fondoFranja = when {
+            claro -> Color(0xFFF4F4F6)
+            f.estuche == Estuche.DVD || f.estuche == Estuche.UMD || f.estuche == Estuche.JEWEL -> lerp(Color(0xFF0E0E12), base, 0.18f)
+            esCarton(f.estuche) -> lerp(base, Color.Black, 0.5f)
+            else -> base
+        }
+        val p = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        // La portada (o una armada) ocupa todo lo de abajo de la franja.
+        val dst = RectF(0f, franja.toFloat(), w.toFloat(), h.toFloat())
+        val arte = f.portada?.let { u -> try { Imagenes.cargar(ctx, u, w, memoriaGrafica = false)?.asAndroidBitmap() } catch (_: Exception) { null } }
+        if (arte != null) c.drawBitmap(arte, null, dst, p)
+        else {
+            val generado = frente(InfoReverso(f.titulo, f.consola, f.consola, f.color, f.estuche, "", emptyList(), null, dst.width() / dst.height()))
+            c.drawBitmap(generado, null, dst, p)
+        }
+        if (franja > 0) {
+            p.color = fondoFranja.toArgb()
+            c.drawRect(0f, 0f, w.toFloat(), franja.toFloat(), p)
+            // Un filo de luz bajo la franja, como el borde del inserto de papel.
+            p.color = 0x33FFFFFF
+            c.drawRect(0f, franja - 2f, w.toFloat(), franja.toFloat(), p)
+            val tinta = if (fondoFranja.luminanceSimple() > 0.6f) 0xFF15121D.toInt() else 0xFFFFFFFF.toInt()
+            val pad = w * 0.05f
+            val centrado = f.estuche == Estuche.TARJETA || f.estuche == Estuche.CARTON_PORTATIL
+            val logo = f.logo?.let { u -> try { Imagenes.cargar(ctx, u, 512, memoriaGrafica = false)?.asAndroidBitmap() } catch (_: Exception) { null } }
+            if (logo != null && logo.height > 0) {
+                val altoLogo = franja * 0.66f
+                val anchoLogo = min(altoLogo * logo.width / logo.height, w * 0.7f)
+                val alto2 = anchoLogo * logo.height / logo.width
+                val x = if (centrado) (w - anchoLogo) / 2f else pad
+                c.drawBitmap(logo, null, RectF(x, (franja - alto2) / 2f, x + anchoLogo, (franja + alto2) / 2f), p)
+            } else {
+                // Sin logo propio: el nombre de la consola como marca, en letras anchas.
+                val t = texto(franja * 0.44f, tinta, negrita = true).apply { letterSpacing = 0.08f; textAlign = if (centrado) Paint.Align.CENTER else Paint.Align.LEFT }
+                val nombre = TextUtils.ellipsize(f.consola.uppercase(), t, w - 2 * pad, TextUtils.TruncateAt.END).toString()
+                c.drawText(nombre, if (centrado) w / 2f else pad, franja * 0.66f, t)
+            }
+        }
+        cache.put(k, bmp)
+        return bmp
     }
 
     private fun texto(tam: Float, color: Int, negrita: Boolean = false) = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -323,10 +397,14 @@ fun Caja3D(
 ) {
     val ctx = LocalContext.current
     val frenteReal = rememberImagen(juego.portada, if (detalle) 720 else 420)
-    val aspecto = aspectoCaja(frenteReal, consola)
-    val info = infoReverso(e, juego, consola, aspecto)
     val estuche = estucheDe(consola)
     val grosor = grosorDe(estuche)
+    // La franja de la consola va arriba de la portada: la caja crece un poco para que la portada se vea entera.
+    val franja = franjaDe(estuche)
+    val aspecto = aspectoCaja(frenteReal, consola) * (1f - franja)
+    val info = infoReverso(e, juego, consola, aspecto)
+    val logo = e.consolasPropias[consola.id]?.logo?.let { Uri.parse(it) }
+    val datosFrente = InfoFrente(juego.titulo, consola.bonito, consola.color.toArgb(), estuche, juego.portada, logo, aspecto, if (detalle) 640 else 360)
     // Las caras reales (si aparecieron) o las armadas por Díptico.
     val reversoReal = if (detalle) rememberImagen(caras?.reverso?.let { Uri.parse(it) }, 900) else null
     val lomoReal = rememberImagen(caras?.lomo?.let { Uri.parse(it) }, 720)
@@ -336,10 +414,10 @@ fun Caja3D(
     val lomoHecho by produceState(FabricaCaras.enCache("lomo", info), info) {
         if (value == null) value = withContext(Dispatchers.Default) { runCatching { FabricaCaras.hacer(ctx, "lomo", info) }.getOrNull() }
     }
-    val frenteHecho by produceState(FabricaCaras.enCache("frente", info), info, frenteReal == null) {
-        if (value == null && frenteReal == null) value = withContext(Dispatchers.Default) { runCatching { FabricaCaras.hacer(ctx, "frente", info) }.getOrNull() }
+    val frenteHecho by produceState(FabricaCaras.enCacheFrente(datosFrente), datosFrente) {
+        if (value == null) value = withContext(Dispatchers.IO) { runCatching { FabricaCaras.hacerFrente(ctx, datosFrente) }.getOrNull() }
     }
-    val frente = frenteReal?.asAndroidBitmap() ?: frenteHecho
+    val frente = frenteHecho ?: frenteReal?.asAndroidBitmap()
     val reverso = reversoReal?.asAndroidBitmap() ?: reversoHecho
     val lomo = lomoReal?.asAndroidBitmap() ?: lomoHecho
     // El color de los cantos: cartón impreso (el de la consola) o plástico.
