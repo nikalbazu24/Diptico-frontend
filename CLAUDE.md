@@ -288,3 +288,17 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Teclas: con la tarjeta abierta, B/Atrás cierra y A abre Ajustes › Mi perfil. DIPPO felicita el día del cumpleaños (`CentroBisa.saludoInicial`).
 - Foto: `pedirImagen("perfilFoto")`. Galería `personajes`. Novedades `perfil-2.0-35` (la de Discord pasó a id literal). Capturas t334–t340.
 - Pendiente: Start+A para abrir el perfil con el mando; el botón también en el encabezado del inicio con widgets; estadísticas «esta semana».
+
+## Marcos, Discord y DIPPO arriba (10 nov, rama `fix/perfil-marcos`, Sonnet)
+- Beta.299/301 ya publicadas (perfil + Start+A + botón en el encabezado de widgets).
+- `Perfil.fotoDiscord` (usa `extra.discordAvatar`) y `Perfil.marco`; `MARCOS`/`MarcoPerfil` (en `estado/Perfil.kt`): estela y doble
+  libres; chispas(hola), corazon(corazon), llama(racha3), noche(buho), aurora(explorador), arcoiris(trotamundos), oro(cien_h) con logro
+  de DIPPO (`Diptico.marcoDesbloqueado`, `idsLogrosDippo`). Galería `marcos` con candado. `ui/Marcos.kt` (`dibujarMarco`, todo en el dibujo,
+  `rememberInfiniteTransition` en `FotoPerfil`; quieto si `LocalMovimiento` es false).
+- `BotonPerfil` ahora lleva la insignia de Discord (abre `PanelAmigos`, que tiene al pie «Mi perfil» y «Ajustes de Discord»); se quitó `BotonDiscord`
+  de `EstadoChico` y `FranjaAccesos`. Ajustes de Discord viven en `Seccion.PERFIL` (ya no en LOGROS). Tamaños: franja 40, encabezados 32.
+- Tarjeta de perfil: `LogrosDippoTile` y `LogrosRATile` (usa `e.perfilRA`).
+- `ui/DippoBurbuja.kt`: globito de DIPPO sobre su cabeza en la capa de `Raiz` (`BurbujaDippoCapa`), se saca deslizando; `DippoInicio` solo publica
+  el mensaje y la posición de su cabeza. `LocalPantallaId`/`pantallaActual()` en `Raiz.kt`.
+- `FranjaAccesos`: grupo izquierdo con `horizontalScroll`, derecha fija. Novedades `marcos-dippo-2.0-37`. Capturas t342–t345.
+- Pendiente (próxima semana): conexión completa de Discord (llamadas de voz/chat, Comms Access, puerta de edad con la fecha de nacimiento).
