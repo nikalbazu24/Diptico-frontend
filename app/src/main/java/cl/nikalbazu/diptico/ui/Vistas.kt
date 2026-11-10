@@ -273,44 +273,52 @@ fun VentanaJuego(e: Estado) {
                 .superficieApp(lerpColor(p.superficie, color, .12f), RoundedCornerShape(esc.d(26)), CapaCristal.PANEL)
                 .sinCerrar().padding(esc.d(14)),
         ) {
-            // Encabezado compacto
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (c != null) CajaJuego(j, c, escala = 58f / cajaDe(c).alto)
-                Spacer(Modifier.width(esc.d(12)))
-                Column(Modifier.weight(1f)) {
-                    Etiqueta(c?.bonito ?: "", Coral, 11f)
-                    Texto(j.titulo, 19f, lineas = 1)
-                    val d = e.datos[j.clave]
-                    Detalle(
-                        listOfNotNull(
-                            d?.tiempo?.takeIf { it > 0 }?.let { "${formatoTiempo(it)} jugadas" } ?: "Sin jugar",
-                            if (d?.favorito == true) "♥ Favorito" else null,
-                        ).joinToString(" · "),
-                        12.5f, lineas = 1,
-                    )
-                }
-            }
-            Spacer(Modifier.height(esc.d(12)))
-            // Fila de acciones grandes
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                opciones.take(n).forEachIndexed { i, o -> Mosaico(o, i == e.indice, Modifier.weight(1f)) { Diptico.elegirIndice(i) } }
-            }
-            // Qué hace lo que está elegido, en palabras simples (siempre el mismo alto: así nada salta).
-            Box(Modifier.fillMaxWidth().height(esc.d(50)).padding(top = esc.d(6), start = esc.d(4), end = esc.d(4))) {
-                opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 12f, lineas = 2) }
-            }
-            Etiqueta("Ajustes de este juego", p.tenue, 11f)
-            Spacer(Modifier.height(esc.d(6)))
-            // Lista que se desliza sola siguiendo la selección (y con el dedo).
+            // Todo se desliza junto (encabezado, acciones y ajustes): al bajar por los ajustes, lo de arriba se va y
+            // las opciones usan toda la ventana; al volver a las acciones, reaparece.
             val lista = rememberLazyListState()
+            val cabecera = 2
             LaunchedEffect(e.indice) {
                 if (e.indice >= n) {
-                    val k = e.indice - n
+                    val k = e.indice - n + cabecera
                     val vis = lista.layoutInfo.visibleItemsInfo
-                    if (vis.isEmpty() || k <= vis.first().index || k >= vis.last().index) lista.animateScrollToItem((k - 1).coerceAtLeast(0))
-                } else lista.scrollToItem(0)
+                    if (vis.isEmpty() || k <= vis.first().index + 1 || k >= vis.last().index) lista.animateScrollToItem((k - 1).coerceAtLeast(0))
+                } else lista.animateScrollToItem(0)
             }
             LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                item(key = "cabecera") {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (c != null) CajaJuego(j, c, escala = 58f / cajaDe(c).alto)
+                            Spacer(Modifier.width(esc.d(12)))
+                            Column(Modifier.weight(1f)) {
+                                Etiqueta(c?.bonito ?: "", Coral, 11f)
+                                Texto(j.titulo, 19f, lineas = 1)
+                                val d = e.datos[j.clave]
+                                Detalle(
+                                    listOfNotNull(
+                                        d?.tiempo?.takeIf { it > 0 }?.let { "${formatoTiempo(it)} jugadas" } ?: "Sin jugar",
+                                        if (d?.favorito == true) "♥ Favorito" else null,
+                                    ).joinToString(" · "),
+                                    12.5f, lineas = 1,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(esc.d(12)))
+                        // Fila de acciones grandes
+                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                            opciones.take(n).forEachIndexed { i, o -> Mosaico(o, i == e.indice, Modifier.weight(1f)) { Diptico.elegirIndice(i) } }
+                        }
+                    }
+                }
+                item(key = "ayuda") {
+                    Column {
+                        // Qué hace lo que está elegido, en palabras simples (siempre el mismo alto: así nada salta).
+                        Box(Modifier.fillMaxWidth().height(esc.d(50)).padding(top = esc.d(6), start = esc.d(4), end = esc.d(4))) {
+                            opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 12f, lineas = 2) }
+                        }
+                        Etiqueta("Ajustes de este juego", p.tenue, 11f)
+                    }
+                }
                 itemsIndexed(opciones.drop(n)) { k, o ->
                     val i = k + n
                     TarjetaOpcion(o, i == e.indice, alto = 46f) { Diptico.elegirIndice(i) }

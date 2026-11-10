@@ -845,6 +845,7 @@ internal fun PanelClave(e: Estado) {
                 "ras_rawg" -> listOf(Icono.CLAVE, "Clave de RAWG", "Gratis: crea una cuenta en rawg.io, entra a rawg.io/apidocs, toca «Get API Key» y copia la clave.", "Pega tu clave")
                 "ras_tgdb" -> listOf(Icono.CLAVE, "Clave de TheGamesDB", "Gratis: se pide en el foro de thegamesdb.net (sección «API Key Requests»). Te llega una clave pública.", "Pega tu clave")
                 "discord_app" -> listOf(Icono.MUNDO, "Application ID de Discord", "Solo si usas tu propia app de Discord: el número largo de «General Information» en discord.com/developers. Díptico ya trae el suyo.", "Ej: 1569677228269117580")
+                "discord_secreto" -> listOf(Icono.CLAVE, "Clave secreta de Discord", "En discord.com/developers › tu app Díptico › OAuth2 › Client Secret: toca Reset Secret, cópiala y pégala aquí. Solo se guarda en tu consola.", "Pega el Client Secret")
                 "discord_webhook" -> listOf(Icono.MUNDO, "Canal de Discord", "En tu servidor: Editar canal › Integraciones › Webhooks › Nuevo webhook › Copiar URL, y pégala aquí.", "https://discord.com/api/webhooks/…")
                 "notas" -> listOf(Icono.LAPIZ, "Mis trucos y notas", "Claves, trucos, coleccionables, lo que quieras recordar de este juego.", "Ej: el código del cofre es 4-2-1")
                 else -> listOf(Icono.CLAVE, "Clave de SteamGridDB", "Es gratis: entra a steamgriddb.com, inicia sesión, ve a Preferencias › API y copia tu clave aquí.", "Pega tu clave")
@@ -878,7 +879,7 @@ internal fun PanelClave(e: Estado) {
                     CodigoQR(e.enlaceUrl ?: url, 72f)
                 }
             }
-            val esClave = e.textoPara == "sgdb" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave" || (e.textoPara.startsWith("ras_") && e.textoPara != "ras_ssUsuario")
+            val esClave = e.textoPara == "sgdb" || e.textoPara == "discord_secreto" || e.textoPara.startsWith("ia_clave") || e.textoPara == "ra_clave" || (e.textoPara.startsWith("ras_") && e.textoPara != "ras_ssUsuario")
             CampoTexto(e.borrador, ejemplo as String, { Diptico.guardarClave() }, numerico = esClave, alto = if (e.textoPara == "notas" || e.textoPara == "reporte_fallas") 130f else 60f)
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 BotonGrande("B · Cancelar", p.fondo2, p.tinta, Modifier.weight(1f)) { Diptico.cerrarPanel() }

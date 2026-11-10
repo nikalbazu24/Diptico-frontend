@@ -176,7 +176,17 @@ object Raspadores {
     }
 
     /** El reverso y el lomo reales de la caja (enlaces), si alguna fuente conectada los tiene. */
-    data class Caras(val reverso: String?, val lomo: String?)
+    data class Caras(val reverso: String?, val lomo: String?, val frente: String? = null)
+
+    /** Plataformas de TheGamesDB por consola de Díptico (para no traer la caja de otra consola). */
+    private val PLATAFORMA_TGDB = mapOf(
+        "nes" to 7, "famicom" to 7, "snes" to 6, "sfc" to 6, "n64" to 3, "gc" to 2, "wii" to 9, "wiiu" to 38, "switch" to 4971,
+        "gb" to 4, "gbc" to 41, "gba" to 5, "nds" to 8, "n3ds" to 4912, "virtualboy" to 4918,
+        "psx" to 10, "ps2" to 11, "ps3" to 12, "ps4" to 4919, "psp" to 13, "psvita" to 39,
+        "genesis" to 18, "megadrive" to 36, "mastersystem" to 35, "gamegear" to 20, "saturn" to 17, "dreamcast" to 16,
+        "segacd" to 21, "sega32x" to 33, "pcengine" to 34, "tg16" to 34, "neogeo" to 24, "xbox" to 14, "xbox360" to 15,
+        "atari2600" to 22, "atari7800" to 27, "atarilynx" to 4924, "ngp" to 4922, "ngpc" to 4923, "wonderswan" to 4925, "wonderswancolor" to 4926,
+    )
 
     /**
      * Busca la caja completa: ScreenScraper trae reverso («box-2D-back») y lomo («box-2D-side»); TheGamesDB, el
@@ -185,6 +195,7 @@ object Raspadores {
     fun caras(c: Claves, titulo: String, archivo: String, consola: String): Caras {
         var reverso: String? = null
         var lomo: String? = null
+        var frente: String? = null
         if (c.screenscraper) try {
             val base = "devid=${cod(c.ssDevId.trim())}&devpassword=${cod(c.ssDevClave.trim())}&softname=Diptico&output=json" +
                 (if (c.ssUsuario.isNotBlank()) "&ssid=${cod(c.ssUsuario.trim())}&sspassword=${cod(c.ssClave.trim())}" else "")
@@ -200,25 +211,38 @@ object Raspadores {
                     .minByOrNull { orden.indexOf(it.optString("region")).let { p -> if (p < 0) 9 else p } }?.optString("url")
                 reverso = una("box-2D-back")
                 lomo = una("box-2D-side")
+                frente = una("box-2D")
             }
         } catch (_: Exception) {}
-        if (reverso == null && c.conTgdb) try {
+        if ((reverso == null || frente == null) && c.conTgdb) try {
             val k = cod(c.tgdb.trim())
-            pedir("https://api.thegamesdb.net/v1.1/Games/ByGameName?apikey=$k&name=${cod(titulo)}&include=boxart")?.let { r ->
-                val o = JSONObject(r)
+            // Primero en su consola (así no aparece la caja de otra versión); si no hay, en todas.
+            val plataforma = PLATAFORMA_TGDB[consola]
+            val r = (plataforma?.let { pedir("https://api.thegamesdb.net/v1.1/Games/ByGameName?apikey=$k&name=${cod(titulo)}&filter%5Bplatform%5D=$it&include=boxart") }
+                ?.takeIf { try { JSONObject(it).getJSONObject("data").getJSONArray("games").length() > 0 } catch (_: Exception) { false } })
+                ?: pedir("https://api.thegamesdb.net/v1.1/Games/ByGameName?apikey=$k&name=${cod(titulo)}&include=boxart")
+            r?.let {
+                val o = JSONObject(it)
                 val juegos = o.getJSONObject("data").getJSONArray("games")
                 if (juegos.length() > 0) {
                     val id = juegos.getJSONObject(0).getInt("id")
                     o.optJSONObject("include")?.optJSONObject("boxart")?.let { b ->
-                        val base = b.getJSONObject("base_url").getString("large")
+                        val urls = b.getJSONObject("base_url")
+                        val base = urls.optString("large").ifBlank { urls.getString("original") }
                         b.optJSONObject("data")?.optJSONArray("$id")?.let { l ->
-                            for (i in 0 until l.length()) l.getJSONObject(i).takeIf { it.optString("side") == "back" }?.let { reverso = base + it.getString("filename") }
+                            for (i in 0 until l.length()) {
+                                val im = l.getJSONObject(i)
+                                when (im.optString("side")) {
+                                    "back" -> if (reverso == null) reverso = base + im.getString("filename")
+                                    "front" -> if (frente == null) frente = base + im.getString("filename")
+                                }
+                            }
                         }
                     }
                 }
             }
         } catch (_: Exception) {}
-        return Caras(reverso, lomo)
+        return Caras(reverso, lomo, frente)
     }
 
     /** Busca en todas las fuentes conectadas. */

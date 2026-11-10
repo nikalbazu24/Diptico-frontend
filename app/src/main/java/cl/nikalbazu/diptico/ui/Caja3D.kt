@@ -78,7 +78,12 @@ data class InfoFrente(
     val ancho: Int,
     /** Alto de la franja (0 = sin franja, si la persona la apagó). */
     val franja: Float = franjaDe(estuche),
+    /** La franja va al costado izquierdo (DS, 3DS) en vez de arriba; [franja] es entonces su ancho. */
+    val lateral: Boolean = false,
 )
+
+/** Consolas cuya caja lleva la franja con el logo al costado izquierdo. */
+fun franjaLateral(id: String) = id == "nds" || id == "n3ds"
 
 /** Cajas de plástico blanco (Dreamcast, Master System): el reverso y el lomo van claros. */
 private fun estucheClaro(t: Estuche) = t == Estuche.JEWEL_BLANCO || t == Estuche.REJILLA_BLANCA
@@ -135,7 +140,7 @@ internal object FabricaCaras {
         val h = (w / f.aspecto).roundToInt().coerceIn(200, 1600)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = android.graphics.Canvas(bmp)
-        val franja = (h * f.franja).roundToInt()
+        val franja = ((if (f.lateral) w else h) * f.franja).roundToInt()
         val base = Color(f.color)
         val claro = estucheClaro(f.estuche)
         val fondoFranja = when {
@@ -146,14 +151,34 @@ internal object FabricaCaras {
         }
         val p = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         // La portada (o una armada) ocupa todo lo de abajo de la franja.
-        val dst = RectF(0f, franja.toFloat(), w.toFloat(), h.toFloat())
+        val dst = if (f.lateral) RectF(franja.toFloat(), 0f, w.toFloat(), h.toFloat()) else RectF(0f, franja.toFloat(), w.toFloat(), h.toFloat())
         val arte = f.portada?.let { u -> try { Imagenes.cargar(ctx, u, w, memoriaGrafica = false)?.asAndroidBitmap() } catch (_: Exception) { null } }
         if (arte != null) c.drawBitmap(arte, null, dst, p)
         else {
             val generado = frente(InfoReverso(f.titulo, f.consola, f.consola, f.color, f.estuche, "", emptyList(), null, dst.width() / dst.height()))
             c.drawBitmap(generado, null, dst, p)
         }
-        if (franja > 0) {
+        if (franja > 0 && f.lateral) {
+            // Al costado (DS, 3DS): la franja va a lo alto, con el logo o el nombre girado de abajo hacia arriba.
+            p.color = fondoFranja.toArgb()
+            c.drawRect(0f, 0f, franja.toFloat(), h.toFloat(), p)
+            p.color = 0x33FFFFFF
+            c.drawRect(franja - 2f, 0f, franja.toFloat(), h.toFloat(), p)
+            val tinta = if (fondoFranja.luminanceSimple() > 0.6f) 0xFF15121D.toInt() else 0xFFFFFFFF.toInt()
+            c.save(); c.translate(franja / 2f, h * 0.96f); c.rotate(-90f)
+            val logo = f.logo?.let { u -> try { Imagenes.cargar(ctx, u, 512, memoriaGrafica = false)?.asAndroidBitmap() } catch (_: Exception) { null } }
+            if (logo != null && logo.height > 0) {
+                val altoLogo = franja * 0.66f
+                val anchoLogo = min(altoLogo * logo.width / logo.height, h * 0.6f)
+                val alto2 = anchoLogo * logo.height / logo.width
+                c.drawBitmap(logo, null, RectF(0f, -alto2 / 2f, anchoLogo, alto2 / 2f), p)
+            } else {
+                val t = texto(franja * 0.5f, tinta, negrita = true).apply { letterSpacing = 0.08f }
+                val nombre = TextUtils.ellipsize(f.consola.uppercase(), t, h * 0.8f, TextUtils.TruncateAt.END).toString()
+                c.drawText(nombre, 0f, franja * 0.18f, t)
+            }
+            c.restore()
+        } else if (franja > 0) {
             p.color = fondoFranja.toArgb()
             c.drawRect(0f, 0f, w.toFloat(), franja.toFloat(), p)
             // Un filo de luz bajo la franja, como el borde del inserto de papel.
@@ -398,15 +423,19 @@ fun Caja3D(
     caras: CarasGuardadas? = null, detalle: Boolean = true, sombraPiso: Boolean = true,
 ) {
     val ctx = LocalContext.current
-    val frenteReal = rememberImagen(juego.portada, if (detalle) 720 else 420)
+    // El frente exacto (el escaneo de la caja de TheGamesDB o ScreenScraper) manda sobre la portada: ya trae su franja.
+    val frenteExacto = caras?.frente?.let { Uri.parse(it) }
+    val portadaUri = frenteExacto ?: juego.portada
+    val frenteReal = rememberImagen(portadaUri, if (detalle) 720 else 420)
     val estuche = estucheDe(consola)
     val grosor = grosorDe(estuche)
-    // La franja de la consola va arriba de la portada: la caja crece un poco para que la portada se vea entera.
-    val franja = if (e.extra.bandaCaja) franjaDe(estuche) else 0f
-    val aspecto = aspectoCaja(frenteReal, consola) * (1f - franja)
+    // La franja de la consola va arriba de la portada (o al costado en DS/3DS): la caja crece para que la portada se vea entera.
+    val lateral = franjaLateral(consola.id)
+    val franja = if (e.extra.bandaCaja && frenteExacto == null) (if (lateral) 0.1f else franjaDe(estuche)) else 0f
+    val aspecto = aspectoCaja(frenteReal, consola).let { if (lateral) it / (1f - franja) else it * (1f - franja) }.coerceIn(0.55f, 1.6f)
     val info = infoReverso(e, juego, consola, aspecto)
     val logo = e.consolasPropias[consola.id]?.logo?.let { Uri.parse(it) }
-    val datosFrente = InfoFrente(juego.titulo, consola.bonito, consola.color.toArgb(), estuche, juego.portada, logo, aspecto, if (detalle) 640 else 360, franja)
+    val datosFrente = InfoFrente(juego.titulo, consola.bonito, consola.color.toArgb(), estuche, portadaUri, logo, aspecto, if (detalle) 640 else 360, franja, lateral)
     // Las caras reales (si aparecieron) o las armadas por Díptico.
     val reversoReal = if (detalle) rememberImagen(caras?.reverso?.let { Uri.parse(it) }, 900) else null
     val lomoReal = rememberImagen(caras?.lomo?.let { Uri.parse(it) }, 720)

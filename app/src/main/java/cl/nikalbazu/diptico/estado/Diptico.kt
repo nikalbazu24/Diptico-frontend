@@ -953,7 +953,7 @@ object Diptico {
                 discordUsuario = almacen.texto("discordUsuario", ""),
                 discordAvatar = almacen.texto("discordAvatar", ""),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
-                caras = CarasGuardadas.leer(almacen.texto("carasCaja")),
+                caras = CarasGuardadas.leer(almacen.texto("carasCaja2")),
                 bandaCaja = almacen.bool("bandaCaja", true),
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
@@ -2322,6 +2322,10 @@ object Diptico {
                 "Aparece un código QR: escanéalo con tu teléfono y aprueba en Discord. O entra a discord.com/activate y escribe el código. Nunca escribes tu contraseña en la consola.",
                 grupo = "Discord") { iniciarDiscord() })
         }
+        val conSecreto = almacen.texto("discordSecreto", "").isNotBlank()
+        add(Opcion("Clave secreta de la app (Client Secret)", if (conSecreto) "Puesta ✓" else "Falta", Icono.CLAVE,
+            "Discord la pide para iniciar sesión desde una consola. En discord.com/developers › tu app › OAuth2 › Client Secret › Reset Secret, cópiala y pégala aquí (o mándala con el QR). Solo se guarda en tu consola.",
+            grupo = "Discord") { abrirTexto("discord_secreto", "") })
         // Viene lista con la app; solo se muestra si falta o si alguien puso la suya.
         if (cl.nikalbazu.diptico.BuildConfig.DISCORD_APP.isBlank() || x.discordApp.isNotBlank())
         add(Opcion("App de Díptico en Discord", appDiscord().ifBlank { "Falta" }, Icono.CLAVE,
@@ -2364,16 +2368,22 @@ object Diptico {
             avisar("Primero pega el Application ID de la app de Díptico en Discord")
             return
         }
+        val secreto = almacen.texto("discordSecreto", "")
+        if (secreto.isBlank()) {
+            abrirTexto("discord_secreto", "")
+            avisar("Falta la clave secreta de la app de Discord (Client Secret)")
+            return
+        }
         loginDiscordJob?.cancel()
         actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord())) }
         loginDiscordJob = scope.launch {
-            val (c, error) = DiscordCuenta.pedirCodigo(app)
+            val (c, error) = DiscordCuenta.pedirCodigo(app, secreto)
             if (c == null) { actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(error = error ?: "No pude pedir el código"))) }; return@launch }
             actualizar { it.copy(extra = it.extra.copy(discordLogin = LoginDiscord(c.usuario, c.url, c.urlCompleta, c.expira))) }
             while (System.currentTimeMillis() < c.expira) {
                 delay(c.intervalo * 1000)
                 if (estado.value.extra.discordLogin == null) return@launch
-                val (token, falla) = DiscordCuenta.revisar(app, c)
+                val (token, falla) = DiscordCuenta.revisar(app, c, secreto)
                 if (token != null) {
                     almacen.guardarTexto("discordToken", token.acceso)
                     almacen.guardarTexto("discordRefresh", token.refresco)
@@ -2953,7 +2963,7 @@ object Diptico {
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave_gemini", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
         if (estado.value.panel != Panel.CLAVE) claveDesde = regresoActual()
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace" && para != "discord_webhook" && para != "discord_app") }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace" && para != "discord_webhook" && para != "discord_app" && para != "discord_secreto") }
         // Para las claves: el teléfono puede mandarla directo (QR con la página de la consola en tu Wi-Fi).
         val oficial = urlClave(para)
         if (oficial != null && para != "ra_usuario") {
@@ -2962,6 +2972,7 @@ object Diptico {
                 "sgdb" -> "Clave de SteamGridDB"
                 "discord_webhook" -> "Enlace de Discord"
                 "discord_app" -> "Application ID de Discord"
+                "discord_secreto" -> "Clave secreta de Discord"
                 else -> tituloRaspador(para) ?: "Clave de RetroAchievements"
             }
             val url = Enlace.iniciar(titulo, oficial) { clave -> recibirClaveRemota(para, clave) }
@@ -5554,14 +5565,14 @@ object Diptico {
         if (!c.screenscraper && !c.conTgdb) return
         val j = e.juegosPorClave[clave] ?: return
         val ya = e.extra.caras[clave]
-        if (ya != null && (ya.reverso != null || System.currentTimeMillis() - ya.buscado < 7 * 86_400_000L)) return
+        if (ya != null && ((ya.reverso != null && ya.frente != null) || System.currentTimeMillis() - ya.buscado < 2 * 86_400_000L)) return
         if (!buscandoCaras.add(clave)) return
         scope.launch {
             val r = withContext(Dispatchers.IO) { runCatching { cl.nikalbazu.diptico.data.Raspadores.caras(c, j.titulo, j.archivo, j.consolaId) }.getOrNull() }
             buscandoCaras.remove(clave)
-            val g = CarasGuardadas(r?.reverso, r?.lomo, System.currentTimeMillis())
+            val g = CarasGuardadas(r?.reverso, r?.lomo, System.currentTimeMillis(), r?.frente)
             actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras + (clave to g))) }
-            almacen.guardarTexto("carasCaja", CarasGuardadas.escribir(estado.value.extra.caras))
+            almacen.guardarTexto("carasCaja2", CarasGuardadas.escribir(estado.value.extra.caras))
         }
     }
 
@@ -7599,7 +7610,7 @@ object Diptico {
         "sgdb" -> "https://www.steamgriddb.com/profile/preferences/api"
         "ra_clave", "ra_usuario" -> "https://retroachievements.org/settings"
         "discord_webhook" -> Discord.AYUDA
-        "discord_app" -> "https://discord.com/developers/applications"
+        "discord_app", "discord_secreto" -> "https://discord.com/developers/applications"
         else -> null
     }
 
@@ -7709,6 +7720,13 @@ object Diptico {
                     avisar("Clave guardada. Ahora escribe tu pregunta.")
                     return
                 }
+            }
+            "discord_secreto" -> {
+                val v = t.trim()
+                almacen.guardarTexto("discordSecreto", v)
+                cerrarPanel()
+                if (v.isNotEmpty() && estado.value.extra.discordUsuario.isBlank()) iniciarDiscord()
+                return
             }
             "discord_app" -> {
                 val id = t.trim()
@@ -9708,19 +9726,19 @@ object Diptico {
 
 
 /** Las caras reales de una caja que se encontraron en internet (enlaces) y cuándo se buscaron. */
-data class CarasGuardadas(val reverso: String?, val lomo: String?, val buscado: Long) {
+data class CarasGuardadas(val reverso: String?, val lomo: String?, val buscado: Long, val frente: String? = null) {
     companion object {
         fun leer(t: String): Map<String, CarasGuardadas> = try {
             val o = org.json.JSONObject(t.ifBlank { "{}" })
             o.keys().asSequence().associateWith { k ->
                 val v = o.getJSONObject(k)
-                CarasGuardadas(v.optString("r").ifBlank { null }, v.optString("l").ifBlank { null }, v.optLong("b"))
+                CarasGuardadas(v.optString("r").ifBlank { null }, v.optString("l").ifBlank { null }, v.optLong("b"), v.optString("f").ifBlank { null })
             }
         } catch (_: Exception) { emptyMap() }
 
         fun escribir(m: Map<String, CarasGuardadas>): String {
             val o = org.json.JSONObject()
-            for ((k, v) in m) o.put(k, org.json.JSONObject().put("r", v.reverso.orEmpty()).put("l", v.lomo.orEmpty()).put("b", v.buscado))
+            for ((k, v) in m) o.put(k, org.json.JSONObject().put("r", v.reverso.orEmpty()).put("l", v.lomo.orEmpty()).put("b", v.buscado).put("f", v.frente.orEmpty()))
             return o.toString()
         }
     }
