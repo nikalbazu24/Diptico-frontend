@@ -72,17 +72,24 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
         val hueco = esc.d(10)
         val alto = maxHeight - esc.d(24)
         // Con poco alto (una pantalla, con la vitrina arriba) va una sola fila de mosaicos más grandes.
-        val unaFila = alto < esc.d(200)
+        // Con la vitrina de cajas arriba, abajo va una sola fila en el mismo orden que el estante: avanzar es +1, sin saltos.
+        val estante = e.portadaCajas && nuevoDisenoDosPantallas(e)
+        val unaFila = alto < esc.d(200) || estante
         SideEffect { Teclas.mosaicosUnaFila = unaFila }
-        val lado: Dp = if (unaFila) alto.coerceAtLeast(esc.d(60)) else ((alto - hueco) / 2).coerceAtLeast(esc.d(60))
+        val lado: Dp = when {
+            estante -> alto.coerceAtMost(esc.d(170)).coerceAtLeast(esc.d(60))
+            unaFila -> alto.coerceAtLeast(esc.d(60))
+            else -> ((alto - hueco) / 2).coerceAtLeast(esc.d(60))
+        }
         LazyHorizontalGrid(
             rows = GridCells.Fixed(if (unaFila) 1 else 2), state = estado, modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = esc.d(18), vertical = esc.d(12)),
+            contentPadding = PaddingValues(horizontal = esc.d(18), vertical = if (estante) ((maxHeight - lado) / 2).coerceAtLeast(esc.d(12)) else esc.d(12)),
             horizontalArrangement = Arrangement.spacedBy(hueco), verticalArrangement = Arrangement.spacedBy(hueco),
         ) {
             items(lista.size, key = { lista[it].clave }, span = { i -> GridItemSpan(if (i == 0) maxLineSpan else 1) }) { i ->
                 val grande = i == 0
                 when {
+                    estante -> Mosaico(e, i, false, lado, ancho = lado * 0.78f)
                     unaFila -> Mosaico(e, i, grande, lado, ancho = if (grande) lado * 1.7f else lado)
                     grande -> Mosaico(e, i, true, lado * 2 + hueco)
                     else -> Mosaico(e, i, false, lado)

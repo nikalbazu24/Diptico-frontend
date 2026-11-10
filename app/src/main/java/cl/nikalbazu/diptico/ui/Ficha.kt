@@ -26,6 +26,9 @@ import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.Panel
 import kotlinx.coroutines.delay
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -138,6 +141,20 @@ fun PanelFicha(e: Estado) {
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Box(Modifier.fillMaxWidth().height(esc.d(150)).background(Brush.verticalGradient(listOf(colorDe(j.clave).copy(alpha = 0.35f), Color.Transparent))))
         Column(Modifier.fillMaxSize().padding(start = esc.d(16), end = esc.d(16), top = esc.d(12), bottom = esc.d(10))) {
+            // Al bajar por la lista, la cabecera y las pestañas se van hacia arriba y dejan todo el espacio a las opciones;
+            // al volver al comienzo reaparecen. Arriba queda una línea fina con el juego y la pestaña.
+            val arriba = e.indice == 0
+            AnimatedVisibility(!arriba, enter = expandVertically(tween(220)) + fadeIn(tween(220)), exit = shrinkVertically(tween(200)) + fadeOut(tween(150))) {
+                Row(Modifier.fillMaxWidth().padding(bottom = esc.d(8)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                    Texto(j.titulo, 14f, lineas = 1, traducir = false, modifier = Modifier.weight(1f))
+                    Box(Modifier.clip(RoundedCornerShape(50)).background(Uva).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
+                        Texto(Diptico.PESTANAS_FICHA.getOrElse(e.pestanaFicha) { "" }, 12f, color = SobreUva, lineas = 1)
+                    }
+                    Texto("L1 R1", 11f, color = p.tenue, lineas = 1, traducir = false)
+                }
+            }
+            AnimatedVisibility(arriba, enter = expandVertically(tween(240)) + fadeIn(tween(240)), exit = shrinkVertically(tween(220)) + fadeOut(tween(150))) {
+            Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (c != null) CajaJuego(j, c, escala = 0.5f)
                 Spacer(Modifier.width(esc.d(12)))
@@ -163,6 +180,8 @@ fun PanelFicha(e: Estado) {
                 }
             }
             Spacer(Modifier.height(esc.d(10)))
+            }
+            }
             AnimatedContent(
                 targetState = e.pestanaFicha,
                 transitionSpec = { (fadeIn(tween(250)) + slideInHorizontally(tween(280)) { if (targetState > initialState) it / 10 else -it / 10 }) togetherWith fadeOut(tween(120)) },

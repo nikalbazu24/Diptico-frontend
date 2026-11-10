@@ -106,10 +106,14 @@ object DiscordCuenta {
     data class Usuario(val id: String, val nombre: String, val avatar: String?)
 
     /** Los permisos que se piden: saber quién eres y mostrar tu actividad (para el «Jugando a…»). */
-    const val PERMISOS = "identify openid sdk.social_layer_presence"
+    const val PERMISOS = "identify"
     private const val API = "https://discord.com/api/v10"
 
-    private fun formulario(url: String, campos: Map<String, String>): Pair<Int, String> {
+    /**
+     * Discord pide que la app se identifique con su Client ID y su clave secreta (Client Secret) en el flujo de
+     * dispositivos. La clave la pega la persona en Ajustes y solo se guarda en su consola.
+     */
+    private fun formulario(url: String, campos: Map<String, String>, app: String = "", secreto: String = ""): Pair<Int, String> {
         val con = URL(url).openConnection() as HttpURLConnection
         con.requestMethod = "POST"
         con.doOutput = true
@@ -117,6 +121,10 @@ object DiscordCuenta {
         con.readTimeout = 15_000
         con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
         con.setRequestProperty("User-Agent", "Diptico (Android)")
+        if (app.isNotBlank() && secreto.isNotBlank()) {
+            val par = android.util.Base64.encodeToString("$app:$secreto".toByteArray(), android.util.Base64.NO_WRAP)
+            con.setRequestProperty("Authorization", "Basic $par")
+        }
         val cuerpo = campos.entries.joinToString("&") { "${it.key}=${java.net.URLEncoder.encode(it.value, "UTF-8")}" }
         con.outputStream.use { it.write(cuerpo.toByteArray()) }
         val codigo = con.responseCode
@@ -126,9 +134,9 @@ object DiscordCuenta {
     }
 
     /** Paso 1: el código para el QR. Devuelve el código o el motivo del error. */
-    suspend fun pedirCodigo(app: String): Pair<Codigo?, String?> = withContext(Dispatchers.IO) {
+    suspend fun pedirCodigo(app: String, secreto: String = ""): Pair<Codigo?, String?> = withContext(Dispatchers.IO) {
         try {
-            val (n, t) = formulario("$API/oauth2/device/authorize", mapOf("client_id" to app, "scope" to PERMISOS))
+            val (n, t) = formulario("$API/oauth2/device/authorize", mapOf("client_id" to app, "scope" to PERMISOS), app, secreto)
             if (n !in 200..299) return@withContext null to motivo(t, n)
             val j = JSONObject(t)
             val url = j.optString("verification_uri", "https://discord.com/activate")
@@ -141,11 +149,11 @@ object DiscordCuenta {
     }
 
     /** Paso 2: preguntar si ya aprobaste. null + null = todavía no; Token = listo; null + texto = falló. */
-    suspend fun revisar(app: String, c: Codigo): Pair<Token?, String?> = withContext(Dispatchers.IO) {
+    suspend fun revisar(app: String, c: Codigo, secreto: String = ""): Pair<Token?, String?> = withContext(Dispatchers.IO) {
         try {
             val (n, t) = formulario("$API/oauth2/token", mapOf(
                 "client_id" to app, "grant_type" to "urn:ietf:params:oauth:grant-type:device_code", "device_code" to c.dispositivo,
-            ))
+            ), app, secreto)
             if (n in 200..299) return@withContext leerToken(t) to null
             val error = try { JSONObject(t).optString("error") } catch (_: Exception) { "" }
             when (error) {
@@ -158,9 +166,9 @@ object DiscordCuenta {
     }
 
     /** Renueva el permiso cuando vence (dura una semana). */
-    suspend fun renovar(app: String, refresco: String): Token? = withContext(Dispatchers.IO) {
+    suspend fun renovar(app: String, refresco: String, secreto: String = ""): Token? = withContext(Dispatchers.IO) {
         try {
-            val (n, t) = formulario("$API/oauth2/token", mapOf("client_id" to app, "grant_type" to "refresh_token", "refresh_token" to refresco))
+            val (n, t) = formulario("$API/oauth2/token", mapOf("client_id" to app, "grant_type" to "refresh_token", "refresh_token" to refresco), app, secreto)
             if (n in 200..299) leerToken(t) else null
         } catch (_: Exception) { null }
     }
@@ -190,7 +198,7 @@ object DiscordCuenta {
         val j = try { JSONObject(t) } catch (_: Exception) { null }
         val e = j?.optString("error").orEmpty()
         return when {
-            e == "invalid_client" || n == 401 -> "Discord no reconoce la app de Díptico (revisa el Application ID y que tenga «Public Client»)"
+            e == "invalid_client" || n == 401 -> "Discord no aceptó la app: revisa la clave secreta (Client Secret) en Ajustes › Cuentas y conexiones › Discord"
             e == "invalid_scope" -> "Discord no aceptó los permisos pedidos"
             e.isNotBlank() -> "Discord respondió: " + (j?.optString("error_description")?.takeIf { it.isNotBlank() } ?: e)
             else -> "Discord respondió $n"

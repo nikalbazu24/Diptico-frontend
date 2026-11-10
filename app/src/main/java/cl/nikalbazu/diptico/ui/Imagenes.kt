@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
@@ -68,6 +69,49 @@ object Imagenes {
         return img
     }
 
+    /**
+     * La imagen desenfocada de verdad (para fondos): se carga mediana, se le pasa un desenfoque de caja tres veces
+     * (queda como un desenfoque gaussiano, suave y sin píxeles) una sola vez, y queda guardada.
+     */
+    fun desenfocada(ctx: Context, uri: Uri, lado: Int = 240, radio: Int = 10): ImageBitmap? {
+        val clave = "blur|$uri|$lado|$radio"
+        cache.get(clave)?.let { return it }
+        val base = cargar(ctx, uri, lado, memoriaGrafica = false) ?: return null
+        val b = base.asAndroidBitmap().copy(android.graphics.Bitmap.Config.ARGB_8888, true) ?: return null
+        val w = b.width; val h = b.height
+        val px = IntArray(w * h)
+        b.getPixels(px, 0, w, 0, 0, w, h)
+        val tmp = IntArray(w * h)
+        repeat(3) {
+            cajaBlur(px, tmp, w, h, radio, horizontal = true)
+            cajaBlur(tmp, px, w, h, radio, horizontal = false)
+        }
+        b.setPixels(px, 0, w, 0, 0, w, h)
+        val img = b.asImageBitmap()
+        cache.put(clave, img)
+        return img
+    }
+
+    /** Un paso de desenfoque de caja (promedio móvil) en una dirección. */
+    private fun cajaBlur(src: IntArray, dst: IntArray, w: Int, h: Int, r: Int, horizontal: Boolean) {
+        val largo = if (horizontal) w else h
+        val lineas = if (horizontal) h else w
+        val div = 2 * r + 1
+        for (l in 0 until lineas) {
+            var sa = 0; var sr = 0; var sg = 0; var sb = 0
+            fun idx(k: Int): Int { val q = k.coerceIn(0, largo - 1); return if (horizontal) l * w + q else q * w + l }
+            for (k in -r..r) { val c = src[idx(k)]; sa += c ushr 24; sr += (c shr 16) and 255; sg += (c shr 8) and 255; sb += c and 255 }
+            for (k in 0 until largo) {
+                dst[idx(k)] = ((sa / div) shl 24) or ((sr / div) shl 16) or ((sg / div) shl 8) or (sb / div)
+                val sale = src[idx(k - r)]; val entra = src[idx(k + r + 1)]
+                sa += (entra ushr 24) - (sale ushr 24)
+                sr += ((entra shr 16) and 255) - ((sale shr 16) and 255)
+                sg += ((entra shr 8) and 255) - ((sale shr 8) and 255)
+                sb += (entra and 255) - (sale and 255)
+            }
+        }
+    }
+
     private fun web(ctx: Context, url: String): File? {
         val dir = File(ctx.cacheDir, "web").apply { mkdirs() }
         val f = File(dir, url.hashCode().toUInt().toString(16) + "-" + url.length)
@@ -103,6 +147,16 @@ fun rememberImagen(uri: Uri?, maxLado: Int, memoriaGrafica: Boolean = true): Ima
                 null
             }
         }
+    }
+    return img
+}
+
+/** La imagen desenfocada para fondos (se arma una vez, en segundo plano). */
+@Composable
+fun rememberDesenfocada(uri: Uri?): ImageBitmap? {
+    val ctx = LocalContext.current
+    val img by produceState<ImageBitmap?>(initialValue = null, uri) {
+        value = if (uri == null) null else withContext(Dispatchers.Default) { try { Imagenes.desenfocada(ctx, uri) } catch (_: Exception) { null } }
     }
     return img
 }

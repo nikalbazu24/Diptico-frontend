@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cajas-reales-2.0-32"
-    const val NOMBRE = "Cajas de verdad y más rapidez"
+    const val ID = "cajas-exactas-2.0-33"
+    const val NOMBRE = "Cajas exactas y estante en línea"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -316,10 +316,15 @@ object Novedades {
             Pagina("Inicia sesión con Discord", "En Ajustes › Cuentas y conexiones: aparece un código QR, lo escaneas con tu teléfono y apruebas. Sin escribir contraseñas en la consola.", Icono.MUNDO, 0xFF5865F2),
             Pagina("Tus cuentas, juntas", "Discord, RetroAchievements, SteamGridDB, ScreenScraper y las demás fuentes ahora viven en una sola sección: Cuentas y conexiones. Y las decoraciones del tema se ven en toda la consola, siempre.", Icono.CLAVE, 0xFF7AA8FF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("cajas-reales-2.0-32", "Cajas de verdad y más rapidez", listOf(
             Pagina("Cajas de verdad", "Cada caja tiene frente, lomo y reverso, con su grosor real. Gírala completa con el dedo, el stick derecho o el botón Girar: atrás está la historia del juego, tu tiempo y cuánto dura. Con ScreenScraper o TheGamesDB conectados, trae el reverso original.", Icono.PORTADA, 0xFFFF9A6B),
             Pagina("Del estante al juego", "Las cajas de los costados muestran su lomo, como en un estante. Toca la del centro (o A) y se abre la pantalla de carga con la misma caja, y luego el juego.", Icono.JUGAR, 0xFF6B4EFF),
             Pagina("Más rápido", "Menos trabajo en cada cuadro: los difuminados, el zoom de las portadas y el logo al jugar ya no rearman la pantalla entera. Mientras juegas, las decoraciones se quedan quietas para no quitarle fluidez al juego.", Icono.CHISPA, 0xFF3BD18A),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Cajas exactas", "Con TheGamesDB o ScreenScraper conectados, el frente y el reverso son el escaneo de la caja original. En DS y 3DS la franja del logo va al costado, como en sus cajas.", Icono.PORTADA, 0xFFFF9A6B),
+            Pagina("Estante en línea", "Con la vitrina de cajas, abajo los juegos van en una sola fila en el mismo orden que arriba: avanzas uno a uno, sin saltos. El fondo es la portada desenfocada de verdad.", Icono.JUGAR, 0xFF6B4EFF),
+            Pagina("Más espacio en las opciones", "En las opciones del juego y en su ficha, todo se desliza junto: lo de arriba se va al bajar y las opciones usan toda la ventana.", Icono.MENU, 0xFF3BD18A),
         )),
     )
 

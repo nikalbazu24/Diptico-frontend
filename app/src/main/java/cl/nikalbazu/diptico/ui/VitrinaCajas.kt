@@ -153,12 +153,14 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Color(0xFF09080D)).testTag("vitrina-cajas")) {
             val ancho = maxWidth.value
             val alto = maxHeight.value
-            // 1. Fondo: el arte del juego, chiquito y estirado (suave como difuminado, sin el costo de un desenfoque en vivo).
-            // La portada del juego elegido, chiquita y estirada: queda desenfocada sin el costo de un desenfoque en vivo.
+            // 1. Fondo: la portada del juego elegido desenfocada (se arma una vez por juego, no en cada cuadro).
             Crossfade(juego, animationSpec = tween(if (Estilo.efectosCompletos) 520 else 0), label = "fondo-cajas") { j ->
-                ArteJuego(
-                    j, preferirArte = false, maxLado = 40, imagen = "portada",
-                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.62f; scaleX = 1.15f; scaleY = 1.15f },
+                // La portada del juego elegido (o su caja exacta), desenfocada de verdad y a pantalla completa.
+                val fondo = rememberDesenfocada(e.extra.caras[j.clave]?.frente?.let { android.net.Uri.parse(it) } ?: j.portada ?: j.arte)
+                if (fondo != null) androidx.compose.foundation.Image(
+                    fondo, contentDescription = null, contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
+                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.7f; scaleX = 1.08f; scaleY = 1.08f },
                 )
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to color.copy(alpha = 0.4f))))
