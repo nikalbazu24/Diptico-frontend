@@ -152,7 +152,13 @@ fun FranjaAccesos(e: Estado) {
         BotonFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, if (conDock) null else "Ajustes") { Diptico.abrirMenu() }
         if (conDock) {
             Box(Modifier.size(esc.d(1), esc.d(26)).background(p.tinta.copy(alpha = 0.15f)))
-            FilaDock(e, 30f)
+            // Las apps se esconden y se sacan con un botoncito: la franja queda limpia cuando no las usas.
+            androidx.compose.animation.AnimatedVisibility(
+                e.extra.dockVisible,
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandHorizontally(expandFrom = Alignment.Start),
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkHorizontally(shrinkTowards = Alignment.Start),
+            ) { FilaDock(e, 30f) }
+            BotonRepliegue(e.extra.dockVisible) { Diptico.alternarDockVisible() }
         } else BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
         androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
         DippoInicio(e, 36f)
@@ -165,6 +171,23 @@ fun FranjaAccesos(e: Estado) {
                 .clip(RoundedCornerShape(esc.d(1.5f))).background(tono))
         }
         Texto(if (bateria >= 0) "$bateria%" else "—", 13f, color = p.tinta, traducir = false, lineas = 1)
+    }
+}
+
+/** El botón que esconde (‹) o saca (las apps) el dock de la franja. */
+@Composable
+private fun BotonRepliegue(abierto: Boolean, alPulsar: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val giro by androidx.compose.animation.core.animateFloatAsState(if (abierto) 0f else 180f, label = "repliegue")
+    Box(
+        Modifier.size(esc.d(28), esc.d(40)).clip(RoundedCornerShape(esc.d(10))).background(Color.White.copy(alpha = 0.06f))
+            .clickable(onClick = alPulsar).testTag("dock-repliegue"),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (abierto) Texto("‹", 18f, color = p.tinta.copy(alpha = 0.8f), traducir = false, lineas = 1,
+            modifier = Modifier.graphicsLayer { rotationZ = giro })
+        else IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 14f)
     }
 }
 

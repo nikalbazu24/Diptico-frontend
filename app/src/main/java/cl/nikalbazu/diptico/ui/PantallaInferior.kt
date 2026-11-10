@@ -190,7 +190,10 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
     ) { panel ->
         when (panel) {
             // Con dos pantallas, el menú va arriba (la pantalla grande) y aquí la ayuda con su vista previa.
-            Panel.MENU -> if (!conAyuda && !e.intercambiar) AyudaMenu(e) else PanelMenu(e, conAyuda)
+            // Con las pantallas cambiadas, el menú ocupa esta pantalla entera sobre su propio fondo (sin el inicio asomándose detrás).
+            Panel.MENU -> if (!conAyuda && !e.intercambiar) AyudaMenu(e)
+                else if (e.intercambiar && !conAyuda) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
+                else PanelMenu(e, conAyuda)
             Panel.RAPIDO -> VentanaJuego(e)
             Panel.BUSCAR -> PanelBuscar(e)
             Panel.CENTRO -> Box(Modifier.fillMaxSize())
@@ -463,14 +466,14 @@ private fun EnJuego(e: Estado) {
             Spacer(Modifier.height(esc.d(10)))
             if (mas) MasHerramientas(e, s, Modifier.weight(1f)) { mas = false }
             else Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                // 2 · DIPPO: un consejo según lo que pasa, y la pista a un toque.
+                // 2 · El logo del juego manda, como en Cocoon: grande y flotando suave en el espacio que queda.
+                LogoEnPartida(juego, color, e.despierta && e.experiencia.movimiento, Modifier.weight(1f).fillMaxWidth())
+                // 3 · DIPPO: un consejo según lo que pasa, y la pista a un toque.
                 ConsejoDippo(e, s, juego, (seg / 60).toInt())
-                // 3 · Tu partida: el próximo paso y cuánto te queda.
+                // 4 · Tu partida, compacta: el próximo paso en una línea y una barrita fina de cuánto te queda.
                 TuPartida(e, s.clave)
-                // 4 · La música, solo si suena algo.
+                // 5 · La música, solo si suena algo.
                 MusicaEnJuego()
-                // 5 · El logo del juego, como en Cocoon: flota suave en el espacio que queda.
-                LogoEnPartida(juego, color, Modifier.weight(1f).fillMaxWidth())
                 // 6 · Tus apps: se abren aquí y el juego sigue arriba.
                 if (e.extra.dock && e.appsFijadas.isNotEmpty()) FilaDock(e, 34f, Modifier.align(Alignment.CenterHorizontally))
             }
@@ -488,22 +491,23 @@ private fun EnJuego(e: Estado) {
 
 /** El logo del juego (o su nombre en grande) flotando despacio, con un brillo del color de la consola detrás. */
 @Composable
-private fun LogoEnPartida(juego: cl.nikalbazu.diptico.data.Juego?, color: Color, modifier: Modifier) {
+private fun LogoEnPartida(juego: cl.nikalbazu.diptico.data.Juego?, color: Color, moverse: Boolean, modifier: Modifier) {
     val esc = LocalEscala.current
-    val anima = Diptico.estado.collectAsState().value.let { it.despierta && it.experiencia.movimiento && Estilo.efectosCompletos }
+    // Flota solo con la pantalla despierta (sin escuchar todo el estado: así no se redibuja con cada cambio).
+    val anima = moverse && Estilo.efectosCompletos
     val flotar = if (anima) {
         val t = rememberInfiniteTransition(label = "logo")
         val f by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(2800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "flotar")
         f
     } else 0f
     Box(modifier, contentAlignment = Alignment.Center) {
-        Box(Modifier.size(esc.d(260)).background(Brush.radialGradient(listOf(color.copy(alpha = 0.28f), Color.Transparent))))
+        Box(Modifier.size(esc.d(340)).background(Brush.radialGradient(listOf(color.copy(alpha = 0.32f), Color.Transparent))))
         val logo = rememberImagen(juego?.logo, 800)
         Box(Modifier.graphicsLayer { translationY = flotar * 5f * density }) {
             if (logo != null) Image(
                 logo, contentDescription = juego?.titulo, contentScale = ContentScale.Fit,
-                modifier = Modifier.heightIn(max = esc.d(110)).widthIn(max = esc.d(340)).padding(esc.d(6)),
-            ) else Texto(juego?.titulo ?: "Jugando", 26f, color = Color.White, lineas = 2, interlineado = 30f, alinear = TextAlign.Center, traducir = false,
+                modifier = Modifier.heightIn(max = esc.d(170)).widthIn(max = esc.d(420)).padding(esc.d(6)),
+            ) else Texto(juego?.titulo ?: "Jugando", 32f, color = Color.White, lineas = 2, interlineado = 36f, alinear = TextAlign.Center, traducir = false,
                 modifier = Modifier.padding(horizontal = esc.d(20)))
         }
     }
@@ -539,7 +543,7 @@ private fun ConsejoDippo(e: Estado, s: cl.nikalbazu.diptico.estado.Sesion, juego
     }
 }
 
-/** Tu próximo paso (se toca para cambiarlo) y cuánto te queda según HowLongToBeat. */
+/** Tu próximo paso (se toca para cambiarlo) y cuánto te queda según HowLongToBeat, en poco espacio. */
 @Composable
 private fun TuPartida(e: Estado, clave: String) {
     val esc = LocalEscala.current
@@ -547,19 +551,25 @@ private fun TuPartida(e: Estado, clave: String) {
     val d = e.extra.duraciones[clave]?.takeIf { it.tiene }
     val jugado = e.datos[clave]?.tiempo ?: 0L
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(18))).background(Color.White.copy(alpha = 0.06f))
-            .clickable { Diptico.abrirPaso() }.padding(esc.d(12)),
-        verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14))).background(Color.White.copy(alpha = 0.06f))
+            .clickable { Diptico.abrirPaso() }.padding(horizontal = esc.d(12), vertical = esc.d(8)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(5)),
     ) {
-        Etiqueta("Tu próximo paso", Color(0xFFC9B8FF), 10.5f)
-        Texto(paso.ifBlank { "Toca para anotar dónde vas" }, 16f, color = if (paso.isBlank()) Color(0xFF8E89A8) else Color.White, lineas = 2)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconoDiptico(Icono.LAPIZ, Color(0xFFC9B8FF), 12f)
+            Spacer(Modifier.width(esc.d(8)))
+            Texto(paso.ifBlank { "Toca para anotar dónde vas" }, 13.5f, color = if (paso.isBlank()) Color(0xFF8E89A8) else Color.White,
+                lineas = 1, modifier = Modifier.weight(1f))
+            if (d != null && d.principal > 0f) cl.nikalbazu.diptico.estado.CuantoDura.teQueda(d, jugado)?.let {
+                Spacer(Modifier.width(esc.d(8)))
+                Detalle(it, 11f, color = Color(0xFFB9B5D6), lineas = 1)
+            }
+        }
         if (d != null && d.principal > 0f) {
-            Spacer(Modifier.height(esc.d(4)))
             val avance = (jugado / 3600f / d.principal).coerceIn(0f, 1f)
-            Box(Modifier.fillMaxWidth().height(esc.d(6)).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.12f))) {
+            Box(Modifier.fillMaxWidth().height(esc.d(3)).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.12f))) {
                 Box(Modifier.fillMaxWidth(avance).fillMaxHeight().clip(RoundedCornerShape(50)).background(Brush.horizontalGradient(listOf(Coral, Sol))))
             }
-            cl.nikalbazu.diptico.estado.CuantoDura.teQueda(d, jugado)?.let { Detalle(it, 11.5f, color = Color(0xFFB9B5D6), lineas = 1) }
         }
     }
 }

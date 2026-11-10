@@ -211,7 +211,7 @@ fun cajaDe(consola: Consola, escala: Float = 1f): FormaCaja {
 
 /** La caja del juego con la forma de su consola (o la que elegiste para esa consola). */
 @Composable
-fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, escala: Float = 1f, vivo: Boolean = false) {
+fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, escala: Float = 1f, vivo: Boolean = false, estuche: Boolean = false) {
     val esc = LocalEscala.current
     val f = cajaDe(consola, escala)
     val cfg = LocalFormas.current[consola.id]
@@ -240,7 +240,9 @@ fun CajaJuego(juego: Juego, consola: Consola, modifier: Modifier = Modifier, esc
                 drawCircle(Color(0xFF0E0C16), r * 0.09f, c)
             }
         }
-        when (f.banda) {
+        // Con estuche (vitrina y carga): el detalle propio de cada consola en vez de la banda simple.
+        if (estuche && !disco && cfg?.forma.let { it == null || it == "original" }) CapaEstuche(consola)
+        else when (f.banda) {
             Banda.NINGUNA -> Unit
             Banda.BISAGRA -> Box(Modifier.fillMaxHeight().width(esc.d(11 * k)).background(Color.Black.copy(alpha = 0.3f)))
             Banda.LATERAL_CLARA -> Box(Modifier.fillMaxHeight().width(esc.d(8 * k)).background(Color.White.copy(alpha = 0.35f)))

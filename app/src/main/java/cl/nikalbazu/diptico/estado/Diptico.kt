@@ -377,6 +377,12 @@ data class EstadoExtra(
     val carga: CargaJuego? = null,
     /** La portada de arriba con el diseño nuevo: "cajas" (vitrina de cajas) o "arte" (el arte del juego en grande). */
     val portada: String = "cajas",
+    /** Las apps del dock a la vista en la franja de abajo (se esconden con su botón para dejar la franja limpia). */
+    val dockVisible: Boolean = true,
+    /** Discord: el enlace del webhook de tu canal y cuándo avisar (al empezar y al terminar de jugar). */
+    val discordWebhook: String = "",
+    val discordEmpezar: Boolean = true,
+    val discordTerminar: Boolean = true,
 )
 
 /** Un juego que se está abriendo: cuál, en qué pantalla y desde cuándo (para la animación de carga). */
@@ -918,6 +924,10 @@ object Diptico {
                 dippoVoz = almacen.bool("dippoVoz", true),
                 cargaJuego = almacen.bool("cargaJuego", true),
                 portada = almacen.texto("portadaArriba", "cajas"),
+                dockVisible = almacen.bool("dockVisible", true),
+                discordWebhook = almacen.texto("discordWebhook", ""),
+                discordEmpezar = almacen.bool("discordEmpezar", true),
+                discordTerminar = almacen.bool("discordTerminar", true),
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
@@ -2202,6 +2212,7 @@ object Diptico {
             return
         }
         if (e.turbo) turboAlJugar(juego, displayId)
+        if (e.extra.discordEmpezar) avisarDiscord(juego, consola, inicio = true, sesionSeg = 0L)
         actualizar {
             it.copy(navegacion = it.navegacion.copy(retomaVideo = "", retomaVideoClave = ""), sesion = Sesion(juego.clave, System.currentTimeMillis(), displayId, consola.dosPantallas), panel = Panel.NINGUNO, despierta = false, burbujaAbierta = false, burbujaAlerta = false)
         }
@@ -2228,6 +2239,74 @@ object Diptico {
     fun cancelarCarga() {
         if (estado.value.extra.carga == null) return
         actualizar { it.copy(extra = it.extra.copy(carga = null)) }
+    }
+
+    /** «Hace X h Y min» para las tarjetas de Discord. */
+    private fun duracionDiscord(seg: Long): String {
+        val h = seg / 3600
+        val m = (seg % 3600) / 60
+        return if (h > 0) "$h h $m min" else "$m min"
+    }
+
+    /** Publica en el canal de Discord que empezaste (o terminaste) de jugar, con la portada. No hace nada sin webhook. */
+    private fun avisarDiscord(juego: Juego, consola: Consola, inicio: Boolean, sesionSeg: Long, totalSeg: Long = 0L, prueba: Boolean = false) {
+        val e = estado.value
+        val url = e.extra.discordWebhook
+        if (url.isBlank()) return
+        val quien = e.nombre.ifBlank { "Alguien" }
+        val titulo = when {
+            prueba -> "Díptico está conectado a este canal"
+            inicio -> "🎮 $quien está jugando ${juego.titulo}"
+            else -> "✅ $quien jugó ${juego.titulo}"
+        }
+        val total = totalSeg.takeIf { it > 0 } ?: (e.datos[juego.clave]?.tiempo?.toLong() ?: 0L)
+        val detalle = buildString {
+            append(consola.bonito)
+            if (!inicio && sesionSeg > 0) append(" · esta vez ${duracionDiscord(sesionSeg)}")
+            if (total > 0) append(" · en total ${duracionDiscord(total)}")
+            e.datos[juego.clave]?.paso?.takeIf { it.isNotBlank() && inicio }?.let { append("\nVa por: $it") }
+        }
+        val color = consola.color.let { (((it.red * 255).toInt() and 0xFF) shl 16) or (((it.green * 255).toInt() and 0xFF) shl 8) or ((it.blue * 255).toInt() and 0xFF) }
+        scope.launch {
+            val imagen = withContext(Dispatchers.IO) { Discord.portada(app, juego.portada) }
+            val error = Discord.enviar(url, Discord.tarjeta(titulo, detalle, color, imagen != null, "Desde Díptico en ${android.os.Build.MODEL}"), imagen)
+            if (prueba) avisar(error ?: "Listo: mira tu canal de Discord")
+        }
+    }
+
+    /** Manda una tarjeta de prueba con el juego elegido (o el primero). */
+    fun probarDiscord() {
+        val e = estado.value
+        if (e.extra.discordWebhook.isBlank()) { abrirTexto("discord_webhook"); return }
+        val j = e.seleccionado ?: e.juegos.firstOrNull() ?: run { avisar("Primero agrega juegos"); return }
+        val c = Consolas.porId(j.consolaId) ?: return
+        avisarDiscord(j, c, inicio = true, sesionSeg = 0L, prueba = true)
+        avisar("Enviando a Discord…")
+    }
+
+    private fun opcionesDiscord(e: Estado): List<Opcion> = buildList {
+        val conectado = e.extra.discordWebhook.isNotBlank()
+        add(Opcion(
+            "Enlace del canal (webhook)", if (conectado) "Conectado ✓" else "Pegar enlace", Icono.MUNDO,
+            "En Discord: abre tu servidor › Editar canal › Integraciones › Webhooks › Nuevo webhook › Copiar URL. Pégala aquí o mándala desde tu teléfono con el código QR. Díptico no pide tu cuenta ni tu contraseña.",
+            grupo = "Discord",
+        ) { abrirTexto("discord_webhook", estado.value.extra.discordWebhook) })
+        if (!conectado) return@buildList
+        add(Opcion("Avisar cuando empiezo a jugar", if (e.extra.discordEmpezar) "Sí" else "No", Icono.JUGAR,
+            "Publica en el canal qué juego abriste, con su portada y dónde vas.", grupo = "Discord") {
+            val v = !estado.value.extra.discordEmpezar
+            almacen.guardarBool("discordEmpezar", v); actualizar { it.copy(extra = it.extra.copy(discordEmpezar = v)) }
+        })
+        add(Opcion("Avisar cuando termino", if (e.extra.discordTerminar) "Sí" else "No", Icono.RELOJ,
+            "Al salir del juego publica cuánto jugaste esta vez y en total (solo si fue más de un minuto).", grupo = "Discord") {
+            val v = !estado.value.extra.discordTerminar
+            almacen.guardarBool("discordTerminar", v); actualizar { it.copy(extra = it.extra.copy(discordTerminar = v)) }
+        })
+        add(Opcion("Mandar una prueba", "", Icono.CHISPA, "Publica una tarjeta de prueba en tu canal para ver que todo funciona.", grupo = "Discord") { probarDiscord() })
+        add(Opcion("Desconectar Discord", "", Icono.BORRAR, "Olvida el enlace: Díptico deja de publicar en tu canal.", grupo = "Discord") {
+            almacen.guardarTexto("discordWebhook", ""); actualizar { it.copy(extra = it.extra.copy(discordWebhook = "")) }
+            avisar("Discord desconectado")
+        })
     }
 
     /** El último juego cuya sesión se cerró y cuándo: si se vuelve a abrir pronto, se intenta retomar la partida. */
@@ -2660,6 +2739,11 @@ object Diptico {
             sesiones = d.sesiones + if (duracion >= 15) 1 else 0,
         )
         almacen.guardarDatos(datos)
+        if (duracion >= 60 && estado.value.extra.discordTerminar) {
+            val j = estado.value.juegosPorClave[s.clave]
+            val c = j?.let { Consolas.porId(it.consolaId) }
+            if (j != null && c != null) avisarDiscord(j, c, inicio = false, sesionSeg = duracion, totalSeg = datos[s.clave]?.tiempo?.toLong() ?: 0L)
+        }
         // ¿Dónde quedaste?: una tarjeta con formas rápidas de anotarlo (escribir, nota de voz, mapa) o pasar de largo.
         val hacerPregunta = preguntar && duracion >= 60 && estado.value.preguntarQuedaste
         actualizar { it.copy(sesion = null, despierta = false, datos = datos, juegoSel = s.clave) }
@@ -2774,13 +2858,14 @@ object Diptico {
     /** Abre el cuadro de texto para [para] ("sgdb", "ia_clave_gemini", "titulo", "notas"). */
     fun abrirTexto(para: String, inicial: String = "") {
         if (estado.value.panel != Panel.CLAVE) claveDesde = regresoActual()
-        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace") }
+        actualizar { it.copy(panel = Panel.CLAVE, textoPara = para, borrador = inicial, teclaFila = 2, teclaCol = 0, simbolos = false, cursor = -1, ancla = null, mayus = inicial.isEmpty() && para != "sgdb" && !para.startsWith("ia_clave") && !para.startsWith("ra_") && !para.startsWith("ras_") && para != "tema_enlace" && para != "discord_webhook") }
         // Para las claves: el teléfono puede mandarla directo (QR con la página de la consola en tu Wi-Fi).
         val oficial = urlClave(para)
         if (oficial != null && para != "ra_usuario") {
             val titulo = when (para) {
                 "ia_clave_gemini" -> "Clave de Gemini"; "ia_clave_openai" -> "Clave de ChatGPT"
                 "sgdb" -> "Clave de SteamGridDB"
+                "discord_webhook" -> "Enlace de Discord"
                 else -> tituloRaspador(para) ?: "Clave de RetroAchievements"
             }
             val url = Enlace.iniciar(titulo, oficial) { clave -> recibirClaveRemota(para, clave) }
@@ -3133,6 +3218,7 @@ object Diptico {
             estado.value.panel != Panel.CLAVE -> 160
             estado.value.textoPara == "notas" -> 2000
             estado.value.textoPara == "tema_enlace" -> 600
+            estado.value.textoPara == "discord_webhook" -> 300
             estado.value.textoPara == "titulo" -> 80
             else -> 200
         }
@@ -3930,7 +4016,7 @@ object Diptico {
                     aplicarTema()
                 }
             }
-            Seccion.LOGROS -> lista += opcionesLogros(e)
+            Seccion.LOGROS -> { lista += opcionesLogros(e); lista += opcionesDiscord(e) }
             Seccion.ESENCIAL -> lista += opcionesEsenciales(e)
             Seccion.MAS -> lista += opcionesMas(e)
             Seccion.ASISTENTE -> {
@@ -7375,6 +7461,7 @@ object Diptico {
         "ia_clave_openai", "openai" -> "https://platform.openai.com/api-keys"
         "sgdb" -> "https://www.steamgriddb.com/profile/preferences/api"
         "ra_clave", "ra_usuario" -> "https://retroachievements.org/settings"
+        "discord_webhook" -> Discord.AYUDA
         else -> null
     }
 
@@ -7484,6 +7571,15 @@ object Diptico {
                     avisar("Clave guardada. Ahora escribe tu pregunta.")
                     return
                 }
+            }
+            "discord_webhook" -> {
+                val url = t.trim()
+                if (url.isNotEmpty() && !Discord.valido(url)) { avisar("Ese enlace no es un webhook de Discord (empieza con https://discord.com/api/webhooks/)"); return }
+                almacen.guardarTexto("discordWebhook", url)
+                actualizar { it.copy(extra = it.extra.copy(discordWebhook = url)) }
+                cerrarPanel()
+                if (url.isNotEmpty()) probarDiscord()
+                return
             }
             "tema_enlace" -> {
                 cerrarPanel()
@@ -9190,6 +9286,13 @@ object Diptico {
     fun elegirPestanaApps(i: Int) = actualizar { it.copy(navegacion = it.navegacion.copy(appsMenu = null, appsMoviendo = null), appsPestana = i, indice = 0) }
 
     /** Fija (o suelta) una app: las fijadas tienen su pestaña y su widget en el inicio. */
+    /** Esconde o vuelve a mostrar las apps del dock en la franja de abajo (queda guardado). */
+    fun alternarDockVisible() {
+        val v = !estado.value.extra.dockVisible
+        almacen.guardarBool("dockVisible", v)
+        actualizar { it.copy(extra = it.extra.copy(dockVisible = v)) }
+    }
+
     /** Despliega o recoge el dock de apps de la pantalla de abajo. */
     fun abrirDock(abrir: Boolean) {
         if (abrir && estado.value.appsFijadas.isEmpty()) { avisar("Fija tus apps en el cajón con Y y aparecerán aquí"); abrirApps(); return }

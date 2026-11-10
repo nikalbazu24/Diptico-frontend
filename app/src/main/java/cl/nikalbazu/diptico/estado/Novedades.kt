@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cajas-carga-2.0-29"
-    const val NOMBRE = "Cajas y pantalla de carga"
+    const val ID = "estuches-discord-2.0-30"
+    const val NOMBRE = "Estuches, Discord y tu logo al jugar"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -302,9 +302,14 @@ object Novedades {
             Pagina("Ficha sin repetir", "Abajo lees y eliges; arriba pasan tus capturas y fotos del juego, y DIPPO te cuenta datos tuyos.", Icono.PORTADA, 0xFFFF9A6B),
             Pagina("Juegos en una carpeta", "Cuando DIPPO te propone juegos, vienen en una carpetita: tócala, se abre y juegas al tiro.", Icono.BISA, 0xFF7AA8FF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("cajas-carga-2.0-29", "Cajas y pantalla de carga", listOf(
             Pagina("Pantalla de carga", "Al abrir un juego, todo se tiñe del color de su consola, entra su caja y se funde a negro antes de empezar. B la cancela. Se apaga en Ajustes › Pantalla y estilo.", Icono.JUGAR, 0xFFE60012),
             Pagina("Vitrina de cajas", "Arriba, la caja del juego elegido luce al centro con las de al lado asomándose inclinadas. Toca una caja de al lado para elegirla, o la del centro para jugar.", Icono.PORTADA, 0xFFFF9A6B),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Cada consola, su estuche", "Las cajas de la vitrina y de la carga ahora parecen de su consola: el cartón con rejilla de los 8 bits, la franja de 16 bits, el estuche de CD con bisagra, el DVD, la tarjeta, el UMD y la marquesina de arcade.", Icono.PORTADA, 0xFFFF9A6B),
+            Pagina("Discord", "Conecta un canal de tu servidor en Ajustes › Juegos › Discord: Díptico publica qué juegas, con la portada, y cuánto jugaste al terminar.", Icono.MUNDO, 0xFF5865F2),
+            Pagina("Tu logo al jugar", "Mientras juegas, el logo del juego luce en grande abajo y lo que te queda cabe en una línea. En la franja, las apps se esconden con su botoncito.", Icono.MANDO, 0xFF7AA8FF),
         )),
     )
 

@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -79,11 +80,10 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             val alto = maxHeight.value
             // 1. Fondo: el arte del juego difuminado y oscurecido, con la luz de su consola desde abajo.
             Crossfade(juego, animationSpec = tween(if (Estilo.efectosCompletos) 450 else 0), label = "fondo-cajas") { j ->
+                // Una versión chiquita del arte, estirada: queda suave como desenfocada sin el costo de un desenfoque en vivo.
                 ArteJuego(
-                    j, preferirArte = true, maxLado = 480,
-                    modifier = Modifier.fillMaxSize()
-                        .then(if (Estilo.efectosCompletos) Modifier.blur(26.dp) else Modifier)
-                        .graphicsLayer { alpha = 0.55f; scaleX = 1.1f; scaleY = 1.1f },
+                    j, preferirArte = true, maxLado = 72,
+                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.55f; scaleX = 1.1f; scaleY = 1.1f },
                 )
             }
             // La luz de la consola sube desde abajo, como el foco de una vitrina.
@@ -97,19 +97,19 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             // 2. Las cajas: la elegida al centro y hasta dos a cada lado.
             // Cada caja con la forma de su consola (la vitrina ignora la forma «para todas» del estante).
             if (consola != null && lista.isNotEmpty()) CompositionLocalProvider(LocalFormas provides e.formas) {
-                val v = pos.value
-                val desde = (floor(v).toInt() - 3).coerceAtLeast(0)
-                val hasta = (ceil(v).toInt() + 3).coerceAtMost(lista.lastIndex)
-                // Alto de la caja del centro: cerca de la mitad de la pantalla.
+                // Qué cajas se dibujan depende del juego elegido (no de cada cuadro de la animación): así no se recompone todo
+                // mientras se deslizan; el deslizamiento se lee solo al dibujar.
+                val desde = (indice - 4).coerceAtLeast(0)
+                val hasta = (indice + 4).coerceAtMost(lista.lastIndex)
                 val altoCaja = alto * 0.5f
                 val paso1 = ancho * 0.27f
                 val paso2 = ancho * 0.12f
                 Box(Modifier.fillMaxSize().padding(bottom = (alto * 0.12f).dp), contentAlignment = Alignment.Center) {
                     // De la más lejana a la más cercana: la del centro se dibuja al final, encima de todas.
-                    val orden = (desde..hasta).filter { abs(it - v) <= 2.6f }.sortedByDescending { abs(it - v) }
+                    val orden = (desde..hasta).sortedByDescending { abs(it - indice) }
                     for (i in orden) {
                         val j = lista[i]
-                        key(j.clave) { CajaVitrina(j, i - v, juego.clave, altoCaja, paso1, paso2, ancho) }
+                        key(j.clave) { CajaVitrina(j, i, pos, juego.clave, altoCaja, paso1, paso2, ancho) }
                     }
                 }
             }
@@ -150,37 +150,48 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
     }
 }
 
-/** Una caja del estante, a [r] lugares de la elegida (negativo = a la izquierda). */
+/** Una caja del estante en el lugar [i]; [pos] es la posición animada del estante (se lee solo al dibujar). */
 @Composable
-private fun CajaVitrina(j: Juego, r: Float, elegida: String, altoCaja: Float, paso1: Float, paso2: Float, ancho: Float) {
+private fun CajaVitrina(j: Juego, i: Int, pos: Animatable<Float, *>, elegida: String, altoCaja: Float, paso1: Float, paso2: Float, ancho: Float) {
     val esc = LocalEscala.current
     val c = Consolas.porId(j.consolaId) ?: return
-    val ar = abs(r)
-    val cerca = ar.coerceAtMost(1f)
-    val lejos = (ar - 1f).coerceAtLeast(0f)
     val base = cajaDe(c)
     val escala = minOf(altoCaja / base.alto, (ancho * 0.3f) / base.ancho) / esc.factor
-    val signo = if (r < 0) -1f else 1f
-    val dx = signo * (cerca * paso1 + lejos * paso2)
+    val sombra = esc.d(10)
     Box(
         Modifier
-            .offset { IntOffset((dx * density).roundToInt(), 0) }
+            .offset {
+                val r = i - pos.value
+                val ar = abs(r)
+                val dx = (if (r < 0) -1f else 1f) * (ar.coerceAtMost(1f) * paso1 + (ar - 1f).coerceAtLeast(0f) * paso2)
+                IntOffset((dx * density).roundToInt(), 0)
+            }
             .graphicsLayer {
+                val r = i - pos.value
+                val ar = abs(r)
+                val cerca = ar.coerceAtMost(1f)
+                val lejos = (ar - 1f).coerceAtLeast(0f)
                 if (!vitrinaSinGiro) {
                     rotationY = -r.coerceIn(-1f, 1f) * 34f
                     cameraDistance = 12f * density
                 }
                 val s = 1f - 0.26f * cerca - 0.1f * lejos
                 scaleX = s; scaleY = s
-                alpha = (1f - 0.15f * cerca - 0.55f * lejos).coerceIn(0f, 1f)
+                alpha = if (ar > 2.6f) 0f else (1f - 0.15f * cerca - 0.55f * lejos).coerceIn(0f, 1f)
+                shadowElevation = sombra.toPx() * (1f - 0.5f * cerca)
+                shape = RoundedCornerShape(esc.d(6))
+                clip = true
             }
-            .shadow(esc.d(if (ar < 0.5f) 30 else 14), RoundedCornerShape(esc.d(6)), ambientColor = Color.Black, spotColor = Color.Black)
             .clickable(remember { MutableInteractionSource() }, indication = null) {
                 if (j.clave == elegida) Diptico.jugar() else Diptico.elegirJuego(j.clave)
             },
     ) {
-        CajaJuego(j, c, escala = escala)
+        CajaJuego(j, c, escala = escala, estuche = true)
         // Las de los costados quedan en penumbra para que mande la del centro.
-        if (cerca > 0.01f) Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.38f * cerca + 0.2f * lejos)))
+        Box(Modifier.matchParentSize().drawBehind {
+            val ar = abs(i - pos.value)
+            val a = 0.38f * ar.coerceAtMost(1f) + 0.2f * (ar - 1f).coerceAtLeast(0f)
+            if (a > 0.01f) drawRect(Color.Black.copy(alpha = a))
+        })
     }
 }

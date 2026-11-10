@@ -1207,6 +1207,21 @@ class Capturas {
     @Test fun t305_vitrina_cajas() = foto("305_vitrina_cajas", base().copy(vista = "mosaicos"), Rol.SUPERIOR)
     @Test fun t306_vitrina_cajas_psx() = foto("306_vitrina_cajas_psx", base().copy(vista = "mosaicos", juegoSel = "psx/3"), Rol.SUPERIOR)
     @Test fun t310_vitrina_sin_giro() { cl.nikalbazu.diptico.ui.vitrinaSinGiro = true; try { foto("310_vitrina_sin_giro", base().copy(vista = "mosaicos", juegoSel = "psx/3"), Rol.SUPERIOR) } finally { cl.nikalbazu.diptico.ui.vitrinaSinGiro = false } }
+    private val juegosVarios = listOf(
+        juego("1", "snes", "Leyenda del Bosque"), juego("2", "psx", "Bahía Neón"), juego("3", "ps2", "Caballero de Papel"),
+        juego("4", "switch", "Isla Brillante"), juego("5", "nes", "Torre Pixel"), juego("6", "genesis", "Rayo Azul"),
+        juego("7", "n64", "Pixel Kart 64"), juego("8", "psp", "Isla Tormenta"), juego("9", "gba", "Cohete Rojo"), juego("10", "dreamcast", "Ola Neón"),
+    )
+    @Test fun t311_estuches_ps2() = foto("311_estuches_ps2", base().copy(vista = "mosaicos", juegos = juegosVarios, juegoSel = "ps2/3"), Rol.SUPERIOR)
+    @Test fun t312_estuches_nes() = foto("312_estuches_nes", base().copy(vista = "mosaicos", juegos = juegosVarios, juegoSel = "genesis/6"), Rol.SUPERIOR)
+    @Test fun t313_estuches_psp() = foto("313_estuches_psp", base().copy(vista = "mosaicos", juegos = juegosVarios, juegoSel = "psp/8"), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t314_franja_dock_escondido() = foto("314_franja_dock_escondido", base().copy(vista = "mosaicos", appsFijadas = listOf("com.android.settings"), extra = EstadoExtra(dockVisible = false)), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t315_jugando_logo() = foto("315_jugando_logo", base().copy(sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true, extra = EstadoExtra(duraciones = mapOf("snes/1" to cl.nikalbazu.diptico.estado.CuantoDura.Duracion(12f, 18f, 30f, 1L)))), Rol.INFERIOR, mi = 1)
+    @Test fun t316_ajustes_discord() = foto("316_ajustes_discord", base().copy(vista = "mosaicos", panel = Panel.MENU, seccion = Seccion.G_JUEGOS, enOpciones = true, extra = EstadoExtra(discordWebhook = "https://discord.com/api/webhooks/1/abc")), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t317_menu_intercambiado() = foto("317_menu_intercambiado", base().copy(vista = "mosaicos", intercambiar = true, panel = Panel.MENU), Rol.INFERIOR, mi = 0)
     @Test fun t307_carga_arriba() = foto("307_carga_arriba", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.SUPERIOR, avance = 600)
     @Config(qualifiers = ABAJO)
     @Test fun t308_carga_abajo() = foto("308_carga_abajo", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.INFERIOR, mi = 1, avance = 600)

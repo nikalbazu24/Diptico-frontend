@@ -108,7 +108,7 @@ private fun ContenidoCarga(e: Estado, miPantalla: Int, unica: Boolean) {
                         rotationY = 22f * (1f - c) + 6f
                         cameraDistance = 14f * density
                     }.shadow(esc.d(24), RoundedCornerShape(esc.d(6)), ambientColor = Color.Black, spotColor = Color.Black),
-                ) { CajaJuego(juego, consola, escala = escala) }
+                ) { CajaJuego(juego, consola, escala = escala, estuche = true) }
             }
             val textos = @Composable {
                 val c = suave(tramo(v, 0.18f, 0.46f))
