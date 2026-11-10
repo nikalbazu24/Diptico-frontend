@@ -22,6 +22,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -101,38 +105,11 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                 val paso1 = ancho * 0.27f
                 val paso2 = ancho * 0.12f
                 Box(Modifier.fillMaxSize().padding(bottom = (alto * 0.12f).dp), contentAlignment = Alignment.Center) {
-                    for (i in desde..hasta) {
+                    // De la más lejana a la más cercana: la del centro se dibuja al final, encima de todas.
+                    val orden = (desde..hasta).filter { abs(it - v) <= 2.6f }.sortedByDescending { abs(it - v) }
+                    for (i in orden) {
                         val j = lista[i]
-                        val c = Consolas.porId(j.consolaId) ?: continue
-                        val r = i - v
-                        val ar = abs(r)
-                        val cerca = ar.coerceAtMost(1f)
-                        val lejos = (ar - 1f).coerceAtLeast(0f)
-                        if (ar > 2.6f) continue
-                        val base = cajaDe(c)
-                        val escala = minOf(altoCaja / base.alto, (ancho * 0.3f) / base.ancho) / esc.factor
-                        val signo = if (r < 0) -1f else 1f
-                        Box(
-                            Modifier.zIndex(-ar)
-                                .graphicsLayer {
-                                    translationX = signo * (cerca * paso1 + lejos * paso2) * density
-                                    if (!vitrinaSinGiro) {
-                                        rotationY = -r.coerceIn(-1f, 1f) * 34f
-                                        cameraDistance = 12f * density
-                                    }
-                                    val s = 1f - 0.26f * cerca - 0.1f * lejos
-                                    scaleX = s; scaleY = s
-                                    alpha = (1f - 0.15f * cerca - 0.55f * lejos).coerceIn(0f, 1f)
-                                }
-                                .shadow(esc.d(if (ar < 0.5f) 30 else 14), RoundedCornerShape(esc.d(6)), ambientColor = Color.Black, spotColor = Color.Black)
-                                .clickable(remember { MutableInteractionSource() }, indication = null) {
-                                    if (j.clave == juego.clave) Diptico.jugar() else Diptico.elegirJuego(j.clave)
-                                },
-                        ) {
-                            CajaJuego(j, c, escala = escala)
-                            // Las de los costados quedan en penumbra para que mande la del centro.
-                            if (cerca > 0.01f) Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.38f * cerca + 0.2f * lejos)))
-                        }
+                        key(j.clave) { CajaVitrina(j, i - v, juego.clave, altoCaja, paso1, paso2, ancho) }
                     }
                 }
             }
@@ -170,5 +147,40 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                 }
             }
         }
+    }
+}
+
+/** Una caja del estante, a [r] lugares de la elegida (negativo = a la izquierda). */
+@Composable
+private fun CajaVitrina(j: Juego, r: Float, elegida: String, altoCaja: Float, paso1: Float, paso2: Float, ancho: Float) {
+    val esc = LocalEscala.current
+    val c = Consolas.porId(j.consolaId) ?: return
+    val ar = abs(r)
+    val cerca = ar.coerceAtMost(1f)
+    val lejos = (ar - 1f).coerceAtLeast(0f)
+    val base = cajaDe(c)
+    val escala = minOf(altoCaja / base.alto, (ancho * 0.3f) / base.ancho) / esc.factor
+    val signo = if (r < 0) -1f else 1f
+    val dx = signo * (cerca * paso1 + lejos * paso2)
+    Box(
+        Modifier
+            .offset { IntOffset((dx * density).roundToInt(), 0) }
+            .graphicsLayer {
+                if (!vitrinaSinGiro) {
+                    rotationY = -r.coerceIn(-1f, 1f) * 34f
+                    cameraDistance = 12f * density
+                }
+                val s = 1f - 0.26f * cerca - 0.1f * lejos
+                scaleX = s; scaleY = s
+                alpha = (1f - 0.15f * cerca - 0.55f * lejos).coerceIn(0f, 1f)
+            }
+            .shadow(esc.d(if (ar < 0.5f) 30 else 14), RoundedCornerShape(esc.d(6)), ambientColor = Color.Black, spotColor = Color.Black)
+            .clickable(remember { MutableInteractionSource() }, indication = null) {
+                if (j.clave == elegida) Diptico.jugar() else Diptico.elegirJuego(j.clave)
+            },
+    ) {
+        CajaJuego(j, c, escala = escala)
+        // Las de los costados quedan en penumbra para que mande la del centro.
+        if (cerca > 0.01f) Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.38f * cerca + 0.2f * lejos)))
     }
 }
