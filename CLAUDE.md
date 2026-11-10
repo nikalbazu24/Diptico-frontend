@@ -210,3 +210,10 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   OJO: en Robolectric con zIndex + translationX en graphicsLayer las vecinas no salían; quedó con offset + orden por cercanía + key.
   El giro rotationY no se ve en las capturas (sí en el equipo). Capturas t305–t310. Novedades `cajas-carga-2.0-29`.
   Pendiente: la «caja que se abre» con librito (opcional, apagable) para la ficha; Nicolás eligió color y forma por consola.
+- Estuches + Discord (10 nov, rama `fix/cajas-unicas`): `ui/Estuches.kt` (`Estuche`, `estucheDe`, `CapaEstuche` con
+  drawWithCache; `CajaJuego(estuche = true)` en vitrina y carga). Vitrina lee `pos` solo al dibujar (offset/graphicsLayer/
+  drawBehind), fondo con arte de 72 px sin blur en vivo. Menú con pantallas intercambiadas: fondo opaco a pantalla completa
+  (`Paneles`). Dock replegable `extra.dockVisible` (`BotonRepliegue`, `Diptico.alternarDockVisible`). En partida: logo
+  primero y grande, `TuPartida` compacta. Discord por webhook (`estado/Discord.kt`, `extra.discordWebhook/Empezar/Terminar`,
+  `avisarDiscord` al lanzar y en `cerrarSesion`, opciones en Seccion.LOGROS grupo «Discord», texto `discord_webhook` con QR).
+  Rich Presence real necesita Discord Social SDK (no descargable desde la sesión). Novedades `estuches-discord-2.0-30`. Capturas t311–t317.
