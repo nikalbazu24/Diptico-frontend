@@ -314,3 +314,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - `difuminar`/`ventanaEncima(e)` en `PantallaInferior.kt`: todo panel abierto (menos CENTRO/NINGUNO), amigos o perfil difuminan el estante;
   `Raiz.encima` suma `amigosEn` y `discordLogin`.
 
+## DIPPO guía (10 nov, rama `fix/recorrido-dippo`, Opus)
+- `ui/RecorridoDippo.kt`: con `e.recorrido`, `TourNovedades` dibuja a DIPPO grande (`AvatarBisa` con cara por paso) + globo con texto
+  letra a letra (`TextoQueEscribeDippo`). Abajo `NovedadesCompania` dice «DIPPO te cuenta arriba». `RECORRIDO` = 6 páginas en su voz.
+  `DippoInicio` no se dibuja con `novedades >= 0`.
+- Trucos escondidos: `estado/DatosDippo.kt` (24), `Diptico.siguienteDatoDippo()` (almacén `dippoDato`, rota), fase 4 del globito en
+  `DippoInicio` (a los 45 s y luego cada 4 min, 11 s visible, color Uva). Ajuste `extra.dippoDatos` (clave `dippoDatos`) en G_DIPPO.
+- Novedades `dippo-guia-2.0-39`. Capturas t346–t347.
+
