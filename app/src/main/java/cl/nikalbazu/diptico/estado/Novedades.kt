@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "ficha-carpetas-2.0-28"
-    const val NOMBRE = "Ficha viva y carpetas claras"
+    const val ID = "cajas-carga-2.0-29"
+    const val NOMBRE = "Cajas y pantalla de carga"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -298,9 +298,13 @@ object Novedades {
             Pagina("Mientras juegas, más simple", "La pantalla libre quedó ordenada: DIPPO con un consejo, tu próximo paso con cuánto te queda, la música, tus apps y cuatro botones: Pista, Mi paso, Guías y Más.", Icono.MANDO, 0xFFFF9A6B),
             Pagina("Sin botón «Terminé»", "Ya no hace falta: cuando sales del juego y vuelves a Díptico, la partida se cierra sola y se guarda tu tiempo.", Icono.CHECK, 0xFF7AA8FF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("ficha-carpetas-2.0-28", "Ficha viva y carpetas claras", listOf(
             Pagina("Ficha sin repetir", "Abajo lees y eliges; arriba pasan tus capturas y fotos del juego, y DIPPO te cuenta datos tuyos.", Icono.PORTADA, 0xFFFF9A6B),
             Pagina("Juegos en una carpeta", "Cuando DIPPO te propone juegos, vienen en una carpetita: tócala, se abre y juegas al tiro.", Icono.BISA, 0xFF7AA8FF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Pantalla de carga", "Al abrir un juego, todo se tiñe del color de su consola, entra su caja y se funde a negro antes de empezar. B la cancela. Se apaga en Ajustes › Pantalla y estilo.", Icono.JUGAR, 0xFFE60012),
+            Pagina("Vitrina de cajas", "Arriba, la caja del juego elegido luce al centro con las de al lado asomándose inclinadas. Toca una caja de al lado para elegirla, o la del centro para jugar.", Icono.PORTADA, 0xFFFF9A6B),
         )),
     )
 

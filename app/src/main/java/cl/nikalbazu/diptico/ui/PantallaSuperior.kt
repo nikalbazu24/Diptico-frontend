@@ -146,6 +146,11 @@ private fun Caratulas(e: Estado) {
             if (e.sesion == null) BarraFlotante(e, null, Modifier.align(Alignment.BottomCenter))
             return@Box
         }
+        // Vitrina de cajas (diseño nuevo con dos pantallas): la caja del juego al centro y las vecinas inclinadas.
+        if (e.portadaCajas && e.sesion == null && nuevoDisenoDosPantallas(e)) {
+            VitrinaCajas(e, juego)
+            return@Box
+        }
         Heroe(juego, if (angosta) 1f else 0.86f)
         Box(
             Modifier.fillMaxSize().background(

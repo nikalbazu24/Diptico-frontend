@@ -65,7 +65,7 @@ class Capturas {
         datos = mapOf("snes/1" to DatosJuego(tiempo = 3 * 3600 + 25 * 60, paso = "Buscar la llave del templo del agua", ultimo = 1L)),
     )
 
-    private fun foto(nombre: String, e: Estado, rol: Rol, tema: Tema? = null, mi: Int = 0) {
+    private fun foto(nombre: String, e: Estado, rol: Rol, tema: Tema? = null, mi: Int = 0, avance: Long = 1600) {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(e)
         Estilo.tema = tema ?: Temas.incluidos[0]
@@ -76,7 +76,7 @@ class Capturas {
         regla.setContent {
             Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { Raiz(e, rol, mi) }
         }
-        regla.mainClock.advanceTimeBy(1600)
+        regla.mainClock.advanceTimeBy(avance)
         regla.onRoot().captureRoboImage("capturas/$nombre.png")
     }
 
@@ -861,7 +861,7 @@ class Capturas {
         cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(cl.nikalbazu.diptico.audio.Sonando("Spotify", "Canción de prueba con nombre largo", "Artista", null, true, "com.spotify.music"))
         regla.mainClock.autoAdvance = false
         regla.setContent { Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { cl.nikalbazu.diptico.ui.MuestrarioWidgets(e, an, al, foco) } }
-        regla.mainClock.advanceTimeBy(1600)
+        regla.mainClock.advanceTimeBy(avance)
         regla.onRoot().captureRoboImage("capturas/$nombre.png")
         cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(null)
     }
@@ -1204,6 +1204,12 @@ class Capturas {
     @Test fun t300_widgets_inicio_nuevo() = foto("300_widgets_inicio_nuevo", base().let { b -> b.copy(vista = "mosaicos", inicio = "widgets", widgets = cl.nikalbazu.diptico.estado.Widgets.inicioNuevo, paginas = 1, extra = EstadoExtra(duraciones = mapOf((b.seleccionado?.clave ?: "") to cl.nikalbazu.diptico.estado.CuantoDura.Duracion(12f, 18f, 30f, 1L)))) }, Rol.SUPERIOR)
     @Test fun t301_franja_con_dock() = foto("301_franja_con_dock", base().copy(vista = "mosaicos", appsFijadas = listOf("com.android.settings", "com.android.chrome", "org.ppsspp.ppsspp")), Rol.INFERIOR)
     @Test fun t302_jugando_con_dock() = foto("302_jugando_con_dock", base().copy(appsFijadas = listOf("com.android.settings", "com.android.chrome"), sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true), Rol.INFERIOR, mi = 1)
+    @Test fun t305_vitrina_cajas() = foto("305_vitrina_cajas", base().copy(vista = "mosaicos"), Rol.SUPERIOR)
+    @Test fun t306_vitrina_cajas_psx() = foto("306_vitrina_cajas_psx", base().copy(vista = "mosaicos", juegoSel = "psx/3"), Rol.SUPERIOR)
+    @Test fun t307_carga_arriba() = foto("307_carga_arriba", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.SUPERIOR, avance = 600)
+    @Config(qualifiers = ABAJO)
+    @Test fun t308_carga_abajo() = foto("308_carga_abajo", base().copy(vista = "mosaicos", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis()))), Rol.INFERIOR, mi = 1, avance = 600)
+    @Test fun t309_carga_una() = foto("309_carga_una", base().copy(modoPantallas = "una_negra", extra = EstadoExtra(carga = cl.nikalbazu.diptico.estado.CargaJuego("psx/3", 0, System.currentTimeMillis())), juegoSel = "psx/3"), Rol.UNICA, avance = 600)
     @Test fun t303_portada_con_puntos() = foto("303_portada_con_puntos", base().copy(vista = "mosaicos"), Rol.SUPERIOR)
     @Test fun t304_jugando_nuevo_con_hltb() = foto("304_jugando_nuevo", base().copy(appsFijadas = listOf("com.android.settings", "com.android.chrome"), sesion = Sesion("snes/1", System.currentTimeMillis() - 1_500_000, 0, false), despierta = true, extra = EstadoExtra(duraciones = mapOf("snes/1" to cl.nikalbazu.diptico.estado.CuantoDura.Duracion(12f, 18f, 30f, 1L)))), Rol.INFERIOR, mi = 1)
     @Test fun t298_vistas_juegos() = foto("298_vistas_juegos", base().copy(panel = Panel.GALERIA, galeria = "vistas_juegos"), Rol.SUPERIOR)

@@ -200,7 +200,7 @@ fun BotonesVitrina(e: Estado, juego: cl.nikalbazu.diptico.data.Juego, modifier: 
 }
 
 @Composable
-private fun BotonVitrina(letra: String, texto: String, lleno: Boolean, alPulsar: () -> Unit) {
+internal fun BotonVitrina(letra: String, texto: String, lleno: Boolean, alPulsar: () -> Unit) {
     val esc = LocalEscala.current
     val forma = RoundedCornerShape(50)
     val tinta = if (lleno) Color(0xFF15121D) else Color.White
