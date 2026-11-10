@@ -342,7 +342,8 @@ object Novedades {
         )),
         Version(ID, NOMBRE, listOf(
             Pagina("Un marco que se mueve", "Tu foto lleva un aro de luz en movimiento: una estela que da vueltas sin parar. Se cambia en Ajustes › Mi perfil › Marco de la foto. Si apagas los efectos, queda quieto.", Icono.ESTRELLA, 0xFF9B6BFF),
-            Pagina("Marcos que se ganan", "Con los logros de DIPPO se desbloquean marcos nuevos: chispas, latido, llama, noche estrellada, aurora, arcoíris y oro. Los que faltan se ven con un candado y te dicen qué logro piden.", Icono.TROFEO, 0xFFFFC94D),
+            Pagina("Marcos que se ganan", "Con los logros de DIPPO se desbloquean marcos nuevos: chispas, latido, llama, noche estrellada, aurora, arcoíris y oro. Ahora piden logros difíciles (250 o 500 horas, 25 finales, 14 días seguidos…). Los que faltan se ven con un candado y te dicen qué logro piden.", Icono.TROFEO, 0xFFFFC94D),
+            Pagina("Títulos y más logros", "Hay 12 logros difíciles nuevos y títulos que se muestran bajo tu nombre en la tarjeta: Maratonista, Coleccionista, Constante, Leyenda y más. Se eligen en Mi perfil › Título.", Icono.TROFEO, 0xFFFFC94D),
             Pagina("Tu foto de Discord", "Con Discord conectado puedes usar su foto como tu foto de perfil (Mi perfil › Usar la foto de Discord). Ahora es un poco más grande y se ve en el inicio, en las portadas y abajo.", Icono.MUNDO, 0xFF5865F2),
             Pagina("Discord en tu foto", "Una insignia de Discord en la esquina de tu foto abre la ventana de amigos, con atajos a tu perfil y a los ajustes. Todos los ajustes de Discord ahora están en Mi perfil.", Icono.MUNDO, 0xFF5865F2),
             Pagina("Logros en tu tarjeta", "Tu tarjeta muestra tus logros de DIPPO (con los últimos trofeos) y los de RetroAchievements (usuario, puntos e insignias recientes).", Icono.TROFEO, 0xFFFF7A59),

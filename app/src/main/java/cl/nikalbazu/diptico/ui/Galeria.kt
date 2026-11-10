@@ -58,6 +58,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
         "logros_dippo" -> "Logros de DIPPO" to Icono.TROFEO
         "personajes" -> "Elige tu personaje" to Icono.PERFIL
         "marcos" -> "Marco de tu foto" to Icono.ESTRELLA
+        "titulos" -> "Tu título" to Icono.TROFEO
         "artes" -> "Galería de artes" to Icono.PORTADA
         "vistas_consolas" -> "Cómo ver tus consolas" to Icono.MANDO
         "filtros" -> "Mostrar juegos" to Icono.BUSCAR
@@ -543,6 +544,13 @@ fun VistaGaleria(e: Estado) {
                 Spacer(Modifier.height(esc.d(14)))
                 Texto(it.nombre, 26f, lineas = 1)
                 Detalle(if (it.enUso) "Es tu personaje ✓" else "A para elegirlo", 14f, lineas = 1)
+            }
+            e.galeria == "titulos" && it != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                FotoPerfil(e.extra.perfil, 130f)
+                Spacer(Modifier.height(esc.d(12)))
+                Texto(e.nombre.ifBlank { "Tu nombre" }, 22f, lineas = 1, traducir = e.nombre.isBlank())
+                Texto(if (it.id == "ninguno") "Sin título" else "★ ${it.nombre}", 16f, color = Sol, lineas = 1, traducir = false)
+                Detalle(if (it.detalle.startsWith("🔒")) it.detalle else if (it.enUso) "Es tu título ✓" else "A para elegirlo", 13f, lineas = 3)
             }
             e.galeria == "marcos" && it != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 FotoPerfil(e.extra.perfil, 170f, marco = it.id)

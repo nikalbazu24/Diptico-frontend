@@ -2503,6 +2503,8 @@ object Diptico {
         lista += Opcion("Mi personaje", nombrePersonaje(pf.personaje), Icono.BISA, "Ocho amigos de Díptico para elegir. Se ve cuando no tienes foto.", grupo = "Tu imagen") { abrirGaleria("personajes") }
         lista += Opcion("Marco de la foto", "${marcoDe(pf.marco).nombre} · ${marcosDesbloqueados()} de ${MARCOS.size}", Icono.ESTRELLA,
             "Un aro de luz que se mueve alrededor de tu foto. Los marcos nuevos se desbloquean con logros de DIPPO.", grupo = "Tu imagen") { abrirGaleria("marcos") }
+        lista += Opcion("Título", tituloDe(pf.titulo).ifBlank { "Sin título" }, Icono.TROFEO,
+            "Una frase bajo tu nombre en tu tarjeta. Se desbloquea con logros difíciles de DIPPO.", grupo = "Tu imagen") { abrirGaleria("titulos") }
         lista += opcionLista("Mi color", Icono.PALETA, "El color del borde de tu foto y de los detalles de tu tarjeta.",
             Perfil.COLORES.map { it.second.toString() }, Perfil.COLORES.map { it.first }, pf.color.toString(), grupo = "Tu imagen") { id -> cambiarPerfil { it.copy(color = id.toLong()) } }
         lista += opcionLista("Consola favorita", Icono.MANDO, "La que se muestra en tu tarjeta. «La más jugada» la elige sola según tus horas.",
@@ -2755,6 +2757,7 @@ object Diptico {
         "logros_dippo" -> listOf("Logros de DIPPO")
         "personajes" -> listOf("Personajes")
         "marcos" -> listOf("Marcos")
+        "titulos" -> listOf("Títulos")
         "artes" -> listOf("Artes", "Portadas")
         "temas" -> listOf("Incluidos", "Mis temas")
         "importar_temas" -> listOf("Importar temas")
@@ -2805,6 +2808,15 @@ object Diptico {
                 m.id == e.extra.perfil.marco) {
                 if (!libre) avisar("🔒 Gana el logro «${logro?.titulo}» para usar este marco")
                 else { cambiarPerfil { it.copy(marco = m.id) }; avisar("Marco «${m.nombre}» listo"); cerrarPanel() }
+            }
+        }
+        if (e.galeria == "titulos") return TITULOS.map { t ->
+            val libre = tituloDesbloqueado(t)
+            val logro = LogrosDippo.LISTA.firstOrNull { it.id == t.logro }
+            ItemGaleria(t.id.ifEmpty { "ninguno" }, t.nombre, if (libre) "Un título bajo tu nombre" else "🔒 Se gana con «${logro?.titulo ?: "un logro"}»: ${logro?.descripcion.orEmpty()}",
+                t.id == e.extra.perfil.titulo) {
+                if (!libre) avisar("🔒 Gana el logro «${logro?.titulo}» para usar este título")
+                else { cambiarPerfil { it.copy(titulo = t.id) }; avisar(if (t.id.isEmpty()) "Sin título" else "Título «${t.nombre}» listo"); cerrarPanel() }
             }
         }
         if (e.galeria == "logros_dippo") return progresoLogrosDippo(e).map { (l, v) ->
@@ -5699,6 +5711,7 @@ object Diptico {
     fun marcoDesbloqueado(m: MarcoPerfil): Boolean = m.logro == null || m.logro in hechosDippo()
     /** Los ids de los logros de DIPPO ya ganados. */
     fun idsLogrosDippo(): Set<String> = hechosDippo().toSet()
+    fun tituloDesbloqueado(t: TituloPerfil): Boolean = t.logro == null || t.logro in hechosDippo()
     fun marcosDesbloqueados(): Int = MARCOS.count { marcoDesbloqueado(it) }
 
     /** Días seguidos jugando (para el widget de progreso). */

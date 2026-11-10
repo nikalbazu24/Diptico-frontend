@@ -52,6 +52,7 @@ import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.LogrosDippo
 import cl.nikalbazu.diptico.estado.Perfil
 import cl.nikalbazu.diptico.estado.Seccion
+import cl.nikalbazu.diptico.estado.tituloDe
 import cl.nikalbazu.diptico.estado.ResumenPerfil
 import cl.nikalbazu.diptico.estado.SocialDiscord
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -202,6 +203,7 @@ private fun Encabezado(e: Estado, nombre: String, tam: Float) {
     val desde = remember(pf.desde) { java.text.SimpleDateFormat("MMM yyyy", java.util.Locale.getDefault()).format(java.util.Date(pf.desde)) }
     Column(verticalArrangement = Arrangement.spacedBy(LocalEscala.current.d(2))) {
         Texto(nombre, tam, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = false)
+        tituloDe(pf.titulo).takeIf { it.isNotBlank() }?.let { Texto("★ $it", 13.5f, color = Sol, peso = FontWeight.Bold, lineas = 1, traducir = false) }
         Texto(
             (if (pf.apodo.isNotBlank()) "@${pf.apodo} · " else "") + "desde $desde",
             14f, color = TextoSuave, lineas = 1, traducir = false,

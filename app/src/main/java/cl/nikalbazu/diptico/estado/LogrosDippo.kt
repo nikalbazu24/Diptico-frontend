@@ -55,6 +55,19 @@ object LogrosDippo {
         Logro("memoria", "Buena memoria", "Anota tu próximo paso en 5 juegos.", Icono.LAPIZ, 5) { e, _ -> e.datos.values.count { it.paso.isNotBlank() } },
         Logro("corazon", "Favoritos del corazón", "Marca 10 juegos como favoritos.", Icono.CORAZON, 10) { e, _ -> e.datos.values.count { it.favorito } },
         Logro("look", "Cambio de look", "Cambia de tema 3 veces.", Icono.PALETA, 3) { _, c -> c.n("temas") },
+        // Los difíciles: premian de verdad (y abren marcos y títulos del perfil).
+        Logro("trescientas", "Imparable", "Juega 300 partidas.", Icono.MANDO, 300) { e, _ -> partidas(e) },
+        Logro("doscientas_h", "250 horas juntos", "Suma 250 horas jugando.", Icono.RELOJ, 250) { e, _ -> horas(e) },
+        Logro("quinientas_h", "Leyenda: 500 horas", "Suma 500 horas jugando.", Icono.TROFEO, 500) { e, _ -> horas(e) },
+        Logro("finales25", "Archivo de finales", "Termina 25 juegos.", Icono.TROFEO, 25) { e, _ -> terminados(e) },
+        Logro("explorador50", "Gran explorador", "Juega 50 juegos distintos.", Icono.MUNDO, 50) { e, _ -> jugados(e) },
+        Logro("consolas8", "Coleccionista de consolas", "Juega en 8 consolas distintas.", Icono.PANTALLAS, 8) { e, _ -> consolas(e) },
+        Logro("racha14", "Dos semanas seguidas", "Juega 14 días seguidos.", Icono.ESTRELLA, 14) { _, c -> racha(c.dias) },
+        Logro("racha30", "Un mes sin faltar", "Juega 30 días seguidos.", Icono.ESTRELLA, 30) { _, c -> racha(c.dias) },
+        Logro("corazon30", "Corazón de coleccionista", "Marca 30 juegos como favoritos.", Icono.CORAZON, 30) { e, _ -> e.datos.values.count { it.favorito } },
+        Logro("pregunton", "Mejores amigos", "Hazle 200 preguntas a DIPPO.", Icono.BISA, 200) { _, c -> c.n("preguntas") },
+        Logro("memoria20", "Memoria de elefante", "Anota tu próximo paso en 20 juegos.", Icono.LAPIZ, 20) { e, _ -> e.datos.values.count { it.paso.isNotBlank() } },
+        Logro("temas10", "Camaleón", "Cambia de tema 10 veces.", Icono.PALETA, 10) { _, c -> c.n("temas") },
     )
 
     /** Cada logro con su avance (sin pasarse de la meta). */

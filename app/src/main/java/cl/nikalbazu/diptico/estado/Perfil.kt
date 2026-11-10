@@ -27,10 +27,12 @@ data class Perfil(
     val fotoDiscord: Boolean = false,
     /** El marco de la foto (ver [MARCOS]). */
     val marco: String = "estela",
+    /** El título bajo tu nombre (ver [TITULOS]). */
+    val titulo: String = "",
 ) {
     fun json(): String = JSONObject()
         .put("apodo", apodo).put("nacimiento", nacimiento).put("foto", foto).put("personaje", personaje)
-        .put("color", color).put("consolaFav", consolaFav).put("desde", desde).put("mostrarHoras", mostrarHoras).put("fotoDiscord", fotoDiscord).put("marco", marco)
+        .put("color", color).put("consolaFav", consolaFav).put("desde", desde).put("mostrarHoras", mostrarHoras).put("fotoDiscord", fotoDiscord).put("marco", marco).put("titulo", titulo)
         .toString()
 
     /** La edad cumplida hoy, o null si no hay fecha. */
@@ -80,6 +82,7 @@ data class Perfil(
                     mostrarHoras = o.optBoolean("mostrarHoras", true),
                     fotoDiscord = o.optBoolean("fotoDiscord", false),
                     marco = o.optString("marco", "estela").ifBlank { "estela" },
+                    titulo = o.optString("titulo"),
                 )
             } catch (_: Exception) { Perfil(desde = System.currentTimeMillis()) }
         }
@@ -115,14 +118,31 @@ data class MarcoPerfil(val id: String, val nombre: String, val logro: String?, v
 val MARCOS: List<MarcoPerfil> = listOf(
     MarcoPerfil("estela", "Estela", null, "Un cometa de luz que da vueltas sin parar."),
     MarcoPerfil("doble", "Doble estela", null, "Dos cometas que se persiguen."),
-    MarcoPerfil("chispas", "Chispas", "hola", "Luciérnagas que orbitan tu foto."),
-    MarcoPerfil("corazon", "Latido", "corazon", "Un aro rosado que late como corazón."),
-    MarcoPerfil("llama", "Llama", "racha3", "Fuego que corre alrededor del aro."),
-    MarcoPerfil("noche", "Noche estrellada", "buho", "Un aro de medianoche con estrellitas."),
-    MarcoPerfil("aurora", "Aurora", "explorador", "Colores de aurora que fluyen."),
-    MarcoPerfil("arcoiris", "Arcoíris", "trotamundos", "Todos los colores girando."),
-    MarcoPerfil("oro", "Oro", "cien_h", "Un aro dorado con un destello que pasa."),
+    MarcoPerfil("chispas", "Chispas", "cien", "Luciérnagas que orbitan tu foto."),
+    MarcoPerfil("corazon", "Latido", "corazon30", "Un aro rosado que late como corazón."),
+    MarcoPerfil("llama", "Llama", "racha14", "Fuego que corre alrededor del aro."),
+    MarcoPerfil("noche", "Noche estrellada", "finales25", "Un aro de medianoche con estrellitas."),
+    MarcoPerfil("aurora", "Aurora", "explorador50", "Colores de aurora que fluyen."),
+    MarcoPerfil("arcoiris", "Arcoíris", "consolas8", "Todos los colores girando."),
+    MarcoPerfil("oro", "Oro", "quinientas_h", "Un aro dorado con un destello que pasa."),
 )
+
+/** Un título que se muestra bajo tu nombre. Se desbloquea con un logro de DIPPO. */
+data class TituloPerfil(val id: String, val nombre: String, val logro: String?)
+
+val TITULOS: List<TituloPerfil> = listOf(
+    TituloPerfil("", "Sin título", null),
+    TituloPerfil("novato", "Recién llegado", "hola"),
+    TituloPerfil("maraton", "Maratonista", "trescientas"),
+    TituloPerfil("coleccionista", "Coleccionista", "corazon30"),
+    TituloPerfil("constante", "Constante", "racha30"),
+    TituloPerfil("explorador", "Explorador de consolas", "consolas8"),
+    TituloPerfil("finalista", "Cazador de finales", "finales25"),
+    TituloPerfil("amigo", "Mejor amigo de DIPPO", "pregunton"),
+    TituloPerfil("leyenda", "Leyenda", "quinientas_h"),
+)
+
+fun tituloDe(id: String) = TITULOS.firstOrNull { it.id == id }?.takeIf { it.id.isNotEmpty() }?.nombre.orEmpty()
 
 fun marcoDe(id: String) = MARCOS.firstOrNull { it.id == id } ?: MARCOS.first()
 
