@@ -174,7 +174,7 @@ private fun EncabezadoWidgets(e: Estado) {
             if (e.sesion == null) BarraFlotante(e, null, Modifier.widthIn(max = anchoBarra), arriba = true)
             // Con el diseño nuevo arriba no hay barra de la hora: la hora y la batería van aquí, chiquitas.
             if (nuevoDisenoDosPantallas(e)) {
-                BotonPerfil(24f)
+                BotonPerfil(32f)
                 androidx.compose.foundation.layout.Spacer(Modifier.width(esc.d(8)))
                 val bat = rememberBateria()
                 Texto(rememberHora() + if (bat >= 0) " · $bat%" else "", 13f, color = LocalPaleta.current.tenue, lineas = 1, traducir = false)

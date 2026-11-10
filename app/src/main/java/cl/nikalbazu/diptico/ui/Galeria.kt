@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -56,6 +57,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
         "vistas_juegos" -> "Cómo ver tus juegos" to Icono.VISTA
         "logros_dippo" -> "Logros de DIPPO" to Icono.TROFEO
         "personajes" -> "Elige tu personaje" to Icono.PERFIL
+        "marcos" -> "Marco de tu foto" to Icono.ESTRELLA
         "artes" -> "Galería de artes" to Icono.PORTADA
         "vistas_consolas" -> "Cómo ver tus consolas" to Icono.MANDO
         "filtros" -> "Mostrar juegos" to Icono.BUSCAR
@@ -131,7 +133,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                 "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> if (esc.angosta) 2 else 3
                 "cajas" -> if (esc.angosta) 3 else 4
                 "artes" -> if (esc.angosta) 3 else 4
-                "personajes" -> if (esc.angosta) 3 else 4
+                "personajes", "marcos" -> if (esc.angosta) 3 else 4
                 else -> 1
             }
             SideEffect { Teclas.columnasGaleria = cols }
@@ -155,6 +157,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                             }
                             "copias_srm" -> FilaCancion(it, activo, Icono.COPIAR) { Diptico.elegirIndice(i) }
                             "personajes" -> TarjetaPersonaje(e, it, activo) { Diptico.elegirIndice(i) }
+                            "marcos" -> TarjetaMarco(e, it, activo) { Diptico.elegirIndice(i) }
                             "artes" -> MiniArte(e, it, activo, e.galeriaPestana == 0) { Diptico.elegirIndice(i) }
                             "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
                             "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
@@ -412,6 +415,29 @@ private fun MiniArte(e: Estado, it: Diptico.ItemGaleria, activo: Boolean, arte: 
     }
 }
 
+/** Un marco para elegir: la foto con el aro en movimiento; si falta ganarlo, se ve apagado con un candado. */
+@Composable
+private fun TarjetaMarco(e: Estado, it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Unit) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    val bloqueado = it.detalle.startsWith("🔒")
+    val forma = RoundedCornerShape(esc.d(18))
+    Column(
+        Modifier.fillMaxWidth().clip(forma)
+            .background(if (activo) Uva.copy(alpha = .22f) else p.superficie)
+            .then(if (activo) Modifier.border(esc.d(3), Uva, forma) else Modifier)
+            .clickable(onClick = alPulsar).padding(esc.d(8)),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            FotoPerfil(e.extra.perfil, 76f, marco = it.id, modifier = Modifier.graphicsLayer { alpha = if (bloqueado) 0.35f else 1f })
+            if (bloqueado) Texto("🔒", 22f, lineas = 1, traducir = false)
+        }
+        Texto(it.nombre, 13f, lineas = 1, traducir = false)
+        if (it.enUso) Texto("Tu marco ✓", 11f, color = Sol, lineas = 1)
+    }
+}
+
 /** Un personaje para elegir: su cara sobre el color de tu perfil; el elegido lleva el borde de luz. */
 @Composable
 private fun TarjetaPersonaje(e: Estado, it: Diptico.ItemGaleria, activo: Boolean, alPulsar: () -> Unit) {
@@ -517,6 +543,12 @@ fun VistaGaleria(e: Estado) {
                 Spacer(Modifier.height(esc.d(14)))
                 Texto(it.nombre, 26f, lineas = 1)
                 Detalle(if (it.enUso) "Es tu personaje ✓" else "A para elegirlo", 14f, lineas = 1)
+            }
+            e.galeria == "marcos" && it != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                FotoPerfil(e.extra.perfil, 170f, marco = it.id)
+                Spacer(Modifier.height(esc.d(14)))
+                Texto(it.nombre, 24f, lineas = 1, traducir = false)
+                Detalle(if (it.enUso) "Es tu marco ✓" else it.detalle, 13f, lineas = 3)
             }
             e.galeria == "colores" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(cl.nikalbazu.diptico.ui.Estilo.tema, e.oscuro) }

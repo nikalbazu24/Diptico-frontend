@@ -23,10 +23,14 @@ data class Perfil(
     val desde: Long = 0L,
     /** Mostrar tus horas jugadas en la tarjeta. */
     val mostrarHoras: Boolean = true,
+    /** Usar la foto de tu cuenta de Discord (si está conectada) en vez de tu foto o personaje. */
+    val fotoDiscord: Boolean = false,
+    /** El marco de la foto (ver [MARCOS]). */
+    val marco: String = "estela",
 ) {
     fun json(): String = JSONObject()
         .put("apodo", apodo).put("nacimiento", nacimiento).put("foto", foto).put("personaje", personaje)
-        .put("color", color).put("consolaFav", consolaFav).put("desde", desde).put("mostrarHoras", mostrarHoras)
+        .put("color", color).put("consolaFav", consolaFav).put("desde", desde).put("mostrarHoras", mostrarHoras).put("fotoDiscord", fotoDiscord).put("marco", marco)
         .toString()
 
     /** La edad cumplida hoy, o null si no hay fecha. */
@@ -74,6 +78,8 @@ data class Perfil(
                     color = o.optLong("color", 0xFFFF7A59), consolaFav = o.optString("consolaFav"),
                     desde = o.optLong("desde", 0L).takeIf { it > 0 } ?: System.currentTimeMillis(),
                     mostrarHoras = o.optBoolean("mostrarHoras", true),
+                    fotoDiscord = o.optBoolean("fotoDiscord", false),
+                    marco = o.optString("marco", "estela").ifBlank { "estela" },
                 )
             } catch (_: Exception) { Perfil(desde = System.currentTimeMillis()) }
         }
@@ -101,6 +107,24 @@ val PERSONAJES: List<Pair<String, String>> = listOf(
     "gato" to "Misu", "robot" to "Robotín", "bicho" to "Moquito", "dragon" to "Dragoncito",
     "fantasma" to "Fantasmita", "caballero" to "Caballerito", "zorro" to "Zorrito", "pixel" to "Pixelito",
 )
+
+/** Un marco para la foto. Si tiene [logro], se desbloquea al ganar ese logro de DIPPO. */
+data class MarcoPerfil(val id: String, val nombre: String, val logro: String?, val detalle: String)
+
+/** Los marcos de la foto de perfil: los dos primeros son libres, el resto se gana con logros de DIPPO. */
+val MARCOS: List<MarcoPerfil> = listOf(
+    MarcoPerfil("estela", "Estela", null, "Un cometa de luz que da vueltas sin parar."),
+    MarcoPerfil("doble", "Doble estela", null, "Dos cometas que se persiguen."),
+    MarcoPerfil("chispas", "Chispas", "hola", "Luciérnagas que orbitan tu foto."),
+    MarcoPerfil("corazon", "Latido", "corazon", "Un aro rosado que late como corazón."),
+    MarcoPerfil("llama", "Llama", "racha3", "Fuego que corre alrededor del aro."),
+    MarcoPerfil("noche", "Noche estrellada", "buho", "Un aro de medianoche con estrellitas."),
+    MarcoPerfil("aurora", "Aurora", "explorador", "Colores de aurora que fluyen."),
+    MarcoPerfil("arcoiris", "Arcoíris", "trotamundos", "Todos los colores girando."),
+    MarcoPerfil("oro", "Oro", "cien_h", "Un aro dorado con un destello que pasa."),
+)
+
+fun marcoDe(id: String) = MARCOS.firstOrNull { it.id == id } ?: MARCOS.first()
 
 fun nombrePersonaje(id: String) = PERSONAJES.firstOrNull { it.first == id }?.second ?: "Misu"
 

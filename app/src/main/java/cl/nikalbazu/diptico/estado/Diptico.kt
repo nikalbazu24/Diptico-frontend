@@ -2497,8 +2497,12 @@ object Diptico {
                 "Escríbela así: 12/03/1990. DIPPO te felicita en tu cumpleaños, y más adelante servirá para las llamadas con amigos.", grupo = "Tus datos") { abrirTexto("perfil_nacimiento", fechaEscrita) },
             Opcion("Mi foto", if (pf.foto.isBlank()) "Usar un personaje" else "Cambiar mi foto", Icono.PORTADA, "Elige una imagen de tu consola. Si no, se usa el personaje.", grupo = "Tu imagen") { pedirImagen("perfilFoto") },
         )
+        if (e.extra.discordAvatar.isNotBlank()) lista += Opcion("Usar la foto de Discord", if (pf.fotoDiscord) "Sí" else "No", Icono.MUNDO,
+            "Tu foto de perfil de Discord se ve en vez de tu foto o personaje, en la barra y en tu tarjeta.", grupo = "Tu imagen") { cambiarPerfil { it.copy(fotoDiscord = !it.fotoDiscord) } }
         if (pf.foto.isNotBlank()) lista += Opcion("Quitar mi foto", "Volver al personaje", Icono.BORRAR, "Tu foto se quita de Díptico (la imagen original no se toca).", grupo = "Tu imagen") { cambiarPerfil { it.copy(foto = "") }; avisar("Foto quitada") }
         lista += Opcion("Mi personaje", nombrePersonaje(pf.personaje), Icono.BISA, "Ocho amigos de Díptico para elegir. Se ve cuando no tienes foto.", grupo = "Tu imagen") { abrirGaleria("personajes") }
+        lista += Opcion("Marco de la foto", "${marcoDe(pf.marco).nombre} · ${marcosDesbloqueados()} de ${MARCOS.size}", Icono.ESTRELLA,
+            "Un aro de luz que se mueve alrededor de tu foto. Los marcos nuevos se desbloquean con logros de DIPPO.", grupo = "Tu imagen") { abrirGaleria("marcos") }
         lista += opcionLista("Mi color", Icono.PALETA, "El color del borde de tu foto y de los detalles de tu tarjeta.",
             Perfil.COLORES.map { it.second.toString() }, Perfil.COLORES.map { it.first }, pf.color.toString(), grupo = "Tu imagen") { id -> cambiarPerfil { it.copy(color = id.toLong()) } }
         lista += opcionLista("Consola favorita", Icono.MANDO, "La que se muestra en tu tarjeta. «La más jugada» la elige sola según tus horas.",
@@ -2750,6 +2754,7 @@ object Diptico {
         "vistas_juegos" -> listOf("Tus juegos")
         "logros_dippo" -> listOf("Logros de DIPPO")
         "personajes" -> listOf("Personajes")
+        "marcos" -> listOf("Marcos")
         "artes" -> listOf("Artes", "Portadas")
         "temas" -> listOf("Incluidos", "Mis temas")
         "importar_temas" -> listOf("Importar temas")
@@ -2791,6 +2796,15 @@ object Diptico {
                 cambiarPerfil { it.copy(personaje = id, foto = "") }
                 avisar("¡Ahora eres $nombre!")
                 cerrarPanel()
+            }
+        }
+        if (e.galeria == "marcos") return MARCOS.map { m ->
+            val libre = marcoDesbloqueado(m)
+            val logro = LogrosDippo.LISTA.firstOrNull { it.id == m.logro }
+            ItemGaleria(m.id, m.nombre, if (libre) m.detalle else "🔒 Se gana con «${logro?.titulo ?: "un logro"}»: ${logro?.descripcion.orEmpty()}",
+                m.id == e.extra.perfil.marco) {
+                if (!libre) avisar("🔒 Gana el logro «${logro?.titulo}» para usar este marco")
+                else { cambiarPerfil { it.copy(marco = m.id) }; avisar("Marco «${m.nombre}» listo"); cerrarPanel() }
             }
         }
         if (e.galeria == "logros_dippo") return progresoLogrosDippo(e).map { (l, v) ->
@@ -4183,7 +4197,7 @@ object Diptico {
         val lista = mutableListOf<Opcion>()
         when (s) {
             Seccion.G_PERFIL, Seccion.G_ESTILO, Seccion.G_TEMAS, Seccion.G_WIDGETS, Seccion.G_BIBLIOTECA, Seccion.G_JUEGOS, Seccion.G_CUENTAS, Seccion.G_CONTROLES, Seccion.G_SONIDO, Seccion.G_DIPPO, Seccion.G_SISTEMA -> Unit
-            Seccion.PERFIL -> lista += opcionesPerfil(e)
+            Seccion.PERFIL -> { lista += opcionesPerfil(e); lista += opcionesDiscord(e) }
             Seccion.ESTANTE -> lista += opcionesEstante(e)
             Seccion.CONSOLA -> lista += opcionesConsola(e)
             Seccion.SOBREMESA -> lista += opcionesSobremesa(e)
@@ -4295,7 +4309,6 @@ object Diptico {
                 }
             }
             Seccion.LOGROS -> {
-                lista += opcionesDiscord(e)
                 lista += opcionesLogros(e).map { if (it.grupo.isNullOrBlank()) it.copy(grupo = "RetroAchievements") else it }
                 lista += (listOf(Opcion(
                     "Clave de SteamGridDB", if (e.claveSgdb.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
@@ -5681,6 +5694,12 @@ object Diptico {
     fun progresoLogrosDippo(e: Estado = estado.value): List<Pair<LogrosDippo.Logro, Int>> = LogrosDippo.progreso(e, contadores())
 
     fun logrosDippoGanados(): Int = hechosDippo().size
+
+    /** Los marcos de la foto que ya puedes usar (los libres y los de logros ganados). */
+    fun marcoDesbloqueado(m: MarcoPerfil): Boolean = m.logro == null || m.logro in hechosDippo()
+    /** Los ids de los logros de DIPPO ya ganados. */
+    fun idsLogrosDippo(): Set<String> = hechosDippo().toSet()
+    fun marcosDesbloqueados(): Int = MARCOS.count { marcoDesbloqueado(it) }
 
     /** Días seguidos jugando (para el widget de progreso). */
     fun rachaDias(): Int = LogrosDippo.racha(contadores().dias)

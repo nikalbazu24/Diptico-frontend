@@ -23,7 +23,18 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.dp
+import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Perfil
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
  * Los personajes de Díptico: ocho amigos originales dibujados con degradados, brillos y luz.
@@ -295,22 +306,36 @@ private fun pixelito(p: Pincel) = with(p) {
 }
 
 /**
- * Tu foto de perfil: tu imagen si elegiste una, o el personaje sobre un fondo del color de tu perfil.
- * Con [anillo] lleva el borde del color del perfil.
+ * Tu foto de perfil: tu imagen (o la de tu Discord) si elegiste una, o el personaje sobre un fondo del color de tu perfil.
+ * Con [anillo] lleva el marco elegido (por defecto una estela de luz que gira sin parar).
  */
 @Composable
-fun FotoPerfil(perfil: Perfil, tam: Float, modifier: Modifier = Modifier, anillo: Boolean = true, personaje: String = perfil.personaje) {
+fun FotoPerfil(
+    perfil: Perfil, tam: Float, modifier: Modifier = Modifier, anillo: Boolean = true, personaje: String = perfil.personaje,
+    marco: String = perfil.marco,
+) {
     val esc = LocalEscala.current
     val color = Color(perfil.color)
-    val img = if (perfil.foto.isNotBlank()) rememberImagen(android.net.Uri.parse(perfil.foto), (tam * 3).toInt().coerceIn(96, 512)) else null
-    Box(
-        modifier.size(esc.d(tam)).clip(CircleShape)
-            .then(if (anillo) Modifier.border(esc.d((tam * 0.055f).coerceIn(2f, 7f)), color, CircleShape) else Modifier)
-            .drawBehind {
-                drawRect(Brush.radialGradient(listOf(lerp(color, Color.White, 0.28f), color, lerp(color, Color.Black, 0.45f)), center = Offset(size.width * 0.3f, size.height * 0.25f), radius = size.maxDimension * 1.05f))
-            },
-    ) {
-        if (img != null) Image(img, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-        else Canvas(Modifier.fillMaxSize().padding(esc.d(tam * 0.1f))) { dibujarPersonaje(personaje, size.minDimension) }
+    val avatar by remember { Diptico.estado.map { it.extra.discordAvatar }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.extra.discordAvatar)
+    val fuente = when {
+        perfil.fotoDiscord && avatar.isNotBlank() -> avatar
+        perfil.foto.isNotBlank() -> perfil.foto
+        else -> ""
+    }
+    val img = if (fuente.isNotBlank()) rememberImagen(android.net.Uri.parse(fuente), (tam * 3).toInt().coerceIn(96, 512)) else null
+    val g = if (anillo) esc.d((tam * 0.07f).coerceIn(2.5f, 8f)) else 0.dp
+    val anima = anillo && LocalMovimiento.current
+    val vuelta = if (anima) rememberInfiniteTransition(label = "marco").animateFloat(0f, 1f, infiniteRepeatable(tween(3600, easing = LinearEasing)), label = "vuelta") else null
+    Box(modifier.size(esc.d(tam))) {
+        Box(
+            Modifier.fillMaxSize().padding(g * 1.35f).clip(CircleShape)
+                .drawBehind {
+                    drawRect(Brush.radialGradient(listOf(lerp(color, Color.White, 0.28f), color, lerp(color, Color.Black, 0.45f)), center = Offset(size.width * 0.3f, size.height * 0.25f), radius = size.maxDimension * 1.05f))
+                },
+        ) {
+            if (img != null) Image(img, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            else Canvas(Modifier.fillMaxSize().padding(esc.d(tam * 0.1f))) { dibujarPersonaje(personaje, size.minDimension) }
+        }
+        if (anillo) Canvas(Modifier.fillMaxSize()) { dibujarMarco(marco, color, vuelta?.value ?: 0.12f, g.toPx()) }
     }
 }

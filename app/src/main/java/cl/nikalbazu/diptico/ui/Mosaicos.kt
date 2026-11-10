@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -153,24 +154,29 @@ fun FranjaAccesos(e: Estado) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(esc.d(6)),
     ) {
-        // Con el dock, Buscar y Ajustes quedan como íconos para dejarle espacio a tus apps.
-        val conDock = e.extra.dock
-        BotonFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR, if (conDock) null else "Buscar") { Diptico.abrirBuscar() }
-        BotonFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, if (conDock) null else "Ajustes") { Diptico.abrirMenu() }
-        if (conDock) {
-            Box(Modifier.size(esc.d(1), esc.d(26)).background(p.tinta.copy(alpha = 0.15f)))
-            // Las apps se esconden y se sacan con un botoncito: la franja queda limpia cuando no las usas.
-            androidx.compose.animation.AnimatedVisibility(
-                e.extra.dockVisible,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandHorizontally(expandFrom = Alignment.Start),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkHorizontally(shrinkTowards = Alignment.Start),
-            ) { FilaDock(e, 30f) }
-            BotonRepliegue(e.extra.dockVisible) { Diptico.alternarDockVisible() }
-        } else BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
-        androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-        BotonDiscord(26f)
+        // Los accesos y el dock se deslizan hacia el lado cuando no caben; a la derecha quedan fijos tu foto, DIPPO, la hora y la batería.
+        androidx.compose.foundation.layout.Row(
+            Modifier.weight(1f).horizontalScroll(androidx.compose.foundation.rememberScrollState()).testTag("franja-deslizable"),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(esc.d(6)),
+        ) {
+            // Con el dock, Buscar y Ajustes quedan como íconos para dejarle espacio a tus apps.
+            val conDock = e.extra.dock
+            BotonFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR, if (conDock) null else "Buscar") { Diptico.abrirBuscar() }
+            BotonFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, if (conDock) null else "Ajustes") { Diptico.abrirMenu() }
+            if (conDock) {
+                Box(Modifier.size(esc.d(1), esc.d(26)).background(p.tinta.copy(alpha = 0.15f)))
+                // Las apps se esconden y se sacan con un botoncito: la franja queda limpia cuando no las usas.
+                androidx.compose.animation.AnimatedVisibility(
+                    e.extra.dockVisible,
+                    enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandHorizontally(expandFrom = Alignment.Start),
+                    exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkHorizontally(shrinkTowards = Alignment.Start),
+                ) { FilaDock(e, 30f) }
+                BotonRepliegue(e.extra.dockVisible) { Diptico.alternarDockVisible() }
+            } else BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
+        }
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(8)))
-        BotonPerfil(30f)
+        BotonPerfil(40f)
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
         DippoInicio(e, 36f)
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(10)))

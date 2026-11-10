@@ -6,6 +6,7 @@ import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -45,8 +48,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
+import cl.nikalbazu.diptico.estado.Icono
+import cl.nikalbazu.diptico.estado.LogrosDippo
 import cl.nikalbazu.diptico.estado.Perfil
+import cl.nikalbazu.diptico.estado.Seccion
 import cl.nikalbazu.diptico.estado.ResumenPerfil
+import cl.nikalbazu.diptico.estado.SocialDiscord
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
@@ -60,22 +67,37 @@ private val TextoSuave = Color(0xFFA5A8BD)
 @Composable
 fun BotonPerfil(tam: Float = 26f) {
     val vista = LocalView.current
+    val esc = LocalEscala.current
     val pf by remember { Diptico.estado.map { it.extra.perfil }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.extra.perfil)
+    val cuenta by remember { Diptico.estado.map { it.extra.discordUsuario.isNotBlank() }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.extra.discordUsuario.isNotBlank())
+    val conexion by SocialDiscord.conexion.collectAsState()
     // Centro de la foto en la ventana (fracción del ancho y del alto); no se lee al dibujar, así que no recompone nada.
     val centro = remember { floatArrayOf(0.92f, 0.07f) }
-    Box(
-        Modifier
-            .onGloballyPositioned { c ->
-                val p = c.positionInWindow()
-                val w = vista.rootView.width.coerceAtLeast(1)
-                val h = vista.rootView.height.coerceAtLeast(1)
-                centro[0] = (p.x + c.size.width / 2f) / w
-                centro[1] = (p.y + c.size.height / 2f) / h
-            }
-            .clip(CircleShape)
-            .clickable { Diptico.abrirPerfil(vista.display?.displayId ?: 0, centro[0], centro[1]) }
-            .testTag("boton-perfil"),
-    ) { FotoPerfil(pf, tam) }
+    val insignia = tam * 0.46f
+    Box(Modifier.padding(end = esc.d(insignia * 0.25f), bottom = esc.d(insignia * 0.2f))) {
+        Box(
+            Modifier
+                .onGloballyPositioned { c ->
+                    val p = c.positionInWindow()
+                    val w = vista.rootView.width.coerceAtLeast(1)
+                    val h = vista.rootView.height.coerceAtLeast(1)
+                    centro[0] = (p.x + c.size.width / 2f) / w
+                    centro[1] = (p.y + c.size.height / 2f) / h
+                }
+                .clip(CircleShape)
+                .clickable { Diptico.abrirPerfil(vista.display?.displayId ?: 0, centro[0], centro[1]) }
+                .testTag("boton-perfil"),
+        ) { FotoPerfil(pf, tam) }
+        // La insignia de Discord: un toque abre la ventana de amigos. El puntito verde dice si estás conectado.
+        val listo = cuenta && (!SocialDiscord.disponible || conexion == "listo")
+        Box(
+            Modifier.align(Alignment.BottomEnd).offset(x = esc.d(insignia * 0.25f), y = esc.d(insignia * 0.2f)).size(esc.d(insignia))
+                .clip(CircleShape).background(Color(0xFF1E1F24)).padding(esc.d(insignia * 0.1f))
+                .clickable { Diptico.abrirAmigos(vista.display?.displayId ?: 0) }
+                .testTag("boton-discord"),
+            contentAlignment = Alignment.Center,
+        ) { MarcaDiscord(insignia * 0.8f, listo) }
+    }
 }
 
 /**
@@ -224,8 +246,9 @@ private fun Numeros(e: Estado, r: ResumenPerfil, color: Color, conFavoritos: Boo
         }
         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
             Dato("Racha", if (r.racha == 1) "1 día" else "${r.racha} días", if (r.racha > 0) "jugando seguido" else "juega hoy para empezar", color, Modifier.weight(1f))
-            Dato("Logros de DIPPO", "${r.logros} de ${r.logrosTotal}", "", color, Modifier.weight(1f))
+            LogrosDippoTile(r, color, Modifier.weight(1f))
         }
+        LogrosRATile(e, color)
         if (conFavoritos) {
             Texto("MIS FAVORITOS", 12f, color = TextoSuave, espaciado = 1.6f, lineas = 1)
             if (r.favoritos.isEmpty()) Detalle("Marca juegos como favoritos y aparecen aquí.", 12.5f, color = TextoSuave, lineas = 2)
@@ -233,6 +256,58 @@ private fun Numeros(e: Estado, r: ResumenPerfil, color: Color, conFavoritos: Boo
                 for (j in r.favoritos) Box(
                     Modifier.height(esc.d(62)).aspectRatio(0.78f).clip(RoundedCornerShape(esc.d(10))).background(Color.White.copy(alpha = 0.06f)),
                 ) { ArteJuego(j, preferirArte = false, maxLado = 200, modifier = Modifier.fillMaxSize()) }
+            }
+        }
+    }
+}
+
+/** Tus logros de DIPPO: cuántos llevas y los últimos trofeos que ganaste. */
+@Composable
+private fun LogrosDippoTile(r: ResumenPerfil, color: Color, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val ganados = remember(r.logros) { Diptico.idsLogrosDippo() }
+    val lista = remember(ganados) { LogrosDippo.LISTA.filter { it.id in ganados }.takeLast(5) }
+    Column(
+        modifier.clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f))
+            .clickable { Diptico.cerrarPerfil(); Diptico.abrirGaleria("logros_dippo") }
+            .padding(horizontal = esc.d(12), vertical = esc.d(7)),
+    ) {
+        Texto("Logros de DIPPO", 11.5f, color = TextoSuave, lineas = 1)
+        Texto("${r.logros} de ${r.logrosTotal}", 19f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = false)
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(4)), modifier = Modifier.height(esc.d(16))) {
+            if (lista.isEmpty()) Texto("Aún sin trofeos", 11.5f, color = color, lineas = 1)
+            else for (l in lista) IconoDiptico(l.icono, Sol, 15f)
+        }
+    }
+}
+
+/** Tus logros de RetroAchievements: usuario, puntos y las insignias más recientes. */
+@Composable
+private fun LogrosRATile(e: Estado, color: Color) {
+    val esc = LocalEscala.current
+    val ra = e.perfilRA
+    LaunchedEffect(e.usuarioRA) { if (ra == null && e.usuarioRA.isNotBlank()) Diptico.cargarPerfilRA() }
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f))
+            .clickable { Diptico.cerrarPerfil(); Diptico.abrirMenu(Seccion.G_PERFIL) }
+            .padding(horizontal = esc.d(12), vertical = esc.d(7)),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
+    ) {
+        IconoDiptico(Icono.TROFEO, Sol, 22f)
+        Column(Modifier.weight(1f)) {
+            Texto("RetroAchievements", 11.5f, color = TextoSuave, lineas = 1, traducir = false)
+            when {
+                e.usuarioRA.isBlank() -> Texto("Conéctalo en tu perfil", 13.5f, color = TextoClaro, lineas = 1)
+                ra == null -> Texto("Cargando…", 13.5f, color = TextoClaro, lineas = 1)
+                else -> Texto("${ra.usuario} · ${ra.puntos} pts", 15f, color = TextoClaro, peso = FontWeight.Black, lineas = 1, traducir = false)
+            }
+        }
+        if (ra != null) Row(horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
+            for ((_, l) in ra.recientes.take(4)) {
+                val img = rememberImagen(android.net.Uri.parse(l.imagen), 96)
+                Box(Modifier.size(esc.d(26)).clip(RoundedCornerShape(esc.d(6))).background(Color.White.copy(alpha = 0.08f))) {
+                    if (img != null) Image(img, null, Modifier.fillMaxSize())
+                }
             }
         }
     }

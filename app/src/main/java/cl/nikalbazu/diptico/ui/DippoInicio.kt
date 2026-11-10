@@ -1,10 +1,5 @@
 package cl.nikalbazu.diptico.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +18,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.testTag
 import cl.nikalbazu.diptico.bisa.AvatarBisa
 import cl.nikalbazu.diptico.estado.Diptico
@@ -76,26 +73,35 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
         if (System.currentTimeMillis() - e.extra.dippoCelebra < 8000) { fase = 3; delay(7000); fase = 0 }
     }
     val saludando = fase == 1
-    Row(modifier.testTag("dippo-inicio"), verticalAlignment = Alignment.CenterVertically) {
-        AnimatedVisibility(
-            fase != 0,
-            enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
-            exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
-        ) {
-            Box(
-                Modifier.padding(end = esc.d(6)).clip(RoundedCornerShape(esc.d(12)))
-                    .background(when (fase) { 2 -> Coral.copy(alpha = 0.92f); 3 -> Sol.copy(alpha = 0.95f); else -> p.superficie.copy(alpha = 0.92f) })
-                    .then(if (fase == 3) Modifier.clickable { fase = 0; Diptico.abrirGaleria("logros_dippo") } else if (fase == 2 && idea != null) Modifier.clickable { fase = 0; if (idea.second.tipo.startsWith("bisa_")) Diptico.abrirAsistente(); Diptico.ejecutarAccion(idea.second) } else Modifier)
-                    .padding(horizontal = esc.d(10), vertical = esc.d(5)),
-            ) {
-                if (fase == 3) Texto("🏆 " + e.extra.dippoLogro, 12f, color = Color(0xFF2A1E05), lineas = 1, traducir = false)
-                else if (fase == 2 && idea != null) Texto(idea.first, 12f, color = Color.White, lineas = 1, traducir = false)
-                else Texto(saludoDippo(hora), 12f, color = p.tinta, lineas = 1)
-            }
+    val vista = androidx.compose.ui.platform.LocalView.current
+    val pantalla = vista.display?.displayId ?: 0
+    // El globito sale arriba de su cabeza, en la capa de Raiz (así no empuja ni tapa los accesos de abajo).
+    val texto = when (fase) {
+        3 -> "🏆 " + e.extra.dippoLogro
+        2 -> idea?.first
+        1 -> saludoDippo(hora)
+        else -> null
+    }
+    LaunchedEffect(fase, texto, pantalla) {
+        if (texto == null) { DippoBurbuja.ocultar(); return@LaunchedEffect }
+        val alToque: (() -> Unit)? = when {
+            fase == 3 -> { { fase = 0; Diptico.abrirGaleria("logros_dippo") } }
+            fase == 2 && idea != null -> { { fase = 0; if (idea.second.tipo.startsWith("bisa_")) Diptico.abrirAsistente(); Diptico.ejecutarAccion(idea.second) } }
+            else -> null
         }
+        DippoBurbuja.pantalla = pantalla
+        DippoBurbuja.mostrar(DippoBurbuja.Mensaje(System.nanoTime(), texto, fase, alToque) { fase = 0 })
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { DippoBurbuja.ocultar() } }
+    Row(modifier.testTag("dippo-inicio"), verticalAlignment = Alignment.CenterVertically) {
         AvatarBisa(
             tam,
-            Modifier.combinedClickable(onLongClick = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() },
+            Modifier
+                .onGloballyPositioned { c ->
+                    val pos = c.positionInWindow()
+                    DippoBurbuja.cabeza = androidx.compose.ui.geometry.Rect(pos.x, pos.y, pos.x + c.size.width, pos.y + c.size.height)
+                }
+                .combinedClickable(onLongClick = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() },
             cara = if (e.pensando) CaraDippo.PENSANDO else caraDippoInicio(saludando || fase == 2, bateria, cargando, hora),
         )
     }
