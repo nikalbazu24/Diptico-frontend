@@ -861,7 +861,7 @@ class Capturas {
         cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(cl.nikalbazu.diptico.audio.Sonando("Spotify", "Canción de prueba con nombre largo", "Artista", null, true, "com.spotify.music"))
         regla.mainClock.autoAdvance = false
         regla.setContent { Lienzo(e.oscuro, Modifier.fillMaxSize(), e.tamTexto) { cl.nikalbazu.diptico.ui.MuestrarioWidgets(e, an, al, foco) } }
-        regla.mainClock.advanceTimeBy(avance)
+        regla.mainClock.advanceTimeBy(1600)
         regla.onRoot().captureRoboImage("capturas/$nombre.png")
         cl.nikalbazu.diptico.audio.Medios.fijarParaPrueba(null)
     }
