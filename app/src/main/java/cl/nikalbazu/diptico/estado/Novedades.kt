@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "perfil-mando-2.0-36"
-    const val NOMBRE = "Perfil con el mando"
+    const val ID = "marcos-dippo-2.0-37"
+    const val NOMBRE = "Marcos, Discord y DIPPO"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -336,9 +336,17 @@ object Novedades {
             Pagina("Foto o personaje", "Pon una foto de tu consola o elige uno de ocho personajes de Díptico: Misu, Robotín, Moquito, Dragoncito, Fantasmita, Caballerito, Zorrito y Pixelito. Todos son originales.", Icono.BISA, 0xFFE64FA0),
             Pagina("Tus datos", "En Ajustes › Mi perfil: tu nombre, un apodo, tu fecha de nacimiento (DIPPO te felicita ese día), tu color y tu consola favorita. Si quieres, puedes ocultar tus horas.", Icono.EDITAR, 0xFF23C486),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("perfil-mando-2.0-36", "Perfil con el mando", listOf(
             Pagina("Perfil con el mando", "Mantén Start y aprieta A en el inicio: se abre tu perfil. Con el mismo gesto se cierra, y B también.", Icono.PERFIL, 0xFFFF7A59),
             Pagina("Tu foto en el inicio", "Tu foto también está junto a la hora en el inicio con widgets, para abrir tu perfil con un toque.", Icono.BISA, 0xFFE64FA0),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Un marco que se mueve", "Tu foto lleva un aro de luz en movimiento: una estela que da vueltas sin parar. Se cambia en Ajustes › Mi perfil › Marco de la foto. Si apagas los efectos, queda quieto.", Icono.ESTRELLA, 0xFF9B6BFF),
+            Pagina("Marcos que se ganan", "Con los logros de DIPPO se desbloquean marcos nuevos: chispas, latido, llama, noche estrellada, aurora, arcoíris y oro. Los que faltan se ven con un candado y te dicen qué logro piden.", Icono.TROFEO, 0xFFFFC94D),
+            Pagina("Tu foto de Discord", "Con Discord conectado puedes usar su foto como tu foto de perfil (Mi perfil › Usar la foto de Discord). Ahora es un poco más grande y se ve en el inicio, en las portadas y abajo.", Icono.MUNDO, 0xFF5865F2),
+            Pagina("Discord en tu foto", "Una insignia de Discord en la esquina de tu foto abre la ventana de amigos, con atajos a tu perfil y a los ajustes. Todos los ajustes de Discord ahora están en Mi perfil.", Icono.MUNDO, 0xFF5865F2),
+            Pagina("Logros en tu tarjeta", "Tu tarjeta muestra tus logros de DIPPO (con los últimos trofeos) y los de RetroAchievements (usuario, puntos e insignias recientes).", Icono.TROFEO, 0xFFFF7A59),
+            Pagina("DIPPO sobre su cabeza", "Los mensajes de DIPPO salen como globitos justo arriba de su cabeza. Deslízalos hacia arriba o a un lado y se van, sin molestar la vista.", Icono.BISA, 0xFFFF7A59),
+            Pagina("Barra de abajo deslizable", "La franja de accesos de abajo se desliza hacia el lado cuando hay muchas apps. Tu foto, DIPPO, la hora y la batería quedan fijos a la derecha.", Icono.APPS, 0xFF38BDF8),
         )),
     )
 

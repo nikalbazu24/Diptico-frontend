@@ -213,6 +213,15 @@ private fun ContenidoAmigos(e: Estado, modifier: Modifier) {
                 }
             }
         }
+        // Al pie: tu tarjeta de perfil y todos los ajustes de Discord (ahora viven en «Mi perfil»).
+        Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(10), vertical = esc.d(8)), horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f))
+                .clickable { Diptico.cerrarAmigos(); Diptico.abrirPerfil(android.view.Display.DEFAULT_DISPLAY, 0.5f, 0.2f) }
+                .padding(vertical = esc.d(8)), contentAlignment = Alignment.Center) { Texto("Mi perfil", 12.5f, color = Color.White, lineas = 1) }
+            Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(ColorDiscord.copy(alpha = 0.55f))
+                .clickable { Diptico.cerrarAmigos(); Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.G_PERFIL) }
+                .padding(vertical = esc.d(8)), contentAlignment = Alignment.Center) { Texto("Ajustes de Discord", 12.5f, color = Color.White, lineas = 1) }
+        }
     }
 }
 

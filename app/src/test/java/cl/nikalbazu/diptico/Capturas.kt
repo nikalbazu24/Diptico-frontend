@@ -1302,6 +1302,24 @@ class Capturas {
     }
     @Config(qualifiers = ABAJO)
     @Test fun t341_perfil_galeria_personajes_abajo() = foto("341_perfil_galeria_personajes_abajo", conPerfil(personaje = "zorro", color = 0xFF9B6BFF).copy(panel = Panel.GALERIA, galeria = "personajes", indice = 2), Rol.INFERIOR, mi = 1)
+    @Test fun t342_perfil_marcos_galeria() = foto("342_perfil_marcos_galeria", conPerfil(personaje = "gato", color = 0xFF9B6BFF).copy(panel = Panel.GALERIA, galeria = "marcos", indice = 3), Rol.SUPERIOR)
+    @Test fun t343_perfil_marcos_hoja() {
+        regla.setContent { Lienzo(true, Modifier.fillMaxSize(), 1f) { androidx.compose.foundation.layout.Column {
+            for (fila in cl.nikalbazu.diptico.estado.MARCOS.chunked(5)) androidx.compose.foundation.layout.Row {
+                for (m in fila) cl.nikalbazu.diptico.ui.FotoPerfil(cl.nikalbazu.diptico.estado.Perfil(personaje = "zorro", color = 0xFFFF7A59), 120f, marco = m.id)
+            }
+        } } }
+        regla.mainClock.autoAdvance = false
+        regla.mainClock.advanceTimeBy(900)
+        regla.onRoot().captureRoboImage("capturas/343_perfil_marcos_hoja.png")
+    }
+    @Test fun t344_perfil_tarjeta_con_logros() {
+        val ra = cl.nikalbazu.diptico.data.PerfilRA("nikalbazu", 1840, 5210, "", "2021", "",
+            listOf("Chrono Trigger" to cl.nikalbazu.diptico.data.Logro(1, "Primera victoria", "", 5, "1", "2026-11-01", false)))
+        foto("344_perfil_tarjeta_con_logros", conPerfil(abierto = 0).copy(perfilRA = ra, usuarioRA = "nikalbazu"), Rol.SUPERIOR)
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t345_abajo_franja_y_globito_dippo() = foto("345_abajo_franja_y_globito_dippo", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.INFERIOR, mi = 1)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)
