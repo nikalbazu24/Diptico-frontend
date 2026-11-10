@@ -52,6 +52,12 @@ private fun suave(x: Float) = FastOutSlowInEasing.transform(x)
  */
 @Composable
 fun PantallaCarga(e: Estado, miPantalla: Int, unica: Boolean) {
+    // La caja con la forma de su consola (no la forma «para todas» del estante).
+    androidx.compose.runtime.CompositionLocalProvider(LocalFormas provides e.formas) { ContenidoCarga(e, miPantalla, unica) }
+}
+
+@Composable
+private fun ContenidoCarga(e: Estado, miPantalla: Int, unica: Boolean) {
     val carga = e.extra.carga ?: return
     val juego = remember(carga.clave) { e.juegosPorClave[carga.clave] } ?: return
     val consola = Consolas.porId(juego.consolaId) ?: return
