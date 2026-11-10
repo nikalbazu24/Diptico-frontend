@@ -256,3 +256,12 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Con vitrina de cajas, `Mosaicos` va en una fila (`estante`), mismo orden que arriba (+1 por paso).
 - `VentanaJuego` (opciones del juego): todo dentro del LazyColumn; `PanelFicha`: cabecera se esconde con indice > 0.
 - Novedades `cajas-exactas-2.0-33`. Capturas t327–t330.
+
+## Discord con el Social SDK (10 nov, en curso, rama `fix/discord-amigos`, SIN publicar)
+- La vía HTTP (device flow) falla aun con Client Secret («No pude conectar» = 401 sin desafío en Android) y no da amigos.
+  Decisión: usar el **Social SDK** (`discord_partner_sdk.aar`, C++ por NDK/Prefab, licencia NO permite subirlo al repo
+  público → guardarlo como asset de un release borrador y que el CI lo baje). Auth con Public Client sin secreto,
+  amigos con `GetRelationships`, presencia «Jugando a…».
+- Hecho en la rama: `estado/Social.kt` (`SocialDiscord`, `AmigoDiscord`), `ui/Amigos.kt` (`MarcaDiscord` dibujo propio,
+  `BotonDiscord` en `EstadoChico` y `FranjaAccesos`, `PanelAmigos` desde el costado derecho, `extra.amigosEn`),
+  Teclas (B cierra). Capturas t331–t332. ESPERANDO el .zip del SDK que Nicolás baja del portal (Social SDK › Downloads).
