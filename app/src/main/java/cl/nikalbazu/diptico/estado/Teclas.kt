@@ -173,6 +173,15 @@ object Teclas {
             return true
         }
 
+        // Start + A en el inicio: abre (o cierra) tu perfil.
+        if (abajo && ev.repeatCount == 0 && esA(code) && start in presionadas && e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro) {
+            cancelarToque(start)
+            consumidas += start
+            consumidas += code
+            if (e.extra.perfilEn >= 0) Diptico.cerrarPerfil() else Diptico.abrirPerfil()
+            return true
+        }
+
         // Botones extra (L4, R4…): su acción, fuera de los juegos y del teclado.
         if (!e.conTeclado && e.panel != Panel.CLAVE && e.panel != Panel.PASO && e.botonesExtra.any { !it.conStart && it.tecla == code && it.tecla != 0 && it.accion != "nada" }) {
             if (arriba) Diptico.botonExtra(code)
