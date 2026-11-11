@@ -366,6 +366,8 @@ data class EstadoExtra(
     val dippoDatos: Boolean = true,
     /** Si la biblioteca muestra la carpeta «Todos los juegos» junto a las de cada consola. */
     val carpetaTodos: Boolean = false,
+    /** La barra de abajo (lupa, apps y ajustes): fija, pero se puede apagar. */
+    val franjaAbajo: Boolean = true,
     /** Editando el perfil dentro de su tarjeta: la fila elegida (-1 = solo mirando). */
     val perfilEdita: Int = -1,
     /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
@@ -965,6 +967,7 @@ object Diptico {
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoDatos = almacen.bool("dippoDatos", true),
                 carpetaTodos = almacen.bool("carpetaTodos2", false),
+                franjaAbajo = almacen.bool("franjaAbajo", true),
                 termica = almacen.bool("termica", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
@@ -8686,7 +8689,13 @@ object Diptico {
                 "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande), Carpetas (cuadrícula de íconos que abren sus juegos) o Discos (cada consola es un vinilo en su funda, y la elegida saca su disco girando). En Sistemas, Carpetas y Discos primero eliges la consola y después entras a sus juegos.",
                 menos = { cambiarVistaConsolas(-1) },
             ) { abrirGaleria("vistas_consolas") },
-            Opcion("Carpeta «Todos los juegos»", if (e.extra.carpetaTodos) "Sí" else "No", Icono.CARPETA,
+            Opcion("Barra de abajo", if (e.extra.franjaAbajo) "Sí" else "No", Icono.APPS,
+                "La barra fija de la pantalla de abajo con la lupa, tus apps y los ajustes. Apagada, los abres con los botones del mando o desde el menú.") {
+                val v = !estado.value.extra.franjaAbajo
+                almacen.guardarBool("franjaAbajo", v)
+                actualizar { it.copy(extra = it.extra.copy(franjaAbajo = v)) }
+            },
+                        Opcion("Carpeta «Todos los juegos»", if (e.extra.carpetaTodos) "Sí" else "No", Icono.CARPETA,
                 "Agrega a la biblioteca una carpeta con todos tus juegos juntos, además de la de cada consola. Apagada, solo ves una carpeta por consola.") {
                 val v = !estado.value.extra.carpetaTodos
                 almacen.guardarBool("carpetaTodos2", v)

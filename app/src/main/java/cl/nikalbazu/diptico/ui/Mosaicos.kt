@@ -146,6 +146,7 @@ private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp, ancho: Dp = la
  */
 @Composable
 fun FranjaAccesos(e: Estado) {
+    if (!e.extra.franjaAbajo) return
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     // Sin franja de color: el fondo se funde con el del tema y encima flotan tres piezas del mismo estilo

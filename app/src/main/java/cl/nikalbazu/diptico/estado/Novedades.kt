@@ -10,7 +10,7 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "franja-nueva-2.0-49"
+    const val ID = "franja-ajuste-2.0-50"
     const val NOMBRE = "Esquinas ordenadas"
 
     /**
@@ -396,8 +396,11 @@ object Novedades {
         Version("esquinas-2.0-48", "DIPPO y tu foto, abajo", listOf(
             Pagina("Arriba de la pantalla de abajo", "Donde decía «Biblioteca» y «Ordenar» ahora están DIPPO, la hora y la batería, y tu foto de perfil. Tus apps fijas van en una píldora con los colores de tu tema.", Icono.PERFIL, 0xFFFF7A59),
         )),
-        Version(ID, "Barra de apps nueva", listOf(
+        Version("franja-nueva-2.0-49", "Barra de apps nueva", listOf(
             Pagina("Todo combina", "La barra de abajo ya no es una franja: la lupa y los ajustes son círculos y tus apps van en una píldora, todo con la superficie de tu tema. Arriba, DIPPO más grande en su esquina y en la otra tu foto, la hora y la batería.", Icono.APPS, 0xFF3BA8FF),
+        )),
+        Version(ID, "Barra de abajo a tu gusto", listOf(
+            Pagina("Fija o apagada", "La barra de abajo queda siempre a mano. Si prefieres más espacio, apágala en Ajustes buscando «Barra de abajo».", Icono.APPS, 0xFF2EC4A6),
         )),
     )
 
