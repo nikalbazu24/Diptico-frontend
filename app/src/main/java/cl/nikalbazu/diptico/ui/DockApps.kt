@@ -34,7 +34,7 @@ const val MAX_DOCK = 5
  * en la otra. Sin apps fijadas muestra un botón para elegirlas.
  */
 @Composable
-fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boolean = true) {
+fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boolean = true, flotante: Boolean = false) {
     if (!e.extra.dock) return
     val p = LocalPaleta.current
     val esc = LocalEscala.current
@@ -43,7 +43,8 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
     Row(modifier.testTag("dock-apps"), horizontalArrangement = Arrangement.spacedBy(esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
         apps.forEach { pkg ->
             Box(
-                Modifier.clip(RoundedCornerShape(esc.d(12))).clickable { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
+                Modifier.then(if (flotante) Modifier.shadow(esc.d(8), RoundedCornerShape(esc.d(12)), clip = false) else Modifier)
+                    .clip(RoundedCornerShape(esc.d(12))).clickable { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
                     .padding(esc.d(3)),
             ) { IconoApp(pkg, tam, desnudo = true) }
         }
@@ -57,7 +58,8 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
             androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
             Texto("Fija tus apps", 12f, color = p.tinta, lineas = 1)
         } else if (conCajon) Box(
-            Modifier.size(esc.d(tam + 6f)).clip(CircleShape).background(p.tinta.copy(alpha = 0.10f))
+            Modifier.size(esc.d(tam + 6f)).then(if (flotante) Modifier.shadow(esc.d(6), CircleShape, clip = false) else Modifier)
+                .clip(CircleShape).background(p.tinta.copy(alpha = 0.10f))
                 .clickable { Diptico.abrirApps() },
             contentAlignment = Alignment.Center,
         ) { IconoDiptico(Icono.APPS, p.tinta, tam * 0.45f) }

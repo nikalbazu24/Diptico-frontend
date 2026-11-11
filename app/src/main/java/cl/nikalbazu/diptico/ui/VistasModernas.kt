@@ -76,16 +76,17 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Bool
         androidx.compose.animation.core.spring(dampingRatio = .6f, stiffness = 500f), label = "carpeta tomada")
     // Modo edición: todas tiemblan un poquito (cada una a su ritmo); la tomada flota quieta y más grande.
     val tiembla = ordenando && !tomada && LocalMovimiento.current
-    val giro = if (tiembla) {
+    // Se guarda el estado y se lee al dibujar: tiembla sin recomponer la carpeta en cada cuadro.
+    val giroEstado: androidx.compose.runtime.State<Float> = if (tiembla) {
         val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "tiembla")
         t.animateFloat(-1.4f, 1.4f, androidx.compose.animation.core.infiniteRepeatable(
             androidx.compose.animation.core.tween(150 + (id.hashCode() and 63), easing = androidx.compose.animation.core.LinearEasing),
-            androidx.compose.animation.core.RepeatMode.Reverse), label = "giro").value
-    } else 0f
+            androidx.compose.animation.core.RepeatMode.Reverse), label = "giro")
+    } else remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
     Column(Modifier.width(lado), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(lado).graphicsLayer {
                 val s = (1f - .035f * (1f - foco)) * (1f + .1f * alzada)
-                scaleX = s; scaleY = s; rotationZ = giro - 4f * alzada
+                scaleX = s; scaleY = s; rotationZ = giroEstado.value - 4f * alzada
             }
             // La elegida lleva un halo del color de su consola y borde blanco, como los mosaicos.
             .then(if ((elegida || tomada) && interactiva) Modifier.shadow(esc.d(16 + 14 * alzada), forma, clip = false, ambientColor = color, spotColor = color) else Modifier.shadow(esc.d(3), forma, clip = false))
