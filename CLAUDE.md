@@ -361,3 +361,6 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - v1.1-beta.348: abajo, `CabeceraCarpetas` = `EsquinasArriba(e)` (DIPPO izq., hora/batería al centro, `BotonPerfil` der.; sin «Biblioteca»/«Ordenar»).
   `FranjaAccesos`: lupa izq., ajustes der., dock al centro en píldora `superficieApp(p.superficie)` + borde `p.linea`. Nicolás quiere
   DIPPO/perfil en la parte de arriba de la PANTALLA DE ABAJO (no en la barra de la pantalla superior). Novedades `esquinas-2.0-48`.
+- beta.351/352: `FranjaAccesos` sin franja de color (degradado al `p.fondo`), `CirculoFranja` (lupa/ajustes) + píldora del dock, todo con
+  `superficieApp(p.superficie)`. `EsquinasArriba`: DIPPO 52 a la izq.; a la der. foto · hora · batería. `extra.franjaAbajo` (clave `franjaAbajo`,
+  opción «Barra de abajo» en `opcionesEstante`). Novedades `franja-ajuste-2.0-50`. Sin capturas revisadas.
