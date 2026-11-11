@@ -431,3 +431,14 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   de las rejillas; lupa/ajustes/cajón sin círculo (ícono con sombra). Globito de DIPPO oculto con cualquier panel/ventana (`BurbujaDippoCapa(oculta=)`).
 - Rendimiento: detrás del desenfoque `LocalMovimiento` = false (la vitrina deja de mecerse), `CarpetaBiblioteca` → `CarpetaCuerpo` sin Estado,
   trama de `ArteCarpeta` con un solo `drawPoints`. Novedades `switch2-ports-2.0-55`. Capturas t366–t371.
+
+## Temas propios + Diptico.kt partido (11 nov, noche, rama `fix/temas-propios`, Opus)
+- `estado/Temas.kt`: cada fiesta es tema completo (`ESTILO_FIESTA`: trama, acabado, forma, fondo; OJO va ANTES de `fiestas` porque el objeto se
+  inicializa en orden, con `by lazy` también fallaba). Fechas nuevas: madre (2.º dom. mayo), padre (3.º dom. junio), profesor 16/10, libro 23/4,
+  friki 25/5. `Temas.calendario()` = todas con su próxima fecha. `Temas.exclusivos` (8 `TemaExclusivo(logro, tema)` ids `x_*`, logros difíciles:
+  racha14, racha30, trescientas, doscientas_h, quinientas_h, finales25, explorador50, consolas8); `todosLosTemas` suma `temasExclusivosGanados()`.
+- Galería "temas": pestañas Incluidos, Calendario, Exclusivos (candado como los marcos), Mis temas (índice 3).
+- Diptico.kt bajó de 10.090 a ~8.250 líneas: 109 funciones movidas como extensiones a `DipticoMenu.kt`, `DipticoTeclado.kt`, `DipticoImagenes.kt`,
+  `DipticoInicioPersonal.kt`, `DipticoCentro.kt` (script en la sesión: mueve solo `fun`; las propiedades quedan en el objeto). Todo lo `private`
+  del objeto pasó a `internal`. Los 60 archivos fuera de `estado` que usan Diptico importan `cl.nikalbazu.diptico.estado.*`.
+- Traducciones: `herramientas/traducir/extras16.tsv` (siguiente: extras17). Novedades `temas-propios-2.0-56`. Capturas t372–t375.
