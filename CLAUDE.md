@@ -402,3 +402,14 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `Opcion.sub`); `extra.subOpcion/subSel`, `VentanaSubOpciones` en Menu.kt, `Diptico.opcionEnFoco(e)` para la ayuda de arriba,
   `claveMenu(e)` como llave de caché. La búsqueda de ajustes ve todo.
 - Novedades `partidas-a-salvo-2.0-53` (la 52 = editor de perfil, beta.362). Capturas t352–t365.
+
+## Más fluido y flotante (11 nov, tarde, rama `fix/fluido-flotante`, Sonnet)
+- `FranjaAccesos` (ui/Mosaicos.kt) sin píldora de fondo: `FilaDock(flotante = true)` da sombra a cada ícono, `CirculoFranja` es burbuja
+  casi transparente con sombra y borde fino. Escondida = solo la barrita (`dock-repliegue`).
+- Lentitud (sin poder medir en equipo, causas halladas leyendo): `VitrinaCajas` animaba las 7 `Caja3D` con `ola` (infinita) → ahora solo la
+  caja elegida lee el balanceo; `Mosaico` ya no recibe `Estado` (juego, elegido, jugado) y no se recompone entero por cada cambio;
+  el temblor de carpetas lee su `State` en `graphicsLayer`. Pedir a Nicolás las lecturas del Medidor de fluidez (inicio, carpetas, vitrina).
+- `EsquinasArriba`: burbuja con el título (`tituloDe(e.extra.perfil.titulo)`) junto a la foto.
+- Novedades `fluido-flotante-2.0-54` (la cadena de `NavegacionTest` ya incluye `partidas-a-salvo-2.0-53`).
+- Pendiente Sonnet: «DIPPO aparece solo al hablar en Ajustes» (no quedó claro dónde sale hoy; preguntar a Nicolás), traducciones (#28),
+  retoque de «Tu año» (`fix/tu-ano-retoque`). Temas propios/calendario = Opus.
