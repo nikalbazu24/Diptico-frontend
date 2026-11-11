@@ -11,6 +11,7 @@ import cl.nikalbazu.diptico.audio.Avisos
 import cl.nikalbazu.diptico.audio.Medios
 import cl.nikalbazu.diptico.audio.Musica
 import cl.nikalbazu.diptico.audio.Sonidos
+import cl.nikalbazu.diptico.audio.Vibracion
 import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.data.Biblioteca
 import cl.nikalbazu.diptico.data.Consola
@@ -368,8 +369,8 @@ data class EstadoExtra(
     val carpetaTodos: Boolean = false,
     /** La barra de abajo (lupa, apps y ajustes): fija, pero se puede apagar. */
     val franjaAbajo: Boolean = true,
-    /** Editando el perfil dentro de su tarjeta: la fila elegida (-1 = solo mirando). */
-    val perfilEdita: Int = -1,
+    /** Editando el perfil: el borrador (null = solo mirando). Con dos pantallas va abajo y la tarjeta arriba. */
+    val edicionPerfil: EdicionPerfil? = null,
     /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
     val termica: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -2490,8 +2491,13 @@ object Diptico {
         actualizar { it.copy(extra = it.extra.copy(perfilEn = pantalla, perfilOx = ox.coerceIn(0f, 1f), perfilOy = oy.coerceIn(0f, 1f), amigosEn = -1)) }
     }
 
+    /** La tarjeta pasa a [pantalla] (al editar con dos pantallas, se queda arriba). */
+    fun moverPerfilA(pantalla: Int) {
+        if (estado.value.extra.perfilEn >= 0 && estado.value.extra.perfilEn != pantalla) actualizar { it.copy(extra = it.extra.copy(perfilEn = pantalla)) }
+    }
+
     fun cerrarPerfil() {
-        if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1, perfilEdita = -1)) }
+        if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1, edicionPerfil = null)) }
     }
 
     // ---------- Tu año ----------
@@ -2521,33 +2527,106 @@ object Diptico {
         }
     }
 
-    /** Desde la tarjeta: cierra y abre «Mi perfil» en los ajustes para cambiar los datos. */
-    /** Editar el perfil sin salir de su tarjeta: la lista de datos aparece ahí mismo. */
+    /** Con dos pantallas (y sin partida), el editor va abajo y la tarjeta arriba; si no, el editor ocupa la pantalla del perfil. */
+    fun edicionDividida(e: Estado) = !e.unaPantalla && e.sesion == null
+
+    /** Abre el editor del perfil con un borrador de lo que tienes ahora; nada se guarda hasta A · Guardar. */
     fun editarPerfil() {
-        if (estado.value.extra.perfilEn < 0) { abrirMenu(Seccion.G_PERFIL); return }
-        actualizar { it.copy(extra = it.extra.copy(perfilEdita = 0)) }
+        val e = estado.value
+        val x = e.extra
+        val ed = EdicionPerfil(x.perfil, e.nombre, x.discordPresencia, x.dippoSaludo)
+        val en = if (x.perfilEn >= 0) x.perfilEn else android.view.Display.DEFAULT_DISPLAY
+        actualizar {
+            it.copy(
+                panel = if (it.panel == Panel.MENU || it.panel == Panel.GALERIA) Panel.NINGUNO else it.panel,
+                extra = it.extra.copy(edicionPerfil = ed, perfilEn = en, perfilOx = 0.5f, perfilOy = 0.5f, amigosEn = -1, desplegable = -1),
+            )
+        }
     }
 
-    fun dejarDeEditarPerfil() = actualizar { it.copy(extra = it.extra.copy(perfilEdita = -1)) }
-
-    /** Lo que se puede cambiar desde la tarjeta (sin «Ver mi perfil» ni «Tu año»). */
-    fun opcionesEdicionPerfil(e: Estado): List<Opcion> = opcionesPerfil(e).filter { it.titulo != "Ver mi perfil" && it.titulo != "Tu año" }
-
-    fun moverEdicionPerfil(d: Int) {
-        val n = opcionesEdicionPerfil(estado.value).size
-        if (n == 0) return
-        actualizar { it.copy(extra = it.extra.copy(perfilEdita = (it.extra.perfilEdita + d).coerceIn(0, n - 1))) }
+    /** B · Cancelar: se descarta el borrador y queda la tarjeta como estaba. */
+    fun cancelarEdicionPerfil() {
+        val ed = estado.value.extra.edicionPerfil ?: return
+        val e = estado.value
+        val hubo = ed.perfil != e.extra.perfil || ed.nombre != e.nombre || ed.presencia != e.extra.discordPresencia || ed.saludo != e.extra.dippoSaludo
+        actualizar { it.copy(extra = it.extra.copy(edicionPerfil = null)) }
+        if (hubo) avisar("Cambios descartados")
     }
 
-    /** Usa una fila del editor; si abre otra ventana (teclado, galería, imagen), la tarjeta se cierra para no taparla. */
-    fun usarEdicionPerfil(i: Int, menos: Boolean = false) {
-        val o = opcionesEdicionPerfil(estado.value).getOrNull(i) ?: return
-        actualizar { it.copy(extra = it.extra.copy(perfilEdita = i)) }
-        val antes = estado.value
-        if (menos) (o.menos ?: return)() else o.accion()
-        val d = estado.value
-        if (d.panel != antes.panel && d.panel != Panel.NINGUNO && d.panel != Panel.CENTRO)
-            actualizar { it.copy(extra = it.extra.copy(perfilEn = -1, perfilEdita = -1)) }
+    /** A · Guardar: el borrador pasa a ser tu perfil (nombre, foto, datos, color y privacidad). */
+    fun guardarEdicionPerfil() {
+        val e = estado.value
+        val ed = e.extra.edicionPerfil ?: return
+        if (ed.nombre != e.nombre) almacen.guardarTexto("nombre", ed.nombre)
+        almacen.guardarTexto("perfil", ed.perfil.json())
+        if (ed.presencia != e.extra.discordPresencia) {
+            almacen.guardarBool("discordPresencia", ed.presencia)
+            if (!ed.presencia) SocialDiscord.sinJuego()
+        }
+        if (ed.saludo != e.extra.dippoSaludo) almacen.guardarBool("dippoSaludo", ed.saludo)
+        actualizar {
+            it.copy(nombre = ed.nombre, extra = it.extra.copy(perfil = ed.perfil, discordPresencia = ed.presencia, dippoSaludo = ed.saludo, edicionPerfil = null))
+        }
+        Sonidos.aviso()
+        avisar(if (ed.nombre.isNotBlank()) "¡Listo, ${ed.nombre}! Tu perfil quedó guardado" else "Tu perfil quedó guardado")
+    }
+
+    private fun cambiarEdicion(f: (EdicionPerfil) -> EdicionPerfil) =
+        actualizar { s -> s.extra.edicionPerfil?.let { s.copy(extra = s.extra.copy(edicionPerfil = f(it))) } ?: s }
+
+    /** Con el mando: ↑ ↓ cambian de fila (saltando las que no se ven), ← → dentro de la fila; en «Consola favorita» ← → la cambian. */
+    fun moverEdicionPerfil(df: Int, dc: Int) {
+        val e = estado.value
+        val ed = e.extra.edicionPerfil ?: return
+        val conD = e.extra.discordAvatar.isNotBlank()
+        if (df != 0) {
+            var f = ed.fila
+            do { f += df } while (f in 0 until FilasEdicion.TOTAL && !FilasEdicion.visible(f, SocialDiscord.disponible))
+            if (f !in 0 until FilasEdicion.TOTAL) return
+            cambiarEdicion { it.copy(fila = f, col = it.col.coerceIn(0, FilasEdicion.ancho(f, conD) - 1)) }
+            Vibracion.mover()
+            return
+        }
+        if (ed.fila == FilasEdicion.CONSOLA) { ciclarConsolaFav(dc); return }
+        val n = FilasEdicion.ancho(ed.fila, conD)
+        val c = (ed.col + dc).coerceIn(0, n - 1)
+        if (c != ed.col) { cambiarEdicion { it.copy(col = c) }; Vibracion.mover() }
+    }
+
+    private fun ciclarConsolaFav(d: Int) {
+        val ids = listOf("") + estado.value.consolasConJuegos.map { it.id }
+        cambiarEdicion { ed ->
+            val i = ids.indexOf(ed.perfil.consolaFav).coerceAtLeast(0)
+            ed.copy(perfil = ed.perfil.copy(consolaFav = ids[(i + d).mod(ids.size)]))
+        }
+    }
+
+    /** Usa lo que está en ([fila], [col]): con A o con un toque. */
+    fun usarEdicionPerfil(fila: Int, col: Int = 0) {
+        val e = estado.value
+        val ed = e.extra.edicionPerfil ?: return
+        cambiarEdicion { it.copy(fila = fila, col = col) }
+        val p = ed.perfil
+        when (fila) {
+            FilasEdicion.FOTO -> when (FilasEdicion.fuentes(e.extra.discordAvatar.isNotBlank()).getOrNull(col)) {
+                "personaje" -> cambiarEdicion { it.copy(perfil = p.copy(foto = "", fotoDiscord = false, personaje = if (p.personaje == INICIAL) "gato" else p.personaje)) }
+                "discord" -> cambiarEdicion { it.copy(perfil = p.copy(fotoDiscord = true)) }
+                "galeria" -> pedirImagen("perfilFoto")
+                INICIAL -> cambiarEdicion { it.copy(perfil = p.copy(foto = "", fotoDiscord = false, personaje = INICIAL)) }
+            }
+            FilasEdicion.PERSONAJES_1, FilasEdicion.PERSONAJES_2 -> PERSONAJES.getOrNull((fila - 1) * 4 + col)?.let { (id, _) ->
+                cambiarEdicion { it.copy(perfil = p.copy(personaje = id, foto = "", fotoDiscord = false)) }
+            }
+            FilasEdicion.NOMBRE -> abrirTexto("nombre", ed.nombre)
+            FilasEdicion.APODO -> abrirTexto("perfil_apodo", p.apodo)
+            FilasEdicion.FECHA -> abrirTexto("perfil_nacimiento", p.nacimiento.split("-").takeIf { it.size == 3 }?.reversed()?.joinToString("/").orEmpty())
+            FilasEdicion.CONSOLA -> ciclarConsolaFav(1)
+            FilasEdicion.COLOR -> Perfil.COLORES.getOrNull(col)?.let { (_, c) -> cambiarEdicion { it.copy(perfil = p.copy(color = c)) } }
+            FilasEdicion.PRESENCIA -> cambiarEdicion { it.copy(presencia = !it.presencia) }
+            FilasEdicion.SALUDO -> cambiarEdicion { it.copy(saludo = !it.saludo) }
+            FilasEdicion.HORAS -> cambiarEdicion { it.copy(perfil = p.copy(mostrarHoras = !p.mostrarHoras)) }
+            FilasEdicion.BOTONES -> if (col == 0) guardarEdicionPerfil() else cancelarEdicionPerfil()
+        }
     }
 
     fun guardarPerfil(nuevo: Perfil) {
@@ -2555,7 +2634,11 @@ object Diptico {
         actualizar { it.copy(extra = it.extra.copy(perfil = nuevo)) }
     }
 
-    fun cambiarPerfil(f: (Perfil) -> Perfil) = guardarPerfil(f(estado.value.extra.perfil))
+    /** Cambia el perfil; si estás en el editor, cambia el borrador (se guarda con A · Guardar). */
+    fun cambiarPerfil(f: (Perfil) -> Perfil) {
+        if (estado.value.extra.edicionPerfil != null) cambiarEdicion { it.copy(perfil = f(it.perfil)) }
+        else guardarPerfil(f(estado.value.extra.perfil))
+    }
 
     /** Lo que se muestra en la tarjeta: tus horas, tu juego más jugado, la racha, los logros de DIPPO y tus favoritos. */
     fun resumenPerfil(e: Estado): ResumenPerfil {
@@ -2581,6 +2664,10 @@ object Diptico {
         val consolas = e.consolasConJuegos
         val fechaEscrita = pf.nacimiento.split("-").takeIf { it.size == 3 }?.reversed()?.joinToString("/").orEmpty()
         val lista = mutableListOf(
+            Opcion("Editar mi perfil", "Foto, personaje, datos y color", Icono.LAPIZ,
+                "Abre el editor: con dos pantallas, abajo cambias tus datos y arriba ves tu tarjeta tal como va quedando. Se guarda con A.", grupo = "Tu perfil") {
+                editarPerfil()
+            },
             Opcion("Ver mi perfil", "Abrir mi tarjeta", Icono.PERFIL, "Tu tarjeta con tus horas, tu racha, tus logros y tus juegos favoritos.", grupo = "Tu perfil") {
                 cerrarPanel(); abrirPerfil(android.view.Display.DEFAULT_DISPLAY, 0.5f, 0.14f)
             },
@@ -3319,6 +3406,12 @@ object Diptico {
         }
         if (e.panel == Panel.CLAVE && e.textoPara == "buscar_imagen") {
             actualizar { it.copy(panel = Panel.IMAGENES, indice = 0) }
+            return
+        }
+        // Escribiendo un dato del perfil desde el editor: se vuelve al editor (no a los ajustes).
+        if (e.panel == Panel.CLAVE && e.extra.edicionPerfil != null && (e.textoPara == "nombre" || e.textoPara.startsWith("perfil_"))) {
+            claveDesde = null
+            actualizar { it.copy(panel = Panel.NINGUNO) }
             return
         }
         if (e.panel == Panel.CLAVE && e.configurado) {
@@ -8037,7 +8130,7 @@ object Diptico {
                 cambiarPerfil { it.copy(nacimiento = f) }
                 avisar(if (f.isEmpty()) "Fecha quitada" else "Fecha guardada")
             }
-            "nombre" -> {
+            "nombre" -> if (e.extra.edicionPerfil != null) cambiarEdicion { it.copy(nombre = t.take(24)) } else {
                 almacen.guardarTexto("nombre", t.take(24))
                 actualizar { it.copy(nombre = t.take(24)) }
                 if (t.isNotBlank()) avisar("¡Hola, ${t.take(24)}!")

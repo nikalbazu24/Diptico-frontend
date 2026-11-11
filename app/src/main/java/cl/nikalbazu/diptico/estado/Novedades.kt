@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "franja-burbuja-2.0-51"
-    const val NOMBRE = "Esquinas ordenadas"
+    const val ID = "editar-perfil-2.0-52"
+    const val NOMBRE = "Editar tu perfil"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -402,8 +402,12 @@ object Novedades {
         Version("franja-ajuste-2.0-50", "Barra de abajo a tu gusto", listOf(
             Pagina("Fija o apagada", "La barra de abajo queda siempre a mano. Si prefieres más espacio, apágala en Ajustes buscando «Barra de abajo».", Icono.APPS, 0xFF2EC4A6),
         )),
-        Version(ID, "Barra con burbuja", listOf(
+        Version("franja-burbuja-2.0-51", "Barra con burbuja", listOf(
             Pagina("Sin marcos y escondida abajo", "Los íconos de tus apps van sin casillas ni marcos. La barra se esconde hacia abajo y deja solo una barrita: tócala y la barra sale como una burbuja (y con otro toque vuelve a esconderse).", Icono.APPS, 0xFF3BA8FF),
+        )),
+        Version(ID, "Editar tu perfil", listOf(
+            Pagina("Tu perfil, en dos pantallas", "Toca tu foto y elige «Editar perfil»: abajo cambias tu foto, tu personaje, tus datos, tu color y lo que muestras; arriba ves tu tarjeta tal como va quedando. Nada se guarda hasta que aprietas A · Guardar (o Start). B cancela.", Icono.PERFIL, 0xFFFF7A59, "A · Guardar"),
+            Pagina("Tu inicial como foto", "Si no quieres foto ni personaje, elige «Mi inicial»: tu perfil muestra la primera letra de tu nombre sobre tu color.", Icono.TEXTO, 0xFF9B6BFF),
         )),
     )
 

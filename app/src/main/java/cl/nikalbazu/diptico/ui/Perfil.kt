@@ -1,6 +1,5 @@
 package cl.nikalbazu.diptico.ui
 
-import androidx.compose.foundation.layout.widthIn
 
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -109,8 +108,20 @@ fun BotonPerfil(tam: Float = 26f) {
  * y se cierra encogiéndose de vuelta hacia ella. B o tocar afuera la cierra; A abre los ajustes del perfil.
  */
 @Composable
-fun PanelPerfil(e: Estado, miPantalla: Int) {
-    val abierto = e.extra.perfilEn == miPantalla
+fun PanelPerfil(e: Estado, miPantalla: Int, rol: Rol = Rol.SUPERIOR) {
+    val ed = e.extra.edicionPerfil
+    val dividida = ed != null && Diptico.edicionDividida(e)
+    val abierto = when {
+        // Escribiendo un dato (teclado arriba): la tarjeta se aparta para no taparlo.
+        ed != null && e.panel != cl.nikalbazu.diptico.estado.Panel.NINGUNO -> false
+        // Editando con dos pantallas: la tarjeta va siempre arriba (el editor está abajo).
+        dividida -> rol == Rol.SUPERIOR
+        // Editando en una pantalla: el editor la cubre entera.
+        ed != null -> false
+        else -> e.extra.perfilEn == miPantalla
+    }
+    // Si la tarjeta se abrió abajo, al editar se queda arriba también después de guardar.
+    LaunchedEffect(dividida, rol, miPantalla) { if (dividida && rol == Rol.SUPERIOR && e.extra.perfilEn != miPantalla) Diptico.moverPerfilA(miPantalla) }
     val animar = LocalMovimiento.current
     val t by animateFloatAsState(
         if (abierto) 1f else 0f,
@@ -121,7 +132,9 @@ fun PanelPerfil(e: Estado, miPantalla: Int) {
     val esc = LocalEscala.current
     val ox = e.extra.perfilOx
     val oy = e.extra.perfilOy
-    val color = Color(e.extra.perfil.color)
+    // Mientras editas, la tarjeta muestra el borrador: ves cómo queda antes de guardar.
+    val ev = remember(e, ed) { if (ed != null) e.copy(nombre = ed.nombre, extra = e.extra.copy(perfil = ed.perfil)) else e }
+    val color = Color(ev.extra.perfil.color)
     Box(Modifier.fillMaxSize()) {
         // Oscurece un poco más lo de atrás (el desenfoque lo pone Raiz).
         Box(
@@ -147,7 +160,7 @@ fun PanelPerfil(e: Estado, miPantalla: Int) {
                     .border(esc.d(1.5f), color.copy(alpha = 0.55f), forma)
                     .clickable(remember { MutableInteractionSource() }, indication = null) {}
                     .testTag("panel-perfil"),
-            ) { ContenidoPerfil(e) }
+            ) { ContenidoPerfil(ev) }
         }
     }
 }
@@ -161,15 +174,6 @@ private fun ContenidoPerfil(e: Estado) {
     val nombre = e.nombre.ifBlank { pf.apodo.ifBlank { "Jugador" } }
     val angosta = esc.angosta
     Column(Modifier.fillMaxSize().padding(esc.d(if (angosta) 16 else 22))) {
-        if (e.extra.perfilEdita >= 0) {
-            EditorPerfil(e, color, Modifier.weight(1f).fillMaxWidth())
-            Spacer(Modifier.height(esc.d(10)))
-            Box(
-                Modifier.clip(RoundedCornerShape(50)).background(color).clickable { Diptico.dejarDeEditarPerfil() }
-                    .padding(horizontal = esc.d(16), vertical = esc.d(7)),
-            ) { Texto("B · Listo", 13.5f, color = if (color.luminance2() > 0.55f) Color(0xFF14101A) else Color.White, lineas = 1) }
-            return@Column
-        }
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
             if (angosta) {
                 // Pantalla casi cuadrada: arriba tu foto y tu nombre, y abajo las pastillas y los números (sin favoritos, para que quepa todo).
@@ -193,6 +197,23 @@ private fun ContenidoPerfil(e: Estado) {
             }
         }
         Spacer(Modifier.height(esc.d(10)))
+        if (e.extra.edicionPerfil != null) {
+            // Editando abajo: aquí solo se avisa, y los botones guardan o cancelan igual que allá.
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).padding(horizontal = esc.d(14), vertical = esc.d(7))) {
+                    Texto("✎ Editando en la pantalla de abajo", 13.5f, color = TextoClaro, lineas = 1)
+                }
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).background(color).clickable { Diptico.guardarEdicionPerfil() }
+                        .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+                ) { Texto("A · Guardar", 13.5f, color = if (color.luminance2() > 0.55f) Color(0xFF14101A) else Color.White, lineas = 1) }
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).clickable { Diptico.cancelarEdicionPerfil() }
+                        .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+                ) { Texto("B · Cancelar", 13.5f, color = TextoClaro, lineas = 1) }
+            }
+            return@Column
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
             Box(
                 Modifier.clip(RoundedCornerShape(50)).background(color).clickable { Diptico.editarPerfil() }
@@ -365,36 +386,3 @@ internal fun PreviaPerfil(e: Estado) {
 }
 
 
-/** Tus datos para cambiar ahí mismo, dentro de la tarjeta: ↑ ↓ eliges, A cambia, ← vuelve atrás en las que tienen valores. */
-@Composable
-private fun EditorPerfil(e: Estado, color: Color, modifier: Modifier) {
-    val esc = LocalEscala.current
-    val opciones = remember(e.extra.perfil, e.nombre, e.extra.discordAvatar) { Diptico.opcionesEdicionPerfil(e) }
-    val lista = androidx.compose.foundation.lazy.rememberLazyListState()
-    LaunchedEffect(e.extra.perfilEdita) { if (e.extra.perfilEdita in opciones.indices) lista.animateScrollToItem((e.extra.perfilEdita - 2).coerceAtLeast(0)) }
-    Column(modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-            FotoPerfil(e.extra.perfil, 52f)
-            Column { Texto("Editar mi perfil", 20f, color = TextoClaro, lineas = 1); Texto("Los cambios se guardan solos", 11.5f, color = TextoClaro.copy(alpha = .6f), lineas = 1) }
-        }
-        Spacer(Modifier.height(esc.d(8)))
-        androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxWidth().weight(1f), state = lista, verticalArrangement = Arrangement.spacedBy(esc.d(4))) {
-            items(opciones.size) { i ->
-                val o = opciones[i]
-                val elegida = i == e.extra.perfilEdita
-                Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14)))
-                        .background(if (elegida) color.copy(alpha = .28f) else Color.White.copy(alpha = .06f))
-                        .then(if (elegida) Modifier.border(esc.d(1.5f), color, RoundedCornerShape(esc.d(14))) else Modifier)
-                        .clickable { Diptico.usarEdicionPerfil(i) }
-                        .padding(horizontal = esc.d(14), vertical = esc.d(9)),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    o.icono?.let { IconoDiptico(it, TextoClaro, 16f); Spacer(Modifier.width(esc.d(10))) }
-                    Texto(o.titulo, 14f, color = TextoClaro, lineas = 1, modifier = Modifier.weight(1f))
-                    Texto(o.valor, 12.5f, color = TextoClaro.copy(alpha = .7f), lineas = 1, traducir = false, modifier = Modifier.widthIn(max = esc.d(200)))
-                }
-            }
-        }
-    }
-}

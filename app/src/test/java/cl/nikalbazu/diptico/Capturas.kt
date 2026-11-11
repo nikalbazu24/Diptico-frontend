@@ -1362,6 +1362,22 @@ class Capturas {
         ),
         Rol.INFERIOR, mi = 1,
     )
+    // ---------- Editar perfil (abajo) con la tarjeta arriba ----------
+    private fun editando(fila: Int, col: Int, personaje: String = "zorro", color: Long = 0xFF23C486, una: Boolean = false): Estado {
+        val e = conPerfil(abierto = 0)
+        val ed = cl.nikalbazu.diptico.estado.EdicionPerfil(
+            e.extra.perfil.copy(personaje = personaje, color = color), "Nico", presencia = true, saludo = true, fila = fila, col = col,
+        )
+        return e.copy(unaPantalla = una, extra = e.extra.copy(edicionPerfil = ed))
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t352_editar_perfil_abajo() = foto("352_editar_perfil_abajo", editando(cl.nikalbazu.diptico.estado.FilasEdicion.PERSONAJES_2, 2), Rol.INFERIOR, mi = 1)
+    @Test fun t353_editar_perfil_tarjeta_arriba() = foto("353_editar_perfil_tarjeta_arriba", editando(cl.nikalbazu.diptico.estado.FilasEdicion.PERSONAJES_2, 2), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t354_editar_perfil_color() = foto("354_editar_perfil_color", editando(cl.nikalbazu.diptico.estado.FilasEdicion.COLOR, 6, personaje = "inicial", color = 0xFF9B6BFF), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t355_editar_perfil_guardar() = foto("355_editar_perfil_guardar", editando(cl.nikalbazu.diptico.estado.FilasEdicion.BOTONES, 0, personaje = "pixel", color = 0xFFFFC94D), Rol.INFERIOR, mi = 1)
+    @Test fun t356_editar_perfil_una_pantalla() = foto("356_editar_perfil_una_pantalla", editando(cl.nikalbazu.diptico.estado.FilasEdicion.NOMBRE, 0, una = true), Rol.UNICA)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)
