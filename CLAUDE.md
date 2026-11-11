@@ -345,3 +345,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   Ajustes › Tu perfil, y `vigilarTuAno` avisa una vez en diciembre. Teclas: B cierra. Raiz y `ventanaEncima` la cuentan como ventana (desenfoque).
 - Logros en vivo: `revisarLogrosDippo` cuenta el tiempo y la partida en curso (antes solo se sumaban al cerrar la sesión); `EnJuego` muestra «Logro de DIPPO
   desbloqueado» 10 s con DIPPO celebrando y despierta la pantalla. Novedades `tu-ano-2.0-42`. Capturas t350–t351, test `TuAnoTest`.
+
+## Biblioteca ordenada + perfil en la tarjeta (10 nov, v1.1-beta.341)
+- Carpeta «Todos los juegos» apagada por defecto: `extra.carpetaTodos` (clave `carpetaTodos2`, opción en `opcionesEstante`); `pestanas`
+  solo incluye "todo" si está activa (o si no hay consolas). `consolaDeCarpeta(e)` saca la selección de "todo" al volver a las carpetas.
+  "todo" sigue existiendo como estado interno (saltos a un juego desde el inicio).
+- Pistas de botones de `CarpetasConsolas` pasaron a `CabeceraCarpetas` (Biblioteca/N sistemas · pistas · Ordenar).
+- Perfil: `extra.perfilEdita` (fila elegida); `editarPerfil` abre `EditorPerfil` dentro de `PanelPerfil`; `usarEdicionPerfil` cierra la
+  tarjeta si la opción abre otro panel. Teclas: ↑↓ eligen, A/→ cambia, ← menos, B listo. Novedades `biblioteca-ordenada-2.0-45`.
+- PENDIENTE (Opus): lentitud general (medir antes: `Estado` entero recompone todo); carpetas movibles a gusto y en widgets
+  (colecciones) — boceto primero. Sin capturas revisadas de esta versión.
