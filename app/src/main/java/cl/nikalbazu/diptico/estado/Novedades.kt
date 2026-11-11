@@ -10,7 +10,7 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "editar-perfil-2.0-52"
+    const val ID = "editar-perfil-2.0-53"
     const val NOMBRE = "Editar tu perfil"
 
     /**
@@ -405,9 +405,12 @@ object Novedades {
         Version("franja-burbuja-2.0-51", "Barra con burbuja", listOf(
             Pagina("Sin marcos y escondida abajo", "Los íconos de tus apps van sin casillas ni marcos. La barra se esconde hacia abajo y deja solo una barrita: tócala y la barra sale como una burbuja (y con otro toque vuelve a esconderse).", Icono.APPS, 0xFF3BA8FF),
         )),
-        Version(ID, "Editar tu perfil", listOf(
+        Version("editar-perfil-2.0-52", "Editar tu perfil", listOf(
             Pagina("Tu perfil, en dos pantallas", "Toca tu foto y elige «Editar perfil»: abajo cambias tu foto, tu personaje, tus datos, tu color y lo que muestras; arriba ves tu tarjeta tal como va quedando. Nada se guarda hasta que aprietas A · Guardar (o Start). B cancela.", Icono.PERFIL, 0xFFFF7A59, "A · Guardar"),
             Pagina("Tu inicial como foto", "Si no quieres foto ni personaje, elige «Mi inicial»: tu perfil muestra la primera letra de tu nombre sobre tu color.", Icono.TEXTO, 0xFF9B6BFF),
+        )),
+        Version(ID, "Editor con fondo difuminado", listOf(
+            Pagina("Como todas las ventanas", "El editor del perfil ahora deja ver tu inicio difuminado detrás, igual que el resto de las ventanas de Díptico.", Icono.PERFIL, 0xFFFF7A59),
         )),
     )
 
