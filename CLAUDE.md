@@ -413,3 +413,21 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Novedades `fluido-flotante-2.0-54` (la cadena de `NavegacionTest` ya incluye `partidas-a-salvo-2.0-53`).
 - Pendiente Sonnet: «DIPPO aparece solo al hablar en Ajustes» (no quedó claro dónde sale hoy; preguntar a Nicolás), traducciones (#28),
   retoque de «Tu año» (`fix/tu-ano-retoque`). Temas propios/calendario = Opus.
+
+## Switch 2 y ports nativos (11 nov, noche, rama `fix/switch2-ports`, Opus)
+- APKs leídos (Nicolás los adjuntó): **NovaS 0.1.1** `io.github.nova5emu.novas` (derivado de Eden: `org.yuzu.yuzu_emu.activities.EmulationActivity`,
+  TECH_DISCOVERED + content URI, Android 13+, 12 GB, Adreno; .nup sin llaves). **Banana Native 0.2.4** `dev.bananative.android` (nxnative: ports nativos de
+  Switch 2; alias exportado `dev.bananative.android.Launch` → FrontendLaunch con extra `game` = ruta absoluta del .nup, o `title_id`; alias `.Open` VIEW .nup;
+  pide «Acceso a todos los archivos»). Juegos con libnxlaunch: Mario Kart World 0400C3F00006E000, DK Bananza 040074A01BF12000, Splatoon Raiders
+  0400380020056000, Pokopia 0400A3A01EE4C000, Zelda OoT S2 0400486024DEC000.
+- `assets/sistemas.json` (editado a mano, OJO si se regenera con herramientas): reglas NOVAS y BANANA-NATIVE; switch2 ext +nup, órdenes NovaS y Banana primero;
+  switch con NovaS al final.
+- `estado/Nativos.kt`: catálogo (`JUEGOS_BANANA`, 30 `PORTS` con paquetes del pack Obtainium Recomp-Decomp), `recomendado(ctx, juego)` (Banana para esos
+  5 si está instalada; va entre el emulador del juego y el de la consola en `jugarComprobado`/`volverALaPartida`), `equipo(ctx)`, extensiones
+  `abrirNativos/cerrarNativos/pestanaNativos/moverNativos/usarNativo/entradasNativos`. Ports conocidos instalados entran solos a la carpeta Ports (`todosCrudos`).
+- `ui/CentroNativos.kt` (`CentroNativos(e, rol)` en Raiz; `extra.nativosEn/nativosPestana/nativosSel`): dos pantallas = lista abajo + detalle arriba;
+  una = lado a lado. Teclas: cruceta, L1/R1/←→ pestaña, A, B. Accesos: Ajustes › Biblioteca (primera opción) y pastilla en `CabeceraSistema` de switch2/ports.
+- Barra de abajo: ahora superpuesta (`FranjaAccesos(e, Modifier.align(BottomCenter))` en PantallaInferior), `LocalAireAbajo` + `ALTO_FRANJA_*` para el relleno
+  de las rejillas; lupa/ajustes/cajón sin círculo (ícono con sombra). Globito de DIPPO oculto con cualquier panel/ventana (`BurbujaDippoCapa(oculta=)`).
+- Rendimiento: detrás del desenfoque `LocalMovimiento` = false (la vitrina deja de mecerse), `CarpetaBiblioteca` → `CarpetaCuerpo` sin Estado,
+  trama de `ArteCarpeta` con un solo `drawPoints`. Novedades `switch2-ports-2.0-55`. Capturas t366–t371.
