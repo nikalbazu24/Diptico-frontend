@@ -358,3 +358,6 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - v1.1-beta.343 (Opus): `opcionesSeccion` cachea por `e.copy(indice=0, enOpciones=false)` (antes se rearmaba todo el menú en cada paso)
   y `remember` de `ui/Menu.kt` igual; transiciones ×0,65 (`RAPIDEZ` en `ui/Movimiento.kt`). Novedades `mas-rapido-2.0-46`.
   Falta: rendimiento de la vitrina de cajas 3D (medir en la Thor) y carpetas movibles + carpeta como widget/colección (boceto primero).
+- v1.1-beta.348: abajo, `CabeceraCarpetas` = `EsquinasArriba(e)` (DIPPO izq., hora/batería al centro, `BotonPerfil` der.; sin «Biblioteca»/«Ordenar»).
+  `FranjaAccesos`: lupa izq., ajustes der., dock al centro en píldora `superficieApp(p.superficie)` + borde `p.linea`. Nicolás quiere
+  DIPPO/perfil en la parte de arriba de la PANTALLA DE ABAJO (no en la barra de la pantalla superior). Novedades `esquinas-2.0-48`.
