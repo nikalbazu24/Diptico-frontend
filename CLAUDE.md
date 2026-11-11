@@ -367,3 +367,19 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - beta.35x «Barra con burbuja»: `IconoApp(desnudo = true)` (sin casilla/marco) en `FilaDock`. `FranjaAccesos` = Column: barrita (`dock-repliegue`,
   siempre visible, alterna `extra.dockVisible`) + `AnimatedVisibility` con entrada burbuja (spring + scaleIn desde abajo al centro) y salida hacia abajo;
   esconde TODA la barra (lupa, apps, ajustes). `BotonRepliegue` borrado. Novedades `franja-burbuja-2.0-51`. Sin capturas revisadas.
+
+## Editar perfil abajo + tarjeta arriba (11 nov, rama `fix/editar-perfil`, Opus)
+- Boceto: canvas 5041841b (`Editar.dc.html` abajo, `Main.dc.html` tarjeta), adaptado a horizontal (Nicolás lo aprobó).
+- `EstadoExtra.edicionPerfil: EdicionPerfil?` (reemplaza `perfilEdita`): borrador con perfil, nombre, `presencia` (discordPresencia),
+  `saludo` (dippoSaludo), `fila`/`col`. `FilasEdicion` (estado/Perfil.kt) da el orden: FOTO, PERSONAJES_1/2, NOMBRE, APODO, FECHA,
+  CONSOLA, COLOR, PRESENCIA (solo con kit), SALUDO, HORAS, BOTONES.
+- `Diptico.editarPerfil/cancelarEdicionPerfil/guardarEdicionPerfil/moverEdicionPerfil(df, dc)/usarEdicionPerfil(fila, col)`,
+  `edicionDividida(e)` (= dos pantallas y sin partida), `moverPerfilA`. `cambiarPerfil` escribe en el borrador si hay edición
+  (así la foto de la galería y el apodo/fecha del teclado van al borrador). Texto "nombre" con edición → borrador; `cerrarPanel`
+  desde CLAVE vuelve al editor (panel NINGUNO).
+- `ui/EditorPerfil.kt` (`EditorPerfilPantalla(e, rol, mi)` en Raiz tras `PanelPerfil(e, mi, rol)`): se ve con `panel == NINGUNO`;
+  la tarjeta se aparta mientras se escribe. Tarjeta muestra el borrador y pastillas «Editando abajo · A Guardar · B Cancelar».
+- Teclas: cruceta (al bajar, repite), A usa, Start guarda, B cancela. Foto «Mi inicial» = `personaje = INICIAL` (letra del nombre).
+- Ajustes › Tu perfil: nueva primera opción «Editar mi perfil». Marco y título siguen solo en Ajustes (el boceto no los tiene).
+- Del boceto NO se hizo «Mostrar mi perfil a mis amigos» (no hay nada detrás que lo use). Novedades `editar-perfil-2.0-52`. Capturas t352–t356.
+- El empuje forzado a `fix/revision-capturas` lo bloquea la sesión: se fusiona la rama nueva encima (merge normal).
