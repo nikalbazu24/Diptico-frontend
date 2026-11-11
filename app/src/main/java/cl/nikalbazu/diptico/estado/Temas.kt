@@ -172,6 +172,46 @@ object Temas {
     private fun f(id: String, nombre: String, donde: String, a: Long, b: Long, c: Long, decor: String, mensaje: String, base: String = "auto", paises: Set<String> = emptySet()) =
         Fiesta(id, nombre, donde, Tema("fiesta_$id", nombre, a, b, c, base, decor, mensaje), paises)
 
+    // OJO: va antes de [fiestas], que lo usa al armarse (un objeto se inicializa en orden).
+    /**
+     * Cada fiesta es un tema completo, no solo colores: su trama de fondo, su acabado y la forma de sus botones.
+     * (trama, acabado, forma, fondo). Las que no están aquí quedan con el estilo base.
+     */
+    private val ESTILO_FIESTA: Map<String, List<Any>> = mapOf(
+        "anionuevo" to listOf("cielo", "brillo", "capsula", 0xFF0B1026L),
+        "navidad" to listOf("rombos", "brillo", "capsula", 0xFF16130F),
+        "fiestaspatrias" to listOf("diagonal", "degradado", "bisel", 0L),
+        "halloween" to listOf("cielo", "degradado", "bisel", 0xFF140B1F),
+        "muertos" to listOf("puntos", "brillo", "capsula", 0xFF1A0E1E),
+        "lunar" to listOf("rombos", "brillo", "bisel", 0xFF1E0A0C),
+        "diwali" to listOf("puntos", "brillo", "capsula", 0xFF1C1206),
+        "janucá" to listOf("cielo", "vidrio", "capsula", 0xFF0B1226),
+        "sanvalentin" to listOf("puntos", "degradado", "capsula", 0L),
+        "carnaval" to listOf("diagonal", "brillo", "capsula", 0L),
+        "holi" to listOf("barrido", "brillo", "capsula", 0L),
+        "hanami" to listOf("ondas", "degradado", "capsula", 0L),
+        "pascua" to listOf("puntos", "degradado", "capsula", 0L),
+        "songkran" to listOf("ondas", "vidrio", "capsula", 0L),
+        "tierra" to listOf("ondas", "degradado", "recta", 0L),
+        "orgullo" to listOf("barrido", "brillo", "capsula", 0L),
+        "andino" to listOf("rombos", "degradado", "bisel", 0xFF120F1C),
+        "gamer" to listOf("reticula", "brillo", "pixel", 0xFF07101A),
+        "friki" to listOf("lcd", "brillo", "pixel", 0xFF0D0A1F),
+        "glorias" to listOf("ondas", "degradado", "recta", 0xFF07132B),
+        "patrimonio" to listOf("papel", "liso", "recta", 0L),
+        "libro" to listOf("papel", "liso", "recta", 0L),
+        "profesor" to listOf("papel", "degradado", "recta", 0L),
+        "tirana" to listOf("diagonal", "brillo", "bisel", 0xFF1C0A16),
+        "musica" to listOf("ondas", "brillo", "capsula", 0xFF120E22),
+        "oktoberfest" to listOf("rombos", "degradado", "bisel", 0L),
+        "gracias" to listOf("papel", "degradado", "recta", 0L),
+    )
+
+    private fun conEstiloDeFiesta(fi: Fiesta): Fiesta {
+        val est = ESTILO_FIESTA[fi.id] ?: return fi
+        return fi.copy(tema = fi.tema.copy(trama = est[0] as String, acabado = est[1] as String, forma = est[2] as String, fondo = est[3] as Long))
+    }
+
     val fiestas = listOf(
         f("anionuevo", "Año Nuevo", "Todo el mundo", 0xFFFFC93C, 0xFFFF5D8F, 0xFF3BA8FF, "fuegos", "¡Feliz año nuevo!", "oscuro"),
         f("reyes", "Día de Reyes", "España y Latinoamérica", 0xFFFFC93C, 0xFF8E6CF0, 0xFFFF7A59, "estrellas", "¡Feliz Día de Reyes!"),
@@ -213,45 +253,6 @@ object Temas {
         f("libro", "Día del Libro", "Todo el mundo", 0xFFB45309, 0xFF3D5A80, 0xFFF2CC8F, "hojas", "Día del Libro: ¿y si hoy lees un rato?"),
         f("friki", "Día del Orgullo Friki", "España y Latinoamérica", 0xFF7B61FF, 0xFF00E5FF, 0xFFFF2E97, "estrellas", "¡Feliz Día del Orgullo Friki!", "oscuro"),
     ).map { conEstiloDeFiesta(it) }
-
-    /**
-     * Cada fiesta es un tema completo, no solo colores: su trama de fondo, su acabado y la forma de sus botones.
-     * (trama, acabado, forma, fondo). Las que no están aquí quedan con el estilo base.
-     */
-    private val ESTILO_FIESTA: Map<String, List<Any>> by lazy { mapOf(
-        "anionuevo" to listOf("cielo", "brillo", "capsula", 0xFF0B1026L),
-        "navidad" to listOf("rombos", "brillo", "capsula", 0xFF16130F),
-        "fiestaspatrias" to listOf("diagonal", "degradado", "bisel", 0L),
-        "halloween" to listOf("cielo", "degradado", "bisel", 0xFF140B1F),
-        "muertos" to listOf("puntos", "brillo", "capsula", 0xFF1A0E1E),
-        "lunar" to listOf("rombos", "brillo", "bisel", 0xFF1E0A0C),
-        "diwali" to listOf("puntos", "brillo", "capsula", 0xFF1C1206),
-        "janucá" to listOf("cielo", "vidrio", "capsula", 0xFF0B1226),
-        "sanvalentin" to listOf("puntos", "degradado", "capsula", 0L),
-        "carnaval" to listOf("diagonal", "brillo", "capsula", 0L),
-        "holi" to listOf("barrido", "brillo", "capsula", 0L),
-        "hanami" to listOf("ondas", "degradado", "capsula", 0L),
-        "pascua" to listOf("puntos", "degradado", "capsula", 0L),
-        "songkran" to listOf("ondas", "vidrio", "capsula", 0L),
-        "tierra" to listOf("ondas", "degradado", "recta", 0L),
-        "orgullo" to listOf("barrido", "brillo", "capsula", 0L),
-        "andino" to listOf("rombos", "degradado", "bisel", 0xFF120F1C),
-        "gamer" to listOf("reticula", "brillo", "pixel", 0xFF07101A),
-        "friki" to listOf("lcd", "brillo", "pixel", 0xFF0D0A1F),
-        "glorias" to listOf("ondas", "degradado", "recta", 0xFF07132B),
-        "patrimonio" to listOf("papel", "liso", "recta", 0L),
-        "libro" to listOf("papel", "liso", "recta", 0L),
-        "profesor" to listOf("papel", "degradado", "recta", 0L),
-        "tirana" to listOf("diagonal", "brillo", "bisel", 0xFF1C0A16),
-        "musica" to listOf("ondas", "brillo", "capsula", 0xFF120E22),
-        "oktoberfest" to listOf("rombos", "degradado", "bisel", 0L),
-        "gracias" to listOf("papel", "degradado", "recta", 0L),
-    ) }
-
-    private fun conEstiloDeFiesta(fi: Fiesta): Fiesta {
-        val est = ESTILO_FIESTA[fi.id] ?: return fi
-        return fi.copy(tema = fi.tema.copy(trama = est[0] as String, acabado = est[1] as String, forma = est[2] as String, fondo = est[3] as Long))
-    }
 
     /** Un tema que solo se usa ganando un logro difícil de DIPPO. */
     data class TemaExclusivo(val logro: String, val tema: Tema)
