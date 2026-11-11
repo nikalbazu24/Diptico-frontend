@@ -77,7 +77,16 @@ object Estilo {
     var efecto by mutableStateOf("degradado")
     /** Animaciones y difuminados completos (se apagan en modo ahorro). */
     var efectosCompletos by mutableStateOf(true)
+    /** Accesibilidad: alto contraste (letras secundarias y bordes más marcados). */
+    var contraste by mutableStateOf(false)
 }
+
+/** La paleta con alto contraste: lo tenue se acerca a la letra principal y las líneas se notan más. */
+fun conContraste(p: Paleta): Paleta = p.copy(
+    tenue = lerp(p.tenue, p.tinta, 0.6f),
+    linea = lerp(p.linea, p.tinta, 0.45f),
+    acentoTexto = lerp(p.acentoTexto, p.tinta, 0.25f),
+)
 
 val Uva: Color get() = Color(Estilo.tema.acento)
 val UvaSombra: Color get() = lerp(Uva, Color.Black, 0.22f)
@@ -237,7 +246,7 @@ val LocalPaleta = staticCompositionLocalOf { PaletaOscura }
  */
 @Composable
 fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f, zoom: Float = 1f, contenido: @Composable () -> Unit) {
-    val paleta = paletaDe(Estilo.tema, oscuro)
+    val paleta = paletaDe(Estilo.tema, oscuro).let { if (Estilo.contraste) conContraste(it) else it }
     BoxWithConstraints(modifier.background(paleta.fondo)) {
         val alto = if (maxHeight.value > 0f) maxHeight.value else 1f
         // En pantallas verticales (un teléfono) manda el ancho, para que nada quede fuera.

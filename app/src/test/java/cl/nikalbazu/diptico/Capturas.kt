@@ -1378,6 +1378,14 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t355_editar_perfil_guardar() = foto("355_editar_perfil_guardar", editando(cl.nikalbazu.diptico.estado.FilasEdicion.BOTONES, 0, personaje = "pixel", color = 0xFFFFC94D), Rol.INFERIOR, mi = 1)
     @Test fun t356_editar_perfil_una_pantalla() = foto("356_editar_perfil_una_pantalla", editando(cl.nikalbazu.diptico.estado.FilasEdicion.NOMBRE, 0, una = true), Rol.UNICA)
+    @Config(qualifiers = ABAJO)
+    @Test fun t357_partidas_copias() = foto("357_partidas_copias", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.SISTEMA, enOpciones = true, indice = 0,
+        extra = conPerfil().extra.copy(carpetasPartidas = listOf("content://x/tree/saves"), medidorFps = true)), Rol.INFERIOR, mi = 1)
+    @Test fun t358_alto_contraste() {
+        cl.nikalbazu.diptico.ui.Estilo.contraste = true
+        try { foto("358_alto_contraste", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 1, extra = conPerfil().extra.copy(altoContraste = true)), Rol.SUPERIOR) }
+        finally { cl.nikalbazu.diptico.ui.Estilo.contraste = false }
+    }
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)

@@ -43,7 +43,7 @@ import kotlinx.coroutines.withContext
 enum class Panel { WIDGET, ENCUADRE, APPS, EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO, MENU, CLAVE, PORTS, FICHA, TRABAJOS, BUSCAR, CENTRO, CARPETAS, ESTADISTICAS, IMAGENES, ASISTENTE, GALERIA, ESTUDIO }
 
 /** Carpetas que Díptico puede pedir. */
-enum class Carpeta { JUEGOS, MEDIA, MUSICA }
+enum class Carpeta { JUEGOS, MEDIA, MUSICA, PARTIDAS }
 
 /** Pasos del tutorial guiado del primer arranque. */
 enum class PasoTuto { BIENVENIDA, PANTALLAS, TEXTO, DISPOSICION, JUEGOS, CARPETA, EMULADORES, PORTS, PORTADAS, MUSICA, APARIENCIA, CONTROLES, LISTO }
@@ -371,6 +371,14 @@ data class EstadoExtra(
     val franjaAbajo: Boolean = true,
     /** Editando el perfil: el borrador (null = solo mirando). Con dos pantallas va abajo y la tarjeta arriba. */
     val edicionPerfil: EdicionPerfil? = null,
+    /** Carpetas donde los emuladores guardan las partidas (direcciones de Android); al terminar de jugar se respalda lo que cambió. */
+    val carpetasPartidas: List<String> = emptyList(),
+    /** Respaldar solo las partidas al terminar de jugar. */
+    val respaldoPartidas: Boolean = true,
+    /** Accesibilidad: letras secundarias y bordes más marcados. */
+    val altoContraste: Boolean = false,
+    /** Medidor de fluidez: cuadros por segundo en una esquina de cada pantalla. */
+    val medidorFps: Boolean = false,
     /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
     val termica: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -969,6 +977,10 @@ object Diptico {
                 dippoDatos = almacen.bool("dippoDatos", true),
                 carpetaTodos = almacen.bool("carpetaTodos2", false),
                 franjaAbajo = almacen.bool("franjaAbajo", true),
+                carpetasPartidas = almacen.texto("carpetasPartidas").lines().filter { it.isNotBlank() },
+                respaldoPartidas = almacen.bool("respaldoPartidas", true),
+                altoContraste = almacen.bool("altoContraste", false),
+                medidorFps = almacen.bool("medidorFps", false),
                 termica = almacen.bool("termica", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
@@ -1224,7 +1236,7 @@ object Diptico {
             e.continuacion > 0L || e.relojGrande || !e.configurado
 
     /** Hace [accion] ahora si la pantalla está libre; si no, la deja en la fila para cuando se libere. */
-    private fun cuandoHayaLugar(clave: String, accion: () -> Unit) {
+    internal fun cuandoHayaLugar(clave: String, accion: () -> Unit) {
         if (!hayAlgoEncima() && enFila.isEmpty()) { accion(); return }
         enFila.removeIf { it.first == clave }
         enFila.add(clave to accion)
@@ -1399,6 +1411,32 @@ object Diptico {
             ) { if (conDrive) respaldarAhora() else elegirDondeRespaldar() },
             if (conDrive) Opcion("Respaldar ahora", "Último: $cuando", Icono.CHECK, "Guarda el respaldo en ${e.respaldoNombre} en este momento.") { respaldarAhora() } else null,
             if (conDrive) Opcion("Cambiar dónde se guarda", e.respaldoNombre.take(28), Icono.CARPETA, "Elige otro archivo u otra carpeta para el respaldo.") { elegirDondeRespaldar() } else null,
+            Opcion(
+                "Respaldo de partidas",
+                when { e.extra.carpetasPartidas.isEmpty() -> "Elegir carpeta"; e.extra.respaldoPartidas -> "Sí · ${e.extra.carpetasPartidas.size} carpeta(s)"; else -> "No" },
+                Icono.COPIAR,
+                "Al terminar de jugar, Díptico copia los guardados que cambiaron en tus carpetas de partidas (por ejemplo RetroArch/saves). " +
+                    "Guarda las últimas ${cl.nikalbazu.diptico.data.RespaldoPartidas.VERSIONES} por juego y la más nueva viaja en tu respaldo de Drive. " +
+                    "Se recuperan desde las opciones de cada juego › Copias de partida.",
+                grupo = "Partidas",
+            ) {
+                if (estado.value.extra.carpetasPartidas.isEmpty()) pedirCarpeta?.invoke(Carpeta.PARTIDAS) ?: avisar("No pude abrir el selector de carpetas")
+                else {
+                    val v = !estado.value.extra.respaldoPartidas
+                    almacen.guardarBool("respaldoPartidas", v)
+                    actualizar { it.copy(extra = it.extra.copy(respaldoPartidas = v)) }
+                }
+            },
+            Opcion("Agregar carpeta de partidas", "Otra carpeta", Icono.CARPETA,
+                "Suma otra carpeta donde un emulador guarde sus partidas (cada emulador usa la suya).", grupo = "Partidas") {
+                pedirCarpeta?.invoke(Carpeta.PARTIDAS) ?: avisar("No pude abrir el selector de carpetas")
+            },
+            if (e.extra.carpetasPartidas.isNotEmpty()) Opcion("Quitar las carpetas de partidas", "${e.extra.carpetasPartidas.size}", Icono.BORRAR,
+                "Díptico deja de mirar esas carpetas. Las copias que ya hizo se quedan.", grupo = "Partidas") {
+                almacen.guardarTexto("carpetasPartidas", "")
+                actualizar { it.copy(extra = it.extra.copy(carpetasPartidas = emptyList())) }
+                avisar("Carpetas de partidas quitadas")
+            } else null,
             Opcion(
                 "Traer un respaldo", icono = Icono.PEGAR,
                 ayuda = "Elige un respaldo de Díptico (de Drive o de donde lo tengas) y recupera todo. Sirve para pasar tus cosas a otra consola. Reemplaza tus ajustes actuales.",
@@ -1719,6 +1757,15 @@ object Diptico {
                 actualizar { it.copy(tieneMedia = true) }
                 avisar("Imágenes de ES-DE conectadas")
                 escanear()
+            }
+            Carpeta.PARTIDAS -> {
+                val antes = estado.value.extra.carpetasPartidas
+                if (uri.toString() !in antes) {
+                    val nuevas = antes + uri.toString()
+                    almacen.guardarTexto("carpetasPartidas", nuevas.joinToString("\n"))
+                    actualizar { it.copy(extra = it.extra.copy(carpetasPartidas = nuevas)) }
+                }
+                avisar("Listo: al terminar de jugar respaldo las partidas que cambien en «${Biblioteca.nombreCarpeta(uri)}»")
             }
             Carpeta.MUSICA -> {
                 almacen.carpetaMusica = uri
@@ -2478,224 +2525,6 @@ object Diptico {
         if (estado.value.extra.amigosEn >= 0) actualizar { it.copy(extra = it.extra.copy(amigosEn = -1)) }
     }
 
-    // ---------- Tu perfil ----------
-
-    /** Lee tu perfil guardado; la primera vez lo crea (con la fecha de hoy como «desde»). */
-    private fun cargarPerfil(): Perfil {
-        val t = almacen.texto("perfil")
-        return Perfil.leer(t).also { if (t.isBlank()) almacen.guardarTexto("perfil", it.json()) }
-    }
-
-    /** Abre la tarjeta de tu perfil en [pantalla]; crece desde el punto ([ox], [oy]) = fracción del ancho y del alto donde está tu foto. */
-    fun abrirPerfil(pantalla: Int = android.view.Display.DEFAULT_DISPLAY, ox: Float = 0.92f, oy: Float = 0.07f) {
-        actualizar { it.copy(extra = it.extra.copy(perfilEn = pantalla, perfilOx = ox.coerceIn(0f, 1f), perfilOy = oy.coerceIn(0f, 1f), amigosEn = -1)) }
-    }
-
-    /** La tarjeta pasa a [pantalla] (al editar con dos pantallas, se queda arriba). */
-    fun moverPerfilA(pantalla: Int) {
-        if (estado.value.extra.perfilEn >= 0 && estado.value.extra.perfilEn != pantalla) actualizar { it.copy(extra = it.extra.copy(perfilEn = pantalla)) }
-    }
-
-    fun cerrarPerfil() {
-        if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1, edicionPerfil = null)) }
-    }
-
-    // ---------- Tu año ----------
-
-    /** Abre «Tu año» (el resumen de lo que jugaste) en [pantalla]; cierra el perfil y los amigos si estaban abiertos. */
-    fun abrirTuAno(pantalla: Int = android.view.Display.DEFAULT_DISPLAY) {
-        actualizar { it.copy(extra = it.extra.copy(anioEn = pantalla, perfilEn = -1, amigosEn = -1)) }
-    }
-
-    fun cerrarTuAno() {
-        if (estado.value.extra.anioEn >= 0) actualizar { it.copy(extra = it.extra.copy(anioEn = -1)) }
-    }
-
-    /** En diciembre, avisa una sola vez por año que «Tu año» ya está listo. */
-    private fun vigilarTuAno() {
-        scope.launch {
-            delay(20_000)
-            while (true) {
-                val c = java.util.Calendar.getInstance()
-                val anio = c.get(java.util.Calendar.YEAR)
-                if (TuAno.tocaAvisar(c.get(java.util.Calendar.MONTH) + 1, anio, almacen.texto("tuAnoAvisado")) && estado.value.configurado && estado.value.sesion == null) {
-                    almacen.guardarTexto("tuAnoAvisado", anio.toString())
-                    cuandoHayaLugar("tu-ano") { avisar("🎁 Tu año $anio con Díptico está listo: ábrelo desde tu perfil o en Ajustes"); Sonidos.aviso() }
-                }
-                delay(6 * 3_600_000L)
-            }
-        }
-    }
-
-    /** Con dos pantallas (y sin partida), el editor va abajo y la tarjeta arriba; si no, el editor ocupa la pantalla del perfil. */
-    fun edicionDividida(e: Estado) = !e.unaPantalla && e.sesion == null
-
-    /** Abre el editor del perfil con un borrador de lo que tienes ahora; nada se guarda hasta A · Guardar. */
-    fun editarPerfil() {
-        val e = estado.value
-        val x = e.extra
-        val ed = EdicionPerfil(x.perfil, e.nombre, x.discordPresencia, x.dippoSaludo)
-        val en = if (x.perfilEn >= 0) x.perfilEn else android.view.Display.DEFAULT_DISPLAY
-        actualizar {
-            it.copy(
-                panel = if (it.panel == Panel.MENU || it.panel == Panel.GALERIA) Panel.NINGUNO else it.panel,
-                extra = it.extra.copy(edicionPerfil = ed, perfilEn = en, perfilOx = 0.5f, perfilOy = 0.5f, amigosEn = -1, desplegable = -1),
-            )
-        }
-    }
-
-    /** B · Cancelar: se descarta el borrador y queda la tarjeta como estaba. */
-    fun cancelarEdicionPerfil() {
-        val ed = estado.value.extra.edicionPerfil ?: return
-        val e = estado.value
-        val hubo = ed.perfil != e.extra.perfil || ed.nombre != e.nombre || ed.presencia != e.extra.discordPresencia || ed.saludo != e.extra.dippoSaludo
-        actualizar { it.copy(extra = it.extra.copy(edicionPerfil = null)) }
-        if (hubo) avisar("Cambios descartados")
-    }
-
-    /** A · Guardar: el borrador pasa a ser tu perfil (nombre, foto, datos, color y privacidad). */
-    fun guardarEdicionPerfil() {
-        val e = estado.value
-        val ed = e.extra.edicionPerfil ?: return
-        if (ed.nombre != e.nombre) almacen.guardarTexto("nombre", ed.nombre)
-        almacen.guardarTexto("perfil", ed.perfil.json())
-        if (ed.presencia != e.extra.discordPresencia) {
-            almacen.guardarBool("discordPresencia", ed.presencia)
-            if (!ed.presencia) SocialDiscord.sinJuego()
-        }
-        if (ed.saludo != e.extra.dippoSaludo) almacen.guardarBool("dippoSaludo", ed.saludo)
-        actualizar {
-            it.copy(nombre = ed.nombre, extra = it.extra.copy(perfil = ed.perfil, discordPresencia = ed.presencia, dippoSaludo = ed.saludo, edicionPerfil = null))
-        }
-        Sonidos.aviso()
-        avisar(if (ed.nombre.isNotBlank()) "¡Listo, ${ed.nombre}! Tu perfil quedó guardado" else "Tu perfil quedó guardado")
-    }
-
-    private fun cambiarEdicion(f: (EdicionPerfil) -> EdicionPerfil) =
-        actualizar { s -> s.extra.edicionPerfil?.let { s.copy(extra = s.extra.copy(edicionPerfil = f(it))) } ?: s }
-
-    /** Con el mando: ↑ ↓ cambian de fila (saltando las que no se ven), ← → dentro de la fila; en «Consola favorita» ← → la cambian. */
-    fun moverEdicionPerfil(df: Int, dc: Int) {
-        val e = estado.value
-        val ed = e.extra.edicionPerfil ?: return
-        val conD = e.extra.discordAvatar.isNotBlank()
-        if (df != 0) {
-            var f = ed.fila
-            do { f += df } while (f in 0 until FilasEdicion.TOTAL && !FilasEdicion.visible(f, SocialDiscord.disponible))
-            if (f !in 0 until FilasEdicion.TOTAL) return
-            cambiarEdicion { it.copy(fila = f, col = it.col.coerceIn(0, FilasEdicion.ancho(f, conD) - 1)) }
-            Vibracion.mover()
-            return
-        }
-        if (ed.fila == FilasEdicion.CONSOLA) { ciclarConsolaFav(dc); return }
-        val n = FilasEdicion.ancho(ed.fila, conD)
-        val c = (ed.col + dc).coerceIn(0, n - 1)
-        if (c != ed.col) { cambiarEdicion { it.copy(col = c) }; Vibracion.mover() }
-    }
-
-    private fun ciclarConsolaFav(d: Int) {
-        val ids = listOf("") + estado.value.consolasConJuegos.map { it.id }
-        cambiarEdicion { ed ->
-            val i = ids.indexOf(ed.perfil.consolaFav).coerceAtLeast(0)
-            ed.copy(perfil = ed.perfil.copy(consolaFav = ids[(i + d).mod(ids.size)]))
-        }
-    }
-
-    /** Usa lo que está en ([fila], [col]): con A o con un toque. */
-    fun usarEdicionPerfil(fila: Int, col: Int = 0) {
-        val e = estado.value
-        val ed = e.extra.edicionPerfil ?: return
-        cambiarEdicion { it.copy(fila = fila, col = col) }
-        val p = ed.perfil
-        when (fila) {
-            FilasEdicion.FOTO -> when (FilasEdicion.fuentes(e.extra.discordAvatar.isNotBlank()).getOrNull(col)) {
-                "personaje" -> cambiarEdicion { it.copy(perfil = p.copy(foto = "", fotoDiscord = false, personaje = if (p.personaje == INICIAL) "gato" else p.personaje)) }
-                "discord" -> cambiarEdicion { it.copy(perfil = p.copy(fotoDiscord = true)) }
-                "galeria" -> pedirImagen("perfilFoto")
-                INICIAL -> cambiarEdicion { it.copy(perfil = p.copy(foto = "", fotoDiscord = false, personaje = INICIAL)) }
-            }
-            FilasEdicion.PERSONAJES_1, FilasEdicion.PERSONAJES_2 -> PERSONAJES.getOrNull((fila - 1) * 4 + col)?.let { (id, _) ->
-                cambiarEdicion { it.copy(perfil = p.copy(personaje = id, foto = "", fotoDiscord = false)) }
-            }
-            FilasEdicion.NOMBRE -> abrirTexto("nombre", ed.nombre)
-            FilasEdicion.APODO -> abrirTexto("perfil_apodo", p.apodo)
-            FilasEdicion.FECHA -> abrirTexto("perfil_nacimiento", p.nacimiento.split("-").takeIf { it.size == 3 }?.reversed()?.joinToString("/").orEmpty())
-            FilasEdicion.CONSOLA -> ciclarConsolaFav(1)
-            FilasEdicion.COLOR -> Perfil.COLORES.getOrNull(col)?.let { (_, c) -> cambiarEdicion { it.copy(perfil = p.copy(color = c)) } }
-            FilasEdicion.PRESENCIA -> cambiarEdicion { it.copy(presencia = !it.presencia) }
-            FilasEdicion.SALUDO -> cambiarEdicion { it.copy(saludo = !it.saludo) }
-            FilasEdicion.HORAS -> cambiarEdicion { it.copy(perfil = p.copy(mostrarHoras = !p.mostrarHoras)) }
-            FilasEdicion.BOTONES -> if (col == 0) guardarEdicionPerfil() else cancelarEdicionPerfil()
-        }
-    }
-
-    fun guardarPerfil(nuevo: Perfil) {
-        almacen.guardarTexto("perfil", nuevo.json())
-        actualizar { it.copy(extra = it.extra.copy(perfil = nuevo)) }
-    }
-
-    /** Cambia el perfil; si estás en el editor, cambia el borrador (se guarda con A · Guardar). */
-    fun cambiarPerfil(f: (Perfil) -> Perfil) {
-        if (estado.value.extra.edicionPerfil != null) cambiarEdicion { it.copy(perfil = f(it.perfil)) }
-        else guardarPerfil(f(estado.value.extra.perfil))
-    }
-
-    /** Lo que se muestra en la tarjeta: tus horas, tu juego más jugado, la racha, los logros de DIPPO y tus favoritos. */
-    fun resumenPerfil(e: Estado): ResumenPerfil {
-        val jugados = e.datos.filterValues { it.tiempo > 0 }
-        val top = jugados.maxByOrNull { it.value.tiempo }
-        val porClave = e.juegos.associateBy { it.clave }
-        val favoritos = e.datos.filterValues { it.favorito }.keys.mapNotNull { porClave[it] }.take(4)
-            .ifEmpty { jugados.entries.sortedByDescending { it.value.tiempo }.mapNotNull { porClave[it.key] }.take(4) }
-        val porConsola = jugados.entries.groupBy { porClave[it.key]?.consolaId.orEmpty() }.filterKeys { it.isNotEmpty() }
-            .mapValues { (_, v) -> v.sumOf { it.value.tiempo } }
-        val idConsola = e.extra.perfil.consolaFav.ifBlank { porConsola.maxByOrNull { it.value }?.key.orEmpty() }
-        return ResumenPerfil(
-            segundos = jugados.values.sumOf { it.tiempo },
-            masJugado = top?.let { porClave[it.key] }, masJugadoSeg = top?.value?.tiempo ?: 0L,
-            racha = rachaDias(), logros = logrosDippoGanados(), logrosTotal = LogrosDippo.LISTA.size,
-            favoritos = favoritos, juegosJugados = jugados.size,
-            consola = if (idConsola.isEmpty()) "" else (e.consolasConJuegos.firstOrNull { it.id == idConsola }?.bonito ?: Consolas.porId(idConsola)?.bonito.orEmpty()),
-        )
-    }
-
-    private fun opcionesPerfil(e: Estado): List<Opcion> {
-        val pf = e.extra.perfil
-        val consolas = e.consolasConJuegos
-        val fechaEscrita = pf.nacimiento.split("-").takeIf { it.size == 3 }?.reversed()?.joinToString("/").orEmpty()
-        val lista = mutableListOf(
-            Opcion("Editar mi perfil", "Foto, personaje, datos y color", Icono.LAPIZ,
-                "Abre el editor: con dos pantallas, abajo cambias tus datos y arriba ves tu tarjeta tal como va quedando. Se guarda con A.", grupo = "Tu perfil") {
-                editarPerfil()
-            },
-            Opcion("Ver mi perfil", "Abrir mi tarjeta", Icono.PERFIL, "Tu tarjeta con tus horas, tu racha, tus logros y tus juegos favoritos.", grupo = "Tu perfil") {
-                cerrarPanel(); abrirPerfil(android.view.Display.DEFAULT_DISPLAY, 0.5f, 0.14f)
-            },
-            Opcion("Tu año", "Ver mi resumen del año", Icono.ESTRELLA, "Tus horas, tus juegos más jugados, tu mejor mes y tu racha del año, con un comentario de DIPPO. En diciembre te aviso solo.", grupo = "Tu perfil") {
-                cerrarPanel(); abrirTuAno(android.view.Display.DEFAULT_DISPLAY)
-            },
-            Opcion("Tu nombre", e.nombre.ifBlank { "Sin nombre" }, Icono.TEXTO, "Así te saluda DIPPO y así se ve en tu perfil.", grupo = "Tus datos") { abrirTexto("nombre", estado.value.nombre) },
-            Opcion("Apodo", if (pf.apodo.isBlank()) "Sin apodo" else "@${pf.apodo}", Icono.TEXTO, "Cómo te dicen tus amigos. Se ve como @apodo.", grupo = "Tus datos") { abrirTexto("perfil_apodo", estado.value.extra.perfil.apodo) },
-            Opcion("Fecha de nacimiento", pf.nacimientoBonito().ifBlank { "Sin fecha" }, Icono.RELOJ,
-                "Escríbela así: 12/03/1990. DIPPO te felicita en tu cumpleaños, y más adelante servirá para las llamadas con amigos.", grupo = "Tus datos") { abrirTexto("perfil_nacimiento", fechaEscrita) },
-            Opcion("Mi foto", if (pf.foto.isBlank()) "Usar un personaje" else "Cambiar mi foto", Icono.PORTADA, "Elige una imagen de tu consola. Si no, se usa el personaje.", grupo = "Tu imagen") { pedirImagen("perfilFoto") },
-        )
-        if (e.extra.discordAvatar.isNotBlank()) lista += Opcion("Usar la foto de Discord", if (pf.fotoDiscord) "Sí" else "No", Icono.MUNDO,
-            "Tu foto de perfil de Discord se ve en vez de tu foto o personaje, en la barra y en tu tarjeta.", grupo = "Tu imagen") { cambiarPerfil { it.copy(fotoDiscord = !it.fotoDiscord) } }
-        if (pf.foto.isNotBlank()) lista += Opcion("Quitar mi foto", "Volver al personaje", Icono.BORRAR, "Tu foto se quita de Díptico (la imagen original no se toca).", grupo = "Tu imagen") { cambiarPerfil { it.copy(foto = "") }; avisar("Foto quitada") }
-        lista += Opcion("Mi personaje", nombrePersonaje(pf.personaje), Icono.BISA, "Ocho amigos de Díptico para elegir. Se ve cuando no tienes foto.", grupo = "Tu imagen") { abrirGaleria("personajes") }
-        lista += Opcion("Marco de la foto", "${marcoDe(pf.marco).nombre} · ${marcosDesbloqueados()} de ${MARCOS.size}", Icono.ESTRELLA,
-            "Un aro de luz que se mueve alrededor de tu foto. Los marcos nuevos se desbloquean con logros de DIPPO.", grupo = "Tu imagen") { abrirGaleria("marcos") }
-        lista += Opcion("Título", tituloDe(pf.titulo).ifBlank { "Sin título" }, Icono.TROFEO,
-            "Una frase bajo tu nombre en tu tarjeta. Se desbloquea con logros difíciles de DIPPO.", grupo = "Tu imagen") { abrirGaleria("titulos") }
-        lista += opcionLista("Mi color", Icono.PALETA, "El color del borde de tu foto y de los detalles de tu tarjeta.",
-            Perfil.COLORES.map { it.second.toString() }, Perfil.COLORES.map { it.first }, pf.color.toString(), grupo = "Tu imagen") { id -> cambiarPerfil { it.copy(color = id.toLong()) } }
-        lista += opcionLista("Consola favorita", Icono.MANDO, "La que se muestra en tu tarjeta. «La más jugada» la elige sola según tus horas.",
-            listOf("") + consolas.map { it.id }, listOf("La más jugada") + consolas.map { it.bonito }, pf.consolaFav, grupo = "Tu tarjeta") { id -> cambiarPerfil { it.copy(consolaFav = id) } }
-        lista += Opcion("Mostrar mis horas", if (pf.mostrarHoras) "Sí" else "No", Icono.RELOJ, "Si lo apagas, tu tarjeta no muestra cuántas horas has jugado.", grupo = "Tu tarjeta") { cambiarPerfil { it.copy(mostrarHoras = !it.mostrarHoras) } }
-        return lista
-    }
-
     /** Cierra el panel del QR sin conectar. */
     fun cancelarDiscord() {
         loginDiscordJob?.cancel()
@@ -2932,7 +2761,7 @@ object Diptico {
         "biblioteca" -> listOf("Opciones de biblioteca")
         "variantes_juego" -> listOf("Archivos del juego")
         "capturas_juego", "captura_acciones" -> listOf("Capturas guardadas")
-        "copias_srm" -> listOf("Copias de RetroArch")
+        "copias_srm" -> listOf("Copias de partida")
         "filtros" -> listOf("Filtrar juegos")
         "orden" -> listOf("Ordenar juegos")
         "vistas_consolas" -> listOf("Tus consolas")
@@ -3221,6 +3050,7 @@ object Diptico {
         )
         almacen.guardarDatos(datos)
         TuAno.registrar(s.clave, duracion)
+        respaldarPartida(s.clave, s.inicio, duracion)
         SocialDiscord.sinJuego()
         if (duracion >= 60 && estado.value.extra.discordTerminar) {
             val j = estado.value.juegosPorClave[s.clave]
@@ -3988,9 +3818,9 @@ object Diptico {
                 ciclarEmuladorJuego(juego.clave, consola)
             }
         }
-        if (consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
-            lista += Opcion("Copias de RetroArch", ".srm", Icono.COPIAR,
-                "Guarda o recupera una copia manual del archivo SRAM que selecciones.") { abrirCopiasPartida(juego.clave) }
+        if (estado.value.extra.carpetasPartidas.isNotEmpty() || consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
+            lista += Opcion("Copias de partida", if (estado.value.extra.carpetasPartidas.isNotEmpty()) "Automáticas" else ".srm", Icono.COPIAR,
+                "Vuelve a una partida respaldada sola al terminar de jugar, o guarda y recupera una copia manual de RetroArch (.srm).") { abrirCopiasPartida(juego.clave) }
         }
         lista += Opcion("Capturas del juego", d?.capturas?.size?.toString() ?: "0", Icono.PORTADA,
             "Junta tus capturas guardadas para verlas, compartirlas o marcar un mapa.") { abrirGaleria("capturas_juego") }
@@ -4494,6 +4324,15 @@ object Diptico {
                     val i = tamanos.indexOfFirst { kotlin.math.abs(it - estado.value.tamTexto) < 0.01f }
                     fijarTam(tamanos[(i + 1) % tamanos.size])
                 }
+                lista += Opcion(
+                    "Alto contraste", if (e.extra.altoContraste) "Sí" else "No", Icono.TEMA,
+                    "Las letras chicas y los bordes se ven más marcados, para leer mejor con poca luz o con la vista cansada.",
+                ) {
+                    val v = !estado.value.extra.altoContraste
+                    almacen.guardarBool("altoContraste", v)
+                    actualizar { it.copy(extra = it.extra.copy(altoContraste = v)) }
+                    aplicarFluidez()
+                }
             }
             Seccion.INICIO -> { lista += opcionesInicio(e); lista += opcionesDock(e) }
             Seccion.TEMAS -> {
@@ -4679,6 +4518,15 @@ object Diptico {
                         actualizar { it.copy(fluidez = l[n]) }
                         aplicarFluidez()
                     }
+                }
+                lista += Opcion(
+                    "Medidor de fluidez", if (e.extra.medidorFps) "Sí" else "No", Icono.CHISPA,
+                    "Muestra en una esquina de cada pantalla cuántos cuadros por segundo dibuja Díptico y el cuadro más lento. " +
+                        "Sirve para ver qué pantalla o qué ajuste lo pone lento. Mientras está encendido gasta un poco más de batería.",
+                ) {
+                    val v = !estado.value.extra.medidorFps
+                    almacen.guardarBool("medidorFps", v)
+                    actualizar { it.copy(extra = it.extra.copy(medidorFps = v)) }
                 }
                 lista += Opcion(
                     "Protector de pantalla", if (e.protectorMin == 0) "Nunca" else "A los ${e.protectorMin} min", Icono.RELOJ,
@@ -8206,7 +8054,7 @@ object Diptico {
     var pedirArchivo: ((String) -> Unit)? = null
     private var archivoPara = ""
 
-    private fun pedirImagen(para: String) = pedirArchivoPara(para, "image/*")
+    internal fun pedirImagen(para: String) = pedirArchivoPara(para, "image/*")
 
     private fun pedirArchivoPara(para: String, tipo: String) {
         imagenVisual = null
@@ -8218,11 +8066,40 @@ object Diptico {
     private var copiaParaExportar: java.io.File? = null
     private var opcionesCopiasPartida: List<ItemGaleria> = emptyList()
 
+    /** Al terminar de jugar: copia en segundo plano los guardados que cambiaron durante la partida. */
+    private fun respaldarPartida(clave: String, inicio: Long, duracion: Long) {
+        val x = estado.value.extra
+        if (!x.respaldoPartidas || x.carpetasPartidas.isEmpty() || duracion < 30) return
+        val carpetas = x.carpetasPartidas.map(Uri::parse)
+        scope.launch {
+            val n = withContext(Dispatchers.IO) { runCatching { cl.nikalbazu.diptico.data.RespaldoPartidas.respaldar(app, clave, carpetas, inicio) }.getOrDefault(0) }
+            if (n > 0) avisar(if (n == 1) "Partida respaldada" else "Partida respaldada ($n archivos)")
+        }
+    }
+
+    private fun restaurarPartida(copia: cl.nikalbazu.diptico.data.RespaldoPartidas.Copia) {
+        if (estado.value.sesion != null) { avisar("Cierra el juego antes de restaurar una partida"); return }
+        scope.launch {
+            val n = withContext(Dispatchers.IO) { runCatching { cl.nikalbazu.diptico.data.RespaldoPartidas.restaurar(app, copia) }.getOrDefault(0) }
+            avisar(if (n > 0) "Partida restaurada ($n archivo${if (n == 1) "" else "s"})" else "No pude restaurar: revisa que la carpeta de partidas siga conectada")
+        }
+    }
+
     private fun abrirCopiasPartida(clave: String) {
         val j = estado.value.juegos.firstOrNull { it.clave == clave } ?: return
         scope.launch {
             val copias = withContext(Dispatchers.IO) { cl.nikalbazu.diptico.data.CopiasPartida.listar(app, clave) }
-            opcionesCopiasPartida = listOf(ItemGaleria("copia-nueva", "Guardar copia .srm",
+            val auto = withContext(Dispatchers.IO) { cl.nikalbazu.diptico.data.RespaldoPartidas.listar(app, clave) }
+            val automaticas = auto.map { c ->
+                val fecha = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(c.fecha))
+                ItemGaleria("auto-${c.fecha}", "Respaldo automático · $fecha", "${c.archivos.size} archivo(s): " + c.archivos.take(3).joinToString(", ") { it.name }, false) {
+                    mostrarDialogo(Dialogo("restaurar-partida", "¿Volver a esta partida?",
+                        "Los guardados de ese momento vuelven a su carpeta y reemplazan los de ahora. Hazlo con el juego cerrado.",
+                        Icono.COPIAR, si = "Restaurar", no = "Cancelar")) { restaurarPartida(c) }
+                }
+            } + if (estado.value.extra.carpetasPartidas.isEmpty()) listOf(ItemGaleria("auto-carpeta", "Respaldar solo al terminar de jugar",
+                "Elige la carpeta donde tu emulador guarda las partidas y Díptico las copia sola.", false) { pedirCarpeta?.invoke(Carpeta.PARTIDAS) }) else emptyList()
+            opcionesCopiasPartida = automaticas + listOf(ItemGaleria("copia-nueva", "Guardar copia .srm",
                 "Selecciona un guardado. Se conservan las últimas tres copias.", false) { pedirArchivoPara("partida-srm:$clave", "*/*") }) +
                 copias.mapIndexed { i, archivo ->
                     val fecha = java.text.DateFormat.getDateTimeInstance().format(java.util.Date(archivo.lastModified()))
@@ -9299,6 +9176,7 @@ object Diptico {
         cl.nikalbazu.diptico.ui.Estilo.decoraciones = efectos && e.decoraciones && e.experiencia.movimiento
         // Con un juego abierto se dibujan quietas: ninguna animación le roba cuadros al emulador.
         cl.nikalbazu.diptico.ui.Estilo.decorQuieta = e.sesion != null
+        cl.nikalbazu.diptico.ui.Estilo.contraste = e.extra.altoContraste
     }
 
     private var ultimaActividad = SystemClock.uptimeMillis()

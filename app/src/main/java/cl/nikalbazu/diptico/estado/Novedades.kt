@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "editar-perfil-2.0-53"
-    const val NOMBRE = "Editar tu perfil"
+    const val ID = "partidas-a-salvo-2.0-53"
+    const val NOMBRE = "Partidas a salvo"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -409,8 +409,11 @@ object Novedades {
             Pagina("Tu perfil, en dos pantallas", "Toca tu foto y elige «Editar perfil»: abajo cambias tu foto, tu personaje, tus datos, tu color y lo que muestras; arriba ves tu tarjeta tal como va quedando. Nada se guarda hasta que aprietas A · Guardar (o Start). B cancela.", Icono.PERFIL, 0xFFFF7A59, "A · Guardar"),
             Pagina("Tu inicial como foto", "Si no quieres foto ni personaje, elige «Mi inicial»: tu perfil muestra la primera letra de tu nombre sobre tu color.", Icono.TEXTO, 0xFF9B6BFF),
         )),
-        Version(ID, "Editor con fondo difuminado", listOf(
-            Pagina("Como todas las ventanas", "El editor del perfil ahora deja ver tu inicio difuminado detrás, igual que el resto de las ventanas de Díptico.", Icono.PERFIL, 0xFFFF7A59),
+        Version(ID, "Partidas a salvo", listOf(
+            Pagina("Tus partidas, respaldadas solas", "En Ajustes › Sistema › Respaldo de partidas elige la carpeta donde tu emulador guarda (por ejemplo RetroArch/saves). Al terminar de jugar, Díptico copia lo que cambió: guarda las últimas 3 por juego y la más nueva viaja en tu respaldo de Drive. Para volver a una, abre las opciones del juego › Copias de partida.", Icono.COPIAR, 0xFF23C486),
+            Pagina("¿Va fluido?", "Activa el Medidor de fluidez en Ajustes: cada pantalla muestra sus cuadros por segundo y el cuadro más lento. Verde es fluido; amarillo o rojo te dicen dónde se pone lento.", Icono.CHISPA, 0xFFFFC94D),
+            Pagina("Alto contraste", "Junto al tamaño de letra hay una opción de alto contraste: las letras chicas y los bordes se marcan más para leer mejor.", Icono.TEMA, 0xFF38BDF8),
+            Pagina("Editor con fondo difuminado", "El editor del perfil deja ver tu inicio difuminado detrás, como todas las ventanas.", Icono.PERFIL, 0xFFFF7A59),
         )),
     )
 

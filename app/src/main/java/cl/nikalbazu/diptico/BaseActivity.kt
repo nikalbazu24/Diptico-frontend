@@ -35,6 +35,10 @@ abstract class BaseActivity : ComponentActivity() {
         if (uri != null) Diptico.carpetaElegida(uri, Carpeta.MUSICA)
     }
 
+    private val elegirPartidas = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) Diptico.carpetaElegida(uri, Carpeta.PARTIDAS)
+    }
+
     // Respaldo: crear el archivo (en Google Drive o donde se elija) y traer uno.
     private val crearRespaldo = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         if (uri != null) Diptico.respaldoCreado(uri)
@@ -123,6 +127,7 @@ abstract class BaseActivity : ComponentActivity() {
                     Carpeta.JUEGOS -> elegirJuegos.launch(null)
                     Carpeta.MEDIA -> elegirImagenes.launch(null)
                     Carpeta.MUSICA -> elegirMusica.launch(null)
+                    Carpeta.PARTIDAS -> elegirPartidas.launch(null)
                 }
             } catch (e: Exception) {
                 Diptico.avisar("No pude abrir el selector de carpetas")
