@@ -259,6 +259,10 @@ private fun BotonRepliegue(abierto: Boolean, alPulsar: () -> Unit) {
     }
 }
 
+/** Nuevo diseño (vista Mosaicos) con las dos pantallas: arriba solo la vitrina, sin barras repetidas. */
+internal fun nuevoDisenoDosPantallas(e: Estado): Boolean = e.vista == "mosaicos" && !e.unaPantalla && e.dosDisponibles
+
+/** Los dos botones de la vitrina de arriba: A para jugar (o continuar) y X para la ficha del juego. */
 @Composable
 fun BotonesVitrina(e: Estado, juego: cl.nikalbazu.diptico.data.Juego, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
