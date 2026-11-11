@@ -1,5 +1,12 @@
 package cl.nikalbazu.diptico.estado
 
+import cl.nikalbazu.diptico.estado.Diptico.Control
+import cl.nikalbazu.diptico.estado.Diptico.InfoBateria
+import cl.nikalbazu.diptico.estado.Diptico.ItemGaleria
+import cl.nikalbazu.diptico.estado.Diptico.LanzadorPC
+import cl.nikalbazu.diptico.estado.Diptico.OpcionBurbuja
+import cl.nikalbazu.diptico.estado.Diptico.PorBorrar
+import cl.nikalbazu.diptico.estado.Diptico.Regreso
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
