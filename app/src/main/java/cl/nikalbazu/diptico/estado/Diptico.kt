@@ -4265,7 +4265,9 @@ object Diptico {
 
     fun opcionesSeccion(s: Seccion): List<Opcion> {
         val e = estado.value
-        val c = cacheOpciones?.takeIf { it.first === e }?.second ?: HashMap<Seccion, List<Opcion>>().also { cacheOpciones = e to it }
+        // Moverse por la lista (indice) no cambia las opciones: no se vuelven a armar en cada paso.
+        val clave = e.copy(indice = 0, enOpciones = false)
+        val c = cacheOpciones?.takeIf { it.first === e || it.first == clave }?.second ?: HashMap<Seccion, List<Opcion>>().also { cacheOpciones = clave to it }
         return c.getOrPut(s) { armarOpciones(s) }
     }
 

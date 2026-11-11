@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "biblioteca-ordenada-2.0-45"
-    const val NOMBRE = "Biblioteca más ordenada"
+    const val ID = "mas-rapido-2.0-46"
+    const val NOMBRE = "Más rápido"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -382,10 +382,13 @@ object Novedades {
         Version("tu-ano-2.0-44", "Tu año, bien ajustado", listOf(
             Pagina("Todo a la vista", "«Tu año» ahora cabe entero en la pantalla de arriba: el botón de cerrar pasó a la esquina y las tarjetas son más compactas.", Icono.ESTRELLA, 0xFFFFC93C),
         )),
-        Version(ID, "Biblioteca más ordenada", listOf(
+        Version("biblioteca-ordenada-2.0-45", "Biblioteca más ordenada", listOf(
             Pagina("Sin «Todos los juegos»", "La biblioteca muestra una carpeta por consola y nada más. Si quieres ver todos tus juegos juntos, actívala en Ajustes (búscala por su nombre: Carpeta «Todos los juegos»).", Icono.CARPETA, 0xFF3BA8FF),
             Pagina("Controles en la cabecera", "La barrita de abajo con los botones desapareció: ahora esa guía está arriba, entre «Biblioteca · sistemas» y «Ordenar».", Icono.MANDO, 0xFFFFC93C),
             Pagina("Tu perfil se edita ahí mismo", "En tu tarjeta de perfil, A abre tus datos dentro de la misma ventana: nombre, foto, personaje, marco y más. Ya no te manda a Ajustes.", Icono.PERFIL, 0xFFFF7A59),
+        )),
+        Version(ID, "Más rápido", listOf(
+            Pagina("Ajustes y transiciones más ágiles", "Moverte por los ajustes ya no vuelve a armar toda la lista en cada paso, y las animaciones son más cortas.", Icono.CHISPA, 0xFF2EC4A6),
         )),
     )
 
