@@ -714,3 +714,23 @@ Elige la carpeta donde tu emulador guarda las partidas y Díptico las copia sola
 Partida respaldada	Save backed up	Partida salva	存档已备份	セーブをバックアップしました
 Cierra el juego antes de restaurar una partida	Close the game before restoring a save	Feche o jogo antes de restaurar uma partida	恢复存档前请先关闭游戏	セーブを戻す前にゲームを閉じてください
 No pude restaurar: revisa que la carpeta de partidas siga conectada	Couldn't restore: check that the save folder is still connected	Não consegui restaurar: verifique se a pasta de partidas continua conectada	无法恢复：请检查存档文件夹是否仍已连接	復元できませんでした：セーブフォルダーがまだ接続されているか確認してください
+Ordena tus carpetas	Arrange your folders	Organize suas pastas	整理你的文件夹	フォルダーを並べ替え
+Mantén presionada una carpeta (con el dedo o con A): todas tiemblan y puedes arrastrarlas a su nuevo lugar, o tomarlas con A y moverlas con la cruceta. B o «Listo» termina.	Press and hold a folder (with your finger or A): they all wiggle and you can drag them to a new spot, or pick one up with A and move it with the D-pad. B or “Done” finishes.	Mantenha uma pasta pressionada (com o dedo ou com A): todas tremem e você pode arrastá-las para outro lugar, ou pegar com A e mover com o direcional. B ou «Pronto» termina.	长按一个文件夹（手指或 A）：所有文件夹会抖动，可拖到新位置，或按 A 拿起后用十字键移动。按 B 或“完成”结束。	フォルダーを長押し（指か A）：全部が揺れ、ドラッグで移動できます。A で持ち上げて十字キーで動かすことも。B か「完了」で終了。
+Carpetas con estilo	Folders with style	Pastas com estilo	有风格的文件夹	スタイル付きフォルダー
+En Ajustes › Biblioteca › Estilo de las carpetas elige cómo se ven: Tarjeta, Consola, Abanico de portadas o Logo grande.	In Settings › Library › Folder style choose how they look: Card, Console, Cover fan or Big logo.	Em Ajustes › Biblioteca › Estilo das pastas escolha como ficam: Cartão, Console, Leque de capas ou Logo grande.	在 设置 › 游戏库 › 文件夹样式 中选择外观：卡片、主机、封面扇形或大标志。	設定 › ライブラリ › フォルダーのスタイルで見た目を選べます：カード、ゲーム機、カバーの扇、大きなロゴ。
+Ajustes más ordenados	Tidier settings	Ajustes mais organizados	更整齐的设置	すっきりした設定
+Las secciones largas muestran lo principal; el resto está en «Más opciones…», que se abre en una ventana. Arriba sigue la explicación con su vista previa de cada opción.	Long sections show the essentials; the rest is under “More options…”, which opens in a window. Above, each option is still explained with its preview.	As seções longas mostram o principal; o resto fica em «Mais opções…», que abre numa janela. Em cima continua a explicação com a prévia de cada opção.	较长的分区只显示主要选项，其余放在“更多选项…”中，以窗口打开。上屏仍会解释每个选项并显示预览。	長いセクションは主な項目だけを表示し、残りは「その他のオプション…」のウィンドウに。上の画面では引き続き各項目の説明とプレビューが表示されます。
+Estilo de las carpetas	Folder style	Estilo das pastas	文件夹样式	フォルダーのスタイル
+Cómo se ven las carpetas de tus consolas: tarjeta, el dibujo de la consola, un abanico con tus juegos más jugados o el logo grande.	How your console folders look: a card, the console drawing, a fan of your most-played games or the big logo.	Como ficam as pastas dos seus consoles: cartão, o desenho do console, um leque com seus jogos mais jogados ou o logo grande.	主机文件夹的外观：卡片、主机图、最常玩游戏的扇形或大标志。	ゲーム機フォルダーの見た目：カード、ゲーム機の絵、よく遊ぶゲームの扇、大きなロゴ。
+Tarjeta	Card	Cartão	卡片	カード
+Consola	Console	Console	主机	ゲーム機
+Abanico de portadas	Cover fan	Leque de capas	封面扇形	カバーの扇
+Logo grande	Big logo	Logo grande	大标志	大きなロゴ
+Ordenar carpetas	Arrange folders	Organizar pastas	整理文件夹	フォルダーを並べ替え
+A tu gusto	Your way	Do seu jeito	随你喜欢	お好みで
+Las carpetas tiemblan y las mueves arrastrando con el dedo, o con A y la cruceta. También se entra manteniendo una carpeta presionada. B o «Listo» termina.	The folders wiggle and you move them by dragging with your finger, or with A and the D-pad. You can also start by holding a folder down. B or “Done” finishes.	As pastas tremem e você as move arrastando com o dedo, ou com A e o direcional. Também dá para entrar mantendo uma pasta pressionada. B ou «Pronto» termina.	文件夹会抖动，用手指拖动或用 A 和十字键移动。也可以长按文件夹进入。按 B 或“完成”结束。	フォルダーが揺れ、指でドラッグするか A と十字キーで動かします。フォルダーの長押しでも始められます。B か「完了」で終了。
+Mueve con la cruceta · A la suelta	Move with the D-pad · A drops it	Mova com o direcional · A solta	用十字键移动 · A 放下	十字キーで移動 · A で置く
+Arrastra con el dedo, o A para tomar una · X personaliza	Drag with your finger, or A to pick one up · X customizes	Arraste com o dedo, ou A para pegar uma · X personaliza	用手指拖动，或按 A 拿起 · X 自定义	指でドラッグ、または A で持ち上げ · X でカスタマイズ
+B · Listo	B · Done	B · Pronto	B · 完成	B · 完了
+Necesitas al menos dos consolas para ordenarlas	You need at least two consoles to arrange them	Você precisa de pelo menos dois consoles para organizá-los	至少需要两个主机才能排序	並べ替えるには 2 つ以上のゲーム機が必要です
+Más opciones	More options	Mais opções	更多选项	その他のオプション

@@ -1386,6 +1386,32 @@ class Capturas {
         try { foto("358_alto_contraste", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 1, extra = conPerfil().extra.copy(altoContraste = true)), Rol.SUPERIOR) }
         finally { cl.nikalbazu.diptico.ui.Estilo.contraste = false }
     }
+    // ---------- Carpetas: ordenar y estilos ----------
+    private fun carpetasCon(estilo: String, ordenando: Boolean = false, tomada: String? = null) = conRecientes(base()).copy(
+        vistaConsolas = "carpetas", enSistemas = true, consolaSel = tomada ?: "snes",
+        extra = EstadoExtra(estiloCarpetas = estilo, ordenandoCarpetas = ordenando, carpetaTomada = tomada),
+    )
+    @Config(qualifiers = ABAJO)
+    @Test fun t359_carpetas_ordenando() = foto("359_carpetas_ordenando", carpetasCon("tarjeta", ordenando = true, tomada = "snes"), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t360_carpetas_consola() = foto("360_carpetas_consola", carpetasCon("consola"), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t361_carpetas_abanico() = foto("361_carpetas_abanico", carpetasCon("abanico"), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t362_carpetas_logo() = foto("362_carpetas_logo", carpetasCon("logo"), Rol.INFERIOR, mi = 1)
+    // ---------- Ajustes condensados ----------
+    private fun conSubOpciones(abierta: Boolean, sel: Int = 1): Estado {
+        val e0 = conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 0)
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(e0)
+        val i = Diptico.opcionesSeccion(Seccion.G_ESTILO).indexOfFirst { it.sub != null }.coerceAtLeast(0)
+        return e0.copy(indice = i, extra = e0.extra.copy(subOpcion = if (abierta) i else -1, subSel = sel))
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t363_ajustes_condensados() = foto("363_ajustes_condensados", conSubOpciones(false), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t364_ajustes_ventana_mas() = foto("364_ajustes_ventana_mas", conSubOpciones(true), Rol.INFERIOR, mi = 1)
+    @Test fun t365_ajustes_ventana_ayuda_arriba() = foto("365_ajustes_ventana_ayuda_arriba", conSubOpciones(true), Rol.SUPERIOR)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)
