@@ -1368,7 +1368,7 @@ class Capturas {
         val ed = cl.nikalbazu.diptico.estado.EdicionPerfil(
             e.extra.perfil.copy(personaje = personaje, color = color), "Nico", presencia = true, saludo = true, fila = fila, col = col,
         )
-        return e.copy(unaPantalla = una, extra = e.extra.copy(edicionPerfil = ed))
+        return e.copy(modoPantallas = if (una) "una_negra" else "dos", extra = e.extra.copy(edicionPerfil = ed))
     }
     @Config(qualifiers = ABAJO)
     @Test fun t352_editar_perfil_abajo() = foto("352_editar_perfil_abajo", editando(cl.nikalbazu.diptico.estado.FilasEdicion.PERSONAJES_2, 2), Rol.INFERIOR, mi = 1)
