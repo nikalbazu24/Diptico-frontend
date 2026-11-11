@@ -34,7 +34,7 @@ fun medir(duracionesMs: List<Float>): Medicion {
 }
 
 /**
- * Medidor de fluidez: una pastilla chica en la esquina de abajo a la izquierda con los cuadros por segundo de esta
+ * Medidor de fluidez: una pastilla chica en la esquina de abajo a la derecha con los cuadros por segundo de esta
  * pantalla y el cuadro más lento del último segundo. Verde = fluido, amarillo = se nota, rojo = tirones.
  */
 @Composable
@@ -65,7 +65,7 @@ fun MedidorFps(visible: Boolean) {
         m.fps >= 40 -> Color(0xFFFFC94D)
         else -> Color(0xFFFF5A5F)
     }
-    Box(Modifier.fillMaxSize().padding(esc.d(6)), contentAlignment = Alignment.BottomStart) {
+    Box(Modifier.fillMaxSize().padding(esc.d(6)), contentAlignment = Alignment.BottomEnd) {
         Row(
             Modifier.clip(RoundedCornerShape(50)).background(Color(0xCC0B0C16)).padding(horizontal = esc.d(8), vertical = esc.d(3)).testTag("medidor-fps"),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(5)),
