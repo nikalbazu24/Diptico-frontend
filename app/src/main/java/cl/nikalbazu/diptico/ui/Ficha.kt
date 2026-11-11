@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.*
+
 import androidx.compose.foundation.horizontalScroll
 import android.net.Uri
 import androidx.compose.animation.Crossfade

@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.bisa
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent

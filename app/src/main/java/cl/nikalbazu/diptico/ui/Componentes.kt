@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.content.Context
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedVisibility

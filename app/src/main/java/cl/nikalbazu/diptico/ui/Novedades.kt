@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.*
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat

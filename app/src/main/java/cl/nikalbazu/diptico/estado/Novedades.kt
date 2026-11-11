@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "switch2-ports-2.0-55"
-    const val NOMBRE = "Switch 2 y ports nativos"
+    const val ID = "temas-propios-2.0-56"
+    const val NOMBRE = "Temas propios"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -423,12 +423,17 @@ object Novedades {
             Pagina("Más fluido", "La vitrina de cajas mueve solo la del centro, los mosaicos ya no se redibujan enteros en cada paso y las carpetas tiemblan sin trabar. Prende el Medidor de fluidez para comparar.", Icono.CHISPA, 0xFFFFC94D),
             Pagina("Tu título junto a tu foto", "El título que ganas con los logros de DIPPO aparece en una burbuja chica al lado de tu foto, abajo.", Icono.PERFIL, 0xFFFF7A59),
         )),
-        Version(ID, "Switch 2 y ports nativos", listOf(
+        Version("switch2-ports-2.0-55", "Switch 2 y ports nativos", listOf(
             Pagina("Switch 2 con NovaS", "Díptico ya abre tus juegos de Switch 2 con NovaS (beta), también los archivos .nup. Si lo tienes instalado, queda listo solo.", Icono.MANDO, 0xFF00C3E3),
             Pagina("Ports nativos de Switch 2", "Mario Kart World, Donkey Kong Bananza, Splatoon Raiders, Pokémon Pokopia y Zelda: Ocarina of Time se abren solos con Banana Native como port nativo, mucho más fluidos. Los demás siguen con NovaS.", Icono.CHISPA, 0xFFFFC94D),
             Pagina("Un centro propio", "En Ajustes › Biblioteca › «Switch 2 y ports nativos» (o desde la carpeta de Switch 2 o de Ports): abajo eliges, arriba ves el detalle. Revisa si tu consola aguanta, elige NovaS y consigue ports como Ship of Harkinian, Ghostship o Dusklight. Los que instales aparecen solos en tu carpeta Ports.", Icono.APPS, 0xFF23C486, "L1 · R1"),
             Pagina("Barra flotante de verdad", "La barra de abajo ya no ocupa espacio: tus carpetas corren por detrás y los accesos flotan sin círculos. Escondida, queda solo la píldora.", Icono.APPS, 0xFF3BA8FF),
             Pagina("DIPPO no interrumpe", "Con Ajustes o cualquier ventana abierta, DIPPO guarda sus globitos para después.", Icono.PERFIL, 0xFFFF7A59),
+        )),
+        Version(ID, "Temas propios", listOf(
+            Pagina("Calendario de temas", "En Ajustes › Temas › pestaña Calendario están todas las fiestas, de la más cercana a la más lejana, y cada una es un tema completo: su fondo, su trama, sus botones y su decoración. Con «Fechas especiales» se pone sola el día que toca; o úsala cuando quieras.", Icono.MUNDO, 0xFFFFC93C),
+            Pagina("Más fechas de Chile", "Se suman el Día de la Mamá, el Día del Papá, el Día del Profesor, el Día del Libro y el Día del Orgullo Friki.", Icono.ESTRELLA, 0xFFFF5D8F),
+            Pagina("Temas exclusivos", "Ocho temas que no se venden ni se importan: Aurora austral, Eclipse, Turbo, Bosque profundo, Leyenda, Créditos finales, Cartógrafo y Museo de consolas. Cada uno se gana con un logro difícil de DIPPO; antes se ven con candado.", Icono.TROFEO, 0xFF8B5CF6),
         )),
     )
 

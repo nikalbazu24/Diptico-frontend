@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.emu
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.app.ActivityOptions
 import android.content.ActivityNotFoundException
 import android.content.ClipData

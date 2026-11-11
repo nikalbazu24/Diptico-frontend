@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle

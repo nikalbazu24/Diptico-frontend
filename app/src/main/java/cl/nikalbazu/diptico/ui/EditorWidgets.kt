@@ -2,6 +2,8 @@
 
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture

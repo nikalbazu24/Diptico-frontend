@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

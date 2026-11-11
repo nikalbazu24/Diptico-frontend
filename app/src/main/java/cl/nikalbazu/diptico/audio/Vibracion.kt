@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.audio
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.content.Context
 import android.os.Build
 import android.os.SystemClock

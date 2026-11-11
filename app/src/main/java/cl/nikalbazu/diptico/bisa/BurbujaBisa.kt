@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.bisa
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager

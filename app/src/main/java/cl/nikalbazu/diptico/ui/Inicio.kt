@@ -2,6 +2,8 @@
 
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.*
+
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.gestures.detectTapGestures

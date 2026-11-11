@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll

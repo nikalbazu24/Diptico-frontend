@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.*
+
 import cl.nikalbazu.diptico.estado.Panel
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.blur

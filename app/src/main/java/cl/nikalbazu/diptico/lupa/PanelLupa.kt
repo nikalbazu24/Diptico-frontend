@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.lupa
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.graphics.RectF
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

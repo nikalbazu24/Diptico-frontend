@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico
 
+import cl.nikalbazu.diptico.estado.*
+
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
