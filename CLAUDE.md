@@ -364,3 +364,6 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - beta.351/352: `FranjaAccesos` sin franja de color (degradado al `p.fondo`), `CirculoFranja` (lupa/ajustes) + píldora del dock, todo con
   `superficieApp(p.superficie)`. `EsquinasArriba`: DIPPO 52 a la izq.; a la der. foto · hora · batería. `extra.franjaAbajo` (clave `franjaAbajo`,
   opción «Barra de abajo» en `opcionesEstante`). Novedades `franja-ajuste-2.0-50`. Sin capturas revisadas.
+- beta.35x «Barra con burbuja»: `IconoApp(desnudo = true)` (sin casilla/marco) en `FilaDock`. `FranjaAccesos` = Column: barrita (`dock-repliegue`,
+  siempre visible, alterna `extra.dockVisible`) + `AnimatedVisibility` con entrada burbuja (spring + scaleIn desde abajo al centro) y salida hacia abajo;
+  esconde TODA la barra (lupa, apps, ajustes). `BotonRepliegue` borrado. Novedades `franja-burbuja-2.0-51`. Sin capturas revisadas.
