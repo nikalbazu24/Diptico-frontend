@@ -355,3 +355,6 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   tarjeta si la opción abre otro panel. Teclas: ↑↓ eligen, A/→ cambia, ← menos, B listo. Novedades `biblioteca-ordenada-2.0-45`.
 - PENDIENTE (Opus): lentitud general (medir antes: `Estado` entero recompone todo); carpetas movibles a gusto y en widgets
   (colecciones) — boceto primero. Sin capturas revisadas de esta versión.
+- v1.1-beta.343 (Opus): `opcionesSeccion` cachea por `e.copy(indice=0, enOpciones=false)` (antes se rearmaba todo el menú en cada paso)
+  y `remember` de `ui/Menu.kt` igual; transiciones ×0,65 (`RAPIDEZ` en `ui/Movimiento.kt`). Novedades `mas-rapido-2.0-46`.
+  Falta: rendimiento de la vitrina de cajas 3D (medir en la Thor) y carpetas movibles + carpeta como widget/colección (boceto primero).
