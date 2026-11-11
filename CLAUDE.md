@@ -383,3 +383,22 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Ajustes › Tu perfil: nueva primera opción «Editar mi perfil». Marco y título siguen solo en Ajustes (el boceto no los tiene).
 - Del boceto NO se hizo «Mostrar mi perfil a mis amigos» (no hay nada detrás que lo use). Novedades `editar-perfil-2.0-52`. Capturas t352–t356.
 - El empuje forzado a `fix/revision-capturas` lo bloquea la sesión: se fusiona la rama nueva encima (merge normal).
+
+## Versión grande «Partidas a salvo» (11 nov, rama `fix/version-grande` → main, beta.375, Opus)
+- Decisiones de Nicolás (11 nov): sí accesibilidad, medición, estilos de carpetas, respaldo de partidas; postergados Discord voz/chat,
+  mapas web y compartir «Tu año»; NO perfil infantil; una versión = un tema grande; inicio NUEVO DESCARTADO (Claude decidió dejar el actual).
+  Foto de perfil va en el inicio de ARRIBA (BotonPerfil en `BarraSuperior { }` de la portada con arte y de `VistaSistema`; la vitrina de cajas ya la tenía).
+- Bocetos aprobados: https://claude.ai/artifact/AxJJLmHBzAeFiGTgnPngFD (carpetas modo edición + 4 estilos, ajustes condensados con demo arriba).
+- `data/RespaldoPartidas.kt`: carpetas de partidas (SAF, `Carpeta.PARTIDAS`, `extra.carpetasPartidas`, clave `carpetasPartidas`),
+  `respaldarPartida` en `cerrarSesion` (≥30 s): copia lo modificado desde el inicio de la partida (−1 min), 3 versiones por juego en
+  filesDir/respaldo-partidas/<sha>/<fecha>/ con `.origen`; la más nueva va en el zip de Drive (≤48 MB, `paraRespaldo`). Restaurar desde
+  opciones del juego › Copias de partida (escribe en el URI original con "wt").
+- `ui/Medidor.kt` (`extra.medidorFps`, abajo a la derecha), alto contraste (`extra.altoContraste` → `Estilo.contraste` → `conContraste` en Lienzo).
+- `estado/DipticoPerfil.kt` y `estado/DipticoCarpetas.kt`: funciones de Diptico como EXTENSIONES (`fun Diptico.x()`); fuera del paquete
+  estado hay que importarlas (`import cl.nikalbazu.diptico.estado.*`). Seguir partiendo Diptico.kt así.
+- Carpetas: `extra.ordenandoCarpetas/carpetaTomada/estiloCarpetas` (tarjeta/consola/abanico/logo, `ESTILOS_CARPETA`). Mantener A (repeatCount 1)
+  o el dedo entra; A toma/suelta, cruceta mueve, X personaliza, B listo; arrastre con `detectDragGestures` en `CarpetasConsolas`.
+- Ajustes condensados: `condensar(s, l)` en `opcionesSeccion` (secciones G_ con >12 opciones: 3 por grupo + fila «Más opciones de …» con
+  `Opcion.sub`); `extra.subOpcion/subSel`, `VentanaSubOpciones` en Menu.kt, `Diptico.opcionEnFoco(e)` para la ayuda de arriba,
+  `claveMenu(e)` como llave de caché. La búsqueda de ajustes ve todo.
+- Novedades `partidas-a-salvo-2.0-53` (la 52 = editor de perfil, beta.362). Capturas t352–t365.
