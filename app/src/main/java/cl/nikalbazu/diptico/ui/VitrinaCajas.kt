@@ -141,7 +141,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             giroY.snapTo(if (normal == -180f) 180f else normal)
         }
     }
-    val moverse = e.experiencia.movimiento && Estilo.efectosCompletos && !vitrinaSinGiro
+    val moverse = e.experiencia.movimiento && Estilo.efectosCompletos && !vitrinaSinGiro && LocalMovimiento.current
     // Un balanceo muy leve cuando nadie la toca: se siente viva, sin marear.
     val ola = if (moverse) androidx.compose.animation.core.rememberInfiniteTransition(label = "flotar").animateFloat(
         initialValue = 0f, targetValue = (2 * Math.PI).toFloat(),

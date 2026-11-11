@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
@@ -145,16 +146,23 @@ private fun Mosaico(j: cl.nikalbazu.diptico.data.Juego, elegido: Boolean, jugado
  * Franja de abajo del nuevo diseño: accesos fijos (Buscar, Apps, Ajustes) a la izquierda y la hora con la batería a
  * la derecha. Reemplaza la barra de la hora en la pantalla de abajo, así no se repite ni tapa nada.
  */
+/** Alto de la barra de abajo abierta (barrita + accesos) y cerrada (solo la barrita), en dp de Díptico. */
+const val ALTO_FRANJA_ABIERTA = 84f
+const val ALTO_FRANJA_CERRADA = 22f
+
+/** Cuánto tapa la barra flotante de abajo: las rejillas lo suman a su relleno para poder correr el último elemento por encima. */
+val LocalAireAbajo = androidx.compose.runtime.compositionLocalOf { 0.dp }
+
 @Composable
-fun FranjaAccesos(e: Estado) {
+fun FranjaAccesos(e: Estado, modifier: Modifier = Modifier) {
     if (!e.extra.franjaAbajo) return
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val abierta = e.extra.dockVisible
     val mueve = LocalMovimiento.current
-    // Se esconde hacia abajo y queda solo una barrita; al tocarla la barra sale (y se guarda) con efecto burbuja.
+    // Sin fondo: flota sobre lo de atrás. Se esconde hacia abajo y queda solo la barrita; al tocarla la barra sale con efecto burbuja.
     androidx.compose.foundation.layout.Column(
-        Modifier.fillMaxWidth().testTag("franja-accesos"),
+        modifier.fillMaxWidth().testTag("franja-accesos"),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -208,18 +216,19 @@ fun FranjaAccesos(e: Estado) {
     }
 }
 
-/** Botón redondo de las esquinas de la franja: burbuja casi transparente que flota con su sombra. */
+/** Acceso de las esquinas de la franja (lupa, ajustes): solo el ícono, flotando, con una sombra suave para leerse sobre cualquier fondo. */
 @Composable
 private fun CirculoFranja(icono: cl.nikalbazu.diptico.estado.Icono, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(
-        Modifier.size(esc.d(44)).shadow(esc.d(6), androidx.compose.foundation.shape.CircleShape, clip = false)
-            .clip(androidx.compose.foundation.shape.CircleShape).background(p.tinta.copy(alpha = 0.10f))
-            .border(esc.d(1), p.tinta.copy(alpha = 0.14f), androidx.compose.foundation.shape.CircleShape)
-            .clickable(onClick = alPulsar),
+        Modifier.size(esc.d(44)).clip(androidx.compose.foundation.shape.CircleShape).clickable(onClick = alPulsar),
         contentAlignment = Alignment.Center,
-    ) { IconoDiptico(icono, p.tinta, 17f) }
+    ) {
+        // La sombra es el mismo ícono, oscuro y corrido un poquito hacia abajo.
+        Box(Modifier.graphicsLayer { translationY = 1.5f * density; alpha = 0.35f }) { IconoDiptico(icono, Color.Black, 20f) }
+        IconoDiptico(icono, p.tinta, 20f)
+    }
 }
 
 /** Arriba de la pantalla de abajo: DIPPO en una esquina, tu perfil en la otra y la hora y la batería al centro. */

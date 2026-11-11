@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "fluido-flotante-2.0-54"
-    const val NOMBRE = "Más fluido y flotante"
+    const val ID = "switch2-ports-2.0-55"
+    const val NOMBRE = "Switch 2 y ports nativos"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -418,10 +418,17 @@ object Novedades {
             Pagina("Carpetas con estilo", "En Ajustes › Biblioteca › Estilo de las carpetas elige cómo se ven: Tarjeta, Consola, Abanico de portadas o Logo grande.", Icono.CARPETA, 0xFF9B6BFF),
             Pagina("Ajustes más ordenados", "Las secciones largas muestran lo principal; el resto está en «Más opciones…», que se abre en una ventana. Arriba sigue la explicación con su vista previa de cada opción.", Icono.MENU, 0xFF5865F2),
         )),
-        Version(ID, "Más fluido y flotante", listOf(
+        Version("fluido-flotante-2.0-54", "Más fluido y flotante", listOf(
             Pagina("Barra de abajo flotante", "La barra de abajo ya no tiene fondo: tus apps flotan con una sombra suave y la lupa y los ajustes son burbujas casi transparentes. Si la escondes con la barrita, queda solo esa píldora.", Icono.APPS, 0xFF3BA8FF),
             Pagina("Más fluido", "La vitrina de cajas mueve solo la del centro, los mosaicos ya no se redibujan enteros en cada paso y las carpetas tiemblan sin trabar. Prende el Medidor de fluidez para comparar.", Icono.CHISPA, 0xFFFFC94D),
             Pagina("Tu título junto a tu foto", "El título que ganas con los logros de DIPPO aparece en una burbuja chica al lado de tu foto, abajo.", Icono.PERFIL, 0xFFFF7A59),
+        )),
+        Version(ID, "Switch 2 y ports nativos", listOf(
+            Pagina("Switch 2 con NovaS", "Díptico ya abre tus juegos de Switch 2 con NovaS (beta), también los archivos .nup. Si lo tienes instalado, queda listo solo.", Icono.MANDO, 0xFF00C3E3),
+            Pagina("Ports nativos de Switch 2", "Mario Kart World, Donkey Kong Bananza, Splatoon Raiders, Pokémon Pokopia y Zelda: Ocarina of Time se abren solos con Banana Native como port nativo, mucho más fluidos. Los demás siguen con NovaS.", Icono.CHISPA, 0xFFFFC94D),
+            Pagina("Un centro propio", "En Ajustes › Biblioteca › «Switch 2 y ports nativos» (o desde la carpeta de Switch 2 o de Ports): abajo eliges, arriba ves el detalle. Revisa si tu consola aguanta, elige NovaS y consigue ports como Ship of Harkinian, Ghostship o Dusklight. Los que instales aparecen solos en tu carpeta Ports.", Icono.APPS, 0xFF23C486, "L1 · R1"),
+            Pagina("Barra flotante de verdad", "La barra de abajo ya no ocupa espacio: tus carpetas corren por detrás y los accesos flotan sin círculos. Escondida, queda solo la píldora.", Icono.APPS, 0xFF3BA8FF),
+            Pagina("DIPPO no interrumpe", "Con Ajustes o cualquier ventana abierta, DIPPO guarda sus globitos para después.", Icono.PERFIL, 0xFFFF7A59),
         )),
     )
 

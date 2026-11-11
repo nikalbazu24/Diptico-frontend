@@ -1412,6 +1412,20 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t364_ajustes_ventana_mas() = foto("364_ajustes_ventana_mas", conSubOpciones(true), Rol.INFERIOR, mi = 1)
     @Test fun t365_ajustes_ventana_ayuda_arriba() = foto("365_ajustes_ventana_ayuda_arriba", conSubOpciones(true), Rol.SUPERIOR)
+    // Barra de abajo flotante (sin fondo, encima de las carpetas) y escondida (solo la píldora).
+    private fun conDock(abierta: Boolean) = carpetasCon("tarjeta").let { it.copy(vista = "mosaicos", appsFijadas = listOf("com.android.settings", "com.android.chrome"), extra = it.extra.copy(dockVisible = abierta)) }
+    @Config(qualifiers = ABAJO)
+    @Test fun t366_barra_flotante() = foto("366_barra_flotante", conDock(true), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t367_barra_escondida() = foto("367_barra_escondida", conDock(false), Rol.INFERIOR, mi = 1)
+    // Centro de Switch 2 y ports: abajo la lista, arriba el detalle, y con una pantalla todo junto.
+    private fun conNativos(pestana: Int, sel: Int = 0) = base().copy(vista = "mosaicos", extra = EstadoExtra(nativosEn = 0, nativosPestana = pestana, nativosSel = sel))
+    @Config(qualifiers = ABAJO)
+    @Test fun t368_nativos_abajo() = foto("368_nativos_abajo", conNativos(0, 1), Rol.INFERIOR, mi = 1)
+    @Test fun t369_nativos_arriba() = foto("369_nativos_arriba", conNativos(0, 1), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t370_nativos_ports() = foto("370_nativos_ports", conNativos(1, 0), Rol.INFERIOR, mi = 1)
+    @Test fun t371_nativos_una() = foto("371_nativos_una", conNativos(0, 2).copy(modoPantallas = "una_negra"), Rol.UNICA)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)

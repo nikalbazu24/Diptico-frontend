@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
@@ -58,10 +59,14 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
             androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
             Texto("Fija tus apps", 12f, color = p.tinta, lineas = 1)
         } else if (conCajon) Box(
-            Modifier.size(esc.d(tam + 6f)).then(if (flotante) Modifier.shadow(esc.d(6), CircleShape, clip = false) else Modifier)
-                .clip(CircleShape).background(p.tinta.copy(alpha = 0.10f))
+            Modifier.size(esc.d(tam + 6f)).clip(CircleShape)
+                .then(if (flotante) Modifier else Modifier.background(p.tinta.copy(alpha = 0.10f)))
                 .clickable { Diptico.abrirApps() },
             contentAlignment = Alignment.Center,
-        ) { IconoDiptico(Icono.APPS, p.tinta, tam * 0.45f) }
+        ) {
+            // Flotando, sin círculo: el ícono con su sombra, igual que la lupa y los ajustes.
+            if (flotante) Box(Modifier.graphicsLayer { translationY = 1.5f * density; alpha = 0.35f }) { IconoDiptico(Icono.APPS, Color.Black, tam * 0.55f) }
+            IconoDiptico(Icono.APPS, p.tinta, tam * (if (flotante) 0.55f else 0.45f))
+        }
     }
 }

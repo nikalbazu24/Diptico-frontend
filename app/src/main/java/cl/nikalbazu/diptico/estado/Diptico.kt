@@ -434,6 +434,10 @@ data class EstadoExtra(
     val perfilEn: Int = -1,
     /** «Tu año» abierto en esta pantalla (-1 = cerrado). */
     val anioEn: Int = -1,
+    /** Centro de Switch 2 y ports nativos: en qué pantalla está abierto (-1 = cerrado), su pestaña y la fila elegida. */
+    val nativosEn: Int = -1,
+    val nativosPestana: Int = 0,
+    val nativosSel: Int = 0,
     val perfilOx: Float = 0.92f,
     val perfilOy: Float = 0.07f,
 )
@@ -1698,7 +1702,7 @@ object Diptico {
             else accesosAndroid[j.uri]?.let { Lanzador.appDisponible(app, it) && paquetes.add(it) } == true
         }
         val e = estado.value
-        val ports = juegosApps(e.ports.filterNot { it in paquetes }, Consolas.PORTS)
+        val ports = juegosApps((e.ports + Nativos.paquetesPorts.filter { Lanzador.instalado(app, it) }).filterNot { it in paquetes }, Consolas.PORTS)
         paquetes.addAll(ports.map { it.archivo })
         val android = juegosApps(e.android.filterNot { it in paquetes }, Consolas.ANDROID)
         return (archivos + ports + android + juegosDePC()).distinctBy { it.clave }
@@ -2342,7 +2346,7 @@ object Diptico {
             // Si es el mismo juego que se dejó hace poco (volviste a Díptico con la partida en pausa), el emulador
             // puede tenerla guardada en memoria: se abre sin «limpiar la tarea» para no reiniciarla.
             val reciente = ultimaPartida?.let { (clave, cuando) -> clave == juego.clave && System.currentTimeMillis() - cuando < RETOMAR_MS } == true
-            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], displayId, raizDe(archivo), retomar = reciente)
+            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: Nativos.recomendado(app, juego) ?: e.emuladores[consola.id], displayId, raizDe(archivo), retomar = reciente)
         }
         if (conCarga) terminarCarga(juego.clave, if (error != null) 0L else 1200L)
         if (error != null) {
@@ -2612,7 +2616,7 @@ object Diptico {
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, s.displayId)
         else {
             val archivo = archivoParaJugar(juego, e)
-            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id], s.displayId, raizDe(archivo), retomar = true)
+            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: Nativos.recomendado(app, juego) ?: e.emuladores[consola.id], s.displayId, raizDe(archivo), retomar = true)
         }
         if (error != null) { avisar(error); return }
         actualizar { it.copy(panel = Panel.NINGUNO, continuacion = 0L) }
@@ -8728,6 +8732,9 @@ object Diptico {
     private fun opcionesEstante(e: Estado): List<Opcion> {
         val c = Consolas.porId(e.consolaSel)
         val lista = mutableListOf(
+            Opcion("Switch 2 y ports nativos", "NovaS · Banana Native · ports", Icono.MANDO,
+                "Un centro propio para lo nuevo: revisa si tu consola aguanta Switch 2, elige NovaS como emulador, juega como port nativo los juegos que convierte Banana Native y consigue los ports nativos (Zelda, Mario 64, Crash…), que aparecen solos en tu carpeta Ports.",
+            ) { cerrarPanel(); abrirNativos(pestana = if (estado.value.consolaSel == Consolas.PORTS) 1 else 0) },
             Opcion("Galería de artes", "${e.visibles.count { it.arte != null }} artes", Icono.PORTADA,
                 "Los artes y portadas de los juegos de esta carpeta, en grande en la otra pantalla. Elige uno con A para ir a ese juego.",
             ) { abrirGaleria("artes") },

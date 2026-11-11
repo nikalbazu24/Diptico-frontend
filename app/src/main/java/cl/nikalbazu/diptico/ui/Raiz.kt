@@ -66,7 +66,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         val centroAqui = e.panel == Panel.CENTRO && arribaFisica
         val tienda = e.panel == Panel.GALERIA && e.galeria == "tienda_temas"
         // Desenfoque detrás de lo que se abre encima: el centro de control, la bienvenida, el reloj grande o la continuación.
-        val encima = centroAqui || e.extra.perfilEn == miPantalla || editorAqui(e, rol, miPantalla) || e.extra.anioEn == miPantalla || e.extra.amigosEn == miPantalla || e.extra.discordLogin != null || e.dialogo != null || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
+        val encima = centroAqui || e.extra.perfilEn == miPantalla || editorAqui(e, rol, miPantalla) || e.extra.anioEn == miPantalla || nativosAqui(e, rol) || e.extra.amigosEn == miPantalla || e.extra.discordLogin != null || e.dialogo != null || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
         val desenfoque by animateDpAsState(if (encima && Estilo.efectosCompletos) 18.dp else 0.dp, tween(300), label = "desenfoque")
         // Deslizar hacia abajo desde el borde de arriba: por la izquierda, notificaciones; por la derecha, ajustes rápidos.
         val libre by androidx.compose.runtime.rememberUpdatedState(e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro)
@@ -80,6 +80,9 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                     }
                 }
                 Box(Modifier.fillMaxSize().desenfoqueAnimado { desenfoque }) {
+                    // Con algo abierto encima, lo de atrás queda quieto: así el desenfoque no se recalcula en cada cuadro.
+                    val moverAtras = LocalMovimiento.current && !encima
+                    CompositionLocalProvider(LocalMovimiento provides moverAtras) {
                     when {
                         !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
                         tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
@@ -89,6 +92,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                             PantallaSuperior(e.copy(juegoSel = e.fichaFijada, consolaSel = "todo"))
                         } else PantallaSuperior(e)
                         else -> PantallaInferior(e, miPantalla)
+                    }
                     }
                 }
                 AnimatedVisibility(visible = centroAqui, enter = fadeIn(tween(160)), exit = fadeOut(tween(200))) { PanelCentro(e) }
@@ -147,7 +151,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             // Abriendo un juego: la pantalla de carga tapa todo (también la barra) en las dos pantallas.
             if (e.extra.carga != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PantallaCarga(e, miPantalla, rol == Rol.UNICA)
             // La ventana de amigos de Discord, desde el costado de la pantalla donde se abrió.
-            BurbujaDippoCapa(miPantalla)
+            BurbujaDippoCapa(miPantalla, oculta = e.panel != Panel.NINGUNO || encima || ventanaEncima(e) || e.extra.carga != null)
             PanelAmigos(e, miPantalla)
             // Tu perfil: una tarjeta que crece desde tu foto, sobre el fondo difuminado.
             PanelPerfil(e, miPantalla, rol)
@@ -155,6 +159,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             EditorPerfilPantalla(e, rol, miPantalla)
             // Tu año: el resumen de lo que jugaste, encima del perfil.
             PanelTuAno(e, miPantalla)
+            // Centro de Switch 2 y ports nativos: abajo la lista, arriba el detalle.
+            CentroNativos(e, rol)
             // Iniciando sesión con Discord: el QR va encima de todo (en las dos pantallas, para encontrarlo donde mires).
             if (e.extra.discordLogin != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PanelDiscord(e)
             // Medidor de fluidez (Ajustes › Fluidez): encima de todo, en cada pantalla.

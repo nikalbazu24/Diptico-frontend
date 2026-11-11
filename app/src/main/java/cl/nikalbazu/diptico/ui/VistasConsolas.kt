@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -262,6 +263,7 @@ fun CabeceraSistema(e: Estado) {
             Box(Modifier.size(esc.d(28)).clip(CircleShape).clickable { Diptico.volverASistemas() }, contentAlignment = Alignment.Center) { Texto("‹", 24f) }
             Texto(Consolas.porId(e.consolaSel)?.nombreLargo ?: "Todos tus juegos", 15f, lineas = 1,
                 alinear = TextAlign.Center, modifier = Modifier.weight(1f))
+            if (esConsolaNativa(e.consolaSel)) AccesoNativos(e)
             Box(Modifier.size(esc.d(28)).clip(CircleShape).clickable { Diptico.alternarModoCarpeta() }, contentAlignment = Alignment.Center) { Texto(if (e.modoCarpeta == "completa") "↙" else "↗", 17f) }
         }
         return
@@ -283,6 +285,7 @@ fun CabeceraSistema(e: Estado) {
             Texto(Consolas.porId(e.consolaSel)?.nombreLargo ?: "Todos tus juegos", 15f, lineas = 1)
             Detalle(juegosTexto(e.visibles.size), 11.5f, lineas = 1)
         }
+        if (esConsolaNativa(e.consolaSel)) AccesoNativos(e)
         if (e.vistaConsolas == "carpetas") {
             val ventana = e.modoCarpeta != "completa"
             Box(Modifier.clip(RoundedCornerShape(50)).background(p.superficie)
@@ -292,6 +295,18 @@ fun CabeceraSistema(e: Estado) {
             }
         }
     }
+}
+
+/** En la carpeta de Switch 2 o de Ports: abre el centro de Switch 2 y ports nativos. */
+@Composable
+private fun AccesoNativos(e: Estado) {
+    val esc = LocalEscala.current
+    val pantalla = pantallaActual()
+    Box(
+        Modifier.padding(horizontal = esc.d(6)).clip(RoundedCornerShape(50)).background(Color(0xFF00C3E3).copy(alpha = 0.18f))
+            .clickable { Diptico.abrirNativos(pantalla, if (e.consolaSel == Consolas.PORTS) 1 else 0) }
+            .padding(horizontal = esc.d(10), vertical = esc.d(6)).testTag("acceso-nativos"),
+    ) { Texto(if (e.consolaSel == Consolas.PORTS) "Ports nativos" else "Centro Switch 2", 11.5f, lineas = 1) }
 }
 
 /** En la otra pantalla, en modo Sistemas: la consola elegida en grande, con lo último que jugaste en ella. */
@@ -478,7 +493,7 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
             }
             SideEffect { Teclas.carrilesCarpetas = carriles }
             LaunchedEffect(sel, horizontal) { grilla.mostrar(sel, carriles) }
-            val relleno = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10))
+            val relleno = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10) + LocalAireAbajo.current)
             if (conZoom) {
                 val ordenando = e.extra.ordenandoCarpetas && interactiva
                 // Cuánto mide un paso entre carpetas (para saber dónde se soltó la que arrastras).
