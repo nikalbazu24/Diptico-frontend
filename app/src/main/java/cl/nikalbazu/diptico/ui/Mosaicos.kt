@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -146,34 +148,61 @@ private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp, ancho: Dp = la
 fun FranjaAccesos(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    // Sin franja de color: el fondo se funde con el del tema y encima flotan tres piezas del mismo estilo
+    // (círculo · píldora · círculo), todas con la superficie del tema.
     androidx.compose.foundation.layout.Row(
-        Modifier.fillMaxWidth().background(p.superficie.copy(alpha = 0.6f)).padding(horizontal = esc.d(12), vertical = esc.d(8)).testTag("franja-accesos"),
+        Modifier.fillMaxWidth()
+            .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Transparent, p.fondo.copy(alpha = 0.85f))))
+            .padding(horizontal = esc.d(14), vertical = esc.d(8)).testTag("franja-accesos"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Esquina izquierda: la lupa. Esquina derecha: los ajustes. En el centro, tus apps fijas (se esconden con el botoncito).
-        BotonFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR, null) { Diptico.abrirBuscar() }
-        Box(Modifier.weight(1f).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
+        CirculoFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR) { Diptico.abrirBuscar() }
+        Box(Modifier.weight(1f).padding(horizontal = esc.d(10)).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
             androidx.compose.foundation.layout.Row(
-                // Tus apps en una píldora con los colores del tema.
-                Modifier.superficieApp(p.superficie, RoundedCornerShape(50))
-                    .border(esc.d(1), p.linea, RoundedCornerShape(50))
-                    .padding(horizontal = esc.d(8), vertical = esc.d(4))
+                Modifier.height(esc.d(44)).superficieApp(p.superficie, RoundedCornerShape(50))
+                    .padding(horizontal = esc.d(6))
                     .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(esc.d(6)),
+                horizontalArrangement = Arrangement.spacedBy(esc.d(4)),
             ) {
                 if (e.extra.dock) {
                     androidx.compose.animation.AnimatedVisibility(
                         e.extra.dockVisible,
                         enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandHorizontally(expandFrom = Alignment.End),
                         exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkHorizontally(shrinkTowards = Alignment.End),
-                    ) { FilaDock(e, 30f) }
+                    ) {
+                        androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+                            Spacer(Modifier.width(esc.d(4)))
+                            FilaDock(e, 30f)
+                            Spacer(Modifier.width(esc.d(6)))
+                            Box(Modifier.size(esc.d(1), esc.d(22)).background(p.tinta.copy(alpha = 0.12f)))
+                        }
+                    }
                     BotonRepliegue(e.extra.dockVisible) { Diptico.alternarDockVisible() }
-                } else BotonFranja(cl.nikalbazu.diptico.estado.Icono.APPS, "Apps") { Diptico.abrirApps() }
+                } else androidx.compose.foundation.layout.Row(
+                    Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirApps() }.padding(horizontal = esc.d(14), vertical = esc.d(8)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 15f)
+                    Spacer(Modifier.width(esc.d(8)))
+                    Texto("Apps", 13f, color = p.tinta, lineas = 1)
+                }
             }
         }
-        BotonFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, null) { Diptico.abrirMenu() }
+        CirculoFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES) { Diptico.abrirMenu() }
     }
+}
+
+/** Botón redondo de las esquinas de la franja: la misma superficie del tema que la píldora del centro. */
+@Composable
+private fun CirculoFranja(icono: cl.nikalbazu.diptico.estado.Icono, alPulsar: () -> Unit) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    Box(
+        Modifier.size(esc.d(44)).superficieApp(p.superficie, androidx.compose.foundation.shape.CircleShape)
+            .clip(androidx.compose.foundation.shape.CircleShape).clickable(onClick = alPulsar),
+        contentAlignment = Alignment.Center,
+    ) { IconoDiptico(icono, p.tinta, 17f) }
 }
 
 /** Arriba de la pantalla de abajo: DIPPO en una esquina, tu perfil en la otra y la hora y la batería al centro. */
@@ -181,12 +210,15 @@ fun FranjaAccesos(e: Estado) {
 fun EsquinasArriba(e: Estado) {
     val esc = LocalEscala.current
     androidx.compose.foundation.layout.Row(
-        Modifier.fillMaxWidth().padding(start = esc.d(12), end = esc.d(12), top = esc.d(6), bottom = esc.d(2)).testTag("esquinas-arriba"),
+        Modifier.fillMaxWidth().padding(start = esc.d(10), end = esc.d(14), top = esc.d(4), bottom = esc.d(2)).testTag("esquinas-arriba"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(esc.d(40)), contentAlignment = Alignment.Center) { DippoInicio(e, 36f) }
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { HoraBateria() }
-        BotonPerfil(40f)
+        // DIPPO grande en su esquina; a la derecha (de afuera hacia adentro): batería, hora y tu foto.
+        Box(Modifier.size(esc.d(56)), contentAlignment = Alignment.Center) { DippoInicio(e, 52f) }
+        Spacer(Modifier.weight(1f))
+        BotonPerfil(38f)
+        Spacer(Modifier.width(esc.d(12)))
+        HoraBateria()
     }
 }
 
@@ -227,27 +259,6 @@ private fun BotonRepliegue(abierto: Boolean, alPulsar: () -> Unit) {
     }
 }
 
-@Composable
-private fun BotonFranja(icono: cl.nikalbazu.diptico.estado.Icono, nombre: String?, alPulsar: () -> Unit) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    androidx.compose.foundation.layout.Row(
-        Modifier.height(esc.d(40)).clip(RoundedCornerShape(esc.d(12))).background(Color.White.copy(alpha = 0.07f))
-            .clickable(onClick = alPulsar).padding(horizontal = esc.d(12)),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconoDiptico(icono, p.tinta, 15f)
-        if (nombre != null) {
-            androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(7)))
-            Texto(nombre, 13f, color = p.tinta, lineas = 1)
-        }
-    }
-}
-
-/** Nuevo diseño (vista Mosaicos) con las dos pantallas: arriba solo la vitrina, sin barras repetidas. */
-internal fun nuevoDisenoDosPantallas(e: Estado): Boolean = e.vista == "mosaicos" && !e.unaPantalla && e.dosDisponibles
-
-/** Los dos botones de la vitrina de arriba: A para jugar (o continuar) y X para la ficha del juego. */
 @Composable
 fun BotonesVitrina(e: Estado, juego: cl.nikalbazu.diptico.data.Juego, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
