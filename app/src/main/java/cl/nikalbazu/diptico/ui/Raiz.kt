@@ -157,6 +157,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             PanelTuAno(e, miPantalla)
             // Iniciando sesión con Discord: el QR va encima de todo (en las dos pantallas, para encontrarlo donde mires).
             if (e.extra.discordLogin != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PanelDiscord(e)
+            // Medidor de fluidez (Ajustes › Fluidez): encima de todo, en cada pantalla.
+            MedidorFps(e.extra.medidorFps && !(rol == Rol.INFERIOR && e.unaPantalla))
         }
     }
 }

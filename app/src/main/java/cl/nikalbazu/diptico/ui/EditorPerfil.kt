@@ -96,7 +96,7 @@ private fun Editor(e: Estado, ed: EdicionPerfil) {
     val conDiscord = e.extra.discordAvatar.isNotBlank()
     Box(
         Modifier.fillMaxSize()
-            .background(Brush.verticalGradient(if (Estilo.efectosCompletos) listOf(Color(0xB314152A), Color(0xD10B0C16)) else listOf(Color(0xF214152A), Color(0xF70B0C16))))
+            .background(Brush.verticalGradient(if (Estilo.efectosCompletos) listOf(Color(0xD914152A), Color(0xE60B0C16)) else listOf(Color(0xF214152A), Color(0xF70B0C16))))
             .clickable(remember { MutableInteractionSource() }, indication = null) {}
             .testTag("editor-perfil"),
     ) {

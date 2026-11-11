@@ -38,7 +38,7 @@ object Respaldo {
     )
 
     /** Carpetas que también viajan en el respaldo: copias manuales de partidas y la música de los temas instalados. */
-    private val CARPETAS_EXTRA = listOf("copias-partida", "temas-comunidad")
+    private val CARPETAS_EXTRA = listOf("copias-partida", "temas-comunidad", cl.nikalbazu.diptico.data.RespaldoPartidas.CARPETA)
 
     /** Ruta relativa segura (sin «..», sin ocultos, hasta 3 niveles). */
     private fun rutaSegura(ruta: String): Boolean {
@@ -84,7 +84,11 @@ object Respaldo {
             }
             for (nombre in CARPETAS_EXTRA) {
                 val raiz = File(ctx.filesDir, nombre)
-                raiz.walkTopDown().filter { it.isFile }.forEach { f ->
+                // Partidas respaldadas: solo la copia más nueva de cada juego, y sin pasar de 48 MB (el respaldo tiene un tope).
+                val archivos = if (nombre == cl.nikalbazu.diptico.data.RespaldoPartidas.CARPETA)
+                    cl.nikalbazu.diptico.data.RespaldoPartidas.paraRespaldo(ctx, 48L * 1024 * 1024).asSequence()
+                else raiz.walkTopDown().filter { it.isFile }
+                archivos.forEach { f ->
                     val rel = f.relativeTo(raiz).invariantSeparatorsPath
                     if (!rutaSegura(rel)) return@forEach
                     zip.putNextEntry(ZipEntry("extras/$nombre/$rel"))
