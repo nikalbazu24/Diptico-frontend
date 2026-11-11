@@ -131,6 +131,8 @@ data class Opcion(
     val elegir: ((Int) -> Unit)? = null,
     /** Si las alternativas son estilos de íconos: sus identificadores, para mostrar una muestra en cada fila. */
     val muestrasIconos: List<String>? = null,
+    /** Ajustes condensados: las opciones que esta fila guarda y muestra en una ventana emergente. */
+    val sub: List<Opcion>? = null,
     val accion: () -> Unit,
 )
 
@@ -379,6 +381,14 @@ data class EstadoExtra(
     val altoContraste: Boolean = false,
     /** Medidor de fluidez: cuadros por segundo en una esquina de cada pantalla. */
     val medidorFps: Boolean = false,
+    /** Ajustes condensados: la fila «Más opciones…» abierta en ventana (índice; -1 = ninguna) y la opción marcada adentro. */
+    val subOpcion: Int = -1,
+    val subSel: Int = 0,
+    /** Carpetas en modo edición (tiemblan y se pueden mover) y la que está tomada para moverla con la cruceta. */
+    val ordenandoCarpetas: Boolean = false,
+    val carpetaTomada: String? = null,
+    /** Cómo se ven las carpetas: "tarjeta", "consola", "abanico" o "logo" (ver ESTILOS_CARPETA). */
+    val estiloCarpetas: String = "tarjeta",
     /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
     val termica: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -981,6 +991,7 @@ object Diptico {
                 respaldoPartidas = almacen.bool("respaldoPartidas", true),
                 altoContraste = almacen.bool("altoContraste", false),
                 medidorFps = almacen.bool("medidorFps", false),
+                estiloCarpetas = almacen.texto("estiloCarpetas", "tarjeta"),
                 termica = almacen.bool("termica", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
@@ -3202,6 +3213,7 @@ object Diptico {
 
     fun cerrarPanel() {
         if (estado.value.desplegable >= 0) actualizar { it.copy(extra = it.extra.copy(desplegable = -1)) }
+        if (estado.value.extra.subOpcion >= 0) actualizar { it.copy(extra = it.extra.copy(subOpcion = -1, subSel = 0)) }
         if (estado.value.appsMenu != null || estado.value.appsMoviendo != null) { cerrarOpcionesApp(); return }
         if (estado.value.coleccionVisual != null) actualizar { it.copy(coleccionVisual = null) }
         val e = estado.value
@@ -3597,6 +3609,10 @@ object Diptico {
 
     private fun moverIndiceSolo(delta: Int) {
         val e = estado.value
+        subOpciones(e)?.let { sub ->
+            if (sub.isNotEmpty()) actualizar { it.copy(extra = it.extra.copy(subSel = (it.extra.subSel + delta).coerceIn(0, sub.size - 1))) }
+            return
+        }
         if (e.panel == Panel.MENU && e.desplegable >= 0) {
             val total = opcionesSeccion(e.seccion).getOrNull(e.desplegable)?.alternativas?.size ?: 0
             if (total > 0) actualizar { it.copy(extra = it.extra.copy(desplegableSel = (it.desplegableSel + delta).coerceIn(0, total - 1))) }
@@ -3744,6 +3760,7 @@ object Diptico {
             Panel.MENU -> if (!e.enOpciones) columnaMenu(true) else {
                 val o = opcionesSeccion(e.seccion).getOrNull(e.indice)
                 when {
+                    e.extra.subOpcion >= 0 -> usarSubOpcion()
                     e.desplegable >= 0 -> elegirDesplegable(e.desplegableSel)
                     o?.alternativas != null && o.elegir != null -> abrirDesplegable(e.indice, o.elegida)
                     else -> o?.accion?.invoke()
@@ -3778,6 +3795,7 @@ object Diptico {
         val e = estado.value
         when {
             !e.configurado && e.panel == Panel.NINGUNO -> pasoAnterior()
+            e.panel == Panel.MENU && e.extra.subOpcion >= 0 -> cerrarSubOpciones()
             e.panel == Panel.MENU && e.desplegable >= 0 -> cerrarDesplegable()
             // Una sección avanzada abierta desde «Más ajustes»: B vuelve ahí, con esa sección marcada.
             e.panel == Panel.MENU && e.enOpciones && e.seccion !in seccionesMenu() -> {
@@ -4192,9 +4210,68 @@ object Diptico {
     fun opcionesSeccion(s: Seccion): List<Opcion> {
         val e = estado.value
         // Moverse por la lista (indice) no cambia las opciones: no se vuelven a armar en cada paso.
-        val clave = e.copy(indice = 0, enOpciones = false)
+        val clave = claveMenu(e)
         val c = cacheOpciones?.takeIf { it.first === e || it.first == clave }?.second ?: HashMap<Seccion, List<Opcion>>().also { cacheOpciones = clave to it }
-        return c.getOrPut(s) { armarOpciones(s) }
+        return c.getOrPut(s) { condensar(s, armarOpciones(s)) }
+    }
+
+    /** Lo que cambia las opciones del menú (moverse por las listas no las cambia). */
+    fun claveMenu(e: Estado): Estado = e.copy(indice = 0, enOpciones = false, extra = e.extra.copy(subSel = 0, subOpcion = -1, desplegableSel = 0))
+
+    /**
+     * Ajustes condensados: en una sección larga, cada grupo muestra sus 3 primeras opciones y el resto queda
+     * en una fila «Más opciones…» que se abre en una ventana emergente. Con una búsqueda se ve todo.
+     */
+    private fun condensar(s: Seccion, l: List<Opcion>): List<Opcion> {
+        if (!esGrupoAjustes(s) || estado.value.buscarAjuste.isNotBlank() || l.size <= 12) return l
+        val salida = mutableListOf<Opcion>()
+        var i = 0
+        while (i < l.size) {
+            val g = grupoOpcion(s, l[i])
+            var j = i
+            while (j < l.size && grupoOpcion(s, l[j]) == g) j++
+            val grupo = l.subList(i, j)
+            if (grupo.size > 4) {
+                salida += grupo.take(3).map { it.copy(grupo = g) }
+                val resto = grupo.drop(3)
+                val titulo = if (g.isBlank()) "Más opciones" else "Más opciones de ${g.lowercase()}"
+                salida += Opcion(
+                    titulo, "${resto.size} ›", Icono.MENU,
+                    resto.take(4).joinToString(", ") { Idioma.t(it.titulo) } + if (resto.size > 4) "…" else "",
+                    grupo = g, sub = resto,
+                ) { abrirSubOpciones(titulo) }
+            } else salida += grupo.map { it.copy(grupo = g) }
+            i = j
+        }
+        return salida
+    }
+
+    fun abrirSubOpciones(titulo: String) {
+        val e = estado.value
+        val i = opcionesSeccion(e.seccion).indexOfFirst { it.titulo == titulo && it.sub != null }
+        if (i < 0) return
+        actualizar { it.copy(indice = i, extra = it.extra.copy(subOpcion = i, subSel = 0)) }
+    }
+
+    fun cerrarSubOpciones() {
+        if (estado.value.extra.subOpcion >= 0) actualizar { it.copy(extra = it.extra.copy(subOpcion = -1, subSel = 0)) }
+    }
+
+    /** Las opciones de la ventana abierta (null = no hay ventana). */
+    fun subOpciones(e: Estado): List<Opcion>? =
+        if (e.panel == Panel.MENU && e.extra.subOpcion >= 0) opcionesSeccion(e.seccion).getOrNull(e.extra.subOpcion)?.sub else null
+
+    /** La opción que se explica arriba: la marcada en la ventana, o la de la lista. */
+    fun opcionEnFoco(e: Estado): Opcion? =
+        subOpciones(e)?.getOrNull(e.extra.subSel) ?: if (e.enOpciones) opcionesSeccion(e.seccion).getOrNull(e.indice) else null
+
+    /** Usa la opción [i] de la ventana (A o →; con [menos], ←). Si abre otra cosa, la ventana se cierra. */
+    fun usarSubOpcion(i: Int = estado.value.extra.subSel, menos: Boolean = false) {
+        val e = estado.value
+        val o = subOpciones(e)?.getOrNull(i) ?: return
+        if (i != e.extra.subSel) actualizar { it.copy(extra = it.extra.copy(subSel = i)) }
+        if (menos) (o.menos ?: return)() else o.accion()
+        if (estado.value.panel != Panel.MENU) actualizar { it.copy(extra = it.extra.copy(subOpcion = -1, subSel = 0)) }
     }
 
     /** Ajustes que más se usan, sacados de todas las secciones. O, si se buscó algo, lo que coincide. */
@@ -8671,6 +8748,13 @@ object Diptico {
                 almacen.guardarBool("carpetaTodos2", v)
                 actualizar { it.copy(extra = it.extra.copy(carpetaTodos = v)) }
                 actualizar { it.copy(consolaSel = if (v) it.consolaSel else consolaDeCarpeta(it)) }
+            },
+            opcionLista("Estilo de las carpetas", Icono.CARPETA,
+                "Cómo se ven las carpetas de tus consolas: tarjeta, el dibujo de la consola, un abanico con tus juegos más jugados o el logo grande.",
+                ESTILOS_CARPETA.map { it.first }, ESTILOS_CARPETA.map { it.second }, e.extra.estiloCarpetas) { elegirEstiloCarpetas(it) },
+            Opcion("Ordenar carpetas", "A tu gusto", Icono.VISTA,
+                "Las carpetas tiemblan y las mueves arrastrando con el dedo, o con A y la cruceta. También se entra manteniendo una carpeta presionada. B o «Listo» termina.") {
+                cerrarPanel(); empezarOrdenCarpetas()
             },
             Opcion("Abrir carpetas", if (e.modoCarpeta == "completa") "Pantalla completa" else "Ventana con desenfoque", Icono.CARPETA,
                 "Elige cómo se abren los juegos en la vista Carpetas.") { alternarModoCarpeta() },

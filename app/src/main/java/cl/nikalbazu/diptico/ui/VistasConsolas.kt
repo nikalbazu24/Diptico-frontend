@@ -61,6 +61,7 @@ import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Teclas
+import cl.nikalbazu.diptico.estado.*
 import kotlin.math.abs
 
 /*
@@ -437,8 +438,10 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
     var tam by remember(e.tamCarpetas) { mutableFloatStateOf(e.tamCarpetas) }
     var ajustando by remember { androidx.compose.runtime.mutableStateOf(false) }
     val animado by animateFloatAsState(tam, tween(duracionMovimiento(if (ajustando) 60 else 220)), label = "densidad carpetas")
+    // Si se sale de las carpetas, el modo edición termina solo.
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { if (interactiva) Diptico.terminarOrdenCarpetas() } }
     Column(modifier) {
-        CabeceraCarpetas(e, interactiva)
+        if (e.extra.ordenandoCarpetas && interactiva) BarraOrdenar(e) else CabeceraCarpetas(e, interactiva)
         if (ajustando) ParadasDensidad(cl.nikalbazu.diptico.estado.Densidades.carpetas, tam, { Diptico.guardarTamCarpetas(it) })
         val zona = Modifier.fillMaxWidth().weight(1f)
         BoxWithConstraints(if (conZoom && interactiva) zona.ajustarDensidad(
@@ -474,9 +477,35 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
             LaunchedEffect(sel, horizontal) { grilla.mostrar(sel, carriles) }
             val relleno = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10))
             if (conZoom) {
+                val ordenando = e.extra.ordenandoCarpetas && interactiva
+                // Cuánto mide un paso entre carpetas (para saber dónde se soltó la que arrastras).
+                val pasoX = with(densidad) { (lado + separacionX).toPx() }
+                val pasoY = with(densidad) { (lado + separacionY + esc.d(22)).toPx() }
                 RejillaCentrada(ids.size, carriles, sel, separacionX, separacionY, relleno,
-                    Modifier.fillMaxSize(), interactiva, horizontal, { ids[it] }) { k ->
-                    CarpetaBiblioteca(e, ids[k], k == sel, interactiva, lado)
+                    Modifier.fillMaxSize(), interactiva && !ordenando, horizontal, { ids[it] }) { k ->
+                    val id = ids[k]
+                    var arrastre by remember(id) { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                    var arrastrando by remember(id) { androidx.compose.runtime.mutableStateOf(false) }
+                    Box(
+                        Modifier.zIndex(if (arrastrando) 5f else 0f)
+                            .graphicsLayer { translationX = arrastre.x; translationY = arrastre.y }
+                            .then(if (ordenando && id != "todo") Modifier.pointerInput(id, k, carriles, horizontal) {
+                                androidx.compose.foundation.gestures.detectDragGestures(
+                                    onDragStart = { arrastrando = true; Diptico.elegirConsola(id) },
+                                    onDragEnd = {
+                                        val dx = kotlin.math.round(arrastre.x / pasoX).toInt()
+                                        val dy = kotlin.math.round(arrastre.y / pasoY).toInt()
+                                        val paso = if (horizontal) dy + dx * carriles else dx + dy * carriles
+                                        arrastre = androidx.compose.ui.geometry.Offset.Zero
+                                        arrastrando = false
+                                        Diptico.soltarCarpetaEn(id, k + paso)
+                                    },
+                                    onDragCancel = { arrastre = androidx.compose.ui.geometry.Offset.Zero; arrastrando = false },
+                                ) { cambio, d -> cambio.consume(); arrastre += d }
+                            } else Modifier),
+                    ) {
+                        CarpetaBiblioteca(e, id, k == sel, interactiva, lado, tomada = arrastrando || (ordenando && e.extra.carpetaTomada == id))
+                    }
                 }
             } else LazyVerticalGrid(columns = celdas, state = grilla, userScrollEnabled = interactiva,
                 modifier = Modifier.fillMaxSize(), contentPadding = relleno,
@@ -517,5 +546,25 @@ private fun CarpetaVisual(e: Estado, id: String, elegida: Boolean, amplia: Boole
                 Detalle(if (juegos.size == 1) "1 juego" else "${juegos.size} juegos", 11f, lineas = 1)
             }
         }
+    }
+}
+
+/** Arriba de las carpetas mientras las ordenas: qué hacer y el botón «Listo». */
+@Composable
+private fun BarraOrdenar(e: Estado) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = esc.d(14), vertical = esc.d(6)),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Texto("Ordenar carpetas", 17f, peso = FontWeight.Black, lineas = 1)
+            Detalle(if (e.extra.carpetaTomada != null) "Mueve con la cruceta · A la suelta" else "Arrastra con el dedo, o A para tomar una · X personaliza", 11f, lineas = 1)
+        }
+        Box(
+            Modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(50)).background(Uva)
+                .clickable { Diptico.terminarOrdenCarpetas() }.padding(horizontal = esc.d(14), vertical = esc.d(6)),
+        ) { Texto("B · Listo", 13f, color = SobreUva, peso = FontWeight.Black, lineas = 1) }
     }
 }

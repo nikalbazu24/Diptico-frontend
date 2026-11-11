@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -116,7 +117,7 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
             PaginaSeccion(e, conAyuda, Modifier.weight(1f).fillMaxHeight())
             // Con una sola pantalla, la vista previa va a la derecha del menú.
             if (conAyuda && !esc.angosta) {
-                val o = if (e.enOpciones) Diptico.opcionesSeccion(e.seccion).getOrNull(e.indice) else null
+                val o = Diptico.opcionEnFoco(e)
                 PreviaAjuste(e, e.seccion, o, Modifier.width(esc.d(220)).fillMaxHeight().padding(start = esc.d(4), end = esc.d(12), top = esc.d(14), bottom = esc.d(14)))
             }
         }
@@ -125,6 +126,54 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
             visible = e.extra.desplegable >= 0 && e.enOpciones,
             enter = entradaFlotante(mov), exit = salidaFlotante(mov),
         ) { VentanaDesplegable(e) }
+        // Ajustes condensados: «Más opciones…» se abre en una ventana encima del menú.
+        androidx.compose.animation.AnimatedVisibility(
+            visible = e.extra.subOpcion >= 0 && e.enOpciones,
+            enter = entradaFlotante(mov), exit = salidaFlotante(mov),
+        ) { VentanaSubOpciones(e) }
+    }
+}
+
+/** La ventana de «Más opciones…»: las mismas filas del menú; ↑ ↓ eligen, A o → cambian, ← al revés, B vuelve. */
+@Composable
+private fun VentanaSubOpciones(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val fila = Diptico.opcionesSeccion(e.seccion).getOrNull(e.extra.subOpcion) ?: return
+    val sub = fila.sub ?: return
+    val color = colorSeccion(e.seccion)
+    val lista = rememberLazyListState()
+    LaunchedEffect(e.extra.subSel) { lista.mostrar(e.extra.subSel) }
+    Box(
+        Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)).clickable(
+            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null,
+        ) { Diptico.cerrarSubOpciones() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            Modifier.widthIn(max = esc.d(520)).fillMaxWidth(0.9f).heightIn(max = esc.d(560)).fillMaxHeight(0.86f)
+                .shadow(esc.d(18), RoundedCornerShape(esc.d(24))).clip(RoundedCornerShape(esc.d(24))).background(p.fondo2)
+                .border(esc.d(1.5f), color.copy(alpha = 0.5f), RoundedCornerShape(esc.d(24)))
+                .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {}
+                .padding(vertical = esc.d(14))
+                .testTag("ventana-sub-opciones"),
+        ) {
+            Row(Modifier.padding(horizontal = esc.d(18)), verticalAlignment = Alignment.CenterVertically) {
+                Texto(fila.titulo, 18f, lineas = 1, modifier = Modifier.weight(1f))
+                Box(
+                    Modifier.size(esc.d(30)).clip(CircleShape).background(p.superficie).clickable { Diptico.cerrarSubOpciones() },
+                    contentAlignment = Alignment.Center,
+                ) { IconoDiptico(Icono.CERRAR, p.tinta, 14f) }
+            }
+            LazyColumn(
+                state = lista, modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = esc.d(10), vertical = esc.d(8)),
+                verticalArrangement = Arrangement.spacedBy(esc.d(6)),
+            ) {
+                itemsIndexed(sub) { i, o -> FilaOpcion(o, i == e.extra.subSel, color) { Diptico.usarSubOpcion(i) } }
+            }
+            Pistas("↑ ↓" to "Moverte", "A" to "Cambiar", "B" to "Volver", modifier = Modifier.padding(start = esc.d(18), top = esc.d(4)))
+        }
     }
 }
 
@@ -273,7 +322,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
     val s = e.seccion
     val color = colorSeccion(s)
     // Las opciones se arman solo cuando cambia algo (no en cada cuadro de una animación).
-    val opciones = remember(s, e.copy(indice = 0, enOpciones = false)) { Diptico.opcionesSeccion(s) }
+    val opciones = remember(s, Diptico.claveMenu(e)) { Diptico.opcionesSeccion(s) }
     Column(modifier.graphicsLayer { alpha = if (e.enOpciones) 1f else 0.82f }) {
         // Encabezado con el color de la sección.
         Row(
@@ -393,8 +442,7 @@ fun AyudaMenu(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val s = e.seccion
-    val opciones = remember(s, e.copy(indice = 0, enOpciones = false)) { Diptico.opcionesSeccion(s) }
-    val o = if (e.enOpciones) opciones.getOrNull(e.indice) else null
+    val o = Diptico.opcionEnFoco(e)
     val color = colorSeccion(s)
     Box(Modifier.fillMaxSize().background(p.fondo)) {
         Box(
@@ -404,7 +452,8 @@ fun AyudaMenu(e: Estado) {
         val angosta = esc.angosta
         if (!angosta) BarraSuperior(Modifier.align(Alignment.TopStart), trabajos = e.trabajos)
         AnimatedContent(
-            targetState = s to (if (e.enOpciones) e.indice else -1),
+            // Dentro de una ventana de «Más opciones», cada opción marcada cuenta como otra (1000 + su número).
+            targetState = s to (if (e.extra.subOpcion >= 0) 1000 + e.extra.subSel else if (e.enOpciones) e.indice else -1),
             // Transición corta: así recorrer opciones con la cruceta se siente fluido.
             transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(90)) },
             label = "ayuda",
@@ -413,7 +462,7 @@ fun AyudaMenu(e: Estado) {
                 top = esc.d(if (angosta) 18 else 60), bottom = esc.d(if (angosta) 46 else 54),
             ),
         ) { (sec, indice) ->
-            val opcion = if (sec == s && indice >= 0) opciones.getOrNull(indice) else null
+            val opcion = if (sec == s && indice >= 0) o else null
             val titulo = opcion?.titulo
             val valor = opcion?.valor
             Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {

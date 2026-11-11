@@ -414,6 +414,9 @@ object Novedades {
             Pagina("¿Va fluido?", "Activa el Medidor de fluidez en Ajustes: cada pantalla muestra sus cuadros por segundo y el cuadro más lento. Verde es fluido; amarillo o rojo te dicen dónde se pone lento.", Icono.CHISPA, 0xFFFFC94D),
             Pagina("Alto contraste", "Junto al tamaño de letra hay una opción de alto contraste: las letras chicas y los bordes se marcan más para leer mejor.", Icono.TEMA, 0xFF38BDF8),
             Pagina("Editor con fondo difuminado", "El editor del perfil deja ver tu inicio difuminado detrás, como todas las ventanas.", Icono.PERFIL, 0xFFFF7A59),
+            Pagina("Ordena tus carpetas", "Mantén presionada una carpeta (con el dedo o con A): todas tiemblan y puedes arrastrarlas a su nuevo lugar, o tomarlas con A y moverlas con la cruceta. B o «Listo» termina.", Icono.CARPETA, 0xFFE64FA0, "Mantén A"),
+            Pagina("Carpetas con estilo", "En Ajustes › Biblioteca › Estilo de las carpetas elige cómo se ven: Tarjeta, Consola, Abanico de portadas o Logo grande.", Icono.CARPETA, 0xFF9B6BFF),
+            Pagina("Ajustes más ordenados", "Las secciones largas muestran lo principal; el resto está en «Más opciones…», que se abre en una ventana. Arriba sigue la explicación con su vista previa de cada opción.", Icono.MENU, 0xFF5865F2),
         )),
     )
 

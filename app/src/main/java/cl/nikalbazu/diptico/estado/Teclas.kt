@@ -495,6 +495,27 @@ object Teclas {
 
         // Modo Sistemas, eligiendo consola: la cruceta y L1/R1 cambian de consola, A entra, Y elige un juego al azar.
         if (!hayPanel && e.sesion == null && e.eligiendoConsola) {
+            // Ordenando carpetas (tiemblan): A toma o suelta, la cruceta mueve la tomada, X personaliza, B termina.
+            if (e.extra.ordenandoCarpetas) {
+                if (abajo) dir(code)?.let { (dx, dy) ->
+                    if (e.extra.carpetaTomada != null) Diptico.moverCarpetaTomada(dx, dy, carrilesCarpetas)
+                    else if (e.vistaConsolas in Diptico.VISTAS_CARPETAS) Diptico.moverCarpetas(dx, dy, carrilesCarpetas)
+                    else Diptico.cambiarConsola(if (dx + dy < 0) -1 else 1)
+                    return true
+                }
+                if (arriba) when {
+                    esA(code) -> Diptico.tomarOSoltarCarpeta()
+                    esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.terminarOrdenCarpetas()
+                    code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.abrirEditarConsola(e.consolaSel)
+                }
+                return true
+            }
+            // Mantener A sobre una carpeta: entra al modo para ordenarlas (con la carpeta ya tomada).
+            if (abajo && esA(code) && ev.repeatCount == 1 && e.vistaConsolas in Diptico.VISTAS_CARPETAS && e.consolaSel != "todo") {
+                consumidas += code
+                Diptico.empezarOrdenCarpetas(tomar = e.consolaSel)
+                return true
+            }
             if (abajo) {
                 dir(code)?.let { (dx, dy) ->
                     if (e.vistaConsolas in Diptico.VISTAS_CARPETAS) {
@@ -859,10 +880,10 @@ object Teclas {
                 // Columna de secciones a la izquierda y opciones a la derecha.
                 KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(-1)
                 KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(1)
-                KeyEvent.KEYCODE_DPAD_LEFT -> if (e.desplegable >= 0) Unit else if (e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(false)
-                KeyEvent.KEYCODE_DPAD_RIGHT -> if (e.desplegable >= 0) Unit else if (!e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(true)
-                KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.saltarSeccion(-1, envolver = true)
-                KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.saltarSeccion(1, envolver = true)
+                KeyEvent.KEYCODE_DPAD_LEFT -> if (e.extra.subOpcion >= 0) Diptico.usarSubOpcion(menos = true) else if (e.desplegable >= 0) Unit else if (e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(false)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> if (e.extra.subOpcion >= 0) Diptico.usarSubOpcion() else if (e.desplegable >= 0) Unit else if (!e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(true)
+                KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0 && e.extra.subOpcion < 0) Diptico.saltarSeccion(-1, envolver = true)
+                KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0 && e.extra.subOpcion < 0) Diptico.saltarSeccion(1, envolver = true)
                 else -> return esA(code) || esB(code) || code in botonesControl
             }
             return true
