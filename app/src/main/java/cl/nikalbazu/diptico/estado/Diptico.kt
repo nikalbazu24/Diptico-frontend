@@ -364,6 +364,8 @@ data class EstadoExtra(
     val dippoSaludo: Boolean = true,
     /** DIPPO cuenta trucos y funciones escondidas de vez en cuando. */
     val dippoDatos: Boolean = true,
+    /** Si la biblioteca muestra la carpeta «Todos los juegos» junto a las de cada consola. */
+    val carpetaTodos: Boolean = false,
     /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
     val termica: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -804,7 +806,7 @@ data class Estado(
     val consolasEmu: List<Consola>
         get() = consolasConJuegos.filter { !it.sinEmulador }
 
-    val pestanas: List<String> by lazy { listOf("todo") + consolasConJuegos.map { it.id } }
+    val pestanas: List<String> by lazy { (if (extra.carpetaTodos || consolasConJuegos.isEmpty()) listOf("todo") else emptyList()) + consolasConJuegos.map { it.id } }
 
     /** La selección y los paneles pueden cambiar sin volver a filtrar ni ordenar la biblioteca. */
     val visibles: List<Juego> by lazy { biblioteca.visibles(this) }
@@ -960,6 +962,7 @@ object Diptico {
                 dippoInicio = almacen.bool("dippoInicio", true),
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoDatos = almacen.bool("dippoDatos", true),
+                carpetaTodos = almacen.bool("carpetaTodos2", false),
                 termica = almacen.bool("termica", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
@@ -1243,7 +1246,7 @@ object Diptico {
             "caratulas" -> actualizar { it.copy(inicio = "heroe") }
             "widgets" -> actualizar { it.copy(inicio = "widgets") }
             "consolas" -> actualizar {
-                it.copy(inicio = "heroe", enSistemas = true, vistaConsolas = if (it.vistaConsolas in MODOS_ELEGIR) it.vistaConsolas else "carpetas")
+                it.copy(inicio = "heroe", enSistemas = true, consolaSel = consolaDeCarpeta(it), vistaConsolas = if (it.vistaConsolas in MODOS_ELEGIR) it.vistaConsolas else "carpetas")
             }
             "ultimo" -> scope.launch {
                 actualizar { it.copy(inicio = "heroe") }
@@ -8408,7 +8411,13 @@ object Diptico {
 
     /** Modo sistemas: vuelve al carrusel de consolas. */
     fun volverASistemas() {
-        if (estado.value.vistaConsolas in MODOS_ELEGIR) actualizar { it.copy(enSistemas = true, widgetFoco = -1) }
+        if (estado.value.vistaConsolas in MODOS_ELEGIR) actualizar { it.copy(enSistemas = true, widgetFoco = -1, consolaSel = consolaDeCarpeta(it)) }
+    }
+
+    /** Sin la carpeta «Todos los juegos», la selección de carpetas nunca queda en «todo»: cae en la consola del juego o en la primera. */
+    private fun consolaDeCarpeta(e: Estado): String {
+        if (e.consolaSel != "todo" || e.extra.carpetaTodos) return e.consolaSel
+        return e.seleccionado?.consolaId?.takeIf { it in e.pestanas } ?: e.pestanas.firstOrNull() ?: "todo"
     }
 
     /** R3 o el botón Vista: estante, cuadrícula o lista. */
@@ -8650,6 +8659,13 @@ object Diptico {
                 "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande), Carpetas (cuadrícula de íconos que abren sus juegos) o Discos (cada consola es un vinilo en su funda, y la elegida saca su disco girando). En Sistemas, Carpetas y Discos primero eliges la consola y después entras a sus juegos.",
                 menos = { cambiarVistaConsolas(-1) },
             ) { abrirGaleria("vistas_consolas") },
+            Opcion("Carpeta «Todos los juegos»", if (e.extra.carpetaTodos) "Sí" else "No", Icono.CARPETA,
+                "Agrega a la biblioteca una carpeta con todos tus juegos juntos, además de la de cada consola. Apagada, solo ves una carpeta por consola.") {
+                val v = !estado.value.extra.carpetaTodos
+                almacen.guardarBool("carpetaTodos2", v)
+                actualizar { it.copy(extra = it.extra.copy(carpetaTodos = v)) }
+                actualizar { it.copy(consolaSel = if (v) it.consolaSel else consolaDeCarpeta(it)) }
+            },
             Opcion("Abrir carpetas", if (e.modoCarpeta == "completa") "Pantalla completa" else "Ventana con desenfoque", Icono.CARPETA,
                 "Elige cómo se abren los juegos en la vista Carpetas.") { alternarModoCarpeta() },
             Opcion("Recorrido de carpetas", if (e.carpetasHorizontal) "Horizontal" else "Vertical", Icono.VISTA,

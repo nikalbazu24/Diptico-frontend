@@ -10,6 +10,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,9 +68,14 @@ internal fun CabeceraCarpetas(e: Estado, interactiva: Boolean) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(16), vertical = esc.d(5)),
-        horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Texto("Biblioteca", 16f, lineas = 1)
-        Texto("${e.pestanas.size - 1} sistemas", 11f, color = p.tenue, lineas = 1)
+        verticalAlignment = Alignment.CenterVertically) {
+        Column {
+            Texto("Biblioteca", 16f, lineas = 1)
+            Texto("${e.consolasConJuegos.size} sistemas", 10.5f, color = p.tenue, lineas = 1)
+        }
+        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Pistas("✥" to "Carpeta", "A" to "Abrir", "X" to "Personalizar", "Y" to "Al azar")
+        }
         Box(Modifier.superficieApp(p.superficie, RoundedCornerShape(50))
             .clickable(enabled = interactiva) { Diptico.abrirGaleria("orden_carpetas") }
             .padding(horizontal = esc.d(12), vertical = esc.d(6))) { Texto("Ordenar", 11f, lineas = 1) }

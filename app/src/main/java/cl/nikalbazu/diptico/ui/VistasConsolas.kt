@@ -484,9 +484,6 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
                 items(ids.size, key = { ids[it] }) { k -> CarpetaVisual(e, ids[k], k == sel, amplia = e.vistaConsolas == "vitrina") }
             }
         }
-        Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
-            Pistas("✥" to "Carpeta", "A" to "Abrir", "X" to "Personalizar", "Y" to "Al azar")
-        }
     }
 }
 

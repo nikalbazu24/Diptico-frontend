@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "tu-ano-2.0-44"
-    const val NOMBRE = "Tu año completo"
+    const val ID = "biblioteca-ordenada-2.0-45"
+    const val NOMBRE = "Biblioteca más ordenada"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -379,8 +379,12 @@ object Novedades {
         Version("tu-ano-2.0-43", "Tu año completo", listOf(
             Pagina("«Tu año» se ve completo", "En la pantalla ancha, tus números van a la izquierda y el mes a mes con tus cinco juegos más jugados a la derecha, todo a la vista sin deslizar. Y los plurales salen bien («1 partida»).", Icono.ESTRELLA, 0xFFFFC93C),
         )),
-        Version(ID, "Tu año, bien ajustado", listOf(
+        Version("tu-ano-2.0-44", "Tu año, bien ajustado", listOf(
             Pagina("Todo a la vista", "«Tu año» ahora cabe entero en la pantalla de arriba: el botón de cerrar pasó a la esquina y las tarjetas son más compactas.", Icono.ESTRELLA, 0xFFFFC93C),
+        )),
+        Version(ID, "Biblioteca más ordenada", listOf(
+            Pagina("Sin «Todos los juegos»", "La biblioteca muestra una carpeta por consola y nada más. Si quieres ver todos tus juegos juntos, actívala en Ajustes (búscala por su nombre: Carpeta «Todos los juegos»).", Icono.CARPETA, 0xFF3BA8FF),
+            Pagina("Controles en la cabecera", "La barrita de abajo con los botones desapareció: ahora esa guía está arriba, entre «Biblioteca · sistemas» y «Ordenar».", Icono.MANDO, 0xFFFFC93C),
         )),
     )
 
