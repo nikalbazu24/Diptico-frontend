@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -111,7 +112,7 @@ private fun Editor(e: Estado, ed: EdicionPerfil) {
                     TarjetaFoto(ed, acento, conDiscord)
                     EtiquetaEd("PERSONAJES")
                     Personajes(ed, acento)
-                    Texto("Personajes originales de Díptico. Pronto habrá más.", 10.5f, color = Suave, familia = Nunito, lineas = 2)
+                    if (!esc.angosta) Texto("Personajes originales de Díptico. Pronto habrá más.", 10.5f, color = Suave, familia = Nunito, lineas = 2)
                 }
                 // Derecha: datos, color y privacidad (se desliza sola hasta lo que eliges).
                 Derecha(e, ed, acento, Modifier.weight(1.08f))
@@ -148,7 +149,7 @@ private fun TarjetaFoto(ed: EdicionPerfil, acento: Color, conDiscord: Boolean) {
         Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(18))).background(Casilla).padding(esc.d(12)),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
     ) {
-        FotoPerfil(p, 70f)
+        FotoPerfil(p, if (esc.angosta) 58f else 70f)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
             EtiquetaEd("FOTO")
             androidx.compose.foundation.layout.FlowRow(
@@ -177,16 +178,16 @@ private fun Personajes(ed: EdicionPerfil, acento: Color) {
         Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(Casilla).padding(vertical = esc.d(8), horizontal = esc.d(4)),
         verticalArrangement = Arrangement.spacedBy(esc.d(6)),
     ) {
-        for (fila in 0 until 2) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        for (fila in 0 until 2) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(2))) {
             for (c in 0 until 4) {
                 val (id, nombre) = PERSONAJES[fila * 4 + c]
                 val elegido = usandoPersonaje && p.personaje == id
                 val enfocado = ed.fila == FilasEdicion.PERSONAJES_1 + fila && ed.col == c
                 Column(
-                    Modifier.clip(RoundedCornerShape(esc.d(12)))
+                    Modifier.weight(1f).clip(RoundedCornerShape(esc.d(12)))
                         .then(if (enfocado) Modifier.background(acento.copy(alpha = 0.22f)).border(esc.d(1.5f), acento, RoundedCornerShape(esc.d(12))) else Modifier)
                         .clickable { Diptico.usarEdicionPerfil(FilasEdicion.PERSONAJES_1 + fila, c) }
-                        .padding(horizontal = esc.d(4), vertical = esc.d(3))
+                        .padding(horizontal = esc.d(1), vertical = esc.d(3))
                         .testTag("personaje-$id"),
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(2)),
                 ) {
@@ -194,9 +195,9 @@ private fun Personajes(ed: EdicionPerfil, acento: Color) {
                     Box(
                         Modifier.then(if (elegido) Modifier.border(esc.d(2f), acento, CircleShape).padding(esc.d(2f)) else Modifier.padding(esc.d(2f))).then(aro),
                     ) {
-                        FotoPerfil(Perfil(color = FONDO_PERSONAJE[id] ?: p.color), 38f, anillo = false, personaje = id)
+                        FotoPerfil(Perfil(color = FONDO_PERSONAJE[id] ?: p.color), if (esc.angosta) 34f else 40f, anillo = false, personaje = id)
                     }
-                    Texto(nombre, 10.5f, color = Claro, peso = if (elegido) FontWeight.Black else FontWeight.Bold, familia = Nunito, lineas = 1, traducir = false)
+                    Texto(nombre, if (esc.angosta) 9f else 10.5f, color = Claro, peso = if (elegido) FontWeight.Black else FontWeight.Bold, familia = Nunito, lineas = 1, traducir = false)
                 }
             }
         }
@@ -280,11 +281,11 @@ private fun FilaDato(titulo: String, ayuda: String, valor: String, acento: Color
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
     ) {
         Column(Modifier.weight(1f)) {
-            Texto(titulo, 13.5f, color = Claro, peso = FontWeight.ExtraBold, familia = Nunito, lineas = 1)
+            Texto(titulo, 13f, color = Claro, peso = FontWeight.ExtraBold, familia = Nunito, lineas = 1)
             Texto(ayuda, 10.5f, color = Suave, familia = Nunito, lineas = 2)
         }
-        Texto(valor, 13.5f, color = acento, peso = FontWeight.ExtraBold, familia = Nunito, lineas = 1, traducir = traducirValor, alinear = TextAlign.End,
-            modifier = Modifier.width(esc.d(108)))
+        Texto(valor, 13f, color = acento, peso = FontWeight.ExtraBold, familia = Nunito, lineas = 1, traducir = traducirValor, alinear = TextAlign.End,
+            modifier = Modifier.widthIn(max = esc.d(118)))
     }
 }
 
