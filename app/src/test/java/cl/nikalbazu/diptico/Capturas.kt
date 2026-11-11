@@ -1435,6 +1435,13 @@ class Capturas {
     @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 0), Rol.INFERIOR, mi = 1)
     @Test fun t374_tema_exclusivo_arriba() = foto("374_tema_exclusivo_aurora", base(), Rol.SUPERIOR, tema = Temas.exclusivos[0].tema)
     @Test fun t375_tema_fiesta_navidad() = foto("375_tema_fiesta_navidad", base(), Rol.SUPERIOR, tema = Temas.fiestas.first { it.id == "navidad" }.tema)
+    // Por qué falló un juego: el emulador se cerró enseguida y Díptico explica lo más probable.
+    @Config(qualifiers = ABAJO)
+    @Test fun t376_cierre_rapido() = foto("376_cierre_rapido", base().copy(dialogo = Dialogo("cierre-rapido", "Leyenda del Bosque se cerró enseguida",
+        "Se abrió con DuckStation y volvió a Díptico a los 6 s. Lo más probable:", Icono.EMULADOR,
+        lineas = listOf("PlayStation: los emuladores como DuckStation piden la BIOS (por ejemplo scph5501.bin) en su carpeta de BIOS.",
+            "El emulador no tiene permiso para leer la carpeta de juegos: ábrelo y elige la carpeta dentro de él."),
+        si = "Probar con otro emulador", no = "Cerrar")), Rol.INFERIOR, mi = 1)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)
