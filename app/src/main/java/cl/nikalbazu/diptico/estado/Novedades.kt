@@ -385,6 +385,7 @@ object Novedades {
         Version(ID, "Biblioteca más ordenada", listOf(
             Pagina("Sin «Todos los juegos»", "La biblioteca muestra una carpeta por consola y nada más. Si quieres ver todos tus juegos juntos, actívala en Ajustes (búscala por su nombre: Carpeta «Todos los juegos»).", Icono.CARPETA, 0xFF3BA8FF),
             Pagina("Controles en la cabecera", "La barrita de abajo con los botones desapareció: ahora esa guía está arriba, entre «Biblioteca · sistemas» y «Ordenar».", Icono.MANDO, 0xFFFFC93C),
+            Pagina("Tu perfil se edita ahí mismo", "En tu tarjeta de perfil, A abre tus datos dentro de la misma ventana: nombre, foto, personaje, marco y más. Ya no te manda a Ajustes.", Icono.PERFIL, 0xFFFF7A59),
         )),
     )
 

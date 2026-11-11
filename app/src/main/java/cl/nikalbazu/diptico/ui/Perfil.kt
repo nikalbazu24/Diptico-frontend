@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.layout.widthIn
+
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -159,6 +161,15 @@ private fun ContenidoPerfil(e: Estado) {
     val nombre = e.nombre.ifBlank { pf.apodo.ifBlank { "Jugador" } }
     val angosta = esc.angosta
     Column(Modifier.fillMaxSize().padding(esc.d(if (angosta) 16 else 22))) {
+        if (e.extra.perfilEdita >= 0) {
+            EditorPerfil(e, color, Modifier.weight(1f).fillMaxWidth())
+            Spacer(Modifier.height(esc.d(10)))
+            Box(
+                Modifier.clip(RoundedCornerShape(50)).background(color).clickable { Diptico.dejarDeEditarPerfil() }
+                    .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+            ) { Texto("B · Listo", 13.5f, color = if (color.luminance2() > 0.55f) Color(0xFF14101A) else Color.White, lineas = 1) }
+            return@Column
+        }
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
             if (angosta) {
                 // Pantalla casi cuadrada: arriba tu foto y tu nombre, y abajo las pastillas y los números (sin favoritos, para que quepa todo).
@@ -349,6 +360,41 @@ internal fun PreviaPerfil(e: Estado) {
             Texto(e.nombre.ifBlank { "Tu nombre" }, 24f, lineas = 1, traducir = e.nombre.isBlank())
             if (pf.apodo.isNotBlank()) Detalle("@${pf.apodo}", 14f, lineas = 1)
             if (pf.nacimientoBonito().isNotBlank()) Detalle(pf.nacimientoBonito(), 13f, lineas = 1)
+        }
+    }
+}
+
+
+/** Tus datos para cambiar ahí mismo, dentro de la tarjeta: ↑ ↓ eliges, A cambia, ← vuelve atrás en las que tienen valores. */
+@Composable
+private fun EditorPerfil(e: Estado, color: Color, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val opciones = remember(e.extra.perfil, e.nombre, e.extra.discordAvatar) { Diptico.opcionesEdicionPerfil(e) }
+    val lista = androidx.compose.foundation.lazy.rememberLazyListState()
+    LaunchedEffect(e.extra.perfilEdita) { if (e.extra.perfilEdita in opciones.indices) lista.animateScrollToItem((e.extra.perfilEdita - 2).coerceAtLeast(0)) }
+    Column(modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+            FotoPerfil(e.extra.perfil, 52f)
+            Column { Texto("Editar mi perfil", 20f, color = TextoClaro, lineas = 1); Texto("Los cambios se guardan solos", 11.5f, color = TextoClaro.copy(alpha = .6f), lineas = 1) }
+        }
+        Spacer(Modifier.height(esc.d(8)))
+        androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxWidth().weight(1f), state = lista, verticalArrangement = Arrangement.spacedBy(esc.d(4))) {
+            items(opciones.size) { i ->
+                val o = opciones[i]
+                val elegida = i == e.extra.perfilEdita
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14)))
+                        .background(if (elegida) color.copy(alpha = .28f) else Color.White.copy(alpha = .06f))
+                        .then(if (elegida) Modifier.border(esc.d(1.5f), color, RoundedCornerShape(esc.d(14))) else Modifier)
+                        .clickable { Diptico.usarEdicionPerfil(i) }
+                        .padding(horizontal = esc.d(14), vertical = esc.d(9)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    o.icono?.let { IconoDiptico(it, TextoClaro, 16f); Spacer(Modifier.width(esc.d(10))) }
+                    Texto(o.titulo, 14f, color = TextoClaro, lineas = 1, modifier = Modifier.weight(1f))
+                    Texto(o.valor, 12.5f, color = TextoClaro.copy(alpha = .7f), lineas = 1, traducir = false, modifier = Modifier.widthIn(max = esc.d(200)))
+                }
+            }
         }
     }
 }

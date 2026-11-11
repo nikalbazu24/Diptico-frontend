@@ -144,6 +144,16 @@ object Teclas {
             return true
         }
         // Tu perfil: B lo cierra; A abre los ajustes para cambiar tus datos; Y abre «Tu año».
+        if (e.extra.perfilEn >= 0 && e.extra.perfilEdita >= 0) {
+            if (arriba) when {
+                esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.dejarDeEditarPerfil()
+                code == KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverEdicionPerfil(-1)
+                code == KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverEdicionPerfil(1)
+                code == KeyEvent.KEYCODE_DPAD_LEFT -> Diptico.usarEdicionPerfil(e.extra.perfilEdita, menos = true)
+                esA(code) || code == KeyEvent.KEYCODE_DPAD_RIGHT -> Diptico.usarEdicionPerfil(e.extra.perfilEdita)
+            }
+            return true
+        }
         if (e.extra.perfilEn >= 0) {
             if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BACK)) Diptico.cerrarPerfil()
             else if (arriba && esA(code)) Diptico.editarPerfil()

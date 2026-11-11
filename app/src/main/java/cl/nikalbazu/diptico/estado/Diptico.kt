@@ -366,6 +366,8 @@ data class EstadoExtra(
     val dippoDatos: Boolean = true,
     /** Si la biblioteca muestra la carpeta «Todos los juegos» junto a las de cada consola. */
     val carpetaTodos: Boolean = false,
+    /** Editando el perfil dentro de su tarjeta: la fila elegida (-1 = solo mirando). */
+    val perfilEdita: Int = -1,
     /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
     val termica: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -2486,7 +2488,7 @@ object Diptico {
     }
 
     fun cerrarPerfil() {
-        if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1)) }
+        if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1, perfilEdita = -1)) }
     }
 
     // ---------- Tu año ----------
@@ -2517,9 +2519,32 @@ object Diptico {
     }
 
     /** Desde la tarjeta: cierra y abre «Mi perfil» en los ajustes para cambiar los datos. */
+    /** Editar el perfil sin salir de su tarjeta: la lista de datos aparece ahí mismo. */
     fun editarPerfil() {
-        cerrarPerfil()
-        abrirMenu(Seccion.G_PERFIL)
+        if (estado.value.extra.perfilEn < 0) { abrirMenu(Seccion.G_PERFIL); return }
+        actualizar { it.copy(extra = it.extra.copy(perfilEdita = 0)) }
+    }
+
+    fun dejarDeEditarPerfil() = actualizar { it.copy(extra = it.extra.copy(perfilEdita = -1)) }
+
+    /** Lo que se puede cambiar desde la tarjeta (sin «Ver mi perfil» ni «Tu año»). */
+    fun opcionesEdicionPerfil(e: Estado): List<Opcion> = opcionesPerfil(e).filter { it.titulo != "Ver mi perfil" && it.titulo != "Tu año" }
+
+    fun moverEdicionPerfil(d: Int) {
+        val n = opcionesEdicionPerfil(estado.value).size
+        if (n == 0) return
+        actualizar { it.copy(extra = it.extra.copy(perfilEdita = (it.extra.perfilEdita + d).coerceIn(0, n - 1))) }
+    }
+
+    /** Usa una fila del editor; si abre otra ventana (teclado, galería, imagen), la tarjeta se cierra para no taparla. */
+    fun usarEdicionPerfil(i: Int, menos: Boolean = false) {
+        val o = opcionesEdicionPerfil(estado.value).getOrNull(i) ?: return
+        actualizar { it.copy(extra = it.extra.copy(perfilEdita = i)) }
+        val antes = estado.value
+        if (menos) (o.menos ?: return)() else o.accion()
+        val d = estado.value
+        if (d.panel != antes.panel && d.panel != Panel.NINGUNO && d.panel != Panel.CENTRO)
+            actualizar { it.copy(extra = it.extra.copy(perfilEn = -1, perfilEdita = -1)) }
     }
 
     fun guardarPerfil(nuevo: Perfil) {
