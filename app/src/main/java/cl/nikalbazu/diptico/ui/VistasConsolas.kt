@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -490,7 +491,7 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
                         Modifier.zIndex(if (arrastrando) 5f else 0f)
                             .graphicsLayer { translationX = arrastre.x; translationY = arrastre.y }
                             .then(if (ordenando && id != "todo") Modifier.pointerInput(id, k, carriles, horizontal) {
-                                androidx.compose.foundation.gestures.detectDragGestures(
+                                detectDragGestures(
                                     onDragStart = { arrastrando = true; Diptico.elegirConsola(id) },
                                     onDragEnd = {
                                         val dx = kotlin.math.round(arrastre.x / pasoX).toInt()
