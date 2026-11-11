@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.audio
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent

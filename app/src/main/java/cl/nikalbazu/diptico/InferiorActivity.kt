@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent

@@ -107,7 +107,7 @@ private fun Lista(e: Estado, filas: List<EntradaNativa>, sel: Int) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Texto("SWITCH 2 Y PORTS", 11f, color = Acento, peso = FontWeight.ExtraBold, espaciado = 1.4f, lineas = 1)
-                Texto("Juega lo nuevo, nativo", if (esc.angosta) 19f else 22f, color = Claro, peso = FontWeight.ExtraBold, lineas = 1)
+                Texto("Juega lo nuevo", if (esc.angosta) 19f else 22f, color = Claro, peso = FontWeight.ExtraBold, lineas = 1)
             }
             Pastilla("B · Cerrar") { Diptico.cerrarNativos() }
         }

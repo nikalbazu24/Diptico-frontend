@@ -172,6 +172,46 @@ object Temas {
     private fun f(id: String, nombre: String, donde: String, a: Long, b: Long, c: Long, decor: String, mensaje: String, base: String = "auto", paises: Set<String> = emptySet()) =
         Fiesta(id, nombre, donde, Tema("fiesta_$id", nombre, a, b, c, base, decor, mensaje), paises)
 
+    // OJO: va antes de [fiestas], que lo usa al armarse (un objeto se inicializa en orden).
+    /**
+     * Cada fiesta es un tema completo, no solo colores: su trama de fondo, su acabado y la forma de sus botones.
+     * (trama, acabado, forma, fondo). Las que no están aquí quedan con el estilo base.
+     */
+    private val ESTILO_FIESTA: Map<String, List<Any>> = mapOf(
+        "anionuevo" to listOf("cielo", "brillo", "capsula", 0xFF0B1026L),
+        "navidad" to listOf("rombos", "brillo", "capsula", 0xFF16130F),
+        "fiestaspatrias" to listOf("diagonal", "degradado", "bisel", 0L),
+        "halloween" to listOf("cielo", "degradado", "bisel", 0xFF140B1F),
+        "muertos" to listOf("puntos", "brillo", "capsula", 0xFF1A0E1E),
+        "lunar" to listOf("rombos", "brillo", "bisel", 0xFF1E0A0C),
+        "diwali" to listOf("puntos", "brillo", "capsula", 0xFF1C1206),
+        "janucá" to listOf("cielo", "vidrio", "capsula", 0xFF0B1226),
+        "sanvalentin" to listOf("puntos", "degradado", "capsula", 0L),
+        "carnaval" to listOf("diagonal", "brillo", "capsula", 0L),
+        "holi" to listOf("barrido", "brillo", "capsula", 0L),
+        "hanami" to listOf("ondas", "degradado", "capsula", 0L),
+        "pascua" to listOf("puntos", "degradado", "capsula", 0L),
+        "songkran" to listOf("ondas", "vidrio", "capsula", 0L),
+        "tierra" to listOf("ondas", "degradado", "recta", 0L),
+        "orgullo" to listOf("barrido", "brillo", "capsula", 0L),
+        "andino" to listOf("rombos", "degradado", "bisel", 0xFF120F1C),
+        "gamer" to listOf("reticula", "brillo", "pixel", 0xFF07101A),
+        "friki" to listOf("lcd", "brillo", "pixel", 0xFF0D0A1F),
+        "glorias" to listOf("ondas", "degradado", "recta", 0xFF07132B),
+        "patrimonio" to listOf("papel", "liso", "recta", 0L),
+        "libro" to listOf("papel", "liso", "recta", 0L),
+        "profesor" to listOf("papel", "degradado", "recta", 0L),
+        "tirana" to listOf("diagonal", "brillo", "bisel", 0xFF1C0A16),
+        "musica" to listOf("ondas", "brillo", "capsula", 0xFF120E22),
+        "oktoberfest" to listOf("rombos", "degradado", "bisel", 0L),
+        "gracias" to listOf("papel", "degradado", "recta", 0L),
+    )
+
+    private fun conEstiloDeFiesta(fi: Fiesta): Fiesta {
+        val est = ESTILO_FIESTA[fi.id] ?: return fi
+        return fi.copy(tema = fi.tema.copy(trama = est[0] as String, acabado = est[1] as String, forma = est[2] as String, fondo = est[3] as Long))
+    }
+
     val fiestas = listOf(
         f("anionuevo", "Año Nuevo", "Todo el mundo", 0xFFFFC93C, 0xFFFF5D8F, 0xFF3BA8FF, "fuegos", "¡Feliz año nuevo!", "oscuro"),
         f("reyes", "Día de Reyes", "España y Latinoamérica", 0xFFFFC93C, 0xFF8E6CF0, 0xFFFF7A59, "estrellas", "¡Feliz Día de Reyes!"),
@@ -207,6 +247,34 @@ object Temas {
         f("nino", "Día del Niño", "Chile", 0xFF3BA8FF, 0xFFFFC93C, 0xFFFF5D8F, "burbujas", "¡Feliz Día del Niño!", paises = setOf("CL")),
         f("dosmundos", "Encuentro de Dos Mundos", "Chile y América", 0xFFB45309, 0xFF2EC4A6, 0xFFFFC93C, "hojas", "12 de octubre", paises = setOf("CL")),
         f("musica", "Día de la Música", "Chile y el mundo", 0xFF8E6CF0, 0xFFFF5D8F, 0xFFFFC93C, "estrellas", "¡Feliz Día de la Música!"),
+        f("madre", "Día de la Madre", "Chile y Latinoamérica", 0xFFFF5D8F, 0xFFFFB4C8, 0xFFFFC93C, "petalos", "¡Feliz Día de la Mamá!", paises = setOf("CL")),
+        f("padre", "Día del Padre", "Chile y Latinoamérica", 0xFF3B82F6, 0xFF14B8A6, 0xFFFFC93C, "estrellas", "¡Feliz Día del Papá!", paises = setOf("CL")),
+        f("profesor", "Día del Profesor", "Chile", 0xFF2EC4A6, 0xFFFFB020, 0xFF3D5A80, "estrellas", "¡Feliz día a quienes enseñan!", paises = setOf("CL")),
+        f("libro", "Día del Libro", "Todo el mundo", 0xFFB45309, 0xFF3D5A80, 0xFFF2CC8F, "hojas", "Día del Libro: ¿y si hoy lees un rato?"),
+        f("friki", "Día del Orgullo Friki", "España y Latinoamérica", 0xFF7B61FF, 0xFF00E5FF, 0xFFFF2E97, "estrellas", "¡Feliz Día del Orgullo Friki!", "oscuro"),
+    ).map { conEstiloDeFiesta(it) }
+
+    /** Un tema que solo se usa ganando un logro difícil de DIPPO. */
+    data class TemaExclusivo(val logro: String, val tema: Tema)
+
+    /** Temas exclusivos: cada uno se gana con un logro difícil de DIPPO. Diseño propio, no se venden ni se importan. */
+    val exclusivos = listOf(
+        TemaExclusivo("racha14", Tema("x_aurora", "Aurora austral", 0xFF34D399, 0xFF8B5CF6, 0xFF22D3EE, "oscuro", "destellos",
+            fondo = 0xFF06121C, trama = "cielo", acabado = "vidrio", forma = "capsula", descripcion = "Luces del sur que se mueven sobre la noche. Por jugar dos semanas seguidas.")),
+        TemaExclusivo("racha30", Tema("x_eclipse", "Eclipse", 0xFFFFB020, 0xFFFF5D3A, 0xFFFDE68A, "oled", "orbitas",
+            fondo = 0xFF000000, trama = "cielo", acabado = "brillo", forma = "capsula", descripcion = "Un anillo de fuego sobre negro puro. Por un mes entero sin faltar.")),
+        TemaExclusivo("trescientas", Tema("x_turbo", "Turbo", 0xFFFF2E63, 0xFF08D9D6, 0xFFEAEAEA, "oscuro", "destellos",
+            fondo = 0xFF0F0F1A, trama = "barrido", acabado = "brillo", forma = "bisel", descripcion = "Velocidad pura, con líneas que pasan rápido. Por 300 partidas.")),
+        TemaExclusivo("doscientas_h", Tema("x_bosque_profundo", "Bosque profundo", 0xFF4ADE80, 0xFFA3E635, 0xFFFDE68A, "oscuro", "hojas",
+            fondo = 0xFF07140D, trama = "ondas", acabado = "degradado", forma = "recta", descripcion = "Verde de bosque nativo con luciérnagas. Por 250 horas jugando.")),
+        TemaExclusivo("quinientas_h", Tema("x_leyenda", "Leyenda", 0xFFFACC15, 0xFFF59E0B, 0xFFFFFFFF, "oled", "estrellas",
+            fondo = 0xFF0A0804, tinta = 0xFFFFF4D6, trama = "rombos", acabado = "brillo", forma = "bisel", descripcion = "Oro sobre negro, para quien ya es leyenda. Por 500 horas jugando.")),
+        TemaExclusivo("finales25", Tema("x_creditos", "Créditos finales", 0xFFE5E7EB, 0xFF94A3B8, 0xFFFF7A59, "oled", "estrellas",
+            fondo = 0xFF050507, trama = "lcd", acabado = "liso", forma = "recta", descripcion = "Como la pantalla de créditos: sobria y elegante. Por terminar 25 juegos.")),
+        TemaExclusivo("explorador50", Tema("x_cartografo", "Cartógrafo", 0xFFD97706, 0xFF0EA5E9, 0xFF65A30D, "claro", "nada",
+            fondo = 0xFFF5ECD9, tinta = 0xFF3B2A17, trama = "papel", acabado = "liso", forma = "recta", descripcion = "Un mapa antiguo de todo lo que exploraste. Por jugar 50 juegos distintos.")),
+        TemaExclusivo("consolas8", Tema("x_museo", "Museo de consolas", 0xFF6B4EFF, 0xFFFF7A59, 0xFF2EC4A6, "oscuro", "bloques",
+            fondo = 0xFF14121C, trama = "reticula", acabado = "degradado", forma = "pixel", fuente = "pixel", descripcion = "Una vitrina de todas las épocas, con letra de píxeles. Por jugar en 8 consolas.")),
     )
 
     /** Domingo de Pascua (algoritmo de Gauss/Meeus). */
@@ -266,6 +334,14 @@ object Temas {
         lista += "patrimonio" to (finMayo.minusDays(1)..finMayo)
         val nino = d(anio, 8, 1).with(TemporalAdjusters.dayOfWeekInMonth(2, DayOfWeek.SUNDAY))
         lista += "nino" to (nino.minusDays(1)..nino)
+        // Día de la Madre: segundo domingo de mayo. Día del Padre: tercer domingo de junio (Chile).
+        val madre = d(anio, 5, 1).with(TemporalAdjusters.dayOfWeekInMonth(2, DayOfWeek.SUNDAY))
+        lista += "madre" to (madre.minusDays(1)..madre)
+        val padre = d(anio, 6, 1).with(TemporalAdjusters.dayOfWeekInMonth(3, DayOfWeek.SUNDAY))
+        lista += "padre" to (padre.minusDays(1)..padre)
+        lista += "profesor" to (d(anio, 10, 16)..d(anio, 10, 16))
+        lista += "libro" to (d(anio, 4, 23)..d(anio, 4, 23))
+        lista += "friki" to (d(anio, 5, 25)..d(anio, 5, 25))
         tabla(LUNAR, anio)?.let { lista += "lunar" to (it.minusDays(2)..it.plusDays(6)) }
         tabla(HOLI, anio)?.let { lista += "holi" to (it.minusDays(1)..it.plusDays(1)) }
         tabla(EID, anio)?.let { lista += "eid" to (it.minusDays(1)..it.plusDays(2)) }
@@ -289,6 +365,14 @@ object Temas {
             .filter { it.second.start.isAfter(hoy) }
             .minByOrNull { it.second.start }
             ?.let { (id, r) -> fiestas.firstOrNull { it.id == id }?.let { it to r.start } }
+
+    /** Todas las fiestas con su próxima fecha (las de hoy primero, con su fecha de hoy), en orden. */
+    fun calendario(hoy: LocalDate = LocalDate.now()): List<Pair<Fiesta, LocalDate>> {
+        val hoyIds = (rangos(hoy.year) + rangos(hoy.year - 1)).filter { hoy in it.second }.map { it.first }.toSet()
+        val proximas = (rangos(hoy.year) + rangos(hoy.year + 1)).filter { it.second.start.isAfter(hoy) }.sortedBy { it.second.start }
+        val orden = hoyIds.map { it to hoy } + proximas.map { it.first to it.second.start }
+        return orden.distinctBy { it.first }.mapNotNull { (id, d) -> fiestas.firstOrNull { it.id == id }?.let { it to d } }
+    }
 
     /** Las próximas [n] celebraciones (sin repetir) y cuándo empiezan. */
     fun proximas(n: Int, hoy: LocalDate = LocalDate.now()): List<Pair<Fiesta, LocalDate>> =

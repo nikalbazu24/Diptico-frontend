@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.retoma
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.app.*
 import android.content.*
 import android.content.pm.ServiceInfo

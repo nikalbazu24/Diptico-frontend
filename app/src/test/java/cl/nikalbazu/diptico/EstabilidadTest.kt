@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.content.Context
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider

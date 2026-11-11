@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
@@ -1426,6 +1428,13 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t370_nativos_ports() = foto("370_nativos_ports", conNativos(1, 0), Rol.INFERIOR, mi = 1)
     @Test fun t371_nativos_una() = foto("371_nativos_una", conNativos(0, 2).copy(modoPantallas = "una_negra"), Rol.UNICA)
+    // Temas: el calendario (cada fiesta con su estilo completo) y los exclusivos con candado.
+    @Config(qualifiers = ABAJO)
+    @Test fun t372_temas_calendario() = foto("372_temas_calendario", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 1, indice = 1), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 0), Rol.INFERIOR, mi = 1)
+    @Test fun t374_tema_exclusivo_arriba() = foto("374_tema_exclusivo_aurora", base(), Rol.SUPERIOR, tema = Temas.exclusivos[0].tema)
+    @Test fun t375_tema_fiesta_navidad() = foto("375_tema_fiesta_navidad", base(), Rol.SUPERIOR, tema = Temas.fiestas.first { it.id == "navidad" }.tema)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
     @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)

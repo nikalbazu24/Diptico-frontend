@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.lupa
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel

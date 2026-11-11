@@ -239,7 +239,7 @@ fun Diptico.entradasNativos(e: Estado): List<EntradaNativa> {
                     "Necesita tu copia del juego original (la app te dice qué archivo pide la primera vez). Al instalarlo aparece solo en tu carpeta Ports.",
                 consejos = listOf("Se baja de ${p.enlace.removePrefix("https://")}"),
             )
-        }.sortedWith(compareBy({ !it.instalada }, { it.grupo }, { it.titulo.lowercase() }))
+        }.sortedBy { !it.instalada } // Los instalados primero; el resto en el orden del catálogo (los más conocidos arriba).
     }
 }
 

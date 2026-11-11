@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.data
 
+import cl.nikalbazu.diptico.estado.*
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection

@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import cl.nikalbazu.diptico.estado.*
+
 import android.animation.ValueAnimator
 import android.database.ContentObserver
 import android.os.Handler
