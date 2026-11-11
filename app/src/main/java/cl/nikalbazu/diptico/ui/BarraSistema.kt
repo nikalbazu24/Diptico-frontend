@@ -118,6 +118,8 @@ private fun BarraCompleta(e: Estado, modifier: Modifier, estilo: String, hora: S
     val esc = LocalEscala.current
     Row(modifier.fillMaxWidth().height(esc.d(ALTO_BARRA_SISTEMA)).fondoBarra(estilo)
         .padding(horizontal = esc.d(14)).testTag("barra-sistema"), verticalAlignment = Alignment.CenterVertically) {
+        DippoInicio(e, 24f)
+        Spacer(Modifier.width(esc.d(8)))
         Logo(10f)
         Spacer(Modifier.width(esc.d(10)))
         PildoraTrabajos(e.trabajos)

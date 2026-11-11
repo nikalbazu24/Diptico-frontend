@@ -172,40 +172,6 @@ fun FranjaAccesos(e: Estado) {
     }
 }
 
-/** Arriba de la pantalla de abajo: DIPPO en una esquina, tu perfil en la otra y la hora y la batería al centro, chiquitas. */
-@Composable
-fun EsquinasArriba(e: Estado) {
-    val esc = LocalEscala.current
-    androidx.compose.foundation.layout.Row(
-        Modifier.fillMaxWidth().padding(start = esc.d(12), end = esc.d(12), top = esc.d(6), bottom = esc.d(2)).testTag("esquinas-arriba"),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        DippoInicio(e, 36f)
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { HoraBateria() }
-        BotonPerfil(40f)
-    }
-}
-
-@Composable
-private fun HoraBateria() {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val hora = rememberHora()
-    val bateria = rememberBateria()
-    val cargando = rememberCargando()
-    androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
-        Texto(hora, 13f, color = p.tinta, traducir = false, lineas = 1)
-        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
-        val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }
-        Box(Modifier.size(esc.d(22), esc.d(11)).border(esc.d(1.5f), p.tinta.copy(alpha = 0.7f), RoundedCornerShape(esc.d(3))).padding(esc.d(2))) {
-            Box(Modifier.fillMaxHeight().fillMaxWidth(((if (bateria < 0) 50 else bateria) / 100f).coerceIn(0.08f, 1f))
-                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono))
-        }
-        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(3)))
-        Texto(if (bateria >= 0) "$bateria%" else "—", 13f, color = p.tinta, traducir = false, lineas = 1)
-    }
-}
-
 /** El botón que esconde (‹) o saca (las apps) el dock de la franja. */
 @Composable
 private fun BotonRepliegue(abierto: Boolean, alPulsar: () -> Unit) {

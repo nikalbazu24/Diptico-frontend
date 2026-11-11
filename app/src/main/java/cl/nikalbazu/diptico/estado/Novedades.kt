@@ -391,7 +391,7 @@ object Novedades {
             Pagina("Ajustes y transiciones más ágiles", "Moverte por los ajustes ya no vuelve a armar toda la lista en cada paso, y las animaciones son más cortas.", Icono.CHISPA, 0xFF2EC4A6),
         )),
         Version(ID, "Esquinas ordenadas", listOf(
-            Pagina("Barra de abajo más limpia", "Abajo: la lupa en una esquina, los ajustes en la otra y tus apps fijas al centro (se esconden con el botoncito). Arriba de esa pantalla: DIPPO en una esquina, tu perfil en la otra y la hora y la batería al medio. Se fue la guía de botones.", Icono.APPS, 0xFF3BA8FF),
+            Pagina("Barra de abajo más limpia", "Abajo: la lupa en una esquina, los ajustes en la otra y tus apps fijas al centro (se esconden con el botoncito). En la pantalla de arriba: DIPPO en una esquina y tu perfil en la otra. Se fue la guía de botones.", Icono.APPS, 0xFF3BA8FF),
         )),
     )
 
