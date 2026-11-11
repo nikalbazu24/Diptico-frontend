@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
@@ -92,11 +93,14 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
         ) {
             items(lista.size, key = { lista[it].clave }, span = { i -> GridItemSpan(if (i == 0) maxLineSpan else 1) }) { i ->
                 val grande = i == 0
+                val juego = lista[i]
+                val elegido = i == e.indiceSel
+                val jugado = (e.datos[juego.clave]?.tiempo?.toLong() ?: 0L) > 0L
                 when {
-                    estante -> Mosaico(e, i, false, lado, ancho = lado * 0.78f)
-                    unaFila -> Mosaico(e, i, grande, lado, ancho = if (grande) lado * 1.7f else lado)
-                    grande -> Mosaico(e, i, true, lado * 2 + hueco)
-                    else -> Mosaico(e, i, false, lado)
+                    estante -> Mosaico(juego, elegido, jugado, false, lado, ancho = lado * 0.78f)
+                    unaFila -> Mosaico(juego, elegido, jugado, grande, lado, ancho = if (grande) lado * 1.7f else lado)
+                    grande -> Mosaico(juego, elegido, jugado, true, lado * 2 + hueco)
+                    else -> Mosaico(juego, elegido, jugado, false, lado)
                 }
             }
         }
@@ -105,11 +109,9 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp, ancho: Dp = lado) {
+private fun Mosaico(j: cl.nikalbazu.diptico.data.Juego, elegido: Boolean, jugado: Boolean, grande: Boolean, lado: Dp, ancho: Dp = lado) {
     val esc = LocalEscala.current
-    val j = e.visibles[i]
-    val elegido = i == e.indiceSel
-    val color = Consolas.porId(j.consolaId)?.color ?: Uva
+    val color = remember(j.consolaId) { Consolas.porId(j.consolaId)?.color ?: Uva }
     // El elegido crece con un resorte corto (sin rebote largo) y vuelve suave: se siente como consola.
     val mov = ajusteMovimiento()
     val escala by animateFloatAsState(
@@ -119,7 +121,6 @@ private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp, ancho: Dp = la
         label = "mosaico",
     )
     val forma = RoundedCornerShape(esc.d(if (grande) 14 else 10))
-    val jugado = (e.datos[j.clave]?.tiempo?.toLong() ?: 0L) > 0L
     Box(
         Modifier.size(ancho, lado).graphicsLayer { scaleX = escala; scaleY = escala }
             .then(if (elegido) Modifier.shadow(esc.d(18), forma, ambientColor = color, spotColor = color) else Modifier)
@@ -145,16 +146,23 @@ private fun Mosaico(e: Estado, i: Int, grande: Boolean, lado: Dp, ancho: Dp = la
  * Franja de abajo del nuevo diseño: accesos fijos (Buscar, Apps, Ajustes) a la izquierda y la hora con la batería a
  * la derecha. Reemplaza la barra de la hora en la pantalla de abajo, así no se repite ni tapa nada.
  */
+/** Alto de la barra de abajo abierta (barrita + accesos) y cerrada (solo la barrita), en dp de Díptico. */
+const val ALTO_FRANJA_ABIERTA = 84f
+const val ALTO_FRANJA_CERRADA = 22f
+
+/** Cuánto tapa la barra flotante de abajo: las rejillas lo suman a su relleno para poder correr el último elemento por encima. */
+val LocalAireAbajo = androidx.compose.runtime.compositionLocalOf { 0.dp }
+
 @Composable
-fun FranjaAccesos(e: Estado) {
+fun FranjaAccesos(e: Estado, modifier: Modifier = Modifier) {
     if (!e.extra.franjaAbajo) return
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val abierta = e.extra.dockVisible
     val mueve = LocalMovimiento.current
-    // Se esconde hacia abajo y queda solo una barrita; al tocarla la barra sale (y se guarda) con efecto burbuja.
+    // Sin fondo: flota sobre lo de atrás. Se esconde hacia abajo y queda solo la barrita; al tocarla la barra sale con efecto burbuja.
     androidx.compose.foundation.layout.Column(
-        Modifier.fillMaxWidth().testTag("franja-accesos"),
+        modifier.fillMaxWidth().testTag("franja-accesos"),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -185,12 +193,13 @@ fun FranjaAccesos(e: Estado) {
                 CirculoFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR) { Diptico.abrirBuscar() }
                 Box(Modifier.weight(1f).padding(horizontal = esc.d(10)).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
                     androidx.compose.foundation.layout.Row(
-                        Modifier.height(esc.d(44)).superficieApp(p.superficie, RoundedCornerShape(50))
+                        // Sin píldora de fondo: los accesos flotan sobre la pantalla, cada uno con su sombra suave.
+                        Modifier.height(esc.d(56))
                             .padding(horizontal = esc.d(10))
                             .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (e.extra.dock) FilaDock(e, 30f)
+                        if (e.extra.dock) FilaDock(e, 30f, flotante = true)
                         else androidx.compose.foundation.layout.Row(
                             Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirApps() }.padding(horizontal = esc.d(8), vertical = esc.d(8)),
                             verticalAlignment = Alignment.CenterVertically,
@@ -207,16 +216,19 @@ fun FranjaAccesos(e: Estado) {
     }
 }
 
-/** Botón redondo de las esquinas de la franja: la misma superficie del tema que la píldora del centro. */
+/** Acceso de las esquinas de la franja (lupa, ajustes): solo el ícono, flotando, con una sombra suave para leerse sobre cualquier fondo. */
 @Composable
 private fun CirculoFranja(icono: cl.nikalbazu.diptico.estado.Icono, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(
-        Modifier.size(esc.d(44)).superficieApp(p.superficie, androidx.compose.foundation.shape.CircleShape)
-            .clip(androidx.compose.foundation.shape.CircleShape).clickable(onClick = alPulsar),
+        Modifier.size(esc.d(44)).clip(androidx.compose.foundation.shape.CircleShape).clickable(onClick = alPulsar),
         contentAlignment = Alignment.Center,
-    ) { IconoDiptico(icono, p.tinta, 17f) }
+    ) {
+        // La sombra es el mismo ícono, oscuro y corrido un poquito hacia abajo.
+        Box(Modifier.graphicsLayer { translationY = 1.5f * density; alpha = 0.35f }) { IconoDiptico(icono, Color.Black, 20f) }
+        IconoDiptico(icono, p.tinta, 20f)
+    }
 }
 
 /** Arriba de la pantalla de abajo: DIPPO en una esquina, tu perfil en la otra y la hora y la batería al centro. */
@@ -230,6 +242,15 @@ fun EsquinasArriba(e: Estado) {
         // DIPPO grande en su esquina; a la derecha (de afuera hacia adentro): batería, hora y tu foto.
         Box(Modifier.size(esc.d(56)), contentAlignment = Alignment.Center) { DippoInicio(e, 52f) }
         Spacer(Modifier.weight(1f))
+        // El título que ganaste con DIPPO, en una burbuja chiquita junto a tu foto.
+        val titulo = cl.nikalbazu.diptico.estado.tituloDe(e.extra.perfil.titulo)
+        if (titulo.isNotEmpty()) {
+            val p = LocalPaleta.current
+            Box(Modifier.clip(RoundedCornerShape(50)).background(p.tinta.copy(alpha = 0.10f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
+                Texto(titulo, 11f, color = p.tinta, lineas = 1)
+            }
+            Spacer(Modifier.width(esc.d(8)))
+        }
         BotonPerfil(38f)
         Spacer(Modifier.width(esc.d(12)))
         HoraBateria()

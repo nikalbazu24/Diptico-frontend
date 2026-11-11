@@ -60,13 +60,12 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier) {
         val radio = CornerRadius(s * .125f)
         val luz = Brush.linearGradient(listOf(lerp(medio, Color.White, .2f), medio, lerp(medio, Color.Black, .18f)))
         val clip = Path().apply { addRoundRect(RoundRect(placa, radio)) }
+        // Trama muy discreta: los 576 puntitos se calculan una vez y se dibujan en una sola llamada (antes eran 576).
+        val trama = List(24 * 24) { k -> Offset(s * (k % 24 + .5f) / 24, s * (k / 24 + .5f) / 24) }
+        val tramaColor = tinta.copy(alpha = .08f)
         onDrawBehind {
             drawRect(fondo)
-            // Trama muy discreta, dibujada una vez en la caché, sin texturas descargadas.
-            for (y in 0..23) for (x in 0..23) {
-                val centro = Offset(s * (x + .5f) / 24, s * (y + .5f) / 24)
-                drawCircle(tinta.copy(alpha = .08f), s * .0024f, centro)
-            }
+            drawPoints(trama, androidx.compose.ui.graphics.PointMode.Points, tramaColor, strokeWidth = s * .0048f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
             posiciones.forEachIndexed { i, (x, y, escala) ->
                 withTransform({ translate(s * x, s * y); scale(s * escala / 100, s * escala / 100, Offset.Zero); rotate(if (i % 2 == 0) -10f else 9f, Offset(50f, 50f)) }) {
                     motivos[i % motivos.size].forEach { trazo ->

@@ -141,7 +141,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             giroY.snapTo(if (normal == -180f) 180f else normal)
         }
     }
-    val moverse = e.experiencia.movimiento && Estilo.efectosCompletos && !vitrinaSinGiro
+    val moverse = e.experiencia.movimiento && Estilo.efectosCompletos && !vitrinaSinGiro && LocalMovimiento.current
     // Un balanceo muy leve cuando nadie la toca: se siente viva, sin marear.
     val ola = if (moverse) androidx.compose.animation.core.rememberInfiniteTransition(label = "flotar").animateFloat(
         initialValue = 0f, targetValue = (2 * Math.PI).toFloat(),
@@ -223,7 +223,8 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                                     // del frente. La del centro mira de frente y gira con lo que tú le hagas.
                                     giroY = {
                                         val k = (1f - abs(r())).coerceIn(0f, 1f)
-                                        val balanceo = ola?.value?.let { kotlin.math.sin(it) * 5f } ?: 0f
+                                        // Solo la caja del centro lee el balanceo: las vecinas no se redibujan en cada cuadro.
+                                        val balanceo = if (esElegida) ola?.value?.let { kotlin.math.sin(it) * 5f } ?: 0f else 0f
                                         (1f - k) * 50f + k * (balanceo + if (esElegida) giroY.value else 0f)
                                     },
                                     giroX = { -7f + if (esElegida) (1f - abs(r()).coerceAtMost(1f)) * giroX.value else 0f },

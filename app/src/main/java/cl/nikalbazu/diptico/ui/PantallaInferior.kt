@@ -107,7 +107,12 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
         Box(Modifier.fillMaxSize().then(if (conLupa) Modifier else Modifier.difuminar(e))) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
-                else -> Column(Modifier.fillMaxSize()) {
+                else -> Box(Modifier.fillMaxSize()) {
+                // La barra de abajo flota encima: el contenido corre por detrás y solo deja el aire que pide [LocalAireAbajo].
+                val conFranja = e.vista == "mosaicos" && e.extra.franjaAbajo
+                val aire = if (!conFranja) 0.dp else esc.d(if (e.extra.dockVisible) ALTO_FRANJA_ABIERTA else ALTO_FRANJA_CERRADA)
+                androidx.compose.runtime.CompositionLocalProvider(LocalAireAbajo provides aire) {
+                Column(Modifier.fillMaxSize()) {
                     val escalaEstante = if (esc.angosta) 1.08f else 1.18f
                     when (e.vistaConsolas) {
                         "lado", "rueda" -> Row(Modifier.fillMaxWidth().weight(1f)) {
@@ -117,7 +122,6 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                         }
                         "carpetas" -> {
                             VistaCarpetas(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
-                            if (e.vista == "mosaicos") FranjaAccesos(e)
                         }
                         "sistemas", "mosaico", "vitrina", "discos" -> {
                         AnimatedContent(
@@ -137,15 +141,17 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                                 VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
                             }
                         }
-                        if (e.vista == "mosaicos") FranjaAccesos(e)
                         }
                         else -> {
                             Cinta(e)
                             Box(Modifier.padding(horizontal = esc.d(16)).fillMaxWidth().height(esc.d(1)).background(p.linea))
-                            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
-                            if (e.vista == "mosaicos") FranjaAccesos(e)
+                            // Los mosaicos corren de lado: aquí sí se deja el alto de la barra para no tapar la fila de abajo.
+                            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f).padding(bottom = aire), escalaEstante)
                         }
                     }
+                }
+                }
+                if (conFranja) FranjaAccesos(e, Modifier.align(Alignment.BottomCenter))
                 }
             }
         }
@@ -228,7 +234,7 @@ fun ventanaEncima(e: Estado): Boolean = when (e.panel) {
     Panel.ASISTENTE -> e.sesion == null
     Panel.WIDGET -> e.intercambiar
     else -> true
-} || e.extra.amigosEn >= 0 || e.extra.perfilEn >= 0 || e.extra.anioEn >= 0
+} || e.extra.amigosEn >= 0 || e.extra.perfilEn >= 0 || e.extra.anioEn >= 0 || e.extra.nativosEn >= 0
 
 /** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
 @Composable

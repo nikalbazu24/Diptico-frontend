@@ -138,6 +138,20 @@ object Teclas {
             return true
         }
         if (e.extra.carga != null) { if (arriba && esB(code)) Diptico.cancelarCarga(); return true }
+        // Centro de Switch 2 y ports: cruceta elige, L1/R1 (o ← →) cambian de pestaña, A usa, B cierra.
+        if (e.extra.nativosEn >= 0) {
+            if (abajo) when (code) {
+                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverNativos(-1)
+                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverNativos(1)
+                KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.pestanaNativos(-1)
+                KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.pestanaNativos(1)
+            }
+            if (arriba) when {
+                esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.cerrarNativos()
+                esA(code) -> Diptico.usarNativo()
+            }
+            return true
+        }
         // Tu año: B lo cierra.
         if (e.extra.anioEn >= 0) {
             if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BACK)) Diptico.cerrarTuAno()

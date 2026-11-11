@@ -164,7 +164,10 @@ private fun Caratulas(e: Estado) {
         )
 
         TramaTema()
-        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos)
+        // Tu foto arriba, junto a la hora (como en la vitrina de cajas).
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos) {
+            if (e.sesion == null) Box(Modifier.padding(end = esc.d(10))) { BotonPerfil(30f) }
+        }
 
         AnimatedContent(
             targetState = juego,

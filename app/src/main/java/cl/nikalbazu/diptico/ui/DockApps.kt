@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
@@ -34,7 +35,7 @@ const val MAX_DOCK = 5
  * en la otra. Sin apps fijadas muestra un botón para elegirlas.
  */
 @Composable
-fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boolean = true) {
+fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boolean = true, flotante: Boolean = false) {
     if (!e.extra.dock) return
     val p = LocalPaleta.current
     val esc = LocalEscala.current
@@ -43,7 +44,8 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
     Row(modifier.testTag("dock-apps"), horizontalArrangement = Arrangement.spacedBy(esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
         apps.forEach { pkg ->
             Box(
-                Modifier.clip(RoundedCornerShape(esc.d(12))).clickable { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
+                Modifier.then(if (flotante) Modifier.shadow(esc.d(8), RoundedCornerShape(esc.d(12)), clip = false) else Modifier)
+                    .clip(RoundedCornerShape(esc.d(12))).clickable { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
                     .padding(esc.d(3)),
             ) { IconoApp(pkg, tam, desnudo = true) }
         }
@@ -57,9 +59,14 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
             androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
             Texto("Fija tus apps", 12f, color = p.tinta, lineas = 1)
         } else if (conCajon) Box(
-            Modifier.size(esc.d(tam + 6f)).clip(CircleShape).background(p.tinta.copy(alpha = 0.10f))
+            Modifier.size(esc.d(tam + 6f)).clip(CircleShape)
+                .then(if (flotante) Modifier else Modifier.background(p.tinta.copy(alpha = 0.10f)))
                 .clickable { Diptico.abrirApps() },
             contentAlignment = Alignment.Center,
-        ) { IconoDiptico(Icono.APPS, p.tinta, tam * 0.45f) }
+        ) {
+            // Flotando, sin círculo: el ícono con su sombra, igual que la lupa y los ajustes.
+            if (flotante) Box(Modifier.graphicsLayer { translationY = 1.5f * density; alpha = 0.35f }) { IconoDiptico(Icono.APPS, Color.Black, tam * 0.55f) }
+            IconoDiptico(Icono.APPS, p.tinta, tam * (if (flotante) 0.55f else 0.45f))
+        }
     }
 }
