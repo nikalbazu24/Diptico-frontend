@@ -51,18 +51,19 @@ import cl.nikalbazu.diptico.estado.Teclas
  * (esquinas del tema, o escalonadas en Mundo de bloques), para que combine con el resto de la interfaz.
  */
 @Composable
-fun IconoApp(paquete: String, tam: Float, modifier: Modifier = Modifier) {
+fun IconoApp(paquete: String, tam: Float, modifier: Modifier = Modifier, desnudo: Boolean = false) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val forma = RoundedCornerShape(esc.d(tam * 0.3f))
     val img = rememberImagen(android.net.Uri.parse("app://$paquete"), 144)
+    // «desnudo»: solo el ícono de la app, sin casilla ni marco alrededor (para el dock).
     Box(
-        modifier.size(esc.d(tam)).clip(forma)
+        (if (desnudo) modifier.size(esc.d(tam)) else modifier.size(esc.d(tam)).clip(forma)
             .background(Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(p.superficie, Color.White, 0.06f), p.superficie)))
-            .border(esc.d(1), Color.White.copy(alpha = 0.08f), forma),
+            .border(esc.d(1), Color.White.copy(alpha = 0.08f), forma)),
         contentAlignment = Alignment.Center,
     ) {
-        if (img != null) Image(img, null, Modifier.fillMaxSize(0.8f))
+        if (img != null) Image(img, null, Modifier.fillMaxSize(if (desnudo) 1f else 0.8f))
         else IconoDiptico(Icono.APPS, p.tenue, tam * 0.5f)
     }
 }

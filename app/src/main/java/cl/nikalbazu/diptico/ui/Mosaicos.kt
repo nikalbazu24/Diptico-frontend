@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -149,48 +150,60 @@ fun FranjaAccesos(e: Estado) {
     if (!e.extra.franjaAbajo) return
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    // Sin franja de color: el fondo se funde con el del tema y encima flotan tres piezas del mismo estilo
-    // (círculo · píldora · círculo), todas con la superficie del tema.
-    androidx.compose.foundation.layout.Row(
-        Modifier.fillMaxWidth()
-            .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Transparent, p.fondo.copy(alpha = 0.85f))))
-            .padding(horizontal = esc.d(14), vertical = esc.d(8)).testTag("franja-accesos"),
-        verticalAlignment = Alignment.CenterVertically,
+    val abierta = e.extra.dockVisible
+    val mueve = LocalMovimiento.current
+    // Se esconde hacia abajo y queda solo una barrita; al tocarla la barra sale (y se guarda) con efecto burbuja.
+    androidx.compose.foundation.layout.Column(
+        Modifier.fillMaxWidth().testTag("franja-accesos"),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        CirculoFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR) { Diptico.abrirBuscar() }
-        Box(Modifier.weight(1f).padding(horizontal = esc.d(10)).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.fillMaxWidth().height(esc.d(22)).clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null,
+            ) { Diptico.alternarDockVisible() }.testTag("dock-repliegue"),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.size(esc.d(46), esc.d(5)).clip(RoundedCornerShape(50)).background(p.tinta.copy(alpha = if (abierta) 0.28f else 0.5f)))
+        }
+        val origen = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+        androidx.compose.animation.AnimatedVisibility(
+            abierta,
+            enter = if (!mueve) androidx.compose.animation.EnterTransition.None else
+                androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(100)) +
+                androidx.compose.animation.scaleIn(
+                    androidx.compose.animation.core.spring(dampingRatio = 0.5f, stiffness = 420f), initialScale = 0.3f, transformOrigin = origen,
+                ) + androidx.compose.animation.slideInVertically(androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 420f)) { it / 2 },
+            exit = if (!mueve) androidx.compose.animation.ExitTransition.None else
+                androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(130)) +
+                androidx.compose.animation.scaleOut(androidx.compose.animation.core.tween(170), targetScale = 0.3f, transformOrigin = origen) +
+                androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(170)) { it / 2 },
+        ) {
             androidx.compose.foundation.layout.Row(
-                Modifier.height(esc.d(44)).superficieApp(p.superficie, RoundedCornerShape(50))
-                    .padding(horizontal = esc.d(6))
-                    .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                Modifier.fillMaxWidth().padding(start = esc.d(14), end = esc.d(14), bottom = esc.d(8)),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(esc.d(4)),
             ) {
-                if (e.extra.dock) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        e.extra.dockVisible,
-                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandHorizontally(expandFrom = Alignment.End),
-                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkHorizontally(shrinkTowards = Alignment.End),
+                CirculoFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR) { Diptico.abrirBuscar() }
+                Box(Modifier.weight(1f).padding(horizontal = esc.d(10)).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
+                    androidx.compose.foundation.layout.Row(
+                        Modifier.height(esc.d(44)).superficieApp(p.superficie, RoundedCornerShape(50))
+                            .padding(horizontal = esc.d(10))
+                            .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
-                            Spacer(Modifier.width(esc.d(4)))
-                            FilaDock(e, 30f)
-                            Spacer(Modifier.width(esc.d(6)))
-                            Box(Modifier.size(esc.d(1), esc.d(22)).background(p.tinta.copy(alpha = 0.12f)))
+                        if (e.extra.dock) FilaDock(e, 30f)
+                        else androidx.compose.foundation.layout.Row(
+                            Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirApps() }.padding(horizontal = esc.d(8), vertical = esc.d(8)),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 15f)
+                            Spacer(Modifier.width(esc.d(8)))
+                            Texto("Apps", 13f, color = p.tinta, lineas = 1)
                         }
                     }
-                    BotonRepliegue(e.extra.dockVisible) { Diptico.alternarDockVisible() }
-                } else androidx.compose.foundation.layout.Row(
-                    Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirApps() }.padding(horizontal = esc.d(14), vertical = esc.d(8)),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 15f)
-                    Spacer(Modifier.width(esc.d(8)))
-                    Texto("Apps", 13f, color = p.tinta, lineas = 1)
                 }
+                CirculoFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES) { Diptico.abrirMenu() }
             }
         }
-        CirculoFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES) { Diptico.abrirMenu() }
     }
 }
 
@@ -240,23 +253,6 @@ private fun HoraBateria() {
         }
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(3)))
         Texto(if (bateria >= 0) "$bateria%" else "—", 13f, color = p.tinta, traducir = false, lineas = 1)
-    }
-}
-
-/** El botón que esconde (‹) o saca (las apps) el dock de la franja. */
-@Composable
-private fun BotonRepliegue(abierto: Boolean, alPulsar: () -> Unit) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val giro by androidx.compose.animation.core.animateFloatAsState(if (abierto) 0f else 180f, label = "repliegue")
-    Box(
-        Modifier.size(esc.d(28), esc.d(40)).clip(RoundedCornerShape(esc.d(10))).background(Color.White.copy(alpha = 0.06f))
-            .clickable(onClick = alPulsar).testTag("dock-repliegue"),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (abierto) Texto("‹", 18f, color = p.tinta.copy(alpha = 0.8f), traducir = false, lineas = 1,
-            modifier = Modifier.graphicsLayer { rotationZ = giro })
-        else IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 14f)
     }
 }
 

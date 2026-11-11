@@ -10,7 +10,7 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "franja-ajuste-2.0-50"
+    const val ID = "franja-burbuja-2.0-51"
     const val NOMBRE = "Esquinas ordenadas"
 
     /**
@@ -399,8 +399,11 @@ object Novedades {
         Version("franja-nueva-2.0-49", "Barra de apps nueva", listOf(
             Pagina("Todo combina", "La barra de abajo ya no es una franja: la lupa y los ajustes son círculos y tus apps van en una píldora, todo con la superficie de tu tema. Arriba, DIPPO más grande en su esquina y en la otra tu foto, la hora y la batería.", Icono.APPS, 0xFF3BA8FF),
         )),
-        Version(ID, "Barra de abajo a tu gusto", listOf(
+        Version("franja-ajuste-2.0-50", "Barra de abajo a tu gusto", listOf(
             Pagina("Fija o apagada", "La barra de abajo queda siempre a mano. Si prefieres más espacio, apágala en Ajustes buscando «Barra de abajo».", Icono.APPS, 0xFF2EC4A6),
+        )),
+        Version(ID, "Barra con burbuja", listOf(
+            Pagina("Sin marcos y escondida abajo", "Los íconos de tus apps van sin casillas ni marcos. La barra se esconde hacia abajo y deja solo una barrita: tócala y la barra sale como una burbuja (y con otro toque vuelve a esconderse).", Icono.APPS, 0xFF3BA8FF),
         )),
     )
 

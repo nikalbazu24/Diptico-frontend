@@ -45,7 +45,7 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
             Box(
                 Modifier.clip(RoundedCornerShape(esc.d(12))).clickable { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
                     .padding(esc.d(3)),
-            ) { IconoApp(pkg, tam) }
+            ) { IconoApp(pkg, tam, desnudo = true) }
         }
         if (apps.isEmpty()) Row(
             Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.07f))
@@ -57,7 +57,7 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
             androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
             Texto("Fija tus apps", 12f, color = p.tinta, lineas = 1)
         } else if (conCajon) Box(
-            Modifier.size(esc.d(tam + 6f)).clip(CircleShape).background(Color.White.copy(alpha = 0.08f))
+            Modifier.size(esc.d(tam + 6f)).clip(CircleShape).background(p.tinta.copy(alpha = 0.10f))
                 .clickable { Diptico.abrirApps() },
             contentAlignment = Alignment.Center,
         ) { IconoDiptico(Icono.APPS, p.tinta, tam * 0.45f) }
