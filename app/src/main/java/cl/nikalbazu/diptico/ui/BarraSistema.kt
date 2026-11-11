@@ -123,6 +123,8 @@ private fun BarraCompleta(e: Estado, modifier: Modifier, estilo: String, hora: S
         PildoraTrabajos(e.trabajos)
         Spacer(Modifier.weight(1f))
         IconosEstado(hora, bateria, cargando, red, avisos, c)
+        Spacer(Modifier.width(esc.d(10)))
+        BotonPerfil(26f)
     }
 }
 

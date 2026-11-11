@@ -73,9 +73,7 @@ internal fun CabeceraCarpetas(e: Estado, interactiva: Boolean) {
             Texto("Biblioteca", 16f, lineas = 1)
             Texto("${e.consolasConJuegos.size} sistemas", 10.5f, color = p.tenue, lineas = 1)
         }
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            Pistas("✥" to "Carpeta", "A" to "Abrir", "X" to "Personalizar", "Y" to "Al azar")
-        }
+        Spacer(Modifier.weight(1f))
         Box(Modifier.superficieApp(p.superficie, RoundedCornerShape(50))
             .clickable(enabled = interactiva) { Diptico.abrirGaleria("orden_carpetas") }
             .padding(horizontal = esc.d(12), vertical = esc.d(6))) { Texto("Ordenar", 11f, lineas = 1) }

@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "mas-rapido-2.0-46"
-    const val NOMBRE = "Más rápido"
+    const val ID = "esquinas-2.0-47"
+    const val NOMBRE = "Esquinas ordenadas"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -387,8 +387,11 @@ object Novedades {
             Pagina("Controles en la cabecera", "La barrita de abajo con los botones desapareció: ahora esa guía está arriba, entre «Biblioteca · sistemas» y «Ordenar».", Icono.MANDO, 0xFFFFC93C),
             Pagina("Tu perfil se edita ahí mismo", "En tu tarjeta de perfil, A abre tus datos dentro de la misma ventana: nombre, foto, personaje, marco y más. Ya no te manda a Ajustes.", Icono.PERFIL, 0xFFFF7A59),
         )),
-        Version(ID, "Más rápido", listOf(
+        Version("mas-rapido-2.0-46", "Más rápido", listOf(
             Pagina("Ajustes y transiciones más ágiles", "Moverte por los ajustes ya no vuelve a armar toda la lista en cada paso, y las animaciones son más cortas.", Icono.CHISPA, 0xFF2EC4A6),
+        )),
+        Version(ID, "Esquinas ordenadas", listOf(
+            Pagina("Barra de abajo más limpia", "Abajo: la lupa en una esquina, los ajustes en la otra y tus apps fijas al centro (se esconden con el botoncito). Arriba de esa pantalla: DIPPO en una esquina, tu perfil en la otra y la hora y la batería al medio. Se fue la guía de botones.", Icono.APPS, 0xFF3BA8FF),
         )),
     )
 
