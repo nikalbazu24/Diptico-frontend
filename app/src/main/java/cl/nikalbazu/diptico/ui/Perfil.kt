@@ -1,5 +1,6 @@
 package cl.nikalbazu.diptico.ui
 
+
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -107,8 +108,20 @@ fun BotonPerfil(tam: Float = 26f) {
  * y se cierra encogiéndose de vuelta hacia ella. B o tocar afuera la cierra; A abre los ajustes del perfil.
  */
 @Composable
-fun PanelPerfil(e: Estado, miPantalla: Int) {
-    val abierto = e.extra.perfilEn == miPantalla
+fun PanelPerfil(e: Estado, miPantalla: Int, rol: Rol = Rol.SUPERIOR) {
+    val ed = e.extra.edicionPerfil
+    val dividida = ed != null && Diptico.edicionDividida(e)
+    val abierto = when {
+        // Escribiendo un dato (teclado arriba): la tarjeta se aparta para no taparlo.
+        ed != null && e.panel != cl.nikalbazu.diptico.estado.Panel.NINGUNO -> false
+        // Editando con dos pantallas: la tarjeta va siempre arriba (el editor está abajo).
+        dividida -> rol == Rol.SUPERIOR
+        // Editando en una pantalla: el editor la cubre entera.
+        ed != null -> false
+        else -> e.extra.perfilEn == miPantalla
+    }
+    // Si la tarjeta se abrió abajo, al editar se queda arriba también después de guardar.
+    LaunchedEffect(dividida, rol, miPantalla) { if (dividida && rol == Rol.SUPERIOR && e.extra.perfilEn != miPantalla) Diptico.moverPerfilA(miPantalla) }
     val animar = LocalMovimiento.current
     val t by animateFloatAsState(
         if (abierto) 1f else 0f,
@@ -119,7 +132,9 @@ fun PanelPerfil(e: Estado, miPantalla: Int) {
     val esc = LocalEscala.current
     val ox = e.extra.perfilOx
     val oy = e.extra.perfilOy
-    val color = Color(e.extra.perfil.color)
+    // Mientras editas, la tarjeta muestra el borrador: ves cómo queda antes de guardar.
+    val ev = remember(e, ed) { if (ed != null) e.copy(nombre = ed.nombre, extra = e.extra.copy(perfil = ed.perfil)) else e }
+    val color = Color(ev.extra.perfil.color)
     Box(Modifier.fillMaxSize()) {
         // Oscurece un poco más lo de atrás (el desenfoque lo pone Raiz).
         Box(
@@ -145,7 +160,7 @@ fun PanelPerfil(e: Estado, miPantalla: Int) {
                     .border(esc.d(1.5f), color.copy(alpha = 0.55f), forma)
                     .clickable(remember { MutableInteractionSource() }, indication = null) {}
                     .testTag("panel-perfil"),
-            ) { ContenidoPerfil(e) }
+            ) { ContenidoPerfil(ev) }
         }
     }
 }
@@ -182,6 +197,23 @@ private fun ContenidoPerfil(e: Estado) {
             }
         }
         Spacer(Modifier.height(esc.d(10)))
+        if (e.extra.edicionPerfil != null) {
+            // Editando abajo: aquí solo se avisa, y los botones guardan o cancelan igual que allá.
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).padding(horizontal = esc.d(14), vertical = esc.d(7))) {
+                    Texto("✎ Editando en la pantalla de abajo", 13.5f, color = TextoClaro, lineas = 1)
+                }
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).background(color).clickable { Diptico.guardarEdicionPerfil() }
+                        .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+                ) { Texto("A · Guardar", 13.5f, color = if (color.luminance2() > 0.55f) Color(0xFF14101A) else Color.White, lineas = 1) }
+                Box(
+                    Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f)).clickable { Diptico.cancelarEdicionPerfil() }
+                        .padding(horizontal = esc.d(16), vertical = esc.d(7)),
+                ) { Texto("B · Cancelar", 13.5f, color = TextoClaro, lineas = 1) }
+            }
+            return@Column
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
             Box(
                 Modifier.clip(RoundedCornerShape(50)).background(color).clickable { Diptico.editarPerfil() }
@@ -352,3 +384,5 @@ internal fun PreviaPerfil(e: Estado) {
         }
     }
 }
+
+

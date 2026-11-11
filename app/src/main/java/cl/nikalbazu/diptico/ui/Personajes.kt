@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -335,6 +337,15 @@ fun FotoPerfil(
                 },
         ) {
             if (img != null) Image(img, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            else if (personaje == cl.nikalbazu.diptico.estado.INICIAL) {
+                // Tu inicial: la primera letra de tu nombre (o del que estás escribiendo en el editor).
+                val nombre by remember { Diptico.estado.map { (it.extra.edicionPerfil?.nombre ?: it.nombre).ifBlank { it.extra.perfil.apodo } }.distinctUntilChanged() }
+                    .collectAsState(Diptico.estado.value.nombre)
+                val letra = nombre.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Texto(letra, tam * 0.5f, color = Color.White, peso = FontWeight.Black, lineas = 1, traducir = false, sombra = true)
+                }
+            }
             else Canvas(Modifier.fillMaxSize().padding(esc.d(tam * 0.1f))) { dibujarPersonaje(personaje, size.minDimension) }
         }
         if (anillo) Canvas(Modifier.fillMaxSize()) { dibujarMarco(marco, color, vuelta?.value ?: 0.12f, g.toPx()) }

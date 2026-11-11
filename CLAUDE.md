@@ -345,3 +345,25 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   Ajustes › Tu perfil, y `vigilarTuAno` avisa una vez en diciembre. Teclas: B cierra. Raiz y `ventanaEncima` la cuentan como ventana (desenfoque).
 - Logros en vivo: `revisarLogrosDippo` cuenta el tiempo y la partida en curso (antes solo se sumaban al cerrar la sesión); `EnJuego` muestra «Logro de DIPPO
   desbloqueado» 10 s con DIPPO celebrando y despierta la pantalla. Novedades `tu-ano-2.0-42`. Capturas t350–t351, test `TuAnoTest`.
+
+## Biblioteca ordenada + perfil en la tarjeta (10 nov, v1.1-beta.341)
+- Carpeta «Todos los juegos» apagada por defecto: `extra.carpetaTodos` (clave `carpetaTodos2`, opción en `opcionesEstante`); `pestanas`
+  solo incluye "todo" si está activa (o si no hay consolas). `consolaDeCarpeta(e)` saca la selección de "todo" al volver a las carpetas.
+  "todo" sigue existiendo como estado interno (saltos a un juego desde el inicio).
+- Pistas de botones de `CarpetasConsolas` pasaron a `CabeceraCarpetas` (Biblioteca/N sistemas · pistas · Ordenar).
+- Perfil: `extra.perfilEdita` (fila elegida); `editarPerfil` abre `EditorPerfil` dentro de `PanelPerfil`; `usarEdicionPerfil` cierra la
+  tarjeta si la opción abre otro panel. Teclas: ↑↓ eligen, A/→ cambia, ← menos, B listo. Novedades `biblioteca-ordenada-2.0-45`.
+- PENDIENTE (Opus): lentitud general (medir antes: `Estado` entero recompone todo); carpetas movibles a gusto y en widgets
+  (colecciones) — boceto primero. Sin capturas revisadas de esta versión.
+- v1.1-beta.343 (Opus): `opcionesSeccion` cachea por `e.copy(indice=0, enOpciones=false)` (antes se rearmaba todo el menú en cada paso)
+  y `remember` de `ui/Menu.kt` igual; transiciones ×0,65 (`RAPIDEZ` en `ui/Movimiento.kt`). Novedades `mas-rapido-2.0-46`.
+  Falta: rendimiento de la vitrina de cajas 3D (medir en la Thor) y carpetas movibles + carpeta como widget/colección (boceto primero).
+- v1.1-beta.348: abajo, `CabeceraCarpetas` = `EsquinasArriba(e)` (DIPPO izq., hora/batería al centro, `BotonPerfil` der.; sin «Biblioteca»/«Ordenar»).
+  `FranjaAccesos`: lupa izq., ajustes der., dock al centro en píldora `superficieApp(p.superficie)` + borde `p.linea`. Nicolás quiere
+  DIPPO/perfil en la parte de arriba de la PANTALLA DE ABAJO (no en la barra de la pantalla superior). Novedades `esquinas-2.0-48`.
+- beta.351/352: `FranjaAccesos` sin franja de color (degradado al `p.fondo`), `CirculoFranja` (lupa/ajustes) + píldora del dock, todo con
+  `superficieApp(p.superficie)`. `EsquinasArriba`: DIPPO 52 a la izq.; a la der. foto · hora · batería. `extra.franjaAbajo` (clave `franjaAbajo`,
+  opción «Barra de abajo» en `opcionesEstante`). Novedades `franja-ajuste-2.0-50`. Sin capturas revisadas.
+- beta.35x «Barra con burbuja»: `IconoApp(desnudo = true)` (sin casilla/marco) en `FilaDock`. `FranjaAccesos` = Column: barrita (`dock-repliegue`,
+  siempre visible, alterna `extra.dockVisible`) + `AnimatedVisibility` con entrada burbuja (spring + scaleIn desde abajo al centro) y salida hacia abajo;
+  esconde TODA la barra (lupa, apps, ajustes). `BotonRepliegue` borrado. Novedades `franja-burbuja-2.0-51`. Sin capturas revisadas.

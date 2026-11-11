@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "tu-ano-2.0-44"
-    const val NOMBRE = "Tu año completo"
+    const val ID = "editar-perfil-2.0-52"
+    const val NOMBRE = "Editar tu perfil"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -379,8 +379,35 @@ object Novedades {
         Version("tu-ano-2.0-43", "Tu año completo", listOf(
             Pagina("«Tu año» se ve completo", "En la pantalla ancha, tus números van a la izquierda y el mes a mes con tus cinco juegos más jugados a la derecha, todo a la vista sin deslizar. Y los plurales salen bien («1 partida»).", Icono.ESTRELLA, 0xFFFFC93C),
         )),
-        Version(ID, "Tu año, bien ajustado", listOf(
+        Version("tu-ano-2.0-44", "Tu año, bien ajustado", listOf(
             Pagina("Todo a la vista", "«Tu año» ahora cabe entero en la pantalla de arriba: el botón de cerrar pasó a la esquina y las tarjetas son más compactas.", Icono.ESTRELLA, 0xFFFFC93C),
+        )),
+        Version("biblioteca-ordenada-2.0-45", "Biblioteca más ordenada", listOf(
+            Pagina("Sin «Todos los juegos»", "La biblioteca muestra una carpeta por consola y nada más. Si quieres ver todos tus juegos juntos, actívala en Ajustes (búscala por su nombre: Carpeta «Todos los juegos»).", Icono.CARPETA, 0xFF3BA8FF),
+            Pagina("Controles en la cabecera", "La barrita de abajo con los botones desapareció: ahora esa guía está arriba, entre «Biblioteca · sistemas» y «Ordenar».", Icono.MANDO, 0xFFFFC93C),
+            Pagina("Tu perfil se edita ahí mismo", "En tu tarjeta de perfil, A abre tus datos dentro de la misma ventana: nombre, foto, personaje, marco y más. Ya no te manda a Ajustes.", Icono.PERFIL, 0xFFFF7A59),
+        )),
+        Version("mas-rapido-2.0-46", "Más rápido", listOf(
+            Pagina("Ajustes y transiciones más ágiles", "Moverte por los ajustes ya no vuelve a armar toda la lista en cada paso, y las animaciones son más cortas.", Icono.CHISPA, 0xFF2EC4A6),
+        )),
+        Version("esquinas-2.0-47", "Esquinas ordenadas", listOf(
+            Pagina("Barra de abajo más limpia", "Abajo: la lupa en una esquina, los ajustes en la otra y tus apps fijas al centro (se esconden con el botoncito). En la pantalla de arriba: DIPPO en una esquina y tu perfil en la otra. Se fue la guía de botones.", Icono.APPS, 0xFF3BA8FF),
+        )),
+        Version("esquinas-2.0-48", "DIPPO y tu foto, abajo", listOf(
+            Pagina("Arriba de la pantalla de abajo", "Donde decía «Biblioteca» y «Ordenar» ahora están DIPPO, la hora y la batería, y tu foto de perfil. Tus apps fijas van en una píldora con los colores de tu tema.", Icono.PERFIL, 0xFFFF7A59),
+        )),
+        Version("franja-nueva-2.0-49", "Barra de apps nueva", listOf(
+            Pagina("Todo combina", "La barra de abajo ya no es una franja: la lupa y los ajustes son círculos y tus apps van en una píldora, todo con la superficie de tu tema. Arriba, DIPPO más grande en su esquina y en la otra tu foto, la hora y la batería.", Icono.APPS, 0xFF3BA8FF),
+        )),
+        Version("franja-ajuste-2.0-50", "Barra de abajo a tu gusto", listOf(
+            Pagina("Fija o apagada", "La barra de abajo queda siempre a mano. Si prefieres más espacio, apágala en Ajustes buscando «Barra de abajo».", Icono.APPS, 0xFF2EC4A6),
+        )),
+        Version("franja-burbuja-2.0-51", "Barra con burbuja", listOf(
+            Pagina("Sin marcos y escondida abajo", "Los íconos de tus apps van sin casillas ni marcos. La barra se esconde hacia abajo y deja solo una barrita: tócala y la barra sale como una burbuja (y con otro toque vuelve a esconderse).", Icono.APPS, 0xFF3BA8FF),
+        )),
+        Version(ID, "Editar tu perfil", listOf(
+            Pagina("Tu perfil, en dos pantallas", "Toca tu foto y elige «Editar perfil»: abajo cambias tu foto, tu personaje, tus datos, tu color y lo que muestras; arriba ves tu tarjeta tal como va quedando. Nada se guarda hasta que aprietas A · Guardar (o Start). B cancela.", Icono.PERFIL, 0xFFFF7A59, "A · Guardar"),
+            Pagina("Tu inicial como foto", "Si no quieres foto ni personaje, elige «Mi inicial»: tu perfil muestra la primera letra de tu nombre sobre tu color.", Icono.TEXTO, 0xFF9B6BFF),
         )),
     )
 

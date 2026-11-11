@@ -144,7 +144,24 @@ object Teclas {
             return true
         }
         // Tu perfil: B lo cierra; A abre los ajustes para cambiar tus datos; Y abre «Tu año».
-        if (e.extra.perfilEn >= 0) {
+        // Editando el perfil (abajo): la cruceta elige, A usa lo elegido, Start guarda, B cancela.
+        // Si se abrió el cuadro de texto (nombre, apodo, fecha), las teclas son del teclado.
+        val ed = e.extra.edicionPerfil
+        if (ed != null && e.panel == Panel.NINGUNO) {
+            if (abajo) when (code) {
+                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverEdicionPerfil(-1, 0)
+                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverEdicionPerfil(1, 0)
+                KeyEvent.KEYCODE_DPAD_LEFT -> Diptico.moverEdicionPerfil(0, -1)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> Diptico.moverEdicionPerfil(0, 1)
+            }
+            if (arriba) when {
+                esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.cancelarEdicionPerfil()
+                code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.guardarEdicionPerfil()
+                esA(code) -> Diptico.usarEdicionPerfil(ed.fila, ed.col)
+            }
+            return true
+        }
+        if (e.extra.perfilEn >= 0 && ed == null) {
             if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BACK)) Diptico.cerrarPerfil()
             else if (arriba && esA(code)) Diptico.editarPerfil()
             else if (arriba && esY(code)) Diptico.abrirTuAno(e.extra.perfilEn)

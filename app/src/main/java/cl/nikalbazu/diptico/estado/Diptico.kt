@@ -11,6 +11,7 @@ import cl.nikalbazu.diptico.audio.Avisos
 import cl.nikalbazu.diptico.audio.Medios
 import cl.nikalbazu.diptico.audio.Musica
 import cl.nikalbazu.diptico.audio.Sonidos
+import cl.nikalbazu.diptico.audio.Vibracion
 import cl.nikalbazu.diptico.data.Almacen
 import cl.nikalbazu.diptico.data.Biblioteca
 import cl.nikalbazu.diptico.data.Consola
@@ -364,6 +365,12 @@ data class EstadoExtra(
     val dippoSaludo: Boolean = true,
     /** DIPPO cuenta trucos y funciones escondidas de vez en cuando. */
     val dippoDatos: Boolean = true,
+    /** Si la biblioteca muestra la carpeta «Todos los juegos» junto a las de cada consola. */
+    val carpetaTodos: Boolean = false,
+    /** La barra de abajo (lupa, apps y ajustes): fija, pero se puede apagar. */
+    val franjaAbajo: Boolean = true,
+    /** Editando el perfil: el borrador (null = solo mirando). Con dos pantallas va abajo y la tarjeta arriba. */
+    val edicionPerfil: EdicionPerfil? = null,
     /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
     val termica: Boolean = true,
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -804,7 +811,7 @@ data class Estado(
     val consolasEmu: List<Consola>
         get() = consolasConJuegos.filter { !it.sinEmulador }
 
-    val pestanas: List<String> by lazy { listOf("todo") + consolasConJuegos.map { it.id } }
+    val pestanas: List<String> by lazy { (if (extra.carpetaTodos || consolasConJuegos.isEmpty()) listOf("todo") else emptyList()) + consolasConJuegos.map { it.id } }
 
     /** La selección y los paneles pueden cambiar sin volver a filtrar ni ordenar la biblioteca. */
     val visibles: List<Juego> by lazy { biblioteca.visibles(this) }
@@ -960,6 +967,8 @@ object Diptico {
                 dippoInicio = almacen.bool("dippoInicio", true),
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoDatos = almacen.bool("dippoDatos", true),
+                carpetaTodos = almacen.bool("carpetaTodos2", false),
+                franjaAbajo = almacen.bool("franjaAbajo", true),
                 termica = almacen.bool("termica", true),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
@@ -1243,7 +1252,7 @@ object Diptico {
             "caratulas" -> actualizar { it.copy(inicio = "heroe") }
             "widgets" -> actualizar { it.copy(inicio = "widgets") }
             "consolas" -> actualizar {
-                it.copy(inicio = "heroe", enSistemas = true, vistaConsolas = if (it.vistaConsolas in MODOS_ELEGIR) it.vistaConsolas else "carpetas")
+                it.copy(inicio = "heroe", enSistemas = true, consolaSel = consolaDeCarpeta(it), vistaConsolas = if (it.vistaConsolas in MODOS_ELEGIR) it.vistaConsolas else "carpetas")
             }
             "ultimo" -> scope.launch {
                 actualizar { it.copy(inicio = "heroe") }
@@ -2482,8 +2491,13 @@ object Diptico {
         actualizar { it.copy(extra = it.extra.copy(perfilEn = pantalla, perfilOx = ox.coerceIn(0f, 1f), perfilOy = oy.coerceIn(0f, 1f), amigosEn = -1)) }
     }
 
+    /** La tarjeta pasa a [pantalla] (al editar con dos pantallas, se queda arriba). */
+    fun moverPerfilA(pantalla: Int) {
+        if (estado.value.extra.perfilEn >= 0 && estado.value.extra.perfilEn != pantalla) actualizar { it.copy(extra = it.extra.copy(perfilEn = pantalla)) }
+    }
+
     fun cerrarPerfil() {
-        if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1)) }
+        if (estado.value.extra.perfilEn >= 0) actualizar { it.copy(extra = it.extra.copy(perfilEn = -1, edicionPerfil = null)) }
     }
 
     // ---------- Tu año ----------
@@ -2513,10 +2527,106 @@ object Diptico {
         }
     }
 
-    /** Desde la tarjeta: cierra y abre «Mi perfil» en los ajustes para cambiar los datos. */
+    /** Con dos pantallas (y sin partida), el editor va abajo y la tarjeta arriba; si no, el editor ocupa la pantalla del perfil. */
+    fun edicionDividida(e: Estado) = !e.unaPantalla && e.sesion == null
+
+    /** Abre el editor del perfil con un borrador de lo que tienes ahora; nada se guarda hasta A · Guardar. */
     fun editarPerfil() {
-        cerrarPerfil()
-        abrirMenu(Seccion.G_PERFIL)
+        val e = estado.value
+        val x = e.extra
+        val ed = EdicionPerfil(x.perfil, e.nombre, x.discordPresencia, x.dippoSaludo)
+        val en = if (x.perfilEn >= 0) x.perfilEn else android.view.Display.DEFAULT_DISPLAY
+        actualizar {
+            it.copy(
+                panel = if (it.panel == Panel.MENU || it.panel == Panel.GALERIA) Panel.NINGUNO else it.panel,
+                extra = it.extra.copy(edicionPerfil = ed, perfilEn = en, perfilOx = 0.5f, perfilOy = 0.5f, amigosEn = -1, desplegable = -1),
+            )
+        }
+    }
+
+    /** B · Cancelar: se descarta el borrador y queda la tarjeta como estaba. */
+    fun cancelarEdicionPerfil() {
+        val ed = estado.value.extra.edicionPerfil ?: return
+        val e = estado.value
+        val hubo = ed.perfil != e.extra.perfil || ed.nombre != e.nombre || ed.presencia != e.extra.discordPresencia || ed.saludo != e.extra.dippoSaludo
+        actualizar { it.copy(extra = it.extra.copy(edicionPerfil = null)) }
+        if (hubo) avisar("Cambios descartados")
+    }
+
+    /** A · Guardar: el borrador pasa a ser tu perfil (nombre, foto, datos, color y privacidad). */
+    fun guardarEdicionPerfil() {
+        val e = estado.value
+        val ed = e.extra.edicionPerfil ?: return
+        if (ed.nombre != e.nombre) almacen.guardarTexto("nombre", ed.nombre)
+        almacen.guardarTexto("perfil", ed.perfil.json())
+        if (ed.presencia != e.extra.discordPresencia) {
+            almacen.guardarBool("discordPresencia", ed.presencia)
+            if (!ed.presencia) SocialDiscord.sinJuego()
+        }
+        if (ed.saludo != e.extra.dippoSaludo) almacen.guardarBool("dippoSaludo", ed.saludo)
+        actualizar {
+            it.copy(nombre = ed.nombre, extra = it.extra.copy(perfil = ed.perfil, discordPresencia = ed.presencia, dippoSaludo = ed.saludo, edicionPerfil = null))
+        }
+        Sonidos.aviso()
+        avisar(if (ed.nombre.isNotBlank()) "¡Listo, ${ed.nombre}! Tu perfil quedó guardado" else "Tu perfil quedó guardado")
+    }
+
+    private fun cambiarEdicion(f: (EdicionPerfil) -> EdicionPerfil) =
+        actualizar { s -> s.extra.edicionPerfil?.let { s.copy(extra = s.extra.copy(edicionPerfil = f(it))) } ?: s }
+
+    /** Con el mando: ↑ ↓ cambian de fila (saltando las que no se ven), ← → dentro de la fila; en «Consola favorita» ← → la cambian. */
+    fun moverEdicionPerfil(df: Int, dc: Int) {
+        val e = estado.value
+        val ed = e.extra.edicionPerfil ?: return
+        val conD = e.extra.discordAvatar.isNotBlank()
+        if (df != 0) {
+            var f = ed.fila
+            do { f += df } while (f in 0 until FilasEdicion.TOTAL && !FilasEdicion.visible(f, SocialDiscord.disponible))
+            if (f !in 0 until FilasEdicion.TOTAL) return
+            cambiarEdicion { it.copy(fila = f, col = it.col.coerceIn(0, FilasEdicion.ancho(f, conD) - 1)) }
+            Vibracion.mover()
+            return
+        }
+        if (ed.fila == FilasEdicion.CONSOLA) { ciclarConsolaFav(dc); return }
+        val n = FilasEdicion.ancho(ed.fila, conD)
+        val c = (ed.col + dc).coerceIn(0, n - 1)
+        if (c != ed.col) { cambiarEdicion { it.copy(col = c) }; Vibracion.mover() }
+    }
+
+    private fun ciclarConsolaFav(d: Int) {
+        val ids = listOf("") + estado.value.consolasConJuegos.map { it.id }
+        cambiarEdicion { ed ->
+            val i = ids.indexOf(ed.perfil.consolaFav).coerceAtLeast(0)
+            ed.copy(perfil = ed.perfil.copy(consolaFav = ids[(i + d).mod(ids.size)]))
+        }
+    }
+
+    /** Usa lo que está en ([fila], [col]): con A o con un toque. */
+    fun usarEdicionPerfil(fila: Int, col: Int = 0) {
+        val e = estado.value
+        val ed = e.extra.edicionPerfil ?: return
+        cambiarEdicion { it.copy(fila = fila, col = col) }
+        val p = ed.perfil
+        when (fila) {
+            FilasEdicion.FOTO -> when (FilasEdicion.fuentes(e.extra.discordAvatar.isNotBlank()).getOrNull(col)) {
+                "personaje" -> cambiarEdicion { it.copy(perfil = p.copy(foto = "", fotoDiscord = false, personaje = if (p.personaje == INICIAL) "gato" else p.personaje)) }
+                "discord" -> cambiarEdicion { it.copy(perfil = p.copy(fotoDiscord = true)) }
+                "galeria" -> pedirImagen("perfilFoto")
+                INICIAL -> cambiarEdicion { it.copy(perfil = p.copy(foto = "", fotoDiscord = false, personaje = INICIAL)) }
+            }
+            FilasEdicion.PERSONAJES_1, FilasEdicion.PERSONAJES_2 -> PERSONAJES.getOrNull((fila - 1) * 4 + col)?.let { (id, _) ->
+                cambiarEdicion { it.copy(perfil = p.copy(personaje = id, foto = "", fotoDiscord = false)) }
+            }
+            FilasEdicion.NOMBRE -> abrirTexto("nombre", ed.nombre)
+            FilasEdicion.APODO -> abrirTexto("perfil_apodo", p.apodo)
+            FilasEdicion.FECHA -> abrirTexto("perfil_nacimiento", p.nacimiento.split("-").takeIf { it.size == 3 }?.reversed()?.joinToString("/").orEmpty())
+            FilasEdicion.CONSOLA -> ciclarConsolaFav(1)
+            FilasEdicion.COLOR -> Perfil.COLORES.getOrNull(col)?.let { (_, c) -> cambiarEdicion { it.copy(perfil = p.copy(color = c)) } }
+            FilasEdicion.PRESENCIA -> cambiarEdicion { it.copy(presencia = !it.presencia) }
+            FilasEdicion.SALUDO -> cambiarEdicion { it.copy(saludo = !it.saludo) }
+            FilasEdicion.HORAS -> cambiarEdicion { it.copy(perfil = p.copy(mostrarHoras = !p.mostrarHoras)) }
+            FilasEdicion.BOTONES -> if (col == 0) guardarEdicionPerfil() else cancelarEdicionPerfil()
+        }
     }
 
     fun guardarPerfil(nuevo: Perfil) {
@@ -2524,7 +2634,11 @@ object Diptico {
         actualizar { it.copy(extra = it.extra.copy(perfil = nuevo)) }
     }
 
-    fun cambiarPerfil(f: (Perfil) -> Perfil) = guardarPerfil(f(estado.value.extra.perfil))
+    /** Cambia el perfil; si estás en el editor, cambia el borrador (se guarda con A · Guardar). */
+    fun cambiarPerfil(f: (Perfil) -> Perfil) {
+        if (estado.value.extra.edicionPerfil != null) cambiarEdicion { it.copy(perfil = f(it.perfil)) }
+        else guardarPerfil(f(estado.value.extra.perfil))
+    }
 
     /** Lo que se muestra en la tarjeta: tus horas, tu juego más jugado, la racha, los logros de DIPPO y tus favoritos. */
     fun resumenPerfil(e: Estado): ResumenPerfil {
@@ -2550,6 +2664,10 @@ object Diptico {
         val consolas = e.consolasConJuegos
         val fechaEscrita = pf.nacimiento.split("-").takeIf { it.size == 3 }?.reversed()?.joinToString("/").orEmpty()
         val lista = mutableListOf(
+            Opcion("Editar mi perfil", "Foto, personaje, datos y color", Icono.LAPIZ,
+                "Abre el editor: con dos pantallas, abajo cambias tus datos y arriba ves tu tarjeta tal como va quedando. Se guarda con A.", grupo = "Tu perfil") {
+                editarPerfil()
+            },
             Opcion("Ver mi perfil", "Abrir mi tarjeta", Icono.PERFIL, "Tu tarjeta con tus horas, tu racha, tus logros y tus juegos favoritos.", grupo = "Tu perfil") {
                 cerrarPanel(); abrirPerfil(android.view.Display.DEFAULT_DISPLAY, 0.5f, 0.14f)
             },
@@ -3288,6 +3406,12 @@ object Diptico {
         }
         if (e.panel == Panel.CLAVE && e.textoPara == "buscar_imagen") {
             actualizar { it.copy(panel = Panel.IMAGENES, indice = 0) }
+            return
+        }
+        // Escribiendo un dato del perfil desde el editor: se vuelve al editor (no a los ajustes).
+        if (e.panel == Panel.CLAVE && e.extra.edicionPerfil != null && (e.textoPara == "nombre" || e.textoPara.startsWith("perfil_"))) {
+            claveDesde = null
+            actualizar { it.copy(panel = Panel.NINGUNO) }
             return
         }
         if (e.panel == Panel.CLAVE && e.configurado) {
@@ -4237,7 +4361,9 @@ object Diptico {
 
     fun opcionesSeccion(s: Seccion): List<Opcion> {
         val e = estado.value
-        val c = cacheOpciones?.takeIf { it.first === e }?.second ?: HashMap<Seccion, List<Opcion>>().also { cacheOpciones = e to it }
+        // Moverse por la lista (indice) no cambia las opciones: no se vuelven a armar en cada paso.
+        val clave = e.copy(indice = 0, enOpciones = false)
+        val c = cacheOpciones?.takeIf { it.first === e || it.first == clave }?.second ?: HashMap<Seccion, List<Opcion>>().also { cacheOpciones = clave to it }
         return c.getOrPut(s) { armarOpciones(s) }
     }
 
@@ -8004,7 +8130,7 @@ object Diptico {
                 cambiarPerfil { it.copy(nacimiento = f) }
                 avisar(if (f.isEmpty()) "Fecha quitada" else "Fecha guardada")
             }
-            "nombre" -> {
+            "nombre" -> if (e.extra.edicionPerfil != null) cambiarEdicion { it.copy(nombre = t.take(24)) } else {
                 almacen.guardarTexto("nombre", t.take(24))
                 actualizar { it.copy(nombre = t.take(24)) }
                 if (t.isNotBlank()) avisar("¡Hola, ${t.take(24)}!")
@@ -8408,7 +8534,13 @@ object Diptico {
 
     /** Modo sistemas: vuelve al carrusel de consolas. */
     fun volverASistemas() {
-        if (estado.value.vistaConsolas in MODOS_ELEGIR) actualizar { it.copy(enSistemas = true, widgetFoco = -1) }
+        if (estado.value.vistaConsolas in MODOS_ELEGIR) actualizar { it.copy(enSistemas = true, widgetFoco = -1, consolaSel = consolaDeCarpeta(it)) }
+    }
+
+    /** Sin la carpeta «Todos los juegos», la selección de carpetas nunca queda en «todo»: cae en la consola del juego o en la primera. */
+    private fun consolaDeCarpeta(e: Estado): String {
+        if (e.consolaSel != "todo" || e.extra.carpetaTodos) return e.consolaSel
+        return e.seleccionado?.consolaId?.takeIf { it in e.pestanas } ?: e.pestanas.firstOrNull() ?: "todo"
     }
 
     /** R3 o el botón Vista: estante, cuadrícula o lista. */
@@ -8650,6 +8782,19 @@ object Diptico {
                 "Arriba como pestañas, en una columna al costado, en una rueda que gira, Sistemas (un carrusel grande), Carpetas (cuadrícula de íconos que abren sus juegos) o Discos (cada consola es un vinilo en su funda, y la elegida saca su disco girando). En Sistemas, Carpetas y Discos primero eliges la consola y después entras a sus juegos.",
                 menos = { cambiarVistaConsolas(-1) },
             ) { abrirGaleria("vistas_consolas") },
+            Opcion("Barra de abajo", if (e.extra.franjaAbajo) "Sí" else "No", Icono.APPS,
+                "La barra fija de la pantalla de abajo con la lupa, tus apps y los ajustes. Apagada, los abres con los botones del mando o desde el menú.") {
+                val v = !estado.value.extra.franjaAbajo
+                almacen.guardarBool("franjaAbajo", v)
+                actualizar { it.copy(extra = it.extra.copy(franjaAbajo = v)) }
+            },
+                        Opcion("Carpeta «Todos los juegos»", if (e.extra.carpetaTodos) "Sí" else "No", Icono.CARPETA,
+                "Agrega a la biblioteca una carpeta con todos tus juegos juntos, además de la de cada consola. Apagada, solo ves una carpeta por consola.") {
+                val v = !estado.value.extra.carpetaTodos
+                almacen.guardarBool("carpetaTodos2", v)
+                actualizar { it.copy(extra = it.extra.copy(carpetaTodos = v)) }
+                actualizar { it.copy(consolaSel = if (v) it.consolaSel else consolaDeCarpeta(it)) }
+            },
             Opcion("Abrir carpetas", if (e.modoCarpeta == "completa") "Pantalla completa" else "Ventana con desenfoque", Icono.CARPETA,
                 "Elige cómo se abren los juegos en la vista Carpetas.") { alternarModoCarpeta() },
             Opcion("Recorrido de carpetas", if (e.carpetasHorizontal) "Horizontal" else "Vertical", Icono.VISTA,

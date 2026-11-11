@@ -150,7 +150,9 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             BurbujaDippoCapa(miPantalla)
             PanelAmigos(e, miPantalla)
             // Tu perfil: una tarjeta que crece desde tu foto, sobre el fondo difuminado.
-            PanelPerfil(e, miPantalla)
+            PanelPerfil(e, miPantalla, rol)
+            // Editando tu perfil: abajo (con dos pantallas), con la tarjeta arriba mostrando cómo queda.
+            EditorPerfilPantalla(e, rol, miPantalla)
             // Tu año: el resumen de lo que jugaste, encima del perfil.
             PanelTuAno(e, miPantalla)
             // Iniciando sesión con Discord: el QR va encima de todo (en las dos pantallas, para encontrarlo donde mires).

@@ -273,7 +273,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
     val s = e.seccion
     val color = colorSeccion(s)
     // Las opciones se arman solo cuando cambia algo (no en cada cuadro de una animación).
-    val opciones = remember(s, e) { Diptico.opcionesSeccion(s) }
+    val opciones = remember(s, e.copy(indice = 0, enOpciones = false)) { Diptico.opcionesSeccion(s) }
     Column(modifier.graphicsLayer { alpha = if (e.enOpciones) 1f else 0.82f }) {
         // Encabezado con el color de la sección.
         Row(
@@ -393,7 +393,7 @@ fun AyudaMenu(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val s = e.seccion
-    val opciones = remember(s, e) { Diptico.opcionesSeccion(s) }
+    val opciones = remember(s, e.copy(indice = 0, enOpciones = false)) { Diptico.opcionesSeccion(s) }
     val o = if (e.enOpciones) opciones.getOrNull(e.indice) else null
     val color = colorSeccion(s)
     Box(Modifier.fillMaxSize().background(p.fondo)) {

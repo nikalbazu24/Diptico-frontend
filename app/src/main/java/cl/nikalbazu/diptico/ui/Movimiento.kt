@@ -24,8 +24,11 @@ internal val LocalMovimiento = staticCompositionLocalOf { true }
  */
 internal data class AjusteMovimiento(val intensidad: Float = 1f, val duracion: Float = 1f) {
     val activo get() = intensidad > 0f
-    fun ms(base: Int): Int = if (!activo) 0 else (base * duracion).toInt()
+    fun ms(base: Int): Int = if (!activo) 0 else (base * duracion * RAPIDEZ).toInt()
 }
+
+/** Todas las transiciones van un 35 % más cortas: se sentían lentas en la Thor. */
+private const val RAPIDEZ = 0.65f
 
 internal val LocalAjusteMovimiento = staticCompositionLocalOf { AjusteMovimiento() }
 

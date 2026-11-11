@@ -146,7 +146,55 @@ fun tituloDe(id: String) = TITULOS.firstOrNull { it.id == id }?.takeIf { it.id.i
 
 fun marcoDe(id: String) = MARCOS.firstOrNull { it.id == id } ?: MARCOS.first()
 
-fun nombrePersonaje(id: String) = PERSONAJES.firstOrNull { it.first == id }?.second ?: "Misu"
+fun nombrePersonaje(id: String) = if (id == INICIAL) "Mi inicial" else PERSONAJES.firstOrNull { it.first == id }?.second ?: "Misu"
+
+/** El «personaje» que en vez de un dibujo muestra la primera letra de tu nombre. */
+const val INICIAL = "inicial"
+
+/**
+ * Editando el perfil (en la pantalla de abajo, con la tarjeta arriba): un borrador que solo se guarda con A · Guardar.
+ * [fila]/[col] = lo elegido con el mando (ver [FilasEdicion]).
+ */
+data class EdicionPerfil(
+    val perfil: Perfil,
+    val nombre: String,
+    val presencia: Boolean,
+    val saludo: Boolean,
+    val fila: Int = 0,
+    val col: Int = 0,
+)
+
+/** Las filas del editor, en orden, para moverse con el mando. */
+object FilasEdicion {
+    const val FOTO = 0
+    const val PERSONAJES_1 = 1
+    const val PERSONAJES_2 = 2
+    const val NOMBRE = 3
+    const val APODO = 4
+    const val FECHA = 5
+    const val CONSOLA = 6
+    const val COLOR = 7
+    const val PRESENCIA = 8
+    const val SALUDO = 9
+    const val HORAS = 10
+    const val BOTONES = 11
+    const val TOTAL = 12
+
+    /** Las fuentes de la foto: personaje, Discord (si hay cuenta con foto), galería, inicial. */
+    fun fuentes(conDiscord: Boolean): List<String> = listOfNotNull("personaje", if (conDiscord) "discord" else null, "galeria", INICIAL)
+
+    /** Cuántas cosas hay en la fila (para ← →). */
+    fun ancho(fila: Int, conDiscord: Boolean): Int = when (fila) {
+        FOTO -> fuentes(conDiscord).size
+        PERSONAJES_1, PERSONAJES_2 -> 4
+        COLOR -> Perfil.COLORES.size
+        BOTONES -> 2
+        else -> 1
+    }
+
+    /** Las filas que se ven (sin Discord no hay «Jugando a…»). */
+    fun visible(fila: Int, conKitDiscord: Boolean) = fila != PRESENCIA || conKitDiscord
+}
 
 /** Lo que muestra la tarjeta del perfil, ya calculado. */
 data class ResumenPerfil(
