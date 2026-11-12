@@ -96,6 +96,7 @@ private fun saludo(): String {
  */
 @Composable
 fun PantallaInicio(e: Estado) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("PantallaInicio") }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo)) {

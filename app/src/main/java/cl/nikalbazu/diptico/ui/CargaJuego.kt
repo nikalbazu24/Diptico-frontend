@@ -110,7 +110,7 @@ private fun ContenidoCarga(e: Estado, miPantalla: Int, unica: Boolean) {
                 ) {
                     // Llega girando y se acomoda de tres cuartos, como una caja de verdad que dejas sobre la mesa.
                     Caja3D(
-                        e, juego, consola, Modifier.fillMaxSize(),
+                        datosCaja(e, juego, consola), juego, consola, Modifier.fillMaxSize(),
                         giroY = { val k = suave(tramo(t.value, 0.06f, 0.5f)); 70f * (1f - k) + 16f },
                         giroX = { -8f },
                         caras = e.extra.caras[juego.clave],

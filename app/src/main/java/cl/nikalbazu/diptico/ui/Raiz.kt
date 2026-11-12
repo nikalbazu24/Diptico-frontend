@@ -44,6 +44,7 @@ fun pantallaActual(): Int {
 
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Raiz ${rol}") }
     val barra = e.configurado && rol != Rol.INFERIOR && !nuevoDisenoDosPantallas(e)
     val esc = LocalEscala.current
     CompositionLocalProvider(
@@ -166,7 +167,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             // Iniciando sesión con Discord: el QR va encima de todo (en las dos pantallas, para encontrarlo donde mires).
             if (e.extra.discordLogin != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PanelDiscord(e)
             // Medidor de fluidez (Ajustes › Fluidez): encima de todo, en cada pantalla.
-            MedidorFps(e.extra.medidorFps && !(rol == Rol.INFERIOR && e.unaPantalla))
+            MedidorFps(e.extra.medidorFps && !(rol == Rol.INFERIOR && e.unaPantalla), if (rol == Rol.SUPERIOR) "arriba" else if (rol == Rol.INFERIOR) "abajo" else "única")
         }
     }
 }

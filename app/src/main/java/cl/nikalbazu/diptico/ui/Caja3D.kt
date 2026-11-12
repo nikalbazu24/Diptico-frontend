@@ -384,16 +384,16 @@ private fun Color.luminanceSimple(): Float = 0.2126f * red + 0.7152f * green + 0
 
 /** Lo que va impreso en el reverso de [j]: su historia (si ya se bajó la ficha), tu tiempo y cuánto dura. */
 @Composable
-fun infoReverso(e: Estado, j: Juego, c: Consola, aspecto: Float): InfoReverso {
+fun infoReverso(e: DatosCaja, j: Juego, c: Consola, aspecto: Float): InfoReverso {
     val ctx = LocalContext.current
-    val inicial = if (e.fichaDe == j.clave) e.ficha?.resumen.orEmpty() else ""
+    val inicial = e.resumen
     val resumen by produceState(initialValue = inicial, j.clave, inicial) {
         if (value.isBlank()) value = withContext(Dispatchers.IO) {
             runCatching { cl.nikalbazu.diptico.data.Fichas.guardada(ctx, j.titulo, c.bonito)?.resumen }.getOrNull().orEmpty()
         }
     }
-    val seg = e.datos[j.clave]?.tiempo?.toLong() ?: 0L
-    val d = e.extra.duraciones[j.clave]
+    val seg = e.segundos
+    val d = e.duracion
     fun horas(x: Float) = if (x >= 10f) "${x.roundToInt()} h" else "%.1f h".format(x)
     val datos = listOfNotNull(
         if (seg > 0) Idioma.t("Tu tiempo") + ": " + formatoTiempo(seg) else Idioma.t("Todavía sin jugar"),
@@ -418,10 +418,11 @@ fun aspectoCaja(frente: ImageBitmap?, c: Consola): Float {
  */
 @Composable
 fun Caja3D(
-    e: Estado, juego: Juego, consola: Consola, modifier: Modifier = Modifier,
+    e: DatosCaja, juego: Juego, consola: Consola, modifier: Modifier = Modifier,
     giroY: () -> Float, giroX: () -> Float, penumbra: () -> Float = { 0f },
     caras: CarasGuardadas? = null, detalle: Boolean = true, sombraPiso: Boolean = true,
 ) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Caja3D (cada una)") }
     val ctx = LocalContext.current
     // El frente exacto (el escaneo de la caja de TheGamesDB o ScreenScraper) manda sobre la portada: ya trae su franja.
     val frenteExacto = caras?.frente?.let { Uri.parse(it) }
@@ -431,10 +432,10 @@ fun Caja3D(
     val grosor = grosorDe(estuche)
     // La franja de la consola va arriba de la portada (o al costado en DS/3DS): la caja crece para que la portada se vea entera.
     val lateral = franjaLateral(consola.id)
-    val franja = if (e.extra.bandaCaja && frenteExacto == null) (if (lateral) 0.1f else franjaDe(estuche)) else 0f
+    val franja = if (e.banda && frenteExacto == null) (if (lateral) 0.1f else franjaDe(estuche)) else 0f
     val aspecto = aspectoCaja(frenteReal, consola).let { if (lateral) it / (1f - franja) else it * (1f - franja) }.coerceIn(0.55f, 1.6f)
     val info = infoReverso(e, juego, consola, aspecto)
-    val logo = e.consolasPropias[consola.id]?.logo?.let { Uri.parse(it) }
+    val logo = e.logo?.let { Uri.parse(it) }
     val datosFrente = InfoFrente(juego.titulo, consola.bonito, consola.color.toArgb(), estuche, portadaUri, logo, aspecto, if (detalle) 640 else 360, franja, lateral)
     // Las caras reales (si aparecieron) o las armadas por Díptico.
     val reversoReal = if (detalle) rememberImagen(caras?.reverso?.let { Uri.parse(it) }, 900) else null
@@ -595,4 +596,20 @@ private val NORMALES = floatArrayOf(
     1f, 0f, 0f,
     0f, -1f, 0f,
     0f, 1f, 0f,
+)
+
+
+/**
+ * Lo que una caja necesita del estado, en un paquete chico y comparable: así la caja no se vuelve a armar cada vez
+ * que cambia cualquier cosa de Díptico (antes recibía el estado entero y se rearmaba en cada paso de la cruceta).
+ */
+@androidx.compose.runtime.Immutable
+data class DatosCaja(
+    val banda: Boolean, val logo: String?, val resumen: String, val segundos: Long,
+    val duracion: cl.nikalbazu.diptico.estado.CuantoDura.Duracion?,
+)
+
+fun datosCaja(e: Estado, j: Juego, c: Consola) = DatosCaja(
+    e.extra.bandaCaja, e.consolasPropias[c.id]?.logo, if (e.fichaDe == j.clave) e.ficha?.resumen.orEmpty() else "",
+    e.datos[j.clave]?.tiempo?.toLong() ?: 0L, e.extra.duraciones[j.clave],
 )

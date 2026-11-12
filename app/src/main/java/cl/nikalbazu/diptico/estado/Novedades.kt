@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "ajustes-vistas-2.0-62"
-    const val NOMBRE = "Ajustes ordenados"
+    const val ID = "arreglos-fluidez-2.0-63"
+    const val NOMBRE = "Arreglos y fluidez"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -465,13 +465,20 @@ object Novedades {
             Pagina("Juegos al centro", "En la pantalla de abajo el juego elegido queda en el medio, de lado a lado, también el primero y el último.", Icono.VISTA, 0xFF23C486),
             Pagina("Apps sin sombras y título solo arriba", "La barra de apps ya no lleva sombras ni contornos, y tu título («Recién llegado») se ve solo en la pantalla de arriba.", Icono.APPS, 0xFF8B5CF6),
         )),
-        Version(ID, "Ajustes ordenados", listOf(
+        Version("ajustes-vistas-2.0-62", "Ajustes ordenados", listOf(
             Pagina("Ajustes en ocho secciones", "Pantalla y estilo, Biblioteca, Inicio y widgets, Juegos y emuladores, DIPPO, Controles y sonido, Cuentas y Sistema. Dentro de cada una, las opciones parecidas van juntas en un submenú.", Icono.AJUSTES, 0xFF8B5CF6),
             Pagina("Cada opción se explica", "Al marcar una opción, abajo ves qué hace, cómo se cambia y una vista previa de cómo queda. Ahora todas tienen explicación.", Icono.TUTORIAL, 0xFF3BA8FF),
             Pagina("B vuelve donde estabas", "Si una opción de Ajustes abre otra ventana (una galería, la tienda, una consola…), con B vuelves a esa misma opción y a su submenú, no al comienzo.", Icono.CONTINUAR, 0xFF23C486),
             Pagina("El diseño nuevo en todas las vistas", "Galería, Lista y Carrusel ahora usan el mismo diseño de arriba y abajo que los Mosaicos: ya no vuelve la distribución antigua al cambiar de vista.", Icono.VISTA, 0xFFFF7A59),
-            Pagina("Vuelve la vista Xbox", "«Mosaicos Xbox»: un juego grande y el resto en dos filas. Se elige en Ajustes › Biblioteca › Cómo se ven los juegos, o con R3.", Icono.VISTA, 0xFF23C486),
+            Pagina("Vuelve la vista Xbox", "«Mosaicos Xbox»: un juego grande y el resto en dos filas. Se elige en Ajustes › Biblioteca › Vistas y orden, o con R3.", Icono.VISTA, 0xFF23C486),
             Pagina("DIPPO a la vista", "En Ajustes › DIPPO, hablar con él, sus logros y los premios están apenas entras, sin buscarlos.", Icono.TROFEO, 0xFFFFB547),
+        )),
+        Version(ID, "Arreglos y fluidez", listOf(
+            Pagina("Listas dentro de los submenús", "Los íconos, las vistas y todo lo que tiene varias opciones ahora abren su lista con muestras, también dentro de un submenú. Ya no hay que pasar una por una.", Icono.MENU, 0xFF8B5CF6),
+            Pagina("Íconos solo para las carpetas", "Nueva opción «Íconos en las carpetas»: las carpetas pueden llevar un estilo distinto al de la fila de consolas y la pantalla de arriba.", Icono.CARPETA, 0xFF3BA8FF),
+            Pagina("Mosaicos Xbox sin cortes", "El mosaico grande ya no queda cortado, y en la fila de juegos el elegido crece más para que se note.", Icono.VISTA, 0xFF23C486),
+            Pagina("Vistas previas que corresponden", "Cada opción de Ajustes muestra la vista previa de lo que cambia: carpetas, portada de arriba, Discord, logros…", Icono.TUTORIAL, 0xFFFF7A59),
+            Pagina("Informe de fluidez", "Con el medidor de fluidez encendido, Díptico anota dónde se pone lento. En Ajustes › Pantalla y estilo puedes enviar el informe para arreglar justo eso.", Icono.CHISPA, 0xFFFFB547),
         )),
     )
 

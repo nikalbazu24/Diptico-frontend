@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -54,6 +55,7 @@ import cl.nikalbazu.diptico.estado.Teclas
  */
 @Composable
 fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Mosaicos") }
     val esc = LocalEscala.current
     val lista = e.visibles
     val estado = rememberLazyGridState()
@@ -72,7 +74,8 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
     ) { _ ->
     BoxWithConstraints(Modifier.fillMaxSize().testTag("vista-mosaicos")) {
         if (lista.isEmpty()) { VacioEstante(e); return@BoxWithConstraints }
-        val hueco = esc.d(10)
+        // Con una fila hay más aire entre mosaicos: el elegido crece y no tapa a sus vecinos.
+        val hueco = esc.d(if (e.portadaCajas && nuevoDisenoDosPantallas(e) && e.vista != "xbox") 18 else 10)
         // La zona ya descuenta la barra de abajo (padding en VistaJuegos): maxHeight es lo que queda a la vista.
         val alto = maxHeight - esc.d(24)
         // Con poco alto (una pantalla, con la vitrina arriba) va una sola fila de mosaicos más grandes.
@@ -86,10 +89,12 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
             else -> ((alto - hueco) / 2).coerceAtLeast(esc.d(60))
         }
         // El elegido queda al centro de la pantalla: la fila lleva de relleno a los lados lo que falta para centrar un mosaico.
+        // En dos filas (Xbox) no se centra: el primero es grande y quedaría cortado; va desde el borde con un poco de aire.
         val anchoMosaico = if (estante) lado * 0.78f else lado
-        val aireLado = ((maxWidth - anchoMosaico) / 2).coerceAtLeast(esc.d(18))
+        val aireLado = if (unaFila) ((maxWidth - anchoMosaico) / 2).coerceAtLeast(esc.d(18)) else esc.d(18)
+        val margen = with(androidx.compose.ui.platform.LocalDensity.current) { esc.d(40).roundToPx() }
         LaunchedEffect(e.indiceSel, lista.size) {
-            estado.animateScrollToItem(e.indiceSel.coerceIn(0, lista.lastIndex), 0)
+            estado.animateScrollToItem(e.indiceSel.coerceIn(0, lista.lastIndex), if (unaFila) 0 else -margen)
         }
         LazyHorizontalGrid(
             rows = GridCells.Fixed(if (unaFila) 1 else 2), state = estado, modifier = Modifier.fillMaxSize(),
@@ -119,19 +124,20 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
 
 @Composable
 private fun Mosaico(j: cl.nikalbazu.diptico.data.Juego, elegido: Boolean, jugado: Boolean, grande: Boolean, lado: Dp, ancho: Dp = lado) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Mosaico (cada uno)") }
     val esc = LocalEscala.current
     val color = remember(j.consolaId) { Consolas.porId(j.consolaId)?.color ?: Uva }
     // El elegido crece con un resorte corto (sin rebote largo) y vuelve suave: se siente como consola.
     val mov = ajusteMovimiento()
     val escala by animateFloatAsState(
-        if (elegido) 1.05f else 1f,
+        if (elegido) (if (grande) 1.04f else 1.12f) else 1f,
         if (mov.activo) androidx.compose.animation.core.spring(dampingRatio = 0.7f, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow / mov.duracion.coerceAtLeast(0.3f))
         else androidx.compose.animation.core.snap(),
         label = "mosaico",
     )
     val forma = RoundedCornerShape(esc.d(if (grande) 14 else 10))
     Box(
-        Modifier.size(ancho, lado).graphicsLayer { scaleX = escala; scaleY = escala }
+        Modifier.zIndex(if (elegido) 1f else 0f).size(ancho, lado).graphicsLayer { scaleX = escala; scaleY = escala }
             .then(if (elegido) Modifier.shadow(esc.d(18), forma, ambientColor = color, spotColor = color) else Modifier)
             .clip(forma)
             .background(color.copy(alpha = 0.25f))
@@ -164,6 +170,7 @@ val LocalAireAbajo = androidx.compose.runtime.compositionLocalOf { 0.dp }
 
 @Composable
 fun FranjaAccesos(e: Estado, modifier: Modifier = Modifier) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("FranjaAccesos") }
     if (!e.extra.franjaAbajo) return
     val esc = LocalEscala.current
     // Solo la lupa y los ajustes, pegados a las esquinas de abajo, cada uno en una pestaña semiredonda para que se note.
@@ -206,6 +213,7 @@ private fun CirculoFranja(icono: cl.nikalbazu.diptico.estado.Icono, izquierda: B
 /** Arriba de la pantalla de abajo: DIPPO en una esquina, tu perfil en la otra y la hora y la batería al centro. */
 @Composable
 fun EsquinasArriba(e: Estado) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("EsquinasArriba") }
     val esc = LocalEscala.current
     androidx.compose.foundation.layout.Row(
         Modifier.fillMaxWidth().padding(start = esc.d(10), end = esc.d(14), top = esc.d(4), bottom = esc.d(2)).testTag("esquinas-arriba"),

@@ -234,6 +234,8 @@ fun Diptico.usarSubOpcion(i: Int = estado.value.extra.subSel, menos: Boolean = f
     val e = estado.value
     val o = subOpciones(e)?.getOrNull(i) ?: return
     if (i != e.extra.subSel) actualizar { it.copy(extra = it.extra.copy(subSel = i)) }
+    // Una opción con lista (íconos, vistas…) abre su menú desplegable también dentro del submenú, en vez de pasar a la siguiente.
+    if (!menos && o.alternativas != null && o.elegir != null) { abrirDesplegable(i, o.elegida); return }
     if (menos) (o.menos ?: return)() else desdeMenu(o.accion)
     if (estado.value.panel != Panel.MENU) actualizar { it.copy(extra = it.extra.copy(subOpcion = -1, subSel = 0)) }
 }
@@ -579,6 +581,10 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 actualizar { it.copy(extra = it.extra.copy(medidorFps = v)) }
             }
             lista += Opcion(
+                "Enviar informe de fluidez", if (Fluidez.cuantas() > 0) "${Fluidez.cuantas()} s medidos" else "Enciende el medidor", Icono.CHISPA,
+                "Con el medidor encendido, Díptico anota en qué pantalla y en qué vista se pone lento. Úsalo un rato (carpetas, vitrina, ajustes) y envía el informe: así se arregla justo lo que va lento en tu consola.",
+            ) { enviarInformeFluidez() }
+            lista += Opcion(
                 "Protector de pantalla", if (e.protectorMin == 0) "Nunca" else "A los ${e.protectorMin} min", Icono.RELOJ,
                 "Si no usas la consola, muestra tus juegos con las dos pantallas atenuadas. Cualquier botón lo cierra.",
             ) {
@@ -810,7 +816,7 @@ private fun nombreSubmenu(parte: Seccion, g: String, entera: Boolean): String = 
     parte == Seccion.TEMAS && g == "Elegir" -> "Temas"
     parte == Seccion.TEMAS && g == "Con IA" -> "Temas con IA"
     parte == Seccion.APARIENCIA && g == "Detalles" -> "Animaciones y detalles"
-    parte == Seccion.ESTANTE && g == "Qué ves y en qué orden" -> "Cómo se ven los juegos"
+    parte == Seccion.ESTANTE && g == "Qué ves y en qué orden" -> "Vistas y orden"
     parte == Seccion.ESTANTE && g == "Carpetas" -> "Carpetas de consolas"
     parte == Seccion.PANTALLAS && g == "Escribir" -> "Teclado"
     parte == Seccion.PORTADAS && g == "Imágenes" -> "Portadas e imágenes"
@@ -864,4 +870,20 @@ fun explicacion(o: Opcion): String = o.ayuda.ifBlank {
         o.valor.isNotBlank() -> "Ahora: ${o.valor}. Con A la cambias (← y → también) y en la vista previa ves cómo queda."
         else -> "Con A la usas. En la vista previa ves qué cambia."
     }
+}
+
+
+/** La opción cuyo menú desplegable está abierto: la del submenú si hay uno abierto, si no la de la sección. */
+fun Diptico.opcionDesplegada(e: Estado): Opcion? =
+    if (e.extra.desplegable < 0) null
+    else subOpciones(e)?.getOrNull(e.extra.desplegable) ?: opcionesSeccion(e.seccion).getOrNull(e.extra.desplegable)
+
+
+/** Manda el informe de fluidez por el mismo camino que el reporte de fallas (con su confirmación). */
+fun Diptico.enviarInformeFluidez() {
+    if (Fluidez.cuantas() < 10) { avisar("Enciende el medidor de fluidez y usa Díptico un rato antes de enviar"); return }
+    val equipo = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}"
+    val detalle = Fluidez.informe(equipo) + "\n\n" + Fallas.informe(app, "Datos de la versión", null)
+    reportePendiente = Fallas.Reporte(detalle, false)
+    confirmarReporte("Informe de fluidez (medidor de fps)")
 }

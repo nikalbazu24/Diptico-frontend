@@ -251,7 +251,8 @@ fun SistemasCarrusel(e: Estado, modifier: Modifier = Modifier) {
             }
             if (ancho > 0f && n == 0) Detalle("Aquí aparecerán tus consolas", 15f)
         }
-        Row(Modifier.fillMaxWidth().padding(bottom = esc.d(6)), horizontalArrangement = Arrangement.Center) {
+        // Las pistas van sobre la barra de abajo (lupa, apps y ajustes), no detrás de ella.
+        Row(Modifier.fillMaxWidth().padding(bottom = LocalAireAbajo.current + esc.d(6)), horizontalArrangement = Arrangement.Center) {
             Pistas("← →" to "Consola", "A" to "Entrar", "X" to "Personalizar", "Y" to "Al azar")
         }
     }
@@ -316,6 +317,7 @@ private fun AccesoNativos(e: Estado) {
 /** En la otra pantalla, en modo Sistemas: la consola elegida en grande, con lo último que jugaste en ella. */
 @Composable
 fun VistaSistema(e: Estado, completa: Boolean = true, conPistas: Boolean = true) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("VistaSistema") }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val id = e.consolaSel
@@ -448,6 +450,16 @@ fun CarruselJuegos(e: Estado, modifier: Modifier = Modifier) {
  */
 @Composable
 fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Boolean = true) {
+    // Las carpetas pueden llevar su propio estilo de íconos (Ajustes › «Íconos en las carpetas»).
+    val cfg = LocalIconos.current
+    if (e.extra.iconosCarpetas != "igual" && e.extra.iconosCarpetas != cfg.estilo) {
+        androidx.compose.runtime.CompositionLocalProvider(LocalIconos provides cfg.copy(estilo = e.extra.iconosCarpetas)) { CarpetasConsolasCuerpo(e, modifier, interactiva) }
+    } else CarpetasConsolasCuerpo(e, modifier, interactiva)
+}
+
+@Composable
+private fun CarpetasConsolasCuerpo(e: Estado, modifier: Modifier, interactiva: Boolean) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("CarpetasConsolas") }
     val esc = LocalEscala.current
     val densidad = LocalDensity.current
     val ids = e.pestanas

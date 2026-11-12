@@ -1513,6 +1513,21 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t403_ajustes_explicacion_abajo() = foto("403_ajustes_explicacion_abajo", submenuAbierto(), Rol.INFERIOR, mi = 1)
     @Test fun t404_ajustes_dippo() = foto("404_ajustes_dippo", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true, indice = 1), Rol.SUPERIOR)
+    // Arreglos: Xbox sin cortes, carrusel de sistemas con pistas sobre la barra, y la lista de íconos dentro del submenú.
+    @Config(qualifiers = ABAJO)
+    @Test fun t405_xbox_sin_cortes() = foto("405_xbox_sin_cortes", base().copy(vista = "xbox", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t406_sistemas_pistas() = foto("406_sistemas_pistas", base().copy(vistaConsolas = "sistemas", enSistemas = true), Rol.INFERIOR, mi = 1)
+    private fun listaIconosEnSubmenu(): Estado {
+        val e0 = conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 0)
+        Diptico.iniciar(ApplicationProvider.getApplicationContext()); Diptico.fijarParaPrueba(e0)
+        val l = Diptico.opcionesSeccion(Seccion.G_ESTILO)
+        val i = l.indexOfFirst { o -> o.sub?.any { it.titulo == "Íconos de consola" } == true }.coerceAtLeast(0)
+        val j = l.getOrNull(i)?.sub?.indexOfFirst { it.titulo == "Íconos de consola" }?.coerceAtLeast(0) ?: 0
+        return e0.copy(indice = i, extra = e0.extra.copy(subOpcion = i, subSel = j, desplegable = j, desplegableSel = 5))
+    }
+    @Test fun t407_iconos_lista_en_submenu() = foto("407_iconos_lista_en_submenu", listaIconosEnSubmenu(), Rol.SUPERIOR)
+    @Test fun t408_sistema_hora_logo() = foto("408_sistema_hora_logo", conPerfil().copy(vistaConsolas = "sistemas", enSistemas = true, consolaSel = "snes"), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)
