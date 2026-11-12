@@ -17,6 +17,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.graphics.drawscope.drawImage
+import kotlin.math.roundToInt
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.animation.core.animateDpAsState
@@ -77,16 +84,31 @@ private fun ListaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
                 LocalPaleta provides paletaLecturaCristal(p, e.nivelesGlass.carpetas),
                 LocalAireAbajo provides 0.dp) {
                 val forma = androidx.compose.foundation.shape.RoundedCornerShape(esc.d(26))
-                // Vidrio: la ventana es translúcida y lleva el color de la consola difuminado; detrás se ve la biblioteca desenfocada.
-                val fondoVentana = if (vidrio) Modifier
-                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(
-                        androidx.compose.ui.graphics.lerp(p.fondo, colorConsola, .35f), androidx.compose.ui.graphics.lerp(p.fondo, colorConsola, .12f))), forma)
-                    .border(esc.d(1), androidx.compose.ui.graphics.Color.White.copy(alpha = .22f), forma)
-                else Modifier.superficieApp(p.fondo2, forma, CapaCristal.CARPETA)
-                Column(Modifier.fillMaxWidth(.94f).fillMaxHeight(.94f).testTag("carpeta-abierta")
-                    .then(fondoVentana).sinCerrar()) {
-                    CabeceraSistema(e)
+                // Dos niveles de desenfoque: afuera (la biblioteca, 16 dp) y adentro de la ventana, donde se ve otra capa
+                // de la biblioteca desenfocada un poco menos, con el color de la consola encima.
+                var origenVentana by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                val capa = fondo.imagen
+                Box(Modifier.fillMaxWidth(.94f).fillMaxHeight(.94f).testTag("carpeta-abierta")
+                    .clip(forma)
+                    .onGloballyPositioned { origenVentana = it.positionInRoot() }
+                    .then(if (vidrio) Modifier.border(esc.d(1), androidx.compose.ui.graphics.Color.White.copy(alpha = .22f), forma) else Modifier.superficieApp(p.fondo2, forma, CapaCristal.CARPETA))
+                ) {
+                    if (vidrio && captura && capa != null) {
+                        val extra = esc.d(6).toPx()
+                        Box(Modifier.matchParentSize()
+                            .graphicsLayer { if (extra > 0.5f) renderEffect = androidx.compose.ui.graphics.BlurEffect(extra, extra, androidx.compose.ui.graphics.TileMode.Clamp) }
+                            .drawBehind {
+                                drawImage(capa,
+                                    dstOffset = androidx.compose.ui.unit.IntOffset((fondo.origen.x - origenVentana.x).roundToInt(), (fondo.origen.y - origenVentana.y).roundToInt()),
+                                    dstSize = fondo.dimensiones)
+                            })
+                    }
+                    if (vidrio) Box(Modifier.matchParentSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(
+                        colorConsola.copy(alpha = .30f), androidx.compose.ui.graphics.lerp(p.fondo, colorConsola, .12f).copy(alpha = .55f)))))
+                    Column(Modifier.fillMaxSize().sinCerrar()) {
+                        CabeceraSistema(e)
                     VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+                    }
                 }
             }
         }
