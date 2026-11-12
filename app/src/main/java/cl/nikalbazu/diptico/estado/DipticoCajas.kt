@@ -20,8 +20,8 @@ private fun Diptico.ponerCaras(clave: String, c: CajasComunidad.Caras) {
 }
 
 /** Pide la imagen de la caja (abierta y escaneada entera, o solo el frente) para que DIPPO arme la caja 3D. */
-fun Diptico.armarCajaConImagen() {
-    val clave = estado.value.fichaDe ?: estado.value.juegoSel ?: return
+fun Diptico.armarCajaConImagen(clave: String? = null) {
+    val clave = clave ?: estado.value.fichaDe ?: estado.value.juegoSel ?: return
     avisar("Elige una foto o escaneo de la caja: abierta (reverso, lomo y frente) o solo el frente")
     pedirImagen("caja:$clave")
 }
@@ -67,8 +67,8 @@ internal suspend fun Diptico.cajaDeLaComunidad(clave: String): Boolean {
 }
 
 /** Quita la caja propia (o de la comunidad) de un juego: vuelve a la portada y al reverso armado. */
-fun Diptico.quitarCajaPropia() {
-    val clave = estado.value.fichaDe ?: return
+fun Diptico.quitarCajaPropia(clave: String? = null) {
+    val clave = clave ?: estado.value.fichaDe ?: return
     actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras - clave)) }
     almacen.guardarTexto("carasCaja2", CarasGuardadas.escribir(estado.value.extra.caras))
     avisar("Listo, la caja volvió a la portada")

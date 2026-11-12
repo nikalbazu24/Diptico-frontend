@@ -164,6 +164,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             PanelTuAno(e, miPantalla)
             // Centro de Switch 2 y ports nativos: abajo la lista, arriba el detalle.
             CentroNativos(e, rol)
+            // La caja 3D de un juego: dónde se busca y cómo crearla con DIPPO.
+            PantallaCaja(e, rol)
             // Iniciando sesión con Discord: el QR va encima de todo (en las dos pantallas, para encontrarlo donde mires).
             if (e.extra.discordLogin != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PanelDiscord(e)
             // Al encender o desbloquear la consola (o volver de un juego), la pantalla se abre desde el centro.

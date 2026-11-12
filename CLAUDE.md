@@ -555,3 +555,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Ports (`fix/ports-abajo`): con dos pantallas, la lista arriba y el detalle grande abajo (`CentroNativos`).
 - PENDIENTE: boceto aprobado de «Opciones del juego» (lienzo WhPyNJf4Ajz1QArpgZrYfC: sin Jugar/Ficha, grupos con submenús, pantalla propia para buscar la caja y crearla con DIPPO)
   y de la vitrina (lienzo WEaewaFsBKEYSRg94sPWa7: caja 3D girada desde el inicio, logo grande, tamaño/lugar ajustables). Esperando visto bueno de Nicolás; luego programar (Opus).
+
+## Opciones del juego + caja 3D (12 nov, tarde, rama `fix/opciones-juego`, Sonnet; Novedades `opciones-juego-2.0-66`)
+- Publicada antes: beta.484 (carpetas de vidrio, perfil, ports abajo; Novedades 2.0-65).
+- `estado/DipticoOpcionesJuego.kt`: `opcionesJuegoPlanas()` (la lista vieja, en `Diptico.kt`) se reparte en `gruposJuego()` (Personalizar, Partida,
+  Emulador y versión, Mis cosas); `opcionesRapido()` = Mi paso + grupos + Mover de lugar; `extra.rapidoGrupo/rapidoSel` (grupo abierto), `moverRapido`
+  (cruceta 2 columnas), B cierra el grupo (`cerrarGrupoRapido` desde `cerrarPanel`). `VentanaJuego` (ui/Vistas.kt) reescrita. Sin Jugar/Ficha.
+- Pantalla de la caja: `extra.cajaJuego/cajaFuentes/cajaSel`, `abrirCajaJuego`, `buscarCajaPantalla` (estado de comunidad/ScreenScraper/TheGamesDB),
+  `usarCajaJuego(fila)`; `ui/PantallaCaja.kt` en Raiz (caja girando + fuentes + 4 acciones; con dos pantallas, caja arriba y controles abajo). Bloque en Teclas.
+- Vitrina PS5: caja con pose girada (`POSE_INICIAL` 24°), logo ×1,35, `extra.cajaTam/cajaCorrida/logoTam` con pastillas «Caja −/+ ◀ ▶ Logo −/+».
+- Traducciones `extras24.tsv` (siguiente: extras25). Capturas t416–t420. Sin compilar/revisar aún al escribir esto.

@@ -68,6 +68,9 @@ internal var vitrinaGiroPrueba = 0f
 val Estado.portadaCajas: Boolean get() = extra.portada == "cajas"
 
 /** Portada «PS5 con caja»: el arte del juego de fondo, su información a la izquierda y una sola caja 3D flotando a la derecha. */
+/** La caja del centro nunca se ve de frente plano: queda girada así para que se note 3D desde el primer momento. */
+private const val POSE_INICIAL = 24f
+
 val Estado.portadaPs5: Boolean get() = extra.portada == "ps5"
 
 /** Arriba hay una caja 3D (vitrina de cajas o PS5 con caja). */
@@ -194,12 +197,12 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                 // PS5: una sola caja, flotando a la derecha (más liviano: se dibuja una caja, no siete).
                 val desde = if (ps5) indice else (indice - 3).coerceAtLeast(0)
                 val hasta = if (ps5) indice else (indice + 3).coerceAtMost(lista.lastIndex)
-                val altoCaja = alto * (if (ps5) 0.64f else 0.66f)
-                val anchoCaja = ancho * (if (ps5) 0.34f else 0.44f)
+                val altoCaja = alto * (if (ps5) 0.64f * e.extra.cajaTam else 0.66f)
+                val anchoCaja = ancho * (if (ps5) 0.34f * e.extra.cajaTam else 0.44f)
                 val paso1 = ancho * 0.3f
                 val paso2 = ancho * 0.13f
                 Box(
-                    Modifier.fillMaxSize().padding(bottom = (alto * (if (ps5) 0.04f else 0.16f)).dp, end = (if (ps5) ancho * 0.05f else 0f).dp),
+                    Modifier.fillMaxSize().padding(bottom = (alto * (if (ps5) 0.04f else 0.16f)).dp, end = (if (ps5) ancho * (0.05f + e.extra.cajaCorrida) else 0f).dp),
                     contentAlignment = if (ps5) Alignment.CenterEnd else Alignment.Center,
                 ) {
                     // De la más lejana a la más cercana: la del centro se dibuja al final, encima de todas.
@@ -250,9 +253,9 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                                         val k = (1f - abs(r())).coerceIn(0f, 1f)
                                         // Solo la caja del centro lee el balanceo: las vecinas no se redibujan en cada cuadro.
                                         val balanceo = if (esElegida) ola?.value?.let { kotlin.math.sin(it) * 5f } ?: 0f else 0f
-                                        (1f - k) * 50f + k * (balanceo + if (esElegida) giroY.value else 0f)
+                                        (1f - k) * 50f + k * (balanceo + (if (esElegida) giroY.value + POSE_INICIAL else 0f))
                                     },
-                                    giroX = { -7f + if (esElegida) (1f - abs(r()).coerceAtMost(1f)) * giroX.value else 0f },
+                                    giroX = { -9f + if (esElegida) (1f - abs(r()).coerceAtMost(1f)) * giroX.value else 0f },
                                     penumbra = { (abs(r()) * 0.45f).coerceAtMost(0.7f) },
                                     caras = e.extra.caras[j.clave],
                                     detalle = esElegida,
@@ -283,7 +286,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             ) {
                 Crossfade(juego, animationSpec = tween(220), label = "info-ps5") { j ->
                     Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                        if (j.logo != null) ImagenAnimada(j.logo, Modifier.height(esc.d(76)).fillMaxWidth(0.8f), recortar = false)
+                        if (j.logo != null) ImagenAnimada(j.logo, Modifier.height(esc.d(76 * 1.35f * e.extra.logoTam)).fillMaxWidth((0.8f * e.extra.logoTam).coerceAtMost(1f)), recortar = false)
                         Texto(j.titulo, if (j.logo != null) 18f else 26f, color = Color.White, lineas = 2, traducir = false, sombra = true)
                         val seg = e.datos[j.clave]?.tiempo?.toLong() ?: 0L
                         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
@@ -299,6 +302,18 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                         }
                     }
                 }
+            }
+            // Tamaño y lugar de la caja y del logo (como en iiSU): pastillas chicas abajo a la derecha.
+            if (ps5) Row(
+                Modifier.align(Alignment.BottomEnd).padding(end = esc.d(22), bottom = esc.d(30)),
+                horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PastillaAjuste("Caja −") { Diptico.cambiarCajaTam(-0.1f) }
+                PastillaAjuste("Caja +") { Diptico.cambiarCajaTam(0.1f) }
+                PastillaAjuste("◀") { Diptico.cambiarCajaCorrida(0.04f) }
+                PastillaAjuste("▶") { Diptico.cambiarCajaCorrida(-0.04f) }
+                PastillaAjuste("Logo −") { Diptico.cambiarLogoTam(-0.1f) }
+                PastillaAjuste("Logo +") { Diptico.cambiarLogoTam(0.1f) }
             }
             // Los botones (mismo tamaño y orden) bajan al pie de la vitrina, a la izquierda, para aprovechar mejor el espacio.
             if (ps5) Row(
@@ -338,4 +353,13 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             }
         }
     }
+}
+
+@Composable
+private fun PastillaAjuste(texto: String, alPulsar: () -> Unit) {
+    val esc = LocalEscala.current
+    Box(
+        Modifier.clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.38f))
+            .clickable { alPulsar() }.padding(horizontal = esc.d(9), vertical = esc.d(4)),
+    ) { Texto(texto, 10.5f, color = Color.White.copy(alpha = 0.85f), lineas = 1, traducir = false) }
 }

@@ -55,7 +55,7 @@ import kotlinx.coroutines.withContext
 
 fun Diptico.abrirRapido() {
     if (estado.value.seleccionado == null) return
-    actualizar { it.copy(panel = Panel.RAPIDO, indice = 0) }
+    actualizar { it.copy(panel = Panel.RAPIDO, indice = 0, extra = it.extra.copy(rapidoGrupo = -1, rapidoSel = 0)) }
 }
 
 
@@ -163,6 +163,7 @@ internal fun Diptico.recibirClaveRemota(para: String, clave: String) {
 
 
 fun Diptico.cerrarPanel() {
+    if (estado.value.panel == Panel.RAPIDO && cerrarGrupoRapido()) return
     if (estado.value.desplegable >= 0) actualizar { it.copy(extra = it.extra.copy(desplegable = -1)) }
     if (estado.value.extra.subOpcion >= 0) actualizar { it.copy(extra = it.extra.copy(subOpcion = -1, subSel = 0)) }
     if (estado.value.appsMenu != null || estado.value.appsMoviendo != null) { cerrarOpcionesApp(); return }

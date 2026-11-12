@@ -237,7 +237,7 @@ fun ventanaEncima(e: Estado): Boolean = when (e.panel) {
     Panel.ASISTENTE -> e.sesion == null
     Panel.WIDGET -> e.intercambiar
     else -> true
-} || e.extra.amigosEn >= 0 || e.extra.perfilEn >= 0 || e.extra.anioEn >= 0 || e.extra.nativosEn >= 0
+} || e.extra.amigosEn >= 0 || e.extra.perfilEn >= 0 || e.extra.anioEn >= 0 || e.extra.nativosEn >= 0 || e.extra.cajaJuego.isNotEmpty()
 
 /** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
 @Composable

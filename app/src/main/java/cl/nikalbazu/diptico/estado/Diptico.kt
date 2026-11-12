@@ -384,6 +384,14 @@ data class EstadoExtra(
     /** Ajustes condensados: la fila «Más opciones…» abierta en ventana (índice; -1 = ninguna) y la opción marcada adentro. */
     val subOpcion: Int = -1,
     val subSel: Int = 0,
+    /** Ventana del juego: el grupo abierto (índice en [Diptico.gruposJuego]; -1 = ninguno) y la opción marcada adentro. */
+    val rapidoGrupo: Int = -1,
+    val rapidoSel: Int = 0,
+    /** Pantalla de la caja 3D del juego (clave del juego; "" = cerrada), y su búsqueda en marcha. */
+    val cajaJuego: String = "",
+    /** Estado de las tres fuentes de la caja: comunidad, ScreenScraper, TheGamesDB ("" espera, "buscando", "hallada", "no", "sin"), y la fila marcada. */
+    val cajaFuentes: List<String> = listOf("", "", ""),
+    val cajaSel: Int = 0,
     /** Carpetas en modo edición (tiemblan y se pueden mover) y la que está tomada para moverla con la cruceta. */
     val ordenandoCarpetas: Boolean = false,
     val carpetaTomada: String? = null,
@@ -411,6 +419,10 @@ data class EstadoExtra(
     val caras: Map<String, CarasGuardadas> = emptyMap(),
     /** Las cajas llevan arriba la franja con el logo (o el nombre) de su consola, como las cajas de verdad. */
     val bandaCaja: Boolean = true,
+    /** Vitrina PS5: tamaño de la caja (0,7–1,4) y cuánto se corre a la izquierda (0–0,3 del ancho). */
+    val cajaTam: Float = 1f,
+    val cajaCorrida: Float = 0f,
+    val logoTam: Float = 1f,
     /** La ventana de amigos de Discord está abierta en esta pantalla (id de la pantalla; -1 = cerrada). */
     val amigosEn: Int = -1,
     /** Cuándo DIPPO ganó un logro (para que celebre unos segundos) y cuál. */
@@ -1032,6 +1044,9 @@ object Diptico {
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 caras = CarasGuardadas.leer(almacen.texto("carasCaja2")),
                 bandaCaja = almacen.bool("bandaCaja", true),
+                cajaTam = almacen.texto("cajaTam", "1").toFloatOrNull() ?: 1f,
+                cajaCorrida = almacen.texto("cajaCorrida", "0").toFloatOrNull() ?: 0f,
+                logoTam = almacen.texto("logoTam", "1").toFloatOrNull() ?: 1f,
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
@@ -2795,7 +2810,9 @@ object Diptico {
                     else -> o?.accion?.let { desdeMenu(it) }
                 }
             }
-            Panel.RAPIDO -> opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
+            Panel.RAPIDO ->
+                if (e.extra.rapidoGrupo >= 0) opcionesGrupoRapido(e.extra.rapidoGrupo).getOrNull(e.extra.rapidoSel)?.accion?.invoke()
+                else opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
             Panel.WIDGET -> opcionesWidget(e).getOrNull(e.indice)?.takeIf { !it.apagada }?.accion?.invoke()
             Panel.PORTS -> e.apps.getOrNull(e.indice)?.let { alternarPort(it.paquete) }
             Panel.FICHA -> if (e.pestanaFicha >= 2) opcionesFicha().getOrNull(e.indice)?.accion?.invoke()
@@ -2842,9 +2859,9 @@ object Diptico {
 
     /** La ventana de un juego (Y o mantener A): acciones en mosaico. */
     /** Las primeras opciones de la ventana del juego van grandes, en una fila. */
-    const val PRIMARIAS_RAPIDO = 5
 
-    fun opcionesRapido(): List<Opcion> {
+    /** Todas las opciones del juego, planas (la ventana nueva las reparte en grupos: ver DipticoOpcionesJuego.kt). */
+    internal fun opcionesJuegoPlanas(): List<Opcion> {
         val e = estado.value
         val juego = e.seleccionado ?: return emptyList()
         val d = e.datos[juego.clave]

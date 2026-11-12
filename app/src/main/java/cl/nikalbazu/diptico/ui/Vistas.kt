@@ -303,7 +303,10 @@ private fun Chips(opciones: List<String>, actual: String, nombre: (String) -> St
 
 // ---------- Ventana del juego (Y o mantener A) ----------
 
-/** Ventana flotante con las acciones del juego. El fondo se difumina detrás. */
+/**
+ * Ventana de opciones del juego: «Mi paso» destacado, cuatro grupos con submenús y «Mover de lugar».
+ * Jugar y Ficha ya no están aquí (viven en la vitrina). Con un grupo abierto se ve su lista; B vuelve a la ventana.
+ */
 @Composable
 fun VentanaJuego(e: Estado) {
     val p = LocalPaleta.current
@@ -311,7 +314,12 @@ fun VentanaJuego(e: Estado) {
     val j = e.seleccionado ?: return
     val c = Consolas.porId(j.consolaId)
     val opciones = remember(e) { Diptico.opcionesRapido() }
-    val n = Diptico.PRIMARIAS_RAPIDO
+    val grupoAbierto = e.extra.rapidoGrupo
+    val sub = remember(e, grupoAbierto) { if (grupoAbierto >= 0) Diptico.opcionesGrupoRapido(grupoAbierto) else emptyList() }
+    val tieneMover = opciones.lastOrNull()?.titulo == "Mover de lugar"
+    val tienePaso = opciones.firstOrNull()?.titulo == "Mi paso"
+    val grupos = opciones.filterIndexed { i, o -> !(i == 0 && tienePaso) && !(i == opciones.lastIndex && tieneMover) }
+    val primerGrupo = if (tienePaso) 1 else 0
     Velo {
         val color = colorDe(j.clave)
         Column(
@@ -319,59 +327,84 @@ fun VentanaJuego(e: Estado) {
                 .superficieApp(lerpColor(p.superficie, color, .12f), RoundedCornerShape(esc.d(26)), CapaCristal.PANEL)
                 .sinCerrar().padding(esc.d(14)),
         ) {
-            // Todo se desliza junto (encabezado, acciones y ajustes): al bajar por los ajustes, lo de arriba se va y
-            // las opciones usan toda la ventana; al volver a las acciones, reaparece.
-            val lista = rememberLazyListState()
-            val cabecera = 2
-            LaunchedEffect(e.indice) {
-                if (e.indice >= n) {
-                    val k = e.indice - n + cabecera
-                    val vis = lista.layoutInfo.visibleItemsInfo
-                    if (vis.isEmpty() || k <= vis.first().index + 1 || k >= vis.last().index) lista.animateScrollToItem((k - 1).coerceAtLeast(0))
-                } else lista.animateScrollToItem(0)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (c != null) CajaJuego(j, c, escala = 52f / cajaDe(c).alto)
+                Spacer(Modifier.width(esc.d(12)))
+                Column(Modifier.weight(1f)) {
+                    Etiqueta(if (grupoAbierto >= 0) (grupos.getOrNull(grupoAbierto - 0)?.titulo ?: "") else c?.bonito ?: "", Coral, 11f)
+                    Texto(j.titulo, 19f, lineas = 1)
+                    val d = e.datos[j.clave]
+                    Detalle(
+                        listOfNotNull(
+                            d?.tiempo?.takeIf { it > 0 }?.let { "${formatoTiempo(it)} jugadas" } ?: "Sin jugar",
+                            if (d?.favorito == true) "♥ Favorito" else null,
+                        ).joinToString(" · "),
+                        12.5f, lineas = 1,
+                    )
+                }
             }
-            LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
-                item(key = "cabecera") {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (c != null) CajaJuego(j, c, escala = 58f / cajaDe(c).alto)
+            Spacer(Modifier.height(esc.d(10)))
+            if (grupoAbierto >= 0) {
+                val lista = rememberLazyListState()
+                LaunchedEffect(e.extra.rapidoSel) { lista.animateScrollToItem((e.extra.rapidoSel - 1).coerceAtLeast(0)) }
+                LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                    itemsIndexed(sub) { i, o -> TarjetaOpcion(o, i == e.extra.rapidoSel, alto = 46f) { Diptico.elegirSubRapido(i) } }
+                }
+                Box(Modifier.fillMaxWidth().height(esc.d(40)).padding(top = esc.d(4), start = esc.d(4), end = esc.d(4))) {
+                    sub.getOrNull(e.extra.rapidoSel)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 12f, lineas = 2) }
+                }
+                Pistas("A" to "Elegir", "Cruceta" to "Moverte", "B" to "Volver")
+            } else {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                    if (tienePaso) {
+                        val o = opciones.first()
+                        val act = e.indice == 0
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(18)))
+                                .then(if (act) Modifier.fondoBoton(Uva) else Modifier.background(p.fondo2.copy(alpha = 0.7f)))
+                                .clickable { Diptico.elegirIndice(0) }.padding(horizontal = esc.d(14), vertical = esc.d(12)),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            o.icono?.let { IconoDiptico(it, if (act) SobreUva else p.tinta, 26f, acento = if (act) SobreUva else Coral) }
                             Spacer(Modifier.width(esc.d(12)))
                             Column(Modifier.weight(1f)) {
-                                Etiqueta(c?.bonito ?: "", Coral, 11f)
-                                Texto(j.titulo, 19f, lineas = 1)
-                                val d = e.datos[j.clave]
-                                Detalle(
-                                    listOfNotNull(
-                                        d?.tiempo?.takeIf { it > 0 }?.let { "${formatoTiempo(it)} jugadas" } ?: "Sin jugar",
-                                        if (d?.favorito == true) "♥ Favorito" else null,
-                                    ).joinToString(" · "),
-                                    12.5f, lineas = 1,
-                                )
+                                Texto("Mi paso", 16f, color = if (act) SobreUva else p.tinta, lineas = 1)
+                                Detalle(o.valor.ifBlank { "Anota dónde quedaste" }, 12.5f, lineas = 1)
                             }
                         }
-                        Spacer(Modifier.height(esc.d(12)))
-                        // Fila de acciones grandes
-                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                            opciones.take(n).forEachIndexed { i, o -> Mosaico(o, i == e.indice, Modifier.weight(1f)) { Diptico.elegirIndice(i) } }
+                    }
+                    // Los grupos, de a dos por fila.
+                    grupos.chunked(2).forEachIndexed { f, par ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                            par.forEachIndexed { k, o ->
+                                val i = primerGrupo + f * 2 + k
+                                Column(
+                                    Modifier.weight(1f).height(esc.d(78)).clip(RoundedCornerShape(esc.d(18)))
+                                        .then(if (e.indice == i) Modifier.fondoBoton(Uva) else Modifier.background(p.fondo2.copy(alpha = 0.7f)))
+                                        .clickable { Diptico.elegirIndice(i) }.padding(esc.d(10)),
+                                    verticalArrangement = Arrangement.Center,
+                                ) {
+                                    val act = e.indice == i
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        o.icono?.let { IconoDiptico(it, if (act) SobreUva else p.tinta, 20f, acento = if (act) SobreUva else Coral) }
+                                        Spacer(Modifier.width(esc.d(8)))
+                                        Texto(o.titulo, 14f, color = if (act) SobreUva else p.tinta, lineas = 1)
+                                    }
+                                    Spacer(Modifier.height(esc.d(3)))
+                                    Detalle(o.valor, 11.5f, lineas = 1)
+                                }
+                            }
+                            if (par.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
-                }
-                item(key = "ayuda") {
-                    Column {
-                        // Qué hace lo que está elegido, en palabras simples (siempre el mismo alto: así nada salta).
-                        Box(Modifier.fillMaxWidth().height(esc.d(50)).padding(top = esc.d(6), start = esc.d(4), end = esc.d(4))) {
-                            opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 12f, lineas = 2) }
-                        }
-                        Etiqueta("Ajustes de este juego", p.tenue, 11f)
+                    Box(Modifier.fillMaxWidth().height(esc.d(36)).padding(horizontal = esc.d(4))) {
+                        opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 12f, lineas = 2) }
                     }
+                    if (tieneMover) TarjetaOpcion(opciones.last(), e.indice == opciones.lastIndex, alto = 44f) { Diptico.elegirIndice(opciones.lastIndex) }
                 }
-                itemsIndexed(opciones.drop(n)) { k, o ->
-                    val i = k + n
-                    TarjetaOpcion(o, i == e.indice, alto = 46f) { Diptico.elegirIndice(i) }
-                }
+                Spacer(Modifier.height(esc.d(6)))
+                Pistas("A" to "Elegir", "Cruceta" to "Moverte", "B" to "Cerrar")
             }
-            Spacer(Modifier.height(esc.d(6)))
-            Pistas("A" to "Elegir", "Cruceta" to "Moverte", "B" to "Cerrar")
         }
     }
 }
