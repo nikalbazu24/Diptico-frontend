@@ -483,3 +483,10 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Carpetas: `extra.carpetasTono` ("auto"/"oscuro"/"claro") → `carpetasOscuras(tono)` → `ArteCarpeta(oscuro=)`. El estilo «consola» no usa ese dibujo.
 - Arrastre de carpetas: gesto en la zona (no por carpeta) con `celdasEn` (bounds), carpeta fantasma sobre la zona y auto-scroll al acercarse al borde
   (`RejillaCentrada(estado=)` hoisteado). Sin probar en equipo (las capturas no muestran el arrastre). Traducciones `extras18.tsv`; siguiente: extras19.
+
+## Apps arriba (12 nov, rama `fix/dock-arriba`, Sonnet; Novedades `dock-arriba-2.0-60`)
+- Pedido de Nicolás (foto con líneas): el dock de apps fijadas va ARRIBA al medio de la pantalla de abajo (`EsquinasArriba`, entre DIPPO y la foto), solo en la lista de
+  carpetas (`dockArriba(e)` en `ui/Mosaicos.kt`); en las demás vistas sigue abajo entre lupa y ajustes (`DockOApps`). `FranjaAccesos` ya no tiene barrita ni repliegue
+  (`dockVisible` solo queda para otras pantallas); `ALTO_FRANJA_ABIERTA` = 56. Lupa y ajustes = pestañas semiredondas pegadas a las esquinas (`CirculoFranja(izquierda)`).
+- Íconos pixel: Wii U y Android (`androidgames`) en `SpritesConsola.kt`; `ArteCarpeta` dibuja el sprite al centro si el estilo de íconos es «Píxeles» (`LocalIconos`).
+  Traducciones `extras19.tsv` (siguiente: extras20). Capturas t388.
