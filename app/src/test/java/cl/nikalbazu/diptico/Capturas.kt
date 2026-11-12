@@ -4,6 +4,7 @@ import cl.nikalbazu.diptico.estado.*
 
 import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
@@ -1456,9 +1457,20 @@ class Capturas {
     @Test fun t382_perfil_arriba() = foto("382_perfil_arriba", conPerfil(), Rol.SUPERIOR)
     @Test fun t383_perfil_arriba_cajas() = foto("383_perfil_arriba_cajas", conPerfil().let { it.copy(extra = it.extra.copy(portada = "cajas")) }, Rol.SUPERIOR)
     // Abajo con la vitrina de cajas arriba: la fila de juegos centrada en lo que queda a la vista sobre la barra.
-    @Test fun t384_juegos_centrados() = foto("384_juegos_centrados", base().copy(vista = "mosaicos", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t384_juegos_centrados() = foto("384_juegos_centrados", base().copy(vista = "mosaicos", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
     // Íconos pixel de Switch, Switch 2 y Gahvoria (vista lado a lado con el estilo pixel).
-    @Test fun t385_iconos_pixel() = foto("385_iconos_pixel", base().copy(estiloIconos = "pixel", vistaConsolas = "lado", consolaSel = "switch2"), Rol.INFERIOR)
+    @Test fun t385_iconos_pixel() {
+        regla.setContent { Lienzo(true, Modifier.fillMaxSize(), 1f) {
+            androidx.compose.runtime.CompositionLocalProvider(cl.nikalbazu.diptico.ui.LocalIconos provides cl.nikalbazu.diptico.ui.IconosCfg(estilo = "pixel")) {
+                androidx.compose.foundation.layout.Row(androidx.compose.ui.Modifier.padding(androidx.compose.ui.unit.Dp(24f)), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(androidx.compose.ui.unit.Dp(28f))) {
+                    for (id in listOf("switch", "switch2", "rpgmaker", "snes", "psp"))
+                        cl.nikalbazu.diptico.ui.IconoConsola(cl.nikalbazu.diptico.data.Consolas.porId(id), 120f, androidx.compose.ui.graphics.Color(0xFF14121F))
+                }
+            }
+        } }
+        regla.onRoot().captureRoboImage("capturas/385_iconos_pixel.png")
+    }
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)
