@@ -810,7 +810,7 @@ private fun nombreSubmenu(parte: Seccion, g: String, entera: Boolean): String = 
     parte == Seccion.TEMAS && g == "Elegir" -> "Temas"
     parte == Seccion.TEMAS && g == "Con IA" -> "Temas con IA"
     parte == Seccion.APARIENCIA && g == "Detalles" -> "Animaciones y detalles"
-    parte == Seccion.ESTANTE && g == "Qué ves y en qué orden" -> "Cómo se ven los juegos"
+    parte == Seccion.ESTANTE && g == "Qué ves y en qué orden" -> "Vistas y orden"
     parte == Seccion.ESTANTE && g == "Carpetas" -> "Carpetas de consolas"
     parte == Seccion.PANTALLAS && g == "Escribir" -> "Teclado"
     parte == Seccion.PORTADAS && g == "Imágenes" -> "Portadas e imágenes"

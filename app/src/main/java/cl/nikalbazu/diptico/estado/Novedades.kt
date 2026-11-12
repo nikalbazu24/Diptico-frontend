@@ -470,7 +470,7 @@ object Novedades {
             Pagina("Cada opción se explica", "Al marcar una opción, abajo ves qué hace, cómo se cambia y una vista previa de cómo queda. Ahora todas tienen explicación.", Icono.TUTORIAL, 0xFF3BA8FF),
             Pagina("B vuelve donde estabas", "Si una opción de Ajustes abre otra ventana (una galería, la tienda, una consola…), con B vuelves a esa misma opción y a su submenú, no al comienzo.", Icono.CONTINUAR, 0xFF23C486),
             Pagina("El diseño nuevo en todas las vistas", "Galería, Lista y Carrusel ahora usan el mismo diseño de arriba y abajo que los Mosaicos: ya no vuelve la distribución antigua al cambiar de vista.", Icono.VISTA, 0xFFFF7A59),
-            Pagina("Vuelve la vista Xbox", "«Mosaicos Xbox»: un juego grande y el resto en dos filas. Se elige en Ajustes › Biblioteca › Cómo se ven los juegos, o con R3.", Icono.VISTA, 0xFF23C486),
+            Pagina("Vuelve la vista Xbox", "«Mosaicos Xbox»: un juego grande y el resto en dos filas. Se elige en Ajustes › Biblioteca › Vistas y orden, o con R3.", Icono.VISTA, 0xFF23C486),
             Pagina("DIPPO a la vista", "En Ajustes › DIPPO, hablar con él, sus logros y los premios están apenas entras, sin buscarlos.", Icono.TROFEO, 0xFFFFB547),
         )),
     )

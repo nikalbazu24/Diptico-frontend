@@ -499,3 +499,18 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - `Mosaicos`: el elegido va centrado (relleno `aireLado` = (ancho − mosaico)/2 y `animateScrollToItem(i, 0)` dentro del `BoxWithConstraints`).
 - `FilaDock`: sin sombras ni contornos. `EsquinasArriba` (abajo) sin burbuja de título; el título solo en `PerfilArriba` (arriba).
 - Traducciones `extras20.tsv` (siguiente: extras21). Capturas t389–t395.
+
+## Ajustes ordenados + vistas (12 nov, rama `fix/vistas-ajustes`, Opus; Novedades `ajustes-vistas-2.0-62`)
+- Diseño nuevo en TODAS las vistas: `nuevoDisenoDosPantallas(e) = !unaPantalla && dosDisponibles` (ya no depende de `vista == "mosaicos"`);
+  `Raiz`: sin barra vieja en la pantalla de abajo; `FranjaAccesos` en todas. Vista nueva `"xbox"` («Mosaicos Xbox», `esMosaico(vista)`):
+  Mosaicos en dos filas con el primero grande aunque haya vitrina de cajas. Teclas usa `esMosaico`.
+- Ajustes: 8 secciones (`GRUPOS_AJUSTES`: G_ESTILO=TEMAS+DECORACIONES+APARIENCIA+PANTALLAS, G_BIBLIOTECA, G_WIDGETS, G_JUEGOS, G_DIPPO,
+  G_CONTROLES=CONTROLES+MUSICA «Controles y sonido», G_CUENTAS, G_SISTEMA; G_TEMAS/G_SONIDO quedan sin usar). `submenus(s, partes)` en
+  DipticoMenu.kt: cada grupo (`grupoOpcion`) = fila «Nombre ›» con `sub` (ventana `VentanaSubOpciones`); grupo de 1 opción va directo;
+  `PARTES_ENTERAS` van en un solo submenú; `nombreSubmenu` da nombres claros. DIPPO: Hablar, Logros y «Premios de los logros» directos.
+  `condensar` no toca listas con submenús. `explicacion(o)` = ayuda o una explicación armada (todas las opciones explican algo).
+  `Previas.seccionDe` busca la parte original de la opción (o de la 1.ª del submenú) para la vista previa.
+- B vuelve a la ventana anterior: `Diptico.desdeMenu(accion)` (en `aceptar` y `usarSubOpcion`) apila `EnMenu` si la opción abrió otro panel;
+  `cerrarPanel` llama `volverAlMenu()` (restaura sección, índice y subventana); `actualizar` vacía la pila al volver a NINGUNO.
+- Vitrina de cajas: `RelojBateria` arriba del nombre de la consola (columna izquierda). Traducciones `extras21.tsv` (siguiente: extras22). Capturas t396–t404.
+- Boceto de ajustes: https://claude.ai/artifact/Ezq1VDV9ZTwD2mf4johmxc (Nicolás pidió mantener el diseño actual: lista arriba, explicación abajo).
