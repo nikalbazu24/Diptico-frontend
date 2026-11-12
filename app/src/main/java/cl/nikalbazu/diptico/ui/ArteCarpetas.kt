@@ -61,7 +61,7 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscur
             Triple(.02f, .70f, .28f), Triple(.70f, .70f, .28f),
         )
         // Vidrio: el color de la consola va difuminado y translúcido, y lo de atrás se asoma.
-        val fondo = if (vidrio) Brush.linearGradient(listOf(color.copy(alpha = .38f), color.copy(alpha = .10f)), Offset.Zero, Offset(s, s))
+        val fondo = if (vidrio) Brush.linearGradient(listOf(lerp(color, Color.White, .25f).copy(alpha = .55f), color.copy(alpha = .16f)), Offset.Zero, Offset(s, s))
             else Brush.linearGradient(listOf(papel, lerp(papel, color, .12f)), Offset.Zero, Offset(s, s))
         val placa = Rect(s * .245f, s * .245f, s * .755f, s * .755f)
         val radio = CornerRadius(s * .125f)
@@ -74,7 +74,12 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscur
         onDrawBehind {
             drawRect(fondo)
             if (!vidrio) drawPoints(trama, androidx.compose.ui.graphics.PointMode.Points, tramaColor, strokeWidth = s * .0048f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-            posiciones.forEachIndexed { i, (x, y, escala) ->
+            // Vidrio: sin dibujos en las esquinas (se ve limpio, como un panel de cristal) y con un reflejo de luz arriba.
+            if (vidrio) {
+                drawRect(Brush.linearGradient(listOf(Color.White.copy(alpha = .30f), Color.White.copy(alpha = .06f), Color.Transparent), Offset.Zero, Offset(s * .7f, s * .7f)))
+                drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .18f)), s * .55f, s))
+            }
+            if (!vidrio) posiciones.forEachIndexed { i, (x, y, escala) ->
                 withTransform({ translate(s * x, s * y); scale(s * escala / 100, s * escala / 100, Offset.Zero); rotate(if (i % 2 == 0) -10f else 9f, Offset(50f, 50f)) }) {
                     motivos[i % motivos.size].forEach { trazo ->
                         val tono = lerp(papel, tinta, (.15f + (1f - trazo.color.luminance()) * .72f) * trazo.color.alpha)
