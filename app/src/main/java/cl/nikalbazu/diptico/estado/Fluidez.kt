@@ -30,7 +30,7 @@ object Fluidez {
         add("vista=${e.vista}")
         add("consolas=${e.vistaConsolas}")
         if (e.carpetaEnVentana) add("carpeta-abierta")
-        if (e.portadaCajas) add("cajas3d")
+        if (e.extra.portada == "cajas") add("cajas3d")
         if (e.sesion != null) add("jugando")
         if (e.unaPantalla) add("una-pantalla")
     }.joinToString(" ")
