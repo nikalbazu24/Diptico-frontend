@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "arreglos-fluidez-2.0-63"
-    const val NOMBRE = "Arreglos y fluidez"
+    const val ID = "cajas-comunidad-2.0-64"
+    const val NOMBRE = "Cajas de la comunidad"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -473,7 +473,7 @@ object Novedades {
             Pagina("Vuelve la vista Xbox", "«Mosaicos Xbox»: un juego grande y el resto en dos filas. Se elige en Ajustes › Biblioteca › Vistas y orden, o con R3.", Icono.VISTA, 0xFF23C486),
             Pagina("DIPPO a la vista", "En Ajustes › DIPPO, hablar con él, sus logros y los premios están apenas entras, sin buscarlos.", Icono.TROFEO, 0xFFFFB547),
         )),
-        Version(ID, "Arreglos y fluidez", listOf(
+        Version("arreglos-fluidez-2.0-63", "Arreglos y fluidez", listOf(
             Pagina("PS5 con caja", "Nueva portada de arriba: el arte del juego de fondo, su logo y datos a la izquierda y su caja 3D flotando a la derecha. Abajo quedan solo los íconos para elegir. Ajustes › Pantalla y estilo › Portada de arriba.", Icono.PORTADA, 0xFFE0603A),
             Pagina("La caja se abre", "Al jugar, la caja llega, se abre desde el lomo y adentro brilla el juego antes de que empiece.", Icono.JUGAR, 0xFFFFB547),
             Pagina("Ajustes más simples", "Cada sección muestra arriba lo que más se usa, y el resto queda en «Más de …», ordenado por tema.", Icono.AJUSTES, 0xFF8B5CF6),
@@ -482,6 +482,14 @@ object Novedades {
             Pagina("Mosaicos Xbox sin cortes", "El mosaico grande ya no queda cortado, y en la fila de juegos el elegido crece más para que se note.", Icono.VISTA, 0xFF23C486),
             Pagina("Vistas previas que corresponden", "Cada opción de Ajustes muestra la vista previa de lo que cambia: carpetas, portada de arriba, Discord, logros…", Icono.TUTORIAL, 0xFFFF7A59),
             Pagina("Informe de fluidez", "Con el medidor de fluidez encendido, Díptico anota dónde se pone lento. En Ajustes › Pantalla y estilo puedes enviar el informe para arreglar justo eso.", Icono.CHISPA, 0xFFFFB547),
+        )),
+        Version(ID, "Cajas de la comunidad", listOf(
+            Pagina("PS5 con caja, de fábrica", "La vista nueva queda por defecto: arriba el arte del juego con su caja 3D flotando, abajo los íconos para elegir. Se cambia en Ajustes › Pantalla y estilo.", Icono.PORTADA, 0xFFE0603A),
+            Pagina("DIPPO arma cajas", "En la ficha del juego › Personalizar › «Armar la caja con una imagen»: elige un escaneo de la caja abierta (o solo el frente) y DIPPO la arma en 3D.", Icono.BISA, 0xFFFFB547),
+            Pagina("Cajas de la comunidad", "Las cajas que arma la comunidad se comparten: si alguien ya armó la de tu juego, te aparece sola, antes que ScreenScraper o TheGamesDB.", Icono.MUNDO, 0xFF3BA8FF),
+            Pagina("Cajas y portadas, aparte", "En Personalizar, las cajas y portadas tienen su apartado, separado de los íconos, las imágenes grandes y los logos.", Icono.PALETA, 0xFF8B5CF6),
+            Pagina("Todo con movimiento", "Al encender o desbloquear la consola la pantalla se abre desde el centro, y al entrar a una carpeta los juegos crecen desde ella. La carga del juego usa su logo.", Icono.CHISPA, 0xFF23C486),
+            Pagina("Ports a un toque", "En el centro de Switch 2 y ports: cada pestaña explica cómo funciona, y los ports se instalan directo desde GitHub con A.", Icono.DESCARGA, 0xFF00C3E3),
         )),
     )
 

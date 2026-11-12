@@ -7,6 +7,7 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
@@ -26,15 +27,30 @@ import cl.nikalbazu.diptico.estado.Estado
 /** La biblioteca y sus posiciones siguen montadas durante la apertura y el cierre. */
 @Composable
 internal fun VistaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    if (!e.enSistemas && !e.carpetaEnVentana) {
-        Column(modifier) {
+    // Entrar a una carpeta (y volver): los juegos crecen desde el centro y las carpetas se alejan, como abrir una caja.
+    val mov = ajusteMovimiento()
+    androidx.compose.animation.AnimatedContent(
+        targetState = !e.enSistemas && !e.carpetaEnVentana,
+        transitionSpec = {
+            if (!mov.activo) androidx.compose.animation.EnterTransition.None togetherWith androidx.compose.animation.ExitTransition.None
+            else if (targetState) (fadeIn(tween(mov.ms(240))) + androidx.compose.animation.scaleIn(tween(mov.ms(320), easing = CurvaPosarse), initialScale = 0.9f)) togetherWith
+                (fadeOut(tween(mov.ms(160))) + androidx.compose.animation.scaleOut(tween(mov.ms(220)), targetScale = 1.08f))
+            else (fadeIn(tween(mov.ms(240))) + androidx.compose.animation.scaleIn(tween(mov.ms(300), easing = CurvaPosarse), initialScale = 1.08f)) togetherWith
+                (fadeOut(tween(mov.ms(160))) + androidx.compose.animation.scaleOut(tween(mov.ms(220)), targetScale = 0.9f))
+        },
+        label = "entrar-carpeta", modifier = modifier,
+    ) { dentro ->
+        if (dentro) Column(Modifier.fillMaxSize()) {
             CabeceraSistema(e)
             VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
-        }
-        return
+        } else ListaCarpetas(e, Modifier.fillMaxSize(), escalaEstante)
     }
+}
+
+@Composable
+private fun ListaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
     val transicion = remember { MutableTransitionState(false) }
     transicion.targetState = e.carpetaEnVentana
     val abierta = transicion.currentState || transicion.targetState

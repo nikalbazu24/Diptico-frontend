@@ -528,3 +528,19 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   «Enviar informe de fluidez» (`enviarInformeFluidez`, va por `confirmarReporte` a Drive). `Caja3D` ya no recibe `Estado` sino `DatosCaja` (`datosCaja(e, j, c)`).
 - Mosaicos: Xbox sin centrar (empieza en el borde), elegido 1.12× con `zIndex`; pistas del carrusel de sistemas sobre `LocalAireAbajo`; `BarraSuperior(perfil)` = columna píldora + logo.
 - Traducciones `extras22.tsv` (siguiente: extras23). Capturas t405–t412.
+
+## Cajas de la comunidad (12 nov, rama `fix/version-cajas`, Opus; Novedades `cajas-comunidad-2.0-64`)
+- Por defecto: `vista = "iconos"` y `portadaArriba = "ps5"`; migración única con la clave `visualPs5` (a todos una vez).
+- Ficha › Personalizar (pestaña 3) con `grupo`: «Cajas y portadas» (Portada, Encuadrar, Caja 3D = `buscarCajaOriginal`, «Armar la caja con una imagen» =
+  `armarCajaConImagen`, «Quitar la caja propia»), «Íconos, imágenes grandes y logos», «Más». `Ficha.kt` dibuja el título del grupo.
+- `estado/CajasComunidad.kt`: `clave(titulo, consola)` («snes-super-mario-world»), `armar()` (imagen ancha = reverso|lomo|frente según `consola.caja`
+  ancho/alto; si no, solo frente; JPEG 900 px en filesDir/cajas/<clave>-<n>/), `subir()` (POST tipo "caja" al mismo `REPORTES_URL`), `bajar()` (GET ?caja=).
+  `estado/DipticoCajas.kt`: `cajaDesdeImagen` (pedirImagen "caja:<clave>" → `DipticoArchivos`), diálogo «compartir-caja», `cajaDeLaComunidad`.
+  `pedirCaras(clave, forzar)`: primero la comunidad, después ScreenScraper/TheGamesDB; sin raspadores igual consulta la comunidad (2 días de espera si no hay).
+- `tools/reportes-drive.gs`: `guardarCaja` (carpeta «Díptico · Cajas de la comunidad», propiedad CARPETA_CAJAS, máx. 400/día, <clave>.json con caras base64)
+  y `doGet(?caja=)`. NICOLÁS DEBE PEGAR EL SCRIPT NUEVO Y PUBLICAR UNA VERSIÓN NUEVA DE LA IMPLEMENTACIÓN (misma URL) para que funcione.
+- `CargaJuego`: usa `juego.logo` (el mismo de `LogoEnPartida`) en vez del nombre de la consola. Transiciones: `CortinaDespertar` en Raiz (al pasar
+  `aLaVista` a > 0, círculo que se abre 620 ms), `VistaCarpetas` con `AnimatedContent` al entrar/salir de una carpeta (`ListaCarpetas`).
+- Centro nativos: filas «¿Cómo funciona esto?» (`info-switch2`) y «¿Qué es un port?» (`info-ports`); ports sin instalar = `instalarPort(p)` (GitHub
+  `buscarPublicacion` → `EmuRevisado` → `actualizarEmulador`). Banana Native no distribuye juegos ni ports.
+- Traducciones `extras23.tsv` (siguiente: extras24). Capturas t413–t415.

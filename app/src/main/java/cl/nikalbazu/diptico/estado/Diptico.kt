@@ -973,7 +973,8 @@ object Diptico {
             widgets = leerWidgets(almacen.texto("widgets")),
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
-            vista = almacen.texto("vista", "mosaicos").let { if (it in setOf("mosaicos", "xbox", "iconos", "cuadricula", "lista", "carrusel")) it else "mosaicos" },
+            // La visualización nueva (PS5 con caja arriba, íconos abajo) es la de siempre ahora: se pone una vez a todos.
+            vista = almacen.also { if (!it.bool("visualPs5", false)) { it.guardarTexto("vista", "iconos"); it.guardarTexto("portadaArriba", "ps5"); it.guardarBool("visualPs5", true) } }.texto("vista", "iconos").let { if (it in setOf("mosaicos", "xbox", "iconos", "cuadricula", "lista", "carrusel")) it else "iconos" },
             vistaConsolas = vistaConsolas,
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
@@ -1018,7 +1019,7 @@ object Diptico {
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
                 cargaJuego = almacen.bool("cargaJuego", true),
-                portada = almacen.texto("portadaArriba", "cajas"),
+                portada = almacen.texto("portadaArriba", "ps5"),
                 dockVisible = almacen.bool("dockVisible", true),
                 discordWebhook = almacen.texto("discordWebhook", ""),
                 discordEmpezar = almacen.bool("discordEmpezar", true),
@@ -3488,20 +3489,28 @@ object Diptico {
                 e.ficha?.enlace?.let { url -> add(Opcion("Artículo completo en Wikipedia", icono = Icono.WEB, ayuda = "Abre el artículo de Wikipedia de este juego en el navegador.") { abrirWeb(url) }) }
             }
             3 -> listOf(
-                Opcion("Título", d.titulo ?: j.titulo, Icono.TITULO, ayuda = "El nombre que se muestra en el estante y arriba. El archivo no se cambia.") { abrirTexto("titulo", d.titulo ?: j.titulo) },
-                Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "Elige otra portada en la tienda de imágenes o desde tus archivos.") { buscarCandidatos("portada") },
-                Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "La imagen grande que se ve de fondo en la pantalla de arriba.") { buscarCandidatos("arte") },
-                Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA, ayuda = "El logo que aparece sobre la imagen grande en vez del título escrito.") { buscarCandidatos("logo") },
-                Opcion("Imagen en el inicio", nombreHeroe(e.heroes[j.clave]), Icono.PORTADA, "Qué imagen se ve en grande en el inicio para este juego.") { ciclarHeroe(j.clave) },
+                Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "Elige otra portada en la tienda de imágenes o desde tus archivos.") { buscarCandidatos("portada") }.copy(grupo = "Cajas y portadas"),
                 Opcion("Encuadrar la portada", if (e.encuadres.containsKey("${j.clave}|portada")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
-                    "Corre y acerca la foto para que quede centrada en la forma de la caja.") { abrirEncuadre("portada") },
+                    "Corre y acerca la foto para que quede centrada en la forma de la caja.") { abrirEncuadre("portada") }.copy(grupo = "Cajas y portadas"),
+                Opcion("Caja 3D", when { e.extra.caras[j.clave]?.reverso != null -> "Original ✓"; e.extra.caras[j.clave]?.frente != null -> "Frente original ✓"; else -> "Con la portada" }, Icono.PORTADA,
+                    "La caja que gira arriba. Díptico busca la original de este juego (en la comunidad, ScreenScraper o TheGamesDB); si no aparece, usa la portada y arma el reverso con la ficha.", grupo = "Cajas y portadas") { buscarCajaOriginal() },
+                Opcion("Armar la caja con una imagen", "DIPPO", Icono.BISA,
+                    "Elige una foto o escaneo de la caja abierta (reverso, lomo y frente en una sola imagen) o solo el frente. DIPPO la corta, arma la caja en 3D y te ofrece compartirla con la comunidad.", grupo = "Cajas y portadas") { armarCajaConImagen() },
+                Opcion("Quitar la caja propia", if (e.extra.caras[j.clave] != null) "Volver a la portada" else "No tiene", Icono.BORRAR,
+                    "Quita la caja original o armada de este juego; la caja vuelve a usar la portada.", grupo = "Cajas y portadas") { quitarCajaPropia() },
+                Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "La imagen grande que se ve de fondo en la pantalla de arriba.") { buscarCandidatos("arte") }.copy(grupo = "Íconos, imágenes grandes y logos"),
                 Opcion("Encuadrar la imagen grande", if (e.encuadres.containsKey("${j.clave}|arte")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
-                    "Corre y acerca el hero para que se vea lo importante.") { abrirEncuadre("arte") },
-                Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA, ayuda = "Una canción que suena en el estante cuando este juego está elegido.") { pedirArchivoPara("musica", "audio/*") },
-                Opcion(if (d.favorito) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON, ayuda = "Los favoritos se ven primero con el filtro Favoritos.") { alternarFavorito(j.clave) },
-                Opcion("Buscar todo automático", icono = Icono.DESCARGA, ayuda = "Busca en internet portada, imagen grande y logo para este juego, de una vez.") { descargarUno(j) },
+                    "Corre y acerca el hero para que se vea lo importante.") { abrirEncuadre("arte") }.copy(grupo = "Íconos, imágenes grandes y logos"),
+                Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA, ayuda = "El logo que aparece sobre la imagen grande en vez del título escrito.") { buscarCandidatos("logo") }.copy(grupo = "Íconos, imágenes grandes y logos"),
+                Opcion("Imagen en el inicio", nombreHeroe(e.heroes[j.clave]), Icono.PORTADA, "Qué imagen se ve en grande en el inicio para este juego.") { ciclarHeroe(j.clave) }.copy(grupo = "Íconos, imágenes grandes y logos"),
+                Opcion("Título", d.titulo ?: j.titulo, Icono.TITULO, ayuda = "El nombre que se muestra en el estante y arriba. El archivo no se cambia.") { abrirTexto("titulo", d.titulo ?: j.titulo) }.copy(grupo = "Más"),
+                Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA, ayuda = "Una canción que suena en el estante cuando este juego está elegido.") { pedirArchivoPara("musica", "audio/*") }.copy(grupo = "Más"),
+                Opcion(if (d.favorito) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON, ayuda = "Los favoritos se ven primero con el filtro Favoritos.") { alternarFavorito(j.clave) }.copy(grupo = "Más"),
+                Opcion("Buscar todo automático", icono = Icono.DESCARGA, ayuda = "Busca en internet portada, imagen grande y logo para este juego, de una vez.") { descargarUno(j) }.copy(grupo = "Más"),
                 Opcion("Volver a lo original", "Quita lo personalizado", Icono.BORRAR, ayuda = "Quita el título, las imágenes, la música y los encuadres propios de este juego.") {
                     cambiarDatos(j.clave) { it.copy(titulo = null, portada = null, arte = null, logo = null, musica = null) }
+                    actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras - j.clave)) }
+                    almacen.guardarTexto("carasCaja2", CarasGuardadas.escribir(estado.value.extra.caras))
                     guardarEncuadres(estado.value.encuadres - "${j.clave}|portada" - "${j.clave}|arte")
                     avisar("Listo, ${j.titulo} volvió a como era")
                 },

@@ -166,6 +166,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             CentroNativos(e, rol)
             // Iniciando sesión con Discord: el QR va encima de todo (en las dos pantallas, para encontrarlo donde mires).
             if (e.extra.discordLogin != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PanelDiscord(e)
+            // Al encender o desbloquear la consola (o volver de un juego), la pantalla se abre desde el centro.
+            CortinaDespertar(e.aLaVista > 0 && e.configurado)
             // Medidor de fluidez (Ajustes › Fluidez): encima de todo, en cada pantalla.
             MedidorFps(e.extra.medidorFps && !(rol == Rol.INFERIOR && e.unaPantalla), if (rol == Rol.SUPERIOR) "arriba" else if (rol == Rol.INFERIOR) "abajo" else "única")
         }
@@ -209,3 +211,33 @@ private fun Modifier.cortinaDesdeArriba(puede: () -> Boolean): Modifier = this.t
 )
 
 
+
+
+/**
+ * La animación al despertar: una cortina oscura que se abre en círculo desde el centro con un brillo suave, como una
+ * consola que se enciende. Dura medio segundo y se apaga con «Animaciones: apagadas».
+ */
+@Composable
+private fun CortinaDespertar(visible: Boolean) {
+    val mov = ajusteMovimiento()
+    val apertura = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(1f) }
+    androidx.compose.runtime.LaunchedEffect(visible) {
+        if (!visible || !mov.activo) { apertura.snapTo(1f); return@LaunchedEffect }
+        apertura.snapTo(0f)
+        apertura.animateTo(1f, androidx.compose.animation.core.tween(mov.ms(620), easing = CurvaPosarse))
+    }
+    if (apertura.value >= 1f) return
+    androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+        val a = apertura.value
+        val radio = size.maxDimension * (0.05f + 0.85f * a)
+        drawRect(
+            androidx.compose.ui.graphics.Brush.radialGradient(
+                0f to androidx.compose.ui.graphics.Color.Transparent,
+                0.7f to androidx.compose.ui.graphics.Color.White.copy(alpha = 0.18f * (1f - a)),
+                1f to androidx.compose.ui.graphics.Color.Black,
+                center = center, radius = radio.coerceAtLeast(1f),
+            ),
+            alpha = ((1f - a) * 1.4f).coerceIn(0f, 1f),
+        )
+    }
+}

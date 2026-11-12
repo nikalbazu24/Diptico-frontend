@@ -74,15 +74,29 @@ fun Diptico.pedirDuracion(clave: String, alTerminar: ((CuantoDura.Duracion?) -> 
  * Busca el reverso y el lomo reales de la caja (solo con ScreenScraper o TheGamesDB conectados). Se pregunta una
  * vez por juego; si no aparece, se vuelve a intentar a la semana. Sin fuentes, la caja usa el reverso armado con la ficha.
  */
-fun Diptico.pedirCaras(clave: String) {
+fun Diptico.pedirCaras(clave: String, forzar: Boolean = false) {
     val e = estado.value
     val c = e.raspadores
-    if (!c.screenscraper && !c.conTgdb) return
+    val conRaspadores = c.screenscraper || c.conTgdb
+    if (!conRaspadores && !CajasComunidad.disponible) return
     val j = e.juegosPorClave[clave] ?: return
     val ya = e.extra.caras[clave]
-    if (ya != null && ((ya.reverso != null && ya.frente != null) || System.currentTimeMillis() - ya.buscado < 2 * 86_400_000L)) return
+    if (!forzar && ya != null && ((ya.reverso != null && ya.frente != null) || System.currentTimeMillis() - ya.buscado < 2 * 86_400_000L)) return
     if (!buscandoCaras.add(clave)) return
     scope.launch {
+        // Primero la comunidad (cajas armadas o escaneadas por otras personas), después ScreenScraper y TheGamesDB.
+        if (runCatching { cajaDeLaComunidad(clave) }.getOrDefault(false)) {
+            buscandoCaras.remove(clave)
+            if (forzar) avisar("¡Encontré la caja en la comunidad!")
+            return@launch
+        }
+        if (!conRaspadores) {
+            buscandoCaras.remove(clave)
+            val g = CarasGuardadas(null, null, System.currentTimeMillis(), null)
+            actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras + (clave to g))) }
+            if (forzar) avisar("No está en la comunidad todavía. Puedes armarla tú con «Armar la caja con una imagen»")
+            return@launch
+        }
         val r = withContext(Dispatchers.IO) { runCatching { cl.nikalbazu.diptico.data.Raspadores.caras(c, j.titulo, j.archivo, j.consolaId) }.getOrNull() }
         buscandoCaras.remove(clave)
         val g = CarasGuardadas(r?.reverso, r?.lomo, System.currentTimeMillis(), r?.frente)

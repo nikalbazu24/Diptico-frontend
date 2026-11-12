@@ -1535,6 +1535,12 @@ class Capturas {
     // La caja se abre en la pantalla de carga.
     @Test fun t411_caja_abierta() = foto("411_caja_abierta", base().copy(vista = "iconos", extra = EstadoExtra(portada = "ps5", carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis() - 1350))), Rol.SUPERIOR, avance = 200)
     @Test fun t412_ajustes_b() = foto("412_ajustes_b", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_BIBLIOTECA, enOpciones = true, indice = 0), Rol.SUPERIOR)
+    // Ficha › Personalizar con sus apartados, centro de ports con su explicación, y la carga con el logo del juego.
+    @Config(qualifiers = ABAJO)
+    @Test fun t413_ficha_apartados() = foto("413_ficha_apartados", base().copy(panel = Panel.FICHA, fichaDe = "snes/1", pestanaFicha = 3, indice = 0), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t414_ports_explicados() = foto("414_ports_explicados", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.INFERIOR, mi = 1)
+    @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)

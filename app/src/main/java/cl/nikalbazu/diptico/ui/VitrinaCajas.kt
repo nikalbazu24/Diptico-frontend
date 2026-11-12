@@ -278,7 +278,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
 
             // 4 (PS5). A la izquierda: logo (o nombre), datos y botones, como en la PS5.
             if (ps5) Column(
-                Modifier.align(Alignment.CenterStart).padding(start = esc.d(30), top = esc.d(70)).fillMaxWidth(0.52f),
+                Modifier.align(Alignment.CenterStart).padding(start = esc.d(30), top = esc.d(70)).fillMaxWidth(0.62f),
                 verticalArrangement = Arrangement.spacedBy(esc.d(8)),
             ) {
                 Crossfade(juego, animationSpec = tween(220), label = "info-ps5") { j ->
