@@ -10,6 +10,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -214,7 +216,8 @@ private fun Derecha(e: Estado, ed: EdicionPerfil, acento: Color, modifier: Modif
     // La fila de la derecha que corresponde a lo elegido con el mando (para deslizar hasta ahí).
     val indice = when (ed.fila) {
         FilasEdicion.NOMBRE -> 1; FilasEdicion.APODO -> 2; FilasEdicion.FECHA -> 3; FilasEdicion.CONSOLA -> 4
-        FilasEdicion.COLOR -> 5; FilasEdicion.PRESENCIA -> 7; FilasEdicion.SALUDO -> if (kit) 8 else 7; FilasEdicion.HORAS -> if (kit) 9 else 8
+        FilasEdicion.COLOR -> 5; FilasEdicion.MARCO -> 6
+        FilasEdicion.PRESENCIA -> 8; FilasEdicion.SALUDO -> if (kit) 9 else 8; FilasEdicion.HORAS -> if (kit) 10 else 9
         else -> -1
     }
     LaunchedEffect(indice) { if (indice >= 0) lista.animateScrollToItem((indice - 1).coerceAtLeast(0)) }
@@ -261,6 +264,40 @@ private fun Derecha(e: Estado, ed: EdicionPerfil, acento: Color, modifier: Modif
                     }
                 }
                 Texto("Es el acento de tu tarjeta y de los botones de tu perfil.", 10.5f, color = Suave, familia = Nunito, lineas = 2)
+            }
+        }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                Spacer(Modifier.height(esc.d(2)))
+                EtiquetaEd("BORDE DE MI FOTO")
+                val enMarco = ed.fila == FilasEdicion.MARCO
+                val scroll = androidx.compose.foundation.rememberScrollState()
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14))).background(Casilla)
+                        .then(if (enMarco) Modifier.border(esc.d(1.5f), acento.copy(alpha = 0.7f), RoundedCornerShape(esc.d(14))) else Modifier)
+                        .horizontalScroll(scroll).padding(horizontal = esc.d(10), vertical = esc.d(10)),
+                    horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
+                ) {
+                    MARCOS.forEachIndexed { i, m ->
+                        val libre = Diptico.marcoDesbloqueado(m)
+                        val elegido = p.marco == m.id
+                        val enfocado = enMarco && ed.col == i
+                        Box(
+                            Modifier.size(esc.d(50))
+                                .graphicsLayer { alpha = if (libre) 1f else 0.38f }
+                                .then(if (enfocado) Modifier.border(esc.d(2f), Color.White.copy(alpha = 0.7f), CircleShape) else Modifier)
+                                .then(if (elegido) Modifier.border(esc.d(2.5f), Color.White, CircleShape) else Modifier)
+                                .clickable { Diptico.usarEdicionPerfil(FilasEdicion.MARCO, i) }
+                                .testTag("marco-${m.id}"),
+                            contentAlignment = Alignment.Center,
+                        ) { FotoPerfil(p, 36f, marco = m.id) }
+                    }
+                }
+                // Qué marco está mirando el mando: su nombre y cómo se gana (o que ya es tuyo).
+                val mirado = MARCOS.getOrNull(if (enMarco) ed.col else MARCOS.indexOfFirst { it.id == p.marco }.coerceAtLeast(0)) ?: MARCOS.first()
+                val libreMirado = Diptico.marcoDesbloqueado(mirado)
+                Texto(mirado.nombre + (if (libreMirado) "" else " · bloqueado"), 12f, color = Claro, peso = FontWeight.Bold, lineas = 1)
+                Texto(if (libreMirado) mirado.detalle else "Se gana con un logro de DIPPO. ${mirado.detalle}", 10.5f, color = Suave, familia = Nunito, lineas = 2)
             }
         }
         item { Spacer(Modifier.height(esc.d(2))); EtiquetaEd("PRIVACIDAD Y PERSONALIZACIÓN") }

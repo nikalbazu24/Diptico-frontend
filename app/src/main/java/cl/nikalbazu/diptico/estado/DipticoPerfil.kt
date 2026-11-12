@@ -196,6 +196,10 @@ fun Diptico.usarEdicionPerfil(fila: Int, col: Int = 0) {
         FilasEdicion.FECHA -> abrirTexto("perfil_nacimiento", p.nacimiento.split("-").takeIf { it.size == 3 }?.reversed()?.joinToString("/").orEmpty())
         FilasEdicion.CONSOLA -> ciclarConsolaFav(1)
         FilasEdicion.COLOR -> Perfil.COLORES.getOrNull(col)?.let { (_, c) -> cambiarEdicion { it.copy(perfil = p.copy(color = c)) } }
+        FilasEdicion.MARCO -> MARCOS.getOrNull(col)?.let { m ->
+            if (marcoDesbloqueado(m)) cambiarEdicion { it.copy(perfil = p.copy(marco = m.id)) }
+            else avisar("«${m.nombre}» se gana con un logro de DIPPO")
+        }
         FilasEdicion.PRESENCIA -> cambiarEdicion { it.copy(presencia = !it.presencia) }
         FilasEdicion.SALUDO -> cambiarEdicion { it.copy(saludo = !it.saludo) }
         FilasEdicion.HORAS -> cambiarEdicion { it.copy(perfil = p.copy(mostrarHoras = !p.mostrarHoras)) }

@@ -154,7 +154,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             // Abriendo un juego: la pantalla de carga tapa todo (también la barra) en las dos pantallas.
             if (e.extra.carga != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PantallaCarga(e, miPantalla, rol == Rol.UNICA)
             // La ventana de amigos de Discord, desde el costado de la pantalla donde se abrió.
-            BurbujaDippoCapa(miPantalla, oculta = e.panel != Panel.NINGUNO || encima || ventanaEncima(e) || e.extra.carga != null)
+            BurbujaDippoCapa(miPantalla, oculta = e.panel != Panel.NINGUNO || encima || ventanaEncima(e) || e.extra.carga != null, tapado = e.carpetaEnVentana)
             PanelAmigos(e, miPantalla)
             // Tu perfil: una tarjeta que crece desde tu foto, sobre el fondo difuminado.
             PanelPerfil(e, miPantalla, rol)

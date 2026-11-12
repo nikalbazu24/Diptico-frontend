@@ -393,8 +393,8 @@ data class EstadoExtra(
     val termica: Boolean = true,
     /** Avisos de DIPPO (calor, batería, actualizaciones) también en la campana de notificaciones de arriba. */
     val dippoAvisos: Boolean = true,
-    /** Tono del dibujo de las carpetas: "auto" (según el tema), "oscuro" o "claro". */
-    val carpetasTono: String = "auto",
+    /** Tono de las carpetas: "vidrio" (transparentes y difuminadas), "auto" (según el tema), "oscuro" o "claro". */
+    val carpetasTono: String = "vidrio",
     /** Estilo de íconos solo para las carpetas de consolas ("igual" = el mismo que el resto). */
     val iconosCarpetas: String = "igual",
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -1014,7 +1014,7 @@ object Diptico {
                 estiloCarpetas = almacen.texto("estiloCarpetas", "tarjeta"),
                 termica = almacen.bool("termica", true),
                 dippoAvisos = almacen.bool("dippoAvisos", true),
-                carpetasTono = almacen.texto("carpetasTono", "auto"),
+                carpetasTono = almacen.texto("carpetasTono", "vidrio"),
                 iconosCarpetas = almacen.texto("iconosCarpetas", "igual"),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
@@ -4975,8 +4975,8 @@ object Diptico {
                 "Cómo se ven las carpetas de tus consolas: tarjeta, el dibujo de la consola, un abanico con tus juegos más jugados o el logo grande.",
                 ESTILOS_CARPETA.map { it.first }, ESTILOS_CARPETA.map { it.second }, e.extra.estiloCarpetas) { elegirEstiloCarpetas(it) },
             opcionLista("Tono de las carpetas", Icono.CARPETA,
-                "Los dibujos de las carpetas pueden ser oscuros (cómodos de noche y con temas oscuros) o claros, como papel. «Según el tema» los pone oscuros cuando tu tema lo es.",
-                listOf("auto", "oscuro", "claro"), listOf("Según el tema", "Oscuras", "Claras"), e.extra.carpetasTono) { elegirTonoCarpetas(it) },
+                "«Vidrio» deja las carpetas transparentes, con el color de la consola difuminado y el fondo asomando. Las otras son opacas: oscuras (cómodas de noche), claras como papel, o «Según el tema».",
+                listOf("vidrio", "auto", "oscuro", "claro"), listOf("Vidrio", "Según el tema", "Oscuras", "Claras"), e.extra.carpetasTono) { elegirTonoCarpetas(it) },
             Opcion("Ordenar carpetas", "A tu gusto", Icono.VISTA,
                 "Las carpetas tiemblan y las mueves arrastrando con el dedo, o con A y la cruceta. También se entra manteniendo una carpeta presionada. B o «Listo» termina.") {
                 cerrarPanel(); empezarOrdenCarpetas()

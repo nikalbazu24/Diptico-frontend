@@ -174,11 +174,12 @@ object FilasEdicion {
     const val FECHA = 5
     const val CONSOLA = 6
     const val COLOR = 7
-    const val PRESENCIA = 8
-    const val SALUDO = 9
-    const val HORAS = 10
-    const val BOTONES = 11
-    const val TOTAL = 12
+    const val MARCO = 8
+    const val PRESENCIA = 9
+    const val SALUDO = 10
+    const val HORAS = 11
+    const val BOTONES = 12
+    const val TOTAL = 13
 
     /** Las fuentes de la foto: personaje, Discord (si hay cuenta con foto), galería, inicial. */
     fun fuentes(conDiscord: Boolean): List<String> = listOfNotNull("personaje", if (conDiscord) "discord" else null, "galeria", INICIAL)
@@ -188,6 +189,7 @@ object FilasEdicion {
         FOTO -> fuentes(conDiscord).size
         PERSONAJES_1, PERSONAJES_2 -> 4
         COLOR -> Perfil.COLORES.size
+        MARCO -> MARCOS.size
         BOTONES -> 2
         else -> 1
     }

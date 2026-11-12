@@ -299,12 +299,16 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                         }
                     }
                 }
-                Row(Modifier.padding(top = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
-                    val jugado = (e.datos[juego.clave]?.tiempo?.toLong() ?: 0L) > 0L
-                    BotonVitrina("A", if (jugado) "Continuar" else "Jugar", lleno = true) { Diptico.jugar() }
-                    BotonVitrina("X", "Ficha", lleno = false) { Diptico.abrirFicha() }
-                    BotonVitrina("Y", "DIPPO", lleno = false) { Diptico.abrirAsistente() }
-                }
+            }
+            // Los botones (mismo tamaño y orden) bajan al pie de la vitrina, a la izquierda, para aprovechar mejor el espacio.
+            if (ps5) Row(
+                Modifier.align(Alignment.BottomStart).padding(start = esc.d(30), bottom = esc.d(30)),
+                horizontalArrangement = Arrangement.spacedBy(esc.d(10)), verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val jugado = (e.datos[juego.clave]?.tiempo?.toLong() ?: 0L) > 0L
+                BotonVitrina("A", if (jugado) "Continuar" else "Jugar", lleno = true) { Diptico.jugar() }
+                BotonVitrina("X", "Ficha", lleno = false) { Diptico.abrirFicha() }
+                BotonVitrina("Y", "DIPPO", lleno = false) { Diptico.abrirAsistente() }
             }
             // 4. Abajo: el nombre del juego, una línea de datos y los botones (también se tocan).
             if (!ps5) Column(
