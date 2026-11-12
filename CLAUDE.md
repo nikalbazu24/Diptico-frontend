@@ -442,3 +442,15 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `DipticoInicioPersonal.kt`, `DipticoCentro.kt` (script en la sesión: mueve solo `fun`; las propiedades quedan en el objeto). Todo lo `private`
   del objeto pasó a `internal`. Los 60 archivos fuera de `estado` que usan Diptico importan `cl.nikalbazu.diptico.estado.*`.
 - Traducciones: `herramientas/traducir/extras16.tsv` (siguiente: extras17). Novedades `temas-propios-2.0-56`. Capturas t372–t375.
+
+## Por qué falló un juego + segunda tanda de partición (11 nov, noche, rama `fix/por-que-fallo`, Opus)
+- `estado/DiagnosticoJuego.kt`: `Diagnostico.causas(juego, consola, emulador, bytes, veces)` (BIOS por consola, llaves de Switch, .nup con
+  NovaS/Banana, formatos comprimidos, archivo de <1 KB, permiso del emulador, varias veces seguidas → otro emulador; máx. 5) y
+  `Diptico.revisarCierreRapido(clave, seg)` llamado en `cerrarSesion(preguntar = true)`: si la sesión duró < `CIERRE_RAPIDO_SEG` (20 s)
+  muestra `Dialogo("cierre-rapido")` con las causas y «Probar con otro emulador» (fija `datos.emulador` del juego al siguiente y relanza).
+  Test `DiagnosticoTest`, captura t376. Novedades `por-que-fallo-2.0-57`.
+- Diptico.kt bajó a ~5.800 líneas: diez archivos más (`DipticoTutorial`, `Paneles`, `Temas`, `Widgets`, `BurbujaWidgets`, `Respaldo`,
+  `Archivos`, `Duracion`, `Desinstalar`, `Personalizacion`). OJO: las clases anidadas de Diptico (ItemGaleria, Control, OpcionBurbuja,
+  InfoBateria, LanzadorPC, PorBorrar, Regreso) se importan como `cl.nikalbazu.diptico.estado.Diptico.X` en cada `Diptico*.kt`.
+- Propuesta a Nicolás (pendiente de su sí): próxima versión grande «Emuladores al día», actualizador tipo Obtainium sobre `Actualizador.kt`
+  (GitHub/Forgejo releases, APK arm64, PackageInstaller; firma distinta = desinstalar antes; los de Play Store solo se revisan).
