@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -175,7 +176,9 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             Crossfade(juego, animationSpec = tween(if (Estilo.efectosCompletos) 520 else 0), label = "fondo-cajas") { j ->
                 // PS5: el arte del juego nítido a pantalla completa, oscurecido hacia la izquierda donde va la información.
                 if (ps5) {
-                    ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.9f }, imagen = "arte")
+                    ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize()
+                        .then(if (e.extra.fondoDifuminado) Modifier.graphicsLayer { scaleX = 1.05f; scaleY = 1.05f }.blur(5.dp) else Modifier)
+                        .graphicsLayer { alpha = 0.9f }, imagen = "arte")
                     Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = 0.88f), 0.5f to Color.Black.copy(alpha = 0.5f), 1f to Color.Black.copy(alpha = 0.12f))))
                     return@Crossfade
                 }

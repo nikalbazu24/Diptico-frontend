@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "opciones-juego-2.0-66"
-    const val NOMBRE = "Opciones del juego y cajas 3D"
+    const val ID = "carpeta-abierta-2.0-67"
+    const val NOMBRE = "Carpeta de vidrio y avisos de cajas"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -500,7 +500,7 @@ object Novedades {
             Pagina("Temas en movimiento", "En la galería de temas, el elegido se mueve como un gif, también los exclusivos que todavía no desbloqueas.", Icono.PALETA, 0xFF23C486),
             Pagina("Ports: descripción abajo", "En el centro de Switch 2 y ports, la lista queda arriba y la descripción de lo elegido, abajo.", Icono.DESCARGA, 0xFF00C3E3),
         )),
-        Version(ID, "Opciones del juego y cajas 3D", listOf(
+        Version("opciones-juego-2.0-66", "Opciones del juego y cajas 3D", listOf(
             Pagina("Opciones del juego, ordenadas", "Sin Jugar ni Ficha (ya están en la vitrina). Arriba «Mi paso», al medio cuatro grupos con submenú (Personalizar, Partida, Emulador y versión, Mis cosas) y abajo «Mover de lugar». B vuelve del submenú.", Icono.MENU, 0xFF8B5CF6),
             Pagina("Pantalla de la caja 3D", "En Personalizar › Caja 3D ves dónde se busca (comunidad, ScreenScraper, TheGamesDB) y, si no aparece, DIPPO la arma con una foto tuya y puedes compartirla.", Icono.PORTADA, 0xFF3BA8FF),
             Pagina("Caja en 3D desde el inicio", "La caja de la vitrina queda girada para que se note su volumen sin tocarla, y el logo del juego es más grande.", Icono.JUGAR, 0xFFE0603A),
@@ -508,6 +508,12 @@ object Novedades {
             Pagina("Sin nombres repetidos", "En los mosaicos ya no se repite el nombre del juego: queda solo arriba, entre el número de juegos y la vista.", Icono.TEXTO, 0xFF8B5CF6),
             Pagina("Los bordes giran siempre", "La estela y los demás bordes de tu foto ya no se quedan pegados al abrir tu tarjeta.", Icono.ESTRELLA, 0xFFFF7A59),
             Pagina("Tamaño y lugar a tu gusto", "Arriba a la derecha de la vitrina: Tamaño − / +, Mover ◀ ▶ y Logo − / +. Se guardan solos.", Icono.AJUSTES, 0xFFFFB547),
+        )),
+        Version(ID, "Carpeta de vidrio y avisos de cajas", listOf(
+            Pagina("La carpeta abierta, de vidrio", "Al abrir una carpeta, la ventana con tus juegos ahora es de vidrio: translúcida, con el color de la consola y la biblioteca difuminada detrás. Se cambia en Ajustes › Biblioteca › Tono de las carpetas.", Icono.CARPETA, 0xFF3BA8FF),
+            Pagina("Nombres a la vista", "La ventana de la carpeta termina justo encima de la barra de apps: ya no tapa los nombres de la última fila.", Icono.TEXTO, 0xFF8B5CF6),
+            Pagina("Fondo difuminado con la caja 3D", "Arriba, el arte de fondo lleva un leve desenfoque para que la caja destaque. Se apaga en Ajustes › Pantalla y estilo › Fondo difuminado con la caja 3D.", Icono.PORTADA, 0xFFE0603A),
+            Pagina("Si una caja no se comparte, te digo por qué", "Ahora el aviso explica el motivo (internet, script de Drive sin actualizar, límite del día…) en vez de un mensaje genérico.", Icono.INFO, 0xFFFFB547),
         )),
     )
 
