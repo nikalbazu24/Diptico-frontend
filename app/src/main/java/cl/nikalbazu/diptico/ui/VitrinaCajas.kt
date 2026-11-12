@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.layout.layout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -99,12 +101,14 @@ fun vitrinaActiva(e: Estado): Boolean =
  * como en un estante. Tocar la caja del centro (o A) abre la pantalla de carga y el juego.
  */
 @Composable
-fun VitrinaCajas(e: Estado, juego: Juego) {
+fun VitrinaCajas(e: Estado, juego: Juego, forzarPs5: Boolean = false) {
     androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("VitrinaCajas") }
     val esc = LocalEscala.current
     val consola = Consolas.porId(juego.consolaId)
     val color = consola?.color ?: Uva
-    val ps5 = e.portadaPs5
+    val ps5 = e.portadaPs5 || forzarPs5
+    // Lugar en la vitrina (Ficha › Personalizar): lo que se está editando o lo guardado para este juego; null = lo de siempre.
+    val disp = if (!ps5) null else e.extra.edicionVitrina?.takeIf { it.clave == juego.clave }?.disp ?: e.extra.disposiciones[juego.clave]
     val lista = e.visibles
     val indice = lista.indexOfFirst { it.clave == juego.clave }.coerceAtLeast(0)
     // La posición del estante es continua: así las cajas se deslizan entre juego y juego en vez de saltar.
@@ -176,8 +180,18 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             Crossfade(juego, animationSpec = tween(if (Estilo.efectosCompletos) 520 else 0), label = "fondo-cajas") { j ->
                 // PS5: el arte del juego nítido a pantalla completa, oscurecido hacia la izquierda donde va la información.
                 if (ps5) {
+                    val difumina = disp?.difuminado ?: e.extra.fondoDifuminado
                     ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize()
-                        .then(if (e.extra.fondoDifuminado) Modifier.graphicsLayer { scaleX = 1.05f; scaleY = 1.05f }.blur(5.dp) else Modifier)
+                        .then(if (disp != null) Modifier.graphicsLayer {
+                            // La imagen grande se corre hacia la celda elegida y crece lo justo para no dejar bordes.
+                            val tx = (Disposicion.fx(disp.fondo) - 0.5f) * 0.4f
+                            val ty = (Disposicion.fy(disp.fondo) - 0.5f) * 0.4f
+                            val sMin = maxOf(1f + 2f * abs(tx), 1f + 2f * abs(ty))
+                            val sc = maxOf(disp.fondo.t, sMin) * (if (difumina) 1.05f else 1f)
+                            scaleX = sc; scaleY = sc
+                            translationX = tx * size.width; translationY = ty * size.height
+                        } else if (difumina) Modifier.graphicsLayer { scaleX = 1.05f; scaleY = 1.05f } else Modifier)
+                        .then(if (difumina) Modifier.blur(5.dp) else Modifier)
                         .graphicsLayer { alpha = 0.9f }, imagen = "arte")
                     Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = 0.88f), 0.5f to Color.Black.copy(alpha = 0.5f), 1f to Color.Black.copy(alpha = 0.12f))))
                     return@Crossfade
@@ -196,17 +210,19 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             )))
 
             // 2. El estante: la caja elegida al centro y hasta tres a cada lado.
-            if (consola != null && lista.isNotEmpty()) CompositionLocalProvider(LocalFormas provides e.formas) {
+            if (consola != null && lista.isNotEmpty() && disp?.conCaja != false) CompositionLocalProvider(LocalFormas provides e.formas) {
                 // PS5: una sola caja, flotando a la derecha (más liviano: se dibuja una caja, no siete).
                 val desde = if (ps5) indice else (indice - 3).coerceAtLeast(0)
                 val hasta = if (ps5) indice else (indice + 3).coerceAtMost(lista.lastIndex)
-                val altoCaja = alto * (if (ps5) 0.64f * e.extra.cajaTam else 0.66f)
-                val anchoCaja = ancho * (if (ps5) 0.34f * e.extra.cajaTam else 0.44f)
+                val tamCaja = disp?.caja?.t ?: e.extra.cajaTam
+                val altoCaja = alto * (if (ps5) 0.64f * tamCaja else 0.66f)
+                val anchoCaja = ancho * (if (ps5) 0.34f * tamCaja else 0.44f)
                 val paso1 = ancho * 0.3f
                 val paso2 = ancho * 0.13f
                 Box(
-                    Modifier.fillMaxSize().padding(bottom = (alto * (if (ps5) 0.04f else 0.16f)).dp, end = (if (ps5) ancho * (0.05f + e.extra.cajaCorrida) else 0f).dp),
-                    contentAlignment = if (ps5) Alignment.CenterEnd else Alignment.Center,
+                    if (disp != null) Modifier.fillMaxSize()
+                    else Modifier.fillMaxSize().padding(bottom = (alto * (if (ps5) 0.04f else 0.16f)).dp, end = (if (ps5) ancho * (0.05f + e.extra.cajaCorrida) else 0f).dp),
+                    contentAlignment = if (disp != null) Alignment.TopStart else if (ps5) Alignment.CenterEnd else Alignment.Center,
                 ) {
                     // De la más lejana a la más cercana: la del centro se dibuja al final, encima de todas.
                     val orden = (desde..hasta).sortedByDescending { abs(it - indice) }
@@ -217,7 +233,8 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                             val esElegida = j.clave == juego.clave
                             fun r() = i - pos.value
                             Box(
-                                Modifier.size(anchoCaja.dp, altoCaja.dp)
+                                Modifier.then(if (disp != null) Modifier.centrarEn(Disposicion.fx(disp.caja), Disposicion.fy(disp.caja)) else Modifier)
+                                    .size(anchoCaja.dp, altoCaja.dp)
                                     .offset {
                                         val r = r()
                                         val ar = abs(r)
@@ -283,13 +300,15 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             }
 
             // 4 (PS5). A la izquierda: logo (o nombre), datos y botones, como en la PS5.
+            val tamLogo = disp?.logo?.t ?: e.extra.logoTam
             if (ps5) Column(
-                Modifier.align(Alignment.CenterStart).padding(start = esc.d(30), top = esc.d(70)).fillMaxWidth(0.62f),
+                if (disp != null) Modifier.fillMaxSize().centrarEn(Disposicion.fx(disp.logo), Disposicion.fy(disp.logo)).widthIn(max = (ancho * 0.56f).dp).padding(horizontal = esc.d(18))
+                else Modifier.align(Alignment.CenterStart).padding(start = esc.d(30), top = esc.d(70)).fillMaxWidth(0.62f),
                 verticalArrangement = Arrangement.spacedBy(esc.d(8)),
             ) {
                 Crossfade(juego, animationSpec = tween(220), label = "info-ps5") { j ->
                     Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                        if (j.logo != null) ImagenAnimada(j.logo, Modifier.height(esc.d(76 * 1.35f * e.extra.logoTam)).fillMaxWidth((0.8f * e.extra.logoTam).coerceAtMost(1f)), recortar = false)
+                        if (j.logo != null) ImagenAnimada(j.logo, Modifier.height(esc.d(76 * 1.35f * tamLogo)).fillMaxWidth((0.8f * tamLogo).coerceAtMost(1f)), recortar = false)
                         Texto(j.titulo, if (j.logo != null) 18f else 26f, color = Color.White, lineas = 2, traducir = false, sombra = true)
                         val seg = e.datos[j.clave]?.tiempo?.toLong() ?: 0L
                         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
@@ -305,18 +324,6 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                         }
                     }
                 }
-            }
-            // Tamaño y lugar de la caja y del logo (como en iiSU): pastillas chicas abajo a la derecha.
-            if (ps5) Row(
-                Modifier.align(Alignment.TopCenter).padding(top = esc.d(20)),
-                horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PastillaAjuste("Tamaño −") { Diptico.cambiarCajaTam(-0.1f) }
-                PastillaAjuste("+") { Diptico.cambiarCajaTam(0.1f) }
-                PastillaAjuste("Mover ◀") { Diptico.cambiarCajaCorrida(0.04f) }
-                PastillaAjuste("▶") { Diptico.cambiarCajaCorrida(-0.04f) }
-                PastillaAjuste("Logo −") { Diptico.cambiarLogoTam(-0.1f) }
-                PastillaAjuste("+") { Diptico.cambiarLogoTam(0.1f) }
             }
             // Los botones (mismo tamaño y orden) bajan al pie de la vitrina, a la izquierda, para aprovechar mejor el espacio.
             if (ps5) Row(
@@ -358,11 +365,14 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
     }
 }
 
-@Composable
-private fun PastillaAjuste(texto: String, alPulsar: () -> Unit) {
-    val esc = LocalEscala.current
-    Box(
-        Modifier.clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.38f))
-            .clickable { alPulsar() }.padding(horizontal = esc.d(9), vertical = esc.d(4)),
-    ) { Texto(texto, 10.5f, color = Color.White.copy(alpha = 0.85f), lineas = 1, traducir = false) }
+/** Pone el contenido con su centro en (fx, fy) de lo disponible, sin salirse de los bordes. */
+private fun Modifier.centrarEn(fx: Float, fy: Float): Modifier = this.layout { medible, limites ->
+    val pl = medible.measure(limites.copy(minWidth = 0, minHeight = 0))
+    val w = limites.maxWidth
+    val h = limites.maxHeight
+    layout(w, h) {
+        val x = (fx * w - pl.width / 2f).roundToInt().coerceIn(0, (w - pl.width).coerceAtLeast(0))
+        val y = (fy * h - pl.height / 2f).roundToInt().coerceIn(0, (h - pl.height).coerceAtLeast(0))
+        pl.place(x, y)
+    }
 }

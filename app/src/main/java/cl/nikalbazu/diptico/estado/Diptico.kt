@@ -425,6 +425,10 @@ data class EstadoExtra(
     val cajaTam: Float = 1f,
     val cajaCorrida: Float = 0f,
     val logoTam: Float = 1f,
+    /** Lugar en la vitrina de cada juego (logo, caja 3D e imagen grande en la cuadrícula), por clave. */
+    val disposiciones: Map<String, Disposicion> = emptyMap(),
+    /** El editor de «Lugar en la vitrina» abierto (borrador). */
+    val edicionVitrina: EdicionVitrina? = null,
     /** La ventana de amigos de Discord está abierta en esta pantalla (id de la pantalla; -1 = cerrada). */
     val amigosEn: Int = -1,
     /** Cuándo DIPPO ganó un logro (para que celebre unos segundos) y cuál. */
@@ -1050,6 +1054,7 @@ object Diptico {
                 cajaTam = almacen.texto("cajaTam", "1").toFloatOrNull() ?: 1f,
                 cajaCorrida = almacen.texto("cajaCorrida", "0").toFloatOrNull() ?: 0f,
                 logoTam = almacen.texto("logoTam", "1").toFloatOrNull() ?: 1f,
+                disposiciones = Disposicion.leer(almacen.texto("vitrinaLugar")),
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
@@ -3509,6 +3514,8 @@ object Diptico {
                 e.ficha?.enlace?.let { url -> add(Opcion("Artículo completo en Wikipedia", icono = Icono.WEB, ayuda = "Abre el artículo de Wikipedia de este juego en el navegador.") { abrirWeb(url) }) }
             }
             3 -> listOf(
+                Opcion("Lugar en la vitrina", if (e.extra.disposiciones.containsKey(j.clave)) "A tu gusto ✓" else "Mover logo, imagen y caja", Icono.PALETA,
+                    "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego, eliges su tamaño y si el fondo va difuminado. Arriba ves cómo queda.", grupo = "Lugar en la vitrina") { abrirEditorVitrina(j.clave) },
                 Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "Elige otra portada en la tienda de imágenes o desde tus archivos.") { buscarCandidatos("portada") }.copy(grupo = "Cajas y portadas"),
                 Opcion("Encuadrar la portada", if (e.encuadres.containsKey("${j.clave}|portada")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
                     "Corre y acerca la foto para que quede centrada en la forma de la caja.") { abrirEncuadre("portada") }.copy(grupo = "Cajas y portadas"),
