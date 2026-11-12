@@ -200,24 +200,6 @@ internal fun Diptico.borrarJuego(j: Juego, lista: List<PorBorrar>) {
 }
 
 
-/** Moverse en la ventana del juego: fila de botones grandes arriba, lista abajo. */
-fun Diptico.moverRapido(dx: Int, dy: Int) {
-    val e = estado.value
-    val total = opcionesRapido().size
-    if (total == 0) return
-    val i = e.indice
-    val n = when {
-        i < PRIMARIAS_RAPIDO && dx != 0 -> (i + dx).coerceIn(0, PRIMARIAS_RAPIDO - 1)
-        i < PRIMARIAS_RAPIDO && dy > 0 -> PRIMARIAS_RAPIDO.coerceAtMost(total - 1)
-        i < PRIMARIAS_RAPIDO -> i
-        dy < 0 -> if (i == PRIMARIAS_RAPIDO) 0 else i - 1
-        dy > 0 -> (i + 1).coerceAtMost(total - 1)
-        else -> i
-    }
-    if (n != i) actualizar { it.copy(indice = n) }
-}
-
-
 /** Emulador solo para este juego. */
 internal fun Diptico.ciclarEmuladorJuego(clave: String, c: Consola) {
     val juego = estado.value.juegos.firstOrNull { it.clave == clave }

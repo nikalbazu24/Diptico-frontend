@@ -544,3 +544,24 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Centro nativos: filas «¿Cómo funciona esto?» (`info-switch2`) y «¿Qué es un port?» (`info-ports`); ports sin instalar = `instalarPort(p)` (GitHub
   `buscarPublicacion` → `EmuRevisado` → `actualizarEmulador`). Banana Native no distribuye juegos ni ports.
 - Traducciones `extras23.tsv` (siguiente: extras24). Capturas t413–t415.
+
+## Carpetas de vidrio + perfil (12 nov, tarde, rama `fix/carpetas-vidrio` → main, Sonnet; Novedades `carpetas-vidrio-2.0-65`)
+- `extra.carpetasTono` ahora acepta "vidrio" (por defecto): `ArteCarpeta(vidrio=)` pinta el color de la consola translúcido y difuminado, sin trama ni sombras; `PortadaCarpetaRuta(..., vidrio)`.
+- `ControlesBiblioteca`: el título del juego elegido va al centro, entre «N juegos» y el nombre de la vista (abajo lo tapaba el dock).
+- Vitrina PS5: botones Jugar/Ficha/DIPPO fuera de la columna de info, en `BottomStart` (padding 30). Mismo tamaño.
+- `BurbujaDippoCapa(tapado = e.carpetaEnVentana)`: si algo tapa a DIPPO dibuja un `AvatarBisa` en su lugar (`DippoBurbuja.cabeza`).
+- Editor de perfil: fila `FilasEdicion.MARCO` (= 8; PRESENCIA 9, SALUDO 10, HORAS 11, BOTONES 12, TOTAL 13) con miniatura de cada marco y candado.
+- Galería «temas»: `TarjetaTema(animar)` y `VistaPreviaGaleria` animan la decoración del tema elegido (efecto gif).
+- Ports (`fix/ports-abajo`): con dos pantallas, la lista arriba y el detalle grande abajo (`CentroNativos`).
+- PENDIENTE: boceto aprobado de «Opciones del juego» (lienzo WhPyNJf4Ajz1QArpgZrYfC: sin Jugar/Ficha, grupos con submenús, pantalla propia para buscar la caja y crearla con DIPPO)
+  y de la vitrina (lienzo WEaewaFsBKEYSRg94sPWa7: caja 3D girada desde el inicio, logo grande, tamaño/lugar ajustables). Esperando visto bueno de Nicolás; luego programar (Opus).
+
+## Opciones del juego + caja 3D (12 nov, tarde, rama `fix/opciones-juego`, Sonnet; Novedades `opciones-juego-2.0-66`)
+- Publicada antes: beta.484 (carpetas de vidrio, perfil, ports abajo; Novedades 2.0-65).
+- `estado/DipticoOpcionesJuego.kt`: `opcionesJuegoPlanas()` (la lista vieja, en `Diptico.kt`) se reparte en `gruposJuego()` (Personalizar, Partida,
+  Emulador y versión, Mis cosas); `opcionesRapido()` = Mi paso + grupos + Mover de lugar; `extra.rapidoGrupo/rapidoSel` (grupo abierto), `moverRapido`
+  (cruceta 2 columnas), B cierra el grupo (`cerrarGrupoRapido` desde `cerrarPanel`). `VentanaJuego` (ui/Vistas.kt) reescrita. Sin Jugar/Ficha.
+- Pantalla de la caja: `extra.cajaJuego/cajaFuentes/cajaSel`, `abrirCajaJuego`, `buscarCajaPantalla` (estado de comunidad/ScreenScraper/TheGamesDB),
+  `usarCajaJuego(fila)`; `ui/PantallaCaja.kt` en Raiz (caja girando + fuentes + 4 acciones; con dos pantallas, caja arriba y controles abajo). Bloque en Teclas.
+- Vitrina PS5: caja con pose girada (`POSE_INICIAL` 24°), logo ×1,35, `extra.cajaTam/cajaCorrida/logoTam` con pastillas «Caja −/+ ◀ ▶ Logo −/+».
+- Traducciones `extras24.tsv` (siguiente: extras25). Capturas t416–t420. Sin compilar/revisar aún al escribir esto.

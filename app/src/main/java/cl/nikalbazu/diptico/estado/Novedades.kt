@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cajas-comunidad-2.0-64"
-    const val NOMBRE = "Cajas de la comunidad"
+    const val ID = "opciones-juego-2.0-66"
+    const val NOMBRE = "Opciones del juego y cajas 3D"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -483,13 +483,31 @@ object Novedades {
             Pagina("Vistas previas que corresponden", "Cada opción de Ajustes muestra la vista previa de lo que cambia: carpetas, portada de arriba, Discord, logros…", Icono.TUTORIAL, 0xFFFF7A59),
             Pagina("Informe de fluidez", "Con el medidor de fluidez encendido, Díptico anota dónde se pone lento. En Ajustes › Pantalla y estilo puedes enviar el informe para arreglar justo eso.", Icono.CHISPA, 0xFFFFB547),
         )),
-        Version(ID, "Cajas de la comunidad", listOf(
+        Version("cajas-comunidad-2.0-64", "Cajas de la comunidad", listOf(
             Pagina("PS5 con caja, de fábrica", "La vista nueva queda por defecto: arriba el arte del juego con su caja 3D flotando, abajo los íconos para elegir. Se cambia en Ajustes › Pantalla y estilo.", Icono.PORTADA, 0xFFE0603A),
             Pagina("DIPPO arma cajas", "En la ficha del juego › Personalizar › «Armar la caja con una imagen»: elige un escaneo de la caja abierta (o solo el frente) y DIPPO la arma en 3D.", Icono.BISA, 0xFFFFB547),
             Pagina("Cajas de la comunidad", "Las cajas que arma la comunidad se comparten: si alguien ya armó la de tu juego, te aparece sola, antes que ScreenScraper o TheGamesDB.", Icono.MUNDO, 0xFF3BA8FF),
             Pagina("Cajas y portadas, aparte", "En Personalizar, las cajas y portadas tienen su apartado, separado de los íconos, las imágenes grandes y los logos.", Icono.PALETA, 0xFF8B5CF6),
             Pagina("Todo con movimiento", "Al encender o desbloquear la consola la pantalla se abre desde el centro, y al entrar a una carpeta los juegos crecen desde ella. La carga del juego usa su logo.", Icono.CHISPA, 0xFF23C486),
             Pagina("Ports a un toque", "En el centro de Switch 2 y ports: cada pestaña explica cómo funciona, y los ports se instalan directo desde GitHub con A.", Icono.DESCARGA, 0xFF00C3E3),
+        )),
+        Version("carpetas-vidrio-2.0-65", "Carpetas de vidrio y tu perfil", listOf(
+            Pagina("Carpetas de vidrio", "Las carpetas de las consolas ahora son transparentes, con el color de la consola difuminado. Se cambia en Ajustes › Tono de las carpetas.", Icono.CARPETA, 0xFF3BA8FF),
+            Pagina("El título, a la vista", "El nombre del juego elegido va arriba de la lista, entre el número de juegos y la forma de ver, sin quedar tapado por el dock.", Icono.TEXTO, 0xFF8B5CF6),
+            Pagina("Botones más abajo", "Jugar, Ficha y DIPPO quedan en el pie de la pantalla de arriba, con el mismo tamaño, para aprovechar mejor el espacio.", Icono.JUGAR, 0xFFE0603A),
+            Pagina("DIPPO junto a su mensaje", "Si una carpeta abierta lo tapaba, ahora DIPPO sale él mismo al lado de su mensaje.", Icono.BISA, 0xFFFFB547),
+            Pagina("Borde de tu foto", "En tu tarjeta de usuario puedes elegir el borde (marco) de tu foto. Los que aún no ganas se ven apagados y dicen con qué logro se desbloquean.", Icono.ESTRELLA, 0xFFFF7A59),
+            Pagina("Temas en movimiento", "En la galería de temas, el elegido se mueve como un gif, también los exclusivos que todavía no desbloqueas.", Icono.PALETA, 0xFF23C486),
+            Pagina("Ports: descripción abajo", "En el centro de Switch 2 y ports, la lista queda arriba y la descripción de lo elegido, abajo.", Icono.DESCARGA, 0xFF00C3E3),
+        )),
+        Version(ID, "Opciones del juego y cajas 3D", listOf(
+            Pagina("Opciones del juego, ordenadas", "Sin Jugar ni Ficha (ya están en la vitrina). Arriba «Mi paso», al medio cuatro grupos con submenú (Personalizar, Partida, Emulador y versión, Mis cosas) y abajo «Mover de lugar». B vuelve del submenú.", Icono.MENU, 0xFF8B5CF6),
+            Pagina("Pantalla de la caja 3D", "En Personalizar › Caja 3D ves dónde se busca (comunidad, ScreenScraper, TheGamesDB) y, si no aparece, DIPPO la arma con una foto tuya y puedes compartirla.", Icono.PORTADA, 0xFF3BA8FF),
+            Pagina("Caja en 3D desde el inicio", "La caja de la vitrina queda girada para que se note su volumen sin tocarla, y el logo del juego es más grande.", Icono.JUGAR, 0xFFE0603A),
+            Pagina("Carpetas de vidrio para todos", "Las carpetas quedan de vidrio en todos los estilos (también Consola, Abanico y Logo). Se cambia en Ajustes › Biblioteca › Tono de las carpetas.", Icono.CARPETA, 0xFF3BA8FF),
+            Pagina("Sin nombres repetidos", "En los mosaicos ya no se repite el nombre del juego: queda solo arriba, entre el número de juegos y la vista.", Icono.TEXTO, 0xFF8B5CF6),
+            Pagina("Los bordes giran siempre", "La estela y los demás bordes de tu foto ya no se quedan pegados al abrir tu tarjeta.", Icono.ESTRELLA, 0xFFFF7A59),
+            Pagina("Tamaño y lugar a tu gusto", "Arriba a la derecha de la vitrina: Tamaño − / +, Mover ◀ ▶ y Logo − / +. Se guardan solos.", Icono.AJUSTES, 0xFFFFB547),
         )),
     )
 

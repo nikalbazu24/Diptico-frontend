@@ -387,8 +387,11 @@ internal fun Diptico.moverIndiceSolo(delta: Int) {
             if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
         }
         Panel.RAPIDO -> {
-            val total = opcionesRapido().size
-            if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            if (estado.value.extra.rapidoGrupo >= 0) moverRapido(0, delta)
+            else {
+                val total = opcionesRapido().size
+                if (total > 0) actualizar { it.copy(indice = (it.indice + delta).coerceIn(0, total - 1)) }
+            }
         }
         Panel.ASISTENTE -> {
             val total = elementosAsistente().size

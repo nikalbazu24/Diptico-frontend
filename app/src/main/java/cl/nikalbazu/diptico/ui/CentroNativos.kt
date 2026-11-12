@@ -51,8 +51,8 @@ private val Naranjo = Color(0xFFFF9F43)
 fun nativosAqui(e: Estado, rol: Rol): Boolean = e.extra.nativosEn >= 0 && (rol != Rol.INFERIOR || !e.unaPantalla)
 
 /**
- * Centro de Switch 2 y ports nativos. Con dos pantallas, la de abajo (la táctil) tiene la lista para elegir y la de
- * arriba muestra en grande lo elegido, con sus consejos. Con una sola pantalla, la lista y el detalle van lado a lado.
+ * Centro de Switch 2 y ports nativos. Con dos pantallas, la de arriba tiene la lista para elegir (y los botones) y la de
+ * abajo (la táctil) muestra en grande lo elegido, con sus consejos. Con una sola pantalla, la lista y el detalle van lado a lado.
  */
 @Composable
 fun CentroNativos(e: Estado, rol: Rol) {
@@ -84,8 +84,8 @@ fun CentroNativos(e: Estado, rol: Rol) {
                     .clickable(remember { MutableInteractionSource() }, indication = null) {},
             ) {
                 when {
-                    // Dos pantallas: arriba el detalle grande, abajo la lista.
-                    dividido && rol == Rol.SUPERIOR -> Detalle(filas.getOrNull(sel), e.extra.nativosPestana, grande = true)
+                    // Dos pantallas: arriba la lista y todo lo demás, abajo la descripción grande de lo elegido.
+                    dividido && rol == Rol.INFERIOR -> Detalle(filas.getOrNull(sel), e.extra.nativosPestana, grande = true)
                     dividido -> Lista(e, filas, sel)
                     esc.angosta -> Lista(e, filas, sel)
                     else -> Row(Modifier.fillMaxSize()) {

@@ -1540,6 +1540,11 @@ class Capturas {
     @Test fun t413_ficha_apartados() = foto("413_ficha_apartados", base().copy(panel = Panel.FICHA, fichaDe = "snes/1", pestanaFicha = 3, indice = 0), Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
     @Test fun t414_ports_explicados() = foto("414_ports_explicados", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.INFERIOR, mi = 1)
+    @Test fun t416_opciones_juego() = foto("416_opciones_juego", base().copy(panel = Panel.RAPIDO, indice = 1), Rol.INFERIOR, mi = 1)
+    @Test fun t417_opciones_submenu() = foto("417_opciones_submenu", base().copy(panel = Panel.RAPIDO, indice = 1, extra = EstadoExtra(rapidoGrupo = 0, rapidoSel = 0)), Rol.INFERIOR, mi = 1)
+    @Test fun t418_pantalla_caja_abajo() = foto("418_pantalla_caja_abajo", base().copy(extra = EstadoExtra(cajaJuego = "snes/1", cajaFuentes = listOf("no", "buscando", "sin"), cajaSel = 0)), Rol.INFERIOR, mi = 1)
+    @Test fun t419_pantalla_caja_arriba() = foto("419_pantalla_caja_arriba", base().copy(extra = EstadoExtra(cajaJuego = "snes/1", cajaFuentes = listOf("no", "hallada", "sin"))), Rol.SUPERIOR)
+    @Test fun t420_vitrina_pose() = foto("420_vitrina_pose", base().copy(vista = "iconos", extra = EstadoExtra(portada = "ps5", cajaTam = 1.15f, logoTam = 1.2f)), Rol.SUPERIOR)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)

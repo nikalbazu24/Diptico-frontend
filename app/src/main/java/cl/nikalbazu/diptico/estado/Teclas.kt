@@ -138,6 +138,18 @@ object Teclas {
             return true
         }
         if (e.extra.carga != null) { if (arriba && esB(code)) Diptico.cancelarCarga(); return true }
+        // La caja 3D de un juego: cruceta elige, A usa, B vuelve.
+        if (e.extra.cajaJuego.isNotEmpty()) {
+            if (abajo) when (code) {
+                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverCajaJuego(-1)
+                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverCajaJuego(1)
+            }
+            if (arriba) when {
+                esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.cerrarCajaJuego()
+                esA(code) -> Diptico.usarCajaJuego()
+            }
+            return true
+        }
         // Centro de Switch 2 y ports: cruceta elige, L1/R1 (o ← →) cambian de pestaña, A usa, B cierra.
         if (e.extra.nativosEn >= 0) {
             if (abajo) when (code) {
