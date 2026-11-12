@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "dock-arriba-2.0-60"
-    const val NOMBRE = "Apps arriba"
+    const val ID = "pixel-arriba-2.0-61"
+    const val NOMBRE = "Pixel y orden"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -454,10 +454,16 @@ object Novedades {
             Pagina("DIPPO te avisa en la campana", "La temperatura alta, las actualizaciones de Díptico y de tus emuladores aparecen también en la campana de arriba, con la carita de DIPPO. Se apaga en Ajustes › «Avisos de DIPPO en la campana».", Icono.CAMPANA, 0xFF8B5CF6),
             Pagina("Carpetas en modo oscuro", "Nueva opción «Tono de las carpetas»: Según el tema, Oscuras o Claras. Con un tema oscuro las carpetas pasan a fondo profundo con el dibujo en claro.", Icono.CARPETA, 0xFF2EC4A6),
         )),
-        Version(ID, "Apps arriba", listOf(
+        Version("dock-arriba-2.0-60", "Apps arriba", listOf(
             Pagina("Tus apps, arriba", "Las apps que fijaste ahora van arriba al medio de la pantalla de abajo, entre DIPPO y tu foto. Ya no tapan los juegos.", Icono.APPS, 0xFF3BA8FF),
             Pagina("Lupa y ajustes con fondo", "La lupa y los ajustes siguen en las esquinas de abajo, ahora sobre una pestaña semiredonda para que se noten.", Icono.AJUSTES, 0xFF8B5CF6),
             Pagina("Más íconos pixel", "Wii U y Android tienen su ícono pixel propio, y el estilo «Píxeles» también se ve dentro de las carpetas de las consolas.", Icono.EMULADOR, 0xFFFF7A59),
+        )),
+        Version(ID, "Pixel y orden", listOf(
+            Pagina("Pixel art completo", "Con el estilo «Pixel art», las consolas que ese paquete no trae (Switch, Switch 2, Wii U, Android, fan games) ya no salen como insignia: se dibujan en pixeles, igual que el resto.", Icono.EMULADOR, 0xFFFF7A59),
+            Pagina("Hora y batería a la izquierda", "En la vitrina de arriba, la hora y la batería pasaron junto al nombre de la consola, para que tu foto y tu nombre queden solos a la derecha.", Icono.VISTA, 0xFF3BA8FF),
+            Pagina("Juegos al centro", "En la pantalla de abajo el juego elegido queda en el medio, de lado a lado, también el primero y el último.", Icono.VISTA, 0xFF23C486),
+            Pagina("Apps sin sombras y título solo arriba", "La barra de apps ya no lleva sombras ni contornos, y tu título («Recién llegado») se ve solo en la pantalla de arriba.", Icono.APPS, 0xFF8B5CF6),
         )),
     )
 

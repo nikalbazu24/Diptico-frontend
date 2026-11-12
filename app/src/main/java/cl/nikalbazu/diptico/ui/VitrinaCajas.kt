@@ -243,14 +243,18 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             }
 
             // 3. Arriba: la consola a la izquierda; hora y batería a la derecha.
-            Column(Modifier.align(Alignment.TopStart).padding(start = esc.d(26), top = esc.d(18))) {
-                Texto((consola?.nombre ?: "").uppercase(), 16f, color = Color.White, peso = FontWeight.ExtraBold, espaciado = 1f, lineas = 1, traducir = false)
-                Texto("${indice + 1} de ${lista.size}", 10.5f, color = Color.White.copy(alpha = 0.6f), lineas = 1, traducir = false, espaciado = 1.2f)
+            Row(Modifier.align(Alignment.TopStart).padding(start = esc.d(26), top = esc.d(14)), verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    Texto((consola?.nombre ?: "").uppercase(), 16f, color = Color.White, peso = FontWeight.ExtraBold, espaciado = 1f, lineas = 1, traducir = false)
+                    Texto("${indice + 1} de ${lista.size}", 10.5f, color = Color.White.copy(alpha = 0.6f), lineas = 1, traducir = false, espaciado = 1.2f)
+                }
+                // Hora y batería al otro lado del perfil, para no recargar la esquina de tu foto.
+                if (e.sesion == null) { Spacer(Modifier.width(esc.d(14))); RelojBateria() }
             }
             // Hora y batería chicas, y tu perfil en grande (tipo iiSU).
             Row(Modifier.align(Alignment.TopEnd).padding(end = esc.d(22), top = esc.d(14)), verticalAlignment = Alignment.CenterVertically) {
                 // Sin partida: hora y batería en su píldora, pegadas a tu foto y centradas con ella. Con partida no hay foto grande.
-                if (e.sesion == null) PerfilArriba(conReloj = true) else EstadoChico(conFoto = false)
+                if (e.sesion == null) PerfilArriba() else EstadoChico(conFoto = false)
             }
 
             // 4. Abajo: el nombre del juego, una línea de datos y los botones (también se tocan).

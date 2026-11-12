@@ -1482,6 +1482,14 @@ class Capturas {
     // Abajo: apps sin sombras y sin el título junto a la foto (el título solo va arriba).
     @Config(qualifiers = ABAJO)
     @Test fun t392_abajo_sin_titulo() = foto("392_abajo_sin_titulo", conPerfil().copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR, mi = 1)
+    // Estilo «Pixel art» de RetroArch (sin bajar): Switch, Wii U y Android caen a los sprites pixel, no a la insignia.
+    @Config(qualifiers = ABAJO)
+    @Test fun t393_pixel_art_pestanas() = foto("393_pixel_art_pestanas", base().copy(vistaConsolas = "arriba", estiloIconos = "dot-art", consolaSel = "switch"), Rol.INFERIOR, mi = 1)
+    // Arriba con la vitrina de cajas: hora y batería a la izquierda, junto a la consola; tu foto sola a la derecha.
+    @Test fun t394_vitrina_reloj_izquierda() = foto("394_vitrina_reloj_izquierda", conPerfil().let { it.copy(extra = it.extra.copy(portada = "cajas")) }, Rol.SUPERIOR)
+    // Abajo: el juego elegido en el centro de lado a lado.
+    @Config(qualifiers = ABAJO)
+    @Test fun t395_juegos_al_centro() = foto("395_juegos_al_centro", base().copy(vista = "mosaicos", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)

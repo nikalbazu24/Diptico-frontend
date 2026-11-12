@@ -309,12 +309,13 @@ fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabaj
         Box(Modifier.padding(top = esc.d(if (perfil) 0 else 4))) { Logo(15f) }
         Spacer(Modifier.width(esc.d(14)))
         PildoraTrabajos(trabajos)
+        if (perfil) { Spacer(Modifier.width(esc.d(10))); RelojBateria() }
         Spacer(Modifier.weight(1f))
         extra()
         Campana()
         if (perfil) {
             // Tu perfil en grande, al final de la barra (tipo iiSU), con la hora y la batería en su píldora al lado.
-            PerfilArriba(conReloj = true)
+            PerfilArriba()
         } else Row(
             Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.alternarReloj() }.padding(horizontal = esc.d(6), vertical = esc.d(2)),
             verticalAlignment = Alignment.CenterVertically,
@@ -477,7 +478,8 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
     val uri = propio ?: archivo
     val img = rememberImagen(uri, 192, memoriaGrafica)
     // Si un paquete no trae el ícono de esta consola, se dibuja uno con la misma línea (a color o en contorno).
-    val dibujo = if (paquete != null) (if (paquete.blanco) "contorno" else "insignia") else cfg.estilo
+    // «Pixel art» (RetroArch) no trae Switch, Wii U, Android…: esas se dibujan con nuestros sprites pixel en vez de una insignia.
+    val dibujo = if (paquete != null) (if (paquete.blanco) "contorno" else if (paquete.id == "dot-art") "pixel" else "insignia") else cfg.estilo
     when {
         img != null -> Image(
             img, contentDescription = c.nombre, contentScale = ContentScale.Fit,

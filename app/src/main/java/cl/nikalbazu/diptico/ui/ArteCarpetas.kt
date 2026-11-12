@@ -45,7 +45,7 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscur
     val id = consola?.id ?: "todo"
     val color = consola?.color ?: Uva
     // Con el estilo de íconos «Píxeles», el dibujo del centro es el sprite pixel (si la consola tiene uno).
-    val sprite = if (LocalIconos.current.estilo == "pixel") SpritesConsola.de(id) else null
+    val sprite = if (LocalIconos.current.estilo == "pixel" || LocalIconos.current.estilo == "dot-art") SpritesConsola.de(id) else null
     Box(modifier.drawWithCache {
         val s = min(size.width, size.height)
         // Modo oscuro: el «papel» es un fondo profundo teñido del color de la consola y los dibujos pasan a ser claros.
