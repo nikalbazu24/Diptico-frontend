@@ -61,7 +61,7 @@ fun PantallaCaja(e: Estado, rol: Rol) {
     val muestraControles = rol == Rol.INFERIOR || rol == Rol.UNICA
     if (rol == Rol.INFERIOR && e.unaPantalla) return
     Box(
-        Modifier.fillMaxSize().testTag("pantalla-caja").background(Color(0xF2080912))
+        Modifier.fillMaxSize().testTag("pantalla-caja").background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color(0xFF221A3C), Color(0xFF080912)), radius = 1600f))
             .clickable(remember { MutableInteractionSource() }, indication = null) { },
     ) {
         Row(Modifier.fillMaxSize().padding(esc.d(18)), horizontalArrangement = Arrangement.spacedBy(esc.d(18)), verticalAlignment = Alignment.CenterVertically) {
@@ -86,19 +86,21 @@ fun PantallaCaja(e: Estado, rol: Rol) {
                     Etiqueta("¿Dónde la busco?", p.tenue, 11f)
                     Spacer(Modifier.height(esc.d(4)))
                     val f = e.extra.cajaFuentes
-                    FuenteCaja("Comunidad de Díptico", "Cajas que armó otra gente", f.getOrElse(0) { "" })
-                    FuenteCaja("ScreenScraper", "Escaneos de cajas reales", f.getOrElse(1) { "" })
-                    FuenteCaja("TheGamesDB", "Frente y reverso", f.getOrElse(2) { "" })
+                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                        FuenteCaja("Comunidad", f.getOrElse(0) { "" }, Modifier.weight(1f))
+                        FuenteCaja("ScreenScraper", f.getOrElse(1) { "" }, Modifier.weight(1f))
+                        FuenteCaja("TheGamesDB", f.getOrElse(2) { "" }, Modifier.weight(1f))
+                    }
                     Spacer(Modifier.height(esc.d(8)))
                     Etiqueta("Si no la encuentro, la creamos con DIPPO", Coral, 11f)
                     Spacer(Modifier.height(esc.d(4)))
-                    Column(verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                    Column(verticalArrangement = Arrangement.spacedBy(esc.d(4))) {
                         ACCIONES.forEachIndexed { i, (t, d, ic) ->
                             val act = e.extra.cajaSel == i
                             Row(
                                 Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14)))
                                     .then(if (act) Modifier.fondoBoton(Uva) else Modifier.background(p.fondo2.copy(alpha = 0.7f)))
-                                    .clickable { Diptico.usarCajaJuego(i) }.padding(horizontal = esc.d(12), vertical = esc.d(7)),
+                                    .clickable { Diptico.usarCajaJuego(i) }.padding(horizontal = esc.d(12), vertical = esc.d(5)),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 IconoDiptico(ic, if (act) SobreUva else p.tinta, 20f, acento = if (act) SobreUva else Coral)
@@ -129,7 +131,7 @@ private fun resumenCaja(e: Estado, clave: String): String {
 }
 
 @Composable
-private fun FuenteCaja(nombre: String, detalle: String, estado: String) {
+private fun FuenteCaja(nombre: String, estado: String, modifier: Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val (texto, color) = when (estado) {
@@ -137,13 +139,13 @@ private fun FuenteCaja(nombre: String, detalle: String, estado: String) {
         "hallada" -> "¡La encontré!" to Verde
         "no" -> "No está" to p.tenue
         "sin" -> "No conectada" to p.tenue
-        else -> "" to p.tenue
+        else -> "—" to p.tenue
     }
-    Row(Modifier.fillMaxWidth().padding(vertical = esc.d(2)), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Texto(nombre, 13f, lineas = 1)
-            Detalle(detalle, 11f, lineas = 1)
-        }
-        if (texto.isNotEmpty()) Texto(texto, 12.5f, color = color, lineas = 1)
+    Column(
+        modifier.clip(RoundedCornerShape(esc.d(12))).background(Color.White.copy(alpha = 0.06f))
+            .padding(horizontal = esc.d(10), vertical = esc.d(6)),
+    ) {
+        Texto(nombre, 12.5f, lineas = 1, traducir = false)
+        Texto(texto, 11.5f, color = color, lineas = 1)
     }
 }
