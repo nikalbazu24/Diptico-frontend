@@ -329,7 +329,8 @@ fun FotoPerfil(
     }
     val img = if (fuente.isNotBlank()) rememberImagen(android.net.Uri.parse(fuente), (tam * 3).toInt().coerceIn(96, 512)) else null
     val g = if (anillo) esc.d((tam * 0.07f).coerceIn(2.5f, 8f)) else 0.dp
-    val anima = anillo && LocalMovimiento.current
+    // El marco siempre gira (es un dibujo chico): antes se quedaba pegado detrás del desenfoque, donde el movimiento se apaga.
+    val anima = anillo
     val vuelta = if (anima) rememberInfiniteTransition(label = "marco").animateFloat(0f, 1f, infiniteRepeatable(tween(3600, easing = LinearEasing)), label = "vuelta") else null
     Box(modifier.size(esc.d(tam))) {
         Box(

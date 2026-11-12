@@ -118,12 +118,13 @@ private fun CarpetaCuerpo(
                 }
             }, contentAlignment = Alignment.Center) {
             when (estilo) {
-                "consola" -> Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(
+                "consola" -> Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(if (vidrio) listOf(
+                    color.copy(alpha = .40f), color.copy(alpha = .12f)) else listOf(
                     androidx.compose.ui.graphics.lerp(color, Color.White, .12f), androidx.compose.ui.graphics.lerp(color, Color.Black, .45f)))),
                     contentAlignment = Alignment.Center) { IconoConsola(consola, (lado.value / esc.factor) * .62f, Color.Transparent, memoriaGrafica = false) }
-                "abanico" -> AbanicoCarpeta(abanico, id, color, oscuro)
+                "abanico" -> AbanicoCarpeta(abanico, id, color, oscuro, vidrio)
                 "logo" -> Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.White.copy(alpha = .12f), Color.White.copy(alpha = .03f))))
-                    .background(p.superficie.copy(alpha = .6f)), contentAlignment = Alignment.Center) {
+                    .background(if (vidrio) color.copy(alpha = .22f) else p.superficie.copy(alpha = .6f)), contentAlignment = Alignment.Center) {
                     Texto(consola?.nombre ?: "Todo", (lado.value / esc.factor) * .2f, color = p.tinta, peso = androidx.compose.ui.text.font.FontWeight.Black,
                         lineas = 2, alinear = androidx.compose.ui.text.style.TextAlign.Center, traducir = consola == null, modifier = Modifier.padding(esc.d(6)))
                 }
@@ -140,10 +141,11 @@ private fun CarpetaCuerpo(
 
 /** Estilo «Abanico de portadas»: los tres juegos más jugados de la consola asomando sobre su color. */
 @Composable
-private fun AbanicoCarpeta(top: List<cl.nikalbazu.diptico.data.Juego>, id: String, color: Color, oscuro: Boolean = false) {
-    BoxWithConstraints(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(
+private fun AbanicoCarpeta(top: List<cl.nikalbazu.diptico.data.Juego>, id: String, color: Color, oscuro: Boolean = false, vidrio: Boolean = false) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(if (vidrio) listOf(
+        color.copy(alpha = .38f), color.copy(alpha = .10f)) else listOf(
         androidx.compose.ui.graphics.lerp(color, Color.Black, .25f), androidx.compose.ui.graphics.lerp(color, Color.Black, .65f))))) {
-        if (top.isEmpty()) { ArteCarpeta(Consolas.porId(id), Modifier.fillMaxSize(), oscuro); return@BoxWithConstraints }
+        if (top.isEmpty()) { ArteCarpeta(Consolas.porId(id), Modifier.fillMaxSize(), oscuro, vidrio); return@BoxWithConstraints }
         val w = maxWidth * .46f
         val giros = listOf(-12f, 0f, 12f)
         val xs = listOf(.08f, .27f, .46f)

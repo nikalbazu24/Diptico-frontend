@@ -146,14 +146,12 @@ private fun Mosaico(j: cl.nikalbazu.diptico.data.Juego, elegido: Boolean, jugado
     ) {
         ArteJuego(j, preferirArte = grande, maxLado = if (grande) 640 else 320, modifier = Modifier.fillMaxSize(), imagen = if (grande) "arte" else "portada")
         if (!elegido && !grande) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.18f)))
-        Column(
+        // El nombre ya va arriba, entre el número de juegos y la vista: aquí no se repite.
+        if (grande && jugado) Box(
             Modifier.align(Alignment.BottomStart).fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.78f))))
-                .padding(horizontal = esc.d(if (grande) 12 else 7), vertical = esc.d(if (grande) 10 else 5)),
-        ) {
-            if (grande && jugado) Texto("Continuar", 10.5f, color = Color.White.copy(alpha = 0.75f), lineas = 1)
-            Texto(j.titulo, if (grande) 15f else 10.5f, color = Color.White, lineas = if (grande) 2 else 1, traducir = false)
-        }
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))))
+                .padding(horizontal = esc.d(12), vertical = esc.d(8)),
+        ) { Texto("Continuar", 11f, color = Color.White.copy(alpha = 0.85f), lineas = 1) }
     }
 }
 

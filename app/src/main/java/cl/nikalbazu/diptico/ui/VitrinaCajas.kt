@@ -69,7 +69,7 @@ val Estado.portadaCajas: Boolean get() = extra.portada == "cajas"
 
 /** Portada «PS5 con caja»: el arte del juego de fondo, su información a la izquierda y una sola caja 3D flotando a la derecha. */
 /** La caja del centro nunca se ve de frente plano: queda girada así para que se note 3D desde el primer momento. */
-private const val POSE_INICIAL = 24f
+private const val POSE_INICIAL = 28f
 
 val Estado.portadaPs5: Boolean get() = extra.portada == "ps5"
 
@@ -255,7 +255,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                                         val balanceo = if (esElegida) ola?.value?.let { kotlin.math.sin(it) * 5f } ?: 0f else 0f
                                         (1f - k) * 50f + k * (balanceo + (if (esElegida) giroY.value + POSE_INICIAL else 0f))
                                     },
-                                    giroX = { -9f + if (esElegida) (1f - abs(r()).coerceAtMost(1f)) * giroX.value else 0f },
+                                    giroX = { -6f + if (esElegida) (1f - abs(r()).coerceAtMost(1f)) * giroX.value else 0f },
                                     penumbra = { (abs(r()) * 0.45f).coerceAtMost(0.7f) },
                                     caras = e.extra.caras[j.clave],
                                     detalle = esElegida,
@@ -305,15 +305,15 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             }
             // Tamaño y lugar de la caja y del logo (como en iiSU): pastillas chicas abajo a la derecha.
             if (ps5) Row(
-                Modifier.align(Alignment.BottomEnd).padding(end = esc.d(22), bottom = esc.d(30)),
+                Modifier.align(Alignment.TopEnd).padding(end = esc.d(22), top = esc.d(80)),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
             ) {
-                PastillaAjuste("Caja −") { Diptico.cambiarCajaTam(-0.1f) }
-                PastillaAjuste("Caja +") { Diptico.cambiarCajaTam(0.1f) }
-                PastillaAjuste("◀") { Diptico.cambiarCajaCorrida(0.04f) }
+                PastillaAjuste("Tamaño −") { Diptico.cambiarCajaTam(-0.1f) }
+                PastillaAjuste("+") { Diptico.cambiarCajaTam(0.1f) }
+                PastillaAjuste("Mover ◀") { Diptico.cambiarCajaCorrida(0.04f) }
                 PastillaAjuste("▶") { Diptico.cambiarCajaCorrida(-0.04f) }
                 PastillaAjuste("Logo −") { Diptico.cambiarLogoTam(-0.1f) }
-                PastillaAjuste("Logo +") { Diptico.cambiarLogoTam(0.1f) }
+                PastillaAjuste("+") { Diptico.cambiarLogoTam(0.1f) }
             }
             // Los botones (mismo tamaño y orden) bajan al pie de la vitrina, a la izquierda, para aprovechar mejor el espacio.
             if (ps5) Row(

@@ -1026,7 +1026,7 @@ object Diptico {
                 estiloCarpetas = almacen.texto("estiloCarpetas", "tarjeta"),
                 termica = almacen.bool("termica", true),
                 dippoAvisos = almacen.bool("dippoAvisos", true),
-                carpetasTono = almacen.texto("carpetasTono", "vidrio"),
+                carpetasTono = (if (almacen.texto("carpetasVidrio1", "") == "") { almacen.guardarTexto("carpetasVidrio1", "si"); almacen.guardarTexto("carpetasTono", "vidrio"); "vidrio" } else almacen.texto("carpetasTono", "vidrio")),
                 iconosCarpetas = almacen.texto("iconosCarpetas", "igual"),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),

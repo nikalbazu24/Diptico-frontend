@@ -504,7 +504,10 @@ object Novedades {
             Pagina("Opciones del juego, ordenadas", "Sin Jugar ni Ficha (ya están en la vitrina). Arriba «Mi paso», al medio cuatro grupos con submenú (Personalizar, Partida, Emulador y versión, Mis cosas) y abajo «Mover de lugar». B vuelve del submenú.", Icono.MENU, 0xFF8B5CF6),
             Pagina("Pantalla de la caja 3D", "En Personalizar › Caja 3D ves dónde se busca (comunidad, ScreenScraper, TheGamesDB) y, si no aparece, DIPPO la arma con una foto tuya y puedes compartirla.", Icono.PORTADA, 0xFF3BA8FF),
             Pagina("Caja en 3D desde el inicio", "La caja de la vitrina queda girada para que se note su volumen sin tocarla, y el logo del juego es más grande.", Icono.JUGAR, 0xFFE0603A),
-            Pagina("Tamaño y lugar a tu gusto", "Abajo a la derecha de la vitrina: Caja − / +, ◀ ▶ para correrla y Logo − / +. Se guardan solos.", Icono.AJUSTES, 0xFFFFB547),
+            Pagina("Carpetas de vidrio para todos", "Las carpetas quedan de vidrio en todos los estilos (también Consola, Abanico y Logo). Se cambia en Ajustes › Biblioteca › Tono de las carpetas.", Icono.CARPETA, 0xFF3BA8FF),
+            Pagina("Sin nombres repetidos", "En los mosaicos ya no se repite el nombre del juego: queda solo arriba, entre el número de juegos y la vista.", Icono.TEXTO, 0xFF8B5CF6),
+            Pagina("Los bordes giran siempre", "La estela y los demás bordes de tu foto ya no se quedan pegados al abrir tu tarjeta.", Icono.ESTRELLA, 0xFFFF7A59),
+            Pagina("Tamaño y lugar a tu gusto", "Arriba a la derecha de la vitrina: Tamaño − / +, Mover ◀ ▶ y Logo − / +. Se guardan solos.", Icono.AJUSTES, 0xFFFFB547),
         )),
     )
 
