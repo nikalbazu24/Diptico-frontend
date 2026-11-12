@@ -1528,6 +1528,13 @@ class Capturas {
     }
     @Test fun t407_iconos_lista_en_submenu() = foto("407_iconos_lista_en_submenu", listaIconosEnSubmenu(), Rol.SUPERIOR)
     @Test fun t408_sistema_hora_logo() = foto("408_sistema_hora_logo", conPerfil().copy(vistaConsolas = "sistemas", enSistemas = true, consolaSel = "snes"), Rol.SUPERIOR)
+    // Idea 9b: arriba «PS5 con caja» (arte, info a la izquierda, una caja flotando) y abajo solo los íconos.
+    @Test fun t409_ps5_arriba() = foto("409_ps5_arriba", conPerfil().let { it.copy(vista = "iconos", extra = it.extra.copy(portada = "ps5")) }, Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t410_iconos_abajo() = foto("410_iconos_abajo", base().copy(vista = "iconos", extra = EstadoExtra(portada = "ps5")), Rol.INFERIOR, mi = 1)
+    // La caja se abre en la pantalla de carga.
+    @Test fun t411_caja_abierta() = foto("411_caja_abierta", base().copy(vista = "iconos", extra = EstadoExtra(portada = "ps5", carga = cl.nikalbazu.diptico.estado.CargaJuego("snes/1", 0, System.currentTimeMillis() - 1350))), Rol.SUPERIOR, avance = 200)
+    @Test fun t412_ajustes_b() = foto("412_ajustes_b", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_BIBLIOTECA, enOpciones = true, indice = 0), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)

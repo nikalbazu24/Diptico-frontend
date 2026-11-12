@@ -474,6 +474,9 @@ object Novedades {
             Pagina("DIPPO a la vista", "En Ajustes › DIPPO, hablar con él, sus logros y los premios están apenas entras, sin buscarlos.", Icono.TROFEO, 0xFFFFB547),
         )),
         Version(ID, "Arreglos y fluidez", listOf(
+            Pagina("PS5 con caja", "Nueva portada de arriba: el arte del juego de fondo, su logo y datos a la izquierda y su caja 3D flotando a la derecha. Abajo quedan solo los íconos para elegir. Ajustes › Pantalla y estilo › Portada de arriba.", Icono.PORTADA, 0xFFE0603A),
+            Pagina("La caja se abre", "Al jugar, la caja llega, se abre desde el lomo y adentro brilla el juego antes de que empiece.", Icono.JUGAR, 0xFFFFB547),
+            Pagina("Ajustes más simples", "Cada sección muestra arriba lo que más se usa, y el resto queda en «Más de …», ordenado por tema.", Icono.AJUSTES, 0xFF8B5CF6),
             Pagina("Listas dentro de los submenús", "Los íconos, las vistas y todo lo que tiene varias opciones ahora abren su lista con muestras, también dentro de un submenú. Ya no hay que pasar una por una.", Icono.MENU, 0xFF8B5CF6),
             Pagina("Íconos solo para las carpetas", "Nueva opción «Íconos en las carpetas»: las carpetas pueden llevar un estilo distinto al de la fila de consolas y la pantalla de arriba.", Icono.CARPETA, 0xFF3BA8FF),
             Pagina("Mosaicos Xbox sin cortes", "El mosaico grande ya no queda cortado, y en la fila de juegos el elegido crece más para que se note.", Icono.VISTA, 0xFF23C486),

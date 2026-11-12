@@ -270,6 +270,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
         when (vista) {
             "mosaicos", "xbox" -> Mosaicos(e, Modifier.fillMaxSize())
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
+            "iconos" -> IconosJuegos(e, Modifier.fillMaxSize())
             "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
             "carrusel" -> CarruselJuegos(e, Modifier.fillMaxSize())
             // Vistas que ya no existen (estante, abanico, lomos…): se ven como mosaicos.

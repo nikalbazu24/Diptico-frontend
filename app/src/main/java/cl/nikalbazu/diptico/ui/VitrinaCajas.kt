@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -65,6 +67,12 @@ internal var vitrinaGiroPrueba = 0f
 /** La portada de arriba: "cajas" (la vitrina con las cajas de los juegos) o "arte" (el arte del juego en grande). */
 val Estado.portadaCajas: Boolean get() = extra.portada == "cajas"
 
+/** Portada «PS5 con caja»: el arte del juego de fondo, su información a la izquierda y una sola caja 3D flotando a la derecha. */
+val Estado.portadaPs5: Boolean get() = extra.portada == "ps5"
+
+/** Arriba hay una caja 3D (vitrina de cajas o PS5 con caja). */
+val Estado.vitrina3D: Boolean get() = portadaCajas || portadaPs5
+
 /**
  * El stick derecho mientras se ve la vitrina: gira la caja del centro (lo escribe [cl.nikalbazu.diptico.estado.Teclas]).
  * [x] y [y] van de -1 a 1.
@@ -78,7 +86,7 @@ object GiroCaja {
 
 /** La vitrina está en pantalla y puede recibir el stick derecho. */
 fun vitrinaActiva(e: Estado): Boolean =
-    e.portadaCajas && e.sesion == null && nuevoDisenoDosPantallas(e) && e.panel == cl.nikalbazu.diptico.estado.Panel.NINGUNO &&
+    e.vitrina3D && e.sesion == null && nuevoDisenoDosPantallas(e) && e.panel == cl.nikalbazu.diptico.estado.Panel.NINGUNO &&
         e.inicio != "widgets" && e.extra.carga == null
 
 /**
@@ -92,6 +100,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
     val esc = LocalEscala.current
     val consola = Consolas.porId(juego.consolaId)
     val color = consola?.color ?: Uva
+    val ps5 = e.portadaPs5
     val lista = e.visibles
     val indice = lista.indexOfFirst { it.clave == juego.clave }.coerceAtLeast(0)
     // La posición del estante es continua: así las cajas se deslizan entre juego y juego en vez de saltar.
@@ -161,6 +170,12 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             val alto = maxHeight.value
             // 1. Fondo: la portada del juego elegido desenfocada (se arma una vez por juego, no en cada cuadro).
             Crossfade(juego, animationSpec = tween(if (Estilo.efectosCompletos) 520 else 0), label = "fondo-cajas") { j ->
+                // PS5: el arte del juego nítido a pantalla completa, oscurecido hacia la izquierda donde va la información.
+                if (ps5) {
+                    ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.9f }, imagen = "arte")
+                    Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = 0.88f), 0.5f to Color.Black.copy(alpha = 0.5f), 1f to Color.Black.copy(alpha = 0.12f))))
+                    return@Crossfade
+                }
                 // La portada del juego elegido (o su caja exacta), desenfocada de verdad y a pantalla completa.
                 val fondo = rememberDesenfocada(e.extra.caras[j.clave]?.frente?.let { android.net.Uri.parse(it) } ?: j.portada ?: j.arte)
                 if (fondo != null) androidx.compose.foundation.Image(
@@ -169,20 +184,24 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                     modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.7f; scaleX = 1.08f; scaleY = 1.08f },
                 )
             }
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to color.copy(alpha = 0.4f))))
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+            if (!ps5) Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to color.copy(alpha = 0.4f))))
+            if (!ps5) Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
                 0f to Color.Black.copy(alpha = 0.55f), 0.3f to Color.Transparent, 0.6f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.9f),
             )))
 
             // 2. El estante: la caja elegida al centro y hasta tres a cada lado.
             if (consola != null && lista.isNotEmpty()) CompositionLocalProvider(LocalFormas provides e.formas) {
-                val desde = (indice - 3).coerceAtLeast(0)
-                val hasta = (indice + 3).coerceAtMost(lista.lastIndex)
-                val altoCaja = alto * 0.66f
-                val anchoCaja = ancho * 0.44f
+                // PS5: una sola caja, flotando a la derecha (más liviano: se dibuja una caja, no siete).
+                val desde = if (ps5) indice else (indice - 3).coerceAtLeast(0)
+                val hasta = if (ps5) indice else (indice + 3).coerceAtMost(lista.lastIndex)
+                val altoCaja = alto * (if (ps5) 0.64f else 0.66f)
+                val anchoCaja = ancho * (if (ps5) 0.34f else 0.44f)
                 val paso1 = ancho * 0.3f
                 val paso2 = ancho * 0.13f
-                Box(Modifier.fillMaxSize().padding(bottom = (alto * 0.16f).dp), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.fillMaxSize().padding(bottom = (alto * (if (ps5) 0.04f else 0.16f)).dp, end = (if (ps5) ancho * 0.05f else 0f).dp),
+                    contentAlignment = if (ps5) Alignment.CenterEnd else Alignment.Center,
+                ) {
                     // De la más lejana a la más cercana: la del centro se dibuja al final, encima de todas.
                     val orden = (desde..hasta).sortedByDescending { abs(it - indice) }
                     for (i in orden) {
@@ -197,7 +216,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                                         val r = r()
                                         val ar = abs(r)
                                         val dx = (if (r < 0) -1f else 1f) * (ar.coerceAtMost(1f) * paso1 + (ar - 1f).coerceAtLeast(0f) * paso2)
-                                        val dy = if (esElegida) (ola?.value?.let { kotlin.math.sin(it * 2f) * 4f } ?: 0f) else 0f
+                                        val dy = if (esElegida) (ola?.value?.let { kotlin.math.sin(it * 2f) * (if (ps5) 7f else 4f) } ?: 0f) else 0f
                                         IntOffset((dx * density).roundToInt(), (dy * density).roundToInt())
                                     }
                                     .graphicsLayer {
@@ -257,8 +276,38 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                 if (e.sesion == null) PerfilArriba() else EstadoChico(conFoto = false)
             }
 
+            // 4 (PS5). A la izquierda: logo (o nombre), datos y botones, como en la PS5.
+            if (ps5) Column(
+                Modifier.align(Alignment.CenterStart).padding(start = esc.d(30), top = esc.d(70)).fillMaxWidth(0.52f),
+                verticalArrangement = Arrangement.spacedBy(esc.d(8)),
+            ) {
+                Crossfade(juego, animationSpec = tween(220), label = "info-ps5") { j ->
+                    Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                        if (j.logo != null) ImagenAnimada(j.logo, Modifier.height(esc.d(76)).fillMaxWidth(0.8f), recortar = false)
+                        Texto(j.titulo, if (j.logo != null) 18f else 26f, color = Color.White, lineas = 2, traducir = false, sombra = true)
+                        val seg = e.datos[j.clave]?.tiempo?.toLong() ?: 0L
+                        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                            listOfNotNull(
+                                if (seg > 0) formatoTiempo(seg) + " " + cl.nikalbazu.diptico.estado.Idioma.t("jugadas") else cl.nikalbazu.diptico.estado.Idioma.t("Sin jugar"),
+                                e.extra.duraciones[j.clave]?.takeIf { it.principal > 0f }?.let { cl.nikalbazu.diptico.estado.Idioma.t("Historia") + " ~" + it.principal.roundToInt() + " h" },
+                                e.datos[j.clave]?.favorito?.takeIf { it }?.let { "♥" },
+                            ).forEach { t ->
+                                Box(Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.14f)).padding(horizontal = esc.d(12), vertical = esc.d(4))) {
+                                    Texto(t, 12.5f, color = Color.White, lineas = 1, traducir = false)
+                                }
+                            }
+                        }
+                    }
+                }
+                Row(Modifier.padding(top = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
+                    val jugado = (e.datos[juego.clave]?.tiempo?.toLong() ?: 0L) > 0L
+                    BotonVitrina("A", if (jugado) "Continuar" else "Jugar", lleno = true) { Diptico.jugar() }
+                    BotonVitrina("X", "Ficha", lleno = false) { Diptico.abrirFicha() }
+                    BotonVitrina("Y", "DIPPO", lleno = false) { Diptico.abrirAsistente() }
+                }
+            }
             // 4. Abajo: el nombre del juego, una línea de datos y los botones (también se tocan).
-            Column(
+            if (!ps5) Column(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(bottom = esc.d(14), start = esc.d(24), end = esc.d(24)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(esc.d(4)),

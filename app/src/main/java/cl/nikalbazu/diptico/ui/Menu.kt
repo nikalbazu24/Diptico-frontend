@@ -173,7 +173,16 @@ private fun VentanaSubOpciones(e: Estado) {
                 contentPadding = PaddingValues(horizontal = esc.d(10), vertical = esc.d(8)),
                 verticalArrangement = Arrangement.spacedBy(esc.d(6)),
             ) {
-                itemsIndexed(sub) { i, o -> FilaOpcion(o, i == e.extra.subSel, color) { Diptico.usarSubOpcion(i) } }
+                itemsIndexed(sub) { i, o ->
+                    // En «Más de …» las opciones van por tema, con su título encima.
+                    Column {
+                        val g = o.grupo.orEmpty()
+                        if (g.isNotEmpty() && (i == 0 || sub[i - 1].grupo != g)) {
+                            Etiqueta(g, color, 10.5f, Modifier.padding(start = esc.d(6), top = esc.d(if (i == 0) 0f else 8f), bottom = esc.d(4)))
+                        }
+                        FilaOpcion(o, i == e.extra.subSel, color) { Diptico.usarSubOpcion(i) }
+                    }
+                }
             }
             Pistas("↑ ↓" to "Moverte", "A" to "Cambiar", "B" to "Volver", modifier = Modifier.padding(start = esc.d(18), top = esc.d(4)))
         }

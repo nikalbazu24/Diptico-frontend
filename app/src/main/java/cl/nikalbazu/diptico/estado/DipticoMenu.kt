@@ -532,9 +532,14 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
             ) { v -> almacen.guardarTexto("animaciones", v); actualizar { it.copy(extra = it.extra.copy(animaciones = v)) } }
             lista += opcionLista(
                 "Portada de arriba", Icono.TEMA,
-                "Vitrina de cajas: la caja del juego al centro, con las de al lado asomándose inclinadas. Arte del juego: la imagen del juego en grande con su información.",
-                listOf("cajas", "arte"), listOf("Vitrina de cajas", "Arte del juego"), e.extra.portada, grupo = "Movimiento",
-            ) { v -> almacen.guardarTexto("portadaArriba", v); actualizar { it.copy(extra = it.extra.copy(portada = v)) } }
+                "Vitrina de cajas: la caja del juego al centro, con las de al lado asomándose inclinadas. PS5 con caja: el arte del juego de fondo, su logo e información a la izquierda y su caja 3D flotando (abajo quedan los íconos para elegir). Arte del juego: la imagen en grande con su información.",
+                listOf("cajas", "ps5", "arte"), listOf("Vitrina de cajas", "PS5 con caja", "Arte del juego"), e.extra.portada, grupo = "Movimiento",
+            ) { v ->
+                almacen.guardarTexto("portadaArriba", v)
+                actualizar { it.copy(extra = it.extra.copy(portada = v)) }
+                // Con la PS5 arriba, abajo va el selector de íconos (se puede cambiar después en «Vista de juegos»).
+                if (v == "ps5" && estado.value.vista != "iconos") { almacen.guardarTexto("vista", "iconos"); actualizar { it.copy(vista = "iconos") } }
+            }
             lista += Opcion(
                 "Logo de la consola en las cajas", if (e.extra.bandaCaja) "Sí" else "No", Icono.PORTADA,
                 "Una franja arriba del frente con el logo de la consola, como en las cajas de PS2 o Switch. Usa el logo que elijas para la consola (Editar consola › Logo); si no hay, su nombre. Apágalo si tus portadas ya traen la franja.",
@@ -830,36 +835,54 @@ private fun nombreSubmenu(parte: Seccion, g: String, entera: Boolean): String = 
  * En DIPPO, hablar, los logros y los premios quedan a la vista al entrar.
  */
 internal fun Diptico.submenus(s: Seccion, partes: List<Seccion>): List<Opcion> {
-    val salida = mutableListOf<Opcion>()
-    val usados = HashSet<String>()
+    // Todas las opciones de la sección, cada una con el nombre de su grupo (para los títulos dentro de «Más»).
+    val todas = mutableListOf<Opcion>()
     for (parte in partes) {
-        val opciones = armarOpciones(parte)
         val entera = parte in PARTES_ENTERAS
-        val grupos = LinkedHashMap<String, MutableList<Opcion>>()
-        for (o in opciones) grupos.getOrPut(if (entera) "" else grupoOpcion(parte, o)) { mutableListOf() } += o
-        for ((g, lista) in grupos) {
-            // DIPPO: lo suyo (hablar, logros, premios) va directo, no escondido en un submenú.
-            if (parte == Seccion.ASISTENTE && g == "DIPPO") {
-                salida += lista.map { it.copy(grupo = null) }
-                if (lista.none { it.titulo.startsWith("Premios") }) salida += Opcion(
-                    "Premios de los logros", "Ver", Icono.TROFEO,
-                    "Los marcos, títulos y temas que regalan los logros de DIPPO. Los que ya ganaste se usan con un toque.",
-                ) { abrirGaleria("logros_dippo", 1) }
-                continue
-            }
-            var nombre = nombreSubmenu(parte, g, entera)
-            if (!usados.add(nombre)) nombre = "$nombre (${parte.titulo.lowercase()})".also { usados += it }
-            if (lista.size == 1) { salida += lista[0].copy(grupo = null); continue }
-            val sub = lista.map { it.copy(grupo = null) }
-            salida += Opcion(
-                nombre, "${sub.size} ›", sub.first().icono ?: parte.icono,
-                "Aquí están juntas: " + sub.take(5).joinToString(", ") { Idioma.t(it.titulo) } + if (sub.size > 5) " y más." else ".",
-                sub = sub,
-            ) { abrirSubOpciones(nombre) }
-        }
+        for (o in armarOpciones(parte)) todas += o.copy(grupo = nombreSubmenu(parte, if (entera) "" else grupoOpcion(parte, o), entera))
+    }
+    if (s == Seccion.G_DIPPO && todas.none { it.titulo.startsWith("Premios") }) {
+        val i = todas.indexOfFirst { it.titulo.startsWith("Logros") }
+        todas.add(if (i >= 0) i + 1 else 0, Opcion(
+            "Premios de los logros", "Ver", Icono.TROFEO,
+            "Los marcos, títulos y temas que regalan los logros de DIPPO. Los que ya ganaste se usan con un toque.", grupo = "DIPPO",
+        ) { abrirGaleria("logros_dippo", 1) })
+    }
+    // Lo más usado de la sección va a la vista (en este orden); si faltan, se completa con la primera de cada grupo.
+    val principales = mutableListOf<Opcion>()
+    for (t in PRINCIPALES[s].orEmpty()) todas.firstOrNull { it.titulo == t && it !in principales }?.let { principales += it }
+    for (o in todas) {
+        if (principales.size >= MAX_PRINCIPALES) break
+        if (o !in principales && principales.none { it.grupo == o.grupo }) principales += o
+    }
+    val resto = todas.filter { it !in principales }
+    val salida = principales.map { it.copy(grupo = null) }.toMutableList()
+    if (resto.isNotEmpty()) {
+        val nombre = "Más de ${s.titulo.lowercase()}"
+        val grupos = resto.mapNotNull { it.grupo }.distinct()
+        salida += Opcion(
+            nombre, "${resto.size} ›", Icono.MENU,
+            "El resto de las opciones de ${s.titulo.lowercase()}, ordenadas por tema: " + grupos.take(6).joinToString(", ") { Idioma.t(it) } + if (grupos.size > 6) "…" else ".",
+            sub = resto,
+        ) { abrirSubOpciones(nombre) }
     }
     return salida
 }
+
+/** Cuántas opciones van a la vista en cada sección (el resto, en «Más de …»). */
+private const val MAX_PRINCIPALES = 6
+
+/** Lo más usado de cada sección de Ajustes, en el orden en que se muestra. */
+private val PRINCIPALES: Map<Seccion, List<String>> = mapOf(
+    Seccion.G_ESTILO to listOf("Tienda de temas", "Modo", "Íconos de consola", "Íconos en las carpetas", "Portada de arriba", "Medidor de fluidez"),
+    Seccion.G_BIBLIOTECA to listOf("Vista de juegos", "Tamaño de los juegos", "Estilo de las carpetas", "Tono de las carpetas", "Ordenar carpetas", "Switch 2 y ports nativos"),
+    Seccion.G_WIDGETS to listOf("Acomodar el inicio", "Agregar widgets", "Elegir las apps del dock", "Barra de abajo", "Preguntar dónde quedaste", "Usar el inicio nuevo"),
+    Seccion.G_JUEGOS to listOf("Modo turbo al jugar", "Optimizar ahora"),
+    Seccion.G_DIPPO to listOf("Hablar con DIPPO", "Logros de DIPPO", "Premios de los logros", "DIPPO en el inicio", "Avisos de DIPPO en la campana", "Temperatura y consejos al jugar"),
+    Seccion.G_CONTROLES to listOf("Sticks", "Música de Díptico", "Volumen"),
+    Seccion.G_CUENTAS to listOf("Iniciar sesión con Discord", "Tu cuenta de Discord", "Mostrar «Jugando a…» en Discord", "Conectar RetroAchievements", "Clave de SteamGridDB", "ScreenScraper"),
+    Seccion.G_SISTEMA to listOf("Respaldar ahora", "Idioma", "Buscar actualizaciones", "Ver las novedades de esta versión", "Recorrido por Díptico", "Enviar informe de fluidez"),
+)
 
 
 /** Qué hace una opción y cómo se cambia: su ayuda, o una explicación armada con su valor si no tiene. */
