@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -355,14 +356,14 @@ fun VentanaJuego(e: Estado) {
                 }
                 Pistas("A" to "Elegir", "Cruceta" to "Moverte", "B" to "Volver")
             } else {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                Column(Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
                     if (tienePaso) {
                         val o = opciones.first()
                         val act = e.indice == 0
                         Row(
                             Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(18)))
                                 .then(if (act) Modifier.fondoBoton(Uva) else Modifier.background(p.fondo2.copy(alpha = 0.7f)))
-                                .clickable { Diptico.elegirIndice(0) }.padding(horizontal = esc.d(14), vertical = esc.d(12)),
+                                .clickable { Diptico.elegirIndice(0) }.padding(horizontal = esc.d(14), vertical = esc.d(8)),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             o.icono?.let { IconoDiptico(it, if (act) SobreUva else p.tinta, 26f, acento = if (act) SobreUva else Coral) }
@@ -379,7 +380,7 @@ fun VentanaJuego(e: Estado) {
                             par.forEachIndexed { k, o ->
                                 val i = primerGrupo + f * 2 + k
                                 Column(
-                                    Modifier.weight(1f).height(esc.d(78)).clip(RoundedCornerShape(esc.d(18)))
+                                    Modifier.weight(1f).height(esc.d(58)).clip(RoundedCornerShape(esc.d(16)))
                                         .then(if (e.indice == i) Modifier.fondoBoton(Uva) else Modifier.background(p.fondo2.copy(alpha = 0.7f)))
                                         .clickable { Diptico.elegirIndice(i) }.padding(esc.d(10)),
                                     verticalArrangement = Arrangement.Center,
@@ -397,10 +398,10 @@ fun VentanaJuego(e: Estado) {
                             if (par.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
-                    Box(Modifier.fillMaxWidth().height(esc.d(36)).padding(horizontal = esc.d(4))) {
-                        opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 12f, lineas = 2) }
+                    if (tieneMover) TarjetaOpcion(opciones.last(), e.indice == opciones.lastIndex, alto = 40f) { Diptico.elegirIndice(opciones.lastIndex) }
+                    Box(Modifier.fillMaxWidth().height(esc.d(32)).padding(horizontal = esc.d(4))) {
+                        opciones.getOrNull(e.indice)?.ayuda?.takeIf { it.isNotBlank() }?.let { Detalle(it, 11.5f, lineas = 2) }
                     }
-                    if (tieneMover) TarjetaOpcion(opciones.last(), e.indice == opciones.lastIndex, alto = 44f) { Diptico.elegirIndice(opciones.lastIndex) }
                 }
                 Spacer(Modifier.height(esc.d(6)))
                 Pistas("A" to "Elegir", "Cruceta" to "Moverte", "B" to "Cerrar")

@@ -305,7 +305,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             }
             // Tamaño y lugar de la caja y del logo (como en iiSU): pastillas chicas abajo a la derecha.
             if (ps5) Row(
-                Modifier.align(Alignment.TopEnd).padding(end = esc.d(22), top = esc.d(80)),
+                Modifier.align(Alignment.TopCenter).padding(top = esc.d(20)),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
             ) {
                 PastillaAjuste("Tamaño −") { Diptico.cambiarCajaTam(-0.1f) }
