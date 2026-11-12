@@ -306,10 +306,11 @@ fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabaj
         // Con tu foto grande al final, todo se centra con ella; sin foto, como siempre (arriba).
         verticalAlignment = if (perfil) Alignment.CenterVertically else Alignment.Top,
     ) {
-        Box(Modifier.padding(top = esc.d(if (perfil) 0 else 4))) { Logo(15f) }
+        // Con tu foto a la derecha: la hora y la batería arriba y el logo debajo, en una columna (como en la vitrina de cajas).
+        if (perfil) Column(verticalArrangement = Arrangement.spacedBy(esc.d(6))) { RelojBateria(); Logo(15f) }
+        else Box(Modifier.padding(top = esc.d(4))) { Logo(15f) }
         Spacer(Modifier.width(esc.d(14)))
         PildoraTrabajos(trabajos)
-        if (perfil) { Spacer(Modifier.width(esc.d(10))); RelojBateria() }
         Spacer(Modifier.weight(1f))
         extra()
         Campana()

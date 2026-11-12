@@ -123,16 +123,16 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
                 PreviaAjuste(e, e.seccion, o, Modifier.width(esc.d(220)).fillMaxHeight().padding(start = esc.d(4), end = esc.d(12), top = esc.d(14), bottom = esc.d(14)))
             }
         }
-        // Menú desplegable de una opción con varias alternativas, encima de todo el menú.
-        androidx.compose.animation.AnimatedVisibility(
-            visible = e.extra.desplegable >= 0 && e.enOpciones,
-            enter = entradaFlotante(mov), exit = salidaFlotante(mov),
-        ) { VentanaDesplegable(e) }
         // Ajustes condensados: «Más opciones…» se abre en una ventana encima del menú.
         androidx.compose.animation.AnimatedVisibility(
             visible = e.extra.subOpcion >= 0 && e.enOpciones,
             enter = entradaFlotante(mov), exit = salidaFlotante(mov),
         ) { VentanaSubOpciones(e) }
+        // Menú desplegable de una opción con varias alternativas, encima de todo (también del submenú).
+        androidx.compose.animation.AnimatedVisibility(
+            visible = e.extra.desplegable >= 0 && e.enOpciones,
+            enter = entradaFlotante(mov), exit = salidaFlotante(mov),
+        ) { VentanaDesplegable(e) }
     }
 }
 
@@ -184,7 +184,7 @@ private fun VentanaSubOpciones(e: Estado) {
 private fun VentanaDesplegable(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val o = Diptico.opcionesSeccion(e.seccion).getOrNull(e.extra.desplegable) ?: return
+    val o = Diptico.opcionDesplegada(e) ?: return
     val nombres = o.alternativas ?: return
     val color = colorSeccion(e.seccion)
     val lista = rememberLazyListState()
@@ -225,9 +225,9 @@ private fun VentanaDesplegable(e: Estado) {
                     ) {
                         o.muestrasIconos?.getOrNull(i)?.let { estilo ->
                             // Una muestra del estilo: tres consolas dibujadas con él.
-                            androidx.compose.runtime.CompositionLocalProvider(LocalIconos provides IconosCfg(estilo, emptyMap(), e.iconosVersion)) {
+                            androidx.compose.runtime.CompositionLocalProvider(LocalIconos provides IconosCfg(if (estilo == "igual") e.estiloIconos else estilo, emptyMap(), e.iconosVersion)) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
-                                    listOf("snes", "psx", "gba").forEach { id -> IconoConsola(cl.nikalbazu.diptico.data.Consolas.porId(id), 22f, LocalPaleta.current.fondo2) }
+                                    listOf("snes", "switch", "gba").forEach { id -> IconoConsola(cl.nikalbazu.diptico.data.Consolas.porId(id), 22f, LocalPaleta.current.fondo2) }
                                 }
                             }
                             Spacer(Modifier.width(esc.d(12)))

@@ -395,6 +395,8 @@ data class EstadoExtra(
     val dippoAvisos: Boolean = true,
     /** Tono del dibujo de las carpetas: "auto" (según el tema), "oscuro" o "claro". */
     val carpetasTono: String = "auto",
+    /** Estilo de íconos solo para las carpetas de consolas ("igual" = el mismo que el resto). */
+    val iconosCarpetas: String = "igual",
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
     val dippoColor: String = "hora",
     /** Cuando le hablas a DIPPO, te responde en voz alta. */
@@ -1012,6 +1014,7 @@ object Diptico {
                 termica = almacen.bool("termica", true),
                 dippoAvisos = almacen.bool("dippoAvisos", true),
                 carpetasTono = almacen.texto("carpetasTono", "auto"),
+                iconosCarpetas = almacen.texto("iconosCarpetas", "igual"),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
                 cargaJuego = almacen.bool("cargaJuego", true),
@@ -2730,7 +2733,9 @@ object Diptico {
 
     /** Abre la lista de alternativas de la opción [i] del menú, con la puesta ahora marcada. */
     fun abrirDesplegable(i: Int, elegida: Int) {
-        actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0)), indice = i) }
+        // Dentro de un submenú, [i] es la opción de la ventana (no la de la lista de la sección).
+        if (estado.value.extra.subOpcion >= 0) actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0), subSel = i)) }
+        else actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0)), indice = i) }
         Sonidos.abrir()
     }
 
@@ -2741,7 +2746,7 @@ object Diptico {
     /** Pone la alternativa [n] de la opción abierta y cierra la lista. */
     fun elegirDesplegable(n: Int) {
         val e = estado.value
-        val o = opcionesSeccion(e.seccion).getOrNull(e.desplegable)
+        val o = opcionDesplegada(e)
         actualizar { it.copy(extra = it.extra.copy(desplegable = -1)) }
         if (o?.elegir != null && n in o.alternativas.orEmpty().indices) o.elegir.invoke(n)
     }
@@ -2783,8 +2788,8 @@ object Diptico {
             Panel.MENU -> if (!e.enOpciones) columnaMenu(true) else {
                 val o = opcionesSeccion(e.seccion).getOrNull(e.indice)
                 when {
-                    e.extra.subOpcion >= 0 -> usarSubOpcion()
                     e.desplegable >= 0 -> elegirDesplegable(e.desplegableSel)
+                    e.extra.subOpcion >= 0 -> usarSubOpcion()
                     o?.alternativas != null && o.elegir != null -> abrirDesplegable(e.indice, o.elegida)
                     else -> o?.accion?.let { desdeMenu(it) }
                 }
@@ -2818,8 +2823,8 @@ object Diptico {
         val e = estado.value
         when {
             !e.configurado && e.panel == Panel.NINGUNO -> pasoAnterior()
-            e.panel == Panel.MENU && e.extra.subOpcion >= 0 -> cerrarSubOpciones()
             e.panel == Panel.MENU && e.desplegable >= 0 -> cerrarDesplegable()
+            e.panel == Panel.MENU && e.extra.subOpcion >= 0 -> cerrarSubOpciones()
             // Una sección avanzada abierta desde «Más ajustes»: B vuelve ahí, con esa sección marcada.
             e.panel == Panel.MENU && e.enOpciones && e.seccion !in seccionesMenu() -> {
                 val i = opcionesMas(e).indexOfFirst { it.titulo == e.seccion.titulo }.coerceAtLeast(0)
@@ -3141,13 +3146,24 @@ object Diptico {
             estilosIconos().let { l ->
                 opcionLista(
                     "Íconos de consola", Icono.EMULADOR,
-                    "Estilos de Díptico (formatos, insignias, contornos, píxeles o siglas: todas las consolas con la misma línea), o paquetes de RetroArch (se descargan una vez). Para una sola consola: Menú › Tus consolas.",
+                    "Los íconos de la fila de consolas, del carrusel de sistemas y de la pantalla de arriba. Estilos de Díptico (formatos, insignias, contornos, píxeles o siglas) o paquetes de RetroArch (se descargan una vez). Las carpetas pueden llevar otro estilo: «Íconos en las carpetas».",
                     l, l.map(::nombreEstiloIconos), e.estiloIconos,
                 ) { s ->
                     almacen.guardarTexto("estiloIconos", s)
                     actualizar { it.copy(estiloIconos = s) }
                     bajarIconosFaltantes()
                 }.copy(muestrasIconos = l)
+            },
+            estilosIconos().let { l ->
+                opcionLista(
+                    "Íconos en las carpetas", Icono.CARPETA,
+                    "El dibujo que va dentro de las carpetas de tus consolas. «Igual que arriba» usa el mismo estilo que «Íconos de consola»; o elige otro solo para las carpetas.",
+                    listOf("igual") + l, listOf("Igual que arriba") + l.map(::nombreEstiloIconos), e.extra.iconosCarpetas,
+                ) { s ->
+                    almacen.guardarTexto("iconosCarpetas", s)
+                    actualizar { it.copy(extra = it.extra.copy(iconosCarpetas = s)) }
+                    bajarIconosFaltantes()
+                }.copy(muestrasIconos = listOf("igual") + l)
             },
         )
         if (c != null) {
@@ -3169,7 +3185,13 @@ object Diptico {
     /** Si el estilo es un paquete de RetroArch, baja los íconos que falten de tus consolas. */
     internal fun bajarIconosFaltantes() {
         val e = estado.value
-        val paquete = Descargas.PAQUETES.firstOrNull { it.id == e.estiloIconos } ?: return
+        bajarIconosDe(e.estiloIconos)
+        if (e.extra.iconosCarpetas != e.estiloIconos) bajarIconosDe(e.extra.iconosCarpetas)
+    }
+
+    private fun bajarIconosDe(estilo: String) {
+        val e = estado.value
+        val paquete = Descargas.PAQUETES.firstOrNull { it.id == estilo } ?: return
         val consolas = e.consolasConJuegos.ifEmpty { Consolas.todas.take(24) }
             .filter { !Descargas.archivoIcono(app, paquete.id, it.id).exists() }
         if (consolas.isEmpty()) return

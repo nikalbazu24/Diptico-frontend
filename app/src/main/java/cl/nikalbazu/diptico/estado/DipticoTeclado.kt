@@ -357,13 +357,13 @@ fun Diptico.moverIndice(delta: Int) {
 
 internal fun Diptico.moverIndiceSolo(delta: Int) {
     val e = estado.value
-    subOpciones(e)?.let { sub ->
-        if (sub.isNotEmpty()) actualizar { it.copy(extra = it.extra.copy(subSel = (it.extra.subSel + delta).coerceIn(0, sub.size - 1))) }
+    if (e.panel == Panel.MENU && e.desplegable >= 0) {
+        val total = opcionDesplegada(e)?.alternativas?.size ?: 0
+        if (total > 0) actualizar { it.copy(extra = it.extra.copy(desplegableSel = (it.desplegableSel + delta).coerceIn(0, total - 1))) }
         return
     }
-    if (e.panel == Panel.MENU && e.desplegable >= 0) {
-        val total = opcionesSeccion(e.seccion).getOrNull(e.desplegable)?.alternativas?.size ?: 0
-        if (total > 0) actualizar { it.copy(extra = it.extra.copy(desplegableSel = (it.desplegableSel + delta).coerceIn(0, total - 1))) }
+    subOpciones(e)?.let { sub ->
+        if (sub.isNotEmpty()) actualizar { it.copy(extra = it.extra.copy(subSel = (it.extra.subSel + delta).coerceIn(0, sub.size - 1))) }
         return
     }
     if (!e.configurado && e.panel == Panel.NINGUNO) {

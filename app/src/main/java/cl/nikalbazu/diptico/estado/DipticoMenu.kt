@@ -234,6 +234,8 @@ fun Diptico.usarSubOpcion(i: Int = estado.value.extra.subSel, menos: Boolean = f
     val e = estado.value
     val o = subOpciones(e)?.getOrNull(i) ?: return
     if (i != e.extra.subSel) actualizar { it.copy(extra = it.extra.copy(subSel = i)) }
+    // Una opción con lista (íconos, vistas…) abre su menú desplegable también dentro del submenú, en vez de pasar a la siguiente.
+    if (!menos && o.alternativas != null && o.elegir != null) { abrirDesplegable(i, o.elegida); return }
     if (menos) (o.menos ?: return)() else desdeMenu(o.accion)
     if (estado.value.panel != Panel.MENU) actualizar { it.copy(extra = it.extra.copy(subOpcion = -1, subSel = 0)) }
 }
@@ -865,3 +867,9 @@ fun explicacion(o: Opcion): String = o.ayuda.ifBlank {
         else -> "Con A la usas. En la vista previa ves qué cambia."
     }
 }
+
+
+/** La opción cuyo menú desplegable está abierto: la del submenú si hay uno abierto, si no la de la sección. */
+fun Diptico.opcionDesplegada(e: Estado): Opcion? =
+    if (e.extra.desplegable < 0) null
+    else subOpciones(e)?.getOrNull(e.extra.desplegable) ?: opcionesSeccion(e.seccion).getOrNull(e.extra.desplegable)

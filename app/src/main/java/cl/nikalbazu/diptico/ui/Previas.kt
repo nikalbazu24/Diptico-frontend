@@ -124,6 +124,7 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                 Seccion.DECORACIONES -> Marco { PreviaTema(Estilo.tema, e.oscuro) }
                 Seccion.APARIENCIA -> when {
                     t.startsWith("Efecto") || t == "Modo" -> Marco { PreviaBotonesGrande(e) }
+                    t.contains("carpetas", true) -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(vistaConsolas = "carpetas", enSistemas = true), 1) }
                     t.contains("cono") -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(vistaConsolas = "arriba"), 1) }
                     else -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
                 }
@@ -134,13 +135,21 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                         MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaInicio(ev.copy(inicio = "widgets")) }
                     else -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
                 }
-                Seccion.ESTANTE, Seccion.PORTADAS -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev, 1) }
+                // Cada opción de la biblioteca muestra lo que cambia: las carpetas, la portada de arriba o tus juegos abajo.
+                Seccion.ESTANTE -> when {
+                    t.contains("carpeta", true) || t.contains("cono", true) -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(vistaConsolas = "carpetas", enSistemas = true), 1) }
+                    t.contains("consolas", true) -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(enSistemas = true), 1) }
+                    t.contains("arriba", true) || t.contains("Portada", true) || t.contains("Caja", true) || t.contains("artes", true) -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
+                    else -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PantallaInferior(ev.copy(enSistemas = false), 1) }
+                }
+                Seccion.PORTADAS -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
                 Seccion.MUSICA -> Marco { PreviaMusica(e) }
                 Seccion.CONSOLAS -> {
                     val c = Consolas.todas.firstOrNull { it.bonito == t }
                     MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { VistaSistema(ev.copy(consolaSel = c?.id ?: ev.consolaSel)) }
                 }
                 Seccion.ASISTENTE -> when {
+                    t.startsWith("Logros") || t.startsWith("Premios") || t.startsWith("Trucos") || t.startsWith("Avisos") -> Marco { PreviaDippo(e) }
                     t == "DIPPO en el inicio" || t == "Saludo e ideas al llegar" || t == "Colores de DIPPO" || t == "Responder con voz" -> Marco { PreviaDippo(e) }
                     t == "IA de DIPPO" -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA(Diptico.motorEfectivo(e).let { if (it == "ninguno") "auto" else it }) } }
                     t.startsWith("Clave de") -> {
@@ -150,7 +159,12 @@ fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifie
                     t == "IA en tu consola" || t.contains("modelo") -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { Box(Modifier.fillMaxSize().padding(esc.d(24)), contentAlignment = Alignment.Center) { ExplicaIA("local") } }
                     else -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PanelAsistente(ev.copy(panel = Panel.ASISTENTE)) }
                 }
-                Seccion.LOGROS -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PanelEstadisticas(ev) }
+                Seccion.LOGROS -> when {
+                    t.contains("Discord", true) || t.contains("canal", true) || t.contains("webhook", true) || t.contains("amigos", true) -> Marco { PreviaPerfil(e) }
+                    t.contains("Retro", true) || t.contains("logro", true) || t.startsWith("RA") -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PanelEstadisticas(ev) }
+                    // Claves y fuentes de imágenes: lo que traen se ve en la portada de arriba.
+                    else -> MiniPantalla(ARRIBA_AN, ARRIBA_AL, Modifier.fillMaxSize()) { PantallaSuperior(ev) }
+                }
                 Seccion.BIBLIOTECA -> MiniPantalla(ABAJO_AN, ABAJO_AL, Modifier.fillMaxSize()) { PanelCarpetas(ev.copy(panel = Panel.CARPETAS)) }
                 Seccion.EMULADORES -> Marco { PreviaEmulador(t, o?.valor.orEmpty()) }
                 Seccion.PANTALLAS -> PreviaThor(ev, t)
