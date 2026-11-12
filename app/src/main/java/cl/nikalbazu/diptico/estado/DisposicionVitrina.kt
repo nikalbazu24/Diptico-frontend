@@ -65,17 +65,25 @@ fun Diptico.abrirEditorVitrina(clave: String = estado.value.seleccionado?.clave.
 }
 
 private fun Diptico.cambiarEdicion(f: (EdicionVitrina) -> EdicionVitrina) {
-    actualizar { s -> s.extra.edicionVitrina?.let { s.copy(extra = s.extra.copy(edicionVitrina = f(it))) } ?: s }
+    actualizar { s: Estado ->
+        val actual = s.extra.edicionVitrina
+        if (actual == null) s else s.copy(extra = s.extra.copy(edicionVitrina = f(actual)))
+    }
 }
 
-fun Diptico.elegirPiezaVitrina(k: Int) = cambiarEdicion { it.copy(sel = ((k % 3) + 3) % 3) }
-fun Diptico.siguientePiezaVitrina(d: Int) = cambiarEdicion { it.copy(sel = ((it.sel + d) % 3 + 3) % 3) }
+fun Diptico.elegirPiezaVitrina(k: Int) {
+    cambiarEdicion { ed: EdicionVitrina -> ed.copy(sel = ((k % 3) + 3) % 3) }
+}
+
+fun Diptico.siguientePiezaVitrina(d: Int) {
+    cambiarEdicion { ed: EdicionVitrina -> ed.copy(sel = ((ed.sel + d) % 3 + 3) % 3) }
+}
 
 /** Toca una celda: la pieza elegida va ahí. */
-fun Diptico.ponerPiezaVitrina(c: Int, f: Int) = cambiarEdicion { ed ->
+fun Diptico.ponerPiezaVitrina(c: Int, f: Int) { cambiarEdicion { ed: EdicionVitrina ->
     val p = ed.disp.pieza(ed.sel)
     ed.copy(disp = ed.disp.con(ed.sel, p.copy(c = c.coerceIn(0, Disposicion.COLUMNAS - 1), f = f.coerceIn(0, Disposicion.FILAS - 1))))
-}
+} }
 
 /** Cruceta: corre la pieza elegida una celda. */
 fun Diptico.moverPiezaVitrina(dc: Int, df: Int) {
@@ -84,16 +92,16 @@ fun Diptico.moverPiezaVitrina(dc: Int, df: Int) {
     ponerPiezaVitrina(p.c + dc, p.f + df)
 }
 
-fun Diptico.tamPiezaVitrina(d: Float) = cambiarEdicion { ed ->
+fun Diptico.tamPiezaVitrina(d: Float) { cambiarEdicion { ed: EdicionVitrina ->
     val p = ed.disp.pieza(ed.sel)
     val t = (Math.round((p.t + d) * 10f) / 10f).coerceIn(Disposicion.minimo(ed.sel), Disposicion.maximo(ed.sel))
     ed.copy(disp = ed.disp.con(ed.sel, p.copy(t = t)))
-}
+} }
 
-fun Diptico.alternarCajaVitrina() = cambiarEdicion { it.copy(disp = it.disp.copy(conCaja = !it.disp.conCaja)) }
-fun Diptico.alternarDifuminadoVitrina() = cambiarEdicion { it.copy(disp = it.disp.copy(difuminado = !it.disp.difuminado)) }
-fun Diptico.volverDisposicionOriginal() = cambiarEdicion { it.copy(disp = it.original) }
-fun Diptico.disposicionDeFabrica() = cambiarEdicion { it.copy(disp = Disposicion()) }
+fun Diptico.alternarCajaVitrina() { cambiarEdicion { ed: EdicionVitrina -> ed.copy(disp = ed.disp.copy(conCaja = !ed.disp.conCaja)) } }
+fun Diptico.alternarDifuminadoVitrina() { cambiarEdicion { ed: EdicionVitrina -> ed.copy(disp = ed.disp.copy(difuminado = !ed.disp.difuminado)) } }
+fun Diptico.volverDisposicionOriginal() { cambiarEdicion { ed: EdicionVitrina -> ed.copy(disp = ed.original) } }
+fun Diptico.disposicionDeFabrica() { cambiarEdicion { ed: EdicionVitrina -> ed.copy(disp = Disposicion()) } }
 
 /** «Listo»: guarda lo de este juego y cierra el editor. */
 fun Diptico.guardarEditorVitrina() {

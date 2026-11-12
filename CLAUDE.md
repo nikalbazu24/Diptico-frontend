@@ -569,4 +569,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Versión 2.0-67 (12 nov, tarde, Sonnet): ventana de la carpeta abierta (`ui/VentanaCarpeta.kt`) de vidrio si `carpetasTono == "vidrio"` y por encima de la barra
   (`padding(bottom = LocalAireAbajo)` y `LocalAireAbajo = 0` dentro); `extra.fondoDifuminado` (clave `fondoDifuminado`, opción «Fondo difuminado con la caja 3D») blur 5 dp al arte de la vitrina PS5;
   `CajasComunidad.subir` devuelve el motivo (null = ok) y `tools/reportes-drive.gs` responde `motivo`. Si dice «el script todavía no sabe recibir cajas»: Nicolás debe pegar el script y publicar versión nueva. Traducciones `extras25.tsv` (siguiente: extras26).
-- PENDIENTE (Opus, boceto primero): editor en cuadrícula para mover logo, imagen grande de fondo y caja 3D dentro de Ficha › Personalizar (apartado propio de multimedia del juego). Reemplaza las pastillas Tamaño/Mover/Logo de la vitrina.
+- Lugar en la vitrina (12 nov, Opus, boceto aprobado: lienzo 3gQvmDpvPFvqST9wMs4csH): `estado/DisposicionVitrina.kt` (`Disposicion` logo/caja/fondo
+  como `PiezaVitrina(c, f, t)` en cuadrícula 9×5 + conCaja + difuminado; almacén `vitrinaLugar`, `extra.disposiciones` por juego; borrador
+  `extra.edicionVitrina` con `original`). `ui/EditorVitrina.kt` (dos pantallas: arriba `VitrinaCajas(forzarPs5 = true)` en vivo, abajo la
+  cuadrícula; una pantalla: lado a lado). `VitrinaCajas` con `disp` usa `centrarEn(fx, fy)` para logo/info y caja, y corre/escala el fondo.
+  Pastillas Tamaño/Mover/Logo BORRADAS (cajaTam/logoTam quedan como valor por defecto). Teclas: cruceta mueve, L1/R1 pieza, L2/R2 tamaño,
+  X caja, Y difuminado, Select deshace, A/B/Start Listo. Entradas: Ficha › Personalizar (grupo «Lugar en la vitrina») y opciones › Personalizar.
+  Carpeta abierta de vidrio más opaca (.62/.84) y velo .72; globito de DIPPO oculto con carpeta abierta. Traducciones `extras26.tsv` (siguiente: extras27). Capturas t421–t423.
+- El script de Drive: Nicolás pegó la URL /exec (es la misma de build.gradle); desde la sesión no se puede probar (script.google.com bloqueado).
