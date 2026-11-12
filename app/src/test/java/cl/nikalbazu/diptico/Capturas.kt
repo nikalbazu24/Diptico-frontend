@@ -1490,6 +1490,17 @@ class Capturas {
     // Abajo: el juego elegido en el centro de lado a lado.
     @Config(qualifiers = ABAJO)
     @Test fun t395_juegos_al_centro() = foto("395_juegos_al_centro", base().copy(vista = "mosaicos", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    // Todas las vistas con el diseño nuevo (abajo) y la vista Xbox de vuelta.
+    @Config(qualifiers = ABAJO)
+    @Test fun t396_vista_xbox() = foto("396_vista_xbox", base().copy(vista = "xbox", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t397_vista_galeria() = foto("397_vista_galeria", base().copy(vista = "cuadricula", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t398_vista_lista() = foto("398_vista_lista", base().copy(vista = "lista", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t399_vista_carrusel() = foto("399_vista_carrusel", base().copy(vista = "carrusel", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    // Arriba con la vista Galería: la vitrina de cajas sigue (antes volvía el diseño viejo).
+    @Test fun t400_galeria_arriba() = foto("400_galeria_arriba", conPerfil().let { it.copy(vista = "cuadricula", extra = it.extra.copy(portada = "cajas")) }, Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)
