@@ -408,21 +408,6 @@ private fun EstanteDe(e: Estado, consola: String, alto: Float, escala: Float) {
     }
 }
 
-@Composable
-private fun Info(e: Estado) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    val j = e.seleccionado ?: return
-    val c = Consolas.porId(j.consolaId)
-    Row(Modifier.fillMaxWidth().padding(start = esc.d(18), end = esc.d(18), top = esc.d(2)), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Texto(j.titulo, 20f, lineas = 1)
-            Detalle("${c?.nombreLargo ?: ""} · ${e.indiceSel + 1} de ${e.visibles.size}", 12.5f, lineas = 1)
-        }
-        if (!esc.angosta) Pista("L1 R1", "Consola")
-    }
-}
-
 /**
  * Compañero de partida (rediseño 9 nov 2026): mientras juegas en la otra pantalla, aquí queda lo justo, agrupado.
  * Arriba una línea fina (juego, tiempo de sesión, hora); luego DIPPO con un consejo según lo que pasa, tu partida

@@ -114,25 +114,6 @@ internal fun colorMaterialCristal(p: Paleta, capa: CapaCristal): Color =
 internal fun paletaLecturaCristal(p: Paleta, nivel: Int): Paleta =
     p.copy(tenue = lerp(p.tenue, p.tinta, nivel.coerceIn(0, 100) / 100f))
 
-@Composable
-internal fun Modifier.fondoPantalla(normal: Color): Modifier {
-    if (!Estilo.glass) return background(normal)
-    val claro = LocalPaleta.current.fondo.luminance() > .5f
-    val a = Uva; val b = Coral; val c = Sol
-    return drawWithCache {
-        val w = size.width
-        val h = size.height
-        val radio = max(w, h).coerceAtLeast(1f)
-        val azul = Brush.radialGradient(listOf(a.copy(alpha = if (claro) .19f else .18f), Color.Transparent), Offset(w * .12f, h * .12f), radio * .85f)
-        val menta = Brush.radialGradient(listOf(b.copy(alpha = if (claro) .14f else .12f), Color.Transparent), Offset(w, h * .66f), radio * .64f)
-        val rosa = Brush.radialGradient(listOf(c.copy(alpha = .09f), Color.Transparent), Offset(w * .6f, h), radio * .5f)
-        onDrawBehind {
-            drawRect(normal)
-            drawRect(azul); drawRect(menta); drawRect(rosa)
-        }
-    }
-}
-
 /** Material de navegación: volumen, textura ambiental ampliada, velo y bordes ópticos. */
 @Composable
 internal fun Modifier.superficieCristal(forma: Shape, capa: CapaCristal = CapaCristal.CONTROL, tinte: Color? = null, opacidadFondo: Float = 1f): Modifier {

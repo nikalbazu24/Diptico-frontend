@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "temas-propios-2.0-56"
-    const val NOMBRE = "Temas propios"
+    const val ID = "emuladores-al-dia-2.0-58"
+    const val NOMBRE = "Emuladores al día"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -430,10 +430,20 @@ object Novedades {
             Pagina("Barra flotante de verdad", "La barra de abajo ya no ocupa espacio: tus carpetas corren por detrás y los accesos flotan sin círculos. Escondida, queda solo la píldora.", Icono.APPS, 0xFF3BA8FF),
             Pagina("DIPPO no interrumpe", "Con Ajustes o cualquier ventana abierta, DIPPO guarda sus globitos para después.", Icono.PERFIL, 0xFFFF7A59),
         )),
-        Version(ID, "Temas propios", listOf(
+        Version("temas-propios-2.0-56", "Temas propios", listOf(
             Pagina("Calendario de temas", "En Ajustes › Temas › pestaña Calendario están todas las fiestas, de la más cercana a la más lejana, y cada una es un tema completo: su fondo, su trama, sus botones y su decoración. Con «Fechas especiales» se pone sola el día que toca; o úsala cuando quieras.", Icono.MUNDO, 0xFFFFC93C),
             Pagina("Más fechas de Chile", "Se suman el Día de la Mamá, el Día del Papá, el Día del Profesor, el Día del Libro y el Día del Orgullo Friki.", Icono.ESTRELLA, 0xFFFF5D8F),
             Pagina("Temas exclusivos", "Ocho temas que no se venden ni se importan: Aurora austral, Eclipse, Turbo, Bosque profundo, Leyenda, Créditos finales, Cartógrafo y Museo de consolas. Cada uno se gana con un logro difícil de DIPPO; antes se ven con candado.", Icono.TROFEO, 0xFF8B5CF6),
+        )),
+        Version("por-que-fallo-2.0-57", "Por qué falló un juego", listOf(
+            Pagina("Si un juego no abre, DIPPO te dice por qué", "Si el emulador se cierra a los pocos segundos, Díptico no lo cuenta como partida y te muestra lo más probable: falta la BIOS, faltan las llaves de Switch, el archivo está comprimido o incompleto, o el emulador no tiene permiso para tu carpeta.", Icono.EMULADOR, 0xFFFF7A59),
+            Pagina("Probar con otro emulador", "Desde el mismo aviso, un toque prueba el juego con el siguiente emulador que tengas instalado, y queda guardado solo para ese juego.", Icono.MANDO, 0xFF23C486, "A"),
+        )),
+        Version(ID, "Emuladores al día", listOf(
+            Pagina("DIPPO revisa tus emuladores", "Una vez al día, DIPPO mira qué emuladores tienes, cuáles usas y cuánto, y busca si hay versión nueva en su página. Si hay, te avisa.", Icono.EMULADOR, 0xFF00C3E3),
+            Pagina("Actualiza desde Díptico", "En Ajustes › Juegos y emuladores › «Emuladores al día» (o en el centro de Switch 2 y ports, pestaña Emuladores): A baja la versión nueva y Android la instala encima, como Obtainium. Los ports nativos también se actualizan.", Icono.DESCARGA, 0xFF23C486, "A"),
+            Pagina("Tu perfil, en grande arriba", "Tu foto, tu nombre y tu título se ven grandes en la pantalla de arriba, como en iiSU. Tu perfil se edita desde tu tarjeta (ya no está en Ajustes) y Discord quedó en «Cuentas y conexiones».", Icono.PERFIL, 0xFFFF7A59),
+            Pagina("Los premios de los logros", "En Logros de DIPPO cada logro dice qué regala, y la pestaña Premios junta todos los marcos, títulos y temas: los ganados se usan con un toque.", Icono.TROFEO, 0xFFFFC94D),
         )),
     )
 

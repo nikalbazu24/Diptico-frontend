@@ -1385,7 +1385,7 @@ class Capturas {
         extra = conPerfil().extra.copy(carpetasPartidas = listOf("content://x/tree/saves"), medidorFps = true)), Rol.INFERIOR, mi = 1)
     @Test fun t358_alto_contraste() {
         cl.nikalbazu.diptico.ui.Estilo.contraste = true
-        try { foto("358_alto_contraste", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 1, extra = conPerfil().extra.copy(altoContraste = true)), Rol.SUPERIOR) }
+        try { foto("358_alto_contraste", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 1, extra = conPerfil().extra.copy(altoContraste = true)), Rol.SUPERIOR) }
         finally { cl.nikalbazu.diptico.ui.Estilo.contraste = false }
     }
     // ---------- Carpetas: ordenar y estilos ----------
@@ -1435,8 +1435,35 @@ class Capturas {
     @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 0), Rol.INFERIOR, mi = 1)
     @Test fun t374_tema_exclusivo_arriba() = foto("374_tema_exclusivo_aurora", base(), Rol.SUPERIOR, tema = Temas.exclusivos[0].tema)
     @Test fun t375_tema_fiesta_navidad() = foto("375_tema_fiesta_navidad", base(), Rol.SUPERIOR, tema = Temas.fiestas.first { it.id == "navidad" }.tema)
+    // Emuladores al día: DIPPO arriba con su resumen, los que tienen versión nueva primero.
+    private val emusPrueba = listOf(
+        EmuRevisado("Eden", "dev.eden.eden_emulator", "0.8.2", 0, listOf("Switch"), 41 * 3600, ultima = "v0.9.0", bytes = 98_000_000, nueva = true, notas = "Mejoras en Vulkan\nArreglos de audio"),
+        EmuRevisado("Azahar", "org.azahar_emu.azahar", "2124.1", 0, listOf("3DS"), 12 * 3600, ultima = "2124.1"),
+        EmuRevisado("DuckStation", "com.github.stenzek.duckstation", "0.1-9384", 0, listOf("PlayStation"), 3 * 3600, aviso = "Se actualiza desde Play Store"),
+    )
+    private fun conEmus(sel: Int, descarga: String? = null) = base().copy(vista = "mosaicos", extra = EstadoExtra(nativosEn = 0, nativosPestana = 2, nativosSel = sel,
+        emus = emusPrueba, emusRevisado = System.currentTimeMillis() - 3_600_000L, emusDescarga = descarga, emusAvance = 0.45f))
+    @Config(qualifiers = ABAJO)
+    @Test fun t377_emus_abajo() = foto("377_emus_abajo", conEmus(1), Rol.INFERIOR, mi = 1)
+    @Test fun t378_emus_arriba() = foto("378_emus_arriba", conEmus(0), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t379_emus_bajando() = foto("379_emus_bajando", conEmus(1, "dev.eden.eden_emulator"), Rol.INFERIOR, mi = 1)
+    // Premios de los logros de DIPPO y el perfil grande arriba.
+    @Config(qualifiers = ABAJO)
+    @Test fun t380_logros_premios() = foto("380_logros_premios", conPerfil().copy(panel = Panel.GALERIA, galeria = "logros_dippo", galeriaPestana = 1), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t381_logros_con_premio() = foto("381_logros_con_premio", conPerfil().copy(panel = Panel.GALERIA, galeria = "logros_dippo", galeriaPestana = 0, indice = 4), Rol.INFERIOR, mi = 1)
+    @Test fun t382_perfil_arriba() = foto("382_perfil_arriba", conPerfil(), Rol.SUPERIOR)
+    @Test fun t383_perfil_arriba_cajas() = foto("383_perfil_arriba_cajas", conPerfil().let { it.copy(extra = it.extra.copy(portada = "cajas")) }, Rol.SUPERIOR)
+    // Por qué falló un juego: el emulador se cerró enseguida y Díptico explica lo más probable.
+    @Config(qualifiers = ABAJO)
+    @Test fun t376_cierre_rapido() = foto("376_cierre_rapido", base().copy(dialogo = Dialogo("cierre-rapido", "Leyenda del Bosque se cerró enseguida",
+        "Se abrió con DuckStation y volvió a Díptico a los 6 s. Lo más probable:", Icono.EMULADOR,
+        lineas = listOf("PlayStation: los emuladores como DuckStation piden la BIOS (por ejemplo scph5501.bin) en su carpeta de BIOS.",
+            "El emulador no tiene permiso para leer la carpeta de juegos: ábrelo y elige la carpeta dentro de él."),
+        si = "Probar con otro emulador", no = "Cerrar")), Rol.INFERIOR, mi = 1)
     @Test fun t337_perfil_boton_esquina() = foto("337_perfil_boton_esquina", conPerfil(personaje = "dragon", color = 0xFFE64FA0), Rol.SUPERIOR)
-    @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_PERFIL, enOpciones = true, indice = 3), Rol.SUPERIOR)
+    @Test fun t338_perfil_ajustes() = foto("338_perfil_ajustes", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_CUENTAS, enOpciones = true, indice = 3), Rol.SUPERIOR)
     @Test fun t339_perfil_galeria_personajes() = foto("339_perfil_galeria_personajes", conPerfil(personaje = "fantasma").copy(panel = Panel.GALERIA, galeria = "personajes", indice = 4), Rol.SUPERIOR)
     @Test fun t340_perfil_personajes_grandes() {
         regla.setContent { Lienzo(true, Modifier.fillMaxSize(), 1f) { androidx.compose.foundation.layout.Column {

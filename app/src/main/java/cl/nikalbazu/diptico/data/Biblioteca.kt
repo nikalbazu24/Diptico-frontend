@@ -275,12 +275,6 @@ object Biblioteca {
         )
     }
 
-    /** Olvida lo leído de los fan games (Menú › Biblioteca › Volver a buscar juegos, manteniendo). */
-    fun olvidarFanGames(ctx: Context) {
-        cacheRpg = HashMap()
-        try { java.io.File(ctx.filesDir, "rpgmaker.json").delete() } catch (_: Exception) {}
-    }
-
     /** Lee "Title=" del Game.ini de un juego de RPG Maker. */
     private fun tituloIni(ctx: Context, uri: Uri): String? = try {
         ctx.contentResolver.openInputStream(uri)?.use { s ->

@@ -62,7 +62,8 @@ fun CentroNativos(e: Estado, rol: Rol) {
     if (!abierto && t < 0.01f) return
     val esc = LocalEscala.current
     // Las filas se arman solo al cambiar lo que muestran (no en cada cuadro de la animación).
-    val filas = remember(e.extra.nativosPestana, e.juegos, e.emuladores, e.extra.nativosEn) { Diptico.entradasNativos(e) }
+    val x = e.extra
+    val filas = remember(x.nativosPestana, e.juegos, e.emuladores, x.nativosEn, x.emus, x.emusRevisando, x.emusDescarga, x.emusAvance) { Diptico.entradasNativos(e) }
     val sel = e.extra.nativosSel.coerceIn(0, (filas.size - 1).coerceAtLeast(0))
     val dividido = !e.unaPantalla && e.dosDisponibles
     Box(Modifier.fillMaxSize().testTag("centro-nativos")) {
@@ -106,7 +107,7 @@ private fun Lista(e: Estado, filas: List<EntradaNativa>, sel: Int) {
     Column(Modifier.fillMaxSize().padding(esc.d(if (esc.angosta) 14 else 18))) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Texto("SWITCH 2 Y PORTS", 11f, color = Acento, peso = FontWeight.ExtraBold, espaciado = 1.4f, lineas = 1)
+                Texto("EMULADORES Y PORTS", 11f, color = Acento, peso = FontWeight.ExtraBold, espaciado = 1.4f, lineas = 1)
                 Texto("Juega lo nuevo", if (esc.angosta) 19f else 22f, color = Claro, peso = FontWeight.ExtraBold, lineas = 1)
             }
             Pastilla("B · Cerrar") { Diptico.cerrarNativos() }
@@ -115,8 +116,9 @@ private fun Lista(e: Estado, filas: List<EntradaNativa>, sel: Int) {
         // Pestañas: L1 / R1 (o ← →) o con el dedo.
         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8)), verticalAlignment = Alignment.CenterVertically) {
             Texto("L1", 10f, color = Suave, lineas = 1, traducir = false)
-            Pestana("Switch 2", e.extra.nativosPestana == 0) { if (e.extra.nativosPestana != 0) Diptico.pestanaNativos(-1) }
-            Pestana("Ports nativos", e.extra.nativosPestana == 1) { if (e.extra.nativosPestana != 1) Diptico.pestanaNativos(1) }
+            listOf("Switch 2", "Ports nativos", "Emuladores").forEachIndexed { n, nombre ->
+                Pestana(nombre, e.extra.nativosPestana == n) { if (e.extra.nativosPestana != n) Diptico.pestanaNativos(n - e.extra.nativosPestana) }
+            }
             Texto("R1", 10f, color = Suave, lineas = 1, traducir = false)
         }
         Spacer(Modifier.height(esc.d(10)))
@@ -157,6 +159,7 @@ private fun Fila(f: EntradaNativa, elegida: Boolean, alPulsar: () -> Unit) {
             when {
                 f.paquete != null && f.instalada -> IconoApp(f.paquete, 34f, desnudo = true)
                 f.id == "equipo" -> IconoDiptico(cl.nikalbazu.diptico.estado.Icono.CHISPA, Claro, 18f)
+                f.id == "dippo-emus" -> IconoDiptico(cl.nikalbazu.diptico.estado.Icono.BISA, Claro, 26f)
                 else -> Texto(f.titulo.take(1), 16f, color = Suave, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
             }
         }
@@ -177,7 +180,7 @@ private fun Detalle(f: EntradaNativa?, pestana: Int, grande: Boolean) {
         Modifier.fillMaxSize().padding(esc.d(if (grande) 28 else 18)),
         verticalArrangement = Arrangement.spacedBy(esc.d(if (grande) 10 else 8)),
     ) {
-        Texto(if (pestana == 0) "NINTENDO SWITCH 2" else "PORTS NATIVOS", 11f, color = Acento, peso = FontWeight.ExtraBold, espaciado = 1.4f, lineas = 1)
+        Texto(when (pestana) { 0 -> "NINTENDO SWITCH 2"; 1 -> "PORTS NATIVOS"; else -> "EMULADORES AL DÍA" }, 11f, color = Acento, peso = FontWeight.ExtraBold, espaciado = 1.4f, lineas = 1)
         if (f == null) {
             Texto("Nada que mostrar", 20f, color = Claro, lineas = 1)
             return@Column
@@ -204,8 +207,11 @@ private fun Detalle(f: EntradaNativa?, pestana: Int, grande: Boolean) {
         }
         Spacer(Modifier.weight(1f))
         if (grande) Texto(
-            if (pestana == 0) "Los juegos de Switch 2 que Banana Native convierte se abren solos como port nativo; los demás, con NovaS."
-            else "Los ports que instales aparecen solos en tu carpeta Ports.",
+            when (pestana) {
+                0 -> "Los juegos de Switch 2 que Banana Native convierte se abren solos como port nativo; los demás, con NovaS."
+                1 -> "Los ports que instales aparecen solos en tu carpeta Ports."
+                else -> "DIPPO revisa solo una vez al día y te avisa si hay algo nuevo. Android pide confirmar cada instalación."
+            },
             12f, color = Suave, lineas = 2,
         )
     }

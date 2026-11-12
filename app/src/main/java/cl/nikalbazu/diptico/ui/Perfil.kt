@@ -105,6 +105,30 @@ fun BotonPerfil(tam: Float = 26f) {
 }
 
 /**
+ * Tu perfil en grande en la pantalla de arriba, como en iiSU: tu nombre y tu título junto a una foto grande.
+ * Tocar el nombre o la foto abre tu tarjeta; la insignia de Discord abre tus amigos.
+ */
+@Composable
+fun PerfilArriba(tam: Float = 54f) {
+    val esc = LocalEscala.current
+    val pantalla = pantallaActual()
+    val nombre by remember { Diptico.estado.map { it.nombre }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.nombre)
+    val pf by remember { Diptico.estado.map { it.extra.perfil }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.extra.perfil)
+    val titulo = tituloDe(pf.titulo)
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag("perfil-arriba")) {
+        Column(
+            Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirPerfil(pantalla, 0.9f, 0.08f) }
+                .padding(horizontal = esc.d(10), vertical = esc.d(4)),
+            horizontalAlignment = Alignment.End,
+        ) {
+            Texto(nombre.ifBlank { "Tu perfil" }, 18f, peso = FontWeight.ExtraBold, sombra = true, lineas = 1, traducir = nombre.isBlank())
+            Texto(titulo.ifEmpty { "Toca para ver tu perfil" }, 11.5f, sombra = true, lineas = 1, color = LocalPaleta.current.tinta.copy(alpha = 0.75f))
+        }
+        BotonPerfil(tam)
+    }
+}
+
+/**
  * La tarjeta de tu perfil. Crece desde tu foto con un resorte suave, sobre el fondo difuminado (lo desenfoca [Raiz]),
  * y se cierra encogiéndose de vuelta hacia ella. B o tocar afuera la cierra; A abre los ajustes del perfil.
  */
@@ -328,7 +352,7 @@ private fun LogrosRATile(e: Estado, color: Color) {
     LaunchedEffect(e.usuarioRA) { if (ra == null && e.usuarioRA.isNotBlank()) Diptico.cargarPerfilRA() }
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(16))).background(Color.White.copy(alpha = 0.07f))
-            .clickable { Diptico.cerrarPerfil(); Diptico.abrirMenu(Seccion.G_PERFIL) }
+            .clickable { Diptico.cerrarPerfil(); Diptico.abrirMenu(Seccion.G_CUENTAS) }
             .padding(horizontal = esc.d(12), vertical = esc.d(5)),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
     ) {

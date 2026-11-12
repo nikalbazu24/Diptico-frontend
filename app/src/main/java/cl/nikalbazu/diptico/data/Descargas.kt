@@ -553,5 +553,4 @@ object Descargas {
         indices.clear()
     }
 
-    fun espacioUsado(ctx: Context): Long = File(ctx.filesDir, "medios").walkTopDown().filter { it.isFile }.sumOf { it.length() }
 }

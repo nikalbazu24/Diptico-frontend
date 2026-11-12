@@ -1,5 +1,12 @@
 package cl.nikalbazu.diptico.estado
 
+import cl.nikalbazu.diptico.estado.Diptico.Control
+import cl.nikalbazu.diptico.estado.Diptico.InfoBateria
+import cl.nikalbazu.diptico.estado.Diptico.ItemGaleria
+import cl.nikalbazu.diptico.estado.Diptico.LanzadorPC
+import cl.nikalbazu.diptico.estado.Diptico.OpcionBurbuja
+import cl.nikalbazu.diptico.estado.Diptico.PorBorrar
+import cl.nikalbazu.diptico.estado.Diptico.Regreso
 import cl.nikalbazu.diptico.audio.Sonidos
 import cl.nikalbazu.diptico.audio.Vibracion
 
@@ -15,8 +22,6 @@ val ESTILOS_CARPETA: List<Triple<String, String, String>> = listOf(
     Triple("abanico", "Abanico de portadas", "Tus tres juegos más jugados asomando."),
     Triple("logo", "Logo grande", "Solo el nombre de la consola, grande y sobrio."),
 )
-
-fun nombreEstiloCarpeta(id: String) = ESTILOS_CARPETA.firstOrNull { it.first == id }?.second ?: "Tarjeta"
 
 /** Modo edición de las carpetas: todas tiemblan y se pueden mover (con el dedo o con A + cruceta). */
 fun Diptico.empezarOrdenCarpetas(tomar: String? = null) {

@@ -318,20 +318,3 @@ fun LecturaAsistente(e: Estado) {
 }
 
 
-/** Acceso a DIPPO para el inicio: su cara animada y su nombre. */
-@Composable
-fun BotonBisa(modifier: Modifier = Modifier) {
-    val p = LocalPaleta.current
-    val esc = LocalEscala.current
-    Row(
-        modifier.clip(RoundedCornerShape(50)).background(p.superficie.copy(alpha = 0.9f))
-            .border(esc.d(1.5f), Uva.copy(alpha = 0.5f), RoundedCornerShape(50))
-            .clickable { Diptico.abrirAsistente() }.padding(start = esc.d(4), end = esc.d(12), top = esc.d(4), bottom = esc.d(4)),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(30).value)
-        Spacer(Modifier.width(esc.d(7)))
-        Texto("DIPPO", 14f, lineas = 1)
-    }
-}
-

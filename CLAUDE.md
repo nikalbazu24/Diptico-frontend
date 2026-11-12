@@ -431,3 +431,38 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   de las rejillas; lupa/ajustes/cajón sin círculo (ícono con sombra). Globito de DIPPO oculto con cualquier panel/ventana (`BurbujaDippoCapa(oculta=)`).
 - Rendimiento: detrás del desenfoque `LocalMovimiento` = false (la vitrina deja de mecerse), `CarpetaBiblioteca` → `CarpetaCuerpo` sin Estado,
   trama de `ArteCarpeta` con un solo `drawPoints`. Novedades `switch2-ports-2.0-55`. Capturas t366–t371.
+
+## Temas propios + Diptico.kt partido (11 nov, noche, rama `fix/temas-propios`, Opus)
+- `estado/Temas.kt`: cada fiesta es tema completo (`ESTILO_FIESTA`: trama, acabado, forma, fondo; OJO va ANTES de `fiestas` porque el objeto se
+  inicializa en orden, con `by lazy` también fallaba). Fechas nuevas: madre (2.º dom. mayo), padre (3.º dom. junio), profesor 16/10, libro 23/4,
+  friki 25/5. `Temas.calendario()` = todas con su próxima fecha. `Temas.exclusivos` (8 `TemaExclusivo(logro, tema)` ids `x_*`, logros difíciles:
+  racha14, racha30, trescientas, doscientas_h, quinientas_h, finales25, explorador50, consolas8); `todosLosTemas` suma `temasExclusivosGanados()`.
+- Galería "temas": pestañas Incluidos, Calendario, Exclusivos (candado como los marcos), Mis temas (índice 3).
+- Diptico.kt bajó de 10.090 a ~8.250 líneas: 109 funciones movidas como extensiones a `DipticoMenu.kt`, `DipticoTeclado.kt`, `DipticoImagenes.kt`,
+  `DipticoInicioPersonal.kt`, `DipticoCentro.kt` (script en la sesión: mueve solo `fun`; las propiedades quedan en el objeto). Todo lo `private`
+  del objeto pasó a `internal`. Los 60 archivos fuera de `estado` que usan Diptico importan `cl.nikalbazu.diptico.estado.*`.
+- Traducciones: `herramientas/traducir/extras16.tsv` (siguiente: extras17). Novedades `temas-propios-2.0-56`. Capturas t372–t375.
+
+## Por qué falló un juego + segunda tanda de partición (11 nov, noche, rama `fix/por-que-fallo`, Opus)
+- `estado/DiagnosticoJuego.kt`: `Diagnostico.causas(juego, consola, emulador, bytes, veces)` (BIOS por consola, llaves de Switch, .nup con
+  NovaS/Banana, formatos comprimidos, archivo de <1 KB, permiso del emulador, varias veces seguidas → otro emulador; máx. 5) y
+  `Diptico.revisarCierreRapido(clave, seg)` llamado en `cerrarSesion(preguntar = true)`: si la sesión duró < `CIERRE_RAPIDO_SEG` (20 s)
+  muestra `Dialogo("cierre-rapido")` con las causas y «Probar con otro emulador» (fija `datos.emulador` del juego al siguiente y relanza).
+  Test `DiagnosticoTest`, captura t376. Novedades `por-que-fallo-2.0-57`.
+- Diptico.kt bajó a ~5.800 líneas: diez archivos más (`DipticoTutorial`, `Paneles`, `Temas`, `Widgets`, `BurbujaWidgets`, `Respaldo`,
+  `Archivos`, `Duracion`, `Desinstalar`, `Personalizacion`). OJO: las clases anidadas de Diptico (ItemGaleria, Control, OpcionBurbuja,
+  InfoBateria, LanzadorPC, PorBorrar, Regreso) se importan como `cl.nikalbazu.diptico.estado.Diptico.X` en cada `Diptico*.kt`.
+- Propuesta a Nicolás (pendiente de su sí): próxima versión grande «Emuladores al día», actualizador tipo Obtainium sobre `Actualizador.kt`
+  (GitHub/Forgejo releases, APK arm64, PackageInstaller; firma distinta = desinstalar antes; los de Play Store solo se revisan).
+
+## Emuladores al día (11 nov, noche, rama `fix/emuladores-al-dia`, Opus)
+- `estado/EmuladoresAlDia.kt`: `FUENTES` (GitHub/Forgejo con APK; las de solo web abren su página; ports desde `Nativos.PORTS`), `EmuRevisado`,
+  `revisarEmuladores(silencioso)`, `vigilarEmuladores` (90 s tras abrir, cada 20 h, `extra.emusAuto` clave `emusAuto`, `emusRevisado`),
+  `actualizarEmulador(paquete)` (permiso de instalar → baja a cacheDir/emuladores → `mismaFirma` → `instalarApk`), `emuladorInstalado/NoInstalado`
+  (los llama `ReceptorInstalacion` con el extra "paquete"). Firma distinta = `Dialogo("firma-distinta")` (desinstalar antes).
+- Centro de Switch 2 y ports: 3.ª pestaña «Emuladores» (`PESTANAS_NATIVOS = 3`, `entradasEmuladores`, filas `dippo-emus` y `emu:<pkg>`).
+  Ajustes › Juegos y emuladores › grupo «Emuladores al día». Test `EmuladoresAlDiaTest`.
+- Premios: galería `logros_dippo` con pestañas Logros/Premios (`premiosDippo`, `premiosDeLogro` en DipticoPerfil.kt).
+- Perfil fuera de Ajustes (`G_PERFIL` quitado de `GRUPOS_AJUSTES`; Discord en `G_CUENTAS`); se edita desde la tarjeta. `PerfilArriba(tam=54)`
+  (nombre + título + foto grande, tipo iiSU) en `BarraSuperior(perfil=)` y en la vitrina de cajas; `EstadoChico(conFoto=)`.
+- 30 funciones muertas borradas. Traducciones `extras17.tsv` (siguiente: extras18). Novedades `emuladores-al-dia-2.0-58`. Capturas t377–t383.

@@ -1,5 +1,12 @@
 package cl.nikalbazu.diptico.estado
 
+import cl.nikalbazu.diptico.estado.Diptico.Control
+import cl.nikalbazu.diptico.estado.Diptico.InfoBateria
+import cl.nikalbazu.diptico.estado.Diptico.ItemGaleria
+import cl.nikalbazu.diptico.estado.Diptico.LanzadorPC
+import cl.nikalbazu.diptico.estado.Diptico.OpcionBurbuja
+import cl.nikalbazu.diptico.estado.Diptico.PorBorrar
+import cl.nikalbazu.diptico.estado.Diptico.Regreso
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -261,4 +268,48 @@ internal fun Diptico.opcionesPerfil(e: Estado): List<Opcion> {
         listOf("") + consolas.map { it.id }, listOf("La más jugada") + consolas.map { it.bonito }, pf.consolaFav, grupo = "Tu tarjeta") { id -> cambiarPerfil { it.copy(consolaFav = id) } }
     lista += Opcion("Mostrar mis horas", if (pf.mostrarHoras) "Sí" else "No", Icono.RELOJ, "Si lo apagas, tu tarjeta no muestra cuántas horas has jugado.", grupo = "Tu tarjeta") { cambiarPerfil { it.copy(mostrarHoras = !it.mostrarHoras) } }
     return lista
+}
+
+/** Lo que regala el logro [id] de DIPPO: marcos, títulos y temas exclusivos («Marco Llama», «Tema Eclipse»…). */
+fun premiosDeLogro(id: String): List<String> =
+    MARCOS.filter { it.logro == id }.map { "Marco ${it.nombre}" } +
+        TITULOS.filter { it.logro == id }.map { "Título «${it.nombre}»" } +
+        Temas.exclusivos.filter { it.logro == id }.map { "Tema ${it.tema.nombre}" }
+
+/**
+ * Pestaña «Premios» de los logros de DIPPO: todos los marcos, títulos y temas que se ganan, con candado si falta el logro.
+ * A sobre uno ganado lo usa al tiro (el marco y el título van a tu perfil; el tema se pone).
+ */
+internal fun Diptico.premiosDippo(e: Estado): List<Diptico.ItemGaleria> {
+    val hechos = idsLogrosDippo()
+    fun como(logro: String?) = LogrosDippo.LISTA.firstOrNull { it.id == logro }
+    val l = mutableListOf<Diptico.ItemGaleria>()
+    for (m in MARCOS.filter { it.logro != null }) {
+        val libre = m.logro in hechos
+        l += Diptico.ItemGaleria("marco:${m.id}", "Marco ${m.nombre}",
+            if (libre) "✓ Ganado · ${m.detalle}" else "🔒 ${como(m.logro)?.titulo}: ${como(m.logro)?.descripcion.orEmpty()}", e.extra.perfil.marco == m.id,
+            color = if (libre) 0xFFFFC94DL else 0L) {
+            if (!libre) avisar("🔒 Gana «${como(m.logro)?.titulo}» para usar este marco")
+            else { cambiarPerfil { it.copy(marco = m.id) }; avisar("Marco ${m.nombre} puesto en tu foto") }
+        }
+    }
+    for (t in TITULOS.filter { it.logro != null }) {
+        val libre = t.logro in hechos
+        l += Diptico.ItemGaleria("titulo:${t.id}", "Título «${t.nombre}»",
+            if (libre) "✓ Ganado · se ve junto a tu foto" else "🔒 ${como(t.logro)?.titulo}: ${como(t.logro)?.descripcion.orEmpty()}", e.extra.perfil.titulo == t.id,
+            color = if (libre) 0xFFFFC94DL else 0L) {
+            if (!libre) avisar("🔒 Gana «${como(t.logro)?.titulo}» para usar este título")
+            else { cambiarPerfil { it.copy(titulo = t.id) }; avisar("Título «${t.nombre}» listo") }
+        }
+    }
+    for (x in Temas.exclusivos) {
+        val libre = x.logro in hechos
+        l += Diptico.ItemGaleria("tema:${x.tema.id}", "Tema ${x.tema.nombre}",
+            if (libre) "✓ Ganado · ${x.tema.descripcion}" else "🔒 ${como(x.logro)?.titulo}: ${como(x.logro)?.descripcion.orEmpty()}", e.tema == x.tema.id, x.tema,
+            color = if (libre) 0xFFFFC94DL else 0L) {
+            if (!libre) avisar("🔒 Gana «${como(x.logro)?.titulo}» para usar este tema") else elegirTema(x.tema.id)
+        }
+    }
+    // Los ganados primero.
+    return l.sortedBy { !it.detalle.startsWith("✓") }
 }

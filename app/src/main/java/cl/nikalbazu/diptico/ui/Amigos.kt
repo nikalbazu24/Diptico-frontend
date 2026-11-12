@@ -88,31 +88,6 @@ fun MarcaDiscord(tam: Float, conectado: Boolean, modifier: Modifier = Modifier) 
 }
 
 /**
- * El botón de Discord para las barras (arriba junto a la hora, abajo en la franja). Muestra si estás conectado y
- * cuántos amigos juegan; al tocarlo se abre la ventana de amigos desde el costado de esa misma pantalla.
- */
-@Composable
-fun BotonDiscord(tam: Float = 22f) {
-    val esc = LocalEscala.current
-    val vista = LocalView.current
-    val e by Diptico.estado.collectAsState()
-    val amigos by SocialDiscord.amigos.collectAsState()
-    val conexion by SocialDiscord.conexion.collectAsState()
-    // Con el kit, el puntito verde es la conexión real; sin él, basta con la cuenta guardada.
-    val conectado = e.extra.discordUsuario.isNotBlank() && (!SocialDiscord.disponible || conexion == "listo")
-    val jugando = amigos.count { it.estado == "jugando" }
-    Row(
-        Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirAmigos(vista.display?.displayId ?: 0) }
-            .padding(horizontal = esc.d(4), vertical = esc.d(2)).testTag("boton-discord"),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(esc.d(4)),
-    ) {
-        MarcaDiscord(tam, conectado)
-        if (jugando > 0) Texto("$jugando", 11f, color = LocalPaleta.current.tinta, traducir = false, lineas = 1)
-    }
-}
-
-/**
  * La ventana de amigos: se desliza desde el costado derecho de la pantalla donde la abriste, sin tapar todo.
  * Arriba tu cuenta; luego los amigos que juegan (y a qué), los conectados y los desconectados. B o tocar afuera la cierra.
  */
@@ -214,13 +189,13 @@ private fun ContenidoAmigos(e: Estado, modifier: Modifier) {
                 }
             }
         }
-        // Al pie: tu tarjeta de perfil y todos los ajustes de Discord (ahora viven en «Mi perfil»).
+        // Al pie: tu tarjeta de perfil y todos los ajustes de Discord (viven en «Cuentas y conexiones»).
         Row(Modifier.fillMaxWidth().padding(horizontal = esc.d(10), vertical = esc.d(8)), horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
             Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.1f))
                 .clickable { Diptico.cerrarAmigos(); Diptico.abrirPerfil(android.view.Display.DEFAULT_DISPLAY, 0.5f, 0.2f) }
                 .padding(vertical = esc.d(8)), contentAlignment = Alignment.Center) { Texto("Mi perfil", 12.5f, color = Color.White, lineas = 1) }
             Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(ColorDiscord.copy(alpha = 0.55f))
-                .clickable { Diptico.cerrarAmigos(); Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.G_PERFIL) }
+                .clickable { Diptico.cerrarAmigos(); Diptico.abrirMenu(cl.nikalbazu.diptico.estado.Seccion.G_CUENTAS) }
                 .padding(vertical = esc.d(8)), contentAlignment = Alignment.Center) { Texto("Ajustes de Discord", 12.5f, color = Color.White, lineas = 1) }
         }
     }
