@@ -564,4 +564,5 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Pantalla de la caja: `extra.cajaJuego/cajaFuentes/cajaSel`, `abrirCajaJuego`, `buscarCajaPantalla` (estado de comunidad/ScreenScraper/TheGamesDB),
   `usarCajaJuego(fila)`; `ui/PantallaCaja.kt` en Raiz (caja girando + fuentes + 4 acciones; con dos pantallas, caja arriba y controles abajo). Bloque en Teclas.
 - Vitrina PS5: caja con pose girada (`POSE_INICIAL` 24°), logo ×1,35, `extra.cajaTam/cajaCorrida/logoTam` con pastillas «Caja −/+ ◀ ▶ Logo −/+».
-- Traducciones `extras24.tsv` (siguiente: extras25). Capturas t416–t420. Sin compilar/revisar aún al escribir esto.
+- Traducciones `extras24.tsv` (siguiente: extras25). Capturas t416–t420 revisadas.
+- Arreglos 12 nov (reporte de Nicolás): mosaicos sin nombre (solo en `ControlesBiblioteca`); vidrio por defecto para todos (migración `carpetasVidrio1`) y en todos los estilos, `ArteCarpeta(vidrio)` sin dibujos de esquina y con reflejo; `FotoPerfil` anima el marco siempre (antes `LocalMovimiento` lo dejaba quieto detrás del desenfoque); vitrina `POSE_INICIAL` 28° y giroX −6° como el boceto, pastillas arriba al centro.
