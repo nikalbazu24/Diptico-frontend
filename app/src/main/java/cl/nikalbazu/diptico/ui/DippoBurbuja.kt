@@ -13,6 +13,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
@@ -58,7 +59,7 @@ object DippoBurbuja {
 }
 
 @Composable
-fun BurbujaDippoCapa(miPantalla: Int, oculta: Boolean = false) {
+fun BurbujaDippoCapa(miPantalla: Int, oculta: Boolean = false, tapado: Boolean = false) {
     // Con Ajustes o cualquier ventana abierta, DIPPO no habla: su globito quedaría encima de lo que estás haciendo.
     val m = DippoBurbuja.actual.takeIf { !oculta }
     val esc = LocalEscala.current
@@ -70,6 +71,16 @@ fun BurbujaDippoCapa(miPantalla: Int, oculta: Boolean = false) {
     val colaX = remember { floatArrayOf(0f) }
     val mostrado = ultimo
     Box(Modifier.fillMaxSize().testTag("burbuja-dippo")) {
+        // Si algo tapa a DIPPO (una carpeta abierta, por ejemplo), sale él mismo junto a su mensaje, en su lugar.
+        if (mostrado != null && ahi && tapado && DippoBurbuja.cabeza.width > 0f) {
+            val r = DippoBurbuja.cabeza
+            val tamDp = with(androidx.compose.ui.platform.LocalDensity.current) { r.width.toDp().value }
+            cl.nikalbazu.diptico.bisa.AvatarBisa(
+                tamDp,
+                Modifier.offset { androidx.compose.ui.unit.IntOffset(r.left.toInt(), r.top.toInt()) },
+                cara = CaraDippo.FELIZ,
+            )
+        }
         if (mostrado != null) Box(
             Modifier.layout { medible, c ->
                 val pl = medible.measure(c.copy(minWidth = 0, minHeight = 0))
