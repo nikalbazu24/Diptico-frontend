@@ -77,9 +77,8 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
     BoxWithConstraints(Modifier.fillMaxSize().testTag("vista-mosaicos")) {
         if (lista.isEmpty()) { VacioEstante(e); return@BoxWithConstraints }
         val hueco = esc.d(10)
-        // La barra de abajo flota encima: lo de arriba se centra en lo que queda a la vista, no en toda la pantalla.
-        val aire = LocalAireAbajo.current
-        val alto = maxHeight - aire - esc.d(24)
+        // La zona ya descuenta la barra de abajo (padding en VistaJuegos): maxHeight es lo que queda a la vista.
+        val alto = maxHeight - esc.d(24)
         // Con poco alto (una pantalla, con la vitrina arriba) va una sola fila de mosaicos más grandes.
         // Con la vitrina de cajas arriba, abajo va una sola fila en el mismo orden que el estante: avanzar es +1, sin saltos.
         val estante = e.portadaCajas && nuevoDisenoDosPantallas(e)
@@ -93,13 +92,9 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
         LazyHorizontalGrid(
             rows = GridCells.Fixed(if (unaFila) 1 else 2), state = estado, modifier = Modifier.fillMaxSize(),
             contentPadding = run {
-                // Estante: la fila va en el medio exacto de la pantalla; solo si así taparía la barra de abajo se sube.
-                val mitad = ((maxHeight - lado) / 2).coerceAtLeast(esc.d(12))
-                if (estante && mitad >= aire) PaddingValues(start = esc.d(18), end = esc.d(18), top = mitad, bottom = mitad)
-                else {
-                    val arriba = if (estante) ((maxHeight - aire - lado) / 2).coerceAtLeast(esc.d(12)) else esc.d(12)
-                    PaddingValues(start = esc.d(18), end = esc.d(18), top = arriba, bottom = arriba + aire)
-                }
+                // La zona ya viene con el aire de la barra de abajo (VistaJuegos): aquí solo se centra la fila.
+                val arriba = if (estante) ((maxHeight - lado) / 2).coerceAtLeast(esc.d(12)) else esc.d(12)
+                PaddingValues(start = esc.d(18), end = esc.d(18), top = arriba, bottom = arriba)
             },
             horizontalArrangement = Arrangement.spacedBy(hueco), verticalArrangement = Arrangement.spacedBy(hueco),
         ) {

@@ -140,7 +140,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             }
                             else Column(Modifier.fillMaxSize()) {
                                 CabeceraSistema(e)
-                                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+                                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f).padding(bottom = aire), escalaEstante)
                             }
                         }
                         }
