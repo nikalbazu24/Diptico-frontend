@@ -566,3 +566,7 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Vitrina PS5: caja con pose girada (`POSE_INICIAL` 24°), logo ×1,35, `extra.cajaTam/cajaCorrida/logoTam` con pastillas «Caja −/+ ◀ ▶ Logo −/+».
 - Traducciones `extras24.tsv` (siguiente: extras25). Capturas t416–t420 revisadas.
 - Arreglos 12 nov (reporte de Nicolás): mosaicos sin nombre (solo en `ControlesBiblioteca`); vidrio por defecto para todos (migración `carpetasVidrio1`) y en todos los estilos, `ArteCarpeta(vidrio)` sin dibujos de esquina y con reflejo; `FotoPerfil` anima el marco siempre (antes `LocalMovimiento` lo dejaba quieto detrás del desenfoque); vitrina `POSE_INICIAL` 28° y giroX −6° como el boceto, pastillas arriba al centro.
+- Versión 2.0-67 (12 nov, tarde, Sonnet): ventana de la carpeta abierta (`ui/VentanaCarpeta.kt`) de vidrio si `carpetasTono == "vidrio"` y por encima de la barra
+  (`padding(bottom = LocalAireAbajo)` y `LocalAireAbajo = 0` dentro); `extra.fondoDifuminado` (clave `fondoDifuminado`, opción «Fondo difuminado con la caja 3D») blur 5 dp al arte de la vitrina PS5;
+  `CajasComunidad.subir` devuelve el motivo (null = ok) y `tools/reportes-drive.gs` responde `motivo`. Si dice «el script todavía no sabe recibir cajas»: Nicolás debe pegar el script y publicar versión nueva. Traducciones `extras25.tsv` (siguiente: extras26).
+- PENDIENTE (Opus, boceto primero): editor en cuadrícula para mover logo, imagen grande de fondo y caja 3D dentro de Ficha › Personalizar (apartado propio de multimedia del juego). Reemplaza las pastillas Tamaño/Mover/Logo de la vitrina.

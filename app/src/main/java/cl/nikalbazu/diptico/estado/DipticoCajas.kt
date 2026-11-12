@@ -50,8 +50,9 @@ internal fun Diptico.cajaDesdeImagen(clave: String, uri: Uri) {
             Icono.PORTADA, si = "Compartir", no = "Solo para mí",
         )) {
             scope.launch {
-                val ok = withContext(Dispatchers.IO) { CajasComunidad.subir(llave, j.titulo, consola.bonito, caras) }
-                avisar(if (ok) "¡Gracias! La caja quedó en la comunidad" else "No se pudo compartir ahora. Tu caja igual quedó guardada")
+                val motivo = withContext(Dispatchers.IO) { CajasComunidad.subir(llave, j.titulo, consola.bonito, caras) }
+                if (motivo == null) avisar("¡Gracias! La caja quedó en la comunidad")
+                else mostrarDialogo(Dialogo("caja-no-compartida", "No se pudo compartir", "$motivo.\n\nTu caja igual quedó guardada en este equipo.", Icono.INFO, si = "Entendido", no = "Cerrar")) {}
             }
         }
     }

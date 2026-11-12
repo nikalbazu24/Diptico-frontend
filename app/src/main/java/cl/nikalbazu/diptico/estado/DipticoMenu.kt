@@ -541,6 +541,15 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 if (v == "ps5" && estado.value.vista != "iconos") { almacen.guardarTexto("vista", "iconos"); actualizar { it.copy(vista = "iconos") } }
             }
             lista += Opcion(
+                "Fondo difuminado con la caja 3D", if (e.extra.fondoDifuminado) "Sí" else "No", Icono.PORTADA,
+                "Aplica un leve desenfoque al arte de fondo cuando arriba se ve la caja 3D, para que la caja destaque. Apágalo si prefieres el arte nítido.",
+                grupo = "Movimiento",
+            ) {
+                val v = !estado.value.extra.fondoDifuminado
+                almacen.guardarBool("fondoDifuminado", v)
+                actualizar { it.copy(extra = it.extra.copy(fondoDifuminado = v)) }
+            }
+            lista += Opcion(
                 "Logo de la consola en las cajas", if (e.extra.bandaCaja) "Sí" else "No", Icono.PORTADA,
                 "Una franja arriba del frente con el logo de la consola, como en las cajas de PS2 o Switch. Usa el logo que elijas para la consola (Editar consola › Logo); si no hay, su nombre. Apágalo si tus portadas ya traen la franja.",
                 grupo = "Movimiento",

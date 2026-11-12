@@ -419,6 +419,8 @@ data class EstadoExtra(
     val caras: Map<String, CarasGuardadas> = emptyMap(),
     /** Las cajas llevan arriba la franja con el logo (o el nombre) de su consola, como las cajas de verdad. */
     val bandaCaja: Boolean = true,
+    /** Con la caja 3D arriba, el arte de fondo va con un leve desenfoque (así la caja destaca). */
+    val fondoDifuminado: Boolean = true,
     /** Vitrina PS5: tamaño de la caja (0,7–1,4) y cuánto se corre a la izquierda (0–0,3 del ancho). */
     val cajaTam: Float = 1f,
     val cajaCorrida: Float = 0f,
@@ -1044,6 +1046,7 @@ object Diptico {
                 duraciones = CuantoDura.leer(almacen.texto("duraciones")),
                 caras = CarasGuardadas.leer(almacen.texto("carasCaja2")),
                 bandaCaja = almacen.bool("bandaCaja", true),
+                fondoDifuminado = almacen.bool("fondoDifuminado", true),
                 cajaTam = almacen.texto("cajaTam", "1").toFloatOrNull() ?: 1f,
                 cajaCorrida = almacen.texto("cajaCorrida", "0").toFloatOrNull() ?: 0f,
                 logoTam = almacen.texto("logoTam", "1").toFloatOrNull() ?: 1f,

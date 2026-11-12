@@ -59,9 +59,10 @@ object CajasComunidad {
         return Caras(guardar(frente, File(destino, "frente.jpg")), guardar(canto, File(destino, "lomo.jpg")), guardar(reverso, File(destino, "reverso.jpg")))
     }
 
-    /** Sube una caja a la base compartida. true = quedó guardada. */
-    fun subir(clave: String, titulo: String, consola: String, caras: Caras): Boolean {
-        if (!disponible || caras.vacia) return false
+    /** Sube una caja a la base compartida. null = quedó guardada; si no, el motivo en palabras simples. */
+    fun subir(clave: String, titulo: String, consola: String, caras: Caras): String? {
+        if (!disponible) return "Esta versión no tiene configurado el receptor de Drive"
+        if (caras.vacia) return "La caja no tiene imágenes"
         val o = JSONObject().put("app", "diptico").put("tipo", "caja").put("id", UUID.randomUUID().toString())
             .put("clave", clave).put("titulo", titulo.take(120)).put("consola", consola.take(60))
         caras.frente?.let { o.put("frente", base64(it)) }
@@ -69,8 +70,22 @@ object CajasComunidad {
         caras.reverso?.let { o.put("reverso", base64(it)) }
         return try {
             val r = JSONObject(pedir(URL(BuildConfig.REPORTES_URL), o.toString()))
-            r.optBoolean("ok")
-        } catch (_: Exception) { false }
+            if (r.optBoolean("ok")) null
+            else when (r.optString("motivo")) {
+                "lleno" -> "Hoy ya se compartieron muchas cajas. Prueba mañana"
+                "grande" -> "Las imágenes pesan demasiado"
+                "ocupado" -> "El receptor estaba ocupado. Prueba de nuevo"
+                "clave" -> "No pude armar el nombre de la caja para este juego"
+                "" -> "El script de tu Drive todavía no sabe recibir cajas: hay que pegar la versión nueva de tools/reportes-drive.gs y publicar una versión nueva de la implementación"
+                else -> "El receptor respondió: ${r.optString("motivo")}"
+            }
+        } catch (ex: java.io.IOException) {
+            "No pude conectar con Drive (${ex.javaClass.simpleName}). Revisa internet"
+        } catch (ex: org.json.JSONException) {
+            "Drive respondió algo que no entiendo: el enlace configurado no es el del script, o pide iniciar sesión"
+        } catch (ex: Exception) {
+            "Falló al enviar: ${ex.message ?: ex.javaClass.simpleName}"
+        }
     }
 
     /** Busca la caja de un juego en la base compartida y la guarda en [destino]. null = no está (o no hay conexión). */

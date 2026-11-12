@@ -11,6 +11,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -66,13 +67,24 @@ private fun ListaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
         AnimatedVisibility(transicion, enter = fadeIn(tween(entrada)), exit = fadeOut(tween(salida))) {
             Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = .55f)).clickable { Diptico.volverASistemas() })
         }
-        AnimatedVisibility(transicion, Modifier.align(Alignment.Center),
+        // La barra de apps flota abajo: la ventana termina justo encima de ella (antes la tapaba y se perdían los nombres de la última fila).
+        val aire = LocalAireAbajo.current
+        val vidrio = e.extra.carpetasTono == "vidrio"
+        val colorConsola = remember(e.consolaSel) { cl.nikalbazu.diptico.data.Consolas.porId(e.consolaSel)?.color ?: Uva }
+        AnimatedVisibility(transicion, Modifier.align(Alignment.Center).padding(bottom = aire),
             enter = entradaCarpeta(ajusteMovimiento()), exit = salidaVentana(ajusteMovimiento())) {
             CompositionLocalProvider(LocalFondoVentanaCristal provides fondo,
-                LocalPaleta provides paletaLecturaCristal(p, e.nivelesGlass.carpetas)) {
+                LocalPaleta provides paletaLecturaCristal(p, e.nivelesGlass.carpetas),
+                LocalAireAbajo provides 0.dp) {
                 val forma = androidx.compose.foundation.shape.RoundedCornerShape(esc.d(26))
-                Column(Modifier.fillMaxWidth(.94f).fillMaxHeight(.90f).testTag("carpeta-abierta")
-                    .superficieApp(p.fondo2, forma, CapaCristal.CARPETA).sinCerrar()) {
+                // Vidrio: la ventana es translúcida y lleva el color de la consola difuminado; detrás se ve la biblioteca desenfocada.
+                val fondoVentana = if (vidrio) Modifier
+                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(
+                        colorConsola.copy(alpha = .38f), androidx.compose.ui.graphics.lerp(p.fondo, colorConsola, .12f).copy(alpha = .62f))), forma)
+                    .border(esc.d(1), androidx.compose.ui.graphics.Color.White.copy(alpha = .22f), forma)
+                else Modifier.superficieApp(p.fondo2, forma, CapaCristal.CARPETA)
+                Column(Modifier.fillMaxWidth(.94f).fillMaxHeight(.94f).testTag("carpeta-abierta")
+                    .then(fondoVentana).sinCerrar()) {
                     CabeceraSistema(e)
                     VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
                 }

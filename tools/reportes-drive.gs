@@ -4,7 +4,8 @@ const MAXIMO_DIARIO = 120;
 function doPost(e) {
   try {
     const peticion = e && e.postData;
-    if (!peticion || !peticion.contents || peticion.contents.length > 3000000) return responder(false);
+    if (!peticion || !peticion.contents) return responder(false);
+    if (peticion.contents.length > 3000000) return responder(false, undefined, "grande");
     const r = JSON.parse(peticion.contents);
     // Cajas 3D de la comunidad: van a su propia carpeta (ver guardarCaja).
     if (r && r.app === "diptico" && r.tipo === "caja") return guardarCaja(r);
@@ -40,8 +41,8 @@ function doPost(e) {
   }
 }
 
-function responder(ok, id) {
-  return ContentService.createTextOutput(JSON.stringify(ok ? { ok: true, id } : { ok: false }))
+function responder(ok, id, motivo) {
+  return ContentService.createTextOutput(JSON.stringify(ok ? { ok: true, id } : { ok: false, motivo: motivo || undefined }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -64,15 +65,15 @@ function caraValida(t) {
 }
 
 function guardarCaja(r) {
-  if (typeof r.clave !== "string" || !CLAVE_CAJA.test(r.clave) || !caraValida(r.frente) || !caraValida(r.lomo) ||
-      !caraValida(r.reverso) || !(r.frente || r.lomo || r.reverso)) return responder(false);
+  if (typeof r.clave !== "string" || !CLAVE_CAJA.test(r.clave) || !(r.frente || r.lomo || r.reverso)) return responder(false, undefined, "clave");
+  if (!caraValida(r.frente) || !caraValida(r.lomo) || !caraValida(r.reverso)) return responder(false, undefined, "grande");
   const propiedades = PropertiesService.getScriptProperties();
   const bloqueo = LockService.getScriptLock();
-  if (!bloqueo.tryLock(6000)) return responder(false);
+  if (!bloqueo.tryLock(6000)) return responder(false, undefined, "ocupado");
   try {
     const dia = new Date().toISOString().slice(0, 10);
     const cantidad = propiedades.getProperty("CAJAS_DIA") === dia ? Number(propiedades.getProperty("CAJAS_CANTIDAD")) || 0 : 0;
-    if (cantidad >= MAXIMO_CAJAS_DIARIO) return responder(false);
+    if (cantidad >= MAXIMO_CAJAS_DIARIO) return responder(false, undefined, "lleno");
     propiedades.setProperties({ CAJAS_DIA: dia, CAJAS_CANTIDAD: String(cantidad + 1) });
     const carpeta = carpetaCajas();
     const nombre = r.clave + ".json";
