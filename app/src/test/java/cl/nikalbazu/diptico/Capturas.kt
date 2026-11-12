@@ -1545,6 +1545,10 @@ class Capturas {
     @Test fun t418_pantalla_caja_abajo() = foto("418_pantalla_caja_abajo", base().copy(extra = EstadoExtra(cajaJuego = "snes/1", cajaFuentes = listOf("no", "buscando", "sin"), cajaSel = 0)), Rol.INFERIOR, mi = 1)
     @Test fun t419_pantalla_caja_arriba() = foto("419_pantalla_caja_arriba", base().copy(extra = EstadoExtra(cajaJuego = "snes/1", cajaFuentes = listOf("no", "hallada", "sin"))), Rol.SUPERIOR)
     @Test fun t420_vitrina_pose() = foto("420_vitrina_pose", base().copy(vista = "iconos", extra = EstadoExtra(portada = "ps5", cajaTam = 1.15f, logoTam = 1.2f)), Rol.SUPERIOR)
+    private val dispPrueba = Disposicion(logo = PiezaVitrina(4, 0, 0.9f), caja = PiezaVitrina(1, 2, 1.2f), fondo = PiezaVitrina(6, 3, 1.1f), conCaja = true, difuminado = true)
+    @Test fun t421_editor_vitrina_abajo() = foto("421_editor_vitrina_abajo", base().copy(vista = "iconos", juegoSel = "snes/1", extra = EstadoExtra(portada = "ps5", edicionVitrina = EdicionVitrina("snes/1", dispPrueba, Disposicion(), sel = 1))), Rol.INFERIOR, mi = 1)
+    @Test fun t422_editor_vitrina_arriba() = foto("422_editor_vitrina_arriba", base().copy(vista = "iconos", juegoSel = "snes/1", extra = EstadoExtra(portada = "ps5", edicionVitrina = EdicionVitrina("snes/1", dispPrueba, Disposicion(), sel = 1))), Rol.SUPERIOR)
+    @Test fun t423_vitrina_a_tu_gusto() = foto("423_vitrina_a_tu_gusto", base().copy(vista = "iconos", juegoSel = "snes/1", extra = EstadoExtra(portada = "ps5", disposiciones = mapOf("snes/1" to dispPrueba.copy(conCaja = false, difuminado = false)))), Rol.SUPERIOR)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)

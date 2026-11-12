@@ -513,6 +513,7 @@ object Novedades {
             Pagina("La carpeta abierta, de vidrio", "Al abrir una carpeta, la ventana con tus juegos ahora es de vidrio: translúcida, con el color de la consola y la biblioteca difuminada detrás. Se cambia en Ajustes › Biblioteca › Tono de las carpetas.", Icono.CARPETA, 0xFF3BA8FF),
             Pagina("Nombres a la vista", "La ventana de la carpeta termina justo encima de la barra de apps: ya no tapa los nombres de la última fila.", Icono.TEXTO, 0xFF8B5CF6),
             Pagina("Fondo difuminado con la caja 3D", "Arriba, el arte de fondo lleva un leve desenfoque para que la caja destaque. Se apaga en Ajustes › Pantalla y estilo › Fondo difuminado con la caja 3D.", Icono.PORTADA, 0xFFE0603A),
+            Pagina("Lugar en la vitrina", "En Personalizar de cada juego (o en sus opciones › Personalizar) hay un apartado nuevo: en una cuadrícula mueves el logo, la imagen grande y la caja 3D donde quieras, cambias su tamaño y eliges si va la caja y si el fondo va difuminado. Arriba ves cómo queda al tiro.", Icono.PALETA, 0xFFFF7A59),
             Pagina("Si una caja no se comparte, te digo por qué", "Ahora el aviso explica el motivo (internet, script de Drive sin actualizar, límite del día…) en vez de un mensaje genérico.", Icono.INFO, 0xFFFFB547),
         )),
     )

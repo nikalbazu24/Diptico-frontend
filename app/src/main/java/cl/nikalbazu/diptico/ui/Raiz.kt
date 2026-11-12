@@ -154,7 +154,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             // Abriendo un juego: la pantalla de carga tapa todo (también la barra) en las dos pantallas.
             if (e.extra.carga != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PantallaCarga(e, miPantalla, rol == Rol.UNICA)
             // La ventana de amigos de Discord, desde el costado de la pantalla donde se abrió.
-            BurbujaDippoCapa(miPantalla, oculta = e.panel != Panel.NINGUNO || encima || ventanaEncima(e) || e.extra.carga != null, tapado = e.carpetaEnVentana)
+            BurbujaDippoCapa(miPantalla, oculta = e.panel != Panel.NINGUNO || encima || ventanaEncima(e) || e.extra.carga != null || e.carpetaEnVentana, tapado = e.carpetaEnVentana)
             PanelAmigos(e, miPantalla)
             // Tu perfil: una tarjeta que crece desde tu foto, sobre el fondo difuminado.
             PanelPerfil(e, miPantalla, rol)
@@ -166,6 +166,8 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
             CentroNativos(e, rol)
             // La caja 3D de un juego: dónde se busca y cómo crearla con DIPPO.
             PantallaCaja(e, rol)
+            // Lugar en la vitrina: arriba la vitrina en vivo, abajo la cuadrícula.
+            EditorVitrina(e, rol)
             // Iniciando sesión con Discord: el QR va encima de todo (en las dos pantallas, para encontrarlo donde mires).
             if (e.extra.discordLogin != null && !(rol == Rol.INFERIOR && e.unaPantalla)) PanelDiscord(e)
             // Al encender o desbloquear la consola (o volver de un juego), la pantalla se abre desde el centro.

@@ -21,6 +21,8 @@ fun Diptico.gruposJuego(): List<Pair<Opcion, List<Opcion>>> {
     val personalizar = buildList {
         add(Opcion("Caja 3D", if (e.extra.caras[juego.clave]?.let { it.frente != null || it.reverso != null } == true) "Tiene caja" else "Con la portada", Icono.PORTADA,
             "Busca la caja original del juego. Si no está, DIPPO la arma con una foto tuya y la puedes compartir con la comunidad.") { abrirCajaJuego(juego.clave) })
+        add(Opcion("Lugar en la vitrina", if (e.extra.disposiciones.containsKey(juego.clave)) "A tu gusto ✓" else "Mover logo, imagen y caja", Icono.PALETA,
+            "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego. Arriba ves cómo queda.") { abrirEditorVitrina(juego.clave) })
         addAll(de("Imágenes").map { it.copy(titulo = "Portada de internet") })
         addAll(de("Personalizar").map { it.copy(titulo = "Título, logo y música") })
         addAll(de("Imagen en el inicio", "Cajas de", "Imagen en las cajas"))

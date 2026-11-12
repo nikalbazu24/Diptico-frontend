@@ -138,6 +138,26 @@ object Teclas {
             return true
         }
         if (e.extra.carga != null) { if (arriba && esB(code)) Diptico.cancelarCarga(); return true }
+        // Lugar en la vitrina: cruceta mueve la pieza, L1/R1 cambian de pieza, L2/R2 tamaño, X caja, Y difuminado, A/B/Start listo.
+        if (e.extra.edicionVitrina != null) {
+            if (abajo) when (code) {
+                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverPiezaVitrina(0, -1)
+                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverPiezaVitrina(0, 1)
+                KeyEvent.KEYCODE_DPAD_LEFT -> Diptico.moverPiezaVitrina(-1, 0)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> Diptico.moverPiezaVitrina(1, 0)
+                KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.siguientePiezaVitrina(-1)
+                KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.siguientePiezaVitrina(1)
+                KeyEvent.KEYCODE_BUTTON_L2 -> Diptico.tamPiezaVitrina(-0.1f)
+                KeyEvent.KEYCODE_BUTTON_R2 -> Diptico.tamPiezaVitrina(0.1f)
+            }
+            if (arriba) when {
+                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.alternarCajaVitrina()
+                esY(code) -> Diptico.alternarDifuminadoVitrina()
+                code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.volverDisposicionOriginal()
+                esA(code) || esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.guardarEditorVitrina()
+            }
+            return true
+        }
         // La caja 3D de un juego: cruceta elige, A usa, B vuelve.
         if (e.extra.cajaJuego.isNotEmpty()) {
             if (abajo) when (code) {
