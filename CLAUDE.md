@@ -473,3 +473,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Hora/batería arriba + juegos centrados (11 nov, 23:50, rama `fix/hora-centrado`, Sonnet): `RelojBateria()` (ui/Perfil.kt, píldora oscura con hora | pila | %)
   va dentro de `PerfilArriba(conReloj = true)` a la izquierda del nombre, centrada con la foto (vitrina de cajas y `BarraSuperior(perfil = true)`).
   `Mosaicos` resta `LocalAireAbajo` (la barra flotante) al alto y al centrado vertical: la fila queda al medio de lo visible. Captura t384.
+
+## Carpetas y avisos (12 nov, rama `fix/hora-centrado`, Sonnet; Novedades `hora-iconos-2.0-59`)
+- Hora/batería: `RelojBateria()` (píldora, `ui/Perfil.kt`) dentro de `PerfilArriba(conReloj = true)`. Juegos de abajo: `VistaJuegos` ya
+  descuenta la barra (`padding(bottom = aire)`), así que `Mosaicos` NO resta `LocalAireAbajo` (antes se restaba dos veces); estante centrado con `(maxHeight - lado)/2`.
+- Íconos pixel `ui/SpritesConsola.kt` (Switch, Switch 2, Gahvoria; 16×16 en texto) usados por `ConsolaPixel`.
+- Avisos de DIPPO en la campana: `Avisos.publicarDippo/retirarDippo` (clave con prefijo `dippo:`), `Diptico.avisoDippo/avisoCalor` (`estado/AvisosDippo.kt`),
+  `extra.dippoAvisos`; calor, batería baja, versión nueva de Díptico y de emuladores. Los textos dinámicos de estos avisos quedan solo en español.
+- Carpetas: `extra.carpetasTono` ("auto"/"oscuro"/"claro") → `carpetasOscuras(tono)` → `ArteCarpeta(oscuro=)`. El estilo «consola» no usa ese dibujo.
+- Arrastre de carpetas: gesto en la zona (no por carpeta) con `celdasEn` (bounds), carpeta fantasma sobre la zona y auto-scroll al acercarse al borde
+  (`RejillaCentrada(estado=)` hoisteado). Sin probar en equipo (las capturas no muestran el arrastre). Traducciones `extras18.tsv`; siguiente: extras19.
