@@ -393,6 +393,7 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
             }
         }
         Seccion.LOGROS -> {
+            lista += opcionesDiscord(e)
             lista += opcionesLogros(e).map { if (it.grupo.isNullOrBlank()) it.copy(grupo = "RetroAchievements") else it }
             lista += (listOf(Opcion(
                 "Clave de SteamGridDB", if (e.claveSgdb.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
@@ -653,6 +654,22 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
             ) { pedirCarpeta?.invoke(Carpeta.MUSICA) }
         }
         Seccion.EMULADORES -> {
+            val nuevas = e.extra.emus.count { it.nueva }
+            lista += Opcion(
+                "Emuladores al día", if (nuevas > 0) "$nuevas con versión nueva" else if (e.extra.emusRevisado > 0) "Al día" else "Revisar",
+                Icono.DESCARGA,
+                "DIPPO revisa qué emuladores tienes, cuáles usas y si hay versión nueva en su página; los baja y Android los instala encima, como Obtainium.",
+                grupo = "Emuladores al día",
+            ) { cerrarPanel(); abrirNativos(pestana = 2) }
+            lista += Opcion(
+                "Revisar cada día", if (e.extra.emusAuto) "Sí" else "No", Icono.RELOJ,
+                "Una vez al día, un rato después de abrir Díptico, DIPPO revisa solo y te avisa si hay algo nuevo.",
+                grupo = "Emuladores al día",
+            ) {
+                val v = !estado.value.extra.emusAuto
+                almacen.guardarBool("emusAuto", v)
+                actualizar { it.copy(extra = it.extra.copy(emusAuto = v)) }
+            }
             val consolas = e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.sinEmulador }.take(20) }
             for (c in consolas) {
                 lista += Opcion(

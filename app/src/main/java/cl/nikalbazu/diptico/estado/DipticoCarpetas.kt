@@ -23,8 +23,6 @@ val ESTILOS_CARPETA: List<Triple<String, String, String>> = listOf(
     Triple("logo", "Logo grande", "Solo el nombre de la consola, grande y sobrio."),
 )
 
-fun nombreEstiloCarpeta(id: String) = ESTILOS_CARPETA.firstOrNull { it.first == id }?.second ?: "Tarjeta"
-
 /** Modo edición de las carpetas: todas tiemblan y se pueden mover (con el dedo o con A + cruceta). */
 fun Diptico.empezarOrdenCarpetas(tomar: String? = null) {
     if (estado.value.consolasConJuegos.size < 2) { avisar("Necesitas al menos dos consolas para ordenarlas"); return }

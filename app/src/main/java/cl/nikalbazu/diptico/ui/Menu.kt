@@ -577,7 +577,7 @@ fun PreviaMusica(e: Estado) {
 
 /** Hora, batería y avisos en una línea chica, para los paneles de la pantalla de arriba sin barra. */
 @Composable
-fun EstadoChico() {
+fun EstadoChico(conFoto: Boolean = true) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val hora = rememberHora()
@@ -592,7 +592,7 @@ fun EstadoChico() {
             IconoDiptico(Icono.CAMPANA, Coral, 13f)
             Texto("${avisos.size}", 11f, color = p.tinta, traducir = false, lineas = 1)
         }
-        BotonPerfil(32f)
+        if (conFoto) BotonPerfil(32f)
         Texto(hora, 13f, color = p.tinta, traducir = false, lineas = 1, modifier = Modifier.clickable { Diptico.alternarReloj() })
         val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }
         Box(Modifier.size(esc.d(20), esc.d(10)).border(esc.d(1.5f), p.tinta.copy(alpha = 0.7f), RoundedCornerShape(esc.d(3))).padding(esc.d(2))) {

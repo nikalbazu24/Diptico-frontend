@@ -211,7 +211,7 @@ fun Diptico.cerrarPanel() {
         if (volverA(claveDesde.also { claveDesde = null })) return
         val s = when {
             e.textoPara.startsWith("ra_") || e.textoPara.startsWith("ras_") || e.textoPara.startsWith("discord") || e.textoPara == "sgdb" -> Seccion.LOGROS
-            e.textoPara == "nombre" || e.textoPara.startsWith("perfil_") -> Seccion.G_PERFIL
+            e.textoPara == "nombre" || e.textoPara.startsWith("perfil_") -> { actualizar { it.copy(panel = Panel.NINGUNO) }; editarPerfil(); return }
             e.textoPara.startsWith("ia") && e.seccion == Seccion.ASISTENTE -> Seccion.ASISTENTE
             e.textoPara.startsWith("ia") -> Seccion.TEMAS
             else -> Seccion.PORTADAS

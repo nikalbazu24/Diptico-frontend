@@ -70,9 +70,6 @@ internal fun salidaFlotante(m: AjusteMovimiento): ExitTransition {
     return fadeOut(tween(m.ms(130))) + scaleOut(tween(m.ms(150)), targetScale = 1f - 0.03f * m.intensidad)
 }
 
-/** Desplazamiento vertical de una fila que entra escalonada (la fila [i] de una lista). */
-internal fun retrasoEscalonado(m: AjusteMovimiento, i: Int): Int = if (!m.activo || i > 9) 0 else m.ms(28 * i)
-
 /** Una carpeta que se abre: crece desde más chica con un resorte, como si saliera de su ícono. */
 internal fun entradaCarpeta(m: AjusteMovimiento): EnterTransition {
     if (!m.activo) return EnterTransition.None

@@ -167,9 +167,7 @@ private fun Caratulas(e: Estado) {
 
         TramaTema()
         // Tu foto arriba, junto a la hora (como en la vitrina de cajas).
-        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos) {
-            if (e.sesion == null) Box(Modifier.padding(end = esc.d(10))) { BotonPerfil(30f) }
-        }
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos, perfil = e.sesion == null)
 
         AnimatedContent(
             targetState = juego,
@@ -189,36 +187,6 @@ private fun Caratulas(e: Estado) {
                 "Jugando ahora", Coral, 13f,
                 Modifier.align(Alignment.BottomEnd).padding(end = esc.d(margen), bottom = esc.d(34)),
             )
-        }
-    }
-}
-
-/** Un recordatorio pequeño y pasajero al entrar a los widgets: qué botones usar. No tapa nada ni bloquea. */
-@Composable
-fun RecordatorioWidgets(e: Estado, modifier: Modifier = Modifier) {
-    val esc = LocalEscala.current
-    val p = LocalPaleta.current
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(e.avisoInicio) {
-        if (e.avisoInicio == 0L) return@LaunchedEffect
-        visible = true
-        kotlinx.coroutines.delay(3200)
-        visible = false
-    }
-    androidx.compose.animation.AnimatedVisibility(
-        visible = visible && !e.editandoWidgets && e.panel == Panel.NINGUNO, modifier = modifier.padding(bottom = esc.d(16)),
-        enter = fadeIn(tween(300)) + androidx.compose.animation.slideInVertically(tween(360)) { it / 2 },
-        exit = fadeOut(tween(400)),
-    ) {
-        Row(
-            Modifier.clip(RoundedCornerShape(50)).background(p.fondo2.copy(alpha = 0.82f)).border(esc.d(1), p.linea, RoundedCornerShape(50))
-                .padding(horizontal = esc.d(14), vertical = esc.d(7)),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
-        ) {
-            Pista(if (e.unaPantalla) "✥" else "↑", "Moverte por los widgets")
-            Pista("Select", "Carátulas")
-            Pista("Mantén", "Acomodar")
         }
     }
 }
@@ -419,27 +387,6 @@ fun InfoJuego(e: Estado, j: Juego, tamTitulo: Float, conPaso: Boolean = true) {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun BotonJugar() {
-    val esc = LocalEscala.current
-    Row(
-        Modifier
-            .shadow(esc.d(6), RoundedCornerShape(50), spotColor = Uva)
-            .clip(RoundedCornerShape(50))
-            .fondoBoton(Uva)
-            .clickable { Diptico.jugar() }
-            .padding(start = esc.d(4), end = esc.d(14), top = esc.d(4), bottom = esc.d(4)),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Más chico que antes: así luce el logo y la imagen grande del juego.
-        Box(Modifier.size(esc.d(25)).clip(CircleShape).background(SobreUva), contentAlignment = Alignment.Center) {
-            Texto("A", 12f, color = Uva)
-        }
-        Spacer(Modifier.width(esc.d(7)))
-        Texto("¡Jugar!", 14.5f, color = SobreUva)
     }
 }
 

@@ -296,7 +296,7 @@ fun Aviso(texto: String?, modifier: Modifier, abajo: Float = 70f) {
 
 /** Logo, trabajos de fondo, hora y batería. Tocar la hora agranda el reloj. */
 @Composable
-fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabajo> = emptyList(), extra: @Composable () -> Unit = {}) {
+fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabajo> = emptyList(), perfil: Boolean = false, extra: @Composable () -> Unit = {}) {
     if (LocalBarraSistema.current) return
     val esc = LocalEscala.current
     val hora = rememberHora()
@@ -321,6 +321,8 @@ fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabaj
                 Texto("$bat%", 15f, sombra = true)
             }
         }
+        // Tu perfil en grande, al final de la barra (tipo iiSU).
+        if (perfil) { Spacer(Modifier.width(esc.d(8))); PerfilArriba() }
     }
 }
 
@@ -513,22 +515,6 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
         dibujo == "pixel" -> ConsolaPixel(c, c.color, fondo, modifier, tam)
         else -> IconoHardware(c, c.color, fondo, modifier, tam)
     }
-}
-
-/** El formato de la consola dibujado en píxeles grandes (estilo "Píxeles"). */
-@Composable
-fun MedioPixel(medio: Medio, color: Color, fondo: Color, modifier: Modifier = Modifier, tam: Float = 44f) {
-    val esc = LocalEscala.current
-    val img = remember(medio, color, fondo) {
-        val n = 16
-        val bmp = androidx.compose.ui.graphics.ImageBitmap(n, n)
-        androidx.compose.ui.graphics.drawscope.CanvasDrawScope().draw(
-            androidx.compose.ui.unit.Density(1f), androidx.compose.ui.unit.LayoutDirection.Ltr,
-            androidx.compose.ui.graphics.Canvas(bmp), androidx.compose.ui.geometry.Size(n.toFloat(), n.toFloat()),
-        ) { dibujarMedio(medio, color, fondo) }
-        bmp
-    }
-    Image(img, null, modifier.size(esc.d(tam)), contentScale = ContentScale.Fit, filterQuality = androidx.compose.ui.graphics.FilterQuality.None)
 }
 
 /** El formato de la consola dibujado en píxeles grandes (estilo "Píxeles"). */

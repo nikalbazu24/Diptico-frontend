@@ -390,9 +390,3 @@ fun Diptico.aceptarControl() {
 }
 
 
-/** ← en un panel de valores. */
-fun Diptico.menosEnPanel() {
-    val e = estado.value
-    if (e.panel == Panel.ESTUDIO) cambiarControl(-1)
-    if (e.panel == Panel.EDITAR_CONSOLA) opcionesEditarConsola().getOrNull(e.indice)?.let { o -> (o.menos ?: o.accion).invoke() }
-}

@@ -132,12 +132,13 @@ object Nativos {
 
 // ---------- El centro (estado y acciones) ----------
 
-/** Pestañas del centro: 0 Switch 2, 1 Ports nativos. */
-const val PESTANAS_NATIVOS = 2
+/** Pestañas del centro: 0 Switch 2, 1 Ports nativos, 2 Emuladores al día. */
+const val PESTANAS_NATIVOS = 3
 
 fun Diptico.abrirNativos(pantalla: Int = android.view.Display.DEFAULT_DISPLAY, pestana: Int = 0) {
     Lanzador.olvidar()
     actualizar { it.copy(panel = Panel.NINGUNO, extra = it.extra.copy(nativosEn = pantalla, nativosPestana = pestana.coerceIn(0, PESTANAS_NATIVOS - 1), nativosSel = 0, perfilEn = -1, amigosEn = -1, anioEn = -1)) }
+    if (pestana == 2 && estado.value.extra.emusRevisado == 0L) revisarEmuladores()
 }
 
 fun Diptico.cerrarNativos() {
@@ -148,6 +149,7 @@ fun Diptico.pestanaNativos(delta: Int) {
     val x = estado.value.extra
     val n = (x.nativosPestana + delta).mod(PESTANAS_NATIVOS)
     actualizar { it.copy(extra = it.extra.copy(nativosPestana = n, nativosSel = 0)) }
+    if (n == 2 && x.emusRevisado == 0L) revisarEmuladores()
     cl.nikalbazu.diptico.audio.Sonidos.mover()
 }
 
@@ -171,6 +173,7 @@ internal fun juegosSwitch2(e: Estado): List<Juego> = e.juegosPorConsola["switch2
 /** Las filas de la pestaña abierta. */
 fun Diptico.entradasNativos(e: Estado): List<EntradaNativa> {
     val ctx = app
+    if (e.extra.nativosPestana == 2) return entradasEmuladores(e)
     return if (e.extra.nativosPestana == 0) {
         val eq = Nativos.equipo(ctx)
         val novas = Lanzador.instalado(ctx, Nativos.NOVAS)
@@ -259,6 +262,7 @@ fun Diptico.usarNativo(i: Int = estado.value.extra.nativosSel) {
     val e = estado.value
     val f = entradasNativos(e).getOrNull(i) ?: return
     when {
+        f.id == "dippo-emus" || f.id.startsWith("emu:") -> usarEntradaEmulador(f.id)
         f.id == "equipo" -> avisar(f.ayuda)
         f.id == "novas" -> when {
             !f.instalada -> abrirWeb(Nativos.WEB_NOVAS)

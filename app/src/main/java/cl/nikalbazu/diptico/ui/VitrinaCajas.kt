@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -245,7 +247,11 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                 Texto((consola?.nombre ?: "").uppercase(), 16f, color = Color.White, peso = FontWeight.ExtraBold, espaciado = 1f, lineas = 1, traducir = false)
                 Texto("${indice + 1} de ${lista.size}", 10.5f, color = Color.White.copy(alpha = 0.6f), lineas = 1, traducir = false, espaciado = 1.2f)
             }
-            Box(Modifier.align(Alignment.TopEnd).padding(end = esc.d(22), top = esc.d(18))) { EstadoChico() }
+            // Hora y batería chicas, y tu perfil en grande (tipo iiSU).
+            Row(Modifier.align(Alignment.TopEnd).padding(end = esc.d(22), top = esc.d(14)), verticalAlignment = Alignment.CenterVertically) {
+                EstadoChico(conFoto = e.sesion != null)
+                if (e.sesion == null) { Spacer(Modifier.width(esc.d(10))); PerfilArriba() }
+            }
 
             // 4. Abajo: el nombre del juego, una línea de datos y los botones (también se tocan).
             Column(

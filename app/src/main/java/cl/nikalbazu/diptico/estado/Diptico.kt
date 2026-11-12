@@ -438,6 +438,13 @@ data class EstadoExtra(
     val nativosEn: Int = -1,
     val nativosPestana: Int = 0,
     val nativosSel: Int = 0,
+    /** Emuladores al día: lo que DIPPO revisó, si está revisando, qué se está bajando y cuánto va, y si revisa solo cada día. */
+    val emus: List<EmuRevisado> = emptyList(),
+    val emusRevisando: Boolean = false,
+    val emusRevisado: Long = 0L,
+    val emusDescarga: String? = null,
+    val emusAvance: Float = 0f,
+    val emusAuto: Boolean = true,
     val perfilOx: Float = 0.92f,
     val perfilOy: Float = 0.07f,
 )
@@ -990,6 +997,8 @@ object Diptico {
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoDatos = almacen.bool("dippoDatos", true),
                 carpetaTodos = almacen.bool("carpetaTodos2", false),
+                emusAuto = almacen.bool("emusAuto", true),
+                emusRevisado = almacen.texto("emusRevisado").toLongOrNull() ?: 0L,
                 franjaAbajo = almacen.bool("franjaAbajo", true),
                 carpetasPartidas = almacen.texto("carpetasPartidas").lines().filter { it.isNotBlank() },
                 respaldoPartidas = almacen.bool("respaldoPartidas", true),
@@ -1079,6 +1088,7 @@ object Diptico {
         vigilarReposo()
         vigilarBateria()
         vigilarTuAno()
+        vigilarEmuladores()
         vigilarActualizaciones()
         vigilarLogrosDippo()
         // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
@@ -1169,20 +1179,7 @@ object Diptico {
     fun nombreColorDippo(v: String) = when (v) { "dia" -> "Siempre de día"; "noche" -> "Siempre de noche"; else -> "Según la hora" }
 
     val FORMAS_BARRA = listOf("flotante", "completa")
-    fun nombreFormaBarra(v: String) = if (v == "completa") "Franja completa" else "Flotante"
     val COLORES_BARRA = listOf("vivos", "pastel", "neon", "tema")
-    fun nombreColoresBarra(v: String) = when (v) { "pastel" -> "Pastel"; "neon" -> "Neón"; "tema" -> "Del tema"; else -> "Vivos" }
-
-    fun fijarFormaBarra(v: String) {
-        almacen.guardarTexto("formaBarra", v)
-        actualizar { it.copy(extra = it.extra.copy(formaBarra = v)) }
-    }
-
-    fun fijarColoresBarra(v: String) {
-        almacen.guardarTexto("coloresBarra", v)
-        actualizar { it.copy(extra = it.extra.copy(coloresBarra = v)) }
-    }
-
     fun fijarEstiloBarra(arriba: Boolean, v: String) {
         almacen.guardarTexto(if (arriba) "estiloBarraArriba" else "estiloBarraAbajo", v)
         actualizar { it.copy(extra = if (arriba) it.extra.copy(estiloBarraArriba = v) else it.extra.copy(estiloBarraAbajo = v)) }
@@ -1429,11 +1426,6 @@ object Diptico {
     fun revisarInicio() {
         val v = Inicio.esPredeterminado(app)
         if (v != estado.value.esInicio) actualizar { it.copy(esInicio = v) }
-    }
-
-    internal fun verIntro() {
-        introInicio = 0L
-        actualizar { it.copy(intro = true, introVez = it.introVez + 1, panel = Panel.NINGUNO) }
     }
 
     // ---------- Carpeta y biblioteca ----------
@@ -2339,7 +2331,7 @@ object Diptico {
         "orden" -> listOf("Ordenar juegos")
         "vistas_consolas" -> listOf("Tus consolas")
         "vistas_juegos" -> listOf("Tus juegos")
-        "logros_dippo" -> listOf("Logros de DIPPO")
+        "logros_dippo" -> listOf("Logros de DIPPO", "Premios")
         "personajes" -> listOf("Personajes")
         "marcos" -> listOf("Marcos")
         "titulos" -> listOf("Títulos")
@@ -2404,9 +2396,17 @@ object Diptico {
                 else { cambiarPerfil { it.copy(titulo = t.id) }; avisar(if (t.id.isEmpty()) "Sin título" else "Título «${t.nombre}» listo"); cerrarPanel() }
             }
         }
+        if (e.galeria == "logros_dippo" && e.galeriaPestana == 1) return premiosDippo(e)
         if (e.galeria == "logros_dippo") return progresoLogrosDippo(e).map { (l, v) ->
             val hecho = l.id in hechosDippo()
-            ItemGaleria(l.id, l.titulo, if (hecho) "✓ " + l.descripcion else "${l.descripcion} · $v de ${l.meta}", hecho, color = if (hecho) 0xFFFFC94DL else 0L) {}
+            // Lo que regala cada logro (marco, título o tema), para que se sepa por qué vale la pena.
+            val premio = premiosDeLogro(l.id).joinToString(" · ")
+            val detalle = (if (hecho) "✓ " + l.descripcion else "${l.descripcion} · $v de ${l.meta}") + if (premio.isNotEmpty()) "\n🎁 $premio" else ""
+            ItemGaleria(l.id, l.titulo, detalle, hecho, color = if (hecho) 0xFFFFC94DL else 0L) {
+                if (premio.isEmpty()) avisar(l.descripcion)
+                else if (hecho) actualizar { it.copy(galeriaPestana = 1, indice = 0) }
+                else avisar("🎁 Al ganarlo: $premio")
+            }
         }
         if (e.galeria == "orden_carpetas") return listOf(
             ItemGaleria("alfabetico", "Nombre · A → Z", "Orden alfabético", false) { ordenarCarpetas(true); cerrarPanel() },
@@ -2658,12 +2658,6 @@ object Diptico {
         }
     }
 
-    fun cambiarTamLogo(factor: Float) {
-        val v = (estado.value.tamLogo * factor).coerceIn(0.6f, 1.8f)
-        actualizar { it.copy(tamLogo = v) }
-        almacen.guardarTexto("tamLogo", v.toString())
-    }
-
     /** Abre la ficha de un juego en una pestaña (0 resumen, 1 historia, 2 guías, 3 personalizar, 4 logros). */
     fun abrirFichaDe(clave: String, pestana: Int) {
         actualizar { it.copy(juegoSel = clave, consolaSel = "todo") }
@@ -2901,7 +2895,7 @@ object Diptico {
 
     /** Qué secciones de antes junta cada una de las seis nuevas. */
     val GRUPOS_AJUSTES: Map<Seccion, List<Seccion>> = linkedMapOf(
-        Seccion.G_PERFIL to listOf(Seccion.PERFIL),
+        // «Mi perfil» ya no está en Ajustes: se edita desde tu tarjeta (A sobre la foto) y Discord vive en Cuentas.
         Seccion.G_ESTILO to listOf(Seccion.APARIENCIA, Seccion.PANTALLAS),
         Seccion.G_TEMAS to listOf(Seccion.TEMAS, Seccion.DECORACIONES),
         Seccion.G_WIDGETS to listOf(Seccion.INICIO),
@@ -3027,10 +3021,6 @@ object Diptico {
 
     fun terminarTrabajo(id: String) {
         if (trabajosMapa.remove(id) != null) actualizar { it.copy(trabajos = trabajosMapa.values.toList()) }
-    }
-
-    fun abrirTrabajos() {
-        actualizar { it.copy(panel = if (it.panel == Panel.TRABAJOS) Panel.NINGUNO else Panel.TRABAJOS, indice = 0) }
     }
 
     // ---------- Reloj grande ----------
@@ -4265,12 +4255,6 @@ object Diptico {
 
     fun escucharNota(clave: String) = Notas.reproducir(app, clave)
 
-    fun borrarNota(clave: String) {
-        Notas.borrar(app, clave)
-        actualizar { it.copy(notasVoz = it.notasVoz - clave) }
-        avisar("Nota de voz borrada")
-    }
-
     internal fun leerNotasVoz(): Set<String> = try {
         val hay = java.io.File(app.filesDir, "notas").list()?.toSet() ?: emptySet()
         crudos.map { it.clave }.filter { "${it.hashCode().toUInt()}.m4a" in hay }.toSet()
@@ -4882,8 +4866,6 @@ object Diptico {
         actualizar { it.copy(galeriaConsola = consola ?: consolaParaCajas(it)) }
         abrirGaleria("cajas")
     }
-
-    fun ciclarForma(consola: String) = cambiarForma(consola) { it.copy(forma = FORMAS[(FORMAS.indexOf(it.forma) + 1).mod(FORMAS.size)]) }
 
     internal fun ciclarTamForma(consola: String) = cambiarForma(consola) {
         val l = listOf(0.8f, 1f, 1.2f)
@@ -5511,12 +5493,6 @@ object Diptico {
         actualizar { it.copy(extra = it.extra.copy(dockVisible = v)) }
     }
 
-    /** Despliega o recoge el dock de apps de la pantalla de abajo. */
-    fun abrirDock(abrir: Boolean) {
-        if (abrir && estado.value.appsFijadas.isEmpty()) { avisar("Fija tus apps en el cajón con Y y aparecerán aquí"); abrirApps(); return }
-        actualizar { it.copy(extra = it.extra.copy(dockAbierto = abrir)) }
-    }
-
     internal fun opcionesDock(e: Estado): List<Opcion> = listOf(
         Opcion(
             "Dock de apps", if (e.extra.dock) "Sí" else "No", Icono.APPS,
@@ -5721,8 +5697,6 @@ object Diptico {
         val e = estado.value
         guardarGrilla(e.gridCols, e.gridFilas, if (e.paginas >= 6) 1 else e.paginas + 1)
     }
-
-    fun elegirFondoInicio() = pedirArchivoPara("fondoInicio", "image/*")
 
     fun quitarWidget(i: Int) {
         cambiarWidget(i) { it.copy(visible = false) }

@@ -108,9 +108,11 @@ object Actualizador {
     private fun archivo(ctx: Context): File = File(ctx.cacheDir, "actualizacion").apply { mkdirs() }.let { File(it, "Diptico.apk") }
 
     /** Descarga el APK (con avance de 0 a 1). Devuelve el archivo. */
-    fun descargar(ctx: Context, v: VersionNueva, avance: (Float) -> Unit): File {
-        val destino = archivo(ctx)
-        var url = URL(v.url)
+    fun descargar(ctx: Context, v: VersionNueva, avance: (Float) -> Unit): File = descargarA(v.url, archivo(ctx), v.bytes, avance)
+
+    /** Descarga [direccion] en [destino] siguiendo redirecciones, con avance de 0 a 1 (también para los emuladores). */
+    fun descargarA(direccion: String, destino: File, bytes: Long, avance: (Float) -> Unit): File {
+        var url = URL(direccion)
         var c: HttpURLConnection
         // GitHub redirige a su servidor de archivos: se siguen las redirecciones a mano por si cambian de dominio.
         var saltos = 0
@@ -131,7 +133,7 @@ object Actualizador {
             break
         }
         try {
-            val total = c.contentLengthLong.takeIf { it > 0 } ?: v.bytes
+            val total = c.contentLengthLong.takeIf { it > 0 } ?: bytes
             c.inputStream.use { entrada ->
                 destino.outputStream().use { salida ->
                     val buf = ByteArray(64 * 1024)
@@ -163,10 +165,14 @@ object Actualizador {
     }
 
     /** Le entrega el APK a Android para instalarlo encima. Android muestra su propia ventana para confirmar. */
-    fun instalar(ctx: Context, apk: File) {
+    fun instalar(ctx: Context, apk: File) = instalarApk(ctx, apk, ctx.packageName)
+
+    /** Instala [apk] como [paquete] (Díptico o un emulador). Si Díptico lo instaló antes, Android 12+ no vuelve a preguntar. */
+    fun instalarApk(ctx: Context, apk: File, paquete: String) {
         val pi = ctx.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-        params.setAppPackageName(ctx.packageName)
+        params.setAppPackageName(paquete)
+        if (Build.VERSION.SDK_INT >= 31) params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
         val id = pi.createSession(params)
         pi.openSession(id).use { s ->
             s.openWrite("diptico", 0, apk.length()).use { salida ->
@@ -174,7 +180,7 @@ object Actualizador {
                 s.fsync(salida)
             }
             val flags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0)
-            val pend = PendingIntent.getBroadcast(ctx, id, Intent(ctx, ReceptorInstalacion::class.java), flags)
+            val pend = PendingIntent.getBroadcast(ctx, id, Intent(ctx, ReceptorInstalacion::class.java).putExtra("paquete", paquete), flags)
             s.commit(pend.intentSender)
         }
     }
@@ -248,8 +254,14 @@ class ReceptorInstalacion : BroadcastReceiver() {
                 val confirmar = if (Build.VERSION.SDK_INT >= 33) intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java) else intent.getParcelableExtra(Intent.EXTRA_INTENT)
                 confirmar?.let { try { ctx.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) {} }
             }
-            PackageInstaller.STATUS_SUCCESS -> Unit
-            else -> Diptico.instalacionFallida(intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE))
+            PackageInstaller.STATUS_SUCCESS -> intent.getStringExtra("paquete")?.takeIf { it != ctx.packageName }?.let { runCatching { Diptico.emuladorInstalado(it) } }
+            else -> {
+                val paquete = intent.getStringExtra("paquete")
+                val estado = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
+                val motivo = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+                if (paquete != null && paquete != ctx.packageName) runCatching { Diptico.emuladorNoInstalado(paquete, estado, motivo) }
+                else Diptico.instalacionFallida(motivo)
+            }
         }
     }
 }

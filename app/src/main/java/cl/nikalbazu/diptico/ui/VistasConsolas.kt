@@ -332,9 +332,7 @@ fun VistaSistema(e: Estado, completa: Boolean = true, conPistas: Boolean = true)
             IconoConsola(c, 300f, Color.Transparent)
         }
         TramaTema()
-        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 32f, trabajos = e.trabajos) {
-            if (e.sesion == null) Box(Modifier.padding(end = LocalEscala.current.d(10))) { BotonPerfil(30f) }
-        }
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = 32f, trabajos = e.trabajos, perfil = e.sesion == null)
         Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(36), end = esc.d(36)).fillMaxWidth(if (completa) 0.62f else 0.46f)) {
             Etiqueta(if (id == "todo") "Toda tu colección" else "Consola", Coral, 12f)
             Spacer(Modifier.height(esc.d(4)))

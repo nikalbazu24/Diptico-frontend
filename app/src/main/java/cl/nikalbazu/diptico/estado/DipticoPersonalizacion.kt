@@ -104,34 +104,6 @@ internal fun Diptico.aplicarPerfil(v: Experiencia) {
 }
 
 
-internal fun Diptico.plantillaVisual(nombre: String) {
-    val e = estado.value
-    val elegidos = when (nombre) {
-        "Jugar" -> setOf("juego", "reloj", "proximaPartida", "tengo20")
-        "Explorar" -> setOf("buscar", "recientes", "colaJuegos", "favoritos")
-        else -> setOf("juego", "reloj")
-    }
-    val widgets = Widgets.porDefecto.map { w -> w.copy(visible = w.tipo in elegidos) }
-    val r = Rejilla.distribuir(widgets, 6, 4, 1)
-    val plantilla = e.experiencia.copy(
-        vidrio = nombre != "Ligero", movimiento = nombre != "Ligero",
-        posiciones = r.widgets.map { PosicionVisual(it.tipo, it.x, it.y, it.an, it.al, it.pagina, it.visible) },
-        columnas = 6, filas = 4, paginas = r.paginas, inicioPerfil = "widgets",
-        vistaPerfil = if (nombre == "Ligero") "lista" else "cuadricula",
-        sistemasPerfil = if (nombre == "Explorar") "carpetas" else "arriba",
-        vistaPartida = when (nombre) {
-            "Jugar" -> VistaPartida.BITACORA.name
-            "Ligero" -> VistaPartida.LIGERA.name
-            else -> VistaPartida.CLASICA.name
-        },
-    )
-    mostrarDialogo(Dialogo("plantilla-visual", "Aplicar $nombre", "Cambia la distribución del inicio y el estilo. Conserva las personalizaciones de cada juego.",
-        Icono.PALETA, si = "Aplicar", no = "Cancelar")) {
-        almacen.guardarTexto("perfilVisualAnterior", capturarPerfil().json(local = true).toString())
-        aplicarPerfil(plantilla)
-    }
-}
-
 
 fun Diptico.recibirPerfilVisual(texto: String) {
     try {
@@ -149,12 +121,6 @@ fun Diptico.abrirColeccionVisual(id: String) {
     actualizar { it.copy(coleccionVisual = id) }
 }
 
-
-fun Diptico.fijarFicha() {
-    val e = estado.value
-    if (e.unaPantalla || e.sesion != null) return
-    actualizar { it.copy(fichaFijada = if (it.fichaFijada != null) null else it.seleccionado?.clave) }
-}
 
 
 internal fun Diptico.vigilarUniverso() {

@@ -31,14 +31,6 @@ object Notas {
 
     fun existe(ctx: Context, clave: String): Boolean = archivo(ctx, clave).let { it.exists() && it.length() > 0 }
 
-    fun duracionMs(ctx: Context, clave: String): Long = try {
-        val r = android.media.MediaMetadataRetriever()
-        r.setDataSource(archivo(ctx, clave).absolutePath)
-        val d = r.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
-        r.release()
-        d
-    } catch (_: Exception) { 0L }
-
     fun puedeGrabar(ctx: Context): Boolean =
         ctx.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
