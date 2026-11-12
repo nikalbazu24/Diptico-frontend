@@ -57,11 +57,7 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val lista = e.visibles
     val estado = rememberLazyGridState()
-    val margen = with(androidx.compose.ui.platform.LocalDensity.current) { esc.d(40).roundToPx() }
     SideEffect { Teclas.columnasCuadricula = 2 }
-    LaunchedEffect(e.indiceSel, lista.size) {
-        if (lista.isNotEmpty()) estado.animateScrollToItem(e.indiceSel.coerceIn(0, lista.lastIndex), -margen)
-    }
     // Al cambiar de consola, los mosaicos se deslizan y funden hacia el lado de la consola nueva.
     val mov = ajusteMovimiento()
     androidx.compose.animation.AnimatedContent(
@@ -89,12 +85,18 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
             unaFila -> alto.coerceAtLeast(esc.d(60))
             else -> ((alto - hueco) / 2).coerceAtLeast(esc.d(60))
         }
+        // El elegido queda al centro de la pantalla: la fila lleva de relleno a los lados lo que falta para centrar un mosaico.
+        val anchoMosaico = if (estante) lado * 0.78f else lado
+        val aireLado = ((maxWidth - anchoMosaico) / 2).coerceAtLeast(esc.d(18))
+        LaunchedEffect(e.indiceSel, lista.size) {
+            estado.animateScrollToItem(e.indiceSel.coerceIn(0, lista.lastIndex), 0)
+        }
         LazyHorizontalGrid(
             rows = GridCells.Fixed(if (unaFila) 1 else 2), state = estado, modifier = Modifier.fillMaxSize(),
             contentPadding = run {
                 // La zona ya viene con el aire de la barra de abajo (VistaJuegos): aquí solo se centra la fila.
                 val arriba = if (estante) ((maxHeight - lado) / 2).coerceAtLeast(esc.d(12)) else esc.d(12)
-                PaddingValues(start = esc.d(18), end = esc.d(18), top = arriba, bottom = arriba)
+                PaddingValues(start = aireLado, end = aireLado, top = arriba, bottom = arriba)
             },
             horizontalArrangement = Arrangement.spacedBy(hueco), verticalArrangement = Arrangement.spacedBy(hueco),
         ) {

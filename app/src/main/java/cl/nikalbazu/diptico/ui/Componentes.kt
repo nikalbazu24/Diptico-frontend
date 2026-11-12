@@ -309,12 +309,13 @@ fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabaj
         Box(Modifier.padding(top = esc.d(if (perfil) 0 else 4))) { Logo(15f) }
         Spacer(Modifier.width(esc.d(14)))
         PildoraTrabajos(trabajos)
+        if (perfil) { Spacer(Modifier.width(esc.d(10))); RelojBateria() }
         Spacer(Modifier.weight(1f))
         extra()
         Campana()
         if (perfil) {
             // Tu perfil en grande, al final de la barra (tipo iiSU), con la hora y la batería en su píldora al lado.
-            PerfilArriba(conReloj = true)
+            PerfilArriba()
         } else Row(
             Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.alternarReloj() }.padding(horizontal = esc.d(6), vertical = esc.d(2)),
             verticalAlignment = Alignment.CenterVertically,
