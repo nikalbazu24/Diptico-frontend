@@ -529,7 +529,11 @@ private fun ConsolaPixel(consola: Consola, color: Color, fondo: Color, modifier:
         androidx.compose.ui.graphics.drawscope.CanvasDrawScope().draw(
             androidx.compose.ui.unit.Density(1f), androidx.compose.ui.unit.LayoutDirection.Ltr,
             androidx.compose.ui.graphics.Canvas(bmp), androidx.compose.ui.geometry.Size(n.toFloat(), n.toFloat()),
-        ) { dibujarHardware(consola, color, fondo) }
+        ) {
+            // Switch, Switch 2 y Gahvoria tienen su dibujo pixel propio; el resto, el formato de la consola en píxeles grandes.
+            val sprite = SpritesConsola.de(consola.id)
+            if (sprite != null) dibujarSprite(sprite, color) else dibujarHardware(consola, color, fondo)
+        }
         bmp
     }
     Image(img, null, modifier.size(esc.d(tam)), contentScale = ContentScale.Fit, filterQuality = androidx.compose.ui.graphics.FilterQuality.None)

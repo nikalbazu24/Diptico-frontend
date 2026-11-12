@@ -77,9 +77,8 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
     BoxWithConstraints(Modifier.fillMaxSize().testTag("vista-mosaicos")) {
         if (lista.isEmpty()) { VacioEstante(e); return@BoxWithConstraints }
         val hueco = esc.d(10)
-        // La barra de abajo flota encima: lo de arriba se centra en lo que queda a la vista, no en toda la pantalla.
-        val aire = LocalAireAbajo.current
-        val alto = maxHeight - aire - esc.d(24)
+        // La zona ya descuenta la barra de abajo (padding en VistaJuegos): maxHeight es lo que queda a la vista.
+        val alto = maxHeight - esc.d(24)
         // Con poco alto (una pantalla, con la vitrina arriba) va una sola fila de mosaicos más grandes.
         // Con la vitrina de cajas arriba, abajo va una sola fila en el mismo orden que el estante: avanzar es +1, sin saltos.
         val estante = e.portadaCajas && nuevoDisenoDosPantallas(e)
@@ -93,8 +92,9 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
         LazyHorizontalGrid(
             rows = GridCells.Fixed(if (unaFila) 1 else 2), state = estado, modifier = Modifier.fillMaxSize(),
             contentPadding = run {
-                val arriba = if (estante) ((maxHeight - aire - lado) / 2).coerceAtLeast(esc.d(12)) else esc.d(12)
-                PaddingValues(start = esc.d(18), end = esc.d(18), top = arriba, bottom = arriba + aire)
+                // La zona ya viene con el aire de la barra de abajo (VistaJuegos): aquí solo se centra la fila.
+                val arriba = if (estante) ((maxHeight - lado) / 2).coerceAtLeast(esc.d(12)) else esc.d(12)
+                PaddingValues(start = esc.d(18), end = esc.d(18), top = arriba, bottom = arriba)
             },
             horizontalArrangement = Arrangement.spacedBy(hueco), verticalArrangement = Arrangement.spacedBy(hueco),
         ) {
@@ -154,7 +154,7 @@ private fun Mosaico(j: cl.nikalbazu.diptico.data.Juego, elegido: Boolean, jugado
  * la derecha. Reemplaza la barra de la hora en la pantalla de abajo, así no se repite ni tapa nada.
  */
 /** Alto de la barra de abajo abierta (barrita + accesos) y cerrada (solo la barrita), en dp de Díptico. */
-const val ALTO_FRANJA_ABIERTA = 84f
+const val ALTO_FRANJA_ABIERTA = 56f
 const val ALTO_FRANJA_CERRADA = 22f
 
 /** Cuánto tapa la barra flotante de abajo: las rejillas lo suman a su relleno para poder correr el último elemento por encima. */
@@ -163,78 +163,41 @@ val LocalAireAbajo = androidx.compose.runtime.compositionLocalOf { 0.dp }
 @Composable
 fun FranjaAccesos(e: Estado, modifier: Modifier = Modifier) {
     if (!e.extra.franjaAbajo) return
-    val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val abierta = e.extra.dockVisible
-    val mueve = LocalMovimiento.current
-    // Sin fondo: flota sobre lo de atrás. Se esconde hacia abajo y queda solo la barrita; al tocarla la barra sale con efecto burbuja.
-    androidx.compose.foundation.layout.Column(
+    // Solo la lupa y los ajustes, pegados a las esquinas de abajo, cada uno en una pestaña semiredonda para que se note.
+    // Las apps fijadas (dock) ahora viven arriba, en EsquinasArriba.
+    androidx.compose.foundation.layout.Row(
         modifier.fillMaxWidth().testTag("franja-accesos"),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.Bottom,
     ) {
-        Box(
-            Modifier.fillMaxWidth().height(esc.d(22)).clickable(
-                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null,
-            ) { Diptico.alternarDockVisible() }.testTag("dock-repliegue"),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(Modifier.size(esc.d(46), esc.d(5)).clip(RoundedCornerShape(50)).background(p.tinta.copy(alpha = if (abierta) 0.28f else 0.5f)))
-        }
-        val origen = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
-        androidx.compose.animation.AnimatedVisibility(
-            abierta,
-            enter = if (!mueve) androidx.compose.animation.EnterTransition.None else
-                androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(100)) +
-                androidx.compose.animation.scaleIn(
-                    androidx.compose.animation.core.spring(dampingRatio = 0.5f, stiffness = 420f), initialScale = 0.3f, transformOrigin = origen,
-                ) + androidx.compose.animation.slideInVertically(androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 420f)) { it / 2 },
-            exit = if (!mueve) androidx.compose.animation.ExitTransition.None else
-                androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(130)) +
-                androidx.compose.animation.scaleOut(androidx.compose.animation.core.tween(170), targetScale = 0.3f, transformOrigin = origen) +
-                androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(170)) { it / 2 },
-        ) {
-            androidx.compose.foundation.layout.Row(
-                Modifier.fillMaxWidth().padding(start = esc.d(14), end = esc.d(14), bottom = esc.d(8)),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CirculoFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR) { Diptico.abrirBuscar() }
-                Box(Modifier.weight(1f).padding(horizontal = esc.d(10)).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
-                    androidx.compose.foundation.layout.Row(
-                        // Sin píldora de fondo: los accesos flotan sobre la pantalla, cada uno con su sombra suave.
-                        Modifier.height(esc.d(56))
-                            .padding(horizontal = esc.d(10))
-                            .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (e.extra.dock) FilaDock(e, 30f, flotante = true)
-                        else androidx.compose.foundation.layout.Row(
-                            Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirApps() }.padding(horizontal = esc.d(8), vertical = esc.d(8)),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 15f)
-                            Spacer(Modifier.width(esc.d(8)))
-                            Texto("Apps", 13f, color = p.tinta, lineas = 1)
-                        }
-                    }
-                }
-                CirculoFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES) { Diptico.abrirMenu() }
+        CirculoFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR, izquierda = true) { Diptico.abrirBuscar() }
+        if (dockArriba(e)) Spacer(Modifier.weight(1f))
+        else Box(Modifier.weight(1f).padding(horizontal = esc.d(8), vertical = esc.d(4)).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
+            // En las vistas sin cabecera arriba (juegos de una consola, mosaicos…) las apps fijadas siguen abajo, entre la lupa y los ajustes.
+            androidx.compose.foundation.layout.Row(Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                DockOApps(e)
             }
         }
+        CirculoFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, izquierda = false) { Diptico.abrirMenu() }
     }
 }
 
 /** Acceso de las esquinas de la franja (lupa, ajustes): solo el ícono, flotando, con una sombra suave para leerse sobre cualquier fondo. */
 @Composable
-private fun CirculoFranja(icono: cl.nikalbazu.diptico.estado.Icono, alPulsar: () -> Unit) {
+private fun CirculoFranja(icono: cl.nikalbazu.diptico.estado.Icono, izquierda: Boolean, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
+    // Pestaña de esquina: el lado de afuera queda recto contra el borde de la pantalla y el de adentro, redondeado.
+    val forma = if (izquierda) RoundedCornerShape(topEnd = esc.d(26)) else RoundedCornerShape(topStart = esc.d(26))
     Box(
-        Modifier.size(esc.d(44)).clip(androidx.compose.foundation.shape.CircleShape).clickable(onClick = alPulsar),
-        contentAlignment = Alignment.Center,
+        Modifier.size(esc.d(64), esc.d(52))
+            .clip(forma)
+            .background(p.superficie.copy(alpha = 0.86f))
+            .border(esc.d(1), p.linea, forma)
+            .clickable(onClick = alPulsar),
+        contentAlignment = if (izquierda) Alignment.CenterStart else Alignment.CenterEnd,
     ) {
-        // La sombra es el mismo ícono, oscuro y corrido un poquito hacia abajo.
-        Box(Modifier.graphicsLayer { translationY = 1.5f * density; alpha = 0.35f }) { IconoDiptico(icono, Color.Black, 20f) }
-        IconoDiptico(icono, p.tinta, 20f)
+        Box(Modifier.padding(horizontal = esc.d(14)), contentAlignment = Alignment.Center) { IconoDiptico(icono, p.tinta, 22f) }
     }
 }
 
@@ -248,16 +211,16 @@ fun EsquinasArriba(e: Estado) {
     ) {
         // DIPPO grande en su esquina; a la derecha (de afuera hacia adentro): batería, hora y tu foto.
         Box(Modifier.size(esc.d(56)), contentAlignment = Alignment.Center) { DippoInicio(e, 52f) }
-        Spacer(Modifier.weight(1f))
-        // El título que ganaste con DIPPO, en una burbuja chiquita junto a tu foto.
-        val titulo = cl.nikalbazu.diptico.estado.tituloDe(e.extra.perfil.titulo)
-        if (titulo.isNotEmpty()) {
-            val p = LocalPaleta.current
-            Box(Modifier.clip(RoundedCornerShape(50)).background(p.tinta.copy(alpha = 0.10f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
-                Texto(titulo, 11f, color = p.tinta, lineas = 1)
+        // Tus apps fijadas, arriba al medio (antes iban abajo, tapando los juegos).
+        Box(Modifier.weight(1f).padding(horizontal = esc.d(8)).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.layout.Row(
+                Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                DockOApps(e)
             }
-            Spacer(Modifier.width(esc.d(8)))
         }
+        // El título de tu perfil solo va en la pantalla de arriba.
         BotonPerfil(38f)
         Spacer(Modifier.width(esc.d(12)))
         HoraBateria()
@@ -318,5 +281,24 @@ internal fun BotonVitrina(letra: String, texto: String, lleno: Boolean, alPulsar
         }
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(10)))
         Texto(texto, 15f, color = tinta, lineas = 1)
+    }
+}
+
+/** La lista de carpetas de consolas lleva el dock arriba (en su cabecera); en las demás vistas queda abajo. */
+internal fun dockArriba(e: Estado): Boolean = e.vistaConsolas == "carpetas" && e.enSistemas && !e.carpetaEnVentana && !e.extra.ordenandoCarpetas
+
+/** Apps fijadas (o el botón «Apps» si el dock está apagado). */
+@Composable
+private fun DockOApps(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    if (e.extra.dock) FilaDock(e, 32f, flotante = true)
+    else androidx.compose.foundation.layout.Row(
+        Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirApps() }.padding(horizontal = esc.d(8), vertical = esc.d(8)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 15f)
+        Spacer(Modifier.width(esc.d(8)))
+        Texto("Apps", 13f, color = p.tinta, lineas = 1)
     }
 }

@@ -16,11 +16,12 @@ import androidx.compose.ui.unit.Dp
 internal fun RejillaCentrada(
     cantidad: Int, columnas: Int, seleccion: Int, separacionX: Dp, separacionY: Dp,
     relleno: PaddingValues, modifier: Modifier = Modifier, interactiva: Boolean = true,
-    horizontal: Boolean = false, clave: (Int) -> String, celda: @Composable (Int) -> Unit,
+    horizontal: Boolean = false, clave: (Int) -> String,
+    estado: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState(),
+    celda: @Composable (Int) -> Unit,
 ) {
     val carriles = columnas.coerceAtLeast(1)
     val filas = (0 until cantidad).toList().chunked(carriles)
-    val estado = rememberLazyListState()
     LaunchedEffect(seleccion, carriles, cantidad) {
         if (cantidad > 0) estado.mostrar(seleccion.coerceIn(0, cantidad - 1) / carriles)
     }

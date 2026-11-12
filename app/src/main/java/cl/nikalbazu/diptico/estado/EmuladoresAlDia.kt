@@ -263,6 +263,12 @@ fun Diptico.revisarEmuladores(silencioso: Boolean = false) {
         almacen.guardarTexto("emusRevisado", System.currentTimeMillis().toString())
         actualizar { it.copy(extra = it.extra.copy(emusRevisando = false, emus = ordenEmus(revisados), emusRevisado = System.currentTimeMillis())) }
         val nuevas = revisados.filter { it.nueva }
+        // En la campana de arriba queda el aviso hasta que se actualicen (o dejen de tener versión nueva).
+        if (nuevas.isEmpty()) quitarAvisoDippo("emus")
+        else avisoDippo(
+            "emus", if (nuevas.size == 1) "${nuevas[0].nombre} tiene versión nueva" else "${nuevas.size} emuladores tienen versión nueva",
+            nuevas.take(4).joinToString(" · ") { "${it.nombre} ${it.ultima}" },
+        ) { abrirNativos(pestana = 2) }
         if (!silencioso) avisar(EmuladoresAlDia.comentario(revisados).substringBefore(" El que"))
         else if (nuevas.isNotEmpty()) cuandoHayaLugar("emus-nuevos") {
             mostrarDialogo(
@@ -341,6 +347,8 @@ fun Diptico.emuladorInstalado(paquete: String) {
     }
     val nombre = estado.value.extra.emus.firstOrNull { it.paquete == paquete }?.nombre ?: "El emulador"
     avisar("$nombre quedó al día ($v)")
+    // Si ya no queda ninguno con versión nueva, el aviso de la campana se va.
+    if (estado.value.extra.emus.none { it.nueva }) quitarAvisoDippo("emus")
     File(File(app.cacheDir, "emuladores"), "$paquete.apk").delete()
 }
 

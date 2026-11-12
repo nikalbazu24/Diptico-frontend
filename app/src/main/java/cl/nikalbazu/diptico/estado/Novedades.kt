@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "emuladores-al-dia-2.0-58"
-    const val NOMBRE = "Emuladores al día"
+    const val ID = "dock-arriba-2.0-60"
+    const val NOMBRE = "Apps arriba"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -439,12 +439,25 @@ object Novedades {
             Pagina("Si un juego no abre, DIPPO te dice por qué", "Si el emulador se cierra a los pocos segundos, Díptico no lo cuenta como partida y te muestra lo más probable: falta la BIOS, faltan las llaves de Switch, el archivo está comprimido o incompleto, o el emulador no tiene permiso para tu carpeta.", Icono.EMULADOR, 0xFFFF7A59),
             Pagina("Probar con otro emulador", "Desde el mismo aviso, un toque prueba el juego con el siguiente emulador que tengas instalado, y queda guardado solo para ese juego.", Icono.MANDO, 0xFF23C486, "A"),
         )),
-        Version(ID, "Emuladores al día", listOf(
+        Version("emuladores-al-dia-2.0-58", "Emuladores al día", listOf(
             Pagina("DIPPO revisa tus emuladores", "Una vez al día, DIPPO mira qué emuladores tienes, cuáles usas y cuánto, y busca si hay versión nueva en su página. Si hay, te avisa.", Icono.EMULADOR, 0xFF00C3E3),
             Pagina("Actualiza desde Díptico", "En Ajustes › Juegos y emuladores › «Emuladores al día» (o en el centro de Switch 2 y ports, pestaña Emuladores): A baja la versión nueva y Android la instala encima, como Obtainium. Los ports nativos también se actualizan.", Icono.DESCARGA, 0xFF23C486, "A"),
             Pagina("Tu perfil, en grande arriba", "Tu foto, tu nombre y tu título se ven grandes en la pantalla de arriba, como en iiSU. Tu perfil se edita desde tu tarjeta (ya no está en Ajustes) y Discord quedó en «Cuentas y conexiones».", Icono.PERFIL, 0xFFFF7A59),
             Pagina("Fan games con Gahvoria", "Los fan games de RPG Maker y Pokémon Essentials ahora se abren con Gahvoria (Essentia ya no se usa). DIPPO también revisa si Gahvoria tiene versión nueva.", Icono.EMULADOR, 0xFFE0452B),
             Pagina("Los premios de los logros", "En Logros de DIPPO cada logro dice qué regala, y la pestaña Premios junta todos los marcos, títulos y temas: los ganados se usan con un toque.", Icono.TROFEO, 0xFFFFC94D),
+        )),
+        Version("hora-iconos-2.0-59", "Carpetas y avisos", listOf(
+            Pagina("Hora y batería, bien puestas", "Arriba, junto a tu foto, la hora y la batería van en una píldora oscura y chica, alineada con tu nombre. Tocarla cambia entre 12 y 24 horas. No ocupa más pantalla que antes.", Icono.PERFIL, 0xFF3BA8FF),
+            Pagina("Juegos al medio", "En la pantalla de abajo la fila de juegos queda justo en el centro de lo que se ve, sin contar la barra flotante.", Icono.VISTA, 0xFF23C486),
+            Pagina("Íconos pixel", "Switch, Switch 2 y Gahvoria tienen su ícono pixel propio en la vista de íconos.", Icono.EMULADOR, 0xFFFF7A59),
+            Pagina("Mueve carpetas por toda la pantalla", "Al ordenar carpetas, arrastra una hacia el borde de arriba o de abajo y la vista se desliza sola hasta que la dejes donde quieras. Se suelta en la carpeta que quede debajo del dedo.", Icono.CARPETA, 0xFFFFC94D, "Arrastra"),
+            Pagina("DIPPO te avisa en la campana", "La temperatura alta, las actualizaciones de Díptico y de tus emuladores aparecen también en la campana de arriba, con la carita de DIPPO. Se apaga en Ajustes › «Avisos de DIPPO en la campana».", Icono.CAMPANA, 0xFF8B5CF6),
+            Pagina("Carpetas en modo oscuro", "Nueva opción «Tono de las carpetas»: Según el tema, Oscuras o Claras. Con un tema oscuro las carpetas pasan a fondo profundo con el dibujo en claro.", Icono.CARPETA, 0xFF2EC4A6),
+        )),
+        Version(ID, "Apps arriba", listOf(
+            Pagina("Tus apps, arriba", "Las apps que fijaste ahora van arriba al medio de la pantalla de abajo, entre DIPPO y tu foto. Ya no tapan los juegos.", Icono.APPS, 0xFF3BA8FF),
+            Pagina("Lupa y ajustes con fondo", "La lupa y los ajustes siguen en las esquinas de abajo, ahora sobre una pestaña semiredonda para que se noten.", Icono.AJUSTES, 0xFF8B5CF6),
+            Pagina("Más íconos pixel", "Wii U y Android tienen su ícono pixel propio, y el estilo «Píxeles» también se ve dentro de las carpetas de las consolas.", Icono.EMULADOR, 0xFFFF7A59),
         )),
     )
 

@@ -71,16 +71,17 @@ fun CarpetaBiblioteca(e: Estado, id: String, elegida: Boolean, interactiva: Bool
             .sortedByDescending { e.datos[it.clave]?.tiempo ?: 0L }.take(3)
     } else emptyList()
     CarpetaCuerpo(id, elegida, interactiva, lado, tomada, e.extra.ordenandoCarpetas && interactiva, estilo,
-        e.consolasPropias[id]?.portadaCarpeta, abanico)
+        e.consolasPropias[id]?.portadaCarpeta, abanico, e.extra.carpetasTono)
 }
 
 @Composable
 private fun CarpetaCuerpo(
     id: String, elegida: Boolean, interactiva: Boolean, lado: Dp, tomada: Boolean, ordenando: Boolean, estilo: String,
-    portada: String?, abanico: List<cl.nikalbazu.diptico.data.Juego>,
+    portada: String?, abanico: List<cl.nikalbazu.diptico.data.Juego>, tono: String = "auto",
 ) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
+    val oscuro = carpetasOscuras(tono)
     val consola = Consolas.porId(id)
     val color = consola?.color ?: Uva
     val forma = androidx.compose.foundation.shape.RoundedCornerShape(esc.d(19))
@@ -118,13 +119,13 @@ private fun CarpetaCuerpo(
                 "consola" -> Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(
                     androidx.compose.ui.graphics.lerp(color, Color.White, .12f), androidx.compose.ui.graphics.lerp(color, Color.Black, .45f)))),
                     contentAlignment = Alignment.Center) { IconoConsola(consola, (lado.value / esc.factor) * .62f, Color.Transparent, memoriaGrafica = false) }
-                "abanico" -> AbanicoCarpeta(abanico, id, color)
+                "abanico" -> AbanicoCarpeta(abanico, id, color, oscuro)
                 "logo" -> Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.White.copy(alpha = .12f), Color.White.copy(alpha = .03f))))
                     .background(p.superficie.copy(alpha = .6f)), contentAlignment = Alignment.Center) {
                     Texto(consola?.nombre ?: "Todo", (lado.value / esc.factor) * .2f, color = p.tinta, peso = androidx.compose.ui.text.font.FontWeight.Black,
                         lineas = 2, alinear = androidx.compose.ui.text.style.TextAlign.Center, traducir = consola == null, modifier = Modifier.padding(esc.d(6)))
                 }
-                else -> PortadaCarpetaRuta(portada, id, Modifier.fillMaxSize(), maxLado = 256, memoriaGrafica = false)
+                else -> PortadaCarpetaRuta(portada, id, Modifier.fillMaxSize(), maxLado = 256, memoriaGrafica = false, oscuro = oscuro)
             }
             Box(Modifier.fillMaxSize().border(esc.d(.8f + 2.2f * maxOf(foco, alzada)),
                 if (elegida || tomada) Color.White else Color.White.copy(alpha = .3f), forma))
@@ -137,10 +138,10 @@ private fun CarpetaCuerpo(
 
 /** Estilo «Abanico de portadas»: los tres juegos más jugados de la consola asomando sobre su color. */
 @Composable
-private fun AbanicoCarpeta(top: List<cl.nikalbazu.diptico.data.Juego>, id: String, color: Color) {
+private fun AbanicoCarpeta(top: List<cl.nikalbazu.diptico.data.Juego>, id: String, color: Color, oscuro: Boolean = false) {
     BoxWithConstraints(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(
         androidx.compose.ui.graphics.lerp(color, Color.Black, .25f), androidx.compose.ui.graphics.lerp(color, Color.Black, .65f))))) {
-        if (top.isEmpty()) { ArteCarpeta(Consolas.porId(id), Modifier.fillMaxSize()); return@BoxWithConstraints }
+        if (top.isEmpty()) { ArteCarpeta(Consolas.porId(id), Modifier.fillMaxSize(), oscuro); return@BoxWithConstraints }
         val w = maxWidth * .46f
         val giros = listOf(-12f, 0f, 12f)
         val xs = listOf(.08f, .27f, .46f)
@@ -160,17 +161,17 @@ private fun AbanicoCarpeta(top: List<cl.nikalbazu.diptico.data.Juego>, id: Strin
 internal fun PortadaCarpeta(
     e: Estado, id: String, modifier: Modifier, maxLado: Int = 512,
     memoriaGrafica: Boolean = true,
-) = PortadaCarpetaRuta(e.consolasPropias[id]?.portadaCarpeta, id, modifier, maxLado, memoriaGrafica)
+) = PortadaCarpetaRuta(e.consolasPropias[id]?.portadaCarpeta, id, modifier, maxLado, memoriaGrafica, carpetasOscuras(e.extra.carpetasTono))
 
 /** La portada de una carpeta a partir de su ruta (sin Estado: se salta si nada cambió). */
 @Composable
-internal fun PortadaCarpetaRuta(ruta: String?, id: String, modifier: Modifier, maxLado: Int = 512, memoriaGrafica: Boolean = true) {
+internal fun PortadaCarpetaRuta(ruta: String?, id: String, modifier: Modifier, maxLado: Int = 512, memoriaGrafica: Boolean = true, oscuro: Boolean = false) {
     if (ruta == null) {
-        ArteCarpeta(Consolas.porId(id), modifier)
+        ArteCarpeta(Consolas.porId(id), modifier, oscuro)
         return
     }
     val portada = key(ruta) { rememberImagen(android.net.Uri.parse(ruta), maxLado, memoriaGrafica) }
-    if (portada == null) ArteCarpeta(Consolas.porId(id), modifier)
+    if (portada == null) ArteCarpeta(Consolas.porId(id), modifier, oscuro)
     else Image(portada, contentDescription = null, modifier = modifier, contentScale = ContentScale.Crop)
 }
 

@@ -112,7 +112,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                 else -> Box(Modifier.fillMaxSize()) {
                 // La barra de abajo flota encima: el contenido corre por detrás y solo deja el aire que pide [LocalAireAbajo].
                 val conFranja = e.vista == "mosaicos" && e.extra.franjaAbajo
-                val aire = if (!conFranja) 0.dp else esc.d(if (e.extra.dockVisible) ALTO_FRANJA_ABIERTA else ALTO_FRANJA_CERRADA)
+                val aire = if (!conFranja) 0.dp else esc.d(ALTO_FRANJA_ABIERTA)
                 androidx.compose.runtime.CompositionLocalProvider(LocalAireAbajo provides aire) {
                 Column(Modifier.fillMaxSize()) {
                     val escalaEstante = if (esc.angosta) 1.08f else 1.18f
@@ -140,7 +140,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                             }
                             else Column(Modifier.fillMaxSize()) {
                                 CabeceraSistema(e)
-                                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), escalaEstante)
+                                VistaJuegos(e, Modifier.fillMaxWidth().weight(1f).padding(bottom = aire), escalaEstante)
                             }
                         }
                         }
@@ -448,7 +448,8 @@ private fun EnJuego(e: Estado) {
                 cl.nikalbazu.diptico.estado.Termica.registrar(s.clave, l)
                 if (l.nivel >= cl.nikalbazu.diptico.estado.Termica.Nivel.CALIENTE) {
                     if (!avisado) { avisado = true; Diptico.despertar() }
-                } else if (l.nivel <= cl.nikalbazu.diptico.estado.Termica.Nivel.TIBIA) avisado = false
+                    Diptico.avisoCalor(l)
+                } else if (l.nivel <= cl.nikalbazu.diptico.estado.Termica.Nivel.TIBIA) { avisado = false; Diptico.quitarAvisoDippo("calor") }
             }
             delay(15_000)
         }
