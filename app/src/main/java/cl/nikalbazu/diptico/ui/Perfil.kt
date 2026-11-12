@@ -145,7 +145,7 @@ fun RelojBateria(modifier: Modifier = Modifier) {
         modifier.testTag("reloj-bateria").clip(forma).background(Color.Black.copy(alpha = 0.34f))
             .border(esc.d(1), Color.White.copy(alpha = 0.16f), forma)
             .clickable { Diptico.alternarReloj() }
-            .padding(horizontal = esc.d(13), vertical = esc.d(7)),
+            .padding(horizontal = esc.d(13), vertical = esc.d(4)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Texto(hora, 14f, color = Color.White, peso = FontWeight.ExtraBold, traducir = false, lineas = 1)
