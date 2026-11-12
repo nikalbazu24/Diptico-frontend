@@ -1474,6 +1474,14 @@ class Capturas {
     // Pantalla de abajo: apps fijadas arriba, lupa y ajustes con pestaña semiredonda, íconos pixel dentro de las carpetas.
     @Config(qualifiers = ABAJO)
     @Test fun t388_dock_arriba() = foto("388_dock_arriba", carpetasCon("tarjeta").let { it.copy(estiloIconos = "pixel") }, Rol.INFERIOR, mi = 1)
+    // Pantalla de arriba con el estilo Píxeles: el ícono grande de Switch, Switch 2, Wii U y 3DS.
+    private fun arribaPixel(id: String) = carpetasCon("tarjeta").copy(consolaSel = id, estiloIconos = "pixel")
+    @Test fun t389_arriba_pixel_switch() = foto("389_arriba_pixel_switch", arribaPixel("switch"), Rol.SUPERIOR)
+    @Test fun t390_arriba_pixel_3ds() = foto("390_arriba_pixel_3ds", arribaPixel("n3ds"), Rol.SUPERIOR)
+    @Test fun t391_arriba_pixel_wiiu() = foto("391_arriba_pixel_wiiu", arribaPixel("wiiu"), Rol.SUPERIOR)
+    // Abajo: apps sin sombras y sin el título junto a la foto (el título solo va arriba).
+    @Config(qualifiers = ABAJO)
+    @Test fun t392_abajo_sin_titulo() = foto("392_abajo_sin_titulo", conPerfil().copy(vistaConsolas = "carpetas", enSistemas = true, consolaSel = "snes"), Rol.INFERIOR, mi = 1)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)

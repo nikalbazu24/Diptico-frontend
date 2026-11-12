@@ -46,8 +46,7 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
     Row(modifier.testTag("dock-apps"), horizontalArrangement = Arrangement.spacedBy(esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
         apps.forEach { pkg ->
             Box(
-                Modifier.then(if (flotante) Modifier.shadow(esc.d(8), RoundedCornerShape(esc.d(12)), clip = false) else Modifier)
-                    .clip(RoundedCornerShape(esc.d(12))).clickable { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
+                Modifier.clip(RoundedCornerShape(esc.d(12))).clickable { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
                     .padding(esc.d(3)),
             ) { IconoApp(pkg, tam, desnudo = true) }
         }
@@ -66,8 +65,7 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
                 .clickable { Diptico.abrirApps() },
             contentAlignment = Alignment.Center,
         ) {
-            // Flotando, sin círculo: el ícono con su sombra, igual que la lupa y los ajustes.
-            if (flotante) Box(Modifier.graphicsLayer { translationY = 1.5f * density; alpha = 0.35f }) { IconoDiptico(Icono.APPS, Color.Black, tam * 0.55f) }
+            // Flotando, sin círculo ni sombras: solo el ícono.
             IconoDiptico(Icono.APPS, p.tinta, tam * (if (flotante) 0.55f else 0.45f))
         }
     }

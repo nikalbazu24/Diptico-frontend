@@ -220,15 +220,7 @@ fun EsquinasArriba(e: Estado) {
                 DockOApps(e)
             }
         }
-        // El título que ganaste con DIPPO, en una burbuja chiquita junto a tu foto.
-        val titulo = cl.nikalbazu.diptico.estado.tituloDe(e.extra.perfil.titulo)
-        if (titulo.isNotEmpty()) {
-            val p = LocalPaleta.current
-            Box(Modifier.clip(RoundedCornerShape(50)).background(p.tinta.copy(alpha = 0.10f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
-                Texto(titulo, 11f, color = p.tinta, lineas = 1)
-            }
-            Spacer(Modifier.width(esc.d(8)))
-        }
+        // El título de tu perfil solo va en la pantalla de arriba.
         BotonPerfil(38f)
         Spacer(Modifier.width(esc.d(12)))
         HoraBateria()
