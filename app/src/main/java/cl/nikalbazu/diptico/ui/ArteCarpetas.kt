@@ -2,6 +2,7 @@ package cl.nikalbazu.diptico.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
@@ -40,14 +41,16 @@ internal fun motivosCarpeta(id: String): List<String> = when (id) {
 
 /** Portadas propias y vectoriales para todo el catálogo, también Game Boy. */
 @Composable
-internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier) {
+internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscuro: Boolean = false) {
     val id = consola?.id ?: "todo"
     val color = consola?.color ?: Uva
     Box(modifier.drawWithCache {
         val s = min(size.width, size.height)
-        val papel = lerp(color, Color.White, .88f)
-        val tinta = lerp(color, Color.Black, .63f)
-        val medio = lerp(color, Color.Black, .14f)
+        // Modo oscuro: el «papel» es un fondo profundo teñido del color de la consola y los dibujos pasan a ser claros.
+        val papel = if (oscuro) lerp(color, Color.Black, .8f) else lerp(color, Color.White, .88f)
+        val tinta = if (oscuro) lerp(color, Color.White, .62f) else lerp(color, Color.Black, .63f)
+        val medio = lerp(color, Color.Black, if (oscuro) .32f else .14f)
+        val sombra = if (oscuro) Color.Black else tinta
         val motivos = motivosCarpeta(id).map(::construirEmblema)
         // Dibujos en la periferia. El centro se reserva para la consola, a cualquier tamaño.
         // Solo las cuatro esquinas: menos dibujos y más aire alrededor de la consola.
@@ -78,18 +81,26 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier) {
             // Sombra difusa escalonada, sin marco grueso ni varios contornos concéntricos.
             for (i in 8 downTo 1) {
                 val margen = s * i * .003f
-                drawRoundRect(tinta.copy(alpha = .018f), placa.topLeft + Offset(-margen, s * .014f - margen),
+                drawRoundRect(sombra.copy(alpha = if (oscuro) .05f else .018f), placa.topLeft + Offset(-margen, s * .014f - margen),
                     Size(placa.width + 2 * margen, placa.height + 2 * margen), CornerRadius(radio.x + margen))
             }
             drawRoundRect(luz, placa.topLeft, placa.size, radio)
             clipPath(clip) {
-                drawRect(Brush.radialGradient(listOf(Color.White.copy(alpha = .23f), Color.Transparent), placa.topLeft, s * .63f))
+                drawRect(Brush.radialGradient(listOf(Color.White.copy(alpha = if (oscuro) .14f else .23f), Color.Transparent), placa.topLeft, s * .63f))
                 withTransform({ translate(placa.left + placa.width * .12f, placa.top + placa.height * .12f); scale(placa.width * .76f / size.width, placa.height * .76f / size.height, Offset.Zero) }) {
                     if (consola != null) dibujarHardware(consola, Color.White, medio)
                     else dibujarMedio(cl.nikalbazu.diptico.data.Medio.TODOS, Color.White, medio)
                 }
             }
-            drawRoundRect(Color.White.copy(alpha = .34f), placa.topLeft, placa.size, radio, style = Stroke(s * .002f))
+            drawRoundRect(Color.White.copy(alpha = if (oscuro) .26f else .34f), placa.topLeft, placa.size, radio, style = Stroke(s * .002f))
         }
     })
+}
+
+/** ¿Las carpetas van oscuras? Con «auto» siguen al tema: oscuras si el fondo de la app lo es. */
+@Composable
+internal fun carpetasOscuras(tono: String): Boolean = when (tono) {
+    "oscuro" -> true
+    "claro" -> false
+    else -> LocalPaleta.current.fondo.luminance() < 0.45f
 }

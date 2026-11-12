@@ -1457,6 +1457,13 @@ class Capturas {
     @Test fun t383_perfil_arriba_cajas() = foto("383_perfil_arriba_cajas", conPerfil().let { it.copy(extra = it.extra.copy(portada = "cajas")) }, Rol.SUPERIOR)
     // Abajo con la vitrina de cajas arriba: la fila de juegos centrada en lo que queda a la vista sobre la barra.
     @Test fun t384_juegos_centrados() = foto("384_juegos_centrados", base().copy(vista = "mosaicos", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR)
+    // Íconos pixel de Switch, Switch 2 y Gahvoria (vista lado a lado con el estilo pixel).
+    @Test fun t385_iconos_pixel() = foto("385_iconos_pixel", base().copy(estiloIconos = "pixel", vistaConsolas = "lado", consolaSel = "switch2"), Rol.INFERIOR)
+    // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
+    @Config(qualifiers = ABAJO)
+    @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t387_carpetas_oscuras_tarjeta() = foto("387_carpetas_oscuras_tarjeta", carpetasCon("tarjeta").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)
     // Por qué falló un juego: el emulador se cerró enseguida y Díptico explica lo más probable.
     @Config(qualifiers = ABAJO)
     @Test fun t376_cierre_rapido() = foto("376_cierre_rapido", base().copy(dialogo = Dialogo("cierre-rapido", "Leyenda del Bosque se cerró enseguida",

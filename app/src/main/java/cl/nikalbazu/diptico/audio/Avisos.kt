@@ -18,13 +18,20 @@ data class Aviso(
     val texto: String,
     val tiempo: Long,
     val intent: PendingIntent?,
-)
+    /** Lo que pasa al tocarlo, para los avisos que Díptico se hace a sí mismo (los de DIPPO). */
+    val accion: (() -> Unit)? = null,
+) {
+    /** Un aviso de DIPPO (calor, batería, actualizaciones…), no de otra app. */
+    val esDippo: Boolean get() = clave.startsWith(Avisos.PREFIJO_DIPPO)
+}
 
 /**
  * Notificaciones del sistema dentro de Díptico, para usarlo como launcher principal.
  * Llegan por el mismo servicio del widget de música (acceso a notificaciones).
  */
 object Avisos {
+    const val PREFIJO_DIPPO = "dippo:"
+
     private val _lista = MutableStateFlow<List<Aviso>>(emptyList())
     val lista: StateFlow<List<Aviso>> = _lista
 
@@ -56,7 +63,8 @@ object Avisos {
     }
 
     internal fun cargar(ctx: Context, todas: Array<StatusBarNotification>?) {
-        _lista.value = (todas ?: emptyArray()).mapNotNull { convertir(ctx, it) }.sortedByDescending { it.tiempo }
+        val deDippo = _lista.value.filter { it.esDippo }
+        _lista.value = ((todas ?: emptyArray()).mapNotNull { convertir(ctx, it) } + deDippo).sortedByDescending { it.tiempo }
     }
 
     internal fun llego(ctx: Context, sbn: StatusBarNotification) {
@@ -70,10 +78,28 @@ object Avisos {
         _lista.value = _lista.value.filter { it.clave != sbn.key }
     }
 
+    /**
+     * Un aviso de DIPPO en el centro de notificaciones (la campana de arriba). Con la misma [clave] reemplaza al anterior,
+     * así un aviso que se repite (calor, batería) no se acumula. No sale como globito: DIPPO ya lo dijo donde corresponde.
+     */
+    fun publicarDippo(ctx: Context, clave: String, titulo: String, texto: String, accion: (() -> Unit)? = null) {
+        val a = Aviso(PREFIJO_DIPPO + clave, ctx.packageName, "DIPPO", titulo, texto, System.currentTimeMillis(), null, accion)
+        _lista.value = (listOf(a) + _lista.value.filter { it.clave != a.clave }).take(60)
+    }
+
+    /** Quita un aviso de DIPPO que ya no aplica (se enfrió, se actualizó, se enchufó). */
+    fun retirarDippo(clave: String) {
+        if (_lista.value.any { it.clave == PREFIJO_DIPPO + clave }) _lista.value = _lista.value.filter { it.clave != PREFIJO_DIPPO + clave }
+    }
+
     fun abrir(a: Aviso) {
-        try {
-            a.intent?.send()
-        } catch (_: Exception) {
+        if (a.accion != null) {
+            try { a.accion.invoke() } catch (_: Exception) {}
+        } else {
+            try {
+                a.intent?.send()
+            } catch (_: Exception) {
+            }
         }
         descartar(a)
     }

@@ -168,7 +168,7 @@ private val VISUALES: Map<String, Visual> = mapOf(
     "rpgmaker" to Visual(
         "RPG Maker", Medio.DISQUETE, 0xFFE0452B, CAJA_PC, carpetasJuegos = true,
         alias = listOf("fangames", "fan games", "fangame", "pokemonfangames", "fangamespokemon", "rpgmakerxp", "rpgmakervx", "rpgmakervxace", "rmxp", "gahvoria"),
-        bonito = "Fan games (RPG Maker)",
+        bonito = "Fan games (Gahvoria)",
     ),
     "ports" to Visual("Ports", Medio.APP, 0xFF2EC4A6, CAJA_APP, bonito = "Ports"),
     "androidgames" to Visual("Android", Medio.MOVIL, 0xFF3DDC84, CAJA_APP, bonito = "Juegos de Android"),

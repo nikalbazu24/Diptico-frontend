@@ -391,6 +391,10 @@ data class EstadoExtra(
     val estiloCarpetas: String = "tarjeta",
     /** Mientras juegas: muestra la temperatura y DIPPO da consejos de calor, batería y descansos. */
     val termica: Boolean = true,
+    /** Avisos de DIPPO (calor, batería, actualizaciones) también en la campana de notificaciones de arriba. */
+    val dippoAvisos: Boolean = true,
+    /** Tono del dibujo de las carpetas: "auto" (según el tema), "oscuro" o "claro". */
+    val carpetasTono: String = "auto",
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
     val dippoColor: String = "hora",
     /** Cuando le hablas a DIPPO, te responde en voz alta. */
@@ -1006,6 +1010,8 @@ object Diptico {
                 medidorFps = almacen.bool("medidorFps", false),
                 estiloCarpetas = almacen.texto("estiloCarpetas", "tarjeta"),
                 termica = almacen.bool("termica", true),
+                dippoAvisos = almacen.bool("dippoAvisos", true),
+                carpetasTono = almacen.texto("carpetasTono", "auto"),
                 dippoColor = almacen.texto("dippoColor", "hora"),
                 dippoVoz = almacen.bool("dippoVoz", true),
                 cargaJuego = almacen.bool("cargaJuego", true),
@@ -3697,14 +3703,16 @@ object Diptico {
                             calorAvisado = true
                             avisar("La consola está caliente: déjala descansar un ratito antes de jugar algo pesado")
                         }
+                        if (t.nivel >= Termica.Nivel.CALIENTE) avisoCalor(t) else quitarAvisoDippo("calor")
                     }
                 }
                 val b = try { infoBateria() } catch (_: Exception) { continue }
                 val cargando = b.estado == "Cargando" || b.estado == "Llena"
-                if (cargando || b.nivel > 20) avisado = false
+                if (cargando || b.nivel > 20) { avisado = false; quitarAvisoDippo("bateria") }
                 if (!avisado && !cargando && b.nivel in 1..15 && estado.value.sesion == null && estado.value.aLaVista > 0) {
                     avisado = true
                     avisar("Te queda ${b.nivel}% de batería: buen momento para guardar y enchufar")
+                    avisoDippo("bateria", "Te queda ${b.nivel}% de batería", "Buen momento para guardar tu partida y enchufar la consola.")
                     Sonidos.aviso()
                 }
             }
@@ -4412,6 +4420,7 @@ object Diptico {
                 v != null -> {
                     if (Actualizador.avisarSiNueva(app, v)) Sonidos.aviso()
                     if (nuevaParaLaApp || !silencioso) avisar("¡Díptico ${v.nombre} ya está disponible! Menú › Acerca de")
+                    avisoDippo("diptico", "Díptico ${v.nombre} ya está disponible", "Toca para verla y descargarla desde Acerca de.") { abrirActualizacion() }
                 }
                 !silencioso && resultado.isFailure -> avisar("No pude consultar GitHub. Revisa tu conexión.")
                 !silencioso -> avisar("Ya tienes la versión más nueva")
@@ -4906,6 +4915,9 @@ object Diptico {
             opcionLista("Estilo de las carpetas", Icono.CARPETA,
                 "Cómo se ven las carpetas de tus consolas: tarjeta, el dibujo de la consola, un abanico con tus juegos más jugados o el logo grande.",
                 ESTILOS_CARPETA.map { it.first }, ESTILOS_CARPETA.map { it.second }, e.extra.estiloCarpetas) { elegirEstiloCarpetas(it) },
+            opcionLista("Tono de las carpetas", Icono.CARPETA,
+                "Los dibujos de las carpetas pueden ser oscuros (cómodos de noche y con temas oscuros) o claros, como papel. «Según el tema» los pone oscuros cuando tu tema lo es.",
+                listOf("auto", "oscuro", "claro"), listOf("Según el tema", "Oscuras", "Claras"), e.extra.carpetasTono) { elegirTonoCarpetas(it) },
             Opcion("Ordenar carpetas", "A tu gusto", Icono.VISTA,
                 "Las carpetas tiemblan y las mueves arrastrando con el dedo, o con A y la cruceta. También se entra manteniendo una carpeta presionada. B o «Listo» termina.") {
                 cerrarPanel(); empezarOrdenCarpetas()

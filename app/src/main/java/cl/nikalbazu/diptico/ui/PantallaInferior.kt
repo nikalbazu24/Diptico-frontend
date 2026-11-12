@@ -448,7 +448,8 @@ private fun EnJuego(e: Estado) {
                 cl.nikalbazu.diptico.estado.Termica.registrar(s.clave, l)
                 if (l.nivel >= cl.nikalbazu.diptico.estado.Termica.Nivel.CALIENTE) {
                     if (!avisado) { avisado = true; Diptico.despertar() }
-                } else if (l.nivel <= cl.nikalbazu.diptico.estado.Termica.Nivel.TIBIA) avisado = false
+                    Diptico.avisoCalor(l)
+                } else if (l.nivel <= cl.nikalbazu.diptico.estado.Termica.Nivel.TIBIA) { avisado = false; Diptico.quitarAvisoDippo("calor") }
             }
             delay(15_000)
         }
