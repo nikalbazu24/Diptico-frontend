@@ -44,7 +44,7 @@ fun pantallaActual(): Int {
 
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
-    val barra = e.configurado && !(rol == Rol.INFERIOR && (e.unaPantalla || e.vista == "mosaicos")) && !nuevoDisenoDosPantallas(e)
+    val barra = e.configurado && rol != Rol.INFERIOR && !nuevoDisenoDosPantallas(e)
     val esc = LocalEscala.current
     CompositionLocalProvider(
         LocalPantallaId provides miPantalla,

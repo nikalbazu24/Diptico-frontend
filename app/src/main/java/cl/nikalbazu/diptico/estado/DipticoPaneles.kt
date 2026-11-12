@@ -170,6 +170,8 @@ fun Diptico.cerrarPanel() {
     val e = estado.value
     cadenaRaspador = emptyList()
     if (e.panel == Panel.CLAVE && e.enlaceUrl != null) { Enlace.detener(); actualizar { it.copy(enlaceUrl = null) } }
+    // Lo abriste desde Ajustes: B vuelve a esa misma opción (y a su subventana), no al inicio ni al comienzo del menú.
+    if (e.panel != Panel.MENU && !(e.panel == Panel.GALERIA && e.decoracionAbierta != null) && volverAlMenu()) return
     // Desde la clave, se vuelve a donde estabas (menú o tutorial).
     if (e.panel == Panel.CLAVE && (e.textoPara == "titulo" || e.textoPara == "notas")) {
         actualizar { it.copy(panel = Panel.FICHA) }

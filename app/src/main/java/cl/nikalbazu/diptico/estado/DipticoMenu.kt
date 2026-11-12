@@ -232,7 +232,7 @@ fun Diptico.usarSubOpcion(i: Int = estado.value.extra.subSel, menos: Boolean = f
     val e = estado.value
     val o = subOpciones(e)?.getOrNull(i) ?: return
     if (i != e.extra.subSel) actualizar { it.copy(extra = it.extra.copy(subSel = i)) }
-    if (menos) (o.menos ?: return)() else o.accion()
+    if (menos) (o.menos ?: return)() else desdeMenu(o.accion)
     if (estado.value.panel != Panel.MENU) actualizar { it.copy(extra = it.extra.copy(subOpcion = -1, subSel = 0)) }
 }
 

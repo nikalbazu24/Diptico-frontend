@@ -111,7 +111,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 else -> Box(Modifier.fillMaxSize()) {
                 // La barra de abajo flota encima: el contenido corre por detrás y solo deja el aire que pide [LocalAireAbajo].
-                val conFranja = e.vista == "mosaicos" && e.extra.franjaAbajo
+                val conFranja = e.extra.franjaAbajo
                 val aire = if (!conFranja) 0.dp else esc.d(ALTO_FRANJA_ABIERTA)
                 androidx.compose.runtime.CompositionLocalProvider(LocalAireAbajo provides aire) {
                 Column(Modifier.fillMaxSize()) {
@@ -266,7 +266,7 @@ fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
             }),
     ) { vista ->
         when (vista) {
-            "mosaicos" -> Mosaicos(e, Modifier.fillMaxSize())
+            "mosaicos", "xbox" -> Mosaicos(e, Modifier.fillMaxSize())
             "cuadricula" -> Cuadricula(e, Modifier.fillMaxSize())
             "lista" -> ListaJuegos(e, Modifier.fillMaxSize())
             "carrusel" -> CarruselJuegos(e, Modifier.fillMaxSize())
@@ -295,7 +295,7 @@ fun Cinta(e: Estado) {
         itemsIndexed(e.pestanas, key = { _, id -> id }) { _, id ->
             val c = Consolas.porId(id)
             val activa = id == e.consolaSel
-            val nuevo = e.vista == "mosaicos"
+            val nuevo = true
             val tono = c?.color ?: Coral
             val escala by animateFloatAsState(if (activa) (if (nuevo) 1.06f else 1.14f) else 1f, spring(dampingRatio = 0.5f), label = "icono")
             val forma = RoundedCornerShape(esc.d(14))

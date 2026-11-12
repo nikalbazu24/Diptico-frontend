@@ -971,7 +971,7 @@ object Diptico {
             widgets = leerWidgets(almacen.texto("widgets")),
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
-            vista = almacen.texto("vista", "mosaicos").let { if (it in setOf("mosaicos", "cuadricula", "lista", "carrusel")) it else "mosaicos" },
+            vista = almacen.texto("vista", "mosaicos").let { if (it in setOf("mosaicos", "xbox", "cuadricula", "lista", "carrusel")) it else "mosaicos" },
             vistaConsolas = vistaConsolas,
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
@@ -1151,7 +1151,36 @@ object Diptico {
     }
 
     internal fun actualizar(f: (Estado) -> Estado) {
-        _estado.value = f(_estado.value)
+        val nuevo = f(_estado.value)
+        // De vuelta en el inicio: ya no hay a qué ventana de Ajustes volver.
+        if (nuevo.panel == Panel.NINGUNO && pilaMenu.isNotEmpty()) pilaMenu.clear()
+        _estado.value = nuevo
+    }
+
+    /** Dónde estabas en Ajustes (sección, opción y subventana) cuando una opción abrió otra ventana; B vuelve justo ahí. */
+    internal data class EnMenu(val seccion: Seccion, val enOpciones: Boolean, val indice: Int, val subOpcion: Int, val subSel: Int, val abierto: Panel)
+    internal val pilaMenu = ArrayDeque<EnMenu>()
+
+    /** Corre [accion] desde Ajustes: si abre otra ventana, se recuerda dónde estabas para volver con B. */
+    internal fun desdeMenu(accion: () -> Unit) {
+        val e = estado.value
+        accion()
+        val d = estado.value
+        if (e.panel == Panel.MENU && d.panel != Panel.MENU && d.panel != Panel.NINGUNO) {
+            pilaMenu.addLast(EnMenu(e.seccion, e.enOpciones, e.indice, e.extra.subOpcion, e.extra.subSel, d.panel))
+            while (pilaMenu.size > 6) pilaMenu.removeFirst()
+        }
+    }
+
+    /** Si la ventana que se cierra se abrió desde Ajustes, vuelve a esa opción (con su subventana abierta). */
+    internal fun volverAlMenu(): Boolean {
+        val e = estado.value
+        val r = pilaMenu.lastOrNull() ?: return false
+        if (r.abierto != e.panel) return false
+        pilaMenu.removeLast()
+        actualizar { it.copy(panel = Panel.MENU, seccion = r.seccion, enOpciones = r.enOpciones, indice = r.indice,
+            extra = it.extra.copy(subOpcion = r.subOpcion, subSel = r.subSel, desplegable = -1)) }
+        return true
     }
 
     /** Una pantalla de Díptico aparece (+1) o se va (-1). */
@@ -2479,7 +2508,7 @@ object Diptico {
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
         if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
         if (e.galeria == "vistas_juegos") return VISTAS.map { v ->
-            val detalle = when(v) { "mosaicos" -> "Estilo consola: un mosaico grande y el resto en cuadrados"; "cuadricula" -> "Todas las portadas a la vista"; "iconos" -> "Solo las portadas, sin textos: más juegos a la vista"; "cartuchos" -> "Cada juego en su cartucho o caja en 3D"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
+            val detalle = when(v) { "mosaicos" -> "Una fila de juegos, en el mismo orden que la vitrina de arriba"; "xbox" -> "Estilo Xbox: un mosaico grande y el resto en dos filas"; "cuadricula" -> "Todas las portadas a la vista"; "iconos" -> "Solo las portadas, sin textos: más juegos a la vista"; "cartuchos" -> "Cada juego en su cartucho o caja en 3D"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
             ItemGaleria(v, nombreVista(v), detalle, e.vista == v) { almacen.guardarTexto("vista", v); actualizar { it.copy(vista = v) }; cerrarPanel() }
         }
         if (e.galeria == "vistas_consolas") return VISTAS_CONSOLAS.map { v ->
@@ -2757,7 +2786,7 @@ object Diptico {
                     e.extra.subOpcion >= 0 -> usarSubOpcion()
                     e.desplegable >= 0 -> elegirDesplegable(e.desplegableSel)
                     o?.alternativas != null && o.elegir != null -> abrirDesplegable(e.indice, o.elegida)
-                    else -> o?.accion?.invoke()
+                    else -> o?.accion?.let { desdeMenu(it) }
                 }
             }
             Panel.RAPIDO -> opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
@@ -4581,8 +4610,8 @@ object Diptico {
     // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
 
     /** Las vistas de juegos (9 nov 2026: de nueve a cuatro, las que de verdad se usan). */
-    internal val VISTAS = listOf("mosaicos", "cuadricula", "lista", "carrusel")
-    fun nombreVista(v: String) = when (v) { "cuadricula" -> "Galería"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; else -> "Mosaicos" }
+    internal val VISTAS = listOf("mosaicos", "xbox", "cuadricula", "lista", "carrusel")
+    fun nombreVista(v: String) = when (v) { "xbox" -> "Mosaicos Xbox"; "cuadricula" -> "Galería"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; else -> "Mosaicos" }
 
     /** Cómo se eligen las consolas: la fila de logos (el diseño nuevo), carpetas o sistemas en grande. */
     val VISTAS_CONSOLAS = listOf("arriba", "carpetas", "sistemas")
