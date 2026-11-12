@@ -93,8 +93,13 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
         LazyHorizontalGrid(
             rows = GridCells.Fixed(if (unaFila) 1 else 2), state = estado, modifier = Modifier.fillMaxSize(),
             contentPadding = run {
-                val arriba = if (estante) ((maxHeight - aire - lado) / 2).coerceAtLeast(esc.d(12)) else esc.d(12)
-                PaddingValues(start = esc.d(18), end = esc.d(18), top = arriba, bottom = arriba + aire)
+                // Estante: la fila va en el medio exacto de la pantalla; solo si así taparía la barra de abajo se sube.
+                val mitad = ((maxHeight - lado) / 2).coerceAtLeast(esc.d(12))
+                if (estante && mitad >= aire) PaddingValues(start = esc.d(18), end = esc.d(18), top = mitad, bottom = mitad)
+                else {
+                    val arriba = if (estante) ((maxHeight - aire - lado) / 2).coerceAtLeast(esc.d(12)) else esc.d(12)
+                    PaddingValues(start = esc.d(18), end = esc.d(18), top = arriba, bottom = arriba + aire)
+                }
             },
             horizontalArrangement = Arrangement.spacedBy(hueco), verticalArrangement = Arrangement.spacedBy(hueco),
         ) {
