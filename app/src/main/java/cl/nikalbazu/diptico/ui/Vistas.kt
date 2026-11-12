@@ -55,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -104,6 +105,49 @@ fun Cuadricula(e: Estado, modifier: Modifier = Modifier, soloPortadas: Boolean =
                 if (i == e.indiceSel) Diptico.jugar() else Diptico.elegirJuego(j.clave)
             }
         }
+    }
+}
+
+/**
+ * Selector de íconos: los juegos como cuadrados (la portada recortada), sin textos. Va con la portada «PS5 con caja»:
+ * arriba se ve todo el juego y abajo solo se elige. El elegido crece, con borde blanco y el brillo de su consola.
+ */
+@Composable
+fun IconosJuegos(e: Estado, modifier: Modifier = Modifier) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("IconosJuegos") }
+    val esc = LocalEscala.current
+    val t = LocalTamJuegos.current
+    val lado = 78f * t
+    val lista = e.visibles
+    BoxWithConstraints(modifier) {
+        val anchoUnidades = maxWidth.value / esc.factor
+        val hueco = 14f
+        val cols = ((anchoUnidades - 28f) / (lado + hueco)).toInt().coerceIn(2, 8)
+        SideEffect { Teclas.columnasCuadricula = cols }
+        if (lista.isEmpty()) VacioEstante(e)
+        RejillaCentrada(lista.size, cols, e.indiceSel, esc.d(hueco), esc.d(hueco),
+            PaddingValues(horizontal = esc.d(14), vertical = esc.d(18)), Modifier.fillMaxSize(), clave = { lista[it].clave }) { i ->
+            val j = lista[i]
+            IconoJuego(j, i == e.indiceSel, lado) { if (i == e.indiceSel) Diptico.jugar() else Diptico.elegirJuego(j.clave) }
+        }
+    }
+}
+
+@Composable
+private fun IconoJuego(j: Juego, elegido: Boolean, lado: Float, alTocar: () -> Unit) {
+    val esc = LocalEscala.current
+    val color = remember(j.consolaId) { Consolas.porId(j.consolaId)?.color ?: Uva }
+    val escala by animateFloatAsState(if (elegido) 1.14f else 1f, androidx.compose.animation.core.spring(dampingRatio = 0.7f, stiffness = 500f), label = "icono-juego")
+    val forma = RoundedCornerShape(esc.d(lado * 0.2f))
+    Box(
+        Modifier.zIndex(if (elegido) 1f else 0f).size(esc.d(lado)).graphicsLayer { scaleX = escala; scaleY = escala }
+            .then(if (elegido) Modifier.shadow(esc.d(16), forma, ambientColor = color, spotColor = color) else Modifier)
+            .clip(forma).background(color.copy(alpha = 0.3f))
+            .then(if (elegido) Modifier.border(esc.d(3), Color.White, forma) else Modifier)
+            .clickable(onClick = alTocar),
+    ) {
+        ArteJuego(j, preferirArte = false, maxLado = 240, modifier = Modifier.fillMaxSize())
+        if (!elegido) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.16f)))
     }
 }
 

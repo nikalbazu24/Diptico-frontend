@@ -421,6 +421,8 @@ fun Caja3D(
     e: DatosCaja, juego: Juego, consola: Consola, modifier: Modifier = Modifier,
     giroY: () -> Float, giroX: () -> Float, penumbra: () -> Float = { 0f },
     caras: CarasGuardadas? = null, detalle: Boolean = true, sombraPiso: Boolean = true,
+    /** 0 = cerrada; 1 = la tapa abierta del todo (gira desde el lomo, como un estuche de verdad). */
+    apertura: () -> Float = { 0f },
 ) {
     androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Caja3D (cada una)") }
     val ctx = LocalContext.current
@@ -558,6 +560,67 @@ fun Caja3D(
                 h.borde.color = if (abs(luz) > 0.5f) 0x30FFFFFF else 0x18FFFFFF
                 nc.drawPath(h.ruta, h.borde)
             }
+            // La tapa que se abre (al jugar): adentro se ve el disco o el cartucho, y la tapa gira desde el lomo.
+            val ab = apertura().coerceIn(0f, 1f)
+            if (ab > 0.001f) {
+                // El hueco: el frente se ve oscuro, con el disco (o la tarjeta) del color de la consola.
+                h.ruta.reset()
+                h.ruta.moveTo(h.px[4], h.py[4]); h.ruta.lineTo(h.px[5], h.py[5]); h.ruta.lineTo(h.px[7], h.py[7]); h.ruta.lineTo(h.px[6], h.py[6]); h.ruta.close()
+                h.plano.color = 0xFF121218.toInt()
+                nc.drawPath(h.ruta, h.plano)
+                val mx = (h.px[4] + h.px[5] + h.px[6] + h.px[7]) / 4f
+                val my = (h.py[4] + h.py[5] + h.py[6] + h.py[7]) / 4f
+                val r = min(abs(h.px[5] - h.px[4]), abs(h.py[6] - h.py[4])) * 0.36f
+                if (r > 1f) {
+                    h.plano.shader = RadialGradient(mx - r * 0.3f, my - r * 0.3f, r * 1.3f,
+                        intArrayOf(0xFFF4F4F8.toInt(), 0xFFB8BCC8.toInt(), base.toArgb()), floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP)
+                    nc.drawCircle(mx, my, r, h.plano)
+                    h.plano.shader = null
+                    h.plano.color = 0xFF121218.toInt()
+                    nc.drawCircle(mx, my, r * 0.16f, h.plano)
+                    // Un brillo que crece mientras se abre: lo que sale de la caja es el juego.
+                    h.plano.shader = RadialGradient(mx, my, r * 2.2f, intArrayOf(((ab * 0x66).roundToInt() shl 24) or 0xFFFFFF, 0x00FFFFFF), null, Shader.TileMode.CLAMP)
+                    nc.drawCircle(mx, my, r * 2.2f, h.plano)
+                    h.plano.shader = null
+                }
+                // La tapa: las esquinas del frente giradas alrededor del borde izquierdo (donde está el lomo).
+                val th = Math.toRadians(ab * 112.0)
+                val ct = cos(th).toFloat(); val st = sin(th).toFloat()
+                val zf = D / 2f + 0.5f
+                for (n in 0 until 4) {
+                    val x0 = if (n == 1 || n == 2) W / 2f else -W / 2f
+                    val y0 = if (n >= 2) H / 2f else -H / 2f
+                    val x = -W / 2f + (x0 + W / 2f) * ct
+                    val z = zf + (x0 + W / 2f) * st
+                    val x1 = x * ca + z * sa
+                    val z1 = -x * sa + z * ca
+                    val y2 = y0 * cb - z1 * sb
+                    val z2 = y0 * sb + z1 * cb
+                    val f = cam / (cam - z2)
+                    h.lx[n] = cx + x1 * f
+                    h.ly[n] = cy + y2 * f
+                }
+                for (n in 0 until 4) { h.dst[n * 2] = h.lx[n]; h.dst[n * 2 + 1] = h.ly[n] }
+                h.ruta.reset()
+                h.ruta.moveTo(h.dst[0], h.dst[1]); h.ruta.lineTo(h.dst[2], h.dst[3]); h.ruta.lineTo(h.dst[4], h.dst[5]); h.ruta.lineTo(h.dst[6], h.dst[7]); h.ruta.close()
+                var area = 0f
+                for (n in 0 until 4) { val m = (n + 1) % 4; area += h.dst[n * 2] * h.dst[m * 2 + 1] - h.dst[m * 2] * h.dst[n * 2 + 1] }
+                val bmp = frente
+                if (area > 0f && bmp != null) {
+                    h.src[0] = 0f; h.src[1] = 0f; h.src[2] = bmp.width.toFloat(); h.src[3] = 0f
+                    h.src[4] = bmp.width.toFloat(); h.src[5] = bmp.height.toFloat(); h.src[6] = 0f; h.src[7] = bmp.height.toFloat()
+                    h.matriz.setPolyToPoly(h.src, 0, h.dst, 0, 4)
+                    nc.drawBitmap(bmp, h.matriz, h.imagen)
+                } else {
+                    // Por dentro, la tapa es del color del estuche.
+                    h.plano.color = lerp(Color(canto), Color.Black, 0.15f).toArgb()
+                    nc.drawPath(h.ruta, h.plano)
+                }
+                h.plano.color = (((ab * 0.35f) * 255).roundToInt() shl 24)
+                nc.drawPath(h.ruta, h.plano)
+                h.borde.color = 0x30FFFFFF
+                nc.drawPath(h.ruta, h.borde)
+            }
         }
     }
 }
@@ -573,6 +636,8 @@ private class Herramientas3D {
     val imagen = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     val plano = Paint(Paint.ANTI_ALIAS_FLAG)
     val borde = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.2f }
+    val lx = FloatArray(4)
+    val ly = FloatArray(4)
 }
 
 /**

@@ -514,3 +514,17 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `cerrarPanel` llama `volverAlMenu()` (restaura sección, índice y subventana); `actualizar` vacía la pila al volver a NINGUNO.
 - Vitrina de cajas: `RelojBateria` arriba del nombre de la consola (columna izquierda). Traducciones `extras21.tsv` (siguiente: extras22). Capturas t396–t404.
 - Boceto de ajustes: https://claude.ai/artifact/Ezq1VDV9ZTwD2mf4johmxc (Nicolás pidió mantener el diseño actual: lista arriba, explicación abajo).
+
+## PS5 con caja + Ajustes B + fluidez (12 nov, rama `fix/ajustes-claros`, Opus; Novedades `arreglos-fluidez-2.0-63`)
+- Boceto aprobado (lienzo Ezq1VDV9ZTwD2mf4johmxc): Ajustes **B** (6 opciones a la vista + «Más de …») e **Idea 9b** (arriba arte PS5 + caja 3D flotando; abajo solo íconos).
+- Ajustes: `submenus()` = `PRINCIPALES[s]` (máx. `MAX_PRINCIPALES` 6, se completa con la 1.ª de cada grupo) + fila «Más de …» con el resto
+  (cada opción con `grupo` = nombre del tema; `VentanaSubOpciones` pone el título del grupo). Desplegables también dentro del submenú
+  (`opcionDesplegada(e)`, `abrirDesplegable` con subOpcion, el desplegable se dibuja encima del submenú). `extra.iconosCarpetas` (clave
+  `iconosCarpetas`, "igual") → `CarpetasConsolas` provee su propio `LocalIconos`.
+- Portada `extra.portada = "ps5"` (`Estado.portadaPs5`, `vitrina3D`): `VitrinaCajas` con `ps5` = una sola caja a la derecha, `ArteJuego` nítido de fondo e
+  info a la izquierda (logo si `j.logo`). Elegirla pone la vista `"iconos"` (`IconosJuegos` en ui/Vistas.kt: cuadrados, elegido 1.14×).
+- `Caja3D(apertura = {0..1})`: tapa que gira 112° desde el lomo, hueco oscuro con disco del color de la consola. `CargaJuego` la abre (0.5–0.9 de `CARGA_MS` = 1700).
+- Fluidez: `estado/Fluidez.kt` (muestras por segundo desde `MedidorFps`, contadores `Fluidez.contar` en un SideEffect de las partes grandes) y opción
+  «Enviar informe de fluidez» (`enviarInformeFluidez`, va por `confirmarReporte` a Drive). `Caja3D` ya no recibe `Estado` sino `DatosCaja` (`datosCaja(e, j, c)`).
+- Mosaicos: Xbox sin centrar (empieza en el borde), elegido 1.12× con `zIndex`; pistas del carrusel de sistemas sobre `LocalAireAbajo`; `BarraSuperior(perfil)` = columna píldora + logo.
+- Traducciones `extras22.tsv` (siguiente: extras23). Capturas t405–t412.

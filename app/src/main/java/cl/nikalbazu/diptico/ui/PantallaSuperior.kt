@@ -150,7 +150,7 @@ private fun Caratulas(e: Estado) {
             return@Box
         }
         // Vitrina de cajas (diseño nuevo con dos pantallas): la caja del juego al centro y las vecinas inclinadas.
-        if (e.portadaCajas && e.sesion == null && nuevoDisenoDosPantallas(e)) {
+        if (e.vitrina3D && e.sesion == null && nuevoDisenoDosPantallas(e)) {
             VitrinaCajas(e, juego)
             return@Box
         }

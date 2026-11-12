@@ -470,7 +470,7 @@ data class LoginDiscord(
 data class CargaJuego(val clave: String, val displayId: Int, val inicio: Long)
 
 /** Cuánto dura la pantalla de carga antes de abrir el juego (el fundido a negro termina justo ahí). */
-const val CARGA_MS = 1250L
+const val CARGA_MS = 1700L
 
 val Estado.estiloBarraArriba get() = extra.estiloBarraArriba
 val Estado.estiloBarraAbajo get() = extra.estiloBarraAbajo
@@ -973,7 +973,7 @@ object Diptico {
             widgets = leerWidgets(almacen.texto("widgets")),
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
-            vista = almacen.texto("vista", "mosaicos").let { if (it in setOf("mosaicos", "xbox", "cuadricula", "lista", "carrusel")) it else "mosaicos" },
+            vista = almacen.texto("vista", "mosaicos").let { if (it in setOf("mosaicos", "xbox", "iconos", "cuadricula", "lista", "carrusel")) it else "mosaicos" },
             vistaConsolas = vistaConsolas,
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
@@ -2511,7 +2511,7 @@ object Diptico {
         if (e.galeria == "filtros") return FILTROS.map { f -> ItemGaleria(f, nombreFiltro(f), "Mostrar esta selección", e.filtro == f) { elegirFiltro(f); cerrarPanel() } }
         if (e.galeria == "orden") return ORDENES.map { o -> ItemGaleria(o, nombreOrden(o), "Orden de tu biblioteca", e.orden == o) { elegirOrden(o); cerrarPanel() } }
         if (e.galeria == "vistas_juegos") return VISTAS.map { v ->
-            val detalle = when(v) { "mosaicos" -> "Una fila de juegos, en el mismo orden que la vitrina de arriba"; "xbox" -> "Estilo Xbox: un mosaico grande y el resto en dos filas"; "cuadricula" -> "Todas las portadas a la vista"; "iconos" -> "Solo las portadas, sin textos: más juegos a la vista"; "cartuchos" -> "Cada juego en su cartucho o caja en 3D"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
+            val detalle = when(v) { "mosaicos" -> "Una fila de juegos, en el mismo orden que la vitrina de arriba"; "xbox" -> "Estilo Xbox: un mosaico grande y el resto en dos filas"; "iconos" -> "Solo los íconos de tus juegos, para elegir rápido (va bien con «PS5 con caja» arriba)"; "cuadricula" -> "Todas las portadas a la vista"; "iconos" -> "Solo las portadas, sin textos: más juegos a la vista"; "cartuchos" -> "Cada juego en su cartucho o caja en 3D"; "lista" -> "Nombres claros y navegación rápida"; "estante" -> "Cajas con información del juego"; "carrusel" -> "Una portada protagonista"; "abanico" -> "Portadas como cartas"; else -> "Lomos de las cajas" }
             ItemGaleria(v, nombreVista(v), detalle, e.vista == v) { almacen.guardarTexto("vista", v); actualizar { it.copy(vista = v) }; cerrarPanel() }
         }
         if (e.galeria == "vistas_consolas") return VISTAS_CONSOLAS.map { v ->
@@ -4631,8 +4631,8 @@ object Diptico {
     // ---------- Estante: vista, tamaño, filtros, búsqueda ----------
 
     /** Las vistas de juegos (9 nov 2026: de nueve a cuatro, las que de verdad se usan). */
-    internal val VISTAS = listOf("mosaicos", "xbox", "cuadricula", "lista", "carrusel")
-    fun nombreVista(v: String) = when (v) { "xbox" -> "Mosaicos Xbox"; "cuadricula" -> "Galería"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; else -> "Mosaicos" }
+    internal val VISTAS = listOf("mosaicos", "xbox", "iconos", "cuadricula", "lista", "carrusel")
+    fun nombreVista(v: String) = when (v) { "xbox" -> "Mosaicos Xbox"; "iconos" -> "Íconos"; "cuadricula" -> "Galería"; "lista" -> "Lista"; "carrusel" -> "Carrusel"; else -> "Mosaicos" }
 
     /** Cómo se eligen las consolas: la fila de logos (el diseño nuevo), carpetas o sistemas en grande. */
     val VISTAS_CONSOLAS = listOf("arriba", "carpetas", "sistemas")
