@@ -454,3 +454,15 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   InfoBateria, LanzadorPC, PorBorrar, Regreso) se importan como `cl.nikalbazu.diptico.estado.Diptico.X` en cada `Diptico*.kt`.
 - Propuesta a Nicolás (pendiente de su sí): próxima versión grande «Emuladores al día», actualizador tipo Obtainium sobre `Actualizador.kt`
   (GitHub/Forgejo releases, APK arm64, PackageInstaller; firma distinta = desinstalar antes; los de Play Store solo se revisan).
+
+## Emuladores al día (11 nov, noche, rama `fix/emuladores-al-dia`, Opus)
+- `estado/EmuladoresAlDia.kt`: `FUENTES` (GitHub/Forgejo con APK; las de solo web abren su página; ports desde `Nativos.PORTS`), `EmuRevisado`,
+  `revisarEmuladores(silencioso)`, `vigilarEmuladores` (90 s tras abrir, cada 20 h, `extra.emusAuto` clave `emusAuto`, `emusRevisado`),
+  `actualizarEmulador(paquete)` (permiso de instalar → baja a cacheDir/emuladores → `mismaFirma` → `instalarApk`), `emuladorInstalado/NoInstalado`
+  (los llama `ReceptorInstalacion` con el extra "paquete"). Firma distinta = `Dialogo("firma-distinta")` (desinstalar antes).
+- Centro de Switch 2 y ports: 3.ª pestaña «Emuladores» (`PESTANAS_NATIVOS = 3`, `entradasEmuladores`, filas `dippo-emus` y `emu:<pkg>`).
+  Ajustes › Juegos y emuladores › grupo «Emuladores al día». Test `EmuladoresAlDiaTest`.
+- Premios: galería `logros_dippo` con pestañas Logros/Premios (`premiosDippo`, `premiosDeLogro` en DipticoPerfil.kt).
+- Perfil fuera de Ajustes (`G_PERFIL` quitado de `GRUPOS_AJUSTES`; Discord en `G_CUENTAS`); se edita desde la tarjeta. `PerfilArriba(tam=54)`
+  (nombre + título + foto grande, tipo iiSU) en `BarraSuperior(perfil=)` y en la vitrina de cajas; `EstadoChico(conFoto=)`.
+- 30 funciones muertas borradas. Traducciones `extras17.tsv` (siguiente: extras18). Novedades `emuladores-al-dia-2.0-58`. Capturas t377–t383.
