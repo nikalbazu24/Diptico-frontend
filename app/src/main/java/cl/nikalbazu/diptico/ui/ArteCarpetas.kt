@@ -41,7 +41,7 @@ internal fun motivosCarpeta(id: String): List<String> = when (id) {
 
 /** Portadas propias y vectoriales para todo el catálogo, también Game Boy. */
 @Composable
-internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscuro: Boolean = false) {
+internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscuro: Boolean = false, vidrio: Boolean = false) {
     val id = consola?.id ?: "todo"
     val color = consola?.color ?: Uva
     // Con el estilo de íconos «Píxeles», el dibujo del centro es el sprite pixel (si la consola tiene uno).
@@ -60,17 +60,20 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscur
             Triple(.02f, .02f, .28f), Triple(.70f, .02f, .28f),
             Triple(.02f, .70f, .28f), Triple(.70f, .70f, .28f),
         )
-        val fondo = Brush.linearGradient(listOf(papel, lerp(papel, color, .12f)), Offset.Zero, Offset(s, s))
+        // Vidrio: el color de la consola va difuminado y translúcido, y lo de atrás se asoma.
+        val fondo = if (vidrio) Brush.linearGradient(listOf(color.copy(alpha = .38f), color.copy(alpha = .10f)), Offset.Zero, Offset(s, s))
+            else Brush.linearGradient(listOf(papel, lerp(papel, color, .12f)), Offset.Zero, Offset(s, s))
         val placa = Rect(s * .245f, s * .245f, s * .755f, s * .755f)
         val radio = CornerRadius(s * .125f)
-        val luz = Brush.linearGradient(listOf(lerp(medio, Color.White, .2f), medio, lerp(medio, Color.Black, .18f)))
+        val alfaPlaca = if (vidrio) .55f else 1f
+        val luz = Brush.linearGradient(listOf(lerp(medio, Color.White, .2f).copy(alpha = alfaPlaca), medio.copy(alpha = alfaPlaca), lerp(medio, Color.Black, .18f).copy(alpha = alfaPlaca)))
         val clip = Path().apply { addRoundRect(RoundRect(placa, radio)) }
         // Trama muy discreta: los 576 puntitos se calculan una vez y se dibujan en una sola llamada (antes eran 576).
         val trama = List(24 * 24) { k -> Offset(s * (k % 24 + .5f) / 24, s * (k / 24 + .5f) / 24) }
         val tramaColor = tinta.copy(alpha = .08f)
         onDrawBehind {
             drawRect(fondo)
-            drawPoints(trama, androidx.compose.ui.graphics.PointMode.Points, tramaColor, strokeWidth = s * .0048f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            if (!vidrio) drawPoints(trama, androidx.compose.ui.graphics.PointMode.Points, tramaColor, strokeWidth = s * .0048f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
             posiciones.forEachIndexed { i, (x, y, escala) ->
                 withTransform({ translate(s * x, s * y); scale(s * escala / 100, s * escala / 100, Offset.Zero); rotate(if (i % 2 == 0) -10f else 9f, Offset(50f, 50f)) }) {
                     motivos[i % motivos.size].forEach { trazo ->
@@ -81,7 +84,7 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscur
                 }
             }
             // Sombra difusa escalonada, sin marco grueso ni varios contornos concéntricos.
-            for (i in 8 downTo 1) {
+            if (!vidrio) for (i in 8 downTo 1) {
                 val margen = s * i * .003f
                 drawRoundRect(sombra.copy(alpha = if (oscuro) .05f else .018f), placa.topLeft + Offset(-margen, s * .014f - margen),
                     Size(placa.width + 2 * margen, placa.height + 2 * margen), CornerRadius(radio.x + margen))
