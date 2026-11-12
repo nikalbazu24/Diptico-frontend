@@ -55,6 +55,7 @@ import cl.nikalbazu.diptico.estado.Teclas
  */
 @Composable
 fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Mosaicos") }
     val esc = LocalEscala.current
     val lista = e.visibles
     val estado = rememberLazyGridState()
@@ -123,6 +124,7 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
 
 @Composable
 private fun Mosaico(j: cl.nikalbazu.diptico.data.Juego, elegido: Boolean, jugado: Boolean, grande: Boolean, lado: Dp, ancho: Dp = lado) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Mosaico (cada uno)") }
     val esc = LocalEscala.current
     val color = remember(j.consolaId) { Consolas.porId(j.consolaId)?.color ?: Uva }
     // El elegido crece con un resorte corto (sin rebote largo) y vuelve suave: se siente como consola.
@@ -168,6 +170,7 @@ val LocalAireAbajo = androidx.compose.runtime.compositionLocalOf { 0.dp }
 
 @Composable
 fun FranjaAccesos(e: Estado, modifier: Modifier = Modifier) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("FranjaAccesos") }
     if (!e.extra.franjaAbajo) return
     val esc = LocalEscala.current
     // Solo la lupa y los ajustes, pegados a las esquinas de abajo, cada uno en una pestaña semiredonda para que se note.
@@ -210,6 +213,7 @@ private fun CirculoFranja(icono: cl.nikalbazu.diptico.estado.Icono, izquierda: B
 /** Arriba de la pantalla de abajo: DIPPO en una esquina, tu perfil en la otra y la hora y la batería al centro. */
 @Composable
 fun EsquinasArriba(e: Estado) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("EsquinasArriba") }
     val esc = LocalEscala.current
     androidx.compose.foundation.layout.Row(
         Modifier.fillMaxWidth().padding(start = esc.d(10), end = esc.d(14), top = esc.d(4), bottom = esc.d(2)).testTag("esquinas-arriba"),

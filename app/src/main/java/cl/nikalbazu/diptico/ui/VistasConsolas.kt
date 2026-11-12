@@ -317,6 +317,7 @@ private fun AccesoNativos(e: Estado) {
 /** En la otra pantalla, en modo Sistemas: la consola elegida en grande, con lo último que jugaste en ella. */
 @Composable
 fun VistaSistema(e: Estado, completa: Boolean = true, conPistas: Boolean = true) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("VistaSistema") }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val id = e.consolaSel
@@ -458,6 +459,7 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
 
 @Composable
 private fun CarpetasConsolasCuerpo(e: Estado, modifier: Modifier, interactiva: Boolean) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("CarpetasConsolas") }
     val esc = LocalEscala.current
     val densidad = LocalDensity.current
     val ids = e.pestanas

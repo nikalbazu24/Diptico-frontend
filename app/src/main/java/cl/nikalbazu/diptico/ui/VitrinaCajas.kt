@@ -88,6 +88,7 @@ fun vitrinaActiva(e: Estado): Boolean =
  */
 @Composable
 fun VitrinaCajas(e: Estado, juego: Juego) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("VitrinaCajas") }
     val esc = LocalEscala.current
     val consola = Consolas.porId(juego.consolaId)
     val color = consola?.color ?: Uva
@@ -223,7 +224,7 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
                                     },
                             ) {
                                 Caja3D(
-                                    e, j, c, Modifier.fillMaxSize(),
+                                    datosCaja(e, j, c), j, c, Modifier.fillMaxSize(),
                                     // Las vecinas quedan giradas igual que en un estante de tienda: se les ve el lomo y parte
                                     // del frente. La del centro mira de frente y gira con lo que tú le hagas.
                                     giroY = {

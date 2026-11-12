@@ -100,6 +100,7 @@ import kotlinx.coroutines.delay
 /** Pantalla del estante: consolas, juegos y barra de acciones. Se adapta a pantalla angosta o ancha. */
 @Composable
 fun PantallaInferior(e: Estado, miDisplay: Int) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("PantallaInferior") }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Box(Modifier.fillMaxSize().background(p.fondo2)) {
@@ -241,6 +242,7 @@ fun ventanaEncima(e: Estado): Boolean = when (e.panel) {
 /** Los juegos según la vista elegida: estante (con la info del juego), cuadrícula o lista. */
 @Composable
 fun VistaJuegos(e: Estado, modifier: Modifier, escalaEstante: Float) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("VistaJuegos") }
     val esc = LocalEscala.current
     val animar = LocalMovimiento.current
     var borrador by remember(e.tamJuegos) { androidx.compose.runtime.mutableFloatStateOf(e.tamJuegos) }

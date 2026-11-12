@@ -38,7 +38,7 @@ fun medir(duracionesMs: List<Float>): Medicion {
  * pantalla y el cuadro más lento del último segundo. Verde = fluido, amarillo = se nota, rojo = tirones.
  */
 @Composable
-fun MedidorFps(visible: Boolean) {
+fun MedidorFps(visible: Boolean, pantalla: String = "") {
     if (!visible) return
     val esc = LocalEscala.current
     var m by remember { mutableStateOf(Medicion(0, 0)) }
@@ -53,6 +53,9 @@ fun MedidorFps(visible: Boolean) {
                 anterior = t
                 if (t - desde >= 1_000_000_000L) {
                     m = medir(cuadros)
+                    // Cada segundo queda anotado para el informe de fluidez (Ajustes › Sistema).
+                    cl.nikalbazu.diptico.estado.Fluidez.registrar(pantalla, m.fps, m.peorMs,
+                        cl.nikalbazu.diptico.estado.Fluidez.contexto(cl.nikalbazu.diptico.estado.Diptico.estado.value))
                     cuadros.clear()
                     desde = t
                 }

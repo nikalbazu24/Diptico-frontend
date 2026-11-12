@@ -79,6 +79,7 @@ private fun CarpetaCuerpo(
     id: String, elegida: Boolean, interactiva: Boolean, lado: Dp, tomada: Boolean, ordenando: Boolean, estilo: String,
     portada: String?, abanico: List<cl.nikalbazu.diptico.data.Juego>, tono: String = "auto",
 ) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Carpeta (cada una)") }
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val oscuro = carpetasOscuras(tono)

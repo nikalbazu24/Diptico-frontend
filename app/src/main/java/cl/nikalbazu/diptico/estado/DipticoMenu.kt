@@ -581,6 +581,10 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 actualizar { it.copy(extra = it.extra.copy(medidorFps = v)) }
             }
             lista += Opcion(
+                "Enviar informe de fluidez", if (Fluidez.cuantas() > 0) "${Fluidez.cuantas()} s medidos" else "Enciende el medidor", Icono.CHISPA,
+                "Con el medidor encendido, Díptico anota en qué pantalla y en qué vista se pone lento. Úsalo un rato (carpetas, vitrina, ajustes) y envía el informe: así se arregla justo lo que va lento en tu consola.",
+            ) { enviarInformeFluidez() }
+            lista += Opcion(
                 "Protector de pantalla", if (e.protectorMin == 0) "Nunca" else "A los ${e.protectorMin} min", Icono.RELOJ,
                 "Si no usas la consola, muestra tus juegos con las dos pantallas atenuadas. Cualquier botón lo cierra.",
             ) {
@@ -873,3 +877,13 @@ fun explicacion(o: Opcion): String = o.ayuda.ifBlank {
 fun Diptico.opcionDesplegada(e: Estado): Opcion? =
     if (e.extra.desplegable < 0) null
     else subOpciones(e)?.getOrNull(e.extra.desplegable) ?: opcionesSeccion(e.seccion).getOrNull(e.extra.desplegable)
+
+
+/** Manda el informe de fluidez por el mismo camino que el reporte de fallas (con su confirmación). */
+fun Diptico.enviarInformeFluidez() {
+    if (Fluidez.cuantas() < 10) { avisar("Enciende el medidor de fluidez y usa Díptico un rato antes de enviar"); return }
+    val equipo = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}"
+    val detalle = Fluidez.informe(equipo) + "\n\n" + Fallas.informe(app, "Datos de la versión", null)
+    reportePendiente = Fallas.Reporte(detalle, false)
+    confirmarReporte("Informe de fluidez (medidor de fps)")
+}

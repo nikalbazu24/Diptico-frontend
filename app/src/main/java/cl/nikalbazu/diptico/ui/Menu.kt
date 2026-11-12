@@ -97,6 +97,7 @@ private fun tintaSobre(c: Color) = if (c.luminance() > 0.55f) Tinta else Color.W
  */
 @Composable
 fun PanelMenu(e: Estado, conAyuda: Boolean) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Menú") }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     conAyudaAngosta = conAyuda && !esc.angosta

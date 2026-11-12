@@ -66,6 +66,7 @@ import cl.nikalbazu.diptico.estado.Panel
 /** Pantalla del juego: el juego elegido ocupa todo, con su información encima. Se adapta a pantalla ancha o angosta. */
 @Composable
 fun PantallaSuperior(e: Estado) {
+    androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("PantallaSuperior") }
     if (e.panel == Panel.MENU) {
         // El menú siempre en la pantalla de arriba; la ayuda queda abajo.
         if (!e.intercambiar) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
