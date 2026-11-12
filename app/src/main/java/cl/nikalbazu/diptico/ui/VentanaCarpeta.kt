@@ -65,7 +65,7 @@ private fun ListaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
         CarpetasConsolas(e, Modifier.fillMaxSize().desenfoqueAnimado { desenfoque }
             .then(if (captura) Modifier.fondoDeVentana(fondo, e.nivelesGlass.carpetas) else Modifier), interactiva = !abierta)
         AnimatedVisibility(transicion, enter = fadeIn(tween(entrada)), exit = fadeOut(tween(salida))) {
-            Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = if (e.extra.carpetasTono == "vidrio") .72f else .55f)).clickable { Diptico.volverASistemas() })
+            Box(Modifier.fillMaxSize().background(p.fondo.copy(alpha = .55f)).clickable { Diptico.volverASistemas() })
         }
         // La barra de apps flota abajo: la ventana termina justo encima de ella (antes la tapaba y se perdían los nombres de la última fila).
         val aire = LocalAireAbajo.current
@@ -80,7 +80,7 @@ private fun ListaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
                 // Vidrio: la ventana es translúcida y lleva el color de la consola difuminado; detrás se ve la biblioteca desenfocada.
                 val fondoVentana = if (vidrio) Modifier
                     .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(
-                        androidx.compose.ui.graphics.lerp(p.fondo, colorConsola, .35f).copy(alpha = .62f), androidx.compose.ui.graphics.lerp(p.fondo, colorConsola, .12f).copy(alpha = .84f))), forma)
+                        androidx.compose.ui.graphics.lerp(p.fondo, colorConsola, .35f), androidx.compose.ui.graphics.lerp(p.fondo, colorConsola, .12f))), forma)
                     .border(esc.d(1), androidx.compose.ui.graphics.Color.White.copy(alpha = .22f), forma)
                 else Modifier.superficieApp(p.fondo2, forma, CapaCristal.CARPETA)
                 Column(Modifier.fillMaxWidth(.94f).fillMaxHeight(.94f).testTag("carpeta-abierta")
