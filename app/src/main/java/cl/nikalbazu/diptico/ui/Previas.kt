@@ -93,6 +93,11 @@ private fun seccionDe(o: Opcion?, s: Seccion): Seccion {
     if (o == null) return s
     // En «Más ajustes», cada opción es una sección: se muestra la vista previa de esa sección.
     if (s == Seccion.MAS) return Seccion.values().firstOrNull { it.titulo == o.titulo } ?: Seccion.SISTEMA
+    // En las secciones con submenús, cada opción muestra la vista previa de la parte de donde viene.
+    Diptico.GRUPOS_AJUSTES[s]?.let { partes ->
+        val t = (o.sub?.firstOrNull() ?: o).titulo
+        return partes.firstOrNull { p -> Diptico.armarOpciones(p).any { it.titulo == t } } ?: partes.first()
+    }
     if (s != Seccion.ESENCIAL) return s
     return Seccion.values().firstOrNull { sec -> sec != Seccion.ESENCIAL && sec != Seccion.MAS && !Diptico.esGrupoAjustes(sec) && Diptico.opcionesSeccion(sec).any { it.titulo == o.titulo } } ?: s
 }
@@ -102,8 +107,9 @@ private fun seccionDe(o: Opcion?, s: Seccion): Seccion {
 fun PreviaAjuste(e: Estado, s: Seccion, o: Opcion?, modifier: Modifier = Modifier) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val sec = seccionDe(o, s)
-    val t = o?.titulo.orEmpty()
+    val sec = remember(o?.titulo, s) { seccionDe(o, s) }
+    // Un submenú muestra la vista previa de su primera opción.
+    val t = (o?.sub?.firstOrNull() ?: o)?.titulo.orEmpty()
     val ev = limpio(e)
     Column(modifier) {
         Etiqueta("Vista previa", p.tenue, 11f)

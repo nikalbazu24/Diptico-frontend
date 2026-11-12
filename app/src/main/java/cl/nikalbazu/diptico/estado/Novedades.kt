@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "pixel-arriba-2.0-61"
-    const val NOMBRE = "Pixel y orden"
+    const val ID = "ajustes-vistas-2.0-62"
+    const val NOMBRE = "Ajustes ordenados"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -459,11 +459,19 @@ object Novedades {
             Pagina("Lupa y ajustes con fondo", "La lupa y los ajustes siguen en las esquinas de abajo, ahora sobre una pestaña semiredonda para que se noten.", Icono.AJUSTES, 0xFF8B5CF6),
             Pagina("Más íconos pixel", "Wii U y Android tienen su ícono pixel propio, y el estilo «Píxeles» también se ve dentro de las carpetas de las consolas.", Icono.EMULADOR, 0xFFFF7A59),
         )),
-        Version(ID, "Pixel y orden", listOf(
+        Version("pixel-arriba-2.0-61", "Pixel y orden", listOf(
             Pagina("Pixel art completo", "Con el estilo «Pixel art», las consolas que ese paquete no trae (Switch, Switch 2, Wii U, Android, fan games) ya no salen como insignia: se dibujan en pixeles, igual que el resto.", Icono.EMULADOR, 0xFFFF7A59),
             Pagina("Hora y batería a la izquierda", "En la vitrina de arriba, la hora y la batería pasaron junto al nombre de la consola, para que tu foto y tu nombre queden solos a la derecha.", Icono.VISTA, 0xFF3BA8FF),
             Pagina("Juegos al centro", "En la pantalla de abajo el juego elegido queda en el medio, de lado a lado, también el primero y el último.", Icono.VISTA, 0xFF23C486),
             Pagina("Apps sin sombras y título solo arriba", "La barra de apps ya no lleva sombras ni contornos, y tu título («Recién llegado») se ve solo en la pantalla de arriba.", Icono.APPS, 0xFF8B5CF6),
+        )),
+        Version(ID, "Ajustes ordenados", listOf(
+            Pagina("Ajustes en ocho secciones", "Pantalla y estilo, Biblioteca, Inicio y widgets, Juegos y emuladores, DIPPO, Controles y sonido, Cuentas y Sistema. Dentro de cada una, las opciones parecidas van juntas en un submenú.", Icono.AJUSTES, 0xFF8B5CF6),
+            Pagina("Cada opción se explica", "Al marcar una opción, abajo ves qué hace, cómo se cambia y una vista previa de cómo queda. Ahora todas tienen explicación.", Icono.TUTORIAL, 0xFF3BA8FF),
+            Pagina("B vuelve donde estabas", "Si una opción de Ajustes abre otra ventana (una galería, la tienda, una consola…), con B vuelves a esa misma opción y a su submenú, no al comienzo.", Icono.CONTINUAR, 0xFF23C486),
+            Pagina("El diseño nuevo en todas las vistas", "Galería, Lista y Carrusel ahora usan el mismo diseño de arriba y abajo que los Mosaicos: ya no vuelve la distribución antigua al cambiar de vista.", Icono.VISTA, 0xFFFF7A59),
+            Pagina("Vuelve la vista Xbox", "«Mosaicos Xbox»: un juego grande y el resto en dos filas. Se elige en Ajustes › Biblioteca › Cómo se ven los juegos, o con R3.", Icono.VISTA, 0xFF23C486),
+            Pagina("DIPPO a la vista", "En Ajustes › DIPPO, hablar con él, sus logros y los premios están apenas entras, sin buscarlos.", Icono.TROFEO, 0xFFFFB547),
         )),
     )
 

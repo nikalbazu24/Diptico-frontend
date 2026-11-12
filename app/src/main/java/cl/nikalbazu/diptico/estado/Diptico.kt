@@ -84,13 +84,13 @@ enum class Seccion(val titulo: String, val icono: Icono, val ayuda: String, val 
     SISTEMA("Acerca de", Icono.INFO, "Respaldo en Google Drive, actualizaciones, reportar un problema, el tutorial y la versión de Díptico."),
     // Ajustes nuevos (9 nov 2026): seis secciones claras, cada una junta varias de las de antes.
     G_PERFIL("Mi perfil", Icono.PERFIL, "Tu foto o personaje, tu nombre, tu color y tus datos: para que Díptico sea más tuyo.", "Ajustes"),
-    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Claro u oscuro, animaciones, íconos y las pantallas."),
+    G_ESTILO("Pantalla y estilo", Icono.TEMA, "Temas y decoraciones, claro u oscuro, íconos, animaciones y qué va en cada pantalla."),
     G_TEMAS("Temas y decoraciones", Icono.PALETA, "La tienda de temas, tus colores, las fechas especiales y los adornos animados."),
     G_WIDGETS("Inicio y widgets", Icono.APPS, "La pantalla de inicio, tus widgets y el dock de apps."),
     G_BIBLIOTECA("Biblioteca", Icono.BIBLIOTECA, "Cómo se ven tus juegos, tus consolas, tus carpetas y las portadas."),
     G_JUEGOS("Juegos y emuladores", Icono.EMULADOR, "Con qué se abre cada consola y el modo turbo al jugar."),
     G_CUENTAS("Cuentas y conexiones", Icono.MUNDO, "Discord, RetroAchievements, SteamGridDB, ScreenScraper y las demás fuentes: todo lo que se conecta, en un solo lugar."),
-    G_CONTROLES("Controles", Icono.MANDO, "Qué hace cada botón y stick."),
+    G_CONTROLES("Controles y sonido", Icono.MANDO, "Qué hace cada botón y stick, la música de fondo, los sonidos y la vibración."),
     G_SONIDO("Sonido", Icono.MUSICA, "La música de fondo, los sonidos y la vibración."),
     G_DIPPO("DIPPO", Icono.BISA, "Tu compañero: dónde aparece, sus colores, su IA y cómo te ayuda mientras juegas."),
     G_SISTEMA("Sistema", Icono.INFO, "Respaldo, idioma, Android, la tele y la versión de Díptico."),
@@ -2931,15 +2931,14 @@ object Diptico {
     /** Qué secciones de antes junta cada una de las seis nuevas. */
     val GRUPOS_AJUSTES: Map<Seccion, List<Seccion>> = linkedMapOf(
         // «Mi perfil» ya no está en Ajustes: se edita desde tu tarjeta (A sobre la foto) y Discord vive en Cuentas.
-        Seccion.G_ESTILO to listOf(Seccion.APARIENCIA, Seccion.PANTALLAS),
-        Seccion.G_TEMAS to listOf(Seccion.TEMAS, Seccion.DECORACIONES),
-        Seccion.G_WIDGETS to listOf(Seccion.INICIO),
+        // Ocho secciones; dentro, cada grupo de opciones es un submenú (ver `armarOpciones`).
+        Seccion.G_ESTILO to listOf(Seccion.TEMAS, Seccion.DECORACIONES, Seccion.APARIENCIA, Seccion.PANTALLAS),
         Seccion.G_BIBLIOTECA to listOf(Seccion.ESTANTE, Seccion.CONSOLAS, Seccion.BIBLIOTECA, Seccion.PORTADAS),
+        Seccion.G_WIDGETS to listOf(Seccion.INICIO),
         Seccion.G_JUEGOS to listOf(Seccion.EMULADORES, Seccion.RENDIMIENTO),
-        Seccion.G_CUENTAS to listOf(Seccion.LOGROS),
-        Seccion.G_CONTROLES to listOf(Seccion.CONTROLES),
-        Seccion.G_SONIDO to listOf(Seccion.MUSICA),
         Seccion.G_DIPPO to listOf(Seccion.ASISTENTE),
+        Seccion.G_CONTROLES to listOf(Seccion.CONTROLES, Seccion.MUSICA),
+        Seccion.G_CUENTAS to listOf(Seccion.LOGROS),
         Seccion.G_SISTEMA to listOf(Seccion.SISTEMA, Seccion.IDIOMA, Seccion.CONSOLA, Seccion.SOBREMESA),
     )
 
