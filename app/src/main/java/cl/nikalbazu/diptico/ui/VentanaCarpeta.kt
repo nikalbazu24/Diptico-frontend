@@ -22,7 +22,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.graphics.drawscope.drawImage
 import kotlin.math.roundToInt
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -94,7 +93,7 @@ private fun ListaCarpetas(e: Estado, modifier: Modifier, escalaEstante: Float) {
                     .then(if (vidrio) Modifier.border(esc.d(1), androidx.compose.ui.graphics.Color.White.copy(alpha = .22f), forma) else Modifier.superficieApp(p.fondo2, forma, CapaCristal.CARPETA))
                 ) {
                     if (vidrio && captura && capa != null) {
-                        val extra = esc.d(6).toPx()
+                        val extra = with(androidx.compose.ui.platform.LocalDensity.current) { 6.dp.toPx() }
                         Box(Modifier.matchParentSize()
                             .graphicsLayer { if (extra > 0.5f) renderEffect = androidx.compose.ui.graphics.BlurEffect(extra, extra, androidx.compose.ui.graphics.TileMode.Clamp) }
                             .drawBehind {
