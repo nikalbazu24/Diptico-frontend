@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.lerp
 
 /*
  * Íconos pixel hechos a mano (16×16) para las consolas que merecen uno propio en el estilo «Píxeles»:
- * Switch, Switch 2 y Gahvoria (los fan games de RPG Maker). Cada letra es un color:
+ * Switch, Switch 2, Wii U, Android y Gahvoria (los fan games de RPG Maker). Cada letra es un color:
  *   M principal · D oscuro · L claro (del color de la consola)   B azul · E azul oscuro · F azul claro
  *   K contorno · N pantalla · G brillo de pantalla · W blanco · Y amarillo · X gris de los mandos · C acento (color de la consola)
  *   . transparente
@@ -71,7 +71,47 @@ internal object SpritesConsola {
         "................",
     )
 
+    private val WIIU = listOf(
+        "................",
+        "................",
+        "................",
+        ".KKKKKKKKKKKKKK.",
+        "KMMMMNNNNNNMMMMK",
+        "KMXXMNGGNNNMMWMK",
+        "KMXXMNGNNNNMWMWK",
+        "KMMMMNNNNNNMMWMK",
+        "KMMMMNNNNNNMMMMK",
+        "KDDDDNNNNNNDDDDK",
+        ".KKKKKKKKKKKKKK.",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    )
+
+    private val ANDROID = listOf(
+        "................",
+        "....L......L....",
+        ".....L....L.....",
+        "....LMMMMMML....",
+        "...LMMMMMMMMD...",
+        "...MMWMMMMWMM...",
+        "...DDDDDDDDDD...",
+        "................",
+        ".MM.LMMMMMMD.MM.",
+        ".MM.MMMMMMMM.MM.",
+        ".MM.MMMMMMMM.MM.",
+        ".DD.MMMMMMMM.DD.",
+        "....DMMMMMMD....",
+        ".....MM..MM.....",
+        ".....DD..DD.....",
+        "................",
+    )
+
     fun de(id: String): List<String>? = when (id) {
+        "wiiu" -> WIIU
+        "android", "androidapps", "androidgames" -> ANDROID
         "switch" -> SWITCH
         "switch2" -> SWITCH2
         "rpgmaker", "easyrpg" -> GAHVORIA

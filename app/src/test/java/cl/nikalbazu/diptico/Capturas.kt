@@ -1464,13 +1464,16 @@ class Capturas {
         regla.setContent { Lienzo(true, Modifier.fillMaxSize(), 1f) {
             androidx.compose.runtime.CompositionLocalProvider(cl.nikalbazu.diptico.ui.LocalIconos provides cl.nikalbazu.diptico.ui.IconosCfg(estilo = "pixel")) {
                 androidx.compose.foundation.layout.Row(androidx.compose.ui.Modifier.padding(androidx.compose.ui.unit.Dp(24f)), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(androidx.compose.ui.unit.Dp(28f))) {
-                    for (id in listOf("switch", "switch2", "rpgmaker", "snes", "psp"))
+                    for (id in listOf("switch", "switch2", "wiiu", "androidgames", "rpgmaker"))
                         cl.nikalbazu.diptico.ui.IconoConsola(cl.nikalbazu.diptico.data.Consolas.porId(id), 120f, androidx.compose.ui.graphics.Color(0xFF14121F))
                 }
             }
         } }
         regla.onRoot().captureRoboImage("capturas/385_iconos_pixel.png")
     }
+    // Pantalla de abajo: apps fijadas arriba, lupa y ajustes con pestaña semiredonda, íconos pixel dentro de las carpetas.
+    @Config(qualifiers = ABAJO)
+    @Test fun t388_dock_arriba() = foto("388_dock_arriba", carpetasCon("tarjeta").let { it.copy(estiloIconos = "pixel") }, Rol.INFERIOR, mi = 1)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)

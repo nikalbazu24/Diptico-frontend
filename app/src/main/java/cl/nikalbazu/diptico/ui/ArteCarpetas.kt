@@ -44,6 +44,8 @@ internal fun motivosCarpeta(id: String): List<String> = when (id) {
 internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscuro: Boolean = false) {
     val id = consola?.id ?: "todo"
     val color = consola?.color ?: Uva
+    // Con el estilo de íconos «Píxeles», el dibujo del centro es el sprite pixel (si la consola tiene uno).
+    val sprite = if (LocalIconos.current.estilo == "pixel") SpritesConsola.de(id) else null
     Box(modifier.drawWithCache {
         val s = min(size.width, size.height)
         // Modo oscuro: el «papel» es un fondo profundo teñido del color de la consola y los dibujos pasan a ser claros.
@@ -88,7 +90,8 @@ internal fun ArteCarpeta(consola: Consola?, modifier: Modifier = Modifier, oscur
             clipPath(clip) {
                 drawRect(Brush.radialGradient(listOf(Color.White.copy(alpha = if (oscuro) .14f else .23f), Color.Transparent), placa.topLeft, s * .63f))
                 withTransform({ translate(placa.left + placa.width * .12f, placa.top + placa.height * .12f); scale(placa.width * .76f / size.width, placa.height * .76f / size.height, Offset.Zero) }) {
-                    if (consola != null) dibujarHardware(consola, Color.White, medio)
+                    if (sprite != null) dibujarSprite(sprite, Color.White)
+                    else if (consola != null) dibujarHardware(consola, Color.White, medio)
                     else dibujarMedio(cl.nikalbazu.diptico.data.Medio.TODOS, Color.White, medio)
                 }
             }
