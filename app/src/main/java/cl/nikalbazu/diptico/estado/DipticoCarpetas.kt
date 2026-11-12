@@ -78,3 +78,8 @@ fun Diptico.elegirEstiloCarpetas(id: String) {
     almacen.guardarTexto("estiloCarpetas", id)
     actualizar { it.copy(extra = it.extra.copy(estiloCarpetas = id)) }
 }
+
+fun Diptico.elegirTonoCarpetas(tono: String) {
+    almacen.guardarTexto("carpetasTono", tono)
+    actualizar { it.copy(extra = it.extra.copy(carpetasTono = tono)) }
+}

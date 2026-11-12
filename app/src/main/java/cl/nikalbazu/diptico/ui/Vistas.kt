@@ -509,7 +509,8 @@ private fun ListaAvisos(e: Estado, avisos: List<cl.nikalbazu.diptico.audio.Aviso
                         .clickable { Diptico.abrirAviso(a) }.padding(esc.d(10)),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconoApp(a.paquete, 34f)
+                    if (a.esDippo) Box(Modifier.size(esc.d(34)), contentAlignment = Alignment.Center) { cl.nikalbazu.diptico.bisa.AvatarBisa(esc.d(34).value) }
+                    else IconoApp(a.paquete, 34f)
                     Spacer(Modifier.width(esc.d(10)))
                     Column(Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

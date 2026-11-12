@@ -433,6 +433,15 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 actualizar { it.copy(extra = it.extra.copy(dippoDatos = v)) }
             }
             lista += Opcion(
+                "Avisos de DIPPO en la campana", if (e.extra.dippoAvisos) "Sí" else "No", Icono.CAMPANA,
+                "Calor, batería baja y versiones nuevas (de Díptico y de tus emuladores) también quedan guardados en tus notificaciones, arriba, para verlos cuando quieras.",
+            ) {
+                val v = !estado.value.extra.dippoAvisos
+                almacen.guardarBool("dippoAvisos", v)
+                actualizar { it.copy(extra = it.extra.copy(dippoAvisos = v)) }
+                if (!v) Avisos.lista.value.filter { it.esDippo }.forEach { Avisos.descartar(it) }
+            }
+            lista += Opcion(
                 "Temperatura y consejos al jugar", if (e.extra.termica) "Sí" else "No", Icono.BATERIA,
                 "Mientras juegas, la pantalla compañera muestra qué tan caliente está la consola (verde a rojo) y DIPPO te aconseja si se calienta, si queda poca batería o si llevas mucho rato. Solo informa: Android no deja controlar el ventilador.",
             ) {

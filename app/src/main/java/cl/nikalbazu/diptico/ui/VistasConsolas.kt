@@ -58,6 +58,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.foundation.gestures.scrollBy
 import cl.nikalbazu.diptico.data.Consola
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Diptico
@@ -494,33 +498,79 @@ fun CarpetasConsolas(e: Estado, modifier: Modifier = Modifier, interactiva: Bool
             val relleno = PaddingValues(start = esc.d(14), end = esc.d(14), top = esc.d(8), bottom = esc.d(10) + LocalAireAbajo.current)
             if (conZoom) {
                 val ordenando = e.extra.ordenandoCarpetas && interactiva
-                // Cuánto mide un paso entre carpetas (para saber dónde se soltó la que arrastras).
-                val pasoX = with(densidad) { (lado + separacionX).toPx() }
-                val pasoY = with(densidad) { (lado + separacionY + esc.d(22)).toPx() }
-                RejillaCentrada(ids.size, carriles, sel, separacionX, separacionY, relleno,
-                    Modifier.fillMaxSize(), interactiva && !ordenando, horizontal, { ids[it] }) { k ->
-                    val id = ids[k]
-                    var arrastre by remember(id) { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-                    var arrastrando by remember(id) { androidx.compose.runtime.mutableStateOf(false) }
-                    Box(
-                        Modifier.zIndex(if (arrastrando) 5f else 0f)
-                            .graphicsLayer { translationX = arrastre.x; translationY = arrastre.y }
-                            .then(if (ordenando && id != "todo") Modifier.pointerInput(id, k, carriles, horizontal) {
-                                detectDragGestures(
-                                    onDragStart = { arrastrando = true; Diptico.elegirConsola(id) },
-                                    onDragEnd = {
-                                        val dx = kotlin.math.round(arrastre.x / pasoX).toInt()
-                                        val dy = kotlin.math.round(arrastre.y / pasoY).toInt()
-                                        val paso = if (horizontal) dy + dx * carriles else dx + dy * carriles
-                                        arrastre = androidx.compose.ui.geometry.Offset.Zero
-                                        arrastrando = false
-                                        Diptico.soltarCarpetaEn(id, k + paso)
-                                    },
-                                    onDragCancel = { arrastre = androidx.compose.ui.geometry.Offset.Zero; arrastrando = false },
-                                ) { cambio, d -> cambio.consume(); arrastre += d }
-                            } else Modifier),
-                    ) {
-                        CarpetaBiblioteca(e, id, k == sel, interactiva, lado, tomada = arrastrando || (ordenando && e.extra.carpetaTomada == id))
+                val estadoLista = androidx.compose.foundation.lazy.rememberLazyListState()
+                // Arrastre por toda la pantalla: el gesto vive en la zona (no en cada carpeta), así la carpeta
+                // no se pierde cuando la lista se desplaza sola al acercarla a un borde.
+                val celdasEn = remember { HashMap<String, androidx.compose.ui.geometry.Rect>() }
+                var origenZona by remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                var tamZona by remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+                var tomadaId by remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+                var dedo by remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                var agarre by remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                val idsAct by androidx.compose.runtime.rememberUpdatedState(ids)
+                val enArrastre = tomadaId != null
+                LaunchedEffect(enArrastre, horizontal) {
+                    if (!enArrastre) return@LaunchedEffect
+                    val borde = with(densidad) { esc.d(72).toPx() }
+                    val maxima = with(densidad) { esc.d(18).toPx() }
+                    while (true) {
+                        val largo = (if (horizontal) tamZona.width else tamZona.height).toFloat()
+                        val pos = if (horizontal) dedo.x else dedo.y
+                        val v = when {
+                            pos < borde -> -(1f - pos / borde).coerceIn(0f, 1f)
+                            pos > largo - borde -> ((pos - (largo - borde)) / borde).coerceIn(0f, 1f)
+                            else -> 0f
+                        }
+                        if (v != 0f) estadoLista.scrollBy(v * maxima)
+                        androidx.compose.runtime.withFrameNanos { }
+                    }
+                }
+                Box(Modifier.fillMaxSize()
+                    .onGloballyPositioned({ origenZona = it.positionInRoot(); tamZona = it.size })
+                    .then(if (ordenando) Modifier.pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = { pos ->
+                                val raiz = pos + origenZona
+                                val id = celdasEn.entries.firstOrNull { it.key != "todo" && it.value.contains(raiz) }?.key
+                                if (id != null) {
+                                    tomadaId = id; dedo = pos
+                                    agarre = raiz - celdasEn.getValue(id).topLeft
+                                    Diptico.elegirConsola(id)
+                                }
+                            },
+                            onDragEnd = {
+                                val id = tomadaId
+                                tomadaId = null
+                                if (id != null) {
+                                    val raiz = dedo + origenZona
+                                    val destino = celdasEn.entries.filter { it.key != "todo" }.let { l ->
+                                        l.firstOrNull { it.value.contains(raiz) } ?: l.minByOrNull {
+                                            val c = it.value.center; (c.x - raiz.x) * (c.x - raiz.x) + (c.y - raiz.y) * (c.y - raiz.y)
+                                        }
+                                    }
+                                    val k = destino?.let { idsAct.indexOf(it.key) } ?: -1
+                                    if (k >= 0) Diptico.soltarCarpetaEn(id, k)
+                                }
+                            },
+                            onDragCancel = { tomadaId = null },
+                        ) { cambio, d -> if (tomadaId != null) { cambio.consume(); dedo += d } }
+                    } else Modifier)) {
+                    RejillaCentrada(ids.size, carriles, sel, separacionX, separacionY, relleno,
+                        Modifier.fillMaxSize(), interactiva && !ordenando, horizontal, { ids[it] }, estadoLista) { k ->
+                        val id = ids[k]
+                        androidx.compose.runtime.DisposableEffect(id) { onDispose { celdasEn.remove(id) } }
+                        Box(
+                            Modifier.graphicsLayer { alpha = if (tomadaId == id) .25f else 1f }
+                                .onGloballyPositioned({ celdasEn[id] = it.boundsInRoot() }),
+                        ) {
+                            CarpetaBiblioteca(e, id, k == sel, interactiva, lado, tomada = ordenando && e.extra.carpetaTomada == id)
+                        }
+                    }
+                    tomadaId?.let { id ->
+                        Box(Modifier.offset { androidx.compose.ui.unit.IntOffset((dedo.x - agarre.x).toInt(), (dedo.y - agarre.y).toInt()) }
+                            .zIndex(9f).graphicsLayer { scaleX = 1.06f; scaleY = 1.06f }) {
+                            CarpetaBiblioteca(e, id, true, interactiva, lado, tomada = true)
+                        }
                     }
                 }
             } else LazyVerticalGrid(columns = celdas, state = grilla, userScrollEnabled = interactiva,
@@ -584,3 +634,4 @@ private fun BarraOrdenar(e: Estado) {
         ) { Texto("B · Listo", 13f, color = SobreUva, peso = FontWeight.Black, lineas = 1) }
     }
 }
+
