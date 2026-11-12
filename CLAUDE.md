@@ -470,3 +470,6 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `GAHVORIA` → `io.github.nikalbazu24.gahvoria.LaunchActivity` (VIEW + %ROMSAF% + extra `path`), ext `gahvoria`. Gahvoria aún NO tiene esa
   actividad: mientras no exista, `Lanzador` abre su biblioteca (`actividadExiste`). Falta agregar a Gahvoria la entrada para lanzadores
   (la sesión no tuvo permiso de escritura en su repo). Gahvoria también está en `EmuladoresAlDia.FUENTES`.
+- Hora/batería arriba + juegos centrados (11 nov, 23:50, rama `fix/hora-centrado`, Sonnet): `RelojBateria()` (ui/Perfil.kt, píldora oscura con hora | pila | %)
+  va dentro de `PerfilArriba(conReloj = true)` a la izquierda del nombre, centrada con la foto (vitrina de cajas y `BarraSuperior(perfil = true)`).
+  `Mosaicos` resta `LocalAireAbajo` (la barra flotante) al alto y al centrado vertical: la fila queda al medio de lo visible. Captura t384.

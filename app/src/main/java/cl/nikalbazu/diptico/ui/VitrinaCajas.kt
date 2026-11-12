@@ -249,8 +249,8 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             }
             // Hora y batería chicas, y tu perfil en grande (tipo iiSU).
             Row(Modifier.align(Alignment.TopEnd).padding(end = esc.d(22), top = esc.d(14)), verticalAlignment = Alignment.CenterVertically) {
-                EstadoChico(conFoto = e.sesion != null)
-                if (e.sesion == null) { Spacer(Modifier.width(esc.d(10))); PerfilArriba() }
+                // Sin partida: hora y batería en su píldora, pegadas a tu foto y centradas con ella. Con partida no hay foto grande.
+                if (e.sesion == null) PerfilArriba(conReloj = true) else EstadoChico(conFoto = false)
             }
 
             // 4. Abajo: el nombre del juego, una línea de datos y los botones (también se tocan).

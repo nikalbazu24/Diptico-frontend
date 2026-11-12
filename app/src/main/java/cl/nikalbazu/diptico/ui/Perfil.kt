@@ -109,13 +109,14 @@ fun BotonPerfil(tam: Float = 26f) {
  * Tocar el nombre o la foto abre tu tarjeta; la insignia de Discord abre tus amigos.
  */
 @Composable
-fun PerfilArriba(tam: Float = 54f) {
+fun PerfilArriba(tam: Float = 54f, conReloj: Boolean = false) {
     val esc = LocalEscala.current
     val pantalla = pantallaActual()
     val nombre by remember { Diptico.estado.map { it.nombre }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.nombre)
     val pf by remember { Diptico.estado.map { it.extra.perfil }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.extra.perfil)
     val titulo = tituloDe(pf.titulo)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag("perfil-arriba")) {
+        if (conReloj) { RelojBateria(); Spacer(Modifier.width(esc.d(6))) }
         Column(
             Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirPerfil(pantalla, 0.9f, 0.08f) }
                 .padding(horizontal = esc.d(10), vertical = esc.d(4)),
@@ -125,6 +126,40 @@ fun PerfilArriba(tam: Float = 54f) {
             Texto(titulo.ifEmpty { "Toca para ver tu perfil" }, 11.5f, sombra = true, lineas = 1, color = LocalPaleta.current.tinta.copy(alpha = 0.75f))
         }
         BotonPerfil(tam)
+    }
+}
+
+/**
+ * Hora y batería juntas en una sola píldora oscura y suave, para ir al lado de tu foto arriba: con fondo propio se leen
+ * sobre cualquier arte y quedan alineadas con la foto en vez de flotar sueltas. Tocar la hora cambia su tamaño.
+ */
+@Composable
+fun RelojBateria(modifier: Modifier = Modifier) {
+    val esc = LocalEscala.current
+    val hora = rememberHora()
+    val bateria = rememberBateria()
+    val cargando = rememberCargando()
+    val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> Color.White }
+    val forma = RoundedCornerShape(50)
+    Row(
+        modifier.testTag("reloj-bateria").clip(forma).background(Color.Black.copy(alpha = 0.34f))
+            .border(esc.d(1), Color.White.copy(alpha = 0.16f), forma)
+            .clickable { Diptico.alternarReloj() }
+            .padding(horizontal = esc.d(13), vertical = esc.d(7)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Texto(hora, 14f, color = Color.White, peso = FontWeight.ExtraBold, traducir = false, lineas = 1)
+        if (bateria >= 0) {
+            Box(Modifier.padding(horizontal = esc.d(10)).width(esc.d(1)).height(esc.d(12)).background(Color.White.copy(alpha = 0.28f)))
+            Box(Modifier.size(esc.d(18), esc.d(9)).border(esc.d(1.4f), Color.White.copy(alpha = 0.75f), RoundedCornerShape(esc.d(2.5f))).padding(esc.d(1.6f))) {
+                Box(
+                    Modifier.fillMaxHeight().fillMaxWidth((bateria / 100f).coerceIn(0.08f, 1f))
+                        .clip(RoundedCornerShape(esc.d(1.2f))).background(tono),
+                )
+            }
+            Spacer(Modifier.width(esc.d(6)))
+            Texto("$bateria%", 12.5f, color = if (tono == Color.White) Color.White.copy(alpha = 0.9f) else tono, traducir = false, lineas = 1)
+        }
     }
 }
 
