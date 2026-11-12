@@ -206,7 +206,7 @@ private fun VentanaDesplegable(e: Estado) {
                 o.icono?.let { IconoDiptico(it, color, 20f, acento = color); Spacer(Modifier.width(esc.d(10))) }
                 Texto(o.titulo, 18f, lineas = 1, modifier = Modifier.weight(1f))
             }
-            if (o.ayuda.isNotBlank()) Detalle(o.ayuda, 12f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(18), vertical = esc.d(6)))
+            Detalle(explicacion(o), 12f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(18), vertical = esc.d(6)))
             LazyColumn(
                 state = lista, modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = esc.d(10), vertical = esc.d(6)),
@@ -370,7 +370,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
         }
         if (conAyuda && e.enOpciones) {
             val o = opciones.getOrNull(e.indice)
-            Detalle(o?.ayuda?.ifEmpty { null } ?: s.ayuda, 13.5f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(14)))
+            Detalle(o?.let { explicacion(it) } ?: s.ayuda, 13.5f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(14)))
         }
         Pistas(
             *(if (e.enOpciones) arrayOf("↑ ↓" to "Moverte", "A" to "Cambiar", "B" to "Secciones") else arrayOf("↑ ↓" to "Sección", "A" to "Entrar", "B" to "Cerrar")),
@@ -478,7 +478,7 @@ fun AyudaMenu(e: Estado) {
                         ) { Texto(valor, 15f, color = p.tinta, lineas = 1) }
                     }
                     Detalle(
-                        (if (titulo != null && sec == s) o?.ayuda else null)?.ifEmpty { null } ?: sec.ayuda,
+                        (if (titulo != null && sec == s) o?.let { explicacion(it) } else null) ?: sec.ayuda,
                         if (angosta) 14.5f else 17f, lineas = if (angosta) 3 else 4,
                     )
                     // En pantallas angostas (la de abajo) la vista previa va debajo del texto, con lo que queda de alto.

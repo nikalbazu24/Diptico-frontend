@@ -77,7 +77,7 @@ fun Mosaicos(e: Estado, modifier: Modifier = Modifier) {
         val alto = maxHeight - esc.d(24)
         // Con poco alto (una pantalla, con la vitrina arriba) va una sola fila de mosaicos más grandes.
         // Con la vitrina de cajas arriba, abajo va una sola fila en el mismo orden que el estante: avanzar es +1, sin saltos.
-        val estante = e.portadaCajas && nuevoDisenoDosPantallas(e)
+        val estante = e.portadaCajas && nuevoDisenoDosPantallas(e) && e.vista != "xbox"
         val unaFila = alto < esc.d(200) || estante
         SideEffect { Teclas.mosaicosUnaFila = unaFila }
         val lado: Dp = when {
@@ -250,7 +250,11 @@ private fun HoraBateria() {
 }
 
 /** Nuevo diseño (vista Mosaicos) con las dos pantallas: arriba solo la vitrina, sin barras repetidas. */
-internal fun nuevoDisenoDosPantallas(e: Estado): Boolean = e.vista == "mosaicos" && !e.unaPantalla && e.dosDisponibles
+/** El diseño nuevo (vitrina arriba, controles abajo) vale para todas las vistas de juegos, no solo los mosaicos. */
+internal fun nuevoDisenoDosPantallas(e: Estado): Boolean = !e.unaPantalla && e.dosDisponibles
+
+/** Mosaicos en una fila (estante) o la vista Xbox (un mosaico grande y el resto en dos filas). */
+internal fun esMosaico(vista: String) = vista == "mosaicos" || vista == "xbox"
 
 /** Los dos botones de la vitrina de arriba: A para jugar (o continuar) y X para la ficha del juego. */
 @Composable

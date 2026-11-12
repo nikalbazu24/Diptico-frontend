@@ -112,10 +112,11 @@ fun Diptico.grupoOpcion(s: Seccion, t: String): String = when (s) {
     Seccion.CONTROLES -> if (t == "Sticks") "Sticks" else if (t.startsWith("Botón") || t.startsWith("Aprender")) "Botones extra" else "Más"
     Seccion.SOBREMESA -> if (t == "Cuándo se activa" || t == "Tele conectada") "Cuándo" else "En la tele"
     Seccion.ASISTENTE -> when {
-        t == "Hablar con DIPPO" || t == "DIPPO mientras juegas" || t == "Burbuja flotante" -> "DIPPO"
-        t.startsWith("Clave de") -> "Claves de IA en la nube"
-        t == "Borrar la conversación" -> "Conversación"
-        else -> "Su cerebro"
+        t == "Hablar con DIPPO" || t.startsWith("Logros") || t.startsWith("Premios") -> "DIPPO"
+        t.startsWith("Clave de") || t.contains("IA") || t.contains("modelo", true) || t.contains("conversación", true) || t.contains("voz", true) -> "Su cerebro (IA)"
+        t.contains("juegas") || t.contains("emperatura") || t.contains("onsejo") -> "Mientras juegas"
+        t.contains("Aviso") -> "Avisos"
+        else -> "Dónde aparece"
     }
     Seccion.TEMAS -> when {
         t.startsWith("Mi tema") || t == "Mezclar mi tema" -> "Mi tema"
@@ -180,6 +181,7 @@ fun Diptico.claveMenu(e: Estado): Estado = e.copy(indice = 0, enOpciones = false
  * en una fila «Más opciones…» que se abre en una ventana emergente. Con una búsqueda se ve todo.
  */
 internal fun Diptico.condensar(s: Seccion, l: List<Opcion>): List<Opcion> {
+    if (l.any { it.sub != null }) return l
     if (!esGrupoAjustes(s) || estado.value.buscarAjuste.isNotBlank() || l.size <= 12) return l
     val salida = mutableListOf<Opcion>()
     var i = 0
@@ -232,7 +234,7 @@ fun Diptico.usarSubOpcion(i: Int = estado.value.extra.subSel, menos: Boolean = f
     val e = estado.value
     val o = subOpciones(e)?.getOrNull(i) ?: return
     if (i != e.extra.subSel) actualizar { it.copy(extra = it.extra.copy(subSel = i)) }
-    if (menos) (o.menos ?: return)() else o.accion()
+    if (menos) (o.menos ?: return)() else desdeMenu(o.accion)
     if (estado.value.panel != Panel.MENU) actualizar { it.copy(extra = it.extra.copy(subOpcion = -1, subSel = 0)) }
 }
 
@@ -264,10 +266,7 @@ internal fun Diptico.opcionesEsenciales(e: Estado): List<Opcion> {
 
 
 internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
-    GRUPOS_AJUSTES[s]?.let { partes ->
-        // Cada parte con su nombre de título, para que la sección larga se lea por bloques.
-        return partes.flatMap { sub -> armarOpciones(sub).map { o -> o.copy(grupo = if (partes.size == 1) o.grupo else sub.titulo) } }
-    }
+    GRUPOS_AJUSTES[s]?.let { partes -> return submenus(s, partes) }
     val e = estado.value
     val lista = mutableListOf<Opcion>()
     when (s) {
@@ -798,4 +797,71 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
     // Las opciones de un mismo grupo quedan juntas, bajo un solo subtítulo (en el orden en que aparece cada grupo).
     if (s == Seccion.ESENCIAL || s == Seccion.MAS) return lista
     return lista.groupBy { grupoOpcion(s, it) }.values.flatten()
+}
+
+
+/** Partes que van enteras en un solo submenú (sus grupos internos son muy chicos para separarlos). */
+private val PARTES_ENTERAS = setOf(Seccion.SOBREMESA, Seccion.RENDIMIENTO, Seccion.CONSOLAS, Seccion.IDIOMA, Seccion.CONSOLA, Seccion.DECORACIONES, Seccion.EMULADORES)
+
+/** El nombre de un submenú: el del grupo, con nombres más claros para los genéricos. */
+private fun nombreSubmenu(parte: Seccion, g: String, entera: Boolean): String = when {
+    entera || g.isBlank() -> when (parte) { Seccion.RENDIMIENTO -> "Turbo al jugar"; Seccion.SOBREMESA -> "En la tele"; else -> parte.titulo }
+    g == "Más" || g == "Más opciones" -> "Más de ${parte.titulo.lowercase()}"
+    parte == Seccion.TEMAS && g == "Elegir" -> "Temas"
+    parte == Seccion.TEMAS && g == "Con IA" -> "Temas con IA"
+    parte == Seccion.APARIENCIA && g == "Detalles" -> "Animaciones y detalles"
+    parte == Seccion.ESTANTE && g == "Qué ves y en qué orden" -> "Cómo se ven los juegos"
+    parte == Seccion.ESTANTE && g == "Carpetas" -> "Carpetas de consolas"
+    parte == Seccion.PANTALLAS && g == "Escribir" -> "Teclado"
+    parte == Seccion.PORTADAS && g == "Imágenes" -> "Portadas e imágenes"
+    parte == Seccion.SISTEMA && g == "Díptico" -> "Acerca de Díptico"
+    else -> g
+}
+
+/**
+ * Una sección de Ajustes armada con submenús: cada grupo de opciones es una fila «Nombre ›» que abre su ventana
+ * (las opciones adentro, con su explicación y su vista previa). Un grupo de una sola opción va directo.
+ * En DIPPO, hablar, los logros y los premios quedan a la vista al entrar.
+ */
+internal fun Diptico.submenus(s: Seccion, partes: List<Seccion>): List<Opcion> {
+    val salida = mutableListOf<Opcion>()
+    val usados = HashSet<String>()
+    for (parte in partes) {
+        val opciones = armarOpciones(parte)
+        val entera = parte in PARTES_ENTERAS
+        val grupos = LinkedHashMap<String, MutableList<Opcion>>()
+        for (o in opciones) grupos.getOrPut(if (entera) "" else grupoOpcion(parte, o)) { mutableListOf() } += o
+        for ((g, lista) in grupos) {
+            // DIPPO: lo suyo (hablar, logros, premios) va directo, no escondido en un submenú.
+            if (parte == Seccion.ASISTENTE && g == "DIPPO") {
+                salida += lista.map { it.copy(grupo = null) }
+                if (lista.none { it.titulo.startsWith("Premios") }) salida += Opcion(
+                    "Premios de los logros", "Ver", Icono.TROFEO,
+                    "Los marcos, títulos y temas que regalan los logros de DIPPO. Los que ya ganaste se usan con un toque.",
+                ) { abrirGaleria("logros_dippo", 1) }
+                continue
+            }
+            var nombre = nombreSubmenu(parte, g, entera)
+            if (!usados.add(nombre)) nombre = "$nombre (${parte.titulo.lowercase()})".also { usados += it }
+            if (lista.size == 1) { salida += lista[0].copy(grupo = null); continue }
+            val sub = lista.map { it.copy(grupo = null) }
+            salida += Opcion(
+                nombre, "${sub.size} ›", sub.first().icono ?: parte.icono,
+                "Aquí están juntas: " + sub.take(5).joinToString(", ") { Idioma.t(it.titulo) } + if (sub.size > 5) " y más." else ".",
+                sub = sub,
+            ) { abrirSubOpciones(nombre) }
+        }
+    }
+    return salida
+}
+
+
+/** Qué hace una opción y cómo se cambia: su ayuda, o una explicación armada con su valor si no tiene. */
+fun explicacion(o: Opcion): String = o.ayuda.ifBlank {
+    when {
+        o.sub != null -> "Aquí están juntas: " + o.sub.take(5).joinToString(", ") { Idioma.t(it.titulo) } + "."
+        o.alternativas != null -> "Elige entre: " + o.alternativas.take(5).joinToString(", ") { Idioma.t(it) } + ". Con A abres la lista y en la vista previa ves cómo queda."
+        o.valor.isNotBlank() -> "Ahora: ${o.valor}. Con A la cambias (← y → también) y en la vista previa ves cómo queda."
+        else -> "Con A la usas. En la vista previa ves qué cambia."
+    }
 }

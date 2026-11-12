@@ -1490,6 +1490,29 @@ class Capturas {
     // Abajo: el juego elegido en el centro de lado a lado.
     @Config(qualifiers = ABAJO)
     @Test fun t395_juegos_al_centro() = foto("395_juegos_al_centro", base().copy(vista = "mosaicos", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    // Todas las vistas con el diseño nuevo (abajo) y la vista Xbox de vuelta.
+    @Config(qualifiers = ABAJO)
+    @Test fun t396_vista_xbox() = foto("396_vista_xbox", base().copy(vista = "xbox", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t397_vista_galeria() = foto("397_vista_galeria", base().copy(vista = "cuadricula", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t398_vista_lista() = foto("398_vista_lista", base().copy(vista = "lista", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t399_vista_carrusel() = foto("399_vista_carrusel", base().copy(vista = "carrusel", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR, mi = 1)
+    // Arriba con la vista Galería: la vitrina de cajas sigue (antes volvía el diseño viejo).
+    @Test fun t400_galeria_arriba() = foto("400_galeria_arriba", conPerfil().let { it.copy(vista = "cuadricula", extra = it.extra.copy(portada = "cajas")) }, Rol.SUPERIOR)
+    // Ajustes ordenados: ocho secciones con submenús; arriba la lista, abajo la explicación y la vista previa.
+    @Test fun t401_ajustes_submenus() = foto("401_ajustes_submenus", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_BIBLIOTECA, enOpciones = true, indice = 0), Rol.SUPERIOR)
+    private fun submenuAbierto(): Estado {
+        val e0 = conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_BIBLIOTECA, enOpciones = true, indice = 0)
+        Diptico.iniciar(ApplicationProvider.getApplicationContext()); Diptico.fijarParaPrueba(e0)
+        val i = Diptico.opcionesSeccion(Seccion.G_BIBLIOTECA).indexOfFirst { it.sub != null }.coerceAtLeast(0)
+        return e0.copy(indice = i, extra = e0.extra.copy(subOpcion = i, subSel = 1))
+    }
+    @Test fun t402_ajustes_submenu_abierto() = foto("402_ajustes_submenu_abierto", submenuAbierto(), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t403_ajustes_explicacion_abajo() = foto("403_ajustes_explicacion_abajo", submenuAbierto(), Rol.INFERIOR, mi = 1)
+    @Test fun t404_ajustes_dippo() = foto("404_ajustes_dippo", conPerfil().copy(panel = Panel.MENU, seccion = Seccion.G_DIPPO, enOpciones = true, indice = 1), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
     @Test fun t386_carpetas_oscuras() = foto("386_carpetas_oscuras", carpetasCon("consola").let { it.copy(extra = it.extra.copy(carpetasTono = "oscuro")) }, Rol.INFERIOR, mi = 1)

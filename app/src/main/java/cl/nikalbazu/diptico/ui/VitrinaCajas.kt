@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -243,13 +244,11 @@ fun VitrinaCajas(e: Estado, juego: Juego) {
             }
 
             // 3. Arriba: la consola a la izquierda; hora y batería a la derecha.
-            Row(Modifier.align(Alignment.TopStart).padding(start = esc.d(26), top = esc.d(14)), verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Texto((consola?.nombre ?: "").uppercase(), 16f, color = Color.White, peso = FontWeight.ExtraBold, espaciado = 1f, lineas = 1, traducir = false)
-                    Texto("${indice + 1} de ${lista.size}", 10.5f, color = Color.White.copy(alpha = 0.6f), lineas = 1, traducir = false, espaciado = 1.2f)
-                }
-                // Hora y batería al otro lado del perfil, para no recargar la esquina de tu foto.
-                if (e.sesion == null) { Spacer(Modifier.width(esc.d(14))); RelojBateria() }
+            // Hora y batería arriba (al otro lado de tu foto) y, debajo, la consola y en cuál juego vas.
+            Column(Modifier.align(Alignment.TopStart).padding(start = esc.d(26), top = esc.d(14))) {
+                if (e.sesion == null) { RelojBateria(); Spacer(Modifier.height(esc.d(8))) }
+                Texto((consola?.nombre ?: "").uppercase(), 16f, color = Color.White, peso = FontWeight.ExtraBold, espaciado = 1f, lineas = 1, traducir = false)
+                Texto("${indice + 1} de ${lista.size}", 10.5f, color = Color.White.copy(alpha = 0.6f), lineas = 1, traducir = false, espaciado = 1.2f)
             }
             // Hora y batería chicas, y tu perfil en grande (tipo iiSU).
             Row(Modifier.align(Alignment.TopEnd).padding(end = esc.d(22), top = esc.d(14)), verticalAlignment = Alignment.CenterVertically) {
