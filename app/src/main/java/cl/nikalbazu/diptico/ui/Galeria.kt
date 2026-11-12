@@ -164,7 +164,8 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
                             "artes" -> MiniArte(e, it, activo, e.galeriaPestana == 0) { Diptico.elegirIndice(i) }
                             "captura_acciones" -> FilaCancion(it, activo, Icono.PORTADA) { Diptico.elegirIndice(i) }
                             "colores" -> MuestraColor(it, activo) { Diptico.elegirIndice(i) }
-                            "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> TarjetaTema(it, activo, e.oscuro) {
+                            // En «temas» (sobre todo los exclusivos, aún bloqueados) el elegido se mueve como un gif: así ves la recompensa.
+                            "temas", "importar_temas", "mezclar_tema", "tienda_temas" -> TarjetaTema(it, activo, e.oscuro, animar = activo && e.galeria == "temas" && Estilo.efectosCompletos) {
                                 if (conPrevia && it.tema != null && !activo) Diptico.actualizar { estado -> estado.copy(indice = i) }
                                 else Diptico.elegirIndice(i)
                             }
@@ -217,7 +218,7 @@ private fun VistaPreviaGaleria(e: Estado, item: Diptico.ItemGaleria, modifier: M
         item.enUso -> "Usar tema"
         else -> "Instalar"
     }
-    val animar = e.galeria == "decoraciones" && Estilo.efectosCompletos
+    val animar = (e.galeria == "decoraciones" || e.galeria == "temas") && Estilo.efectosCompletos
     if (compacta) {
         Row(modifier.padding(top = esc.d(8)), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
@@ -299,7 +300,7 @@ private fun AccionTienda(
 }
 
 @Composable
-private fun TarjetaTema(it: Diptico.ItemGaleria, activo: Boolean, oscuro: Boolean, alPulsar: () -> Unit) {
+private fun TarjetaTema(it: Diptico.ItemGaleria, activo: Boolean, oscuro: Boolean, animar: Boolean = false, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     Column(
@@ -309,7 +310,7 @@ private fun TarjetaTema(it: Diptico.ItemGaleria, activo: Boolean, oscuro: Boolea
     ) {
         Box(Modifier.fillMaxWidth().aspectRatio(1.5f).clip(RoundedCornerShape(esc.d(12)))) {
             val t = it.tema
-            if (t != null) PreviaTema(t, oscuro)
+            if (t != null) PreviaTema(t, oscuro, animar = animar)
             else Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Uva, Coral))), contentAlignment = Alignment.Center) {
                 IconoDiptico(Icono.CHISPA, Color.White, 30f)
             }
