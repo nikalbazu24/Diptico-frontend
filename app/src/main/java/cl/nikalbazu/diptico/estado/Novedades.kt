@@ -443,6 +443,7 @@ object Novedades {
             Pagina("DIPPO revisa tus emuladores", "Una vez al día, DIPPO mira qué emuladores tienes, cuáles usas y cuánto, y busca si hay versión nueva en su página. Si hay, te avisa.", Icono.EMULADOR, 0xFF00C3E3),
             Pagina("Actualiza desde Díptico", "En Ajustes › Juegos y emuladores › «Emuladores al día» (o en el centro de Switch 2 y ports, pestaña Emuladores): A baja la versión nueva y Android la instala encima, como Obtainium. Los ports nativos también se actualizan.", Icono.DESCARGA, 0xFF23C486, "A"),
             Pagina("Tu perfil, en grande arriba", "Tu foto, tu nombre y tu título se ven grandes en la pantalla de arriba, como en iiSU. Tu perfil se edita desde tu tarjeta (ya no está en Ajustes) y Discord quedó en «Cuentas y conexiones».", Icono.PERFIL, 0xFFFF7A59),
+            Pagina("Fan games con Gahvoria", "Los fan games de RPG Maker y Pokémon Essentials ahora se abren con Gahvoria (Essentia ya no se usa). DIPPO también revisa si Gahvoria tiene versión nueva.", Icono.EMULADOR, 0xFFE0452B),
             Pagina("Los premios de los logros", "En Logros de DIPPO cada logro dice qué regala, y la pestaña Premios junta todos los marcos, títulos y temas: los ganados se usan con un toque.", Icono.TROFEO, 0xFFFFC94D),
         )),
     )

@@ -56,7 +56,7 @@ internal object CentroBisa {
         val texto = when {
             s?.sinEmulador == true -> "${j.titulo} se abre como una app de Android. Sus controles y partidas se configuran dentro del juego. Puedes revisar si sigue instalado en el cajón de apps."
             s?.dosPantallas == true -> "${s.bonito} usa las dos pantallas en Díptico. Configura el mando y la pantalla táctil en el emulador. Si tienes permiso de superposición, puedes abrir mi burbuja desde el aviso de partida."
-            s?.id == Consolas.RPGMAKER -> "Los juegos de RPG Maker se abren con Essentia. Si uno falla, revisa que elegiste la carpeta del juego y que Essentia esté disponible. En la ficha de Díptico puedes guardar tus notas y el mapa."
+            s?.id == Consolas.RPGMAKER -> "Los fan games de RPG Maker y Pokémon Essentials se abren con Gahvoria. Si uno falla, revisa que elegiste la carpeta del juego y que Gahvoria tenga acceso a tus archivos. En la ficha de Díptico puedes guardar tus notas y el mapa."
             j.tipo == "m3u" || j.variantes.isNotEmpty() -> "Este juego tiene una lista de discos o archivos alternativos. Antes de jugar puedes elegir el archivo en Opciones del juego › Versión del juego. El emulador decide cómo leer sus discos y guardados."
             else -> "Para ${s?.bonito ?: j.consolaId}, revisa el emulador asignado al juego y la carpeta de archivos. Si el emulador pide una BIOS, configúrala dentro de él. Los botones de guardar estado dependen del emulador y su configuración."
         }

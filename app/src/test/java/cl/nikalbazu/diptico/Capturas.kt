@@ -1089,7 +1089,7 @@ class Capturas {
     private val fanGames = listOf(
         juego("pa", "rpgmaker", "Pokémon Añil").copy(archivo = "Pokemon Anil", esCarpeta = true),
         juego("pz", "rpgmaker", "Pokémon Zeta").copy(archivo = "Pokemon Zeta", esCarpeta = true),
-        juego("ri", "rpgmaker", "Relatos de Invierno").copy(archivo = "Relatos.essentia"),
+        juego("ri", "rpgmaker", "Relatos de Invierno").copy(archivo = "Relatos"),
     )
 
     @Config(qualifiers = ABAJO)
@@ -1455,6 +1455,8 @@ class Capturas {
     @Test fun t381_logros_con_premio() = foto("381_logros_con_premio", conPerfil().copy(panel = Panel.GALERIA, galeria = "logros_dippo", galeriaPestana = 0, indice = 4), Rol.INFERIOR, mi = 1)
     @Test fun t382_perfil_arriba() = foto("382_perfil_arriba", conPerfil(), Rol.SUPERIOR)
     @Test fun t383_perfil_arriba_cajas() = foto("383_perfil_arriba_cajas", conPerfil().let { it.copy(extra = it.extra.copy(portada = "cajas")) }, Rol.SUPERIOR)
+    // Abajo con la vitrina de cajas arriba: la fila de juegos centrada en lo que queda a la vista sobre la barra.
+    @Test fun t384_juegos_centrados() = foto("384_juegos_centrados", base().copy(vista = "mosaicos", extra = EstadoExtra(portada = "cajas")), Rol.INFERIOR)
     // Por qué falló un juego: el emulador se cerró enseguida y Díptico explica lo más probable.
     @Config(qualifiers = ABAJO)
     @Test fun t376_cierre_rapido() = foto("376_cierre_rapido", base().copy(dialogo = Dialogo("cierre-rapido", "Leyenda del Bosque se cerró enseguida",
