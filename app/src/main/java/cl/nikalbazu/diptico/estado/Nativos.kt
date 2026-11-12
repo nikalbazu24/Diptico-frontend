@@ -6,6 +6,9 @@ import android.os.Build
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.emu.Lanzador
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /*
  * Switch 2 y ports nativos: lo que Díptico sabe de NovaS (emulador de Switch 2, derivado de Eden), de Banana Native
@@ -182,6 +185,19 @@ fun Diptico.entradasNativos(e: Estado): List<EntradaNativa> {
         val propios = juegosSwitch2(e)
         val lista = mutableListOf<EntradaNativa>()
         lista += EntradaNativa(
+            "info-switch2", "¿Cómo funciona esto?", "Dos formas de jugar Switch 2: emularlo o como port nativo", "Empieza aquí",
+            lista = true,
+            ayuda = "Hay dos caminos. NovaS EMULA la Switch 2: abre casi cualquier juego (.nup, .nsp, .xci), pero exige más a la consola. " +
+                "Banana Native NO emula: convierte unos pocos juegos (los de la lista de abajo) en apps nativas de Android, y por eso corren mucho más fluido. " +
+                "Díptico elige solo: si el juego está en la lista de Banana y la tienes, usa Banana; si no, NovaS.",
+            consejos = listOf(
+                "1. Instala NovaS (A sobre su fila te lleva a su página).",
+                "2. Banana Native no tiene página pública ni tienda: se consigue de quien lo comparte, y no descarga juegos ni ports.",
+                "3. Tus juegos van en tu carpeta de Switch 2; tú pones los archivos (Díptico no descarga juegos).",
+                "4. En la pestaña «Ports nativos» están los ports de otras consolas: esos sí se instalan desde aquí.",
+            ),
+        )
+        lista += EntradaNativa(
             "equipo", "Tu consola", detalle2(eq) + if (eq.listo) " · lista para Switch 2" else " · puede costarle", "Tu equipo",
             lista = eq.listo,
             ayuda = "Para Switch 2 hace falta Android 13 o más, 12 GB de RAM (mejor 16) y gráficos Adreno (Snapdragon). La AYN Thor cumple con todo.",
@@ -233,13 +249,23 @@ fun Diptico.entradasNativos(e: Estado): List<EntradaNativa> {
         }
         lista
     } else {
-        Nativos.PORTS.map { p ->
+        listOf(EntradaNativa(
+            "info-ports", "¿Qué es un port?", "Juegos rehechos para Android: se instalan desde aquí", "Empieza aquí", lista = true,
+            ayuda = "Un port es un juego clásico rehecho para correr directo en Android, sin emulador: se ve mejor (pantalla ancha, más cuadros) y va más fluido. " +
+                "Son proyectos de fans: la app es gratis, pero cada port te pide UNA VEZ el archivo de tu juego original (tu copia), porque no traen el juego dentro.",
+            consejos = listOf(
+                "1. Elige un port y aprieta A: Díptico baja su última versión de GitHub y Android te pide confirmar la instalación.",
+                "2. Ábrelo una vez: te dice qué archivo pide (por ejemplo tu copia de Zelda Ocarina of Time) y lo prepara.",
+                "3. Listo: aparece solo en tu carpeta Ports, con su ficha y tu tiempo jugado.",
+                "Si Android pide permiso para instalar apps, dáselo a Díptico (solo la primera vez).",
+            ),
+        )) + Nativos.PORTS.map { p ->
             val si = Lanzador.instalado(ctx, p.paquete)
             EntradaNativa(
-                "port:${p.paquete}", p.nombre, "${p.original} · " + (if (si) "instalado · A: jugar" else "A: conseguirlo"),
-                p.origen, p.paquete, si, accion = if (si) "Jugar" else "Conseguir", lista = si,
+                "port:${p.paquete}", p.nombre, "${p.original} · " + (if (si) "instalado · A: jugar" else "A: instalar"),
+                p.origen, p.paquete, si, accion = if (si) "Jugar" else "Instalar", lista = si,
                 ayuda = "Port nativo de ${p.original} (${p.origen}). No es un emulador: el juego corre como app de Android. " +
-                    "Necesita tu copia del juego original (la app te dice qué archivo pide la primera vez). Al instalarlo aparece solo en tu carpeta Ports.",
+                    "Necesita tu copia del juego original (la app te dice qué archivo pide la primera vez). Con A, Díptico lo baja de GitHub y lo instala; después aparece solo en tu carpeta Ports.",
                 consejos = listOf("Se baja de ${p.enlace.removePrefix("https://")}"),
             )
         }.sortedBy { !it.instalada } // Los instalados primero; el resto en el orden del catálogo (los más conocidos arriba).
@@ -263,7 +289,7 @@ fun Diptico.usarNativo(i: Int = estado.value.extra.nativosSel) {
     val f = entradasNativos(e).getOrNull(i) ?: return
     when {
         f.id == "dippo-emus" || f.id.startsWith("emu:") -> usarEntradaEmulador(f.id)
-        f.id == "equipo" -> avisar(f.ayuda)
+        f.id == "equipo" || f.id.startsWith("info-") -> avisar(f.ayuda.substringBefore(". ") + ".")
         f.id == "novas" -> when {
             !f.instalada -> abrirWeb(Nativos.WEB_NOVAS)
             e.emuladores["switch2"] == Nativos.ORDEN_NOVAS -> abrirPaqueteAqui(Nativos.NOVAS, e.extra.nativosEn)
@@ -281,7 +307,7 @@ fun Diptico.usarNativo(i: Int = estado.value.extra.nativosSel) {
         }
         f.id.startsWith("port:") -> {
             val p = Nativos.PORTS.firstOrNull { it.paquete == f.paquete } ?: return
-            if (f.instalada) abrirPaqueteAqui(p.paquete, e.extra.nativosEn) else abrirWeb(p.enlace)
+            if (f.instalada) abrirPaqueteAqui(p.paquete, e.extra.nativosEn) else instalarPort(p)
         }
     }
 }
@@ -295,3 +321,23 @@ fun Diptico.elegirEmuladorConsola(consolaId: String, orden: String) {
 
 /** ¿Tiene algo que mostrar el centro en esta consola? (para ofrecerlo desde la carpeta de Switch 2 o de Ports). */
 fun esConsolaNativa(consolaId: String) = consolaId == "switch2" || consolaId == Consolas.PORTS
+
+
+/** Baja la última versión de un port desde su página de GitHub y la instala (si no publica APK, abre su página). */
+fun Diptico.instalarPort(p: PortNativo) {
+    val f = EmuladoresAlDia.fuenteDe(p.paquete)
+    if (f == null || f.repo.isBlank()) { abrirWeb(p.enlace); return }
+    avisar("Buscando la última versión de ${p.nombre}…")
+    scope.launch {
+        val r = withContext(Dispatchers.IO) { runCatching { EmuladoresAlDia.buscarPublicacion(f, p.paquete) }.getOrNull() }
+        if (r == null) {
+            avisar("${p.nombre} no publica su APK en GitHub: te abro su página")
+            abrirWeb(p.enlace)
+            return@launch
+        }
+        val (pub, url, bytes) = r
+        val nuevo = EmuRevisado(p.nombre, p.paquete, "", 0L, ultima = pub.etiqueta, url = url, bytes = bytes, notas = pub.notas, nueva = true, pagina = p.enlace)
+        actualizar { it.copy(extra = it.extra.copy(emus = it.extra.emus.filterNot { e -> e.paquete == p.paquete } + nuevo)) }
+        actualizarEmulador(p.paquete)
+    }
+}

@@ -319,6 +319,7 @@ fun Diptico.archivoElegido(uri: Uri) {
             actualizar { it.copy(marcandoMapa = clave, pinX = 0.5f, pinY = 0.5f) }
             avisar("Ahora marca dónde quedaste")
         }
+        archivoPara.startsWith("caja:") -> cajaDesdeImagen(archivoPara.removePrefix("caja:"), android.net.Uri.parse(u))
         archivoPara.startsWith("icono:") -> {
             val id = archivoPara.removePrefix("icono:")
             val m = estado.value.iconosPropios + (id to u)

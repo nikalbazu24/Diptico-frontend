@@ -204,7 +204,16 @@ fun PanelFicha(e: Estado) {
                                 }
                             }
                         }
-                        itemsIndexed(opciones) { i, o -> TarjetaOpcion(o, i == e.indice, alto = 54f) { Diptico.elegirIndice(i) } }
+                        itemsIndexed(opciones) { i, o ->
+                            // Apartados: «Cajas y portadas», «Íconos, imágenes grandes y logos» y «Más».
+                            Column {
+                                val g = o.grupo.orEmpty()
+                                if (g.isNotEmpty() && (i == 0 || opciones[i - 1].grupo != g)) {
+                                    Etiqueta(g, Uva, 11f, Modifier.padding(start = esc.d(6), top = esc.d(if (i == 0) 0f else 10f), bottom = esc.d(4)))
+                                }
+                                TarjetaOpcion(o, i == e.indice, alto = 54f) { Diptico.elegirIndice(i) }
+                            }
+                        }
                     }
                 } else {
                     val scroll = rememberScrollState()
