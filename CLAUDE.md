@@ -490,3 +490,12 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   (`dockVisible` solo queda para otras pantallas); `ALTO_FRANJA_ABIERTA` = 56. Lupa y ajustes = pestañas semiredondas pegadas a las esquinas (`CirculoFranja(izquierda)`).
 - Íconos pixel: Wii U y Android (`androidgames`) en `SpritesConsola.kt`; `ArteCarpeta` dibuja el sprite al centro si el estilo de íconos es «Píxeles» (`LocalIconos`).
   Traducciones `extras19.tsv` (siguiente: extras20). Capturas t388.
+
+## Pixel y orden (12 nov, rama `fix/pixel-arriba`, Sonnet; Novedades `pixel-arriba-2.0-61`)
+- Causa de «los íconos pixel no se ven arriba»: Nicolás usa el paquete **Pixel art** (`dot-art`, RetroArch, en Ajustes › Biblioteca › Íconos de consola),
+  que no trae Switch/Switch 2/Wii U/Android/Gahvoria; `IconoConsola` los dibujaba como «insignia» (círculo con vector). Ahora `dot-art` sin PNG cae a
+  `ConsolaPixel` (sprites de `SpritesConsola`) y `ArteCarpeta` también usa sprites con `dot-art`.
+- Hora/batería (`RelojBateria`) pasó a la izquierda de la vitrina de cajas (junto al nombre de la consola) y de `BarraSuperior(perfil=true)`; `PerfilArriba()` sin reloj.
+- `Mosaicos`: el elegido va centrado (relleno `aireLado` = (ancho − mosaico)/2 y `animateScrollToItem(i, 0)` dentro del `BoxWithConstraints`).
+- `FilaDock`: sin sombras ni contornos. `EsquinasArriba` (abajo) sin burbuja de título; el título solo en `PerfilArriba` (arriba).
+- Traducciones `extras20.tsv` (siguiente: extras21). Capturas t389–t395.

@@ -478,7 +478,8 @@ fun IconoConsola(c: Consola?, tam: Float, fondo: Color, modifier: Modifier = Mod
     val uri = propio ?: archivo
     val img = rememberImagen(uri, 192, memoriaGrafica)
     // Si un paquete no trae el ícono de esta consola, se dibuja uno con la misma línea (a color o en contorno).
-    val dibujo = if (paquete != null) (if (paquete.blanco) "contorno" else "insignia") else cfg.estilo
+    // «Pixel art» (RetroArch) no trae Switch, Wii U, Android…: esas se dibujan con nuestros sprites pixel en vez de una insignia.
+    val dibujo = if (paquete != null) (if (paquete.blanco) "contorno" else if (paquete.id == "dot-art") "pixel" else "insignia") else cfg.estilo
     when {
         img != null -> Image(
             img, contentDescription = c.nombre, contentScale = ContentScale.Fit,
