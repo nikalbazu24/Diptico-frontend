@@ -466,3 +466,7 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Perfil fuera de Ajustes (`G_PERFIL` quitado de `GRUPOS_AJUSTES`; Discord en `G_CUENTAS`); se edita desde la tarjeta. `PerfilArriba(tam=54)`
   (nombre + título + foto grande, tipo iiSU) en `BarraSuperior(perfil=)` y en la vitrina de cajas; `EstadoChico(conFoto=)`.
 - 30 funciones muertas borradas. Traducciones `extras17.tsv` (siguiente: extras18). Novedades `emuladores-al-dia-2.0-58`. Capturas t377–t383.
+- Essentia fuera (11 nov, 23:00): fan games de RPG Maker con **Gahvoria** (`io.github.nikalbazu24.gahvoria`, repo Nikalbazu24/gahvoria). Regla
+  `GAHVORIA` → `io.github.nikalbazu24.gahvoria.LaunchActivity` (VIEW + %ROMSAF% + extra `path`), ext `gahvoria`. Gahvoria aún NO tiene esa
+  actividad: mientras no exista, `Lanzador` abre su biblioteca (`actividadExiste`). Falta agregar a Gahvoria la entrada para lanzadores
+  (la sesión no tuvo permiso de escritura en su repo). Gahvoria también está en `EmuladoresAlDia.FUENTES`.

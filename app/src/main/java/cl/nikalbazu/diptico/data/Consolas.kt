@@ -163,11 +163,11 @@ private val VISUALES: Map<String, Visual> = mapOf(
     "scummvm" to Visual("ScummVM", Medio.DISQUETE, 0xFF43A047, CAJA_PC),
     "3do" to Visual("3DO", Medio.CD, 0xFF9E9E9E, CAJA_CD),
     "steam" to Visual("Steam", Medio.APP, 0xFF1B2838, CAJA_APP),
-    // Fan games de RPG Maker XP/VX/VX Ace (Pokémon Essentials y otros), abiertos con Essentia.
-    // Cada subcarpeta con Game.ini es un juego; también sirven los accesos .essentia que crea Essentia.
+    // Fan games de RPG Maker XP/VX/VX Ace (Pokémon Essentials y otros), abiertos con Gahvoria.
+    // Cada subcarpeta con Game.ini es un juego; también sirven los accesos .gahvoria (primera línea = carpeta del juego).
     "rpgmaker" to Visual(
         "RPG Maker", Medio.DISQUETE, 0xFFE0452B, CAJA_PC, carpetasJuegos = true,
-        alias = listOf("fangames", "fan games", "fangame", "pokemonfangames", "fangamespokemon", "rpgmakerxp", "rpgmakervx", "rpgmakervxace", "rmxp", "essentia"),
+        alias = listOf("fangames", "fan games", "fangame", "pokemonfangames", "fangamespokemon", "rpgmakerxp", "rpgmakervx", "rpgmakervxace", "rmxp", "gahvoria"),
         bonito = "Fan games (RPG Maker)",
     ),
     "ports" to Visual("Ports", Medio.APP, 0xFF2EC4A6, CAJA_APP, bonito = "Ports"),
@@ -206,8 +206,9 @@ object Consolas {
     const val ANDROID = "androidgames"
     const val RPGMAKER = "rpgmaker"
 
-    /** Dónde descargar Essentia, el emulador de fan games de RPG Maker. */
-    const val URL_ESSENTIA = "https://github.com/Nikalbazu24/essentia/releases"
+    /** Dónde descargar Gahvoria, la app de fan games de RPG Maker y Pokémon Essentials. */
+    const val URL_GAHVORIA = "https://github.com/Nikalbazu24/gahvoria/releases"
+    const val PAQUETE_GAHVORIA = "io.github.nikalbazu24.gahvoria"
 
     /** Reglas de ES-DE: nombre del emulador -> "paquete/actividad" en orden de preferencia. */
     var reglas: Map<String, List<String>> = emptyMap()

@@ -70,6 +70,7 @@ object EmuladoresAlDia {
         FuenteEmulador("GameNative", listOf("app.gamenative"), "utkarshdalal/GameNative"),
         FuenteEmulador("EKA2L1", listOf("com.github.eka2l1"), "EKA2L1/EKA2L1"),
         FuenteEmulador("Ruffle", listOf("rs.ruffle"), "ruffle-rs/ruffle-android"),
+        FuenteEmulador("Gahvoria", listOf("io.github.nikalbazu24.gahvoria"), "Nikalbazu24/gahvoria", nota = "Fan games de RPG Maker y Pokémon Essentials"),
         FuenteEmulador("J2ME Loader", listOf("ru.playsoftware.j2meloader"), "nikita36078/J2ME-Loader"),
         FuenteEmulador("Citron", listOf("org.citron.citron_emu"), web = "https://citron-emu.org", nota = "Se publica en su web"),
         FuenteEmulador("Kenji-NX", listOf("org.kenjinx.android"), web = "https://git.ryujinx.app/kenji-nx", nota = "Se publica en su web"),

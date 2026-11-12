@@ -289,9 +289,12 @@ object Lanzador {
                     val pkg = paqueteDeAcceso(ctx, juego.uri) ?: return "El archivo ${juego.archivo} debe tener adentro el nombre de la app."
                     return lanzarApp(ctx, pkg, juego.titulo, displayId)
                 }
+                // Gahvoria sin su entrada para lanzadores (versiones antiguas): se abre su biblioteca y eliges el juego ahí.
+                op != null && op.paquete == Consolas.PAQUETE_GAHVORIA && !actividadExiste(ctx, op.paquete, op.actividad) ->
+                    return lanzarApp(ctx, op.paquete, "Gahvoria", displayId)
                 op != null -> construir(ctx, op, juego, consola, rom, raiz)
                 consola.id == Consolas.RPGMAKER ->
-                    return "Para abrir ${juego.titulo} necesitas instalar Essentia. Descárgala desde github.com/Nikalbazu24/essentia"
+                    return "Para abrir ${juego.titulo} necesitas instalar Gahvoria. Descárgala desde github.com/Nikalbazu24/gahvoria"
                 consola.comandos.isEmpty() || juego.esCarpeta || juego.tipo in setOf("ps3", "ps4", "psvita") ->
                     return "Para abrir ${juego.titulo} necesitas instalar ${consola.sugerido}."
                 else -> {
@@ -375,6 +378,14 @@ object Lanzador {
         pm.getApplicationLabel(pm.getApplicationInfo(paquete, 0)).toString()
     } catch (e: Exception) {
         null
+    }
+
+    /** ¿La app [paquete] tiene la pantalla [actividad] y se puede abrir desde otra app? */
+    private fun actividadExiste(ctx: Context, paquete: String?, actividad: String?): Boolean {
+        if (paquete == null || actividad.isNullOrEmpty()) return true
+        return try {
+            ctx.packageManager.getActivityInfo(android.content.ComponentName(paquete, actividad), 0).exported
+        } catch (_: Exception) { false }
     }
 
     /** Abre una app (un port o un juego de Android) en la pantalla elegida. */

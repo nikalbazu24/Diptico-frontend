@@ -1089,7 +1089,7 @@ class Capturas {
     private val fanGames = listOf(
         juego("pa", "rpgmaker", "Pokémon Añil").copy(archivo = "Pokemon Anil", esCarpeta = true),
         juego("pz", "rpgmaker", "Pokémon Zeta").copy(archivo = "Pokemon Zeta", esCarpeta = true),
-        juego("ri", "rpgmaker", "Relatos de Invierno").copy(archivo = "Relatos.essentia"),
+        juego("ri", "rpgmaker", "Relatos de Invierno").copy(archivo = "Relatos"),
     )
 
     @Config(qualifiers = ABAJO)

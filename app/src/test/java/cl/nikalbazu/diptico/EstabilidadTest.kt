@@ -214,7 +214,7 @@ class EstabilidadTest {
         assertTrue(contenido.contains("[credencial omitida]"))
     }
     @Test fun bisaLeeElJuegoActivoAunqueOtroEsteSeleccionado() {
-        val activo = Juego("rpgmaker/a", "rpgmaker", "Fan game", "A.essentia", Uri.parse("content://rom/a"), "a")
+        val activo = Juego("rpgmaker/a", "rpgmaker", "Fan game", "A", Uri.parse("content://rom/a"), "a")
         val otro = activo.copy(clave = "snes/b", consolaId = "snes", titulo = "Otro juego")
         val e = cl.nikalbazu.diptico.estado.Estado(configurado = true, modoPantallas = "dos",
             juegoSel = otro.clave, juegos = listOf(activo, otro),

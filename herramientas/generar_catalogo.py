@@ -43,8 +43,8 @@ EXTRA = {
     'CITRON': ['org.citron.citron_emu/org.citron.citron_emu.activities.EmulationActivity'],
     'SUDACHI': ['org.sudachi.sudachi_emu/org.sudachi.sudachi_emu.activities.EmulationActivity'],
     'YUZU': ['org.yuzu.yuzu_emu/org.yuzu.yuzu_emu.activities.EmulationActivity'],
-    # Essentia: fan games de RPG Maker XP/VX/VX Ace (github.com/Nikalbazu24/essentia).
-    'ESSENTIA': ['io.github.nikalbazu24.essentia/com.hatkid.mkxpz.LauncherActivity'],
+    # Gahvoria: fan games de RPG Maker XP/VX/VX Ace y Pokémon Essentials (github.com/Nikalbazu24/gahvoria).
+    'GAHVORIA': ['io.github.nikalbazu24.gahvoria/io.github.nikalbazu24.gahvoria.LaunchActivity'],
 }
 for k, v in EXTRA.items():
     reglas.setdefault(k, v)
@@ -62,9 +62,9 @@ for s in sis.findall('system'):
     if l is None: sinlib.append(name)
     icono = l if (l and l in icon_names) else (full if full in icon_names else None)
     out.append({'id':name,'nombre':full,'ext':ext,'cmds':cmds,'libretro':l,'plataforma':s.findtext('platform'),'icono':icono})
-# Sistema propio de Díptico: fan games de RPG Maker con Essentia (archivos .essentia o carpetas con Game.ini).
-out.append({'id':'rpgmaker','nombre':'RPG Maker XP / VX / VX Ace','ext':['essentia'],
-            'cmds':[['Essentia','%EMULATOR_ESSENTIA% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF% %EXTRA_path%=%ROM%']],
+# Sistema propio de Díptico: fan games de RPG Maker con Gahvoria (carpetas con Game.ini o accesos .gahvoria).
+out.append({'id':'rpgmaker','nombre':'RPG Maker XP / VX / VX Ace','ext':['gahvoria'],
+            'cmds':[['Gahvoria','%EMULATOR_GAHVORIA% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF% %EXTRA_path%=%ROM%']],
             'libretro':None,'plataforma':'pc','icono':None})
 # emuladores usados pero sin regla
 usados=set(re.findall(r'%EMULATOR_([A-Z0-9_+\-]+)%',open(base+'es_systems.xml').read()))
