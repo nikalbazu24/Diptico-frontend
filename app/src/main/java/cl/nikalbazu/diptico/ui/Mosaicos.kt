@@ -163,6 +163,7 @@ val LocalAireAbajo = androidx.compose.runtime.compositionLocalOf { 0.dp }
 @Composable
 fun FranjaAccesos(e: Estado, modifier: Modifier = Modifier) {
     if (!e.extra.franjaAbajo) return
+    val esc = LocalEscala.current
     // Solo la lupa y los ajustes, pegados a las esquinas de abajo, cada uno en una pestaña semiredonda para que se note.
     // Las apps fijadas (dock) ahora viven arriba, en EsquinasArriba.
     androidx.compose.foundation.layout.Row(
@@ -170,7 +171,13 @@ fun FranjaAccesos(e: Estado, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.Bottom,
     ) {
         CirculoFranja(cl.nikalbazu.diptico.estado.Icono.BUSCAR, izquierda = true) { Diptico.abrirBuscar() }
-        Spacer(Modifier.weight(1f))
+        if (dockArriba(e)) Spacer(Modifier.weight(1f))
+        else Box(Modifier.weight(1f).padding(horizontal = esc.d(8), vertical = esc.d(4)).testTag("franja-deslizable"), contentAlignment = Alignment.Center) {
+            // En las vistas sin cabecera arriba (juegos de una consola, mosaicos…) las apps fijadas siguen abajo, entre la lupa y los ajustes.
+            androidx.compose.foundation.layout.Row(Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                DockOApps(e)
+            }
+        }
         CirculoFranja(cl.nikalbazu.diptico.estado.Icono.AJUSTES, izquierda = false) { Diptico.abrirMenu() }
     }
 }
@@ -210,18 +217,7 @@ fun EsquinasArriba(e: Estado) {
                 Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (e.extra.dock) FilaDock(e, 32f, flotante = true)
-                else {
-                    val p = LocalPaleta.current
-                    androidx.compose.foundation.layout.Row(
-                        Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirApps() }.padding(horizontal = esc.d(8), vertical = esc.d(8)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 15f)
-                        Spacer(Modifier.width(esc.d(8)))
-                        Texto("Apps", 13f, color = p.tinta, lineas = 1)
-                    }
-                }
+                DockOApps(e)
             }
         }
         // El título que ganaste con DIPPO, en una burbuja chiquita junto a tu foto.
@@ -293,5 +289,24 @@ internal fun BotonVitrina(letra: String, texto: String, lleno: Boolean, alPulsar
         }
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(10)))
         Texto(texto, 15f, color = tinta, lineas = 1)
+    }
+}
+
+/** La lista de carpetas de consolas lleva el dock arriba (en su cabecera); en las demás vistas queda abajo. */
+internal fun dockArriba(e: Estado): Boolean = e.vistaConsolas == "carpetas" && e.enSistemas && !e.carpetaEnVentana && !e.extra.ordenandoCarpetas
+
+/** Apps fijadas (o el botón «Apps» si el dock está apagado). */
+@Composable
+private fun DockOApps(e: Estado) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    if (e.extra.dock) FilaDock(e, 32f, flotante = true)
+    else androidx.compose.foundation.layout.Row(
+        Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirApps() }.padding(horizontal = esc.d(8), vertical = esc.d(8)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconoDiptico(cl.nikalbazu.diptico.estado.Icono.APPS, p.tinta, 15f)
+        Spacer(Modifier.width(esc.d(8)))
+        Texto("Apps", 13f, color = p.tinta, lineas = 1)
     }
 }
