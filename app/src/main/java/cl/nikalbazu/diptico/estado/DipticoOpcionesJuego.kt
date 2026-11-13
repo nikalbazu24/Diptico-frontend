@@ -15,7 +15,7 @@ fun Diptico.gruposJuego(): List<Pair<Opcion, List<Opcion>>> {
     val e = estado.value
     val juego = e.seleccionado ?: return emptyList()
     val consola = cl.nikalbazu.diptico.data.Consolas.porId(juego.consolaId)
-    val todas = opcionesJuegoPlanas()
+    val todas = filtrarPorEquipo(opcionesJuegoPlanas())
     fun de(vararg inicios: String) = todas.filter { o -> inicios.any { o.titulo.startsWith(it) } }
 
     val personalizar = buildList {

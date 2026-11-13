@@ -1,5 +1,10 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.roundToInt
+
 import cl.nikalbazu.diptico.estado.*
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -49,7 +54,7 @@ internal fun caraDippoInicio(saludando: Boolean, bateria: Int, cargando: Boolean
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
+fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier, lugar: String = "") {
     // Durante el recorrido o las novedades, DIPPO está al centro de la escena: aquí no se duplica.
     if (!e.extra.dippoInicio || !e.configurado || e.novedades >= 0) return
     val p = LocalPaleta.current
@@ -111,15 +116,38 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier) {
         DippoBurbuja.mostrar(DippoBurbuja.Mensaje(System.nanoTime(), texto, fase, alToque) { fase = 0 })
     }
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { DippoBurbuja.ocultar() } }
+    // DIPPO se mueve con el dedo a donde quieras y se queda ahí (por pantalla y lugar). Doble toque: vuelve a su sitio.
+    val clave = "$pantalla-" + lugar.ifBlank { tam.toInt().toString() }
+    var corrido by remember(clave) { mutableStateOf(Diptico.dippoCorrido(clave).let { androidx.compose.ui.geometry.Offset(it.first, it.second) }) }
+    var base by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    var medida by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+    val vista = androidx.compose.ui.platform.LocalView.current
     Row(modifier.testTag("dippo-inicio"), verticalAlignment = Alignment.CenterVertically) {
         AvatarBisa(
             tam,
             Modifier
+                .offset { androidx.compose.ui.unit.IntOffset(corrido.x.roundToInt(), corrido.y.roundToInt()) }
+                .pointerInput(clave) {
+                    detectDragGestures(onDragEnd = { Diptico.guardarDippoCorrido(clave, corrido.x, corrido.y) }) { cambio, d ->
+                        cambio.consume()
+                        val maxX = (vista.width - medida.width).toFloat()
+                        val maxY = (vista.height - medida.height).toFloat()
+                        corrido = androidx.compose.ui.geometry.Offset(
+                            (corrido.x + d.x).coerceIn(-base.x, (maxX - base.x).coerceAtLeast(-base.x)),
+                            (corrido.y + d.y).coerceIn(-base.y, (maxY - base.y).coerceAtLeast(-base.y)),
+                        )
+                    }
+                }
                 .onGloballyPositioned { c ->
                     val pos = c.positionInWindow()
+                    base = pos - corrido
+                    medida = c.size
                     DippoBurbuja.cabeza = androidx.compose.ui.geometry.Rect(pos.x, pos.y, pos.x + c.size.width, pos.y + c.size.height)
                 }
-                .combinedClickable(onLongClick = { Diptico.hablarConBisa() }) { Diptico.abrirAsistente() },
+                .combinedClickable(
+                    onLongClick = { Diptico.hablarConBisa() },
+                    onDoubleClick = { corrido = androidx.compose.ui.geometry.Offset.Zero; Diptico.guardarDippoCorrido(clave, 0f, 0f) },
+                ) { Diptico.abrirAsistente() },
             cara = if (e.pensando) CaraDippo.PENSANDO else caraDippoInicio(saludando || fase == 2, bateria, cargando, hora),
         )
     }

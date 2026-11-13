@@ -10,7 +10,7 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "carpeta-abierta-2.0-67"
+    const val ID = "segun-equipo-2.0-68"
     const val NOMBRE = "Carpeta de vidrio y avisos de cajas"
 
     /**
@@ -509,12 +509,19 @@ object Novedades {
             Pagina("Los bordes giran siempre", "La estela y los demás bordes de tu foto ya no se quedan pegados al abrir tu tarjeta.", Icono.ESTRELLA, 0xFFFF7A59),
             Pagina("Tamaño y lugar a tu gusto", "Arriba a la derecha de la vitrina: Tamaño − / +, Mover ◀ ▶ y Logo − / +. Se guardan solos.", Icono.AJUSTES, 0xFFFFB547),
         )),
-        Version(ID, "Carpeta de vidrio y avisos de cajas", listOf(
+        Version("carpeta-abierta-2.0-67", "Carpeta de vidrio y avisos de cajas", listOf(
             Pagina("La carpeta abierta, de vidrio", "Al abrir una carpeta, la ventana con tus juegos ahora es de vidrio: translúcida, con el color de la consola y la biblioteca difuminada detrás. Se cambia en Ajustes › Biblioteca › Tono de las carpetas.", Icono.CARPETA, 0xFF3BA8FF),
             Pagina("Nombres a la vista", "La ventana de la carpeta termina justo encima de la barra de apps: ya no tapa los nombres de la última fila.", Icono.TEXTO, 0xFF8B5CF6),
             Pagina("Fondo difuminado con la caja 3D", "Arriba, el arte de fondo lleva un leve desenfoque para que la caja destaque. Se apaga en Ajustes › Pantalla y estilo › Fondo difuminado con la caja 3D.", Icono.PORTADA, 0xFFE0603A),
             Pagina("Lugar en la vitrina", "En Personalizar de cada juego (o en sus opciones › Personalizar) hay un apartado nuevo: en una cuadrícula mueves el logo, la imagen grande y la caja 3D donde quieras, cambias su tamaño y eliges si va la caja y si el fondo va difuminado. Arriba ves cómo queda al tiro.", Icono.PALETA, 0xFFFF7A59),
             Pagina("Si una caja no se comparte, te digo por qué", "Ahora el aviso explica el motivo (internet, script de Drive sin actualizar, límite del día…) en vez de un mensaje genérico.", Icono.INFO, 0xFFFFB547),
+        )),
+        Version(ID, "Díptico según tu equipo", listOf(
+            Pagina("Díptico reconoce tu equipo", "Al abrir sabe si es una consola de dos pantallas, una portátil de una, un teléfono, una tablet o una tele, y se acomoda solo. Si se equivoca, lo cambias en Ajustes › Pantalla y estilo › Tu equipo.", Icono.MANDO, 0xFF3BA8FF),
+            Pagina("Sin opciones que no sirven", "En una consola de una pantalla ya no aparecen las opciones de dos pantallas (modo, intercambiar, pantalla compañera…).", Icono.AJUSTES, 0xFF8B5CF6),
+            Pagina("Inicio nuevo en una pantalla", "A la izquierda, tus consolas con sus íconos; al centro, la vitrina con la caja 3D, tu avance y los botones; abajo, filtros y tus juegos en fila. Nada queda encima de nada.", Icono.JUGAR, 0xFFE0603A),
+            Pagina("Modo sala en la tele", "En la tele: vitrina grande, tus amigos de Discord, «Seguir jugando» con tu avance y las consolas con sus íconos, todo más grande y para el mando.", Icono.PANTALLAS, 0xFF23C486),
+            Pagina("DIPPO va donde quieras", "Arrástralo con el dedo a cualquier parte y se queda ahí. Doble toque y vuelve a su lugar.", Icono.BISA, 0xFFFFB547),
         )),
     )
 

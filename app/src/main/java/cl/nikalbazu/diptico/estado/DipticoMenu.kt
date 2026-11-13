@@ -168,7 +168,7 @@ fun Diptico.opcionesSeccion(s: Seccion): List<Opcion> {
     // Moverse por la lista (indice) no cambia las opciones: no se vuelven a armar en cada paso.
     val clave = claveMenu(e)
     val c = cacheOpciones?.takeIf { it.first === e || it.first == clave }?.second ?: HashMap<Seccion, List<Opcion>>().also { cacheOpciones = clave to it }
-    return c.getOrPut(s) { condensar(s, armarOpciones(s)) }
+    return c.getOrPut(s) { condensar(s, filtrarPorEquipo(armarOpciones(s))) }
 }
 
 
@@ -296,9 +296,9 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
             lista += Opcion(
                 "Tu equipo", q.nombre, Icono.MANDO,
                 "${q.tipoBonito} · ${q.ramGb} GB de memoria · potencia ${q.gama}. Elige esto para que Díptico acomode solo la distribución, las vistas y los efectos para este equipo.",
-            ) { optimizarParaEquipo() }
+            ) { optimizarParaEquipo() }.conLista(TIPOS_EQUIPO.map(::nombreTipoEquipo), TIPOS_EQUIPO.indexOf(almacen.texto("equipoTipo", "auto")).coerceAtLeast(0)) { elegirTipoEquipo(TIPOS_EQUIPO[it]) }
             lista += Opcion(
-                "Tamaño en la pantalla de arriba", nombreZoom(e.zoomArriba), Icono.ARRIBA,
+                if (e.tieneDosPantallas) "Tamaño en la pantalla de arriba" else "Tamaño en la pantalla", nombreZoom(e.zoomArriba), Icono.ARRIBA,
                 "Automático ajusta todo según la forma de la pantalla. Compacto muestra más cosas; grande, todo más grande.",
             ) { ciclarZoom(true) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomArriba) < 0.01f }) { fijarZoom(true, ZOOMS[it]) }
             if (e.dosDisponibles) lista += Opcion(

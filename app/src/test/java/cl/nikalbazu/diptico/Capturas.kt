@@ -1549,6 +1549,9 @@ class Capturas {
     @Test fun t421_editor_vitrina_abajo() = foto("421_editor_vitrina_abajo", base().copy(vista = "iconos", juegoSel = "snes/1", extra = EstadoExtra(portada = "ps5", edicionVitrina = EdicionVitrina("snes/1", dispPrueba, Disposicion(), sel = 1))), Rol.INFERIOR, mi = 1)
     @Test fun t422_editor_vitrina_arriba() = foto("422_editor_vitrina_arriba", base().copy(vista = "iconos", juegoSel = "snes/1", extra = EstadoExtra(portada = "ps5", edicionVitrina = EdicionVitrina("snes/1", dispPrueba, Disposicion(), sel = 1))), Rol.SUPERIOR)
     @Test fun t423_vitrina_a_tu_gusto() = foto("423_vitrina_a_tu_gusto", base().copy(vista = "iconos", juegoSel = "snes/1", extra = EstadoExtra(portada = "ps5", disposiciones = mapOf("snes/1" to dispPrueba.copy(conCaja = false, difuminado = false)))), Rol.SUPERIOR)
+    @Test fun t424_inicio_riel() = foto("424_inicio_riel", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
+    @Test fun t425_inicio_sala() = foto("425_inicio_sala", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "tele")) }, Rol.UNICA)
+    @Test fun t426_ajustes_una_pantalla() = foto("426_ajustes_una_pantalla", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)
