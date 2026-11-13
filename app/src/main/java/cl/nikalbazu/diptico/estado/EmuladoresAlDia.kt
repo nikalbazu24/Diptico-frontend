@@ -60,7 +60,7 @@ object EmuladoresAlDia {
         FuenteEmulador("Pandroid", listOf("com.panda3ds.pandroid"), "wheremyfoodat/Panda3DS"),
         FuenteEmulador("melonDS", listOf("me.magnum.melonds"), "rafaelvcaetano/melonDS-android"),
         FuenteEmulador("Vita3K", listOf("org.vita3k.emulator"), "Vita3K/Vita3K-Android"),
-        FuenteEmulador("ARMSX2", listOf("com.armsx2", "come.nanodata.armsx2", "com.nanodata.armsx"), "ARMSX2/ARMSX2"),
+        FuenteEmulador("ARMSX2", listOf("com.armsx2", "com.nanodata.armsx2", "come.nanodata.armsx2", "com.nanodata.armsx"), "ARMSX2/ARMSX2"),
         FuenteEmulador("Flycast", listOf("com.flycast.emulator"), "flyinghead/flycast"),
         FuenteEmulador("Cemu", listOf("info.cemu.cemu", "info.cemu.Cemu"), "SSimco/Cemu"),
         FuenteEmulador("aPS3e", listOf("aenu.aps3e"), "aenu1/aps3e"),
