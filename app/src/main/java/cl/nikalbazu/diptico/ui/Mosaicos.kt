@@ -264,35 +264,35 @@ internal fun esMosaico(vista: String) = vista == "mosaicos" || vista == "xbox"
 
 /** Los dos botones de la vitrina de arriba: A para jugar (o continuar) y X para la ficha del juego. */
 @Composable
-fun BotonesVitrina(e: Estado, juego: cl.nikalbazu.diptico.data.Juego, modifier: Modifier = Modifier) {
+fun BotonesVitrina(e: Estado, juego: cl.nikalbazu.diptico.data.Juego, modifier: Modifier = Modifier, compacto: Boolean = false) {
     val esc = LocalEscala.current
     val jugado = (e.datos[juego.clave]?.tiempo?.toLong() ?: 0L) > 0L
-    androidx.compose.foundation.layout.Row(modifier.testTag("botones-vitrina"), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-        BotonVitrina("A", if (jugado) "Continuar" else "Jugar", lleno = true) { Diptico.jugar() }
-        BotonVitrina("X", "Ficha del juego", lleno = false) { Diptico.abrirFicha() }
+    androidx.compose.foundation.layout.Row(modifier.testTag("botones-vitrina"), horizontalArrangement = Arrangement.spacedBy(esc.d(if (compacto) 8 else 12))) {
+        BotonVitrina("A", if (jugado) "Continuar" else "Jugar", lleno = true, compacto = compacto) { Diptico.jugar() }
+        BotonVitrina("X", if (compacto) "Ficha" else "Ficha del juego", lleno = false, compacto = compacto) { Diptico.abrirFicha() }
     }
 }
 
 @Composable
-internal fun BotonVitrina(letra: String, texto: String, lleno: Boolean, alPulsar: () -> Unit) {
+internal fun BotonVitrina(letra: String, texto: String, lleno: Boolean, compacto: Boolean = false, alPulsar: () -> Unit) {
     val esc = LocalEscala.current
     val forma = RoundedCornerShape(50)
     val tinta = if (lleno) Color(0xFF15121D) else Color.White
     androidx.compose.foundation.layout.Row(
-        Modifier.height(esc.d(46)).clip(forma)
+        Modifier.height(esc.d(if (compacto) 32 else 46)).clip(forma)
             .background(if (lleno) Color.White else Color.White.copy(alpha = 0.12f))
             .then(if (lleno) Modifier else Modifier.border(esc.d(1), Color.White.copy(alpha = 0.25f), forma))
-            .clickable(onClick = alPulsar).padding(horizontal = esc.d(20)),
+            .clickable(onClick = alPulsar).padding(start = esc.d(if (compacto) 6 else 20), end = esc.d(if (compacto) 14 else 20)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(esc.d(22)).clip(androidx.compose.foundation.shape.CircleShape)
+        Box(Modifier.size(esc.d(if (compacto) 20 else 22)).clip(androidx.compose.foundation.shape.CircleShape)
             .background(if (lleno) tinta else Color.Transparent)
             .then(if (lleno) Modifier else Modifier.border(esc.d(1.5f), tinta, androidx.compose.foundation.shape.CircleShape)),
             contentAlignment = Alignment.Center) {
             Texto(letra, 11f, color = if (lleno) Color.White else tinta, traducir = false, lineas = 1)
         }
-        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(10)))
-        Texto(texto, 15f, color = tinta, lineas = 1)
+        androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(if (compacto) 7 else 10)))
+        Texto(texto, if (compacto) 12.5f else 15f, color = tinta, lineas = 1)
     }
 }
 

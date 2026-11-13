@@ -2901,9 +2901,7 @@ object Diptico {
         lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA, ayuda = "Abre la tienda de imágenes para elegir otra portada de internet.") { abrirFicha(); buscarCandidatos("portada") }
         lista += Opcion("Mover de lugar", if (e.orden == "propio") "A tu gusto" else "Ordénalos a tu gusto", Icono.VISTA, "Corre este juego con la cruceta y deja tus juegos en el orden que quieras.") { empezarOrdenar() }
         if (consola != null && !consola.sinEmulador) {
-            lista += Opcion("Emulador", d?.emulador?.let { id -> Lanzador.opciones(app, consola).firstOrNull { it.id == id }?.nombre } ?: "El de la consola", Icono.EMULADOR, ayuda = "Con qué emulador o núcleo se abre solo este juego. «El de la consola» usa el de Menú › Emuladores.") {
-                ciclarEmuladorJuego(juego.clave, consola)
-            }
+            lista += opcionEmuladorJuego(juego, consola)
         }
         if (estado.value.extra.carpetasPartidas.isNotEmpty() || consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
             lista += Opcion("Copias de partida", if (estado.value.extra.carpetasPartidas.isNotEmpty()) "Automáticas" else ".srm", Icono.COPIAR,
@@ -3851,6 +3849,8 @@ object Diptico {
         if (otras.isEmpty()) return null
         // Con una sola pantalla extra en una consola de dos pantallas (la Thor), esa es la de abajo, no una tele.
         val e = estado.value
+        // En un equipo de una pantalla (Odin 2 Portal, Retroid…), cualquier pantalla extra es la tele, se llame como se llame.
+        if (e.extra.equipoTipo != "dual") return otras.firstOrNull { NOMBRE_TELE.containsMatchIn(it.name ?: "") }?.name ?: otras.first().name ?: "Tele"
         if (otras.size == 1 && e.modoPantallas == "dos" && e.dosDisponibles) return null
         otras.firstOrNull { NOMBRE_TELE.containsMatchIn(it.name ?: "") }?.let { return it.name }
         return if (otras.size >= 2) otras.last().name else null
@@ -5062,11 +5062,17 @@ object Diptico {
 
     // ---------- Tamaño de cada pantalla ----------
 
-    internal val ZOOMS = listOf(1f, 0.85f, 0.92f, 1.08f, 1.16f)
-    fun nombreZoom(z: Float) = when {
-        kotlin.math.abs(z - 1f) < 0.01f -> "Automático"
-        z < 0.9f -> "Muy compacto"; z < 1f -> "Compacto"; z < 1.12f -> "Grande"; else -> "Muy grande"
-    }
+    /** 1f = automático (en las portátiles de una pantalla ya viene más chico, ver [zoomAutomatico]); el resto, a tu gusto. */
+    internal val ZOOMS = listOf(1f, 0.7f, 0.75f, 0.8f, 0.85f, 0.9f, 0.95f, 1.001f, 1.05f, 1.1f, 1.2f, 1.3f)
+    fun nombreZoom(z: Float) = if (kotlin.math.abs(z - 1f) < 0.0005f) "Automático" else "${kotlin.math.round(z * 100).toInt()} %"
+
+    /**
+     * Con «Automático», en una portátil o teléfono de una pantalla todo va un poco más chico (en la Odin 2 se veía muy grande).
+     * Elegir un valor en «Escala de la interfaz» manda sobre esto.
+     */
+    fun zoomAutomatico(e: Estado): Float =
+        if (kotlin.math.abs(e.zoomArriba - 1f) < 0.0005f && e.unaPantalla && e.extra.equipoTipo in setOf("portatil", "telefono") && !e.sobremesa) 0.84f
+        else e.zoomArriba
 
     internal fun fijarZoom(arriba: Boolean, z: Float) {
         almacen.guardarTexto(if (arriba) "zoomArriba" else "zoomAbajo", z.toString())
@@ -5075,7 +5081,7 @@ object Diptico {
 
     internal fun ciclarZoom(arriba: Boolean) {
         val actual = if (arriba) estado.value.zoomArriba else estado.value.zoomAbajo
-        val z = ZOOMS[(ZOOMS.indexOfFirst { kotlin.math.abs(it - actual) < 0.01f } + 1).mod(ZOOMS.size)]
+        val z = ZOOMS[(ZOOMS.indexOfFirst { kotlin.math.abs(it - actual) < 0.0005f } + 1).mod(ZOOMS.size)]
         almacen.guardarTexto(if (arriba) "zoomArriba" else "zoomAbajo", z.toString())
         actualizar { if (arriba) it.copy(zoomArriba = z) else it.copy(zoomAbajo = z) }
     }
@@ -5770,7 +5776,7 @@ object Diptico {
             Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) },
             Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(id) },
             Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) },
-            Opcion("Emulador", if (c.sinEmulador) "No necesita" else nombreEmulador(c), Icono.MANDO, ayuda = "Con qué emulador o núcleo se abren los juegos de esta consola.") { if (!c.sinEmulador) ciclarEmulador(c) },
+            if (c.sinEmulador) Opcion("Emulador", "No necesita", Icono.MANDO, ayuda = "Esta consola no necesita emulador.") {} else opcionEmuladorConsola(c).copy(titulo = "Emulador", icono = Icono.MANDO),
             Opcion("Quitar imágenes y música propias", icono = Icono.BORRAR, ayuda = "Quita las imágenes y la música que elegiste para esta consola.") {
                 cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null, portadaCarpeta = null) }
                 if (estado.value.iconosPropios.containsKey(id)) {

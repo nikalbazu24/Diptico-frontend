@@ -37,7 +37,7 @@ class MainActivity : BaseActivity() {
             val mi = miDisplay()
             val t = e.tamTexto
             // En la tele: todo más grande y con margen para que no se corte nada en los bordes.
-            val z = e.zoomArriba * (if (e.sobremesa) e.sobremesaTam else 1f)
+            val z = Diptico.zoomAutomatico(e) * (if (e.sobremesa) e.sobremesaTam else 1f)
             val margen = if (e.sobremesa) e.sobremesaMargen else 0
             Lienzo(e.oscuro, Modifier.fillMaxSize().margenPorcentaje(margen), t, z) {
                 if (e.unaPantalla) Raiz(e, Rol.UNICA, mi)

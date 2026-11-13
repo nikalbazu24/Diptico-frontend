@@ -45,10 +45,22 @@ data class App(val paquete: String, val nombre: String, val esJuego: Boolean = f
  */
 object Lanzador {
     /** Un emulador instalado para una consola, con la orden que lo abre. */
-    data class Opcion(val comando: Comando, val paquete: String?, val actividad: String?) {
+    data class Opcion(val comando: Comando, val paquete: String?, val actividad: String?, val etiquetaApp: String? = null) {
         /** Lo que se guarda en los ajustes. */
         val id: String get() = comando.etiqueta
-        val nombre: String get() = comando.nombre
+        val nombre: String get() = etiquetaApp ?: comando.nombre
+    }
+
+    /**
+     * Cualquier app instalada usada como emulador (por si Díptico no conoce la tuya): se abre con el juego
+     * como «ver archivo». Se guarda como "app:paquete".
+     */
+    fun appComoEmulador(ctx: Context, paquete: String, nombre: String? = null): Opcion? {
+        if (!instalado(ctx, paquete)) return null
+        val etiqueta = nombre ?: try {
+            ctx.packageManager.getApplicationLabel(ctx.packageManager.getApplicationInfo(paquete, 0)).toString()
+        } catch (_: Exception) { paquete }
+        return Opcion(Comando("app:$paquete", "%EMULATOR_APP% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%"), paquete, null, etiqueta)
     }
 
     private val instalados = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
@@ -109,8 +121,9 @@ object Lanzador {
      */
     fun elegida(ctx: Context, consola: Consola, preferido: String?, tipo: String? = null): Opcion? {
         val ops = opciones(ctx, consola, tipo)
-        if (ops.isEmpty()) return null
         val compatibles = ops.filter { sirve(it.comando, tipo) }
+        if (preferido != null && preferido.startsWith("app:")) appComoEmulador(ctx, preferido.removePrefix("app:"))?.let { return it }
+        if (ops.isEmpty()) return null
         if (preferido != null) {
             val p = ops.firstOrNull { it.id == preferido }
                 ?: preferido.substringAfter('#', "").takeIf { it.isNotEmpty() }?.let { core -> ops.firstOrNull { it.comando.nucleo == core } }
@@ -214,6 +227,8 @@ object Lanzador {
         for (p in partes(linea)) {
             if (p.startsWith("%EMULATOR_")) {
                 if (op.paquete != null) {
+                    // App elegida a mano: Android busca dentro de ella la pantalla que abre el archivo.
+                    if (op.comando.emulador == "APP") { intent.setPackage(op.paquete); continue }
                     if (op.actividad.isNullOrEmpty()) {
                         ctx.packageManager.getLaunchIntentForPackage(op.paquete)?.component?.let { intent.component = it }
                             ?: intent.setPackage(op.paquete)

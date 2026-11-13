@@ -9,7 +9,8 @@ package cl.nikalbazu.diptico.estado
 val Estado.enLaTele: Boolean get() = extra.equipoTipo == "tele" || sobremesa
 
 /** El equipo tiene de verdad una segunda pantalla (aunque ahora se use una sola). */
-val Estado.tieneDosPantallas: Boolean get() = dosDisponibles || extra.equipoTipo == "dual"
+/** Solo una consola de dos pantallas de verdad (la Thor): una tele conectada por HDMI no cuenta como segunda pantalla. */
+val Estado.tieneDosPantallas: Boolean get() = extra.equipoTipo == "dual"
 
 val TIPOS_EQUIPO = listOf("auto", "dual", "portatil", "telefono", "tablet", "tele")
 

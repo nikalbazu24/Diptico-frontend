@@ -298,9 +298,9 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 "${q.tipoBonito} · ${q.ramGb} GB de memoria · potencia ${q.gama}. Elige esto para que Díptico acomode solo la distribución, las vistas y los efectos para este equipo.",
             ) { optimizarParaEquipo() }.conLista(TIPOS_EQUIPO.map(::nombreTipoEquipo), TIPOS_EQUIPO.indexOf(almacen.texto("equipoTipo", "auto")).coerceAtLeast(0)) { elegirTipoEquipo(TIPOS_EQUIPO[it]) }
             lista += Opcion(
-                if (e.tieneDosPantallas) "Tamaño en la pantalla de arriba" else "Tamaño en la pantalla", nombreZoom(e.zoomArriba), Icono.ARRIBA,
-                "Automático ajusta todo según la forma de la pantalla. Compacto muestra más cosas; grande, todo más grande.",
-            ) { ciclarZoom(true) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomArriba) < 0.01f }) { fijarZoom(true, ZOOMS[it]) }
+                if (e.tieneDosPantallas) "Tamaño en la pantalla de arriba" else "Escala de la interfaz", nombreZoom(e.zoomArriba), Icono.ARRIBA,
+                "Qué tan grande se ve todo. Automático se ajusta a tu equipo (en las portátiles de una pantalla viene más chico). Con un número más bajo ves más cosas; más alto, todo más grande.",
+            ) { ciclarZoom(true) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomArriba) < 0.0005f }.coerceAtLeast(0)) { fijarZoom(true, ZOOMS[it]) }
             if (e.dosDisponibles) lista += Opcion(
                 "Tamaño en la pantalla de abajo", nombreZoom(e.zoomAbajo), Icono.ABAJO,
                 "La pantalla de abajo de la Thor es casi cuadrada: en automático todo se acomoda a esa forma.",
@@ -698,16 +698,7 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 almacen.guardarBool("emusAuto", v)
                 actualizar { it.copy(extra = it.extra.copy(emusAuto = v)) }
             }
-            val consolas = e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.sinEmulador }.take(20) }
-            for (c in consolas) {
-                lista += Opcion(
-                    c.bonito,
-                    if (emuladorListo(c)) nombreEmulador(c) else "Falta: ${c.sugerido}",
-                    Icono.EMULADOR,
-                    "Aprieta A para pasar al siguiente emulador instalado. Con RetroArch puedes elegir el núcleo; " +
-                        "el núcleo debe estar descargado dentro de RetroArch.",
-                ) { ciclarEmulador(c) }
-            }
+            lista += opcionesEditorEmuladores(e)
         }
         Seccion.PORTADAS -> {
             if (e.seleccionado != null) lista += Opcion("Buscar imágenes del juego", "Portadas por fuente", Icono.PORTADA,
@@ -883,10 +874,10 @@ private const val MAX_PRINCIPALES = 6
 
 /** Lo más usado de cada sección de Ajustes, en el orden en que se muestra. */
 private val PRINCIPALES: Map<Seccion, List<String>> = mapOf(
-    Seccion.G_ESTILO to listOf("Tienda de temas", "Modo", "Íconos de consola", "Íconos en las carpetas", "Portada de arriba", "Medidor de fluidez"),
+    Seccion.G_ESTILO to listOf("Tienda de temas", "Modo", "Escala de la interfaz", "Íconos de consola", "Íconos en las carpetas", "Portada de arriba", "Medidor de fluidez"),
     Seccion.G_BIBLIOTECA to listOf("Vista de juegos", "Tamaño de los juegos", "Estilo de las carpetas", "Tono de las carpetas", "Ordenar carpetas", "Switch 2 y ports nativos"),
     Seccion.G_WIDGETS to listOf("Acomodar el inicio", "Agregar widgets", "Elegir las apps del dock", "Barra de abajo", "Preguntar dónde quedaste", "Usar el inicio nuevo"),
-    Seccion.G_JUEGOS to listOf("Modo turbo al jugar", "Optimizar ahora"),
+    Seccion.G_JUEGOS to listOf(TITULO_EMU_CONSOLAS, TITULO_EMU_JUEGOS, "Modo turbo al jugar", "Optimizar ahora"),
     Seccion.G_DIPPO to listOf("Hablar con DIPPO", "Logros de DIPPO", "Premios de los logros", "DIPPO en el inicio", "Avisos de DIPPO en la campana", "Temperatura y consejos al jugar"),
     Seccion.G_CONTROLES to listOf("Sticks", "Música de Díptico", "Volumen"),
     Seccion.G_CUENTAS to listOf("Iniciar sesión con Discord", "Tu cuenta de Discord", "Mostrar «Jugando a…» en Discord", "Conectar RetroAchievements", "Clave de SteamGridDB", "ScreenScraper"),
@@ -918,4 +909,26 @@ fun Diptico.enviarInformeFluidez() {
     val detalle = Fluidez.informe(equipo) + "\n\n" + Fallas.informe(app, "Datos de la versión", null)
     reportePendiente = Fallas.Reporte(detalle, false)
     confirmarReporte("Informe de fluidez (medidor de fps)")
+}
+
+
+/**
+ * ◀ ▶ en Ajustes: cambia el valor de la opción marcada sin abrir nada. Una lista pasa a la alternativa anterior o
+ * siguiente; un Sí/No se prende con ▶ y se apaga con ◀. Devuelve false si la opción no se cambia así.
+ */
+fun Diptico.cambiarEnFila(d: Int): Boolean {
+    val e = estado.value
+    val o = opcionesSeccion(e.seccion).getOrNull(e.indice) ?: return false
+    val alt = o.alternativas
+    val elegir = o.elegir
+    if (alt != null && elegir != null && alt.size > 1) {
+        val i = (o.elegida + d).coerceIn(0, alt.size - 1)
+        if (i != o.elegida) elegir(i)
+        return true
+    }
+    if (o.valor == "Sí" || o.valor == "No") {
+        if ((d > 0) != (o.valor == "Sí")) desdeMenu(o.accion)
+        return true
+    }
+    return false
 }
