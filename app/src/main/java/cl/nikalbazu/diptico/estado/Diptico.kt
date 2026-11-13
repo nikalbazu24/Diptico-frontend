@@ -3849,6 +3849,8 @@ object Diptico {
         if (otras.isEmpty()) return null
         // Con una sola pantalla extra en una consola de dos pantallas (la Thor), esa es la de abajo, no una tele.
         val e = estado.value
+        // En un equipo de una pantalla (Odin 2 Portal, Retroid…), cualquier pantalla extra es la tele, se llame como se llame.
+        if (e.extra.equipoTipo != "dual") return otras.firstOrNull { NOMBRE_TELE.containsMatchIn(it.name ?: "") }?.name ?: otras.first().name ?: "Tele"
         if (otras.size == 1 && e.modoPantallas == "dos" && e.dosDisponibles) return null
         otras.firstOrNull { NOMBRE_TELE.containsMatchIn(it.name ?: "") }?.let { return it.name }
         return if (otras.size >= 2) otras.last().name else null

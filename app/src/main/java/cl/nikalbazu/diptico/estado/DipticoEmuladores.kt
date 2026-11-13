@@ -1,6 +1,7 @@
 package cl.nikalbazu.diptico.estado
 
 import cl.nikalbazu.diptico.data.Consola
+import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.emu.App
 import cl.nikalbazu.diptico.emu.Lanzador
@@ -10,7 +11,7 @@ import cl.nikalbazu.diptico.emu.Lanzador
  * aparece, cualquier app instalada (se le pasa el juego como «abrir archivo», como hacen ARMSX2, NetherSX2 y casi todos).
  */
 
-private data class EleccionEmu(val id: String?, val nombre: String)
+internal data class EleccionEmu(val id: String?, val nombre: String)
 
 /** Lista para elegir: los conocidos instalados primero, después «Otra app: …» con el resto de tus apps. */
 private fun Diptico.eleccionesEmulador(c: Consola, tipo: String?, conConsola: Boolean): List<EleccionEmu> {
@@ -42,7 +43,7 @@ internal fun Diptico.opcionEmuladorConsola(c: Consola): Opcion {
         actual?.nombre ?: "Falta: ${c.sugerido}",
         Icono.EMULADOR,
         "Con qué se abren los juegos de ${c.nombre}. Si tu emulador no aparece entre los conocidos, búscalo abajo como «Otra app».",
-    ).conLista(lista.map { it.nombre }, i) { k ->
+    ) {}.conLista(lista.map { it.nombre }, i) { k ->
         val id = lista.getOrNull(k)?.id ?: return@conLista
         val m = estado.value.emuladores + (c.id to id)
         almacen.guardarEmuladores(m)
@@ -51,9 +52,13 @@ internal fun Diptico.opcionEmuladorConsola(c: Consola): Opcion {
     }
 }
 
-/** Opción del emulador de un solo juego (en sus opciones y en Ajustes, para el juego elegido). */
-internal fun Diptico.opcionEmuladorJuego(juego: Juego, c: Consola, titulo: String = "Emulador"): Opcion {
-    val lista = eleccionesEmulador(c, juego.tipo, conConsola = true)
+/** Opción del emulador de un solo juego (en sus opciones y en Ajustes). [cache] evita rearmar la lista para cada juego. */
+internal fun Diptico.opcionEmuladorJuego(
+    juego: Juego, c: Consola, titulo: String = "Emulador",
+    cache: MutableMap<String, List<EleccionEmu>>? = null,
+): Opcion {
+    val lista = cache?.getOrPut(c.id + "|" + juego.tipo) { eleccionesEmulador(c, juego.tipo, conConsola = true) }
+        ?: eleccionesEmulador(c, juego.tipo, conConsola = true)
     val propio = estado.value.datos[juego.clave]?.emulador
     val i = lista.indexOfFirst { it.id == propio }.coerceAtLeast(0)
     val nombre = if (propio == null) "El de la consola" else
@@ -61,8 +66,44 @@ internal fun Diptico.opcionEmuladorJuego(juego: Juego, c: Consola, titulo: Strin
     return Opcion(
         titulo, nombre, Icono.EMULADOR,
         "Con qué se abre solo ${juego.titulo}. «El de la consola» usa el que elegiste para ${c.nombre}. Si tu emulador no aparece, elige «Otra app».",
-    ).conLista(lista.map { it.nombre }, i) { k ->
+    ) {}.conLista(lista.map { it.nombre }, i) { k ->
         val id = lista.getOrNull(k)?.id
         cambiarDatos(juego.clave) { it.copy(emulador = id) }
+    }
+}
+
+const val TITULO_EMU_CONSOLAS = "Emulador de cada consola"
+const val TITULO_EMU_JUEGOS = "Emulador de cada juego"
+
+/**
+ * Editor de emuladores en Ajustes › Juegos y emuladores: dos filas que abren su lista.
+ * «De cada consola»: todas tus consolas con su desplegable. «De cada juego»: tus juegos ordenados por consola,
+ * cada uno con «El de la consola», los emuladores conocidos o cualquier app instalada (por si Díptico no conoce el tuyo).
+ */
+internal fun Diptico.opcionesEditorEmuladores(e: Estado): List<Opcion> {
+    val conJuegos = e.juegos.map { it.consolaId }.toSet()
+    val consolas = Consolas.todas.filter { !it.sinEmulador && (it.id in conJuegos || it.id in e.emuladores) }
+        .ifEmpty { e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.sinEmulador }.take(20) } }
+    val porConsola = consolas.map { opcionEmuladorConsola(it).copy(grupo = "Tus consolas") }
+    val cache = HashMap<String, List<EleccionEmu>>()
+    val porJuego = e.juegos.asSequence()
+        .mapNotNull { j -> Consolas.porId(j.consolaId)?.takeIf { !it.sinEmulador }?.let { j to it } }
+        .sortedWith(compareBy({ it.second.nombre }, { it.first.titulo.lowercase() }))
+        .take(400)
+        .map { (j, c) -> opcionEmuladorJuego(j, c, j.titulo, cache).copy(grupo = c.nombre) }
+        .toList()
+    val propios = e.datos.count { it.value.emulador != null }
+    return buildList {
+        add(Opcion(
+            TITULO_EMU_CONSOLAS, "${consolas.size} consolas ›", Icono.EMULADOR,
+            "Elige con qué se abren los juegos de cada consola. Si tu emulador no aparece entre los conocidos (por ejemplo una versión nueva de ARMSX2), " +
+                "búscalo más abajo en la lista como «Otra app»: Díptico le pasa el juego como abrir archivo.",
+            sub = porConsola,
+        ) { abrirSubOpciones(TITULO_EMU_CONSOLAS) })
+        if (porJuego.isNotEmpty()) add(Opcion(
+            TITULO_EMU_JUEGOS, if (propios > 0) "$propios con emulador propio ›" else "${porJuego.size} juegos ›", Icono.MANDO,
+            "Un emulador distinto solo para un juego (por ejemplo uno de PS2 que anda mejor en otro). «El de la consola» vuelve al de siempre.",
+            sub = porJuego,
+        ) { abrirSubOpciones(TITULO_EMU_JUEGOS) })
     }
 }

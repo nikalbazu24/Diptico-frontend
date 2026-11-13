@@ -47,7 +47,7 @@ class InferiorActivity : BaseActivity() {
                 !e.configurado -> Lienzo(true, Modifier.fillMaxSize(), t) { Raiz(e, Rol.INFERIOR, mi) }
                 // Consola de una pantalla conectada a la tele: esta ventana ES la tele, así que muestra el modo sala
                 // (antes quedaba en negro con «modo una pantalla»). La consola sigue funcionando como mando.
-                e.unaPantalla && (e.sobremesa || (e.extra.equipoTipo == "tele" && !e.extra.equipoNombre.contains("Thor", true))) ->
+                e.unaPantalla && (e.sobremesa || e.extra.equipoTipo != "dual") ->
                     Lienzo(e.oscuro, Modifier.fillMaxSize().margenPorcentaje(if (e.sobremesa) e.sobremesaMargen else 0), t, if (e.sobremesa) e.sobremesaTam else 1f) {
                         Raiz(e.copy(extra = e.extra.copy(equipoTipo = "tele")), Rol.UNICA, mi)
                     }

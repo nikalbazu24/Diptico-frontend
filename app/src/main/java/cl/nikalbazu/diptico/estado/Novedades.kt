@@ -528,7 +528,7 @@ object Novedades {
         )),
         Version(ID, "La tele y tus emuladores", listOf(
             Pagina("Díptico en la tele", "Con una consola de una pantalla, al conectarla a la tele por HDMI ahora se ve el modo sala en la tele (antes salía «modo una pantalla»). La consola sigue funcionando como mando.", Icono.PANTALLAS, 0xFF23C486),
-            Pagina("Elige cualquier emulador", "En Ajustes › Juegos y emuladores eliges de una lista con qué se abre cada consola y el juego que tengas marcado. Si tu emulador no aparece, búscalo como «Otra app».", Icono.EMULADOR, 0xFF7C6CFF),
+            Pagina("Elige cualquier emulador", "En Ajustes › Juegos y emuladores tienes «Emulador de cada consola» y «Emulador de cada juego»: eliges de una lista con qué se abre cada uno. Si tu emulador no aparece (por ejemplo ARMSX2), búscalo como «Otra app».", Icono.EMULADOR, 0xFF7C6CFF),
         )),
     )
 

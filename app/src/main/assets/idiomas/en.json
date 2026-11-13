@@ -1132,6 +1132,8 @@
 "Empieza aquí": "Start here",
 "Emulador": "Emulator",
 "Emulador de Switch 2 (y Switch 1), hecho sobre Eden. Abre juegos .nup, .nsp y .xci. Los .nup ya vienen descifrados: no piden llaves ni firmware.": "Switch 2 (and Switch 1) emulator built on Eden. It opens .nup, .nsp and .xci games. .nup files come decrypted: no keys or firmware needed.",
+"Emulador de cada consola": "Emulator for each console",
+"Emulador de cada juego": "Emulator for each game",
 "Emulador y versión": "Emulator and version",
 "Emulador · Versión · Pantalla en que abre": "Emulator · Version · Screen it opens on",
 "Emuladores": "Emulators",

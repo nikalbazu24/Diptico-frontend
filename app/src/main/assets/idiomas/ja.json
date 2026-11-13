@@ -1145,6 +1145,8 @@
 "Empieza aquí": "ここから",
 "Emulador": "エミュレーター",
 "Emulador de Switch 2 (y Switch 1), hecho sobre Eden. Abre juegos .nup, .nsp y .xci. Los .nup ya vienen descifrados: no piden llaves ni firmware.": "Eden をベースにした Switch 2（と Switch 1）エミュレーター。.nup・.nsp・.xci のゲームを開けます。.nup は復号済みなので、キーやファームウェアは不要です。",
+"Emulador de cada consola": "機種ごとのエミュレーター",
+"Emulador de cada juego": "ゲームごとのエミュレーター",
 "Emulador y versión": "エミュレーターとバージョン",
 "Emulador · Versión · Pantalla en que abre": "エミュレーター · バージョン · 開く画面",
 "Emuladores": "エミュレーター",

@@ -1146,6 +1146,8 @@
 "Empieza aquí": "从这里开始",
 "Emulador": "模拟器",
 "Emulador de Switch 2 (y Switch 1), hecho sobre Eden. Abre juegos .nup, .nsp y .xci. Los .nup ya vienen descifrados: no piden llaves ni firmware.": "基于 Eden 的 Switch 2（及 Switch 1）模拟器。可打开 .nup、.nsp 和 .xci 游戏。.nup 已解密，无需密钥或固件。",
+"Emulador de cada consola": "每个主机的模拟器",
+"Emulador de cada juego": "每个游戏的模拟器",
 "Emulador y versión": "模拟器与版本",
 "Emulador · Versión · Pantalla en que abre": "模拟器 · 版本 · 打开的屏幕",
 "Emuladores": "模拟器",

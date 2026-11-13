@@ -698,12 +698,7 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 almacen.guardarBool("emusAuto", v)
                 actualizar { it.copy(extra = it.extra.copy(emusAuto = v)) }
             }
-            val consolas = e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.sinEmulador }.take(20) }
-            for (c in consolas) lista += opcionEmuladorConsola(c)
-            // El juego elegido: su propio emulador, sin tener que ir a sus opciones.
-            val j = e.seleccionado
-            val cj = j?.let { Consolas.porId(it.consolaId) }
-            if (j != null && cj != null && !cj.sinEmulador) lista += opcionEmuladorJuego(j, cj, "Emulador de «${j.titulo}»")
+            lista += opcionesEditorEmuladores(e)
         }
         Seccion.PORTADAS -> {
             if (e.seleccionado != null) lista += Opcion("Buscar imágenes del juego", "Portadas por fuente", Icono.PORTADA,
@@ -882,7 +877,7 @@ private val PRINCIPALES: Map<Seccion, List<String>> = mapOf(
     Seccion.G_ESTILO to listOf("Tienda de temas", "Modo", "Íconos de consola", "Íconos en las carpetas", "Portada de arriba", "Medidor de fluidez"),
     Seccion.G_BIBLIOTECA to listOf("Vista de juegos", "Tamaño de los juegos", "Estilo de las carpetas", "Tono de las carpetas", "Ordenar carpetas", "Switch 2 y ports nativos"),
     Seccion.G_WIDGETS to listOf("Acomodar el inicio", "Agregar widgets", "Elegir las apps del dock", "Barra de abajo", "Preguntar dónde quedaste", "Usar el inicio nuevo"),
-    Seccion.G_JUEGOS to listOf("Modo turbo al jugar", "Optimizar ahora"),
+    Seccion.G_JUEGOS to listOf(TITULO_EMU_CONSOLAS, TITULO_EMU_JUEGOS, "Modo turbo al jugar", "Optimizar ahora"),
     Seccion.G_DIPPO to listOf("Hablar con DIPPO", "Logros de DIPPO", "Premios de los logros", "DIPPO en el inicio", "Avisos de DIPPO en la campana", "Temperatura y consejos al jugar"),
     Seccion.G_CONTROLES to listOf("Sticks", "Música de Díptico", "Volumen"),
     Seccion.G_CUENTAS to listOf("Iniciar sesión con Discord", "Tu cuenta de Discord", "Mostrar «Jugando a…» en Discord", "Conectar RetroAchievements", "Clave de SteamGridDB", "ScreenScraper"),
