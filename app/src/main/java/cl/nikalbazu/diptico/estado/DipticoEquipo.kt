@@ -37,6 +37,25 @@ fun Diptico.filtrarPorEquipo(l: List<Opcion>): List<Opcion> {
     return l.filterNot(::soloDosPantallas)
 }
 
+/** Los nombres de las opciones de una sección que se ocultan porque este equipo tiene una sola pantalla. */
+fun Diptico.ocultasEnEquipo(s: Seccion): List<String> {
+    if (estado.value.tieneDosPantallas) return emptyList()
+    val partes = GRUPOS_AJUSTES[s] ?: listOf(s)
+    return partes.flatMap { runCatching { armarOpciones(it) }.getOrDefault(emptyList()) }
+        .filter(::soloDosPantallas).map { it.titulo }.distinct()
+}
+
+/** Nombre corto del equipo para la cabecera de Ajustes: «AYN Odin 2 Portal · una pantalla». */
+fun Diptico.etiquetaEquipo(): String {
+    val e = estado.value
+    val nombre = e.extra.equipoNombre.ifBlank { nombreTipoEquipo(e.extra.equipoTipo) }
+    return nombre + " · " + when {
+        e.enLaTele -> "en la tele"
+        e.tieneDosPantallas -> "dos pantallas"
+        else -> "una pantalla"
+    }
+}
+
 fun Diptico.elegirTipoEquipo(t: String) {
     almacen.guardarTexto("equipoTipo", t)
     val tipo = if (t == "auto") equipo().tipo else t

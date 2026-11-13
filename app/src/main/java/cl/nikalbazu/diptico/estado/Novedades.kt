@@ -522,6 +522,9 @@ object Novedades {
             Pagina("Inicio nuevo en una pantalla", "A la izquierda, tus consolas con sus íconos; al centro, la vitrina con la caja 3D, tu avance y los botones; abajo, filtros y tus juegos en fila. Nada queda encima de nada.", Icono.JUGAR, 0xFFE0603A),
             Pagina("Modo sala en la tele", "En la tele: vitrina grande, tus amigos de Discord, «Seguir jugando» con tu avance y las consolas con sus íconos, todo más grande y para el mando.", Icono.PANTALLAS, 0xFF23C486),
             Pagina("DIPPO va donde quieras", "Arrástralo con el dedo a cualquier parte y se queda ahí. Doble toque y vuelve a su lugar.", Icono.BISA, 0xFFFFB547),
+            Pagina("Biblioteca y Ajustes en una pantalla", "Las carpetas llenan toda la pantalla, sin barras encima. Ajustes va en tres columnas: secciones, opciones y la explicación con su vista previa, y te dice qué opciones se ocultaron en tu equipo.", Icono.CARPETA, 0xFF2EC4A6),
+            Pagina("Partida en curso", "Con una pantalla, si vuelves a Díptico en medio de un juego, ya no se da por terminado: puedes volver al juego, anotar tu paso, pedir una pista o ver la guía. Select (o «Terminar partida») lo cierra; la pausa no cuenta como tiempo de juego.", Icono.JUGAR, 0xFF3EE08F),
+            Pagina("ARMSX2 reconocido", "Díptico ahora encuentra ARMSX2 para tus juegos de PS2 (antes buscaba un nombre mal escrito).", Icono.EMULADOR, 0xFF7C6CFF),
         )),
     )
 

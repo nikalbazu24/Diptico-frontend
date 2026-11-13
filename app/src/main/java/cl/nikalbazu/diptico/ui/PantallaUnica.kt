@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
@@ -43,6 +44,14 @@ import cl.nikalbazu.diptico.estado.Panel
  */
 @Composable
 fun PantallaUnica(e: Estado) {
+    // Volviste a Díptico con un juego abierto: «Partida en curso» a pantalla completa (lo de encima, como la ficha o DIPPO, se abre sobre ella).
+    if (e.partidaEnPausa) {
+        Box(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize().difuminar(e)) { PartidaEnCurso(e) }
+            Paneles(e, conAyuda = true)
+        }
+        return
+    }
     if (e.editandoWidgets || !Estilo.efectosCompletos) {
         PantallaUnicaContenido(e)
         return
@@ -92,30 +101,27 @@ private fun PantallaUnicaContenido(e: Estado) {
         return
     }
     if (e.vistaConsolas in Diptico.MODOS_ELEGIR) {
+        // Biblioteca en una pantalla: cada parte en su franja (cabecera con DIPPO, apps y perfil · carpetas que llenan
+        // el alto · pie con pistas, Buscar y Ajustes). Nada flota encima.
+        val carpetas = e.vistaConsolas == "carpetas" || e.vistaConsolas in Diptico.VISTAS_CARPETAS
         Box(Modifier.fillMaxSize().background(p.fondo)) {
-            Column(Modifier.fillMaxSize().difuminar(e)) {
-                Box(Modifier.fillMaxWidth().weight(1f).padding(top = esc.d(12))) {
+            Column(Modifier.fillMaxSize().difuminar(e).testTag("biblioteca-unica")) {
+                Box(Modifier.fillMaxWidth().weight(1f)) {
                     when {
                         e.vistaConsolas == "carpetas" -> VistaCarpetas(e, Modifier.fillMaxSize(), 1.05f)
-                        !e.enSistemas -> Column(Modifier.fillMaxSize()) {
-                            CabeceraSistema(e)
-                            VistaJuegos(e, Modifier.fillMaxWidth().weight(1f), 1.05f)
-                        }
                         e.vistaConsolas in Diptico.VISTAS_CARPETAS -> CarpetasConsolas(e, Modifier.fillMaxSize())
-                        e.vistaConsolas == "discos" -> {
-                            VistaSistema(e, completa = false)
-                            DiscosConsolas(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.55f).fillMaxHeight(0.82f).clipToBounds())
+                        e.vistaConsolas == "discos" -> Row(Modifier.fillMaxSize()) {
+                            Box(Modifier.weight(0.45f).fillMaxHeight()) { VistaSistema(e, completa = false) }
+                            DiscosConsolas(e, Modifier.weight(0.55f).fillMaxHeight().clipToBounds())
                         }
-                        else -> {
-                            VistaSistema(e, completa = false)
-                            SistemasCarrusel(e, Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f).fillMaxHeight(0.8f).clipToBounds())
+                        else -> Row(Modifier.fillMaxSize()) {
+                            Box(Modifier.weight(0.5f).fillMaxHeight()) { VistaSistema(e, completa = false) }
+                            SistemasCarrusel(e, Modifier.weight(0.5f).fillMaxHeight().clipToBounds())
                         }
                     }
                 }
-                if (e.sesion == null && !e.carpetaEnVentana) BarraFlotante(e, if (e.enSistemas) null else e.seleccionado, consola = e.enSistemas)
+                if (e.sesion == null && !e.carpetaEnVentana) PieRiel(e, tele = false, biblioteca = true, conDippo = !carpetas)
             }
-            if (e.sesion == null && e.panel == Panel.NINGUNO)
-                DippoInicio(e, 48f, Modifier.align(Alignment.TopEnd).padding(top = esc.d(ALTO_BARRA_SISTEMA + 10f), end = esc.d(20)))
             Paneles(e, conAyuda = true)
         }
         return
@@ -186,6 +192,9 @@ private fun PantallaUnicaContenido(e: Estado) {
 /** Con una pantalla, fuera de la biblioteca de carpetas y de los widgets, va el inicio nuevo. */
 fun inicioNuevoUnico(e: Estado): Boolean =
     e.configurado && e.inicio != "widgets" && !(e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas)
+
+/** Con una pantalla, el inicio nuevo y la biblioteca llevan su propia cabecera: la barra vieja de la hora no se dibuja encima. */
+fun disenoUnicoNuevo(e: Estado): Boolean = e.configurado && (e.inicio != "widgets" || e.partidaEnPausa)
 
 @Composable
 private fun InfoUnica(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {

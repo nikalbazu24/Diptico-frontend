@@ -78,7 +78,7 @@ fun InicioSala(e: Estado) {
     val esc = LocalEscala.current
     val margen = esc.d(40) // margen de seguridad de la tele, dentro de cada franja
     Column(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Color(0xFF1D2350), Color(0xFF090B14)), radius = 1800f)).testTag("inicio-sala")) {
-        Row(Modifier.fillMaxWidth().height(esc.d(56)).padding(horizontal = margen), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().height(esc.d(50)).padding(horizontal = margen), verticalAlignment = Alignment.CenterVertically) {
             PerfilArriba(40f)
             Spacer(Modifier.weight(1f))
             DippoInicio(e, 40f, lugar = "sala")
@@ -90,8 +90,8 @@ fun InicioSala(e: Estado) {
             if (j != null) VitrinaRiel(e, j, Modifier.weight(1f).fillMaxHeight(), grande = true)
             AmigosAhora(Modifier.width(esc.d(210)).fillMaxHeight())
         }
-        SeguirJugando(e, Modifier.fillMaxWidth().height(esc.d(132)).padding(horizontal = margen))
-        ConsolasSala(e, Modifier.fillMaxWidth().height(esc.d(84)).padding(horizontal = margen))
+        SeguirJugando(e, Modifier.fillMaxWidth().height(esc.d(112)).padding(horizontal = margen))
+        ConsolasSala(e, Modifier.fillMaxWidth().height(esc.d(76)).padding(horizontal = margen))
         PieRiel(e, tele = true)
     }
 }
@@ -188,26 +188,30 @@ private fun VitrinaRiel(e: Estado, j: Juego, modifier: Modifier, grande: Boolean
         ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color(0xEB0C0916), 0.5f to Color(0x8C0C0916), 1f to Color(0x1A0C0916))))
         Row(Modifier.fillMaxSize()) {
-            Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = esc.d(22), vertical = esc.d(14)), verticalArrangement = Arrangement.Center) {
-                if (grande && c != null) {
-                    Texto(c.nombreLargo.uppercase(), 13f, color = Color(0xFFCFE0FF), familia = Nunito, peso = FontWeight.Black, lineas = 1, espaciado = 1.8f, traducir = false)
+            // Lo que no cabe se omite (primero el paso, luego cuánto dura): los botones siempre se ven.
+            BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(horizontal = esc.d(22), vertical = esc.d(12))) {
+                val alto = maxHeight.value / esc.factor
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+                    if (grande && c != null && alto > 150f) {
+                        Texto(c.nombreLargo.uppercase(), 12f, color = Color(0xFFCFE0FF), familia = Nunito, peso = FontWeight.Black, lineas = 1, espaciado = 1.8f, traducir = false)
+                        Spacer(Modifier.height(esc.d(4)))
+                    }
+                    val tamTitulo = if (alto > 190f) (if (grande) 36f else 32f) else 26f
+                    Texto(j.titulo, tamTitulo, color = Color.White, lineas = if (alto > 190f) 2 else 1, interlineado = tamTitulo + 2f, sombra = true, traducir = false)
                     Spacer(Modifier.height(esc.d(6)))
+                    if (alto > 120f) Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
+                        if (tiempo > 0) ChipVitrina(formatoTiempo(tiempo))
+                        if (datos?.favorito == true) ChipVitrina("Favorito")
+                    }
+                    if (alto > 170f) { Spacer(Modifier.height(esc.d(4))); LineaDuracion(e, j) }
+                    val paso = datos?.paso.orEmpty()
+                    if (paso.isNotBlank() && alto > 215f) {
+                        Spacer(Modifier.height(esc.d(4)))
+                        Texto("Próximo paso: $paso", 13f, color = Color(0xFFE8E9F3), familia = Nunito, peso = FontWeight.Bold, lineas = 1, traducir = false)
+                    }
+                    Spacer(Modifier.height(esc.d(8)))
+                    BotonesVitrina(e, j)
                 }
-                Texto(j.titulo, if (grande) 40f else 34f, color = Color.White, lineas = 2, interlineado = if (grande) 42f else 36f, sombra = true, traducir = false)
-                Spacer(Modifier.height(esc.d(8)))
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                    if (tiempo > 0) ChipVitrina(formatoTiempo(tiempo))
-                    if (datos?.favorito == true) ChipVitrina("Favorito")
-                }
-                Spacer(Modifier.height(esc.d(6)))
-                LineaDuracion(e, j)
-                val paso = datos?.paso.orEmpty()
-                if (paso.isNotBlank()) {
-                    Spacer(Modifier.height(esc.d(6)))
-                    Texto("Próximo paso: $paso", 13f, color = Color(0xFFE8E9F3), familia = Nunito, peso = FontWeight.Bold, lineas = 1, traducir = false)
-                }
-                Spacer(Modifier.height(esc.d(10)))
-                BotonesVitrina(e, j)
             }
             if (c != null && e.extra.disposiciones[j.clave]?.conCaja != false) {
                 Box(Modifier.width(if (grande) esc.d(200) else esc.d(230)).fillMaxHeight().padding(vertical = esc.d(12)), contentAlignment = Alignment.Center) {
@@ -350,6 +354,7 @@ private fun SeguirJugando(e: Estado, modifier: Modifier) {
                     }
                 }
             }
+            repeat(5 - recientes.size) { Spacer(Modifier.weight(1f)) }
         }
     }
 }
@@ -364,27 +369,34 @@ private fun ConsolasSala(e: Estado, modifier: Modifier) {
     }
 }
 
-/** Pie: pistas de botones, apps fijadas, Buscar y Ajustes. En la tele, solo pistas (todo se hace con el mando). */
+/**
+ * Pie: pistas de botones, apps fijadas, Buscar y Ajustes. En la tele, solo pistas (todo se hace con el mando).
+ * En la biblioteca de carpetas las apps ya van arriba (cabecera), así que el pie no las repite.
+ */
 @Composable
-private fun PieRiel(e: Estado, tele: Boolean) {
+internal fun PieRiel(e: Estado, tele: Boolean, biblioteca: Boolean = false, conDippo: Boolean = false) {
     val esc = LocalEscala.current
     Row(
         Modifier.fillMaxWidth().height(if (tele) esc.d(38) else esc.d(36)).background(Color.Black.copy(alpha = 0.25f))
-            .padding(horizontal = if (tele) esc.d(40) else esc.d(16)),
+            .padding(horizontal = if (tele) esc.d(40) else esc.d(16)).testTag("pie-riel"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (tele) {
-            Spacer(Modifier.weight(1f))
-            Pistas("A" to "Jugar", "L1/R1" to "Consola", "Y" to "Opciones", "Start" to "Ajustes")
-            Spacer(Modifier.weight(1f))
-        } else {
-            Pistas("A" to "Jugar", "L1/R1" to "Consola", "Y" to "Opciones", "Start" to "Menú")
-            Spacer(Modifier.weight(1f))
-            if (e.extra.dock) FilaDock(e, 22f, conCajon = false)
-            Spacer(Modifier.width(esc.d(12)))
-            BotonPie(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
-            Spacer(Modifier.width(esc.d(8)))
-            BotonPie(Icono.AJUSTES, "Ajustes") { Diptico.abrirMenu() }
+        when {
+            tele -> {
+                Spacer(Modifier.weight(1f))
+                Pistas("A" to "Jugar", "L1/R1" to "Consola", "Y" to "Opciones", "Start" to "Ajustes")
+                Spacer(Modifier.weight(1f))
+            }
+            else -> {
+                BotonPie(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
+                Spacer(Modifier.width(esc.d(10)))
+                if (conDippo) { DippoInicio(e, 28f, lugar = "pie"); Spacer(Modifier.width(esc.d(10))) }
+                if (biblioteca) Pistas("A" to "Abrir", "Mantener A" to "Ordenar", "Start" to "Menú")
+                else Pistas("A" to "Jugar", "L1/R1" to "Consola", "Y" to "Opciones", "Start" to "Menú")
+                Spacer(Modifier.weight(1f))
+                if (e.extra.dock && !biblioteca && e.appsFijadas.isNotEmpty()) { FilaDock(e, 22f, conCajon = false); Spacer(Modifier.width(esc.d(12))) }
+                BotonPie(Icono.AJUSTES, "Ajustes") { Diptico.abrirMenu() }
+            }
         }
     }
 }

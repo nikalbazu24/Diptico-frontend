@@ -430,6 +430,9 @@ data class EstadoExtra(
     /** Qué equipo es (dual/portatil/telefono/tablet/tele), detectado al abrir o elegido en «Tu equipo». */
     val equipoTipo: String = "dual",
     val equipoNombre: String = "",
+    /** Con una sola pantalla: volviste a Díptico con un juego abierto (cuándo), y qué botón de «Partida en curso» está marcado. */
+    val partidaPausa: Long = 0L,
+    val partidaSel: Int = 0,
     /** El editor de «Lugar en la vitrina» abierto (borrador). */
     val edicionVitrina: EdicionVitrina? = null,
     /** La ventana de amigos de Discord está abierta en esta pantalla (id de la pantalla; -1 = cerrada). */
@@ -2686,13 +2689,20 @@ object Diptico {
         if (s.displayId != displayId) return
         // Recién lanzado: la pantalla todavía no se tapó. Lo ignoramos.
         if (System.currentTimeMillis() - s.inicio < 4000) return
+        // Con una sola pantalla no hay pantalla compañera: volver a Díptico no cierra la partida, muestra «Partida en curso»
+        // (volver al juego o terminar). Si el juego duró muy poco, se cierra igual (probablemente no llegó a abrir).
+        if (estado.value.sinCompanera && (System.currentTimeMillis() - s.inicio) / 1000 >= CIERRE_RAPIDO_SEG) {
+            pausarPartidaUnica()
+            return
+        }
         cerrarSesion(preguntar = true)
     }
 
-    fun cerrarSesion(preguntar: Boolean) {
+    fun cerrarSesion(preguntar: Boolean, fin: Long = 0L) {
         val s = estado.value.sesion ?: return
-        ultimaPartida = s.clave to System.currentTimeMillis()
-        val duracion = (System.currentTimeMillis() - s.inicio) / 1000
+        val hasta = if (fin > s.inicio) fin else System.currentTimeMillis()
+        ultimaPartida = s.clave to hasta
+        val duracion = (hasta - s.inicio) / 1000
         Asistente.intentos += Triple(s.clave, s.inicio, System.currentTimeMillis())
         if (Asistente.intentos.size > 40) Asistente.intentos.removeAt(0)
         cl.nikalbazu.diptico.bisa.BurbujaBisa.detener(app)
@@ -2718,7 +2728,7 @@ object Diptico {
         }
         // ¿Dónde quedaste?: una tarjeta con formas rápidas de anotarlo (escribir, nota de voz, mapa) o pasar de largo.
         val hacerPregunta = preguntar && duracion >= 60 && estado.value.preguntarQuedaste
-        actualizar { it.copy(sesion = null, despierta = false, datos = datos, juegoSel = s.clave) }
+        actualizar { it.copy(sesion = null, despierta = false, datos = datos, juegoSel = s.clave, extra = it.extra.copy(partidaPausa = 0L, partidaSel = 0)) }
         // Sale cuando no haya otra cosa encima (una cosa a la vez).
         if (hacerPregunta) cuandoHayaLugar("quedaste") {
             if (estado.value.sesion == null) actualizar { it.copy(juegoSel = s.clave, quedaste = true, quedastePregunta = true, quedasteSel = 0) }

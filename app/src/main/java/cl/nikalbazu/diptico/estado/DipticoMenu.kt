@@ -848,7 +848,7 @@ internal fun Diptico.submenus(s: Seccion, partes: List<Seccion>): List<Opcion> {
     val todas = mutableListOf<Opcion>()
     for (parte in partes) {
         val entera = parte in PARTES_ENTERAS
-        for (o in armarOpciones(parte)) todas += o.copy(grupo = nombreSubmenu(parte, if (entera) "" else grupoOpcion(parte, o), entera))
+        for (o in filtrarPorEquipo(armarOpciones(parte))) todas += o.copy(grupo = nombreSubmenu(parte, if (entera) "" else grupoOpcion(parte, o), entera))
     }
     if (s == Seccion.G_DIPPO && todas.none { it.titulo.startsWith("Premios") }) {
         val i = todas.indexOfFirst { it.titulo.startsWith("Logros") }
