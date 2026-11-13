@@ -88,7 +88,7 @@ fun InicioSala(e: Estado) {
         val j = e.seleccionado
         Row(Modifier.fillMaxWidth().weight(1f).padding(horizontal = margen), horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
             if (j != null) VitrinaRiel(e, j, Modifier.weight(1f).fillMaxHeight(), grande = true)
-            AmigosAhora(Modifier.width(esc.d(210)).fillMaxHeight())
+            AmigosAhora(Modifier.width(esc.d(180)).fillMaxHeight())
         }
         SeguirJugando(e, Modifier.fillMaxWidth().height(esc.d(112)).padding(horizontal = margen))
         ConsolasSala(e, Modifier.fillMaxWidth().height(esc.d(76)).padding(horizontal = margen))
@@ -214,7 +214,7 @@ private fun VitrinaRiel(e: Estado, j: Juego, modifier: Modifier, grande: Boolean
                 }
             }
             if (c != null && e.extra.disposiciones[j.clave]?.conCaja != false) {
-                Box(Modifier.width(if (grande) esc.d(200) else esc.d(230)).fillMaxHeight().padding(vertical = esc.d(12)), contentAlignment = Alignment.Center) {
+                Box(Modifier.width(if (grande) esc.d(150) else esc.d(210)).fillMaxHeight().padding(vertical = esc.d(12)), contentAlignment = Alignment.Center) {
                     Caja3D(datosCaja(e, j, c), j, c, Modifier.fillMaxSize(0.86f), giroY = { -26f }, giroX = { -6f }, caras = e.extra.caras[j.clave], detalle = false)
                 }
             }
