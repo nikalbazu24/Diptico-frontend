@@ -2901,9 +2901,7 @@ object Diptico {
         lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA, ayuda = "Abre la tienda de imágenes para elegir otra portada de internet.") { abrirFicha(); buscarCandidatos("portada") }
         lista += Opcion("Mover de lugar", if (e.orden == "propio") "A tu gusto" else "Ordénalos a tu gusto", Icono.VISTA, "Corre este juego con la cruceta y deja tus juegos en el orden que quieras.") { empezarOrdenar() }
         if (consola != null && !consola.sinEmulador) {
-            lista += Opcion("Emulador", d?.emulador?.let { id -> Lanzador.opciones(app, consola).firstOrNull { it.id == id }?.nombre } ?: "El de la consola", Icono.EMULADOR, ayuda = "Con qué emulador o núcleo se abre solo este juego. «El de la consola» usa el de Menú › Emuladores.") {
-                ciclarEmuladorJuego(juego.clave, consola)
-            }
+            lista += opcionEmuladorJuego(juego, consola)
         }
         if (estado.value.extra.carpetasPartidas.isNotEmpty() || consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
             lista += Opcion("Copias de partida", if (estado.value.extra.carpetasPartidas.isNotEmpty()) "Automáticas" else ".srm", Icono.COPIAR,
@@ -5770,7 +5768,7 @@ object Diptico {
             Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) },
             Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(id) },
             Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) },
-            Opcion("Emulador", if (c.sinEmulador) "No necesita" else nombreEmulador(c), Icono.MANDO, ayuda = "Con qué emulador o núcleo se abren los juegos de esta consola.") { if (!c.sinEmulador) ciclarEmulador(c) },
+            if (c.sinEmulador) Opcion("Emulador", "No necesita", Icono.MANDO, ayuda = "Esta consola no necesita emulador.") {} else opcionEmuladorConsola(c).copy(titulo = "Emulador", icono = Icono.MANDO),
             Opcion("Quitar imágenes y música propias", icono = Icono.BORRAR, ayuda = "Quita las imágenes y la música que elegiste para esta consola.") {
                 cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null, portadaCarpeta = null) }
                 if (estado.value.iconosPropios.containsKey(id)) {

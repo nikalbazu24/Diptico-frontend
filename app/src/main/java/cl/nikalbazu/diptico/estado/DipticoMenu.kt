@@ -699,15 +699,11 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 actualizar { it.copy(extra = it.extra.copy(emusAuto = v)) }
             }
             val consolas = e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.sinEmulador }.take(20) }
-            for (c in consolas) {
-                lista += Opcion(
-                    c.bonito,
-                    if (emuladorListo(c)) nombreEmulador(c) else "Falta: ${c.sugerido}",
-                    Icono.EMULADOR,
-                    "Aprieta A para pasar al siguiente emulador instalado. Con RetroArch puedes elegir el núcleo; " +
-                        "el núcleo debe estar descargado dentro de RetroArch.",
-                ) { ciclarEmulador(c) }
-            }
+            for (c in consolas) lista += opcionEmuladorConsola(c)
+            // El juego elegido: su propio emulador, sin tener que ir a sus opciones.
+            val j = e.seleccionado
+            val cj = j?.let { Consolas.porId(it.consolaId) }
+            if (j != null && cj != null && !cj.sinEmulador) lista += opcionEmuladorJuego(j, cj, "Emulador de «${j.titulo}»")
         }
         Seccion.PORTADAS -> {
             if (e.seleccionado != null) lista += Opcion("Buscar imágenes del juego", "Portadas por fuente", Icono.PORTADA,
