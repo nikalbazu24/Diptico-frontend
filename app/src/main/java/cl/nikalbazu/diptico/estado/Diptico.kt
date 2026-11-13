@@ -427,6 +427,9 @@ data class EstadoExtra(
     val logoTam: Float = 1f,
     /** Lugar en la vitrina de cada juego (logo, caja 3D e imagen grande en la cuadrícula), por clave. */
     val disposiciones: Map<String, Disposicion> = emptyMap(),
+    /** Qué equipo es (dual/portatil/telefono/tablet/tele), detectado al abrir o elegido en «Tu equipo». */
+    val equipoTipo: String = "dual",
+    val equipoNombre: String = "",
     /** El editor de «Lugar en la vitrina» abierto (borrador). */
     val edicionVitrina: EdicionVitrina? = null,
     /** La ventana de amigos de Discord está abierta en esta pantalla (id de la pantalla; -1 = cerrada). */
@@ -1055,6 +1058,8 @@ object Diptico {
                 cajaCorrida = almacen.texto("cajaCorrida", "0").toFloatOrNull() ?: 0f,
                 logoTam = almacen.texto("logoTam", "1").toFloatOrNull() ?: 1f,
                 disposiciones = Disposicion.leer(almacen.texto("vitrinaLugar")),
+                equipoTipo = Equipos.detectar(app, Pantallas.inferior(app) != null).let { q -> almacen.texto("equipoTipo", "auto").takeIf { it != "auto" } ?: q.tipo },
+                equipoNombre = runCatching { Equipos.detectar(app, Pantallas.inferior(app) != null).nombre }.getOrDefault(""),
                 dock = almacen.bool("dock2", true),
                 dockLado = almacen.texto("dockLado", "abajo"),
                 dockTam = almacen.texto("dockTam", "medio"),
@@ -4149,7 +4154,8 @@ object Diptico {
 
     /** Acomoda la distribución y los efectos al equipo: vistas, pantallas y fluidez. */
     fun optimizarParaEquipo(silencioso: Boolean = false) {
-        val q = equipo()
+        val forzado = almacen.texto("equipoTipo", "auto")
+        val q = equipo().let { if (forzado != "auto") it.copy(tipo = forzado) else it }
         val vista = when (q.tipo) { "telefono", "tablet" -> "cuadricula"; else -> null }
         if (vista != null) { almacen.guardarTexto("vista", vista); actualizar { it.copy(vista = vista) } }
         if (q.tipo == "dual" && estado.value.modoPantallas != "dos") elegirModo("dos")

@@ -83,6 +83,14 @@ private fun PantallaUnicaContenido(e: Estado) {
         }
         return
     }
+    // Inicio nuevo de una pantalla (riel de consolas) o modo sala en la tele. La biblioteca de carpetas sigue aparte.
+    if (inicioNuevoUnico(e)) {
+        Box(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize().difuminar(e)) { if (e.enLaTele) InicioSala(e) else InicioRiel(e) }
+            Paneles(e, conAyuda = true)
+        }
+        return
+    }
     if (e.vistaConsolas in Diptico.MODOS_ELEGIR) {
         Box(Modifier.fillMaxSize().background(p.fondo)) {
             Column(Modifier.fillMaxSize().difuminar(e)) {
@@ -174,6 +182,10 @@ private fun PantallaUnicaContenido(e: Estado) {
         Paneles(e, conAyuda = true)
     }
 }
+
+/** Con una pantalla, fuera de la biblioteca de carpetas y de los widgets, va el inicio nuevo. */
+fun inicioNuevoUnico(e: Estado): Boolean =
+    e.configurado && e.inicio != "widgets" && !(e.vistaConsolas in Diptico.MODOS_ELEGIR && e.enSistemas)
 
 @Composable
 private fun InfoUnica(e: Estado, j: cl.nikalbazu.diptico.data.Juego) {
