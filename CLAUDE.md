@@ -585,3 +585,9 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Boceto: lienzo 89jA5mf9RD9mHB2piJKk5k (Main = inicio en franjas: barra 44 · vitrina info+caja · consolas · juegos · pie; Carpetas; Ajustes con 3 columnas y
   «Ocultas en este equipo»; Tele = modo sala; Jugando = volver a Díptico durante la partida con las herramientas de la pantalla compañera; Equipos = tabla).
 - Una pantalla hoy (capturas 20, 21, carpetas_una_horizontal_accesos): diseño viejo (barra «Díptico», DIPPO doble, consolas encima del texto).
+- APROBADO (12 nov 22:29): idea A (riel) + tele nueva + DIPPO arrastrable. Fase 1 en rama `fix/segun-equipo` (Novedades `segun-equipo-2.0-68`):
+  `extra.equipoTipo/equipoNombre` (detectado en `iniciar`, forzable con almacén `equipoTipo`, lista en «Tu equipo»), `estado/DipticoEquipo.kt`
+  (`Estado.enLaTele`, `tieneDosPantallas`, `filtrarPorEquipo` en `opcionesSeccion` y `gruposJuego`, `SOLO_DOS`, `dippoCorrido/guardarDippoCorrido`).
+  `ui/InicioRiel.kt` (`InicioRiel`, `InicioSala`); `PantallaUnica` los usa si `inicioNuevoUnico(e)` (fuera de la biblioteca de carpetas y widgets);
+  Raiz no dibuja `BarraSistema` ahí. `DippoInicio(lugar=)`: arrastre con offset guardado por pantalla y lugar, doble toque lo devuelve.
+  Capturas t424–t426. Traducciones `extras27.tsv` (siguiente: extras28). Fase 2: biblioteca de una pantalla, ajustes en 3 columnas, pantalla de partida en curso.
