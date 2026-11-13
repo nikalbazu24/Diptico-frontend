@@ -115,13 +115,13 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
             scaleX = s; scaleY = s
         }) {
             // Con una sola pantalla la columna de secciones es más angosta, para dejar lugar a la vista previa.
-            ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta || conAyuda) 156f else 196f)).fillMaxHeight())
+            ColumnaSecciones(e, Modifier.width(esc.d(if (esc.angosta) 156f else if (conAyuda) 190f else 196f)).fillMaxHeight())
             Box(Modifier.fillMaxHeight().width(esc.d(1)).background(p.linea))
             PaginaSeccion(e, conAyuda, Modifier.weight(1f).fillMaxHeight())
             // Con una sola pantalla, la vista previa va a la derecha del menú.
             if (conAyuda && !esc.angosta) {
-                val o = Diptico.opcionEnFoco(e)
-                PreviaAjuste(e, e.seccion, o, Modifier.width(esc.d(220)).fillMaxHeight().padding(start = esc.d(4), end = esc.d(12), top = esc.d(14), bottom = esc.d(14)))
+                Box(Modifier.fillMaxHeight().width(esc.d(1)).background(p.linea))
+                ColumnaExplicacion(e, Modifier.width(esc.d(260)).fillMaxHeight())
             }
         }
         // Ajustes condensados: «Más opciones…» se abre en una ventana encima del menú.
@@ -346,9 +346,16 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
                 Texto(s.titulo, 20f, lineas = 1)
                 Detalle(s.ayuda, 12f, lineas = 1)
             }
+            // Con una pantalla: qué equipo reconoció Díptico (así se entiende por qué faltan opciones de dos pantallas).
+            if (conAyuda && !esc.angosta) {
+                Box(Modifier.clip(RoundedCornerShape(50)).background(Color(0xFFFFB454)).padding(horizontal = esc.d(10), vertical = esc.d(3))) {
+                    Texto(Diptico.etiquetaEquipo(), 11.5f, color = Color(0xFF0B0D17), lineas = 1, traducir = false)
+                }
+                Spacer(Modifier.width(esc.d(10)))
+            }
             // Sin barra de la hora arriba (diseño nuevo): la hora, la batería y los avisos van aquí, chiquitos.
             if (!LocalBarraSistema.current) {
-                EstadoChico()
+                EstadoChico(conFoto = !(conAyuda && !esc.angosta))
                 Spacer(Modifier.width(esc.d(10)))
             }
             Box(
@@ -378,7 +385,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
                 }
             }
         }
-        if (conAyuda && e.enOpciones) {
+        if (conAyuda && e.enOpciones && esc.angosta) {
             val o = opciones.getOrNull(e.indice)
             Detalle(o?.let { explicacion(it) } ?: s.ayuda, 13.5f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(14)))
         }
@@ -386,6 +393,37 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
             *(if (e.enOpciones) arrayOf("↑ ↓" to "Moverte", "A" to "Cambiar", "B" to "Secciones") else arrayOf("↑ ↓" to "Sección", "A" to "Entrar", "B" to "Cerrar")),
             modifier = Modifier.padding(start = esc.d(14), top = esc.d(4), bottom = esc.d(10)),
         )
+    }
+}
+
+/**
+ * Tercera columna de Ajustes con una sola pantalla: qué hace la opción marcada, cómo se ve, y qué opciones se
+ * ocultaron porque este equipo no tiene segunda pantalla (para que nadie las busque sin encontrarlas).
+ */
+@Composable
+private fun ColumnaExplicacion(e: Estado, modifier: Modifier) {
+    val p = LocalPaleta.current
+    val esc = LocalEscala.current
+    val s = e.seccion
+    val o = Diptico.opcionEnFoco(e)
+    val color = colorSeccion(s)
+    val ocultas = remember(s, Diptico.claveMenu(e)) { Diptico.ocultasEnEquipo(s) }
+    Column(
+        modifier.background(p.fondo).padding(horizontal = esc.d(14), vertical = esc.d(12)).testTag("ajustes-explicacion"),
+        verticalArrangement = Arrangement.spacedBy(esc.d(8)),
+    ) {
+        Etiqueta((o?.titulo ?: s.titulo).uppercase(), color, 10.5f)
+        Detalle(o?.let { explicacion(it) } ?: s.ayuda, 13.5f, lineas = 5)
+        PreviaAjuste(e, s, o, Modifier.fillMaxWidth().weight(1f))
+        if (ocultas.isNotEmpty()) {
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(12))).background(p.superficie).padding(horizontal = esc.d(10), vertical = esc.d(8)),
+            ) {
+                Etiqueta("Ocultas en este equipo", Color(0xFFFFB454), 10f)
+                Spacer(Modifier.height(esc.d(3)))
+                Detalle(ocultas.joinToString(", ") + ": tu equipo tiene una sola pantalla.", 11.5f, lineas = 4)
+            }
+        }
     }
 }
 

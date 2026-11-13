@@ -1552,6 +1552,12 @@ class Capturas {
     @Test fun t424_inicio_riel() = foto("424_inicio_riel", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     @Test fun t425_inicio_sala() = foto("425_inicio_sala", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "tele")) }, Rol.UNICA)
     @Test fun t426_ajustes_una_pantalla() = foto("426_ajustes_una_pantalla", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
+    // Fase 2 según el equipo: biblioteca de carpetas en una pantalla, partida en curso y ajustes en tres columnas.
+    @Test fun t427_biblioteca_una() = foto("427_biblioteca_una", carpetasCon("tarjeta").let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
+    @Test fun t428_partida_en_curso() = foto("428_partida_en_curso", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false,
+        sesion = Sesion("snes/1", System.currentTimeMillis() - 42 * 60_000, 0, false),
+        extra = it.extra.copy(equipoTipo = "portatil", partidaPausa = System.currentTimeMillis(), partidaSel = 0)) }, Rol.UNICA)
+    @Test fun t429_ajustes_tres_columnas() = foto("429_ajustes_tres_columnas", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 1, extra = it.extra.copy(equipoTipo = "portatil", equipoNombre = "AYN Odin 2 Portal")) }, Rol.UNICA)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
     @Config(qualifiers = ABAJO)

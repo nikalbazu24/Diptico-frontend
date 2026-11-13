@@ -563,7 +563,7 @@ private fun pedirPista(clave: String) {
 
 /** DIPPO con un consejo que cambia según lo que pasa (reintentos, mucho rato, sin nota…). */
 @Composable
-private fun ConsejoDippo(
+internal fun ConsejoDippo(
     e: Estado, s: cl.nikalbazu.diptico.estado.Sesion, juego: cl.nikalbazu.diptico.data.Juego?, min: Int,
     termica: cl.nikalbazu.diptico.estado.Termica.Lectura?, turno: Int, logro: String? = null,
 ) {
@@ -606,7 +606,7 @@ private fun ConsejoDippo(
 
 /** Tu próximo paso (se toca para cambiarlo) y cuánto te queda según HowLongToBeat, en poco espacio. */
 @Composable
-private fun TuPartida(e: Estado, clave: String) {
+internal fun TuPartida(e: Estado, clave: String) {
     val esc = LocalEscala.current
     val paso = e.datos[clave]?.paso.orEmpty()
     val d = e.extra.duraciones[clave]?.takeIf { it.tiene }
@@ -673,7 +673,7 @@ private fun MasHerramientas(e: Estado, s: cl.nikalbazu.diptico.estado.Sesion, mo
 
 /** Controles de la música que suena mientras juegas: portada, canción y anterior / pausa / siguiente. */
 @Composable
-private fun MusicaEnJuego() {
+internal fun MusicaEnJuego() {
     val esc = LocalEscala.current
     val m by cl.nikalbazu.diptico.audio.Medios.sonando.collectAsState()
     val musica = m ?: return

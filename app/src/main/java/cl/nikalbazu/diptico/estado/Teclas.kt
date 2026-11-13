@@ -138,6 +138,20 @@ object Teclas {
             return true
         }
         if (e.extra.carga != null) { if (arriba && esB(code)) Diptico.cancelarCarga(); return true }
+        // Partida en curso con una pantalla (sin nada abierto encima): cruceta elige, A usa, Select o mantener B terminan.
+        if (e.partidaEnPausa && e.panel == Panel.NINGUNO && !e.conTeclado && e.dialogo == null) {
+            if (abajo) when (code) {
+                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_LEFT -> Diptico.moverPartidaUnica(-1)
+                KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT -> Diptico.moverPartidaUnica(1)
+                else -> if (esB(code) && ev.repeatCount == 8) { consumidas += code; Diptico.terminarPartidaUnica() }
+            }
+            if (arriba) when {
+                esA(code) -> Diptico.usarPartidaUnica()
+                code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.terminarPartidaUnica()
+                esB(code) -> Diptico.volverAlJuegoUnica()
+            }
+            return true
+        }
         // Lugar en la vitrina: cruceta mueve la pieza, L1/R1 cambian de pieza, L2/R2 tamaño, X caja, Y difuminado, A/B/Start listo.
         if (e.extra.edicionVitrina != null) {
             if (abajo) when (code) {
