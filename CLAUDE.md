@@ -591,3 +591,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `ui/InicioRiel.kt` (`InicioRiel`, `InicioSala`); `PantallaUnica` los usa si `inicioNuevoUnico(e)` (fuera de la biblioteca de carpetas y widgets);
   Raiz no dibuja `BarraSistema` ahí. `DippoInicio(lugar=)`: arrastre con offset guardado por pantalla y lugar, doble toque lo devuelve.
   Capturas t424–t426. Traducciones `extras27.tsv` (siguiente: extras28). Fase 2: biblioteca de una pantalla, ajustes en 3 columnas, pantalla de partida en curso.
+- Fase 2 hecha (12 nov, noche, Opus; publicada en main e338d6f): biblioteca de una pantalla sin barras encima (`PantallaUnica`: Column con
+  carpetas + `PieRiel(biblioteca = true)`; Raiz no dibuja `BarraSistema` si `disenoUnicoNuevo(e)`), Ajustes con 3.ª columna `ColumnaExplicacion`
+  (explicación + previa + «Ocultas en este equipo» = `ocultasEnEquipo`, chip `etiquetaEquipo`), `submenus` también filtra por equipo.
+  «Partida en curso» (`estado/DipticoPartidaUnica.kt`, `ui/PartidaUnica.kt`): con `sinCompanera`, `alVolver` ya no cierra la sesión
+  (si duró ≥ 20 s) y guarda `extra.partidaPausa`; A/B vuelven al juego (corre `sesion.inicio` lo que duró la pausa), Select o mantener B
+  terminan (`cerrarSesion(fin = pausa)`). `VitrinaRiel` omite paso/duración si falta alto. ARMSX2: paquete `com.nanodata.armsx2` (antes typo `come.`).
+  Remoto: `https://github.com/nikalbazu24/Diptico-frontend.git` (el repo se renombró). Capturas t427–t429. Traducciones `extras28.tsv` (siguiente: extras29).
+  Pendiente: carpetas de una pantalla en una sola fila (vista horizontal) dejan aire arriba y abajo; globito de DIPPO tapa la vitrina un rato.
