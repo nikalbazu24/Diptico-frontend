@@ -940,8 +940,11 @@ object Teclas {
                 // Columna de secciones a la izquierda y opciones a la derecha.
                 KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(-1)
                 KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(1)
-                KeyEvent.KEYCODE_DPAD_LEFT -> if (e.desplegable >= 0) Unit else if (e.extra.subOpcion >= 0) Diptico.usarSubOpcion(menos = true) else if (e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(false)
-                KeyEvent.KEYCODE_DPAD_RIGHT -> if (e.desplegable >= 0) Unit else if (e.extra.subOpcion >= 0) Diptico.usarSubOpcion() else if (!e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(true)
+                // ◀ ▶ cambian el valor de la opción marcada en su misma fila (lista o Sí/No); si no tiene, ◀ vuelve a las secciones.
+                KeyEvent.KEYCODE_DPAD_LEFT -> if (e.desplegable >= 0) Unit else if (e.extra.subOpcion >= 0) Diptico.usarSubOpcion(menos = true)
+                    else if (e.enOpciones && Diptico.cambiarEnFila(-1)) Unit else if (e.enOpciones && ev.repeatCount == 0) Diptico.columnaMenu(false)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> if (e.desplegable >= 0) Unit else if (e.extra.subOpcion >= 0) Diptico.usarSubOpcion()
+                    else if (e.enOpciones) Diptico.cambiarEnFila(1) else if (ev.repeatCount == 0) Diptico.columnaMenu(true)
                 KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0 && e.extra.subOpcion < 0) Diptico.saltarSeccion(-1, envolver = true)
                 KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0 && e.extra.subOpcion < 0) Diptico.saltarSeccion(1, envolver = true)
                 else -> return esA(code) || esB(code) || code in botonesControl

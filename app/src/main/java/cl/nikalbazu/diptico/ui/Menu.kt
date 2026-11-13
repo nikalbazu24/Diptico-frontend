@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -272,7 +273,7 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
         Row(Modifier.padding(horizontal = esc.d(12)), verticalAlignment = Alignment.CenterVertically) {
             MarcaLogo(12f)
             Spacer(Modifier.width(esc.d(8)))
-            Texto("Ajustes", 18f, lineas = 1)
+            Texto("Ajustes", 16f, lineas = 1)
         }
         Spacer(Modifier.height(esc.d(8)))
         // Buscar un ajuste
@@ -306,17 +307,17 @@ private fun ColumnaSecciones(e: Estado, modifier: Modifier) {
                     tween(140), label = "seccion",
                 )
                 Row(
-                    Modifier.fillMaxWidth().height(esc.d(42)).clip(RoundedCornerShape(esc.d(14))).background(fondo)
-                        .then(if (enfoque) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(14))) else Modifier)
+                    Modifier.fillMaxWidth().height(esc.d(36)).clip(RoundedCornerShape(esc.d(10))).background(fondo)
+                        .then(if (enfoque) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(10))) else Modifier)
                         .clickable { Diptico.elegirSeccion(s) }.padding(horizontal = esc.d(8)),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
-                        Modifier.size(esc.d(28)).clip(CircleShape).background(if (activa) color else color.copy(alpha = 0.16f)),
+                        Modifier.size(esc.d(22)).clip(RoundedCornerShape(esc.d(7))).background(if (activa) color else color.copy(alpha = 0.16f)),
                         contentAlignment = Alignment.Center,
-                    ) { IconoDiptico(s.icono, if (activa) tintaSobre(color) else color, 16f, acento = if (activa) tintaSobre(color) else color) }
+                    ) { IconoDiptico(s.icono, if (activa) tintaSobre(color) else color, 13f, acento = if (activa) tintaSobre(color) else color) }
                     Spacer(Modifier.width(esc.d(8)))
-                    Texto(s.titulo, 13.5f, color = if (activa) p.tinta else p.tenue, lineas = 1)
+                    Texto(s.titulo, 12.5f, color = if (activa) p.tinta else p.tenue, lineas = 1)
                 }
             }
         }
@@ -339,12 +340,12 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
         // Encabezado con el color de la sección.
         Row(
             Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.3f), Color.Transparent)))
-                .padding(start = esc.d(14), end = esc.d(10), top = esc.d(10), bottom = esc.d(10)),
+                .padding(start = esc.d(14), end = esc.d(10), top = esc.d(8), bottom = esc.d(8)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
-                Texto(s.titulo, 20f, lineas = 1)
-                Detalle(s.ayuda, 12f, lineas = 1)
+                Texto(s.titulo, 16f, lineas = 1)
+                Detalle(s.ayuda, 11f, lineas = 1)
             }
             // Con una pantalla: qué equipo reconoció Díptico (así se entiende por qué faltan opciones de dos pantallas).
             if (conAyuda && !esc.angosta) {
@@ -371,7 +372,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
         LazyColumn(
             state = lista, modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(start = esc.d(12), end = esc.d(12), top = esc.d(8), bottom = esc.d(8)),
-            verticalArrangement = Arrangement.spacedBy(esc.d(6)),
+            verticalArrangement = Arrangement.spacedBy(esc.d(5)),
         ) {
             itemsIndexed(opciones) { i, o ->
                 // Título de grupo cuando empieza uno nuevo.
@@ -390,7 +391,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
             Detalle(o?.let { explicacion(it) } ?: s.ayuda, 13.5f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(14)))
         }
         Pistas(
-            *(if (e.enOpciones) arrayOf("↑ ↓" to "Moverte", "A" to "Cambiar", "B" to "Secciones") else arrayOf("↑ ↓" to "Sección", "A" to "Entrar", "B" to "Cerrar")),
+            *(if (e.enOpciones) arrayOf("↑ ↓" to "Elegir", "◀ ▶" to "Cambiar", "A" to "Abrir", "B" to "Volver") else arrayOf("↑ ↓" to "Sección", "A" to "Entrar", "B" to "Cerrar")),
             modifier = Modifier.padding(start = esc.d(14), top = esc.d(4), bottom = esc.d(10)),
         )
     }
@@ -412,16 +413,18 @@ private fun ColumnaExplicacion(e: Estado, modifier: Modifier) {
         modifier.background(p.fondo).padding(horizontal = esc.d(14), vertical = esc.d(12)).testTag("ajustes-explicacion"),
         verticalArrangement = Arrangement.spacedBy(esc.d(8)),
     ) {
-        Etiqueta((o?.titulo ?: s.titulo).uppercase(), color, 10.5f)
-        Detalle(o?.let { explicacion(it) } ?: s.ayuda, 13.5f, lineas = 5)
+        Etiqueta("Así se ve", color, 10f)
         PreviaAjuste(e, s, o, Modifier.fillMaxWidth().weight(1f))
+        Texto(o?.titulo ?: s.titulo, 13f, lineas = 1)
+        Detalle(o?.let { explicacion(it) } ?: s.ayuda, 12f, lineas = 4)
         if (ocultas.isNotEmpty()) {
-            Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(12))).background(p.superficie).padding(horizontal = esc.d(10), vertical = esc.d(8)),
-            ) {
-                Etiqueta("Ocultas en este equipo", Color(0xFFFFB454), 10f)
-                Spacer(Modifier.height(esc.d(3)))
-                Detalle(ocultas.joinToString(", ") + ": tu equipo tiene una sola pantalla.", 11.5f, lineas = 4)
+            var ver by androidx.compose.runtime.saveable.rememberSaveable(s) { androidx.compose.runtime.mutableStateOf(false) }
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(10))).clickable { ver = !ver }.padding(vertical = esc.d(2))) {
+                Texto(
+                    (if (ocultas.size == 1) "1 ajuste oculto" else "${ocultas.size} ajustes ocultos") + " en este equipo " + if (ver) "▴" else "›",
+                    11f, color = Color(0xFFFFB454), familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, traducir = false,
+                )
+                if (ver) Detalle(ocultas.joinToString(", ") + ": tu equipo tiene una sola pantalla.", 11f, lineas = 4)
             }
         }
     }
@@ -445,28 +448,39 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
         val interruptor = esInterruptor(o)
         val ancho = maxWidth
         val angosta = ancho < esc.d(400) || conAyudaAngosta
-        val valorAbajo = o.valor.isNotEmpty() && !interruptor && (o.valor.length + o.titulo.length > (if (angosta) 24 else 40))
+        // Pocas alternativas cortas (Auto/Vidrio/Oscuro/Claro…): se ven todas como pastillas y se cambian ahí mismo.
+        val pastillas = o.alternativas?.takeIf { alt -> o.elegir != null && alt.size in 2..4 && alt.all { it.length <= 11 } && alt.sumOf { it.length } <= (if (angosta) 22 else 30) }
+        val valorAbajo = pastillas == null && o.valor.isNotEmpty() && !interruptor && (o.valor.length + o.titulo.length > (if (angosta) 24 else 40))
         Row(
-            Modifier.fillMaxWidth().heightIn(min = esc.d(54)).clip(RoundedCornerShape(esc.d(16))).background(fondo)
-                .then(if (activa) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(16))) else Modifier)
+            Modifier.fillMaxWidth().heightIn(min = esc.d(44)).clip(RoundedCornerShape(esc.d(12))).background(fondo)
+                .then(if (activa) Modifier.border(esc.d(2), color, RoundedCornerShape(esc.d(12))) else Modifier)
                 .clickable { alPulsar() }
                 .graphicsLayer { alpha = if (o.apagada) 0.5f else 1f }
-                .padding(horizontal = esc.d(12), vertical = esc.d(7)),
+                .padding(horizontal = esc.d(10), vertical = esc.d(6)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             o.icono?.let {
-                Box(Modifier.size(esc.d(34)).clip(CircleShape).background(color.copy(alpha = if (activa) 0.3f else 0.14f)), contentAlignment = Alignment.Center) {
-                    IconoDiptico(it, p.tinta, 18f, acento = color)
+                Box(Modifier.size(esc.d(28)).clip(CircleShape).background(color.copy(alpha = if (activa) 0.3f else 0.14f)), contentAlignment = Alignment.Center) {
+                    IconoDiptico(it, p.tinta, 15f, acento = color)
                 }
-                Spacer(Modifier.width(esc.d(12)))
+                Spacer(Modifier.width(esc.d(10)))
             }
             val largo = o.titulo.length > 22
             Column(Modifier.weight(1f)) {
-                Texto(o.titulo, if (largo) 14.5f else 15.5f, lineas = 2, interlineado = if (largo) 16.5f else 18f)
-                if (valorAbajo) Texto(o.valor, 12.5f, color = if (activa) color else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
+                Texto(o.titulo, if (largo) 13f else 13.5f, lineas = 2, interlineado = if (largo) 15f else 16f)
+                if (valorAbajo) Texto(o.valor, 11.5f, color = if (activa) color else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1)
             }
             Spacer(Modifier.width(esc.d(8)))
             when {
+                pastillas != null -> Row(Modifier.clip(RoundedCornerShape(50)).background(p.fondo2.copy(alpha = 0.7f)).padding(esc.d(2))) {
+                    pastillas.forEachIndexed { k, t ->
+                        val sel = k == o.elegida
+                        Box(
+                            Modifier.clip(RoundedCornerShape(50)).background(if (sel) color else Color.Transparent)
+                                .clickable { o.elegir?.invoke(k) }.padding(horizontal = esc.d(9), vertical = esc.d(3)),
+                        ) { Texto(t, 11.5f, color = if (sel) tintaSobre(color) else p.tenue, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1) }
+                    }
+                }
                 interruptor -> InterruptorLiquido(o.valor == "Sí", color)
                 o.titulo == "Modo" && (o.valor == "Oscuro" || o.valor == "Claro") -> InterruptorDiaNoche(o.valor == "Oscuro")
                 o.valor.isNotEmpty() && !valorAbajo -> Box(
@@ -475,8 +489,8 @@ fun FilaOpcion(o: Opcion, activa: Boolean, color: Color, alPulsar: () -> Unit) {
                 ) {
                     // ▾ avisa que al elegirla se abre una lista con todas las alternativas.
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Texto(o.valor, 12.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = ancho * 0.33f))
-                        if (o.alternativas != null) Texto(" ▾", 12.5f, color = p.tenue, lineas = 1, traducir = false)
+                        Texto(o.valor, 11.5f, color = p.tinta, familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.widthIn(max = ancho * 0.33f))
+                        if (o.alternativas != null) Texto(" ▾", 11.5f, color = p.tenue, lineas = 1, traducir = false)
                     }
                 }
                 valorAbajo -> if (o.alternativas != null) Texto("▾", 16f, color = p.tenue, traducir = false)

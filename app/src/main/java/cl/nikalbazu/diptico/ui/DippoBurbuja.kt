@@ -54,6 +54,9 @@ object DippoBurbuja {
     @Volatile var pantalla: Int = 0
     @Volatile var cabeza: Rect = Rect.Zero
 
+    /** Hay una franja que muestra el mensaje junto a DIPPO (inicio compacto): entonces el globito flotante no sale. */
+    var enLinea by mutableStateOf(false)
+
     fun mostrar(m: Mensaje) { actual = m }
     fun ocultar() { actual = null }
 }
@@ -61,7 +64,7 @@ object DippoBurbuja {
 @Composable
 fun BurbujaDippoCapa(miPantalla: Int, oculta: Boolean = false, tapado: Boolean = false) {
     // Con Ajustes o cualquier ventana abierta, DIPPO no habla: su globito quedaría encima de lo que estás haciendo.
-    val m = DippoBurbuja.actual.takeIf { !oculta }
+    val m = DippoBurbuja.actual.takeIf { !oculta && !DippoBurbuja.enLinea }
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     val ahi = m != null && DippoBurbuja.pantalla == miPantalla

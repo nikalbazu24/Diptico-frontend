@@ -118,7 +118,7 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier, lugar: Str
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { DippoBurbuja.ocultar() } }
     // DIPPO se mueve con el dedo a donde quieras y se queda ahí (por pantalla y lugar). Doble toque: vuelve a su sitio.
     val clave = "$pantalla-" + lugar.ifBlank { tam.toInt().toString() }
-    var corrido by remember(clave) { mutableStateOf(Diptico.dippoCorrido(clave).let { androidx.compose.ui.geometry.Offset(it.first, it.second) }) }
+    var corrido by remember(clave) { mutableStateOf(if (lugar == "fijo") androidx.compose.ui.geometry.Offset.Zero else Diptico.dippoCorrido(clave).let { androidx.compose.ui.geometry.Offset(it.first, it.second) }) }
     var base by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     var medida by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     val vista = androidx.compose.ui.platform.LocalView.current
@@ -127,7 +127,7 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier, lugar: Str
             tam,
             Modifier
                 .offset { androidx.compose.ui.unit.IntOffset(corrido.x.roundToInt(), corrido.y.roundToInt()) }
-                .pointerInput(clave) {
+                .then(if (lugar == "fijo") Modifier else Modifier.pointerInput(clave) {
                     detectDragGestures(onDragEnd = { Diptico.guardarDippoCorrido(clave, corrido.x, corrido.y) }) { cambio, d ->
                         cambio.consume()
                         val maxX = (vista.width - medida.width).toFloat()
@@ -137,7 +137,7 @@ fun DippoInicio(e: Estado, tam: Float, modifier: Modifier = Modifier, lugar: Str
                             (corrido.y + d.y).coerceIn(-base.y, (maxY - base.y).coerceAtLeast(-base.y)),
                         )
                     }
-                }
+                })
                 .onGloballyPositioned { c ->
                     val pos = c.positionInWindow()
                     base = pos - corrido

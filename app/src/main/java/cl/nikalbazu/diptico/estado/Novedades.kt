@@ -10,7 +10,7 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "tele-emuladores-2.0-69"
+    const val ID = "inicio-compacto-2.0-70"
     const val NOMBRE = "Carpeta de vidrio y avisos de cajas"
 
     /**
@@ -526,9 +526,16 @@ object Novedades {
             Pagina("Partida en curso", "Con una pantalla, si vuelves a Díptico en medio de un juego, ya no se da por terminado: puedes volver al juego, anotar tu paso, pedir una pista o ver la guía. Select (o «Terminar partida») lo cierra; la pausa no cuenta como tiempo de juego.", Icono.JUGAR, 0xFF3EE08F),
             Pagina("ARMSX2 reconocido", "Díptico ahora encuentra ARMSX2 para tus juegos de PS2 (antes buscaba un nombre mal escrito).", Icono.EMULADOR, 0xFF7C6CFF),
         )),
-        Version(ID, "La tele y tus emuladores", listOf(
+        Version("tele-emuladores-2.0-69", "La tele y tus emuladores", listOf(
             Pagina("Díptico en la tele", "Con una consola de una pantalla, al conectarla a la tele por HDMI ahora se ve el modo sala en la tele (antes salía «modo una pantalla»). La consola sigue funcionando como mando.", Icono.PANTALLAS, 0xFF23C486),
             Pagina("Elige cualquier emulador", "En Ajustes › Juegos y emuladores tienes «Emulador de cada consola» y «Emulador de cada juego»: eliges de una lista con qué se abre cada uno. Si tu emulador no aparece (por ejemplo ARMSX2), búscalo como «Otra app».", Icono.EMULADOR, 0xFF7C6CFF),
+        )),
+        Version(ID, "Inicio compacto y Ajustes nuevos", listOf(
+            Pagina("La caja manda", "En una pantalla, el inicio es más chico y ordenado: la barra de consolas es delgada, la caja 3D del juego se ve grande y abajo hay un estante de cajas.", Icono.JUGAR, 0xFFFF8A5C),
+            Pagina("DIPPO en su lugar", "DIPPO queda fijo arriba con su mensaje al lado, sin globitos encima de nada. Tócalo para hablar con él.", Icono.BISA, 0xFF6FA8FF),
+            Pagina("Dock que se esconde", "Tus apps fijadas van abajo a la derecha. Con «›» se esconden hacia el lado y queda solo la pestaña «‹ Apps».", Icono.APPS, 0xFF23C4A6),
+            Pagina("Escala a tu gusto", "En Ajustes › Pantalla y estilo › Escala de la interfaz eliges qué tan grande se ve todo, de 70 % a 130 %. En automático, las portátiles de una pantalla ya vienen más chicas.", Icono.PANTALLAS, 0xFFFFB454),
+            Pagina("Ajustes más claros", "Las opciones con pocas alternativas se cambian en su misma fila, con pastillas o con ◀ ▶, sin abrir nada. A la derecha, «Así se ve» te muestra lo que cambia.", Icono.AJUSTES, 0xFF7C6CFF),
         )),
     )
 

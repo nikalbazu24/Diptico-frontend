@@ -1,6 +1,9 @@
 package cl.nikalbazu.diptico.ui
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.offset
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -52,22 +55,185 @@ private val FondoRiel = Color(0xFF0C0E1B)
 private val Linea = Color(0xFF1F2340)
 private val Chip = Color(0xFF171B34)
 
-/** Idea A: riel de consolas a la izquierda; a la derecha barra, vitrina, filtros, estante de juegos y pie. */
+/**
+ * Inicio en una pantalla (boceto «ronda 2»): riel delgado de consolas | DIPPO fijo con su mensaje · vitrina con la
+ * caja 3D grande · estante de cajas · pie con el dock que se esconde hacia el lado. Todo más chico que antes.
+ */
 @Composable
 fun InicioRiel(e: Estado) {
     val esc = LocalEscala.current
-    Row(Modifier.fillMaxSize().background(Color(0xFF090B14)).testTag("inicio-riel")) {
-        RielConsolasNuevo(e, Modifier.width(esc.d(92)).fillMaxHeight())
+    Row(Modifier.fillMaxSize().background(Color(0xFF0B0D17)).testTag("inicio-riel")) {
+        RielDelgado(e, Modifier.width(esc.d(52)).fillMaxHeight())
         Column(Modifier.weight(1f).fillMaxHeight()) {
-            BarraRiel(e)
+            FranjaDippo(e)
             val j = e.seleccionado
-            Box(Modifier.fillMaxWidth().weight(1f).padding(horizontal = esc.d(12))) {
-                if (j != null) VitrinaRiel(e, j, Modifier.fillMaxSize(), grande = false)
-                else Texto(if (e.escaneando) "Buscando tus juegos…" else "No encontré juegos en esta consola", 20f, Modifier.align(Alignment.Center))
+            Box(Modifier.fillMaxWidth().weight(1f).padding(horizontal = esc.d(14))) {
+                if (j != null) VitrinaRiel(e, j, Modifier.fillMaxSize(), grande = false, compacta = true)
+                else Texto(if (e.escaneando) "Buscando tus juegos…" else "No encontré juegos en esta consola", 16f, Modifier.align(Alignment.Center))
             }
-            FiltrosRiel(e)
-            EstanteRiel(e, Modifier.fillMaxWidth().height(esc.d(160)))
-            PieRiel(e, tele = false)
+            EstanteCajas(e, Modifier.fillMaxWidth().height(esc.d(112)))
+            PieDock(e)
+        }
+    }
+}
+
+/** Riel delgado: tu foto y las consolas solo con su ícono (la elegida con halo; su nombre va en la vitrina). */
+@Composable
+private fun RielDelgado(e: Estado, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val estado = rememberLazyListState()
+    val sel = e.pestanas.indexOf(e.consolaSel).coerceAtLeast(0)
+    LaunchedEffect(sel) { estado.animateScrollToItem((sel - 3).coerceAtLeast(0)) }
+    Column(modifier.background(Color(0xFF10132A)), horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(Modifier.height(esc.d(8)))
+        BotonPerfil(30f)
+        Spacer(Modifier.height(esc.d(6)))
+        Box(Modifier.width(esc.d(22)).height(esc.d(1)).background(Linea))
+        LazyColumn(
+            state = estado, modifier = Modifier.fillMaxWidth().weight(1f).testTag("riel-consolas"),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(esc.d(7)),
+            contentPadding = PaddingValues(vertical = esc.d(8)),
+        ) {
+            itemsIndexed(e.pestanas, key = { _, id -> id }) { _, id -> IconoRielChico(id, id == e.consolaSel) }
+        }
+    }
+}
+
+@Composable
+private fun IconoRielChico(id: String, elegida: Boolean) {
+    val esc = LocalEscala.current
+    val c = remember(id) { Consolas.porId(id) }
+    val tono = c?.color ?: Uva
+    val forma = RoundedCornerShape(esc.d(11))
+    Box(
+        Modifier.size(esc.d(34))
+            .then(if (elegida) Modifier.shadow(esc.d(10), forma, ambientColor = tono, spotColor = tono) else Modifier)
+            .clip(forma)
+            .background(Brush.linearGradient(listOf(tono, tono.copy(alpha = 0.35f))))
+            .then(if (elegida) Modifier.border(esc.d(2), Color.White, forma) else Modifier)
+            .clickable { Diptico.elegirConsola(id) },
+        contentAlignment = Alignment.Center,
+    ) { Box(Modifier.graphicsLayer { alpha = if (elegida) 1f else 0.6f }) { IconoConsola(c, 20f, Color.Transparent) } }
+}
+
+/** Frase de DIPPO cuando no está diciendo otra cosa: tu próximo paso o una invitación a seguir. */
+private fun fraseDippo(e: Estado): String {
+    val j = e.seleccionado ?: return "Elige un juego y te cuento algo de él."
+    val paso = e.datos[j.clave]?.paso.orEmpty()
+    return when {
+        paso.isNotBlank() -> "Tu próximo paso en ${j.titulo}: $paso"
+        (e.datos[j.clave]?.tiempo ?: 0L).toLong() > 0L -> "¿Seguimos con ${j.titulo}?"
+        else -> "¿Probamos ${j.titulo}? Aprieta A y lo abro."
+    }
+}
+
+/** Franja de DIPPO: él fijo, su mensaje al lado (en su propia franja, sin globito encima de nada), amigos, hora y batería. */
+@Composable
+private fun FranjaDippo(e: Estado) {
+    val esc = LocalEscala.current
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        DippoBurbuja.enLinea = true
+        onDispose { DippoBurbuja.enLinea = false }
+    }
+    val m = DippoBurbuja.actual
+    val texto = m?.texto ?: fraseDippo(e)
+    Row(Modifier.fillMaxWidth().height(esc.d(40)).padding(horizontal = esc.d(14)).testTag("franja-dippo"), verticalAlignment = Alignment.CenterVertically) {
+        DippoInicio(e, 28f, lugar = "fijo")
+        Spacer(Modifier.width(esc.d(8)))
+        Box(
+            Modifier.weight(1f, fill = false).clip(RoundedCornerShape(esc.d(12), esc.d(12), esc.d(12), esc.d(4))).background(Chip)
+                .clickable { m?.alToque?.invoke() ?: Diptico.abrirAsistente() }
+                .padding(horizontal = esc.d(11), vertical = esc.d(4)),
+        ) { Texto(texto, 12f, color = Color(0xFFD6E0FF), familia = Nunito, peso = FontWeight.Bold, lineas = 1, traducir = m == null) }
+        Spacer(Modifier.weight(0.01f))
+        Spacer(Modifier.width(esc.d(10)))
+        AmigosJugando()
+        Spacer(Modifier.width(esc.d(8)))
+        RelojBateria()
+    }
+}
+
+/** Estante: cajas en perspectiva (baratas de dibujar: la portada girada con su lomo); la elegida sube y se endereza. */
+@Composable
+private fun EstanteCajas(e: Estado, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val lista = e.visibles
+    val estado = rememberLazyListState()
+    SideEffect { Teclas.columnasCuadricula = lista.size.coerceAtLeast(1) }
+    LaunchedEffect(e.indiceSel, lista.size) { if (lista.isNotEmpty()) estado.animateScrollToItem((e.indiceSel - 2).coerceAtLeast(0)) }
+    LazyRow(
+        state = estado, modifier = modifier.testTag("estante-riel"),
+        contentPadding = PaddingValues(start = esc.d(18), end = esc.d(18), bottom = esc.d(8), top = esc.d(4)),
+        horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        itemsIndexed(lista, key = { _, j -> j.clave }) { i, j -> CajaInclinada(e, j, i == e.indiceSel) }
+    }
+}
+
+@Composable
+private fun CajaInclinada(e: Estado, j: Juego, elegido: Boolean) {
+    val esc = LocalEscala.current
+    val ancho by animateDpAsState(if (elegido) esc.d(72) else esc.d(60), label = "caja-ancho")
+    val alto by animateDpAsState(if (elegido) esc.d(96) else esc.d(80), label = "caja-alto")
+    val giro by androidx.compose.animation.core.animateFloatAsState(if (elegido) -10f else -24f, label = "caja-giro")
+    val sube by animateDpAsState(if (elegido) esc.d(6) else esc.d(0), label = "caja-sube")
+    val c = remember(j.consolaId) { Consolas.porId(j.consolaId) }
+    val lomo = c?.color ?: Uva
+    val forma = RoundedCornerShape(esc.d(4))
+    val avance = avanceDe(e, j)
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.offset(y = -sube)) {
+        Box(
+            Modifier.width(ancho).height(alto)
+                .graphicsLayer { rotationY = giro; cameraDistance = 14f * density; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f) }
+                .shadow(esc.d(8), forma)
+                .clip(forma).background(Chip)
+                .then(if (elegido) Modifier.border(esc.d(2), Color.White, forma) else Modifier)
+                .clickable { if (elegido) Diptico.jugar() else Diptico.elegirJuego(j.clave) },
+        ) {
+            ArteJuego(j, preferirArte = false, maxLado = 240, modifier = Modifier.fillMaxSize())
+            // Lomo: una franja del color de la consola al borde izquierdo, como una caja de verdad.
+            Box(Modifier.width(esc.d(5)).fillMaxHeight().background(Brush.horizontalGradient(listOf(lomo, lomo.copy(alpha = 0.6f)))))
+        }
+        Spacer(Modifier.height(esc.d(3)))
+        Box(Modifier.width(ancho).height(esc.d(3)).clip(RoundedCornerShape(50)).background(if (avance != null) Color(0xFF262A47) else Color.Transparent)) {
+            if (avance != null) Box(Modifier.fillMaxWidth(avance).fillMaxHeight().background(if (avance >= 1f) Color(0xFF3EE08F) else Color(0xFFFFB454)))
+        }
+    }
+}
+
+/** Pie: Buscar, pistas y el dock de apps fijadas pegado al borde derecho; con «›» se esconde y queda la pestaña «‹ Apps». */
+@Composable
+private fun PieDock(e: Estado) {
+    val esc = LocalEscala.current
+    val visible = e.extra.dockVisible
+    Row(Modifier.fillMaxWidth().height(esc.d(40)).padding(start = esc.d(14)).testTag("pie-dock"), verticalAlignment = Alignment.CenterVertically) {
+        BotonPie(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
+        Spacer(Modifier.width(esc.d(10)))
+        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Pistas("A" to "Jugar", "L1/R1" to "Consola", "Y" to "Opciones")
+        }
+        val forma = RoundedCornerShape(topStart = esc.d(14), bottomStart = esc.d(14))
+        Row(
+            Modifier.clip(forma).background(Chip).border(esc.d(1), Color.White.copy(alpha = 0.06f), forma)
+                .animateContentSize().padding(start = esc.d(6), end = esc.d(10), top = esc.d(4), bottom = esc.d(4)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier.size(esc.d(22)).clip(RoundedCornerShape(esc.d(8))).background(Color.White.copy(alpha = 0.08f))
+                    .clickable { Diptico.alternarDockVisible() }.testTag("dock-lado"),
+                contentAlignment = Alignment.Center,
+            ) { Texto(if (visible) "›" else "‹", 13f, color = Color(0xFFCFD2E6), peso = FontWeight.Black, lineas = 1, traducir = false) }
+            Spacer(Modifier.width(esc.d(8)))
+            if (visible) {
+                if (e.extra.dock && e.appsFijadas.isNotEmpty()) { FilaDock(e, 22f, conCajon = false); Spacer(Modifier.width(esc.d(8))) }
+                else { Texto("Fija tus apps", 11f, color = Color(0xFF8B90AD), peso = FontWeight.ExtraBold, lineas = 1, modifier = Modifier.clickable { Diptico.abrirApps() }); Spacer(Modifier.width(esc.d(8))) }
+                Box(Modifier.width(esc.d(1)).height(esc.d(20)).background(Color.White.copy(alpha = 0.12f)))
+                Spacer(Modifier.width(esc.d(8)))
+                Box(Modifier.size(esc.d(24)).clip(RoundedCornerShape(esc.d(8))).background(Color.White.copy(alpha = 0.08f)).clickable { Diptico.abrirMenu() },
+                    contentAlignment = Alignment.Center) { IconoDiptico(Icono.AJUSTES, Color(0xFFCFD2E6), 15f) }
+            } else Texto("Apps", 11f, color = Color(0xFF8B90AD), peso = FontWeight.ExtraBold, lineas = 1)
         }
     }
 }
@@ -98,27 +264,6 @@ fun InicioSala(e: Estado) {
 
 // ---------- Piezas ----------
 
-@Composable
-private fun RielConsolasNuevo(e: Estado, modifier: Modifier) {
-    val esc = LocalEscala.current
-    val estado = rememberLazyListState()
-    val sel = e.pestanas.indexOf(e.consolaSel).coerceAtLeast(0)
-    LaunchedEffect(sel) { estado.animateScrollToItem((sel - 2).coerceAtLeast(0)) }
-    Column(modifier.background(Brush.verticalGradient(listOf(Color(0xFF121527), FondoRiel))), horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(Modifier.height(esc.d(10)))
-        BotonPerfil(40f)
-        Spacer(Modifier.height(esc.d(8)))
-        Box(Modifier.width(esc.d(56)).height(esc.d(1)).background(Linea))
-        LazyColumn(
-            state = estado, modifier = Modifier.fillMaxWidth().weight(1f).testTag("riel-consolas"),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(esc.d(8)),
-            contentPadding = PaddingValues(vertical = esc.d(10)),
-        ) {
-            itemsIndexed(e.pestanas, key = { _, id -> id }) { _, id -> IconoRiel(id, id == e.consolaSel) }
-        }
-    }
-}
 
 @Composable
 private fun IconoRiel(id: String, elegida: Boolean) {
@@ -144,21 +289,6 @@ private fun IconoRiel(id: String, elegida: Boolean) {
     }
 }
 
-@Composable
-private fun BarraRiel(e: Estado) {
-    val esc = LocalEscala.current
-    val c = Consolas.porId(e.consolaSel)
-    Row(Modifier.fillMaxWidth().height(esc.d(44)).padding(horizontal = esc.d(16)), verticalAlignment = Alignment.CenterVertically) {
-        Texto(((c?.nombreLargo ?: "Todos tus juegos") + " · " + e.visibles.size + " juegos").uppercase(), 12f,
-            color = Color(0xFFFFD2BF), familia = Nunito, peso = FontWeight.Black, lineas = 1, espaciado = 1.6f, traducir = false)
-        Spacer(Modifier.weight(1f))
-        AmigosJugando()
-        Spacer(Modifier.width(esc.d(10)))
-        DippoInicio(e, 36f, lugar = "riel")
-        Spacer(Modifier.width(esc.d(10)))
-        RelojBateria()
-    }
-}
 
 /** «N amigos jugando», solo si Discord está conectado y hay alguien. */
 @Composable
@@ -178,10 +308,10 @@ private fun AmigosJugando() {
 
 /** La vitrina: el arte del juego de fondo; a la izquierda la información y los botones, a la derecha la caja 3D. */
 @Composable
-private fun VitrinaRiel(e: Estado, j: Juego, modifier: Modifier, grande: Boolean) {
+private fun VitrinaRiel(e: Estado, j: Juego, modifier: Modifier, grande: Boolean, compacta: Boolean = false) {
     val esc = LocalEscala.current
     val c = Consolas.porId(j.consolaId)
-    val forma = RoundedCornerShape(esc.d(22))
+    val forma = RoundedCornerShape(esc.d(if (compacta) 18 else 22))
     val datos = e.datos[j.clave]
     val tiempo = (datos?.tiempo ?: 0L).toLong()
     Box(modifier.clip(forma).background(Color(0xFF120D1C)).border(esc.d(1), Color.White.copy(alpha = 0.08f), forma).testTag("vitrina-riel")) {
@@ -192,11 +322,11 @@ private fun VitrinaRiel(e: Estado, j: Juego, modifier: Modifier, grande: Boolean
             BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(horizontal = esc.d(22), vertical = esc.d(12))) {
                 val alto = maxHeight.value / esc.factor
                 Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-                    if (grande && c != null && alto > 150f) {
-                        Texto(c.nombreLargo.uppercase(), 12f, color = Color(0xFFCFE0FF), familia = Nunito, peso = FontWeight.Black, lineas = 1, espaciado = 1.8f, traducir = false)
+                    if ((grande || compacta) && c != null && alto > 150f) {
+                        Texto(if (compacta) (c.nombreLargo + " · " + e.visibles.size + " juegos").uppercase() else c.nombreLargo.uppercase(), if (compacta) 10.5f else 12f, color = if (compacta) Color(0xFFFFB3A1) else Color(0xFFCFE0FF), familia = Nunito, peso = FontWeight.Black, lineas = 1, espaciado = 1.8f, traducir = false)
                         Spacer(Modifier.height(esc.d(4)))
                     }
-                    val tamTitulo = if (alto > 190f) (if (grande) 36f else 32f) else 26f
+                    val tamTitulo = if (compacta) (if (alto > 190f) 26f else 21f) else if (alto > 190f) (if (grande) 36f else 32f) else 26f
                     Texto(j.titulo, tamTitulo, color = Color.White, lineas = if (alto > 190f) 2 else 1, interlineado = tamTitulo + 2f, sombra = true, traducir = false)
                     Spacer(Modifier.height(esc.d(6)))
                     if (alto > 120f) Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically) {
@@ -210,12 +340,12 @@ private fun VitrinaRiel(e: Estado, j: Juego, modifier: Modifier, grande: Boolean
                         Texto("Próximo paso: $paso", 13f, color = Color(0xFFE8E9F3), familia = Nunito, peso = FontWeight.Bold, lineas = 1, traducir = false)
                     }
                     Spacer(Modifier.height(esc.d(8)))
-                    BotonesVitrina(e, j)
+                    BotonesVitrina(e, j, compacto = compacta)
                 }
             }
             if (c != null && e.extra.disposiciones[j.clave]?.conCaja != false) {
-                Box(Modifier.width(if (grande) esc.d(150) else esc.d(210)).fillMaxHeight().padding(vertical = esc.d(12)), contentAlignment = Alignment.Center) {
-                    Caja3D(datosCaja(e, j, c), j, c, Modifier.fillMaxSize(0.86f), giroY = { -26f }, giroX = { -6f }, caras = e.extra.caras[j.clave], detalle = false)
+                Box(Modifier.width(if (compacta) esc.d(300) else if (grande) esc.d(150) else esc.d(210)).fillMaxHeight().padding(vertical = esc.d(if (compacta) 8 else 12)), contentAlignment = Alignment.Center) {
+                    Caja3D(datosCaja(e, j, c), j, c, Modifier.fillMaxSize(if (compacta) 0.94f else 0.86f), giroY = { -26f }, giroX = { -6f }, caras = e.extra.caras[j.clave], detalle = false)
                 }
             }
         }
@@ -230,62 +360,8 @@ private fun ChipVitrina(texto: String) {
     }
 }
 
-/** Filtros de la biblioteca (los mismos de Ajustes), tocando. */
-@Composable
-private fun FiltrosRiel(e: Estado) {
-    val esc = LocalEscala.current
-    val filtros = listOf("todos", "recientes", "favoritos", "sinjugar", "mas")
-    Row(Modifier.fillMaxWidth().height(esc.d(34)).padding(horizontal = esc.d(16)), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-        filtros.forEach { f ->
-            val act = e.filtro == f
-            Box(
-                Modifier.clip(RoundedCornerShape(50)).background(if (act) Color.White else Chip)
-                    .clickable { Diptico.elegirFiltro(f) }.padding(horizontal = esc.d(12), vertical = esc.d(4)),
-            ) { Texto(Diptico.nombreFiltro(f), 12f, color = if (act) Color(0xFF14141C) else Color(0xFFCFD2E6), familia = Nunito, peso = FontWeight.ExtraBold, lineas = 1) }
-        }
-    }
-}
 
-/** El estante: cajas en fila; la elegida sube y crece. Debajo, cuánto llevas (si se sabe cuánto dura). */
-@Composable
-private fun EstanteRiel(e: Estado, modifier: Modifier) {
-    val esc = LocalEscala.current
-    val lista = e.visibles
-    val estado = rememberLazyListState()
-    SideEffect { Teclas.columnasCuadricula = lista.size.coerceAtLeast(1) }
-    LaunchedEffect(e.indiceSel, lista.size) { if (lista.isNotEmpty()) estado.animateScrollToItem((e.indiceSel - 2).coerceAtLeast(0)) }
-    LazyRow(
-        state = estado, modifier = modifier.testTag("estante-riel"),
-        contentPadding = PaddingValues(horizontal = esc.d(16), vertical = esc.d(8)),
-        horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        itemsIndexed(lista, key = { _, j -> j.clave }) { i, j -> CajaEstante(e, j, i == e.indiceSel) }
-    }
-}
 
-@Composable
-private fun CajaEstante(e: Estado, j: Juego, elegido: Boolean) {
-    val esc = LocalEscala.current
-    val ancho by animateDpAsState(if (elegido) esc.d(100) else esc.d(80), label = "caja-ancho")
-    val alto by animateDpAsState(if (elegido) esc.d(130) else esc.d(104), label = "caja-alto")
-    val forma = RoundedCornerShape(esc.d(8))
-    val avance = avanceDe(e, j)
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier.width(ancho).height(alto)
-                .then(if (elegido) Modifier.shadow(esc.d(16), forma, ambientColor = Color(0xFFFF8C5A), spotColor = Color(0xFFFF8C5A)) else Modifier)
-                .clip(forma).background(Chip)
-                .then(if (elegido) Modifier.border(esc.d(3), Color.White, forma) else Modifier)
-                .clickable { if (elegido) Diptico.jugar() else Diptico.elegirJuego(j.clave) },
-        ) { ArteJuego(j, preferirArte = false, maxLado = 300, modifier = Modifier.fillMaxSize()) }
-        Spacer(Modifier.height(esc.d(4)))
-        Box(Modifier.width(ancho).height(esc.d(4)).clip(RoundedCornerShape(50)).background(if (avance != null) Color(0xFF262A47) else Color.Transparent)) {
-            if (avance != null) Box(Modifier.fillMaxWidth(avance).fillMaxHeight().background(if (avance >= 1f) Color(0xFF3EE08F) else Color(0xFFFFB454)))
-        }
-    }
-}
 
 /** Cuánto llevas de la historia (tu tiempo / lo que dura según HowLongToBeat), o null si no se sabe. */
 private fun avanceDe(e: Estado, j: Juego): Float? {
