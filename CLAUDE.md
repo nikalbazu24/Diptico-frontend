@@ -577,3 +577,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   X caja, Y difuminado, Select deshace, A/B/Start Listo. Entradas: Ficha › Personalizar (grupo «Lugar en la vitrina») y opciones › Personalizar.
   Carpeta abierta de vidrio más opaca (.62/.84) y velo .72; globito de DIPPO oculto con carpeta abierta. Traducciones `extras26.tsv` (siguiente: extras27). Capturas t421–t423.
 - El script de Drive: Nicolás pegó la URL /exec (es la misma de build.gradle); desde la sesión no se puede probar (script.google.com bloqueado).
+
+## PENDIENTE: Díptico según el equipo (12 nov, noche, Opus) — boceto esperando aprobación
+- Pedido: especializar según consola (1 o 2 pantallas, tele): nada de opciones de dos pantallas en una Odin 2 Portal; todo lo nuevo llevado a una pantalla;
+  accesible, estético, adaptable a TV. REGLA de Nicolás: **nada superpuesto** (cada parte en su franja) y **usar toda la pantalla**.
+- Base que ya existe: `estado/Equipo.kt` (`Equipos.detectar` → tipo dual/portatil/telefono/tablet/tele, gama, conMando) y `optimizarParaEquipo` (solo cambia vista/fluidez).
+- Boceto: lienzo 89jA5mf9RD9mHB2piJKk5k (Main = inicio en franjas: barra 44 · vitrina info+caja · consolas · juegos · pie; Carpetas; Ajustes con 3 columnas y
+  «Ocultas en este equipo»; Tele = modo sala; Jugando = volver a Díptico durante la partida con las herramientas de la pantalla compañera; Equipos = tabla).
+- Una pantalla hoy (capturas 20, 21, carpetas_una_horizontal_accesos): diseño viejo (barra «Díptico», DIPPO doble, consolas encima del texto).
