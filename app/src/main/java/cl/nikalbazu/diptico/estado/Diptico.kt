@@ -178,6 +178,8 @@ data class Dialogo(
     val no: String = "No",
     val mantener: Boolean = false,
     val peligro: Boolean = false,
+    /** Cuántas líneas del texto se ven (los informes largos piden más). */
+    val lineasTexto: Int = 6,
 )
 
 /** Personalización de una consola o de la carpeta Todo. */
