@@ -1559,6 +1559,21 @@ class Capturas {
     @Test fun t428_partida_en_curso() = foto("428_partida_en_curso", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false,
         sesion = Sesion("snes/1", System.currentTimeMillis() - 42 * 60_000, 0, false),
         extra = it.extra.copy(equipoTipo = "portatil", partidaPausa = System.currentTimeMillis(), partidaSel = 0)) }, Rol.UNICA)
+    private fun informePrueba(): Dialogo {
+        val inf = cl.nikalbazu.diptico.data.Biblioteca.Informe().apply {
+            porConsola["ps2"] = 14; porConsola["snes"] = 32; porConsola["psx"] = 9
+            enSubcarpetas = 6; juntados = 2; sinConsola += "Juegos varios"
+            omitir("God of War II.rar", "el formato .rar no es de PlayStation 2")
+            omitir("Extras/", "carpeta sin archivos de PlayStation 2")
+            omitir("manual.docx", "el formato .docx no es de PlayStation 2")
+        }
+        return Dialogo("informe-escaneo", "Encontré 55 juegos", Informes.resumen(55, 6, 49, 1, inf, 0, 2), Icono.BUSCAR,
+            lineas = Informes.lineas(inf), si = "Listo", no = "Cerrar")
+    }
+    @Test fun t432_informe_escaneo() = foto("432_informe_escaneo", base().copy(dialogo = informePrueba()), Rol.INFERIOR)
+    @Test fun t433_informe_escaneo_una() = foto("433_informe_escaneo_una", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, dialogo = informePrueba(), extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
+    @Test fun t434_teclado_seleccion_dedo() = foto("434_teclado_seleccion_dedo", base().copy(panel = Panel.CLAVE, textoPara = "asistente",
+        borrador = "¿Cómo paso el templo del agua?", cursor = 19, ancla = 13, teclaFila = 2, teclaCol = 3, extra = EstadoExtra(tecladoDedo = true)), Rol.SUPERIOR)
     @Test fun t429_ajustes_tres_columnas() = foto("429_ajustes_tres_columnas", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 1, extra = it.extra.copy(equipoTipo = "portatil", equipoNombre = "AYN Odin 2 Portal")) }, Rol.UNICA)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.

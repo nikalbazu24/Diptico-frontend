@@ -138,8 +138,7 @@ fun Diptico.varianteElegida() {
 /** Escribe una letra y suelta la mayúscula de una sola vez. */
 fun Diptico.escribirLetra(t: String) {
     val e = estado.value
-    escribir(t)
-    if (e.mayus && !e.simbolos && !e.extra.mayusFija && t != "." && t != "?" && t != "!") actualizar { it.copy(mayus = false) }
+    escribir(t, quitarMayus = e.mayus && !e.simbolos && !e.extra.mayusFija && t != "." && t != "?" && t != "!")
 }
 
 
@@ -158,15 +157,21 @@ fun Diptico.moverTecla(dx: Int, dy: Int) {
         }
     }
     if (dx != 0) c = (c + dx).mod(filas[f].size)
-    actualizar { it.copy(teclaFila = f, teclaCol = c.coerceIn(0, filas[f].size - 1)) }
+    actualizar { it.copy(teclaFila = f, teclaCol = c.coerceIn(0, filas[f].size - 1), extra = if (it.extra.tecladoDedo) it.extra.copy(tecladoDedo = false) else it.extra) }
 }
 
 
 /** Aprieta una tecla (con A sobre la elegida, o tocándola). */
-fun Diptico.pulsarTecla(fila: Int = estado.value.teclaFila, col: Int = estado.value.teclaCol) {
+/**
+ * Una tecla del teclado de Díptico. [dedo]: se tocó en la pantalla; el foco del mando no salta a esa tecla (antes
+ * quedaba marcada en morado y parecía pegada) y se esconde hasta que se vuelva a usar la cruceta.
+ */
+fun Diptico.pulsarTecla(fila: Int = estado.value.teclaFila, col: Int = estado.value.teclaCol, dedo: Boolean = false) {
     val e = estado.value
     val t = filasTeclado(e).getOrNull(fila)?.getOrNull(col) ?: return
-    if (fila != e.teclaFila || col != e.teclaCol) actualizar { it.copy(teclaFila = fila, teclaCol = col) }
+    if (dedo) { if (!e.extra.tecladoDedo) actualizar { it.copy(extra = it.extra.copy(tecladoDedo = true)) } }
+    else if (fila != e.teclaFila || col != e.teclaCol || e.extra.tecladoDedo)
+        actualizar { it.copy(teclaFila = fila, teclaCol = col, extra = it.extra.copy(tecladoDedo = false)) }
     pulsarValor(t)
     Sonidos.mover()
 }
@@ -213,17 +218,54 @@ fun Diptico.seleccion(e: Estado): IntRange {
 }
 
 
-fun Diptico.escribir(t: String) {
-    val e = estado.value
-    val sel = seleccion(e)
-    val c = cursorDe(e)
-    val (antes, despues) = if (!sel.isEmpty()) e.borrador.substring(0, sel.first) to e.borrador.substring(sel.last + 1)
-    else e.borrador.substring(0, c) to e.borrador.substring(c)
-    cambiarBorrador(antes + t + despues)
-    val nuevo = (antes.length + t.length).coerceAtMost(estado.value.borrador.length)
-    actualizar { it.copy(cursor = if (despues.isEmpty()) -1 else nuevo, ancla = null) }
-    // Después de un punto, la siguiente va con mayúscula.
-    if (t.trimEnd().let { it.endsWith(".") || it.endsWith("?") || it.endsWith("!") }) actualizar { it.copy(mayus = true) }
+/**
+ * Escribe [t] donde está el cursor (o en lugar de lo seleccionado). Todo en un solo cambio de estado: con varios
+ * seguidos, cada letra redibujaba la pantalla tres veces y al escribir rápido se notaba el retraso.
+ */
+fun Diptico.escribir(t: String, quitarMayus: Boolean = false) {
+    actualizar { e ->
+        val sel = seleccion(e)
+        val c = cursorDe(e)
+        val (antes, despues) = if (!sel.isEmpty()) e.borrador.substring(0, sel.first) to e.borrador.substring(sel.last + 1)
+        else e.borrador.substring(0, c) to e.borrador.substring(c)
+        val texto = (antes + t + despues).take(maxBorrador(e))
+        val nuevo = (antes.length + t.length).coerceAtMost(texto.length)
+        // Después de un punto, la siguiente va con mayúscula.
+        val punto = t.trimEnd().let { it.endsWith(".") || it.endsWith("?") || it.endsWith("!") }
+        e.copy(
+            borrador = texto, cursor = if (despues.isEmpty() || nuevo >= texto.length) -1 else nuevo, ancla = null,
+            mayus = when { punto -> true; quitarMayus -> false; else -> e.mayus },
+        )
+    }
+}
+
+/** Pone el cursor donde se tocó el texto ([i] = posición en el borrador). Con [extender], selecciona hasta ahí. */
+fun Diptico.ponerCursor(i: Int, extender: Boolean = false) {
+    actualizar { e ->
+        val c = i.coerceIn(0, e.borrador.length)
+        e.copy(cursor = if (c >= e.borrador.length) -1 else c, ancla = if (extender) e.ancla ?: cursorDe(e) else null)
+    }
+}
+
+/** Selecciona del carácter [desde] al [hasta] (arrastrar el dedo sobre el texto). */
+fun Diptico.seleccionarTexto(desde: Int, hasta: Int) {
+    actualizar { e ->
+        val a = desde.coerceIn(0, e.borrador.length)
+        val c = hasta.coerceIn(0, e.borrador.length)
+        e.copy(ancla = if (a == c) null else a, cursor = if (c >= e.borrador.length) -1 else c)
+    }
+}
+
+/** Selecciona la palabra que está en [i] (doble toque sobre el texto). */
+fun Diptico.seleccionarPalabra(i: Int) {
+    val b = estado.value.borrador
+    if (b.isEmpty()) return
+    val k = i.coerceIn(0, b.length - 1)
+    if (!b[k].isLetterOrDigit()) { ponerCursor(i); return }
+    var a = k; var z = k
+    while (a > 0 && b[a - 1].isLetterOrDigit()) a--
+    while (z < b.length && b[z].isLetterOrDigit()) z++
+    seleccionarTexto(a, z)
 }
 
 
@@ -290,16 +332,18 @@ fun Diptico.terminarTexto() {
 }
 
 
+/** Cuántas letras admite lo que se está escribiendo. */
+internal fun maxBorrador(e: Estado): Int = when {
+    e.panel != Panel.CLAVE -> 160
+    e.textoPara == "notas" -> 2000
+    e.textoPara == "tema_enlace" -> 600
+    e.textoPara == "discord_webhook" -> 300
+    e.textoPara == "titulo" -> 80
+    else -> 200
+}
+
 fun Diptico.cambiarBorrador(texto: String) {
-    val max = when {
-        estado.value.panel != Panel.CLAVE -> 160
-        estado.value.textoPara == "notas" -> 2000
-        estado.value.textoPara == "tema_enlace" -> 600
-        estado.value.textoPara == "discord_webhook" -> 300
-        estado.value.textoPara == "titulo" -> 80
-        else -> 200
-    }
-    actualizar { it.copy(borrador = texto.take(max)) }
+    actualizar { it.copy(borrador = texto.take(maxBorrador(it))) }
 }
 
 

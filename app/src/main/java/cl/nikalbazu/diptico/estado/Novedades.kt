@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "inicio-compacto-2.0-70"
-    const val NOMBRE = "Carpeta de vidrio y avisos de cajas"
+    const val ID = "cajas-para-siempre-2.0-71"
+    const val NOMBRE = "Cajas para siempre"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -530,12 +530,19 @@ object Novedades {
             Pagina("Díptico en la tele", "Con una consola de una pantalla, al conectarla a la tele por HDMI ahora se ve el modo sala en la tele (antes salía «modo una pantalla»). La consola sigue funcionando como mando.", Icono.PANTALLAS, 0xFF23C486),
             Pagina("Elige cualquier emulador", "En Ajustes › Juegos y emuladores tienes «Emulador de cada consola» y «Emulador de cada juego»: eliges de una lista con qué se abre cada uno. Si tu emulador no aparece (por ejemplo ARMSX2), búscalo como «Otra app».", Icono.EMULADOR, 0xFF7C6CFF),
         )),
-        Version(ID, "Inicio compacto y Ajustes nuevos", listOf(
+        Version("inicio-compacto-2.0-70", "Inicio compacto y Ajustes nuevos", listOf(
             Pagina("La caja manda", "En una pantalla, el inicio es más chico y ordenado: la barra de consolas es delgada, la caja 3D del juego se ve grande y abajo hay un estante de cajas.", Icono.JUGAR, 0xFFFF8A5C),
             Pagina("DIPPO en su lugar", "DIPPO queda fijo arriba con su mensaje al lado, sin globitos encima de nada. Tócalo para hablar con él.", Icono.BISA, 0xFF6FA8FF),
             Pagina("Dock que se esconde", "Tus apps fijadas van abajo a la derecha. Con «›» se esconden hacia el lado y queda solo la pestaña «‹ Apps».", Icono.APPS, 0xFF23C4A6),
             Pagina("Escala a tu gusto", "En Ajustes › Pantalla y estilo › Escala de la interfaz eliges qué tan grande se ve todo, de 70 % a 130 %. En automático, las portátiles de una pantalla ya vienen más chicas.", Icono.PANTALLAS, 0xFFFFB454),
             Pagina("Ajustes más claros", "Las opciones con pocas alternativas se cambian en su misma fila, con pastillas o con ◀ ▶, sin abrir nada. A la derecha, «Así se ve» te muestra lo que cambia.", Icono.AJUSTES, 0xFF7C6CFF),
+        )),
+        Version(ID, "Cajas para siempre", listOf(
+            Pagina("Tus cajas 3D se quedan", "Cada caja que baja Díptico ahora se guarda en el equipo, no en la memoria temporal. Se ven sin internet, después de reiniciar y después de actualizar, sin volver a bajarse.", Icono.PORTADA, 0xFFE0603A),
+            Pagina("Nada se pierde por una mala búsqueda", "Si buscas la caja original y no hay internet o no aparece, se queda la que tenías. Y la caja que armaste tú nunca se reemplaza sola.", Icono.INFO, 0xFFFFB547),
+            Pagina("Cajas en el respaldo", "El respaldo de Díptico ahora lleva tus cajas (primero las que armaste tú), sin tus claves de ScreenScraper.", Icono.DESCARGA, 0xFF2EC4A6),
+            Pagina("Juegos de PS2 en su carpeta", "Díptico ahora encuentra los juegos guardados cada uno en su propia carpeta (ps2/Juego/Juego.iso) y los .bin de PS2 que venían con un .cue. También reconoce carpetas como «PlayStation 2» o «Sony - PlayStation 2».", Icono.CARPETA, 0xFF3BA8FF),
+            Pagina("Te cuento qué encontré", "Ajustes › Biblioteca › Volver a buscar juegos ahora termina con un resumen: juegos nuevos, los que ya estaban, y qué archivos dejé fuera y por qué.", Icono.BUSCAR, 0xFF8B5CF6),
         )),
     )
 

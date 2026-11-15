@@ -392,6 +392,8 @@ data class EstadoExtra(
     /** Estado de las tres fuentes de la caja: comunidad, ScreenScraper, TheGamesDB ("" espera, "buscando", "hallada", "no", "sin"), y la fila marcada. */
     val cajaFuentes: List<String> = listOf("", "", ""),
     val cajaSel: Int = 0,
+    /** Se está escribiendo con el dedo: el foco del mando no se marca en el teclado (parecía una tecla pegada). */
+    val tecladoDedo: Boolean = false,
     /** Carpetas en modo edición (tiemblan y se pueden mover) y la que está tomada para moverla con la cruceta. */
     val ordenandoCarpetas: Boolean = false,
     val carpetaTomada: String? = null,
@@ -1132,6 +1134,7 @@ object Diptico {
         vigilarEmuladores()
         vigilarActualizaciones()
         vigilarLogrosDippo()
+        revisarCajasGuardadas()
         // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
         if (!estado.value.configurado) almacen.guardarTexto("novedadesVistas", Novedades.ID)
         // Recién actualizado: el tour sale al tiro, sin esperar la animación de entrada.
@@ -1500,7 +1503,8 @@ object Diptico {
 
     // ---------- Carpeta y biblioteca ----------
 
-    fun escanear() {
+    /** Vuelve a leer las carpetas de juegos. [informar]: al terminar explica qué encontró y qué dejó fuera (y por qué). */
+    fun escanear(informar: Boolean = false) {
         if (estado.value.escaneando) return
         actualizar { it.copy(escaneando = true) }
         trabajo("escaneo", "Buscando tus juegos")
@@ -1510,12 +1514,13 @@ object Diptico {
                     val carpetas = almacen.carpetas()
                     val media = almacen.media
                     val anterior = crudos
+                    val informe = if (informar) Biblioteca.Informe() else null
                     val (lista, fallas) = withContext(Dispatchers.IO) {
                         val anteriores = anterior.groupBy(::raizDe)
                         var fallas = 0
                         val juegos = carpetas.flatMap { carpeta ->
                             try {
-                                Biblioteca.escanear(app, carpeta.uri, media, carpeta.consola)
+                                Biblioteca.escanear(app, carpeta.uri, media, carpeta.consola, informe)
                             } catch (cancelado: CancellationException) {
                                 throw cancelado
                             } catch (_: Exception) {
@@ -1542,6 +1547,7 @@ object Diptico {
                         bajarIconosFaltantes()
                         identificarNombres()
                     }
+                    if (informe != null) mostrarInformeEscaneo(informe, anterior, lista, fallas, carpetas.size)
                     break
                 }
             } finally {
@@ -3549,8 +3555,9 @@ object Diptico {
                 Opcion("Buscar todo automático", icono = Icono.DESCARGA, ayuda = "Busca en internet portada, imagen grande y logo para este juego, de una vez.") { descargarUno(j) }.copy(grupo = "Más"),
                 Opcion("Volver a lo original", "Quita lo personalizado", Icono.BORRAR, ayuda = "Quita el título, las imágenes, la música y los encuadres propios de este juego.") {
                     cambiarDatos(j.clave) { it.copy(titulo = null, portada = null, arte = null, logo = null, musica = null) }
-                    actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras - j.clave)) }
-                    almacen.guardarTexto("carasCaja2", CarasGuardadas.escribir(estado.value.extra.caras))
+                    val cajaAntes = estado.value.extra.caras[j.clave]
+                    guardarCaras(j.clave, null)
+                    scope.launch(Dispatchers.IO) { CajasLocales.borrarSinUso(app, cajaAntes, estado.value.extra.caras.values) }
                     guardarEncuadres(estado.value.encuadres - "${j.clave}|portada" - "${j.clave}|arte")
                     avisar("Listo, ${j.titulo} volvió a como era")
                 },
@@ -5869,20 +5876,35 @@ object Diptico {
 
 
 
-/** Las caras reales de una caja que se encontraron en internet (enlaces) y cuándo se buscaron. */
-data class CarasGuardadas(val reverso: String?, val lomo: String?, val buscado: Long, val frente: String? = null) {
+/**
+ * Las caras de una caja 3D y cuándo se buscaron. Cada cara es un archivo propio de Díptico (file://, dentro de filesDir)
+ * o, solo mientras no se haya podido bajar, el enlace de internet. [origen]: "propia" (armada por la persona), "comunidad",
+ * "ss" (ScreenScraper), "tgdb" (TheGamesDB) o null (antigua). Las propias nunca se reemplazan solas.
+ */
+data class CarasGuardadas(
+    val reverso: String?, val lomo: String?, val buscado: Long, val frente: String? = null,
+    val origen: String? = null, val disco: String? = null,
+) {
+    val tiene: Boolean get() = frente != null || reverso != null || lomo != null || disco != null
+    val propia: Boolean get() = origen == "propia"
+    fun caras(): List<String> = listOfNotNull(frente, lomo, reverso, disco)
+
     companion object {
         fun leer(t: String): Map<String, CarasGuardadas> = try {
             val o = org.json.JSONObject(t.ifBlank { "{}" })
             o.keys().asSequence().associateWith { k ->
                 val v = o.getJSONObject(k)
-                CarasGuardadas(v.optString("r").ifBlank { null }, v.optString("l").ifBlank { null }, v.optLong("b"), v.optString("f").ifBlank { null })
+                CarasGuardadas(
+                    v.optString("r").ifBlank { null }, v.optString("l").ifBlank { null }, v.optLong("b"), v.optString("f").ifBlank { null },
+                    v.optString("o").ifBlank { null }, v.optString("d").ifBlank { null },
+                )
             }
         } catch (_: Exception) { emptyMap() }
 
         fun escribir(m: Map<String, CarasGuardadas>): String {
             val o = org.json.JSONObject()
-            for ((k, v) in m) o.put(k, org.json.JSONObject().put("r", v.reverso.orEmpty()).put("l", v.lomo.orEmpty()).put("b", v.buscado).put("f", v.frente.orEmpty()))
+            for ((k, v) in m) o.put(k, org.json.JSONObject().put("r", v.reverso.orEmpty()).put("l", v.lomo.orEmpty()).put("b", v.buscado)
+                .put("f", v.frente.orEmpty()).put("o", v.origen.orEmpty()).put("d", v.disco.orEmpty()))
             return o.toString()
         }
     }

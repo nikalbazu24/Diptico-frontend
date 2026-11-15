@@ -51,6 +51,13 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.zIndex
@@ -63,6 +70,8 @@ import androidx.compose.ui.zIndex
 fun TextoEscrito(
     valor: String, ejemplo: String, tam: Float = 17f, minAlto: Float = 36f, modifier: Modifier = Modifier,
     cursor: Int = -1, seleccion: IntRange = IntRange.EMPTY, oculto: Boolean = false,
+    /** Con el dedo sobre el texto: tocar pone el cursor, doble toque elige la palabra y arrastrar selecciona. */
+    alTocar: ((Int) -> Unit)? = null, alDobleToque: ((Int) -> Unit)? = null, alArrastrar: ((Int, Int) -> Unit)? = null,
 ) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
@@ -70,7 +79,35 @@ fun TextoEscrito(
     val brillo by t.animateFloat(1f, 0f, infiniteRepeatable(tween(520), RepeatMode.Reverse), label = "cursor")
     val c = if (cursor < 0 || cursor > valor.length) valor.length else cursor
     val mostrar = if (oculto && valor.length > 6) valor.take(4) + "•".repeat(valor.length - 4) else valor
-    Box(modifier.heightIn(min = esc.d(minAlto))) {
+    val diseno = remember { mutableStateOf<TextLayoutResult?>(null) }
+    // Lo dibujado lleva el cursor «▏» como una letra más: se descuenta para saber en qué letra cayó el dedo.
+    // Se leen al momento del toque (no al armar el gesto): así arrastrar no se corta cuando el cursor se mueve.
+    val conCursor by rememberUpdatedState(seleccion.isEmpty())
+    val cAhora by rememberUpdatedState(c)
+    val largo by rememberUpdatedState(valor.length)
+    fun letraEn(pos: Offset): Int {
+        val d = diseno.value ?: return largo
+        val k = d.getOffsetForPosition(pos)
+        return (if (conCursor && k > cAhora) k - 1 else k).coerceIn(0, largo)
+    }
+    val tocar by rememberUpdatedState(alTocar)
+    val dobleToque by rememberUpdatedState(alDobleToque)
+    val arrastrar by rememberUpdatedState(alArrastrar)
+    val tactil = if (alTocar == null && alArrastrar == null) Modifier else Modifier
+        .pointerInput(Unit) {
+            detectTapGestures(
+                onTap = { tocar?.invoke(letraEn(it)) },
+                onDoubleTap = { pos -> (dobleToque ?: tocar)?.invoke(letraEn(pos)) },
+            )
+        }
+        .pointerInput(Unit) {
+            var desde = 0
+            detectDragGestures(
+                onDragStart = { desde = letraEn(it) },
+                onDrag = { cambio, _ -> arrastrar?.invoke(desde, letraEn(cambio.position)) },
+            )
+        }
+    Box(modifier.heightIn(min = esc.d(minAlto)).then(tactil)) {
         if (valor.isEmpty()) Texto(ejemplo, tam, color = p.tenue, peso = FontWeight.Medium, modifier = Modifier.padding(start = esc.d(4)))
         val texto = buildAnnotatedString {
             for (i in 0..mostrar.length) {
@@ -83,6 +120,7 @@ fun TextoEscrito(
         BasicText(
             texto,
             style = TextStyle(color = p.tinta, fontSize = esc.s(tam), fontFamily = Fredoka, fontWeight = FontWeight.Medium, lineHeight = esc.s(tam * 1.35f)),
+            onTextLayout = { diseno.value = it },
         )
     }
 }
@@ -137,7 +175,11 @@ fun TecladoDiptico(e: Estado) {
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(20))).background(p.superficie)
                     .padding(horizontal = esc.d(14), vertical = esc.d(5)),
                 cursor = e.cursor - maxOf(0, e.borrador.length - 300).let { if (e.cursor < 0) 0 else it },
-                seleccion = sel, oculto = oculto,
+                seleccion = (maxOf(0, e.borrador.length - 300)).let { base -> if (sel.isEmpty()) sel else (sel.first - base).coerceAtLeast(0) until (sel.last + 1 - base) },
+                oculto = oculto,
+                alTocar = { i -> Diptico.ponerCursor(maxOf(0, e.borrador.length - 300) + i) },
+                alDobleToque = { i -> Diptico.seleccionarPalabra(maxOf(0, e.borrador.length - 300) + i) },
+                alArrastrar = { a, z -> val base = maxOf(0, e.borrador.length - 300); Diptico.seleccionarTexto(base + a, base + z) },
             )
             Spacer(Modifier.height(esc.d(4)))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(5))) {
@@ -161,12 +203,12 @@ private fun FranjaTeclado(e: Estado, fila: List<String>, modifier: Modifier) {
     val esc = LocalEscala.current
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         fila.forEachIndexed { c, t ->
-            val activa = e.teclaFila == 0 && c == e.teclaCol
+            val activa = !e.extra.tecladoDedo && e.teclaFila == 0 && c == e.teclaCol
             when {
                 t == "⋯" || t == "Voz" -> Box(
                     Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true).clip(CircleShape)
                         .then(if (activa) Modifier.fondoBoton(Uva) else if (t == "⋯" && e.extra.tecladoEdicion) Modifier.background(Uva.copy(alpha = 0.3f)) else Modifier)
-                        .clickable { Diptico.pulsarTecla(0, c) },
+                        .clickable { Diptico.pulsarTecla(0, c, dedo = true) },
                     contentAlignment = Alignment.Center,
                 ) {
                     IconoDiptico(if (t == "Voz") Icono.MICROFONO else Icono.MENU, if (activa) SobreUva else p.tinta, 17f, acento = if (activa) SobreUva else Coral)
@@ -176,7 +218,7 @@ private fun FranjaTeclado(e: Estado, fila: List<String>, modifier: Modifier) {
                     Box(
                         Modifier.weight(1f).fillMaxHeight().padding(horizontal = esc.d(2)).clip(RoundedCornerShape(esc.d(10)))
                             .then(if (activa) Modifier.fondoBoton(Uva) else Modifier)
-                            .clickable { Diptico.pulsarTecla(0, c) },
+                            .clickable { Diptico.pulsarTecla(0, c, dedo = true) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Texto(t.drop(1), 15f, color = if (activa) SobreUva else p.tinta, lineas = 1, traducir = false,
@@ -189,7 +231,7 @@ private fun FranjaTeclado(e: Estado, fila: List<String>, modifier: Modifier) {
                     Row(
                         Modifier.weight(1f).fillMaxHeight().padding(horizontal = esc.d(2)).clip(RoundedCornerShape(esc.d(10)))
                             .then(if (activa) Modifier.fondoBoton(Uva) else Modifier.background(if (marcada) Sol.copy(alpha = 0.5f) else p.superficie.copy(alpha = 0.6f)))
-                            .clickable { Diptico.pulsarTecla(0, c) },
+                            .clickable { Diptico.pulsarTecla(0, c, dedo = true) },
                         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (icono != null && !esc.angosta) {
@@ -212,7 +254,7 @@ private fun FranjaTeclado(e: Estado, fila: List<String>, modifier: Modifier) {
 private fun RowScope.Tecla(e: Estado, t: String, f: Int, c: Int) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val activa = f == e.teclaFila && c == e.teclaCol
+    val activa = !e.extra.tecladoDedo && f == e.teclaFila && c == e.teclaCol
     val funcion = t in setOf("⇧", "⌫", "?123", "abc", "✓", "␣") || t.length > 1
     val peso = when (t) { "␣" -> 4.6f; "✓", "?123", "abc" -> 1.5f; "⇧", "⌫" -> 1.45f; else -> 1f }
     val toque = remember { MutableInteractionSource() }
@@ -236,10 +278,10 @@ private fun RowScope.Tecla(e: Estado, t: String, f: Int, c: Int) {
                         when {
                             t == "⌫" -> Diptico.borrarPalabra()
                             Palabras.variante(t) != null -> Diptico.escribirLetra(Palabras.variante(t)!!)
-                            else -> Diptico.pulsarTecla(f, c)
+                            else -> Diptico.pulsarTecla(f, c, dedo = true)
                         }
                     },
-                ) { Diptico.pulsarTecla(f, c) },
+                ) { Diptico.pulsarTecla(f, c, dedo = true) },
             contentAlignment = Alignment.Center,
         ) {
             val color = if (activa || t == "✓") SobreUva else p.tinta
