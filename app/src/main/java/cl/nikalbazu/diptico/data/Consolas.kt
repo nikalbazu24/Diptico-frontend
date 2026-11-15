@@ -183,7 +183,7 @@ private val BONITOS = mapOf(
 
 /** Otros nombres de carpeta comunes (de otros frontends y de cómo la gente las nombra), para reconocer más consolas. */
 private val ALIAS = mapOf(
-    "psx" to listOf("ps1", "playstation", "playstation1"), "ps2" to listOf("playstation2"), "ps3" to listOf("playstation3"),
+    "psx" to listOf("ps1", "playstation", "playstation1", "sonyplaystation"), "ps2" to listOf("playstation2", "sonyplaystation2", "ps2roms", "ps2iso", "ps2isos"), "ps3" to listOf("playstation3"),
     "ps4" to listOf("playstation4"), "psp" to listOf("playstationportable"), "psvita" to listOf("vita", "psv"),
     "n3ds" to listOf("3ds", "nintendo3ds"), "nds" to listOf("ds", "nintendods"), "gba" to listOf("gameboyadvance"),
     "gbc" to listOf("gameboycolor"), "gb" to listOf("gameboy"), "snes" to listOf("supernintendo"),
@@ -327,7 +327,18 @@ object Consolas {
         indice ?: (todas.flatMap { c -> c.carpetas.drop(1).map { it.lowercase().replace(" ", "") to c } } +
             todas.map { c -> c.id.lowercase() to c }).toMap().also { indice = it }
 
-    fun porCarpeta(nombre: String): Consola? = porNombreCarpeta()[nombre.lowercase().replace(" ", "").trim()]
+    /**
+     * La consola de una carpeta por su nombre («ps2», «PlayStation 2»…). Si no calza tal cual, prueba sin guiones,
+     * guiones bajos ni puntos («Sony - PlayStation 2», «PS2_ISO»).
+     */
+    fun porCarpeta(nombre: String): Consola? {
+        val mapa = porNombreCarpeta()
+        val n = nombre.lowercase().replace(" ", "").trim()
+        mapa[n]?.let { return it }
+        val sinSignos = n.replace(Regex("[-_.]"), "")
+        if (sinSignos.isEmpty()) return null
+        return mapa[sinSignos] ?: mapa.entries.firstOrNull { it.key.replace(Regex("[-_.]"), "") == sinSignos }?.value
+    }
 
     fun porId(id: String): Consola? = todas.firstOrNull { it.id == id }
 

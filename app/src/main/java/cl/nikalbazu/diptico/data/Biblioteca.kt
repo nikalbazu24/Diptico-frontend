@@ -77,10 +77,42 @@ object Biblioteca {
         uri.lastPathSegment ?: "Carpeta"
     }
 
-    fun escanear(ctx: Context, arbol: Uri, media: Uri?, consolaFija: String? = null): List<Juego> {
+    /**
+     * Lo que encontró (y lo que dejó fuera) un escaneo, para explicarlo en «Volver a buscar juegos».
+     * Se llena solo si se pide; no cambia qué juegos se encuentran.
+     */
+    class Informe {
+        /** Juegos encontrados por consola (antes de juntar versiones repetidas). */
+        val porConsola = LinkedHashMap<String, Int>()
+        /** Archivos que no se agregaron y por qué (máximo [MAX_OMITIDOS]). */
+        val omitidos = ArrayList<Pair<String, String>>()
+        var totalOmitidos = 0
+        /** Carpetas de la raíz que no tienen nombre de consola. */
+        val sinConsola = ArrayList<String>()
+        /** Juegos que estaban en una subcarpeta (por ejemplo «ps2/God of War/God of War.iso»). */
+        var enSubcarpetas = 0
+        var juntados = 0
+
+        fun omitir(archivo: String, motivo: String) {
+            totalOmitidos++
+            if (omitidos.size < MAX_OMITIDOS) omitidos += archivo to motivo
+        }
+        companion object { const val MAX_OMITIDOS = 40 }
+    }
+
+    /**
+     * Consolas de disco (y Switch) donde mucha gente guarda cada juego en su propia carpeta:
+     * ahí se mira un nivel más adentro («ps2/Juego (USA)/Juego.iso»).
+     */
+    private val JUEGO_EN_SUBCARPETA = setOf(
+        "ps2", "psx", "psp", "gc", "wii", "dreamcast", "saturn", "segacd", "pcenginecd", "tg-cd", "3do", "pcfx",
+        "switch", "switch2", "n3ds", "nds", "atarijaguarcd", "neogeocd",
+    )
+
+    fun escanear(ctx: Context, arbol: Uri, media: Uri?, consolaFija: String? = null, informe: Informe? = null): List<Juego> {
         val raizId = DocumentsContract.getTreeDocumentId(arbol)
         val fija = consolaFija?.let { Consolas.porId(it) }
-        if (fija != null) return escanearConsolas(ctx, arbol, media, listOf(Doc(raizId, nombreDe(ctx, arbol, raizId) ?: fija.id, true) to fija))
+        if (fija != null) return escanearConsolas(ctx, arbol, media, listOf(Doc(raizId, nombreDe(ctx, arbol, raizId) ?: fija.id, true) to fija), informe)
         val raiz = listar(ctx, arbol, raizId)
 
         // Carpetas de consola dentro de la carpeta elegida...
@@ -91,11 +123,15 @@ object Biblioteca {
             val consola = nombreRaiz?.let { Consolas.porCarpeta(it) }
             if (consola != null) carpetasConsola += Doc(raizId, nombreRaiz, true) to consola
         }
+        if (informe != null && carpetasConsola.none { it.first.id == raizId }) {
+            raiz.filter { it.esCarpeta && !it.nombre.startsWith(".") && carpetasConsola.none { c -> c.first.id == it.id } }
+                .forEach { informe.sinConsola += it.nombre }
+        }
 
-        return escanearConsolas(ctx, arbol, media, carpetasConsola)
+        return escanearConsolas(ctx, arbol, media, carpetasConsola, informe)
     }
 
-    private fun escanearConsolas(ctx: Context, arbol: Uri, media: Uri?, carpetasConsola: List<Pair<Doc, Consola>>): List<Juego> {
+    private fun escanearConsolas(ctx: Context, arbol: Uri, media: Uri?, carpetasConsola: List<Pair<Doc, Consola>>, informe: Informe? = null): List<Juego> {
         if (carpetasConsola.isEmpty()) return emptyList()
         val mediaRaiz = media?.let { listarMedios(ctx, it) }
         val juegos = mutableListOf<Juego>()
@@ -131,63 +167,105 @@ object Biblioteca {
                 }
             }
 
-            val indices = leerIndices(ctx, arbol, hijos)
-            val pistas = indices.values.flatten().mapTo(HashSet()) { it.lowercase(java.util.Locale.ROOT) }
-            val archivos = hijos.filterNot { it.esCarpeta }.groupBy { it.nombre.lowercase(java.util.Locale.ROOT) }
-
-            for (f in hijos) {
-                // Fan games de RPG Maker: la carpeta es un juego solo si trae Game.ini (o Game.exe / mkxp.json).
-                if (f.esCarpeta && consola.id == Consolas.RPGMAKER) {
-                    val n = f.nombre.lowercase()
-                    if (n in CARPETAS_PORTADAS || n == "media" || n.startsWith(".")) continue
-                    rpgMaker(ctx, arbol, f, consola, portadas, artes)?.let { juegos += it }
-                    continue
-                }
-                if (f.esCarpeta) {
-                    // Juegos en carpeta: PS3/Wii U/Xbox 360, o una carpeta con extensión ("Juego.ps3"), como en ES-DE.
-                    val n = f.nombre.lowercase()
-                    val conExtension = n.substringAfterLast('.', "").let { it.isNotEmpty() && it in consola.extensiones }
-                    if ((consola.carpetasSonJuegos || conExtension) && n !in CARPETAS_PORTADAS && n != "media" && !n.startsWith(".")) {
-                        juegos += Juego(
-                            clave = consola.id + "/" + f.nombre,
-                            consolaId = consola.id,
-                            titulo = limpiarTitulo(f.nombre),
-                            archivo = f.nombre,
-                            uri = DocumentsContract.buildDocumentUriUsingTree(arbol, f.id),
-                            docId = f.id,
-                            portada = portadas[n],
-                            arte = artes[n],
-                            esCarpeta = true,
-                        )
-                    }
-                    continue
-                }
-                val ext = f.nombre.substringAfterLast('.', "").lowercase()
-                if (ext !in consola.extensiones) continue
-                // Solo se ocultan archivos que un índice de esta carpeta menciona por nombre.
-                if (ext in setOf("bin", "img") && f.nombre.lowercase(java.util.Locale.ROOT) in pistas) continue
-                if (f.nombre.startsWith(".")) continue
-                val base = f.nombre.substringBeforeLast('.')
-                val discos = if (ext == "m3u") indices[f.id].orEmpty().mapNotNull { nombre ->
-                    val doc = archivos[nombre.lowercase(java.util.Locale.ROOT)]?.singleOrNull() ?: return@mapNotNull null
-                    if (doc.id == f.id || doc.nombre.substringAfterLast('.').lowercase() !in consola.extensiones) return@mapNotNull null
-                    VarianteJuego(doc.nombre, DocumentsContract.buildDocumentUriUsingTree(arbol, doc.id), doc.id, false)
-                } else emptyList()
-                juegos += Juego(
-                    clave = consola.id + "/" + f.nombre,
-                    consolaId = consola.id,
-                    titulo = limpiarTitulo(base),
-                    archivo = f.nombre,
-                    uri = DocumentsContract.buildDocumentUriUsingTree(arbol, f.id),
-                    docId = f.id,
-                    portada = portadas[base.lowercase()],
-                    arte = artes[base.lowercase()],
-                    variantes = discos,
-                )
-            }
+            val antes = juegos.size
+            juegos += juegosDe(ctx, arbol, hijos, consola, portadas, artes, informe, profundo = consola.id in JUEGO_EN_SUBCARPETA)
+            informe?.porConsola?.merge(consola.id, juegos.size - antes, Int::plus)
         }
-        return sinDuplicados(juegos).sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
+        val unicos = sinDuplicados(juegos)
+        informe?.let { it.juntados += juegos.size - unicos.size }
+        return unicos.sortedWith(compareBy<Juego>({ Consolas.orden(it.consolaId) }, { it.titulo.lowercase() }))
     }
+
+    /**
+     * Los juegos de una carpeta de consola ([hijos]). Con [profundo], una subcarpeta que no es de imágenes y trae
+     * archivos de la consola también cuenta (un nivel, sin bajar más), con su propio .cue/.m3u.
+     */
+    private fun juegosDe(
+        ctx: Context, arbol: Uri, hijos: List<Doc>, consola: Consola, portadas: Map<String, Uri>, artes: Map<String, Uri>,
+        informe: Informe?, profundo: Boolean, prefijo: String = "",
+    ): List<Juego> {
+        val juegos = ArrayList<Juego>()
+        val indices = leerIndices(ctx, arbol, hijos)
+        // Solo se ocultan pistas (.bin/.img) que nombra un índice que SÍ es un formato de esta consola: así un juego
+        // de PS2 en .bin + .cue (y la PS2 no abre .cue) sigue apareciendo por su .bin, en vez de desaparecer entero.
+        val extDe = hijos.associate { it.id to it.nombre.substringAfterLast('.', "").lowercase(java.util.Locale.ROOT) }
+        val pistas = indices.filterKeys { extDe[it] in consola.extensiones }.values.flatten()
+            .mapTo(HashSet()) { it.lowercase(java.util.Locale.ROOT) }
+        val archivos = hijos.filterNot { it.esCarpeta }.groupBy { it.nombre.lowercase(java.util.Locale.ROOT) }
+
+        for (f in hijos) {
+            // Fan games de RPG Maker: la carpeta es un juego solo si trae Game.ini (o Game.exe / mkxp.json).
+            if (f.esCarpeta && consola.id == Consolas.RPGMAKER) {
+                val n = f.nombre.lowercase()
+                if (n in CARPETAS_PORTADAS || n == "media" || n.startsWith(".")) continue
+                rpgMaker(ctx, arbol, f, consola, portadas, artes)?.let { juegos += it }
+                continue
+            }
+            if (f.esCarpeta) {
+                // Juegos en carpeta: PS3/Wii U/Xbox 360, o una carpeta con extensión ("Juego.ps3"), como en ES-DE.
+                val n = f.nombre.lowercase()
+                if (n in CARPETAS_PORTADAS || n == "media" || n.startsWith(".")) continue
+                val conExtension = n.substringAfterLast('.', "").let { it.isNotEmpty() && it in consola.extensiones }
+                if (consola.carpetasSonJuegos || conExtension) {
+                    juegos += Juego(
+                        clave = consola.id + "/" + prefijo + f.nombre,
+                        consolaId = consola.id,
+                        titulo = limpiarTitulo(f.nombre),
+                        archivo = f.nombre,
+                        uri = DocumentsContract.buildDocumentUriUsingTree(arbol, f.id),
+                        docId = f.id,
+                        portada = portadas[n],
+                        arte = artes[n],
+                        esCarpeta = true,
+                    )
+                } else if (profundo && prefijo.isEmpty()) {
+                    val dentro = try { listar(ctx, arbol, f.id) } catch (_: Exception) { emptyList() }
+                    val propios = HashMap(portadas).apply { juntarImagenes(arbol, dentro, this) }
+                    // La portada de la carpeta («ps2/covers/God of War (USA).png») también sirve para el juego de adentro.
+                    portadas[n]?.let { p -> dentro.filterNot { it.esCarpeta }.forEach { propios.putIfAbsent(it.nombre.substringBeforeLast('.').lowercase(), p) } }
+                    val hallados = juegosDe(ctx, arbol, dentro, consola, propios, artes, informe, profundo = false, prefijo = f.nombre + "/")
+                    if (hallados.isEmpty()) informe?.omitir(f.nombre + "/", "carpeta sin archivos de ${consola.bonito}")
+                    informe?.let { it.enSubcarpetas += hallados.size }
+                    juegos += hallados
+                } else informe?.omitir(f.nombre + "/", "subcarpeta: en ${consola.bonito} los juegos van sueltos en la carpeta de la consola")
+                continue
+            }
+            val ext = f.nombre.substringAfterLast('.', "").lowercase()
+            if (f.nombre.startsWith(".")) continue
+            if (ext !in consola.extensiones) {
+                // Imágenes, partidas y archivos de texto no son juegos: no hace falta explicarlos.
+                if (ext !in NO_SON_JUEGOS && informe != null) informe.omitir(prefijo + f.nombre,
+                    if (ext.isEmpty()) "no tiene extensión" else "el formato .$ext no es de ${consola.bonito}")
+                continue
+            }
+            // Solo se ocultan archivos que un índice de esta carpeta menciona por nombre.
+            if (ext in setOf("bin", "img") && f.nombre.lowercase(java.util.Locale.ROOT) in pistas) continue
+            val base = f.nombre.substringBeforeLast('.')
+            val discos = if (ext == "m3u") indices[f.id].orEmpty().mapNotNull { nombre ->
+                val doc = archivos[nombre.lowercase(java.util.Locale.ROOT)]?.singleOrNull() ?: return@mapNotNull null
+                if (doc.id == f.id || doc.nombre.substringAfterLast('.').lowercase() !in consola.extensiones) return@mapNotNull null
+                VarianteJuego(doc.nombre, DocumentsContract.buildDocumentUriUsingTree(arbol, doc.id), doc.id, false)
+            } else emptyList()
+            juegos += Juego(
+                clave = consola.id + "/" + prefijo + f.nombre,
+                consolaId = consola.id,
+                titulo = limpiarTitulo(base),
+                archivo = f.nombre,
+                uri = DocumentsContract.buildDocumentUriUsingTree(arbol, f.id),
+                docId = f.id,
+                portada = portadas[base.lowercase()],
+                arte = artes[base.lowercase()],
+                variantes = discos,
+            )
+        }
+        return juegos
+    }
+
+    /** Lo que suele haber junto a los juegos y no hace falta mencionar al explicar un escaneo. */
+    private val NO_SON_JUEGOS = setOf(
+        "png", "jpg", "jpeg", "webp", "gif", "bmp", "txt", "nfo", "xml", "json", "ini", "cfg", "dat", "sav", "srm", "state",
+        "mcr", "mcd", "ps2", "db", "md", "pdf", "url", "sfv", "md5", "sha1", "log", "lnk", "ds_store", "cue", "gdi", "ccd", "sub",
+    )
 
     private fun leerIndices(ctx: Context, arbol: Uri, hijos: List<Doc>): Map<String, List<String>> {
         val tienePistas = hijos.any { !it.esCarpeta && it.nombre.substringAfterLast('.', "").lowercase() in setOf("bin", "img") }

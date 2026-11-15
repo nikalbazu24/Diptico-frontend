@@ -119,8 +119,11 @@ private fun Diptico.fuentesCaja(a: String, b: String, c: String) {
     actualizar { it.copy(extra = it.extra.copy(cajaFuentes = listOf(a, b, c))) }
 }
 
-/** Busca la caja mostrando el estado de cada fuente: comunidad → ScreenScraper → TheGamesDB. */
-fun Diptico.buscarCajaPantalla(clave: String) {
+/**
+ * Busca la caja mostrando el estado de cada fuente: comunidad → ScreenScraper → TheGamesDB.
+ * Al abrir la pantalla ([explicito] false) no reemplaza una caja armada por la persona; con «Buscar de nuevo», sí.
+ */
+fun Diptico.buscarCajaPantalla(clave: String, explicito: Boolean = false) {
     val e = estado.value
     val j = e.juegosPorClave[clave] ?: return
     val c = e.raspadores
@@ -128,15 +131,13 @@ fun Diptico.buscarCajaPantalla(clave: String) {
     val tg = c.conTgdb
     scope.launch {
         fuentesCaja("buscando", "", "")
-        val enComunidad = runCatching { cajaDeLaComunidad(clave) }.getOrDefault(false)
+        // La persona abrió la pantalla de la caja: mira la comunidad, pero no reemplaza sola la caja que ella armó.
+        val propia = !explicito && estado.value.extra.caras[clave]?.propia == true
+        val enComunidad = !propia && runCatching { cajaDeLaComunidad(clave, respetarPropia = !explicito) }.getOrDefault(false)
         if (enComunidad) { fuentesCaja("hallada", "", ""); return@launch }
-        fuentesCaja(if (CajasComunidad.disponible) "no" else "sin", if (ss) "buscando" else "sin", if (tg) "buscando" else "sin")
-        if (!ss && !tg) return@launch
-        val r = withContext(Dispatchers.IO) { runCatching { Raspadores.caras(c, j.titulo, j.archivo, j.consolaId) }.getOrNull() }
-        val hallada = r != null && (r.frente != null || r.reverso != null)
-        val g = CarasGuardadas(r?.reverso, r?.lomo, System.currentTimeMillis(), r?.frente)
-        actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras + (clave to g))) }
-        almacen.guardarTexto("carasCaja2", CarasGuardadas.escribir(estado.value.extra.caras))
+        fuentesCaja(if (CajasComunidad.disponible) "no" else "sin", if (ss && !propia) "buscando" else "sin", if (tg && !propia) "buscando" else "sin")
+        if ((!ss && !tg) || propia) return@launch
+        val hallada = cajaDeInternet(clave, explicito = explicito)
         fuentesCaja(
             if (CajasComunidad.disponible) "no" else "sin",
             if (!ss) "sin" else if (hallada) "hallada" else "no",
@@ -151,7 +152,7 @@ fun Diptico.usarCajaJuego(fila: Int = estado.value.extra.cajaSel) {
     actualizar { it.copy(extra = it.extra.copy(cajaSel = fila)) }
     when (fila) {
         0 -> armarCajaConImagen(clave)
-        1 -> buscarCajaPantalla(clave)
+        1 -> buscarCajaPantalla(clave, explicito = true)
         2 -> { quitarCajaPropia(clave); cerrarCajaJuego() }
         else -> cerrarCajaJuego()
     }

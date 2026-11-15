@@ -71,37 +71,49 @@ fun Diptico.pedirDuracion(clave: String, alTerminar: ((CuantoDura.Duracion?) -> 
 
 
 /**
- * Busca el reverso y el lomo reales de la caja (solo con ScreenScraper o TheGamesDB conectados). Se pregunta una
- * vez por juego; si no aparece, se vuelve a intentar a la semana. Sin fuentes, la caja usa el reverso armado con la ficha.
+ * Busca la caja real del juego (comunidad, después ScreenScraper o TheGamesDB) y la deja guardada en el equipo.
+ * Automática: nunca toca una caja armada por la persona, y si la caja ya tiene caras espera 30 días para volver a
+ * mirar (2 días si nunca se encontró nada). [forzar] = la persona lo pidió: busca igual y, si no encuentra, conserva la de antes.
  */
 fun Diptico.pedirCaras(clave: String, forzar: Boolean = false) {
     val e = estado.value
     val c = e.raspadores
     val conRaspadores = c.screenscraper || c.conTgdb
     if (!conRaspadores && !CajasComunidad.disponible) return
-    val j = e.juegosPorClave[clave] ?: return
+    if (e.juegosPorClave[clave] == null) return
     val ya = e.extra.caras[clave]
-    if (!forzar && ya != null && ((ya.reverso != null && ya.frente != null) || System.currentTimeMillis() - ya.buscado < 2 * 86_400_000L)) return
+    if (!forzar && ya != null) {
+        if (ya.propia) return
+        val completa = ya.reverso != null && ya.frente != null
+        val espera = if (ya.tiene) 30L * 86_400_000L else 2L * 86_400_000L
+        if (completa || System.currentTimeMillis() - ya.buscado < espera) return
+    }
     if (!buscandoCaras.add(clave)) return
     scope.launch {
-        // Primero la comunidad (cajas armadas o escaneadas por otras personas), después ScreenScraper y TheGamesDB.
-        if (runCatching { cajaDeLaComunidad(clave) }.getOrDefault(false)) {
+        try {
+            // Primero la comunidad (cajas armadas o escaneadas por otras personas), después ScreenScraper y TheGamesDB.
+            if (runCatching { cajaDeLaComunidad(clave, respetarPropia = !forzar) }.getOrDefault(false)) {
+                if (forzar) avisar("¡Encontré la caja en la comunidad!")
+                return@launch
+            }
+            if (!conRaspadores) {
+                val ahora = System.currentTimeMillis()
+                guardarCaras(clave, (estado.value.extra.caras[clave] ?: CarasGuardadas(null, null, ahora)).copy(buscado = ahora))
+                if (forzar) avisar(
+                    if (estado.value.extra.caras[clave]?.tiene == true) "No está en la comunidad. Conservé la caja que tenías"
+                    else "No está en la comunidad todavía. Puedes armarla tú con «Armar la caja con una imagen»"
+                )
+                return@launch
+            }
+            val hallada = cajaDeInternet(clave, explicito = forzar)
+            if (forzar) avisar(when {
+                hallada -> "Listo, encontré la caja"
+                estado.value.extra.caras[clave]?.tiene == true -> "No encontré otra caja. Conservé la que tenías"
+                else -> "No encontré la caja de este juego"
+            })
+        } finally {
             buscandoCaras.remove(clave)
-            if (forzar) avisar("¡Encontré la caja en la comunidad!")
-            return@launch
         }
-        if (!conRaspadores) {
-            buscandoCaras.remove(clave)
-            val g = CarasGuardadas(null, null, System.currentTimeMillis(), null)
-            actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras + (clave to g))) }
-            if (forzar) avisar("No está en la comunidad todavía. Puedes armarla tú con «Armar la caja con una imagen»")
-            return@launch
-        }
-        val r = withContext(Dispatchers.IO) { runCatching { cl.nikalbazu.diptico.data.Raspadores.caras(c, j.titulo, j.archivo, j.consolaId) }.getOrNull() }
-        buscandoCaras.remove(clave)
-        val g = CarasGuardadas(r?.reverso, r?.lomo, System.currentTimeMillis(), r?.frente)
-        actualizar { it.copy(extra = it.extra.copy(caras = it.extra.caras + (clave to g))) }
-        almacen.guardarTexto("carasCaja2", CarasGuardadas.escribir(estado.value.extra.caras))
     }
 }
 

@@ -19,7 +19,9 @@ object Respaldo {
     private const val PREFS = "diptico"
     private const val LIMITE_ZIP = 128L * 1024 * 1024
     private const val LIMITE_AJUSTES = 8L * 1024 * 1024
-    private const val LIMITE_ENTRADAS = 2_048
+    private const val LIMITE_ENTRADAS = 8_192
+    /** Arte de cajas 3D que entra en el respaldo (el resto se vuelve a buscar solo en el equipo nuevo). */
+    private const val TOPE_CAJAS = 64L * 1024 * 1024
     private val descartar = object : OutputStream() {
         override fun write(b: Int) = Unit
         override fun write(b: ByteArray, off: Int, len: Int) = Unit
@@ -39,6 +41,8 @@ object Respaldo {
 
     /** Carpetas que también viajan en el respaldo: copias manuales de partidas y la música de los temas instalados. */
     private val CARPETAS_EXTRA = listOf("copias-partida", "temas-comunidad", cl.nikalbazu.diptico.data.RespaldoPartidas.CARPETA)
+    /** Lo que se acepta al restaurar: lo de arriba más el arte de las cajas 3D. */
+    private val CARPETAS_RESTAURABLES = CARPETAS_EXTRA + CajasLocales.CARPETAS
 
     /** Ruta relativa segura (sin «..», sin ocultos, hasta 3 niveles). */
     private fun rutaSegura(ruta: String): Boolean {
@@ -72,7 +76,14 @@ object Respaldo {
 
     @Synchronized
     fun escribir(ctx: Context, salida: OutputStream): Int {
-        val ajustes = codificar(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all)
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all
+        // Cajas 3D: van sus archivos (las armadas por la persona primero) y la lista sin enlaces de internet,
+        // que pueden llevar las claves de ScreenScraper. Las rutas van relativas para que sirvan en otro equipo.
+        val textoCajas = prefs["carasCaja2"] as? String
+        val cajas = if (textoCajas == null) emptyList() else try { CajasLocales.archivosParaRespaldo(ctx, textoCajas, TOPE_CAJAS) } catch (_: Exception) { emptyList() }
+        val base = ctx.filesDir.path.trimEnd('/') + "/"
+        val incluidos = cajas.map { it.path.removePrefix(base) }.toSet()
+        val ajustes = codificar(if (textoCajas == null) prefs else prefs + ("carasCaja2" to CajasLocales.paraRespaldo(ctx, textoCajas, incluidos)))
         ZipOutputStream(salida).use { zip ->
             zip.putNextEntry(ZipEntry("ajustes.json"))
             zip.write(ajustes.toString().toByteArray())
@@ -95,6 +106,13 @@ object Respaldo {
                     f.inputStream().use { it.copyTo(zip) }
                     zip.closeEntry()
                 }
+            }
+            for (f in cajas) {
+                val rel = f.path.removePrefix(base)
+                if (!rutaSegura(rel)) continue
+                zip.putNextEntry(ZipEntry("extras/$rel"))
+                f.inputStream().use { it.copyTo(zip) }
+                zip.closeEntry()
             }
         }
         return ajustes.length()
@@ -169,7 +187,7 @@ object Respaldo {
                         val rel = resto.substringAfter('/', "")
                         if (e.isDirectory || rel.isBlank()) copiarLimitado(zip, descartar, 0)
                         else {
-                            require(carpeta in CARPETAS_EXTRA && rutaSegura(rel))
+                            require(carpeta in CARPETAS_RESTAURABLES && rutaSegura(rel))
                             val destino = File(extras, "$carpeta/$rel").apply { parentFile?.mkdirs() }
                             destino.outputStream().use { copiarLimitado(zip, it, limite) }
                         }

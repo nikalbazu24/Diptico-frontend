@@ -759,8 +759,8 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
             }
             lista += Opcion(
                 "Volver a buscar juegos", if (e.escaneando) "Buscando…" else "${e.juegos.size} juegos", Icono.BUSCAR,
-                "Úsalo cuando agregues juegos nuevos a tu carpeta.",
-            ) { escanear() }
+                "Úsalo cuando agregues juegos nuevos a tu carpeta. Al terminar te cuento qué encontré y qué archivos dejé fuera, y por qué.",
+            ) { escanear(informar = true) }
             val ocultos = e.datos.count { it.value.oculto }
             lista += Opcion(
                 "Juegos ocultos", if (ocultos == 0) "Ninguno" else "$ocultos", Icono.OCULTAR,

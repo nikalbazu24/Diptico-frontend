@@ -95,10 +95,22 @@ object CajasComunidad {
             val url = URL(BuildConfig.REPORTES_URL + "?caja=" + URLEncoder.encode(clave, "UTF-8"))
             val r = JSONObject(pedir(url, null))
             if (!r.optBoolean("ok")) return null
+            // Cada cara se escribe aparte y se revisa antes de reemplazar la anterior (nunca queda una imagen a medias).
+            // El nombre lleva una huella del contenido: si la caja cambió, es otro archivo (y no se ve la vieja de la memoria).
             fun cara(nombre: String): File? = r.optString(nombre).takeIf { it.isNotBlank() }?.let { b ->
-                File(destino, "$nombre.jpg").apply { writeBytes(Base64.decode(b, Base64.DEFAULT)) }
+                val bytes = Base64.decode(b, Base64.DEFAULT)
+                val huella = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).take(5).joinToString("") { "%02x".format(it) }
+                val f = File(destino, "$nombre-$huella.jpg")
+                if (f.isFile && f.length() == bytes.size.toLong()) return@let f
+                val tmp = File(destino, "$nombre.tmp")
+                tmp.writeBytes(bytes)
+                if (!CajasLocales.esImagen(tmp) || !tmp.renameTo(f)) { tmp.delete(); null } else f
             }
-            Caras(cara("frente"), cara("lomo"), cara("reverso")).takeIf { !it.vacia }
+            val caras = Caras(cara("frente"), cara("lomo"), cara("reverso")).takeIf { !it.vacia } ?: return null
+            // Las versiones viejas de esta misma caja (otra huella) ya no sirven.
+            val nuevas = setOfNotNull(caras.frente, caras.lomo, caras.reverso).map { it.name }.toSet()
+            destino.listFiles()?.filter { it.isFile && it.name !in nuevas }?.forEach { it.delete() }
+            caras
         } catch (_: Exception) { null }
     }
 
