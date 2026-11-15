@@ -123,7 +123,7 @@ class CajasLocalesTest {
         assertFalse("secreto" in ajustes)
         assertFalse("screenscraper" in ajustes)
         val lista = org.json.JSONObject(ajustes).getJSONObject("carasCaja2").getString("v")
-        assertTrue("local:cajas/ps2-gow-1/frente.jpg" in lista)
+        assertEquals("local:cajas/ps2-gow-1/frente.jpg", CarasGuardadas.leer(lista)["ps2/gow.iso"]?.frente)
 
         // Restaurar en un equipo «limpio»: vuelven los archivos y las rutas apuntan a este equipo.
         File(ctx.filesDir, "cajas").deleteRecursively()
