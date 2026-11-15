@@ -1568,7 +1568,7 @@ class Capturas {
             omitir("manual.docx", "el formato .docx no es de PlayStation 2")
         }
         return Dialogo("informe-escaneo", "Encontré 55 juegos", Informes.resumen(55, 6, 49, 1, inf, 0, 2), Icono.BUSCAR,
-            lineas = Informes.lineas(inf), si = "Listo", no = "Cerrar")
+            lineas = Informes.lineas(inf), si = "Listo", no = "Cerrar", lineasTexto = 10)
     }
     @Test fun t432_informe_escaneo() = foto("432_informe_escaneo", base().copy(dialogo = informePrueba()), Rol.INFERIOR)
     @Test fun t433_informe_escaneo_una() = foto("433_informe_escaneo_una", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, dialogo = informePrueba(), extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
