@@ -607,3 +607,20 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Ajustes: pastillas en la fila, ◀ ▶ cambian sin abrir (`cambiarEnFila`), «N ajustes ocultos en este equipo» en la 3.ª columna.
 - Emuladores: «Emulador de cada consola» / «Emulador de cada juego» en Juegos y emuladores (`DipticoEmuladores.kt`, «Otra app» = `appComoEmulador`).
 - Tele por HDMI en equipos de una pantalla (`buscarTele`, `InferiorActivity`: equipoTipo != "dual"). Traducciones siguiente: extras31.
+## Cajas para siempre + PS2 (15 nov, rama `fix/cajas-para-siempre`, Opus; Novedades `cajas-para-siempre-2.0-71`)
+- Encargo grande de Nicolás (Vitrina 3D, Estudio de Cajas, DIPPO conversacional, temas, notificaciones, etc., bloques A–F). Esta entrega:
+  solo lo crítico que no necesita boceto. Lo de diseño (Estudio de Cajas, modos de vitrina, temas/tienda, notificaciones) espera boceto.
+- Causas de que las cajas se perdieran: caras de ScreenScraper/TheGamesDB guardadas como ENLACES (la imagen vivía en `cacheDir/web`, que
+  Android vacía) y con las claves de ScreenScraper dentro (iban al respaldo); una búsqueda fallida/sin red pisaba la caja con nulos;
+  `buscarCajaOriginal` borraba antes de buscar; la comunidad reemplazaba la caja armada por la persona; `cajas/` no iba en el respaldo.
+- `estado/CajasLocales.kt`: caras en `filesDir/cajas-guardadas/<sha>/` (atómico + `esImagen`), `combinar` (nunca borra), `rebasar`
+  (rutas `local:` del respaldo, suelta las que faltan), `paraRespaldo` (sin enlaces), `archivosParaRespaldo` (propias primero, 64 MB),
+  `borrarSinUso` (rutas canónicas: /data/user/0 es enlace). `CarasGuardadas.origen` ("propia", "comunidad", "internet") y `disco`.
+  `DipticoCajas.kt`: `guardarCaras`, `revisarCajasGuardadas` (en `iniciar`), `bajarCarasPendientes`, `cajaDeInternet(explicito)`.
+- Biblioteca: `Biblioteca.Informe` + `juegosDe(profundo)`: juegos en subcarpeta para consolas de disco/Switch (`JUEGO_EN_SUBCARPETA`,
+  clave "ps2/Carpeta/archivo"), los .bin solo se ocultan si el índice (.cue) es formato de la consola (PS2 no tiene .cue → antes
+  desaparecían), `Consolas.porCarpeta` prueba sin -_. y alias PS2. «Volver a buscar juegos» → `escanear(informar = true)` → diálogo.
+- Teclado: tocar/arrastrar en `TextoEscrito`, `escribir` en un solo `actualizar`, `extra.tecladoDedo` esconde el foco del mando al tocar.
+- OJO: otra sesión empujó a main el 15 nov 20:07 (beta 2.0-70 «inicio compacto»). Revisar main antes de fusionar.
+- Canal privado: NO existe. El repo es público (ramas y artefactos de Actions incluidos). Para uno privado Nicolás debe crear un repo privado.
+- Traducciones `extras31.tsv` (siguiente: extras32). Test `CajasLocalesTest` (agregado al CI).
