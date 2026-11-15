@@ -392,6 +392,8 @@ data class EstadoExtra(
     /** Estado de las tres fuentes de la caja: comunidad, ScreenScraper, TheGamesDB ("" espera, "buscando", "hallada", "no", "sin"), y la fila marcada. */
     val cajaFuentes: List<String> = listOf("", "", ""),
     val cajaSel: Int = 0,
+    /** Se está escribiendo con el dedo: el foco del mando no se marca en el teclado (parecía una tecla pegada). */
+    val tecladoDedo: Boolean = false,
     /** Carpetas en modo edición (tiemblan y se pueden mover) y la que está tomada para moverla con la cruceta. */
     val ordenandoCarpetas: Boolean = false,
     val carpetaTomada: String? = null,
