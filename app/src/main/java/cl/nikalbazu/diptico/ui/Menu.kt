@@ -391,7 +391,7 @@ private fun PaginaSeccion(e: Estado, conAyuda: Boolean, modifier: Modifier) {
             Detalle(o?.let { explicacion(it) } ?: s.ayuda, 13.5f, lineas = 2, modifier = Modifier.padding(horizontal = esc.d(14)))
         }
         Pistas(
-            *(if (e.enOpciones) arrayOf("↑ ↓" to "Elegir", "◀ ▶" to "Cambiar", "A" to "Abrir", "B" to "Volver") else arrayOf("↑ ↓" to "Sección", "A" to "Entrar", "B" to "Cerrar")),
+            *(if (e.enOpciones) arrayOf("◀ ▶" to "Cambiar", "A" to "Abrir", "B" to "Volver") else arrayOf("↑ ↓" to "Sección", "A" to "Entrar", "B" to "Cerrar")),
             modifier = Modifier.padding(start = esc.d(14), top = esc.d(4), bottom = esc.d(10)),
         )
     }
