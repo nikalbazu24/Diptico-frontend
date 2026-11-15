@@ -18,7 +18,7 @@ internal fun Diptico.mostrarInformeEscaneo(
     val texto = Informes.resumen(ahora.size, nuevos, ahora.size - nuevos, faltan, informe, fallas, carpetas)
     mostrarDialogo(Dialogo(
         "informe-escaneo", "Encontré ${ahora.size} juegos", texto, Icono.BUSCAR,
-        lineas = Informes.lineas(informe), si = "Listo", no = "Cerrar",
+        lineas = Informes.lineas(informe), si = "Listo", no = "Cerrar", lineasTexto = 10,
     )) {}
 }
 
@@ -27,13 +27,13 @@ object Informes {
     fun resumen(total: Int, nuevos: Int, yaEstaban: Int, faltan: Int, inf: Biblioteca.Informe, fallas: Int, carpetas: Int): String = buildString {
         append(if (nuevos == 0) "Ninguno nuevo" else "$nuevos ${if (nuevos == 1) "nuevo" else "nuevos"}")
         append(" · $yaEstaban ya estaban")
-        if (faltan > 0) append(" · $faltan ya no están en la carpeta (su tiempo, favoritos y cajas se guardan por si vuelven)")
+        if (faltan > 0) append(" · $faltan ${if (faltan == 1) "ya no está" else "ya no están"} en la carpeta (su tiempo, favoritos y cajas se guardan por si vuelve${if (faltan == 1) "" else "n"})")
         append(".")
         val consolas = inf.porConsola.filterValues { it > 0 }.entries.sortedByDescending { it.value }.take(4)
             .joinToString(", ") { "${Consolas.porId(it.key)?.bonito ?: it.key} ${it.value}" }
         if (consolas.isNotEmpty()) append("\n").append(consolas)
         if (inf.enSubcarpetas > 0) append("\n${inf.enSubcarpetas} estaban dentro de su propia carpeta.")
-        if (inf.juntados > 0) append("\nJunté ${inf.juntados} versiones repetidas de un mismo juego (quedan en su ficha).")
+        if (inf.juntados > 0) append("\nJunté ${inf.juntados} ${if (inf.juntados == 1) "versión repetida" else "versiones repetidas"} (quedan en la ficha del juego).")
         if (fallas > 0) append("\nNo pude leer $fallas de tus $carpetas carpetas: elígelas otra vez en Carpetas de juegos.")
         if (inf.sinConsola.isNotEmpty()) append("\nCarpetas sin nombre de consola: ${inf.sinConsola.take(4).joinToString()}. Renómbralas (por ejemplo «ps2») o elige su consola en Carpetas de juegos.")
         if (inf.totalOmitidos > 0) append("\nDejé fuera ${inf.totalOmitidos} ${if (inf.totalOmitidos == 1) "archivo" else "archivos"}:")

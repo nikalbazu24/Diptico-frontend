@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import cl.nikalbazu.diptico.estado.*
 
 import androidx.compose.animation.core.Animatable
@@ -76,15 +78,18 @@ fun VentanaDialogo(e: Estado) {
                 Texto(d.titulo, 20f, lineas = 2, modifier = Modifier.weight(1f))
             }
             Spacer(Modifier.height(esc.d(12)))
-            Detalle(d.texto, 14f, lineas = 6)
-            if (d.lineas.isNotEmpty()) {
-                Spacer(Modifier.height(esc.d(12)))
-                Column(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14))).background(p.fondo).padding(esc.d(12)),
-                    verticalArrangement = Arrangement.spacedBy(esc.d(4)),
-                ) {
-                    d.lineas.take(7).forEach { Detalle("·  $it", 12.5f, lineas = 1) }
-                    if (d.lineas.size > 7) Detalle("…y ${d.lineas.size - 7} más", 12.5f, lineas = 1)
+            // El texto y la lista se desplazan si no caben: los botones siempre quedan a la vista.
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                Detalle(d.texto, 14f, lineas = d.lineasTexto)
+                if (d.lineas.isNotEmpty()) {
+                    Spacer(Modifier.height(esc.d(12)))
+                    Column(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(14))).background(p.fondo).padding(esc.d(12)),
+                        verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+                    ) {
+                        d.lineas.take(7).forEach { Detalle("·  $it", 12.5f, lineas = 1) }
+                        if (d.lineas.size > 7) Detalle("…y ${d.lineas.size - 7} más", 12.5f, lineas = 1)
+                    }
                 }
             }
             Spacer(Modifier.height(esc.d(18)))
