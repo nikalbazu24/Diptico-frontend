@@ -599,3 +599,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   terminan (`cerrarSesion(fin = pausa)`). `VitrinaRiel` omite paso/duración si falta alto. ARMSX2: paquete `com.nanodata.armsx2` (antes typo `come.`).
   Remoto: `https://github.com/nikalbazu24/Diptico-frontend.git` (el repo se renombró). Capturas t427–t429. Traducciones `extras28.tsv` (siguiente: extras29).
   Pendiente: carpetas de una pantalla en una sola fila (vista horizontal) dejan aire arriba y abajo; globito de DIPPO tapa la vitrina un rato.
+
+## Inicio compacto + escala (13–15 nov, v1.1-beta.520, Opus; Novedades `inicio-compacto-2.0-70`)
+- Una pantalla: `InicioRiel` = riel 52 dp | (`FranjaDippo` con DIPPO fijo `lugar="fijo"` y mensaje en línea `DippoBurbuja.enLinea`, `VitrinaRiel(compacta)`,
+  `EstanteCajas` con `CajaInclinada`, `PieDock` con dock que se esconde hacia el lado = `extra.dockVisible`). Dos pantallas NO cambia.
+- Escala: «Escala de la interfaz» en G_ESTILO (`ZOOMS` 70–130 %, `nombreZoom`), `zoomAutomatico(e)` = 0,84 en portátil/teléfono de una pantalla.
+- Ajustes: pastillas en la fila, ◀ ▶ cambian sin abrir (`cambiarEnFila`), «N ajustes ocultos en este equipo» en la 3.ª columna.
+- Emuladores: «Emulador de cada consola» / «Emulador de cada juego» en Juegos y emuladores (`DipticoEmuladores.kt`, «Otra app» = `appComoEmulador`).
+- Tele por HDMI en equipos de una pantalla (`buscarTele`, `InferiorActivity`: equipoTipo != "dual"). Traducciones siguiente: extras31.
