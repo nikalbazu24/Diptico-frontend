@@ -137,7 +137,7 @@ fun ColeccionArriba(e: Estado) {
         val girada = e.extra.cajaGirada
         // Arte del juego a pantalla completa (si no hay, un degradado con el color de la consola).
         if (j != null) {
-            androidx.compose.animation.Crossfade(j.clave, androidx.compose.animation.core.tween(320), label = "arte") { _ ->
+            androidx.compose.animation.Crossfade(j.clave, animationSpec = androidx.compose.animation.core.tween(320), label = "arte") { _ ->
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf((c?.color ?: col.acento).copy(alpha = .55f), col.fondo)))) {
                     ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize())
                 }
@@ -512,7 +512,7 @@ fun ColeccionUnica(e: Estado) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         val girada = e.extra.cajaGirada && j != null
-        if (j != null) androidx.compose.animation.Crossfade(j.clave, tween(320), label = "arte") { _ ->
+        if (j != null) androidx.compose.animation.Crossfade(j.clave, animationSpec = tween(320), label = "arte") { _ ->
             ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize())
         }
         Box(Modifier.fillMaxSize().veloColeccion(col.fondo))

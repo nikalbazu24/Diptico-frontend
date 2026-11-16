@@ -156,11 +156,12 @@ fun CarpetasArribaCV(e: Estado) {
             return@LienzoBoceto
         }
         // Cambio de consola: la de antes se aleja y la nueva llega (zoom out / zoom in).
+        val d1 = duracionMovimiento(280); val d2 = duracionMovimiento(360); val d3 = duracionMovimiento(180); val d4 = duracionMovimiento(220)
         androidx.compose.animation.AnimatedContent(
             targetState = c.id,
             transitionSpec = {
-                (androidx.compose.animation.fadeIn(tween(duracionMovimiento(280))) + androidx.compose.animation.scaleIn(tween(duracionMovimiento(360), easing = CurvaPosarse), initialScale = 0.86f)) togetherWith
-                    (androidx.compose.animation.fadeOut(tween(duracionMovimiento(180))) + androidx.compose.animation.scaleOut(tween(duracionMovimiento(220)), targetScale = 0.86f))
+                (androidx.compose.animation.fadeIn(tween(d1)) + androidx.compose.animation.scaleIn(tween(d2, easing = CurvaPosarse), initialScale = 0.86f)) togetherWith
+                    (androidx.compose.animation.fadeOut(tween(d3)) + androidx.compose.animation.scaleOut(tween(d4), targetScale = 0.86f))
             }, label = "consola", modifier = Modifier.fillMaxSize(),
         ) { id ->
             val k = Consolas.porId(id) ?: return@AnimatedContent

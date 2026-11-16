@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import cl.nikalbazu.diptico.estado.*
 
 /*
  * Colección viva: la base común de los bocetos aprobados (docs/coleccion-viva.md).
