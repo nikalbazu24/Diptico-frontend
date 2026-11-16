@@ -148,14 +148,14 @@ private fun TuSemana(e: Estado, al: Int) {
                             .clip(RoundedCornerShape(esc.d(5)))
                             .background(if (seg > 0) (if (hoy) Sol else Uva) else p.tinta.copy(alpha = 0.12f)))
                         Spacer(Modifier.height(esc.d(3)))
-                        Texto(dia.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()), 10f, color = if (hoy) p.tinta else p.tenue, lineas = 1, traducir = false)
+                        Texto(dia.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.forLanguageTag(Idioma.actual)), 10f, color = if (hoy) p.tinta else p.tenue, lineas = 1, traducir = false)
                     }
                 }
             }
             Detalle(when {
                 mejor == null -> "Esta semana todavía no juegas."
-                racha > 1 -> "Llevas $racha días seguidos. Tu mejor día: ${mejor.first.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())}."
-                else -> "Tu mejor día: ${mejor.first.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())}."
+                racha > 1 -> "Llevas $racha días seguidos. Tu mejor día: ${mejor.first.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.forLanguageTag(Idioma.actual))}."
+                else -> "Tu mejor día: ${mejor.first.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.forLanguageTag(Idioma.actual))}."
             }, 11f, lineas = 1)
         }
     }

@@ -155,7 +155,7 @@ private fun DrawScope.nieveViva(motas: List<Mota>, t: Float, u: Float, quieto: F
     val junta = (quieto / 90f).coerceIn(0f, 1f)
     if (junta > 0.02f) {
         // Abajo: un montoncito ondulado que crece; arriba: escarcha que cuelga del borde.
-        val alto = (6f + 22f * junta) * u
+        val alto = (4f + 12f * junta) * u
         val abajo = Path().apply {
             moveTo(0f, size.height)
             var x = 0f
@@ -165,7 +165,7 @@ private fun DrawScope.nieveViva(motas: List<Mota>, t: Float, u: Float, quieto: F
             }
             lineTo(size.width, size.height); close()
         }
-        drawPath(abajo, Color.White.copy(alpha = 0.78f))
+        drawPath(abajo, Color.White.copy(alpha = 0.55f))
         val arriba = Path().apply {
             moveTo(0f, 0f)
             var x = 0f
@@ -259,7 +259,7 @@ private fun DrawScope.bosqueVivo(motas: List<Mota>, t: Float, u: Float, hora: Fl
                 val y = 0.25f + p.y * 0.7f + cos(t * 0.25f * p.v + p.fase) * 0.05f
                 val luz = ((sin(t * 1.4f * p.v + p.fase) + 1f) / 2f).let { it * it }
                 val c = Offset(x * size.width, y * size.height)
-                drawCircle(Color(0xFFD9FF7A).copy(alpha = 0.18f * luz), 9f * u, c)
+                drawCircle(Brush.radialGradient(listOf(Color(0xFFD9FF7A).copy(alpha = 0.35f * luz), Color.Transparent), center = c, radius = 10f * u), 10f * u, c)
                 drawCircle(Color(0xFFF2FFC0).copy(alpha = 0.85f * luz), 2.2f * u, c)
             }
         }
@@ -286,19 +286,18 @@ private fun DrawScope.lunaViva(motas: List<Mota>, t: Float, u: Float) {
         drawCircle(Color.White.copy(alpha = 0.12f + 0.45f * brillo), (1.2f + 1.6f * p.t) * u, Offset(p.x * size.width, p.y * size.height * 0.7f))
     }
     val r = 26f * u
-    val c = Offset(size.width * 0.82f, size.height * 0.16f)
+    val c = Offset(size.width * 0.24f, size.height * 0.24f)
     val fase = Vivo.faseLuna()
     // La parte en sombra es otro círculo corrido: entra por la derecha al menguar y se va por la izquierda al crecer.
     val k = fase * 2f
     val dx = if (k <= 1f) -2f * r * k else 2f * r * (2f - k)
-    drawCircle(Color(0xFFF1ECD4).copy(alpha = 0.10f), r, c)
     val sombra = Path().apply { addOval(androidx.compose.ui.geometry.Rect(c + Offset(dx, 0f), r * 1.02f)) }
     clipPath(sombra, clipOp = ClipOp.Difference) {
         drawCircle(Color(0xFFFFF7DA).copy(alpha = 0.9f), r, c)
         drawCircle(Color(0xFFE9DFB8).copy(alpha = 0.5f), r * 0.18f, c + Offset(-r * 0.3f, -r * 0.2f))
         drawCircle(Color(0xFFE9DFB8).copy(alpha = 0.4f), r * 0.12f, c + Offset(r * 0.25f, r * 0.3f))
     }
-    drawCircle(Color(0xFFFFF7DA).copy(alpha = 0.10f), r * 1.8f, c)
+    drawCircle(Brush.radialGradient(listOf(Color(0xFFFFF7DA).copy(alpha = 0.16f), Color.Transparent), center = c, radius = r * 2f), r * 2f, c)
     // Estrella fugaz cada ~14 s.
     val ciclo = (t % 14f) / 1.1f
     if (ciclo < 1f) {
@@ -395,7 +394,7 @@ private fun DrawScope.cieloVivo(t: Float, u: Float, hora: Float) {
     val avance = if (deDia) (hora - 6f) / 14f else ((hora + 24f - 20f) % 24f) / 10f
     val x = size.width * (0.1f + 0.8f * avance.coerceIn(0f, 1f))
     val y = size.height * (0.30f - 0.22f * sin(avance.coerceIn(0f, 1f) * PI.toFloat()))
-    drawCircle(astro.copy(alpha = 0.15f + 0.04f * sin(t)), 34f * u, Offset(x, y))
+    drawCircle(Brush.radialGradient(listOf(astro.copy(alpha = 0.22f + 0.04f * sin(t)), Color.Transparent), center = Offset(x, y), radius = 40f * u), 40f * u, Offset(x, y))
     drawCircle(astro.copy(alpha = 0.65f), 14f * u, Offset(x, y))
 }
 
@@ -403,10 +402,10 @@ private fun DrawScope.cieloVivo(t: Float, u: Float, hora: Float) {
 
 private fun DrawScope.fogata(motas: List<Mota>, t: Float, u: Float, racha: Int) {
     val fuerza = (racha.coerceIn(0, 14) / 14f)
-    val base = Offset(size.width * 0.5f, size.height - 6f * u)
+    val base = Offset(size.width - 34f * u, size.height - 6f * u)
     // Leños.
-    drawLine(Color(0xFF5A3420).copy(alpha = 0.8f), base + Offset(-26f * u, 2f * u), base + Offset(26f * u, -4f * u), 6f * u)
-    drawLine(Color(0xFF4A2A18).copy(alpha = 0.8f), base + Offset(-24f * u, -4f * u), base + Offset(24f * u, 2f * u), 6f * u)
+    drawLine(Color(0xFF5A3420).copy(alpha = 0.8f), base + Offset(-18f * u, 2f * u), base + Offset(18f * u, -4f * u), 5f * u)
+    drawLine(Color(0xFF4A2A18).copy(alpha = 0.8f), base + Offset(-16f * u, -4f * u), base + Offset(16f * u, 2f * u), 5f * u)
     if (racha <= 0) {
         // Sin racha quedan brasas que respiran.
         for (i in 0 until 6) {
@@ -415,8 +414,9 @@ private fun DrawScope.fogata(motas: List<Mota>, t: Float, u: Float, racha: Int) 
         }
         return
     }
-    val alto = (30f + 70f * fuerza) * u
-    drawCircle(Color(0xFFFF8A3D).copy(alpha = 0.10f + 0.08f * fuerza), alto * 1.3f, base + Offset(0f, -alto * 0.3f))
+    val alto = (22f + 38f * fuerza) * u
+    val brillo = base + Offset(0f, -alto * 0.3f)
+    drawCircle(Brush.radialGradient(listOf(Color(0xFFFF8A3D).copy(alpha = 0.22f + 0.1f * fuerza), Color.Transparent), center = brillo, radius = alto * 1.5f), alto * 1.5f, brillo)
     val llamas = listOf(Color(0xFFFF5A1F) to 1f, Color(0xFFFFA83D) to 0.72f, Color(0xFFFFE08A) to 0.45f)
     for ((col, esc) in llamas) {
         val h = alto * esc * (0.92f + 0.08f * sin(t * 7f + esc * 10f))
@@ -434,7 +434,7 @@ private fun DrawScope.fogata(motas: List<Mota>, t: Float, u: Float, racha: Int) 
     for ((i, p) in motas.withIndex()) {
         if (i > 6 + (16 * fuerza).toInt()) break
         val k = (p.y + t * 0.35f * p.v) % 1f
-        val c = base + Offset(sin(t * 2f + p.fase) * 18f * u * k + (p.x - 0.5f) * 30f * u, -alto * 0.6f - k * alto * 1.4f)
+        val c = base + Offset(sin(t * 2f + p.fase) * 12f * u * k + (p.x - 0.5f) * 20f * u, -alto * 0.6f - k * alto * 1.4f)
         drawCircle(Color(0xFFFFD36B).copy(alpha = (1f - k) * 0.9f), 1.5f * u, c)
     }
 }
