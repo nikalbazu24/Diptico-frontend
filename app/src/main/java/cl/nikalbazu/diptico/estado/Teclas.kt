@@ -172,15 +172,22 @@ object Teclas {
             }
             return true
         }
-        // La caja 3D de un juego: cruceta elige, A usa, B vuelve.
+        // Estudio de Cajas: cruceta elige, L1/R1 pestaña, A usa, X abre la caja, Select cambia la vista, Y juega, B vuelve.
         if (e.extra.cajaJuego.isNotEmpty()) {
             if (abajo) when (code) {
-                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverCajaJuego(-1)
-                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverCajaJuego(1)
+                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverEstudio(0, -1)
+                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverEstudio(0, 1)
+                KeyEvent.KEYCODE_DPAD_LEFT -> Diptico.moverEstudio(-1, 0)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> Diptico.moverEstudio(1, 0)
+                KeyEvent.KEYCODE_BUTTON_L1 -> if (ev.repeatCount == 0) Diptico.pestanaEstudio(-1)
+                KeyEvent.KEYCODE_BUTTON_R1 -> if (ev.repeatCount == 0) Diptico.pestanaEstudio(1)
             }
             if (arriba) when {
                 esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.cerrarCajaJuego()
-                esA(code) -> Diptico.usarCajaJuego()
+                esA(code) -> Diptico.usarEstudio()
+                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.alternarAperturaEstudio()
+                code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.siguienteVistaEstudio()
+                esY(code) -> { val k = e.extra.cajaJuego; Diptico.cerrarCajaJuego(); Diptico.elegirJuego(k); Diptico.jugar() }
             }
             return true
         }

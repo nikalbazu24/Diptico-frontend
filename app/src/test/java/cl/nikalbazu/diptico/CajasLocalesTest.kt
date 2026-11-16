@@ -162,4 +162,27 @@ class CajasLocalesTest {
         assertTrue("Dejé fuera 1 archivo" in t)
         assertEquals(listOf("Juego.rar: el formato .rar no es de PlayStation 2"), Informes.lineas(inf))
     }
+
+    @Test fun estudioDeCajasSinPiezasSueltas() {
+        // Cada plantilla apunta a un estuche que existe en el dibujo.
+        for (pl in cl.nikalbazu.diptico.estado.EstudioCajas.PLANTILLAS) cl.nikalbazu.diptico.ui.Estuche.valueOf(pl.estuche)
+        val E = cl.nikalbazu.diptico.estado.EstudioCajas
+        assertEquals(8, E.total(0, 0))
+        assertEquals(E.PLANTILLAS.size + 1, E.total(1, 0))
+        assertEquals(E.COLORES.size + E.MATERIALES.size, E.total(2, 0))
+        assertEquals(5, E.total(3, 3))
+        // El estilo viaja en el registro de la caja y no se pierde al combinar con una búsqueda nueva.
+        val conEstilo = CarasGuardadas(null, null, 1L, "file:///f.jpg", plantilla = "ps2", color = 0xFF16161CL, material = "mate")
+        val leido = CarasGuardadas.leer(CarasGuardadas.escribir(mapOf("x" to conEstilo)))["x"]
+        assertEquals(conEstilo, leido)
+        val trasBuscar = CajasLocales.combinar(conEstilo, CarasGuardadas("file:///r.jpg", null, 2L, null, origen = "internet"))
+        assertEquals("ps2", trasBuscar.plantilla)
+        assertEquals("mate", trasBuscar.material)
+        assertEquals("file:///r.jpg", trasBuscar.reverso)
+        // Variantes: misma caja aunque cambie el nombre o la fecha.
+        assertTrue(E.misma(conEstilo, conEstilo.copy(nombre = "Mi caja 1", buscado = 99L)))
+        assertFalse(E.misma(conEstilo, conEstilo.copy(material = null)))
+        val m = mapOf("snes/a.sfc" to conEstilo, "snes/a.sfc#v2" to conEstilo, "snes/a.sfc#v1" to conEstilo, "snes/b.sfc#v1" to conEstilo)
+        assertEquals(listOf("snes/a.sfc#v1", "snes/a.sfc#v2"), E.variantes(m, "snes/a.sfc").map { it.first })
+    }
 }

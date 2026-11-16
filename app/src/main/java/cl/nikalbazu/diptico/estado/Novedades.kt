@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cajas-para-siempre-2.0-71"
-    const val NOMBRE = "Cajas para siempre"
+    const val ID = "estudio-cajas-2.0-72"
+    const val NOMBRE = "Estudio de Cajas"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -537,12 +537,20 @@ object Novedades {
             Pagina("Escala a tu gusto", "En Ajustes › Pantalla y estilo › Escala de la interfaz eliges qué tan grande se ve todo, de 70 % a 130 %. En automático, las portátiles de una pantalla ya vienen más chicas.", Icono.PANTALLAS, 0xFFFFB454),
             Pagina("Ajustes más claros", "Las opciones con pocas alternativas se cambian en su misma fila, con pastillas o con ◀ ▶, sin abrir nada. A la derecha, «Así se ve» te muestra lo que cambia.", Icono.AJUSTES, 0xFF7C6CFF),
         )),
-        Version(ID, "Cajas para siempre", listOf(
+        Version("cajas-para-siempre-2.0-71", "Cajas para siempre", listOf(
             Pagina("Tus cajas 3D se quedan", "Cada caja que baja Díptico ahora se guarda en el equipo, no en la memoria temporal. Se ven sin internet, después de reiniciar y después de actualizar, sin volver a bajarse.", Icono.PORTADA, 0xFFE0603A),
             Pagina("Nada se pierde por una mala búsqueda", "Si buscas la caja original y no hay internet o no aparece, se queda la que tenías. Y la caja que armaste tú nunca se reemplaza sola.", Icono.INFO, 0xFFFFB547),
             Pagina("Cajas en el respaldo", "El respaldo de Díptico ahora lleva tus cajas (primero las que armaste tú), sin tus claves de ScreenScraper.", Icono.DESCARGA, 0xFF2EC4A6),
             Pagina("Juegos de PS2 en su carpeta", "Díptico ahora encuentra los juegos guardados cada uno en su propia carpeta (ps2/Juego/Juego.iso) y los .bin de PS2 que venían con un .cue. También reconoce carpetas como «PlayStation 2» o «Sony - PlayStation 2».", Icono.CARPETA, 0xFF3BA8FF),
             Pagina("Te cuento qué encontré", "Ajustes › Biblioteca › Volver a buscar juegos ahora termina con un resumen: juegos nuevos, los que ya estaban, y qué archivos dejé fuera y por qué.", Icono.BUSCAR, 0xFF8B5CF6),
+        )),
+        Version(ID, "Estudio de Cajas", listOf(
+            Pagina("Estudio de Cajas", "En Personalizar de cada juego: la caja 3D a tu gusto. Arriba la ves girar, de frente, de lomo o de reverso, y con X se abre. Abajo: Caras, Forma, Acabado y Variantes. DIPPO te va contando qué tiene la caja.", Icono.PORTADA, 0xFFE0603A),
+            Pagina("Cada cara con su procedencia", "Frente, lomo, reverso y disco dicen de dónde salieron (tu imagen, la comunidad, ScreenScraper o TheGamesDB). Puedes buscar arte, importar una imagen para una sola cara o devolverla a la de Díptico.", Icono.BUSCAR, 0xFF3BA8FF),
+            Pagina("Forma, color y material", "Doce formas con medidas de cajas reales (PS2, PS1, Blu-ray, UMD, Switch, DS, GameCube, Wii, cartón de SNES, GBA, PC y Android), siete colores y cuatro materiales: Brillo de vitrina, Mate suave, Cartón de época y Cristal de humo.", Icono.PALETA, 0xFF8B5CF6),
+            Pagina("Variantes", "Guarda versiones de la misma caja (la original, la tuya, la de coleccionista) y cambia entre ellas. Al cambiar, la de ahora se guarda sola para que nunca se pierda.", Icono.ESTRELLA, 0xFFFFB547),
+            Pagina("Una melodía al recorrer tus juegos", "Al pasar de un juego a otro suena una nota de «cajita de luz» que sube y baja por una escala que nunca desafina. Cada juego tiene su nota. Se cambia en Ajustes › Controles y sonido.", Icono.MUSICA, 0xFF23C486),
+            Pagina("Personalizar más ordenado", "Primero Nombre, Portada, Imagen grande, Logo y Música; después Lugar en la vitrina, un solo Ajustar encuadre (eliges la imagen primero) y el Estudio de Cajas.", Icono.AJUSTES, 0xFF2EC4A6),
         )),
     )
 

@@ -624,3 +624,21 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - OJO: otra sesión empujó a main el 15 nov 20:07 (beta 2.0-70 «inicio compacto»). Revisar main antes de fusionar.
 - Canal privado: NO existe. El repo es público (ramas y artefactos de Actions incluidos). Para uno privado Nicolás debe crear un repo privado.
 - Traducciones `extras31.tsv` (siguiente: extras32). Test `CajasLocalesTest` (agregado al CI).
+
+## Estudio de Cajas + notas (15 nov, noche, rama `fix/estudio-cajas`, Opus; Novedades `estudio-cajas-2.0-72`)
+- 2.0-71 (cajas para siempre + PS2 + teclado) publicada en main el 15 nov (Nicolás autorizó canal público).
+- Boceto aprobado: lienzo LEkqB8AZDfUEFXE5YynSsn (Thor arriba/abajo, Personalizar, Galería, una pantalla). Pidió «un toque más tuyo»:
+  DIPPO comenta en el Estudio (`EstudioCajas.comentario`), materiales con nombre propio, sello «Guardada en el equipo».
+- `estado/EstudioCajas.kt`: PLANTILLAS (12, `estuche` = nombre de `ui.Estuche` + aspecto), MATERIALES, COLORES, variantes como entradas
+  de `extra.caras` con clave `<juego>#vN` (máx. 6; así viajan en respaldo y `borrarSinUso` las protege), `usarEstudio(sel)` por pestaña,
+  `moverEstudio(dx, dy)` (columnas por pestaña), `caraDesdeImagen` (pedirImagen "cara:<n>:<clave>"), `guardarVariante`/`usarVariante`
+  (al cambiar guarda la actual). `CarasGuardadas` + `plantilla/color/material/nombre` (JSON p/c/m/n); `conEstiloDe` conserva el estilo.
+  `extra.estudioTab/estudioCara/estudioVista/estudioAbierta`. Teclas: cruceta, L1/R1, A, X abre, Select vista, Y juega, B vuelve.
+- `ui/PantallaCaja.kt` = Estudio (InspeccionCaja + PanelEstudio). `Caja3D` usa plantilla (estuche y aspecto), color (base/cantos),
+  material (sin brillo en mate/cartón, cantos translúcidos) y la imagen del disco al abrir.
+- Ficha › Personalizar: grupos «Lo primero» (Nombre, Portada, Imagen grande, Logo, Música), «La vitrina» (Lugar, Ajustar encuadre con
+  lista portada/imagen grande, Estudio de Cajas), «Más». Se quitaron «Caja 3D», «Armar la caja…», «Quitar la caja propia» (viven en el Estudio).
+- Notas al recorrer juegos: `res/raw/sfx_nota.ogg` (generada con `herramientas/sonidos.py <dir> nota`, «cajita de luz» original),
+  `Sonidos.notaJuego(i)` (pentatónica de 2 octavas ida y vuelta, `gradoDe`), llamada en `moverJuego`; ajuste «Sonidos al recorrer juegos»
+  (almacén `notasJuegos`). Traducciones `extras32.tsv` (siguiente: extras33). Capturas t435–t440. Pendiente del Estudio: galería con
+  varios candidatos por proveedor y comparar lado a lado, encuadre por cara, borrar una variante suelta.

@@ -19,12 +19,12 @@ fun Diptico.gruposJuego(): List<Pair<Opcion, List<Opcion>>> {
     fun de(vararg inicios: String) = todas.filter { o -> inicios.any { o.titulo.startsWith(it) } }
 
     val personalizar = buildList {
-        add(Opcion("Caja 3D", if (e.extra.caras[juego.clave]?.let { it.frente != null || it.reverso != null } == true) "Tiene caja" else "Con la portada", Icono.PORTADA,
-            "Busca la caja original del juego. Si no está, DIPPO la arma con una foto tuya y la puedes compartir con la comunidad.") { abrirCajaJuego(juego.clave) })
+        addAll(de("Personalizar").map { it.copy(titulo = "Título, logo y música") })
+        addAll(de("Imágenes"))
         add(Opcion("Lugar en la vitrina", if (e.extra.disposiciones.containsKey(juego.clave)) "A tu gusto ✓" else "Mover logo, imagen y caja", Icono.PALETA,
             "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego. Arriba ves cómo queda.") { abrirEditorVitrina(juego.clave) })
-        addAll(de("Imágenes").map { it.copy(titulo = "Portada de internet") })
-        addAll(de("Personalizar").map { it.copy(titulo = "Título, logo y música") })
+        add(Opcion("Estudio de Cajas", if (e.extra.caras[juego.clave]?.tiene == true) "Tiene caja" else "Con la portada", Icono.PORTADA,
+            "La caja 3D a tu gusto: caras con su procedencia, forma, color, material y variantes. Si no está la original, DIPPO la arma con una foto tuya.") { abrirCajaJuego(juego.clave) })
         addAll(de("Imagen en el inicio", "Cajas de", "Imagen en las cajas"))
     }
     val partida = de("Copias de partida", "Estado en mi cola", "Priorizar en la cola")
@@ -34,7 +34,7 @@ fun Diptico.gruposJuego(): List<Pair<Opcion, List<Opcion>>> {
     val avance = todas.firstOrNull { it.titulo.startsWith("Estado en mi cola") }?.valor.orEmpty()
     val emu = todas.firstOrNull { it.titulo == "Emulador" }?.valor
     return listOf(
-        Opcion("Personalizar", "Caja, portada y logo ›", Icono.PALETA, "Caja 3D · Portada · Imagen grande · Logo") {} to personalizar,
+        Opcion("Personalizar", "Nombre, imágenes y caja ›", Icono.PALETA, "Nombre · Imágenes · Lugar en la vitrina · Estudio de Cajas") {} to personalizar,
         Opcion("Partida", if (avance.isNotBlank()) "$avance ›" else "Copias y cola ›", Icono.COPIAR, "Copias de partida · Estado en mi cola") {} to partida,
         Opcion("Emulador y versión", if (!emu.isNullOrBlank()) "$emu ›" else "Pantalla y versión ›", Icono.EMULADOR,
             if (consola?.sinEmulador == true) "Pantalla en que abre · Pantalla compañera" else "Emulador · Versión · Pantalla en que abre") {} to emulador,
@@ -106,9 +106,11 @@ fun Diptico.moverRapido(dx: Int, dy: Int) {
 // ---------- Caja 3D del juego: dónde se busca y cómo crearla con DIPPO ----------
 
 fun Diptico.abrirCajaJuego(clave: String) {
-    // La ventana del juego se cierra y la pantalla de la caja la reemplaza.
-    actualizar { it.copy(panel = Panel.NINGUNO, extra = it.extra.copy(rapidoGrupo = -1, rapidoSel = 0, cajaJuego = clave, cajaFuentes = listOf("", "", ""), cajaSel = 0)) }
-    buscarCajaPantalla(clave)
+    // La ventana del juego se cierra y el Estudio de Cajas la reemplaza.
+    actualizar { it.copy(panel = Panel.NINGUNO, extra = it.extra.copy(rapidoGrupo = -1, rapidoSel = 0, cajaJuego = clave, cajaFuentes = listOf("", "", ""), cajaSel = 0,
+        estudioTab = 0, estudioCara = 0, estudioVista = 0, estudioAbierta = false)) }
+    // Con la caja ya guardada no hace falta salir a internet al abrir (se busca con «Buscar arte»).
+    if (estado.value.extra.caras[clave]?.tiene != true) buscarCajaPantalla(clave)
 }
 
 fun Diptico.cerrarCajaJuego() {
@@ -144,22 +146,6 @@ fun Diptico.buscarCajaPantalla(clave: String, explicito: Boolean = false) {
             if (!tg) "sin" else if (hallada) "hallada" else "no",
         )
     }
-}
-
-/** Las acciones de la pantalla de la caja, en el orden de sus filas. */
-fun Diptico.usarCajaJuego(fila: Int = estado.value.extra.cajaSel) {
-    val clave = estado.value.extra.cajaJuego.takeIf { it.isNotEmpty() } ?: return
-    actualizar { it.copy(extra = it.extra.copy(cajaSel = fila)) }
-    when (fila) {
-        0 -> armarCajaConImagen(clave)
-        1 -> buscarCajaPantalla(clave, explicito = true)
-        2 -> { quitarCajaPropia(clave); cerrarCajaJuego() }
-        else -> cerrarCajaJuego()
-    }
-}
-
-fun Diptico.moverCajaJuego(d: Int) {
-    actualizar { it.copy(extra = it.extra.copy(cajaSel = (it.extra.cajaSel + d).coerceIn(0, 3))) }
 }
 
 // ---------- Vitrina PS5: tamaño de la caja, lugar y logo (ajustables, se guardan) ----------

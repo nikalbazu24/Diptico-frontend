@@ -396,6 +396,14 @@ data class EstadoExtra(
     val cajaSel: Int = 0,
     /** Se está escribiendo con el dedo: el foco del mando no se marca en el teclado (parecía una tecla pegada). */
     val tecladoDedo: Boolean = false,
+    /** Copia de `Sonidos.notas` para que el menú se redibuje al cambiarla. */
+    val notasJuegos: Boolean = true,
+    /** Estudio de Cajas: pestaña (0 Caras, 1 Forma, 2 Acabado, 3 Variantes), cara elegida (0 frente, 1 lomo, 2 reverso,
+     *  3 disco), vista de la caja (0 girando, 1 frente, 2 lomo, 3 reverso) y si la tapa está abierta. */
+    val estudioTab: Int = 0,
+    val estudioCara: Int = 0,
+    val estudioVista: Int = 0,
+    val estudioAbierta: Boolean = false,
     /** Carpetas en modo edición (tiemblan y se pueden mover) y la que está tomada para moverla con la cruceta. */
     val ordenandoCarpetas: Boolean = false,
     val carpetaTomada: String? = null,
@@ -1126,6 +1134,7 @@ object Diptico {
         Sonidos.iniciar(app)
         Sonidos.activo = estado.value.sonidos
         Sonidos.paquete = almacen.texto("paqueteSonidos", "tema")
+        Sonidos.notas = almacen.bool("notasJuegos", true)
         aplicarFluidez()
         vigilarProtector()
         vigilarPausas()
@@ -1826,7 +1835,7 @@ object Diptico {
         val v = e.visibles
         if (v.isEmpty()) return
         val i = (e.indiceSel + delta).coerceIn(0, v.size - 1)
-        if (i == e.indiceSel && delta != 0) Sonidos.borde()
+        if (i == e.indiceSel && delta != 0) Sonidos.borde() else if (i != e.indiceSel) Sonidos.notaJuego(i)
         actualizar { it.copy(juegoSel = v[i].clave) }
     }
 
@@ -3535,24 +3544,29 @@ object Diptico {
                 e.ficha?.enlace?.let { url -> add(Opcion("Artículo completo en Wikipedia", icono = Icono.WEB, ayuda = "Abre el artículo de Wikipedia de este juego en el navegador.") { abrirWeb(url) }) }
             }
             3 -> listOf(
+                // Lo primero: cómo se llama y cómo se ve. Después, la vitrina. Las cajas viven en el Estudio de Cajas.
+                Opcion("Nombre", d.titulo ?: j.titulo, Icono.TITULO, ayuda = "El nombre que se muestra en el estante y arriba. El archivo no se cambia.") { abrirTexto("titulo", d.titulo ?: j.titulo) }.copy(grupo = "Lo primero"),
+                Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "Elige otra portada en la tienda de imágenes (comunidad, ScreenScraper, SteamGridDB…) o desde tus archivos.") { buscarCandidatos("portada") }.copy(grupo = "Lo primero"),
+                Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "La imagen grande que se ve de fondo en la pantalla de arriba.") { buscarCandidatos("arte") }.copy(grupo = "Lo primero"),
+                Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA, ayuda = "El logo que aparece sobre la imagen grande en vez del título escrito.") { buscarCandidatos("logo") }.copy(grupo = "Lo primero"),
+                Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA, ayuda = "Una canción que suena en el estante cuando este juego está elegido.") { pedirArchivoPara("musica", "audio/*") }.copy(grupo = "Lo primero"),
                 Opcion("Lugar en la vitrina", if (e.extra.disposiciones.containsKey(j.clave)) "A tu gusto ✓" else "Mover logo, imagen y caja", Icono.PALETA,
-                    "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego, eliges su tamaño y si el fondo va difuminado. Arriba ves cómo queda.", grupo = "Lugar en la vitrina") { abrirEditorVitrina(j.clave) },
-                Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "Elige otra portada en la tienda de imágenes o desde tus archivos.") { buscarCandidatos("portada") }.copy(grupo = "Cajas y portadas"),
-                Opcion("Encuadrar la portada", if (e.encuadres.containsKey("${j.clave}|portada")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
-                    "Corre y acerca la foto para que quede centrada en la forma de la caja.") { abrirEncuadre("portada") }.copy(grupo = "Cajas y portadas"),
-                Opcion("Caja 3D", when { e.extra.caras[j.clave]?.reverso != null -> "Original ✓"; e.extra.caras[j.clave]?.frente != null -> "Frente original ✓"; else -> "Con la portada" }, Icono.PORTADA,
-                    "La caja que gira arriba. Díptico busca la original de este juego (en la comunidad, ScreenScraper o TheGamesDB); si no aparece, usa la portada y arma el reverso con la ficha.", grupo = "Cajas y portadas") { buscarCajaOriginal() },
-                Opcion("Armar la caja con una imagen", "DIPPO", Icono.BISA,
-                    "Elige una foto o escaneo de la caja abierta (reverso, lomo y frente en una sola imagen) o solo el frente. DIPPO la corta, arma la caja en 3D y te ofrece compartirla con la comunidad.", grupo = "Cajas y portadas") { armarCajaConImagen() },
-                Opcion("Quitar la caja propia", if (e.extra.caras[j.clave] != null) "Volver a la portada" else "No tiene", Icono.BORRAR,
-                    "Quita la caja original o armada de este juego; la caja vuelve a usar la portada.", grupo = "Cajas y portadas") { quitarCajaPropia() },
-                Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "La imagen grande que se ve de fondo en la pantalla de arriba.") { buscarCandidatos("arte") }.copy(grupo = "Íconos, imágenes grandes y logos"),
-                Opcion("Encuadrar la imagen grande", if (e.encuadres.containsKey("${j.clave}|arte")) "Ajustado ✓" else "Mover y acercar", Icono.PORTADA,
-                    "Corre y acerca el hero para que se vea lo importante.") { abrirEncuadre("arte") }.copy(grupo = "Íconos, imágenes grandes y logos"),
-                Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA, ayuda = "El logo que aparece sobre la imagen grande en vez del título escrito.") { buscarCandidatos("logo") }.copy(grupo = "Íconos, imágenes grandes y logos"),
-                Opcion("Imagen en el inicio", nombreHeroe(e.heroes[j.clave]), Icono.PORTADA, "Qué imagen se ve en grande en el inicio para este juego.") { ciclarHeroe(j.clave) }.copy(grupo = "Íconos, imágenes grandes y logos"),
-                Opcion("Título", d.titulo ?: j.titulo, Icono.TITULO, ayuda = "El nombre que se muestra en el estante y arriba. El archivo no se cambia.") { abrirTexto("titulo", d.titulo ?: j.titulo) }.copy(grupo = "Más"),
-                Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA, ayuda = "Una canción que suena en el estante cuando este juego está elegido.") { pedirArchivoPara("musica", "audio/*") }.copy(grupo = "Más"),
+                    "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego, eliges su tamaño y si el fondo va difuminado. Arriba ves cómo queda.", grupo = "La vitrina") { abrirEditorVitrina(j.clave) },
+                opcionLista(
+                    "Ajustar encuadre", Icono.PORTADA,
+                    "Primero eliges qué imagen: la portada o la imagen grande. Después la corres y la acercas para que se vea lo importante.",
+                    listOf("portada", "arte"), listOf("Portada", "Imagen grande"),
+                    if (e.encuadres.containsKey("${j.clave}|arte") && !e.encuadres.containsKey("${j.clave}|portada")) "arte" else "portada",
+                    grupo = "La vitrina",
+                ) { abrirEncuadre(it) },
+                Opcion("Estudio de Cajas", when {
+                    e.extra.caras[j.clave]?.let { it.frente != null && it.reverso != null } == true -> "Caja completa ✓"
+                    e.extra.caras[j.clave]?.tiene == true -> "Parte de la caja ✓"
+                    else -> "Con la portada"
+                }, Icono.PORTADA,
+                    "La caja 3D a tu gusto: caras (frente, lomo, reverso y disco) con su procedencia, forma física, color, material y variantes guardadas. Todo queda en el equipo.",
+                    grupo = "La vitrina") { abrirCajaJuego(j.clave) },
+                Opcion("Imagen en el inicio", nombreHeroe(e.heroes[j.clave]), Icono.PORTADA, "Qué imagen se ve en grande en el inicio para este juego.") { ciclarHeroe(j.clave) }.copy(grupo = "Más"),
                 Opcion(if (d.favorito) "Quitar de favoritos" else "Marcar como favorito", icono = Icono.CORAZON, ayuda = "Los favoritos se ven primero con el filtro Favoritos.") { alternarFavorito(j.clave) }.copy(grupo = "Más"),
                 Opcion("Buscar todo automático", icono = Icono.DESCARGA, ayuda = "Busca en internet portada, imagen grande y logo para este juego, de una vez.") { descargarUno(j) }.copy(grupo = "Más"),
                 Opcion("Volver a lo original", "Quita lo personalizado", Icono.BORRAR, ayuda = "Quita el título, las imágenes, la música y los encuadres propios de este juego.") {
@@ -5886,8 +5900,13 @@ object Diptico {
 data class CarasGuardadas(
     val reverso: String?, val lomo: String?, val buscado: Long, val frente: String? = null,
     val origen: String? = null, val disco: String? = null,
+    /** Estudio de Cajas: plantilla física (`EstudioCajas.PLANTILLAS`), color del estuche (ARGB) y material. null = el de la consola. */
+    val plantilla: String? = null, val color: Long? = null, val material: String? = null,
+    /** Nombre de la variante (solo en las guardadas como variante). */
+    val nombre: String? = null,
 ) {
     val tiene: Boolean get() = frente != null || reverso != null || lomo != null || disco != null
+    val conEstilo: Boolean get() = plantilla != null || color != null || material != null
     val propia: Boolean get() = origen == "propia"
     fun caras(): List<String> = listOfNotNull(frente, lomo, reverso, disco)
 
@@ -5899,6 +5918,8 @@ data class CarasGuardadas(
                 CarasGuardadas(
                     v.optString("r").ifBlank { null }, v.optString("l").ifBlank { null }, v.optLong("b"), v.optString("f").ifBlank { null },
                     v.optString("o").ifBlank { null }, v.optString("d").ifBlank { null },
+                    v.optString("p").ifBlank { null }, if (v.has("c")) v.optLong("c") else null, v.optString("m").ifBlank { null },
+                    v.optString("n").ifBlank { null },
                 )
             }
         } catch (_: Exception) { emptyMap() }
@@ -5906,7 +5927,9 @@ data class CarasGuardadas(
         fun escribir(m: Map<String, CarasGuardadas>): String {
             val o = org.json.JSONObject()
             for ((k, v) in m) o.put(k, org.json.JSONObject().put("r", v.reverso.orEmpty()).put("l", v.lomo.orEmpty()).put("b", v.buscado)
-                .put("f", v.frente.orEmpty()).put("o", v.origen.orEmpty()).put("d", v.disco.orEmpty()))
+                .put("f", v.frente.orEmpty()).put("o", v.origen.orEmpty()).put("d", v.disco.orEmpty())
+                .put("p", v.plantilla.orEmpty()).put("m", v.material.orEmpty()).put("n", v.nombre.orEmpty())
+                .apply { v.color?.let { put("c", it) } })
             return o.toString()
         }
     }

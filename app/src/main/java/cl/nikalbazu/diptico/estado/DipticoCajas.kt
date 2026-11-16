@@ -21,7 +21,7 @@ private fun Diptico.ponerCaras(clave: String, c: CajasComunidad.Caras, origen: S
         origen = origen,
     )
     // Una caja propia nueva reemplaza todo (si solo trae el frente, el reverso se arma con la ficha, no con la caja vieja).
-    val g = if (origen == "propia") nuevo else CajasLocales.combinar(antes, nuevo)
+    val g = if (origen == "propia") nuevo.conEstiloDe(antes) else CajasLocales.combinar(antes, nuevo)
     guardarCaras(clave, g)
     scope.launch(Dispatchers.IO) { CajasLocales.borrarSinUso(app, antes, estado.value.extra.caras.values) }
 }
@@ -155,7 +155,11 @@ internal suspend fun Diptico.cajaDeInternet(clave: String, explicito: Boolean): 
     val actual = estado.value.extra.caras[clave]
     // Si la persona armó una caja mientras se buscaba, se queda la suya.
     if (!explicito && actual?.propia == true) return false
-    guardarCaras(clave, if (actual?.propia == true) nuevo else CajasLocales.combinar(actual, nuevo))
+    guardarCaras(clave, if (actual?.propia == true) nuevo.conEstiloDe(actual) else CajasLocales.combinar(actual, nuevo))
     withContext(Dispatchers.IO) { CajasLocales.borrarSinUso(app, actual, estado.value.extra.caras.values) }
     return true
 }
+
+/** Las imágenes nuevas con la forma, el color y el material que la persona ya había elegido en el Estudio. */
+internal fun CarasGuardadas.conEstiloDe(antes: CarasGuardadas?): CarasGuardadas =
+    if (antes == null) this else copy(plantilla = antes.plantilla, color = antes.color, material = antes.material)

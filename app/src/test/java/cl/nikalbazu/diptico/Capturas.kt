@@ -1574,6 +1574,17 @@ class Capturas {
     @Test fun t433_informe_escaneo_una() = foto("433_informe_escaneo_una", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, dialogo = informePrueba(), extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     @Test fun t434_teclado_seleccion_dedo() = foto("434_teclado_seleccion_dedo", base().copy(panel = Panel.CLAVE, textoPara = "asistente",
         borrador = "¿Cómo paso el templo del agua?", cursor = 19, ancla = 13, teclaFila = 2, teclaCol = 3, extra = EstadoExtra(tecladoDedo = true)), Rol.SUPERIOR)
+    private fun estudio(tab: Int, sel: Int = 0, caras: CarasGuardadas? = null) = base().let {
+        it.copy(vista = "iconos", juegoSel = "snes/1", extra = it.extra.copy(cajaJuego = "snes/1", estudioTab = tab, cajaSel = sel, estudioVista = 1,
+            caras = if (caras != null) mapOf("snes/1" to caras, "snes/1#v1" to caras.copy(nombre = "Original 1"), "snes/1#v2" to caras.copy(color = 0xFF16161CL, material = "mate", nombre = "Mi caja 2")) else emptyMap()))
+    }
+    @Test fun t435_estudio_arriba() = foto("435_estudio_arriba", estudio(0, caras = CarasGuardadas(null, null, 1L, plantilla = "carton", material = "carton")), Rol.SUPERIOR)
+    @Test fun t436_estudio_caras() = foto("436_estudio_caras", estudio(0, 5), Rol.INFERIOR)
+    @Test fun t437_estudio_forma() = foto("437_estudio_forma", estudio(1, 3, CarasGuardadas(null, null, 1L, plantilla = "bluray")), Rol.INFERIOR)
+    @Test fun t438_estudio_acabado() = foto("438_estudio_acabado", estudio(2, 8, CarasGuardadas(null, null, 1L, color = 0xFFC2352BL, material = "mate")), Rol.INFERIOR)
+    @Test fun t439_estudio_variantes() = foto("439_estudio_variantes", estudio(3, 2, CarasGuardadas(null, null, 1L, plantilla = "ps2")), Rol.INFERIOR)
+    @Test fun t440_estudio_una() = foto("440_estudio_una_pantalla", estudio(1, 1, CarasGuardadas(null, null, 1L, plantilla = "ps2", color = 0xFF1B2F7AL)).let {
+        it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     @Test fun t429_ajustes_tres_columnas() = foto("429_ajustes_tres_columnas", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 1, extra = it.extra.copy(equipoTipo = "portatil", equipoNombre = "AYN Odin 2 Portal")) }, Rol.UNICA)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.

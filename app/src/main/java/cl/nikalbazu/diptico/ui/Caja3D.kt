@@ -430,18 +430,23 @@ fun Caja3D(
     val frenteExacto = caras?.frente?.let { Uri.parse(it) }
     val portadaUri = frenteExacto ?: juego.portada
     val frenteReal = rememberImagen(portadaUri, if (detalle) 720 else 420)
-    val estuche = estucheDe(consola)
+    // Estudio de Cajas: la forma física, el color y el material que eligió la persona (si no, los de la consola).
+    val plantilla = cl.nikalbazu.diptico.estado.EstudioCajas.plantilla(caras?.plantilla)
+    val estuche = plantilla?.let { runCatching { Estuche.valueOf(it.estuche) }.getOrNull() } ?: estucheDe(consola)
     val grosor = grosorDe(estuche)
+    val material = caras?.material
     // La franja de la consola va arriba de la portada (o al costado en DS/3DS): la caja crece para que la portada se vea entera.
     val lateral = franjaLateral(consola.id)
     val franja = if (e.banda && frenteExacto == null) (if (lateral) 0.1f else franjaDe(estuche)) else 0f
-    val aspecto = aspectoCaja(frenteReal, consola).let { if (lateral) it / (1f - franja) else it * (1f - franja) }.coerceIn(0.55f, 1.6f)
+    val aspecto = (plantilla?.aspecto ?: aspectoCaja(frenteReal, consola).let { if (lateral) it / (1f - franja) else it * (1f - franja) }).coerceIn(0.55f, 1.6f)
     val info = infoReverso(e, juego, consola, aspecto)
     val logo = e.logo?.let { Uri.parse(it) }
     val datosFrente = InfoFrente(juego.titulo, consola.bonito, consola.color.toArgb(), estuche, portadaUri, logo, aspecto, if (detalle) 640 else 360, franja, lateral)
     // Las caras reales (si aparecieron) o las armadas por Díptico.
     val reversoReal = if (detalle) rememberImagen(caras?.reverso?.let { Uri.parse(it) }, 900) else null
     val lomoReal = rememberImagen(caras?.lomo?.let { Uri.parse(it) }, 720)
+    // La imagen del disco o cartucho (Estudio de Cajas), solo para cuando la tapa se abre.
+    val discoReal = if (detalle) rememberImagen(caras?.disco?.let { Uri.parse(it) }, 480, memoriaGrafica = false) else null
     val reversoHecho by produceState(FabricaCaras.enCache("reverso", info), info, detalle) {
         if (value == null && detalle) value = withContext(Dispatchers.Default) { runCatching { FabricaCaras.hacer(ctx, "reverso", info) }.getOrNull() }
     }
@@ -456,8 +461,11 @@ fun Caja3D(
     val reverso = reversoReal?.asAndroidBitmap() ?: reversoHecho
     val lomo = lomoReal?.asAndroidBitmap() ?: lomoHecho
     // El color de los cantos: cartón impreso (el de la consola) o plástico.
-    val base = consola.color
+    val base = caras?.color?.let { Color(it) } ?: consola.color
     val canto = when {
+        material == "translucido" -> lerp(base, Color(0xFF9AA4B8), 0.45f).copy(alpha = 0.62f)
+        material == "carton" -> lerp(base, Color(0xFF7A6A4E), 0.35f)
+        caras?.color != null -> lerp(base, Color.Black, 0.2f)
         estucheClaro(estuche) -> Color(0xFFE8E8EC)
         esCarton(estuche) -> lerp(base, Color.Black, 0.2f)
         estuche == Estuche.JEWEL -> Color(0xFF26262C)
@@ -545,14 +553,14 @@ fun Caja3D(
                     nc.drawPath(h.ruta, h.plano)
                 }
                 // Brillo del plástico que cruza el frente y el reverso al girar.
-                if ((k == 0 || k == 1) && detalle && oscuro < 0.5f) {
+                if ((k == 0 || k == 1) && detalle && oscuro < 0.5f && material != "mate" && material != "carton") {
                     val minX = min(min(h.dst[0], h.dst[2]), min(h.dst[4], h.dst[6]))
                     val maxX = max(max(h.dst[0], h.dst[2]), max(h.dst[4], h.dst[6]))
                     val t = ((nx1 + 1f) / 2f)
                     val x0 = minX + (maxX - minX) * (1.1f - t * 1.2f)
                     val anchoBrillo = (maxX - minX) * 0.45f
                     h.plano.shader = LinearGradient(x0 - anchoBrillo, 0f, x0 + anchoBrillo, H * 0.3f,
-                        intArrayOf(0x00FFFFFF, 0x2EFFFFFF, 0x00FFFFFF), null, Shader.TileMode.CLAMP)
+                        intArrayOf(0x00FFFFFF, if (material == "translucido") 0x46FFFFFF else 0x2EFFFFFF, 0x00FFFFFF), null, Shader.TileMode.CLAMP)
                     nc.drawPath(h.ruta, h.plano)
                     h.plano.shader = null
                 }
@@ -572,10 +580,20 @@ fun Caja3D(
                 val my = (h.py[4] + h.py[5] + h.py[6] + h.py[7]) / 4f
                 val r = min(abs(h.px[5] - h.px[4]), abs(h.py[6] - h.py[4])) * 0.36f
                 if (r > 1f) {
-                    h.plano.shader = RadialGradient(mx - r * 0.3f, my - r * 0.3f, r * 1.3f,
-                        intArrayOf(0xFFF4F4F8.toInt(), 0xFFB8BCC8.toInt(), base.toArgb()), floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP)
-                    nc.drawCircle(mx, my, r, h.plano)
-                    h.plano.shader = null
+                    val disco = discoReal?.asAndroidBitmap()
+                    if (disco != null) {
+                        // El disco propio: la imagen recortada en círculo.
+                        h.ruta.reset(); h.ruta.addCircle(mx, my, r, android.graphics.Path.Direction.CW)
+                        nc.save(); nc.clipPath(h.ruta)
+                        h.rect.set(mx - r, my - r, mx + r, my + r)
+                        nc.drawBitmap(disco, null, h.rect, h.imagen)
+                        nc.restore()
+                    } else {
+                        h.plano.shader = RadialGradient(mx - r * 0.3f, my - r * 0.3f, r * 1.3f,
+                            intArrayOf(0xFFF4F4F8.toInt(), 0xFFB8BCC8.toInt(), base.toArgb()), floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP)
+                        nc.drawCircle(mx, my, r, h.plano)
+                        h.plano.shader = null
+                    }
                     h.plano.color = 0xFF121218.toInt()
                     nc.drawCircle(mx, my, r * 0.16f, h.plano)
                     // Un brillo que crece mientras se abre: lo que sale de la caja es el juego.
@@ -638,6 +656,7 @@ private class Herramientas3D {
     val borde = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.2f }
     val lx = FloatArray(4)
     val ly = FloatArray(4)
+    val rect = android.graphics.RectF()
 }
 
 /**

@@ -47,7 +47,7 @@ object Sonidos {
             .build()
         recursos = ctx.applicationContext
         pool = p
-        val nombres = listOf("mover", "consola", "aceptar", "atras", "abrir", "jugar", "borde", "pagina", "deslizar", "tecla", "si", "no", "levantar", "soltar", "aviso")
+        val nombres = listOf("nota", "mover", "consola", "aceptar", "atras", "abrir", "jugar", "borde", "pagina", "deslizar", "tecla", "si", "no", "levantar", "soltar", "aviso")
         for (prefijo in listOf("", "b_", "r_", "u_")) cargar(prefijo, nombres)
     }
 
@@ -84,6 +84,33 @@ object Sonidos {
         ultimoMover = ahora
         Vibracion.mover()
         flujoMover = tocar("mover", 0.96f + (ahora % 7) * 0.012f)
+    }
+
+    /** Al recorrer los juegos suena una nota en vez del clic: [notas] lo apaga. */
+    @Volatile
+    var notas = true
+
+    /** Escala pentatónica (dos octavas, en semitonos desde la nota base): nunca suena desafinado ni triste. */
+    private val ESCALA = intArrayOf(-12, -10, -8, -5, -3, 0, 2, 4, 7, 9, 12)
+
+    /**
+     * El tono del juego número [indice]: sube paso a paso por la escala y, al llegar arriba, baja (ida y vuelta).
+     * Así cada juego tiene siempre su nota y recorrer la fila suena como una melodía.
+     */
+    fun gradoDe(indice: Int): Int {
+        val n = ESCALA.size
+        val vuelta = 2 * (n - 1)
+        val k = ((indice % vuelta) + vuelta) % vuelta
+        return ESCALA[if (k < n) k else vuelta - k]
+    }
+
+    /** La nota del juego elegido (la «cajita de luz» de Díptico). Reemplaza al clic de moverse que sonó recién. */
+    fun notaJuego(indice: Int) {
+        if (!activo || !notas) return
+        val id = ids["nota"] ?: return
+        val ahora = SystemClock.uptimeMillis()
+        if (ahora - ultimoMover < 80 && flujoMover != 0) { pool?.stop(flujoMover); flujoMover = 0 }
+        pool?.play(id, volumen * 0.9f, volumen * 0.9f, 1, 0, 2f.pow(gradoDe(indice) / 12f))
     }
 
     fun consola() { tocar("consola") }
