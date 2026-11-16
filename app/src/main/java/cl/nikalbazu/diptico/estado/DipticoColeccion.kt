@@ -126,7 +126,7 @@ fun Diptico.siguienteVistaCarpetas() {
 
 /** Columnas de la rejilla de carpetas según la vista (para que la cruceta suba y baje bien). */
 fun columnasCarpetasCV(v: String, unaPantalla: Boolean): Int = when (v) {
-    "icono" -> 3
+    "icono" -> -1
     "repisa" -> 1
     "carpeta" -> if (unaPantalla) 3 else 2
     else -> if (unaPantalla) 2 else 1
@@ -138,8 +138,16 @@ fun Diptico.elegirJuegosCarpeta(modo: String) {
 }
 
 fun Diptico.elegirCuantosCarpeta(n: Int) {
-    almacen.guardarTexto("cuantosCarpeta", n.coerceIn(1, 3).toString())
-    actualizar { it.copy(extra = it.extra.copy(cuantosCarpeta = n.coerceIn(1, 3))) }
+    almacen.guardarTexto("cuantosCarpeta", n.coerceIn(1, 5).toString())
+    actualizar { it.copy(extra = it.extra.copy(cuantosCarpeta = n.coerceIn(1, 5))) }
+}
+
+/** Ícono de las carpetas: cuántas por fila (2–6), se ajusta pellizcando con dos dedos. */
+fun Diptico.ajustarColumnasIcono(n: Int) {
+    val v = n.coerceIn(2, 6)
+    if (v == estado.value.extra.columnasIconoCV) return
+    almacen.guardarTexto("columnasIconoCV", v.toString())
+    actualizar { it.copy(extra = it.extra.copy(columnasIconoCV = v)) }
 }
 
 fun Diptico.alternarLogoConsola(id: String) {
@@ -163,7 +171,7 @@ fun juegosJuntoAlIcono(e: Estado, consolaId: String, modo: String, cuantos: Int)
         "elegidos" -> todos.filter { e.datos[it.clave]?.favorito == true }.ifEmpty { todos }
         else -> todos.sortedByDescending { e.datos[it.clave]?.ultimo ?: 0L }
     }
-    return orden.take(cuantos.coerceIn(1, 3))
+    return orden.take(cuantos.coerceIn(1, 5))
 }
 
 /** «Ícono de la carpeta» (6d): abre la búsqueda de imágenes con sus fuentes (SteamGridDB, ScreenScraper, libretro…). */
@@ -175,7 +183,7 @@ fun Diptico.cambiarIconoCarpeta(id: String) {
 /** Entrar a la consola elegida (A en las carpetas), con el sonido de encendido de Díptico. */
 fun Diptico.entrarConsolaCV(id: String) {
     if (estado.value.consolaSel != id) elegirConsola(id)
-    cl.nikalbazu.diptico.audio.Sonidos.encendido()
+    cl.nikalbazu.diptico.audio.Sonidos.encendido(id)
     entrarSistema()
 }
 

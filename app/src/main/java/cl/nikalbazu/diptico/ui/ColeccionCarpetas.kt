@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -68,72 +69,103 @@ import kotlin.math.abs
 
 // ———————————————————————————— la consola en 3D ————————————————————————————
 
-/** Una sola hoja de giro en memoria a la vez (pesa ~47 MB descomprimida): al cambiar de consola se suelta la anterior. */
-private object HojasGiro {
-    private var id: String? = null
-    private var hoja: ImageBitmap? = null
-    @Synchronized fun de(ctx: android.content.Context, consola: String): ImageBitmap? {
-        if (consola == id) return hoja
-        val bmp = runCatching { ctx.assets.open("consolas3d/$consola.webp").use { BitmapFactory.decodeStream(it) } }.getOrNull()
-        id = consola; hoja = bmp?.asImageBitmap()
-        return hoja
-    }
-    fun existe(ctx: android.content.Context, consola: String): Boolean =
-        runCatching { ctx.assets.list("consolas3d")?.contains("$consola.webp") == true }.getOrDefault(false)
-}
-
-private const val CUADROS = 72
-private const val COLUMNAS_HOJA = 8
+/** En las pruebas (Robolectric) no hay GPU: ahí la consola se muestra con un marcador. */
+private val SIN_GPU = android.os.Build.FINGERPRINT == "robolectric"
 
 /**
- * La consola en 3D: un giro de 72 cuadros hecho desde el modelo que mandó Nicolás (va en el equipo, sin internet).
- * Gira sola despacio; con el dedo se gira libre y sigue con inercia al soltar. Sin modelo: un recuadro punteado.
+ * La consola en 3D de verdad: el modelo .glb que mandó Nicolás (va en el equipo, sin internet) dibujado con Filament.
+ * Se gira libre con el dedo hacia cualquier lado (y se acerca con dos dedos), sin saltos; si nadie la toca, gira sola despacio.
  */
 @Composable
 fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    val mov = LocalMovimiento.current
-    val hoja by produceState<ImageBitmap?>(null, c.id) { value = withContext(Dispatchers.IO) { HojasGiro.de(ctx, Modelos3D.idDe(c.id)) } }
-    var angulo by remember(c.id) { mutableStateOf(18f) }
-    var vel by remember { mutableStateOf(0f) }
-    var tocando by remember { mutableStateOf(false) }
-    LaunchedEffect(c.id, mov) {
-        while (true) {
-            withFrameNanos { }
-            if (!tocando) {
-                angulo += (if (mov) 0.15f else 0f) + vel
-                vel *= 0.93f
-                if (abs(vel) < 0.01f) vel = 0f
-            }
-        }
-    }
-    Box(modifier.testTag("consola-3d").pointerInput(c.id) {
-        detectHorizontalDragGestures(
-            onDragStart = { tocando = true; vel = 0f },
-            onDragEnd = { tocando = false }, onDragCancel = { tocando = false },
-        ) { ch, dx -> ch.consume(); val d = dx / (5f * density / 2f); angulo += d; vel = d * 0.6f }
-    }, contentAlignment = Alignment.Center) {
-        val h = hoja
-        if (h == null) {
+    val id = Modelos3D.idDe(c.id)
+    val existe = remember(id) { runCatching { ctx.assets.list("consolas3d")?.contains("$id.glb") == true }.getOrDefault(false) }
+    if (!existe || SIN_GPU) {
+        Box(modifier.testTag("consola-3d"), contentAlignment = Alignment.Center) {
             Box(Modifier.fillMaxSize(0.8f).border(3.dp, col.texto.copy(alpha = .25f), RoundedCornerShape(esc.d(32))), contentAlignment = Alignment.Center) {
-                TB("Aquí va el modelo 3D de ${c.bonito}", 24f, color = col.tenue, lineas = 2)
+                TB(if (existe) c.bonito else "Aquí va el modelo 3D de ${c.bonito}", 24f, color = col.tenue, lineas = 2)
             }
-            return@Box
         }
-        val fw = h.width / COLUMNAS_HOJA
-        val fh = h.height / ((CUADROS + COLUMNAS_HOJA - 1) / COLUMNAS_HOJA)
-        Canvas(Modifier.fillMaxSize()) {
-            val f = ((Math.round(angulo / 5f) % CUADROS) + CUADROS) % CUADROS
-            val escala = minOf(size.width / fw, size.height / fh)
-            val dw = (fw * escala).toInt(); val dh = (fh * escala).toInt()
-            drawImage(
-                h, srcOffset = IntOffset((f % COLUMNAS_HOJA) * fw, (f / COLUMNAS_HOJA) * fh), srcSize = IntSize(fw, fh),
-                dstOffset = IntOffset(((size.width - dw) / 2).toInt(), ((size.height - dh) / 2).toInt()), dstSize = IntSize(dw, dh),
-                filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium,
-            )
+        return
+    }
+    val girar = LocalMovimiento.current
+    androidx.compose.runtime.key(id) {
+        androidx.compose.ui.viewinterop.AndroidView(
+            factory = { cx -> VisorConsola(cx, id, girar) },
+            modifier = modifier.testTag("consola-3d"),
+            onRelease = { it.liberar() },
+        )
+    }
+}
+
+/** El visor de Filament: fondo transparente, luz suave, giro libre con el dedo y giro solo cuando está quieto. */
+private class VisorConsola(ctx: android.content.Context, id: String, private val girar: Boolean) :
+    android.view.TextureView(ctx), android.view.Choreographer.FrameCallback {
+    companion object { var listo = false }
+    private val ui = com.google.android.filament.android.UiHelper(com.google.android.filament.android.UiHelper.ContextErrorPolicy.DONT_CHECK).apply { isOpaque = false }
+    private val engine: com.google.android.filament.Engine
+    private val visor: com.google.android.filament.utils.ModelViewer
+    private var vivo = true
+    private var ultimoToque = 0L
+    private var angulo = 0f
+    private val base = FloatArray(16)
+    private val rot = FloatArray(16)
+    private val fin = FloatArray(16)
+
+    init {
+        if (!listo) { com.google.android.filament.utils.Utils.init(); listo = true }
+        isOpaque = false
+        engine = com.google.android.filament.Engine.create()
+        visor = com.google.android.filament.utils.ModelViewer(this, engine, ui)
+        visor.view.blendMode = com.google.android.filament.View.BlendMode.TRANSLUCENT
+        visor.renderer.clearOptions = visor.renderer.clearOptions.apply { clear = true }
+        visor.scene.skybox = null
+        visor.scene.indirectLight = com.google.android.filament.IndirectLight.Builder()
+            .irradiance(1, floatArrayOf(1f, 1f, 1f)).intensity(32_000f).build(engine)
+        val bytes = ctx.assets.open("consolas3d/$id.glb").use { it.readBytes() }
+        val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size).order(java.nio.ByteOrder.nativeOrder()).put(bytes)
+        buffer.rewind()
+        visor.loadModelGlb(buffer)
+        visor.transformToUnitCube()
+        visor.asset?.let { a ->
+            val tm = engine.transformManager
+            tm.getTransform(tm.getInstance(a.root), base)
         }
+        setOnTouchListener { v, ev ->
+            ultimoToque = android.os.SystemClock.uptimeMillis()
+            if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) v.parent?.requestDisallowInterceptTouchEvent(true)
+            visor.onTouch(v, ev)
+            true
+        }
+        android.view.Choreographer.getInstance().postFrameCallback(this)
+    }
+
+    override fun doFrame(frameTimeNanos: Long) {
+        if (!vivo) return
+        android.view.Choreographer.getInstance().postFrameCallback(this)
+        // Quieta 2 s después de soltarla, vuelve a girar sola (suave, a 60 cuadros).
+        if (girar && android.os.SystemClock.uptimeMillis() - ultimoToque > 2000) {
+            angulo = (angulo + 0.35f) % 360f
+            visor.asset?.let { a ->
+                android.opengl.Matrix.setRotateM(rot, 0, angulo, 0f, 1f, 0f)
+                android.opengl.Matrix.multiplyMM(fin, 0, rot, 0, base, 0)
+                val tm = engine.transformManager
+                tm.setTransform(tm.getInstance(a.root), fin)
+            }
+        }
+        visor.render(frameTimeNanos)
+    }
+
+    fun liberar() {
+        if (!vivo) return
+        vivo = false
+        android.view.Choreographer.getInstance().removeFrameCallback(this)
+        runCatching { visor.destroyModel() }
+        runCatching { ui.detach() }
+        runCatching { engine.destroy() }
     }
 }
 
@@ -176,14 +208,11 @@ fun CarpetasArribaCV(e: Estado) {
                     }
                 }
             }
-            // Acciones a la izquierda; L1 ◀ consola ▶ R1 y el sonido a la derecha.
+            // Acciones a la izquierda; a la derecha cómo cambiar de consola y de vista, en una línea fina.
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
                 AccionesConsolaCV(e, c, alto = 80f)
                 Spacer(Modifier.weight(1f))
-                BotonTecla("L1", "◀", { Diptico.cambiarConsola(-1) }, alto = 70f, letra = 24f)
-                TB(c.bonito, 28f, titulo = true)
-                BotonTecla("R1", "▶", { Diptico.cambiarConsola(1) }, alto = 70f, letra = 24f)
-                BotonRedondo(Icono.MUSICA, 70f, { cl.nikalbazu.diptico.audio.Sonidos.encendido() }, descripcion = "Sonido de encendido")
+                PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas")
             }
         }
     }
@@ -288,15 +317,12 @@ fun CarpetasAbajoCV(e: Estado) {
                     }
                 }
                 Spacer(Modifier.weight(1f))
+                // El dock de apps a la medida de 5 apps (las vistas se cambian con Select, no hace falta otro botón).
+                DockCV(e, 54f)
             }
-            SelectorVistasCarpetas(e, alto = 62f, letra = 22f, modifier = Modifier.fillMaxWidth())
             if (e.extra.pestanaCarpetas == 1) ColeccionesCV(e, Modifier.fillMaxWidth().weight(1f))
             else RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1f), unaPantalla = false)
-            // Pie: qué hace cada botón.
-            Row(Modifier.fillMaxWidth().height(esc.d(70)).vidrio(35f).padding(horizontal = esc.d(18)), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween) {
-                PistaTecla("A", "Entrar", 21f); PistaTecla("X", "Opciones", 21f); PistaTecla("Sel", "Vista", 21f)
-            }
+            PistasFinas("A" to "Entrar", "X" to "Opciones", "Select" to nombreVistaCarpetas(e.extra.vistaCarpetasCV), modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -353,11 +379,29 @@ fun RejillaCarpetasCV(e: Estado, modifier: Modifier, unaPantalla: Boolean) {
     val ids = e.pestanas.filter { it != "todo" }
     val sel = ids.indexOf(e.consolaSel).coerceAtLeast(0)
     val vista = e.extra.vistaCarpetasCV
-    val columnas = columnasCarpetasCV(vista, unaPantalla)
+    val columnas = columnasCarpetasCV(vista, unaPantalla).let { if (it < 0) e.extra.columnasIconoCV else it }
     androidx.compose.runtime.SideEffect { Teclas.carrilesCarpetas = columnas }
     val estado = rememberLazyGridState()
     LaunchedEffect(sel, vista) { estado.animateScrollToItem((sel - columnas).coerceAtLeast(0)) }
-    LazyVerticalGrid(GridCells.Fixed(columnas), modifier, estado,
+    // Pellizcar con dos dedos (vista Ícono): abrir agranda los íconos (menos por fila), cerrar los achica.
+    val columnasAhora = androidx.compose.runtime.rememberUpdatedState(columnas)
+    val pellizco = if (vista != "icono") Modifier else Modifier.pointerInput(Unit) {
+        androidx.compose.foundation.gestures.awaitEachGesture {
+            androidx.compose.foundation.gestures.awaitFirstDown(requireUnconsumed = false)
+            var acumulado = 1f
+            while (true) {
+                val ev = awaitPointerEvent()
+                if (ev.changes.none { it.pressed }) break
+                if (ev.changes.count { it.pressed } >= 2) {
+                    acumulado *= androidx.compose.foundation.gestures.calculateZoom(ev)
+                    ev.changes.forEach { it.consume() }
+                    if (acumulado > 1.18f) { Diptico.ajustarColumnasIcono(columnasAhora.value - 1); acumulado = 1f }
+                    if (acumulado < 0.85f) { Diptico.ajustarColumnasIcono(columnasAhora.value + 1); acumulado = 1f }
+                }
+            }
+        }
+    }
+    LazyVerticalGrid(GridCells.Fixed(columnas), modifier.then(pellizco), estado,
         horizontalArrangement = Arrangement.spacedBy(esc.d(if (vista == "icono") 10f else 24f)),
         verticalArrangement = Arrangement.spacedBy(esc.d(if (vista == "repisa") 12f else 22f)),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = esc.d(10))) {
@@ -396,11 +440,11 @@ private fun IconoCarpetaCV(e: Estado, c: Consola, modifier: Modifier, sigla: Flo
 private fun CarpetaIcono(e: Estado, c: Consola, elegida: Boolean, una: Boolean, onClick: () -> Unit) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    val lado = if (una) 112f else 150f
-    val forma = RoundedCornerShape(esc.d(lado * 0.25f))
-    Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
-        IconoCarpetaCV(e, c, Modifier.graphicsLayer { scaleX = if (elegida) 1.06f else 1f; scaleY = scaleX }.size(esc.d(lado)).clip(forma).then(anilloCV(elegida, forma)), lado * 0.4f)
-        TB(c.bonito, if (una) 20f else 22f, color = if (elegida) col.texto else col.sub)
+    val forma = RoundedCornerShape(24)
+    Column(Modifier.fillMaxWidth().clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        IconoCarpetaCV(e, c, Modifier.fillMaxWidth(0.88f).aspectRatio(1f).graphicsLayer { scaleX = if (elegida) 1.05f else 1f; scaleY = scaleX }
+            .clip(forma).then(anilloCV(elegida, forma)), 40f)
+        TB(c.bonito, 20f, color = if (elegida) col.texto else col.sub)
     }
 }
 
@@ -513,7 +557,7 @@ fun CarpetasUnicaCV(e: Estado) {
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
             // Franja 1: vistas · hora, batería y perfil.
             Row(Modifier.fillMaxWidth().height(esc.d(70)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                SelectorVistasCarpetas(e, alto = 56f, letra = 21f)
+                DockCV(e, 52f)
                 Spacer(Modifier.weight(1f))
                 HoraBateria(56f, 22f); BotonPerfil(58f)
             }
@@ -535,20 +579,17 @@ fun CarpetasUnicaCV(e: Estado) {
                             ChipElegir(n, e.extra.juegosCarpeta == m) { Diptico.elegirJuegosCarpeta(m) }
                         }
                         Spacer(Modifier.weight(1f))
-                        (1..3).forEach { q -> ChipElegir("$q", e.extra.cuantosCarpeta == q) { Diptico.elegirCuantosCarpeta(q) } }
+                        (1..5).forEach { q -> ChipElegir("$q", e.extra.cuantosCarpeta == q) { Diptico.elegirCuantosCarpeta(q) } }
                     }
                     RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1.2f), unaPantalla = true)
                 }
             }
             // Abajo: DIPPO y el dock de apps.
             Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
-                if (e.extra.dippoInicio) DippoFrase("Elige una consola y aprieta A. Con Select cambias cómo se ven las carpetas.", Modifier.weight(1f), cara = 58f, letra = 20f, maxAncho = 900f)
+                if (e.extra.dippoInicio) DippoFrase("Elige una consola y aprieta A. Select cambia cómo se ven las carpetas; si lo mantienes, cambias de pantalla.", Modifier.weight(1f), cara = 58f, letra = 20f, maxAncho = 900f)
                 else Spacer(Modifier.weight(1f))
-                Row(Modifier.vidrio(42f, fuerte = true).padding(esc.d(6)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                    FilaDock(e, 60f, conCajon = false)
-                    BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, descripcion = "Buscar")
-                    BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
-                }
+                BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, descripcion = "Buscar")
+                BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
             }
         }
     }

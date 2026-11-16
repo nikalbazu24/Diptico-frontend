@@ -427,7 +427,9 @@ data class EstadoExtra(
     val vistaCarpetasCV: String = "diptico",
     /** Qué juegos van junto al ícono de cada carpeta: "ultimos", "favoritos" o "elegidos"; y cuántos (1–3). */
     val juegosCarpeta: String = "ultimos",
-    val cuantosCarpeta: Int = 3,
+    val cuantosCarpeta: Int = 4,
+    /** Ícono de las carpetas: cuántas por fila (pellizcar con dos dedos). */
+    val columnasIconoCV: Int = 4,
     /** Consolas que muestran su logo en vez del nombre. */
     val logoConsolas: Set<String> = emptySet(),
     /** Pestaña de arriba en la pantalla de carpetas: 0 Consolas, 1 Colecciones. */
@@ -1086,7 +1088,8 @@ object Diptico {
                 vistaColeccion = almacen.texto("vistaColeccion", "estante"),
                 vistaCarpetasCV = almacen.texto("vistaCarpetasCV", "diptico"),
                 juegosCarpeta = almacen.texto("juegosCarpeta", "ultimos"),
-                cuantosCarpeta = (almacen.texto("cuantosCarpeta", "3").toIntOrNull() ?: 3).coerceIn(1, 3),
+                cuantosCarpeta = (almacen.texto("cuantosCarpeta", "4").toIntOrNull() ?: 4).coerceIn(1, 5),
+                columnasIconoCV = (almacen.texto("columnasIconoCV", "4").toIntOrNull() ?: 4).coerceIn(2, 6),
                 logoConsolas = almacen.texto("logoConsolas", "").split("|").filter { it.isNotBlank() }.toSet(),
                 carpetaTodos = almacen.bool("carpetaTodos2", false),
                 emusAuto = almacen.bool("emusAuto", true),
