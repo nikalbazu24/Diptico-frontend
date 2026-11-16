@@ -197,6 +197,7 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
             Pistas(
                 *(when {
                     e.galeria == "ia" -> arrayOf("A" to "Elegir", "Y" to "Sacar la clave", "B" to "Volver")
+                    e.galeria == "temas" -> arrayOf("A" to "Usar", "Y" to "Probar 30 s", "X" to "Personalizar", "L1 R1" to "Pestaña", "B" to "Volver")
                     pestanas.size > 1 -> arrayOf("A" to "Elegir", "L1 R1" to "Pestaña", "B" to "Volver")
                     else -> arrayOf("A" to "Elegir", "B" to "Volver")
                 }),
@@ -227,6 +228,10 @@ private fun VistaPreviaGaleria(e: Estado, item: Diptico.ItemGaleria, modifier: M
             }
             Texto(item.nombre, 13f, lineas = 2, modifier = Modifier.weight(1f))
             AccionTienda(accion, principal = true, habilitada = !instalando) { Diptico.aceptar() }
+        }
+    } else if (e.galeria == "temas") {
+        Box(modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie).padding(esc.d(10))) {
+            VistaTiendaTema(e, item, compacta = true)
         }
     } else {
         Column(modifier.clip(RoundedCornerShape(esc.d(16))).background(p.superficie).padding(esc.d(12)),
@@ -524,6 +529,7 @@ fun VistaGaleria(e: Estado) {
                 }
             }
             e.galeria in setOf("filtros", "orden", "variantes_juego", "copias_srm") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
+            e.galeria == "temas" && it?.tema != null -> VistaTiendaTema(e, it)
             e.galeria in setOf("temas", "importar_temas", "mezclar_tema", "tienda_temas", "decoraciones") && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(it.tema, e.oscuro) }
                 Spacer(Modifier.height(esc.d(12)))

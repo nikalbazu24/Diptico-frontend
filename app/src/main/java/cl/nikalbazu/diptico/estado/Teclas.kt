@@ -795,6 +795,8 @@ object Teclas {
                 }
                 KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> if (ev.repeatCount == 0 && e.panel == Panel.BUSCAR) {
                     Diptico.cambiarOrden(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
+                } else if (ev.repeatCount == 0 && e.panel == Panel.GALERIA && e.galeria == "temas") {
+                    Diptico.cambiarPreviaTema(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
                 }
                 else -> {
                     // En las apps: mantener A elige en qué pantalla abrirla.
@@ -822,7 +824,10 @@ object Teclas {
                     Panel.ASISTENTE -> Diptico.escribirAlAsistente()
                     Panel.BUSCAR -> if (e.tecladoPropio) Diptico.abrirTexto("buscar_juego", e.busqueda) else Diptico.limpiarBusqueda()
                     Panel.APPS -> Diptico.appsVisibles(e).getOrNull(e.indice)?.let { Diptico.abrirOpcionesApp(it.paquete) }
-                    Panel.GALERIA -> if (e.galeria == "accesos_cortina") Diptico.itemsGaleria(e).getOrNull(e.indice)?.takeIf { it.enUso }?.let { Diptico.subirAcceso(it.id) }
+                    Panel.GALERIA -> {
+                        if (e.galeria == "accesos_cortina") Diptico.itemsGaleria(e).getOrNull(e.indice)?.takeIf { it.enUso }?.let { Diptico.subirAcceso(it.id) }
+                        else if (e.galeria == "temas") Diptico.personalizarTemaElegido()
+                    }
                     else -> Unit
                 }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> when (e.panel) {
@@ -830,7 +835,10 @@ object Teclas {
                     Panel.CENTRO -> if (e.cortina == "avisos") cl.nikalbazu.diptico.audio.Avisos.descartarTodas()
                     Panel.ASISTENTE -> Diptico.borrarChat()
                     Panel.IMAGENES -> Diptico.abrirTexto("buscar_imagen", e.nombreImagen)
-                    Panel.GALERIA -> if (e.galeria == "ia") Diptico.itemsGaleria(e).getOrNull(e.indice)?.let { Diptico.abrirPaginaClave(it.id) }
+                    Panel.GALERIA -> {
+                        if (e.galeria == "ia") Diptico.itemsGaleria(e).getOrNull(e.indice)?.let { Diptico.abrirPaginaClave(it.id) }
+                        else if (e.galeria == "temas") Diptico.itemsGaleria(e).getOrNull(e.indice)?.tema?.let { Diptico.probarTema(it.id) }
+                    }
                     Panel.RAPIDO -> Diptico.cerrarPanel()
                     Panel.APPS -> Diptico.appsVisibles(e).getOrNull(e.indice)?.let { Diptico.alternarFijada(it.paquete) }
                     else -> Unit

@@ -10,7 +10,7 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "cuentas-emuladores-2.0-73"
+    const val ID = "temas-tienda-2.0-74"
     const val NOMBRE = "Cuentas y emuladores claros"
 
     /**
@@ -552,11 +552,17 @@ object Novedades {
             Pagina("Una melodía al recorrer tus juegos", "Al pasar de un juego a otro suena una nota de «cajita de luz» que sube y baja por una escala que nunca desafina. Cada juego tiene su nota. Se cambia en Ajustes › Controles y sonido.", Icono.MUSICA, 0xFF23C486),
             Pagina("Personalizar más ordenado", "Primero Nombre, Portada, Imagen grande, Logo y Música; después Lugar en la vitrina, un solo Ajustar encuadre (eliges la imagen primero) y el Estudio de Cajas.", Icono.AJUSTES, 0xFF2EC4A6),
         )),
-        Version(ID, "Cuentas y emuladores claros", listOf(
+        Version("cuentas-emuladores-2.0-73", "Cuentas y emuladores claros", listOf(
             Pagina("Cada cuenta en su lugar", "En Ajustes › Cuentas y conexiones cada servicio tiene su propia fila: Discord, RetroAchievements, ScreenScraper, TheGamesDB, SteamGridDB… Adentro está solo lo suyo y la fila dice si está conectado.", Icono.MUNDO, 0xFF3BA8FF),
             Pagina("Emuladores con todos sus datos", "Emuladores al día muestra la versión que tienes y cuándo la instalaste, la nueva con su fecha y de dónde viene, el tamaño, sus novedades y si el APK es para el procesador de tu consola.", Icono.EMULADOR, 0xFF7C6CFF),
             Pagina("Firmas distintas, sin sustos", "Si un emulador vino de otra tienda, te explico qué datos se pueden perder y, solo si mantienes A, Android te pregunta si lo desinstalas. Cuando termina, instalo la versión nueva sola.", Icono.CLAVE, 0xFFE0603A),
             Pagina("Borrar una variante", "En el Estudio de Cajas › Variantes ahora puedes quitar una variante suelta: con X sobre ella o tocando «Quitar».", Icono.BORRAR, 0xFFFFB547),
+        )),
+        Version(ID, "Temas nuevos y tienda", listOf(
+            Pagina("Cuatro temas que cambian todo", "En la tienda de temas, pestaña Nuevos: Recortes, Acuario de DIPPO, Salón Recreativo y Constelación. Cada uno trae su fondo, su forma de tarjetas, su manera de marcar lo elegido, su letra, su decoración y sus sonidos.", Icono.PALETA, 0xFFC94A22),
+            Pagina("Míralo en cinco pantallas", "Arriba ves cómo queda el tema en el Inicio, la Biblioteca, los Widgets, los Menús y la Ficha. Cámbialas con L2 y R2, o tocándolas.", Icono.PORTADA, 0xFF35C6D8),
+            Pagina("Pruébalo 30 segundos", "Con Y el tema se pone de verdad en las dos pantallas por 30 segundos y después vuelve el tuyo solo. Si te gusta, A lo deja puesto.", Icono.ESTRELLA, 0xFFFFD36B),
+            Pagina("Hazlo tuyo", "Con X partes desde el tema elegido para cambiarle el fondo, los colores, la decoración o los sonidos.", Icono.AJUSTES, 0xFFFF3EA5),
         )),
     )
 

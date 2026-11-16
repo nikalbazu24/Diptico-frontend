@@ -172,13 +172,13 @@ private fun paletaBase(t: Tema, oscuroPersona: Boolean): Paleta {
     }
 }
 
-private val FredokaBase = FontFamily(
+internal val FredokaBase = FontFamily(
     Font(R.font.fredoka_medium, FontWeight.Medium),
     Font(R.font.fredoka_semibold, FontWeight.SemiBold),
     Font(R.font.fredoka_bold, FontWeight.Bold),
 )
 
-private val NunitoBase = FontFamily(
+internal val NunitoBase = FontFamily(
     Font(R.font.nunito_semibold, FontWeight.SemiBold),
     Font(R.font.nunito_bold, FontWeight.Bold),
     Font(R.font.nunito_extrabold, FontWeight.ExtraBold),
@@ -193,8 +193,16 @@ val Pixel = FontFamily(
     Font(R.font.tiny5, FontWeight.ExtraBold),
 )
 
+/** Letras de los temas nuevos (todas con licencia SIL Open Font License 1.1). */
+val Mano = FontFamily(Font(R.font.kalam_bold, FontWeight.Normal), Font(R.font.kalam_bold, FontWeight.Bold))
+val Arcade = FontFamily(Font(R.font.press_start, FontWeight.Normal), Font(R.font.press_start, FontWeight.Bold))
+val Fina = FontFamily(Font(R.font.josefin_semibold, FontWeight.Normal), Font(R.font.josefin_semibold, FontWeight.Bold))
+
 internal fun fuenteTema(tipo: String, base: FontFamily = FredokaBase): FontFamily = when (tipo) {
     "pixel" -> Pixel
+    "mano" -> Mano
+    "arcade" -> Arcade
+    "fina" -> Fina
     "sans" -> FontFamily.SansSerif
     "serif" -> FontFamily.Serif
     "mono" -> FontFamily.Monospace
@@ -204,7 +212,8 @@ internal fun fuenteTema(tipo: String, base: FontFamily = FredokaBase): FontFamil
 }
 
 val Fredoka: FontFamily get() = fuenteTema(Estilo.tema.fuente, FredokaBase)
-val Nunito: FontFamily get() = fuenteTema(Estilo.tema.fuente, NunitoBase)
+/** Las letras de títulos de los temas nuevos son solo para títulos: el texto largo sigue en Nunito para leerse bien. */
+val Nunito: FontFamily get() = Estilo.tema.fuente.let { if (it in setOf("mano", "arcade", "fina")) NunitoBase else fuenteTema(it, NunitoBase) }
 
 /** Alto del lienzo de diseño, en unidades. Toda pantalla mide 400 de alto; el ancho depende de su forma. */
 const val ALTO_DISENO = 400f
@@ -275,6 +284,8 @@ fun Texto(
     traducir: Boolean = true,
 ) {
     val esc = LocalEscala.current
+    // La letra de 8 bits es muy ancha y la de mano muy alta: se ajustan para que entren donde entra Fredoka.
+    val tam = tam * when (familia) { Arcade -> 0.6f; Mano -> 1.04f; Fina -> 1.06f; else -> 1f }
     // Lee el idioma (estado de Compose) para que todo se redibuje al cambiarlo.
     val idioma = cl.nikalbazu.diptico.estado.Idioma.actual
     if (LocalTextoWidget.current && lineas <= 4) {

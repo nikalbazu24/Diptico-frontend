@@ -651,8 +651,15 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   que abre ACTION_DELETE y guarda `EmuladoresAlDia.pendiente`; `instalarTrasDesinstalar` (desde el receptor de PACKAGE_REMOVED) instala solo.
 - Estudio: `quitarVariante`, `xEstudio` (X en Variantes quita). Traducciones `extras33.tsv` (siguiente: extras34).
 
-## Boceto temas y tienda (15 nov, noche, Opus) — esperando visto bueno de Nicolás
-- Lienzo PWh7wsWBvDx8chtgESPdXA (Main: tienda en la Thor, arriba vista previa real en Inicio/Biblioteca/Widgets/Menús/Ficha, abajo
-  pestañas Nuevos/Incluidos/Calendario/Exclusivos/Mis temas; Editor con 8 submenús; UnaPantalla para la Odin 2).
-- 4 temas nuevos que cambian fondo, forma de tarjetas, selección, letra y sonidos: Recortes (cartón y cinta), Acuario de DIPPO (burbujas),
-  Salón Recreativo (marquesina y neón, distinto de «Arcade neón»), Constelación (estrellas unidas por luz). Y = probar 30 s.
+## Temas nuevos y tienda (16 nov, rama `fix/temas-tienda`, Opus; Novedades `temas-tienda-2.0-74`)
+- Boceto aprobado: lienzo PWh7wsWBvDx8chtgESPdXA. `Temas.nuevos` (recortes, acuario, salon, constelacion) entran en `todosLosTemas`.
+- Valores nuevos: tramas carton/mar/marquesina/constelacion (`TramaTema`), formas recorte/burbuja/neon/estelar (`Formas.kt`,
+  `EsquinaRecorte`), cada una marca lo elegido a su manera en `fondoBoton` → `fondoElegidoTema` (`FORMAS_CON_ELEGIDO`); fuentes
+  mano (Kalam), arcade (Press Start 2P), fina (Josefin Sans semibold instanciada con fontTools) SOLO en títulos (`Nunito` las ignora;
+  `Texto` escala Arcade ×0,6); decoraciones cintas/acuario (DIPPO nadando)/marquesina/constelacion; sonidos con
+  `herramientas/sonidos_temas.py` (sfx_<tema>_mover/aceptar/atras/jugar, en `Sonidos.tematicos`).
+- Galería "temas": pestañas Nuevos(0), Incluidos(1), Calendario(2), Exclusivos(3), Mis temas(4). `ui/PreviaTemaVistas.kt`
+  (`PreviaTemaVista` en 5 vistas, `VistaTiendaTema` en la otra pantalla y al lado en una pantalla). `extra.previaTema` (L2/R2),
+  `extra.temaPrueba` + `probarTema` (Y, 30 s, `aplicarTema` lo antepone a la fiesta; `elegirTema` lo quita), X = `personalizarTemaElegido`.
+- Falta: editor de temas en 8 submenús (Apariencia, Fondos, Colores, Efectos, Sonidos, Decoraciones, Componentes, Instalados).
+  Traducciones `extras34.tsv` (siguiente: extras35). Capturas t441–t450.

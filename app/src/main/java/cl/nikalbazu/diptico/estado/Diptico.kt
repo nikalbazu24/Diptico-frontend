@@ -404,6 +404,9 @@ data class EstadoExtra(
     val estudioCara: Int = 0,
     val estudioVista: Int = 0,
     val estudioAbierta: Boolean = false,
+    /** Tema que se está probando 30 s desde la tienda (null = ninguno) y la vista de la previa (0 Inicio … 4 Ficha). */
+    val temaPrueba: String? = null,
+    val previaTema: Int = 0,
     /** Carpetas en modo edición (tiemblan y se pueden mover) y la que está tomada para moverla con la cruceta. */
     val ordenandoCarpetas: Boolean = false,
     val carpetaTomada: String? = null,
@@ -2424,7 +2427,7 @@ object Diptico {
         "marcos" -> listOf("Marcos")
         "titulos" -> listOf("Títulos")
         "artes" -> listOf("Artes", "Portadas")
-        "temas" -> listOf("Incluidos", "Calendario", "Exclusivos", "Mis temas")
+        "temas" -> listOf("Nuevos", "Incluidos", "Calendario", "Exclusivos", "Mis temas")
         "importar_temas" -> listOf("Importar temas")
         "tienda_temas" -> categoriasTienda
         "decoraciones" -> listOf("Instalados", "Tienda de temas", "Calendario")
@@ -2582,16 +2585,17 @@ object Diptico {
         }
         return when (e.galeria) {
             "temas" -> when (e.galeriaPestana) {
-                0 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
+                0 -> Temas.nuevos.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
+                1 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
                 // Calendario: cada fiesta es un tema completo; se ve sola en su fecha (con «Fechas especiales») o se usa cuando quieras.
-                1 -> Temas.calendario().map { (fi, dia) ->
+                2 -> Temas.calendario().map { (fi, dia) ->
                     val hoy = dia == java.time.LocalDate.now()
                     ItemGaleria(fi.tema.id, fi.nombre, (if (hoy) "Hoy · " else "${dia.dayOfMonth}/${dia.monthValue} · ") + fi.donde, actual.id == fi.tema.id, fi.tema) {
                         elegirTema(fi.tema.id)
                     }
                 }
                 // Exclusivos: se ganan con los logros difíciles de DIPPO; antes se ven con candado.
-                2 -> Temas.exclusivos.map { x ->
+                3 -> Temas.exclusivos.map { x ->
                     val libre = x.logro in hechosDippo()
                     val logro = LogrosDippo.LISTA.firstOrNull { it.id == x.logro }
                     ItemGaleria(x.tema.id, x.tema.nombre,

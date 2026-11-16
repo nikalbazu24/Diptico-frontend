@@ -115,6 +115,7 @@ Díptico usa **Kotlin y Jetpack Compose**. GitHub Actions ejecuta pruebas, compi
 - Reglas de lanzamiento y catálogo base de sistemas de [ES-DE](https://es-de.org) (MIT).
 - Portadas de [libretro-thumbnails](https://github.com/libretro-thumbnails) e íconos de [retroarch-assets](https://github.com/libretro/retroarch-assets).
 - Tiny5, fuente del tema Mundo de bloques, bajo SIL Open Font License 1.1.
+- Kalam, Press Start 2P y Josefin Sans (temas Recortes, Salón Recreativo y Constelación), bajo SIL Open Font License 1.1.
 - Historia de los juegos de Wikipedia.
 
 Hecho en Chile por [@Nikalbazu24](https://github.com/Nikalbazu24).
