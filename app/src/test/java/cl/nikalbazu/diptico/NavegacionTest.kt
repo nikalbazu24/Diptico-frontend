@@ -91,24 +91,19 @@ class NavegacionTest {
     }
 
     @Test fun soloCincoTemasIncluidosYTodosTienenDescripcion() {
-        val e = Estado(galeria = "temas", galeriaPestana = 3)
-        val incluidos = Diptico.itemsGaleria(e)
-        assertEquals(5, incluidos.size)
-        assertTrue(incluidos.all { it.detalle.isNotBlank() && it.tema != null })
-        assertEquals(listOf("Nuevos", "Remasterizados", "Widgets", "Incluidos", "Calendario", "Exclusivos", "Mis temas", "Clásicos"), Diptico.pestanasGaleria("temas"))
-        val nuevos = Diptico.itemsGaleria(e.copy(galeriaPestana = 0))
-        assertEquals(4, nuevos.size)
-        val valido = { t: cl.nikalbazu.diptico.estado.Tema -> t.trama in Temas.TRAMAS && t.forma in Temas.FORMAS && t.fuente in Temas.FUENTES && t.decor in Temas.DECORACIONES }
-        assertTrue(nuevos.all { valido(it.tema!!) })
-        val remaster = Diptico.itemsGaleria(e.copy(galeriaPestana = 1))
-        assertEquals(Temas.remasterizados.size, remaster.size)
-        assertTrue(remaster.all { valido(it.tema!!) && it.tema!!.decor in Temas.DECORACIONES_VIVAS && it.detalle.isNotBlank() })
-        assertTrue(Temas.remasterizados.all { r -> cl.nikalbazu.diptico.audio.Musica.pistas.any { it.id == r.pistaBase } })
-        assertEquals(cl.nikalbazu.diptico.ui.WIDGETS_VIVOS.size, Diptico.itemsGaleria(e.copy(galeriaPestana = 2)).size)
-        assertEquals(Temas.fiestas.size, Diptico.itemsGaleria(e.copy(galeriaPestana = 4)).size)
-        assertEquals(Temas.exclusivos.size, Diptico.itemsGaleria(e.copy(galeriaPestana = 5)).size)
-        assertEquals(1, Diptico.itemsGaleria(e.copy(galeriaPestana = 6)).size)
-        assertEquals(9, Diptico.itemsGaleria(e.copy(galeriaPestana = 7)).size)
+        val e = Estado(galeria = "temas", galeriaPestana = 0)
+        val temas = Diptico.itemsGaleria(e)
+        assertEquals(Temas.incluidos.size, temas.size)
+        assertTrue(temas.all { it.detalle.isNotBlank() && it.tema != null })
+        assertEquals(listOf("Temas", "Widgets", "Calendario", "Exclusivos", "Mis temas"), Diptico.pestanasGaleria("temas"))
+        val valido = { t: cl.nikalbazu.diptico.estado.Tema -> t.trama in Temas.TRAMAS + "" && t.forma in Temas.FORMAS && t.fuente in Temas.FUENTES && t.decor in Temas.DECORACIONES }
+        assertTrue(temas.all { valido(it.tema!!) })
+        assertTrue(Temas.incluidos.filter { it.pistaBase.isNotBlank() }.all { r -> cl.nikalbazu.diptico.audio.Musica.pistas.any { it.id == r.pistaBase } })
+        assertTrue(Temas.MIGRAR.values.all { id -> Temas.incluidos.any { it.id == id } })
+        assertEquals(cl.nikalbazu.diptico.ui.WIDGETS_VIVOS.size, Diptico.itemsGaleria(e.copy(galeriaPestana = 1)).size)
+        assertEquals(Temas.fiestas.size, Diptico.itemsGaleria(e.copy(galeriaPestana = 2)).size)
+        assertEquals(Temas.exclusivos.size, Diptico.itemsGaleria(e.copy(galeriaPestana = 3)).size)
+        assertEquals(1, Diptico.itemsGaleria(e.copy(galeriaPestana = 4)).size)
         val luna = cl.nikalbazu.diptico.ui.Vivo.faseLuna(java.time.LocalDateTime.of(2024, 4, 23, 23, 49))
         assertTrue("luna llena del 23/4/2024: $luna", luna in 0.45f..0.55f)
     }

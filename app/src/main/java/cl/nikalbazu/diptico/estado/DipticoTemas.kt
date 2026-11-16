@@ -131,7 +131,7 @@ internal fun Diptico.guardarDecoracion(id: String, decor: String?, nivel: Int?) 
 fun Diptico.aplicarTema() {
     val e = estado.value
     val fiesta = if (e.temaFestivo) Temas.deHoy() else null
-    val elegido = todosLosTemas(e).firstOrNull { it.id == e.tema }
+    val elegido = todosLosTemas(e).firstOrNull { it.id == (Temas.MIGRAR[e.tema] ?: e.tema) }
         ?: Temas.fiestas.firstOrNull { it.tema.id == e.tema }?.tema
         ?: Temas.incluidos[0]
     val prueba = e.extra.temaPrueba?.let { temaPorId(e, it) }
@@ -222,7 +222,7 @@ internal fun Diptico.instalarTemaComunidad(entrada: TemaComunidad) {
             guardarTemasPropios(listOf(tema) + estado.value.temasPropios.filterNot { it.id == tema.id })
             elegirTema(tema.id)
             val actual = estado.value
-            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 6)
+            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 4)
             avisar(if (actual.fiesta != null) "${tema.nombre} instalado" else "${tema.nombre} instalado y aplicado")
         }.onFailure { avisar(it.message ?: "No pude instalar este tema.") }
     }

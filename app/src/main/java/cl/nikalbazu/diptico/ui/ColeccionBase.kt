@@ -75,20 +75,18 @@ val LocalColeccion = staticCompositionLocalOf {
 fun coloresColeccion(): ColoresColeccion {
     val p = LocalPaleta.current
     val tema = Estilo.tema
-    val radio = when (tema.forma) { "pixel", "recorte" -> 0.25f; "burbuja" -> 1.3f; "neon" -> 0.8f; else -> 1f }
+    val radio = when (tema.forma) { "pixel", "recorte" -> 0.25f; "recta" -> 0.4f; "burbuja" -> 1.3f; "neon" -> 0.8f; else -> 1f }
     val acento = Uva
-    val oscura = p.fondo.luminance() < 0.25f
-    if (oscura && tema.fondo == 0L) return ColoresColeccion(
-        Color(0xFF07080F), Color(0xFF0B0C16), Color(0x8C121424), Color(0x99121424), Color(0x1FFFFFFF),
-        Color(0xFFF4F3FA), Color(0xFFB9BBD6), Color(0xFF8E90AE), Color(0xFFF4F3FA), Color(0xFF12131F), acento, radio,
-    )
+    val oscura = p.fondo.luminance() < 0.3f
+    // Todo sale del tema: así cada tema cambia de verdad el diseño nuevo (antes los oscuros quedaban todos iguales).
+    val vidrio = androidx.compose.ui.graphics.lerp(p.fondo, p.tinta, if (oscura) 0.07f else 0.0f).copy(alpha = if (oscura) 0.62f else 0.82f)
     return ColoresColeccion(
-        fondo = p.fondo, fondo2 = p.fondo2,
-        vidrio = p.superficie.copy(alpha = if (oscura) 0.55f else 0.78f),
-        vidrioFuerte = p.superficie.copy(alpha = if (oscura) 0.62f else 0.88f),
-        borde = p.tinta.copy(alpha = 0.12f),
+        fondo = p.fondo, fondo2 = androidx.compose.ui.graphics.lerp(p.fondo, acento, if (oscura) 0.06f else 0.04f),
+        vidrio = if (oscura) vidrio else Color.White.copy(alpha = 0.72f),
+        vidrioFuerte = if (oscura) vidrio.copy(alpha = 0.78f) else Color.White.copy(alpha = 0.86f),
+        borde = p.tinta.copy(alpha = if (oscura) 0.12f else 0.16f),
         texto = p.tinta, sub = p.tenue, tenue = p.tenue.copy(alpha = 0.8f),
-        elegido = p.tinta, enElegido = p.fondo, acento = acento, radio = radio,
+        elegido = if (oscura) p.tinta else acento, enElegido = if (oscura) p.fondo else Color.White, acento = acento, radio = radio,
     )
 }
 

@@ -141,110 +141,87 @@ object Temas {
         0xFF00E5FF, 0xFFFF2E97, 0xFFB388FF, 0xFFF97316, 0xFF14B8A6, 0xFFFACC15, 0xFF94A3B8, 0xFFFFFFFF,
     )
 
+    /**
+     * Colección viva (16 nov 2026): el catálogo se rehízo entero para el diseño nuevo. Cada tema trae su fondo, sus letras, su forma,
+     * su decoración (que va DETRÁS del contenido) y sus sonidos. Los de antes se quitaron; quedan las fechas especiales.
+     */
     val incluidos = listOf(
-        Tema("diptico", "Díptico", 0xFF6B4EFF, 0xFFFF7A59, 0xFFFFC93C),
-        Tema("diptico_vidrio", "Díptico Cristal", 0xFF6A60BD, 0xFFADB4D1, 0xFFCAD3E2, forma = "cristal"),
-        // Mundo de bloques: pasto, tierra y diamante; letra de píxeles, esquinas escalonadas, sonidos de madera y piano tranquilo.
-        Tema(
-            "bloques", "Mundo de bloques", 0xFF62B33F, 0xFFA0703F, 0xFF5CE1E6, "oscuro", "bloques",
-            fondo = 0xFF1A1714, tinta = 0xFFF4ECDA, fuente = "pixel", forma = "pixel", sonidos = "bloques",
-        ),
-        Tema("medianoche", "Medianoche", 0xFF3B82F6, 0xFF22D3EE, 0xFFA78BFA, "oscuro", "estrellas"),
-        Tema("atardecer", "Atardecer", 0xFFFF7A59, 0xFFFF5D8F, 0xFFFFC93C),
-        Tema("sakura", "Sakura", 0xFFFF8FB1, 0xFFB388FF, 0xFFFFD6E0, decor = "petalos"),
-        Tema("arcade", "Arcade neón", 0xFFFF2E97, 0xFF00E5FF, 0xFFFFE600, "oscuro"),
-        Tema("oceano", "Océano", 0xFF0EA5E9, 0xFF14B8A6, 0xFF38BDF8, decor = "burbujas"),
-        Tema("bosque", "Bosque", 0xFF2EC4A6, 0xFFFFB020, 0xFF8BC34A, decor = "hojas"),
-        Tema("lava", "Lava", 0xFFEF4444, 0xFFF97316, 0xFFFACC15, "oscuro"),
-        Tema("portatil", "Portátil clásica", 0xFF8BAC0F, 0xFF306230, 0xFF9BBC0F, "gb"),
-        Tema("papel", "Papel", 0xFF3D5A80, 0xFFE07A5F, 0xFFF2CC8F, "claro"),
-        Tema("oled", "Negro puro", 0xFF6B4EFF, 0xFFFF7A59, 0xFFFFC93C, "oled"),
-        Tema("chile", "Chile", 0xFFD52B1E, 0xFF0039A6, 0xFFFFFFFF, "oscuro", "estrellas"),
-        Tema("cyber", "Cyberpunk", 0xFFF000FF, 0xFF00F0FF, 0xFFFFF200, "oled"),
-        Tema("menta", "Menta", 0xFF10B981, 0xFF34D399, 0xFFA7F3D0),
-        Tema("lavanda", "Lavanda", 0xFFA78BFA, 0xFFF0ABFC, 0xFFC4B5FD, decor = "petalos"),
-        Tema("dorado", "Dorado", 0xFFD4AF37, 0xFFF59E0B, 0xFFFDE68A, "oscuro", "estrellas"),
-        Tema("hielo", "Hielo", 0xFF7DD3FC, 0xFFBAE6FD, 0xFFE0F2FE, decor = "nieve"),
-        Tema("fuego", "Fuego", 0xFFFF4500, 0xFFFF8C00, 0xFFFFD700, "oscuro"),
-        Tema("monocromo", "Monocromo", 0xFFE5E5E5, 0xFF9CA3AF, 0xFFFFFFFF, "oled"),
-        Tema("cereza", "Cereza", 0xFFBE123C, 0xFFF43F5E, 0xFFFDA4AF),
-        Tema("desierto", "Desierto de Atacama", 0xFFD97706, 0xFFB45309, 0xFF7DD3FC, "oscuro", "estrellas"),
-        Tema("patagonia", "Patagonia", 0xFF0EA5E9, 0xFF64748B, 0xFFE0F2FE, decor = "nieve"),
-        Tema("retro80", "Retro 80", 0xFFFF6EC7, 0xFF7B61FF, 0xFF00E5FF, "oscuro"),
+        Tema("diptico", "Colección", 0xFF6B8CFF, 0xFFFF9B54, 0xFFFFD36B, "oscuro", fondo = 0xFF07080F, tinta = 0xFFF4F3FA, acabado = "vidrio",
+            descripcion = "El de Colección viva: negro azulado, vidrio oscuro y el arte de tus juegos como protagonista."),
+        Tema("aurora", "Aurora", 0xFF5EEAD4, 0xFFA78BFA, 0xFF7DD3FC, "oscuro", "cielo_vivo", fondo = 0xFF061418, tinta = 0xFFEAFBF8,
+            fuente = "redonda", forma = "capsula", sonidos = "constelacion", trama = "cielo", acabado = "vidrio",
+            descripcion = "Luces del sur que se mueven despacio detrás de todo, verde agua y lila. Tranquilo para jugar de noche."),
+        Tema("cartucho", "Cartucho", 0xFFE04848, 0xFF3B6BFF, 0xFFFFD23E, "oscuro", fondo = 0xFF14141C, tinta = 0xFFF5F5FA,
+            fuente = "sans", forma = "bisel", sonidos = "retro", trama = "diagonal", acabado = "brillo",
+            descripcion = "Plástico gris oscuro, bordes biselados y los colores de los botones de siempre. Suena a consola de los 90."),
+        Tema("papel", "Papel", 0xFF3D5A80, 0xFFE07A5F, 0xFFF2CC8F, "claro", fondo = 0xFFF4EFE4, tinta = 0xFF2A2433,
+            forma = "recta", trama = "papel", acabado = "liso",
+            descripcion = "Para leer a plena luz: hoja crema, letra oscura y tarjetas blancas, como una libreta de juegos."),
+        Tema("oled", "Negro puro", 0xFF8C9BFF, 0xFFFF7A59, 0xFFFFC93C, "oled", fondo = 0xFF000000, tinta = 0xFFFFFFFF, acabado = "liso",
+            descripcion = "Negro de verdad para pantallas OLED: gasta menos batería y deja que brille solo el arte."),
+        Tema("recortes", "Recortes", 0xFFC94A22, 0xFF2F6F8F, 0xFFE8B23A, "claro", "cintas",
+            fondo = 0xFFD9BF95, tinta = 0xFF2A2016, fuente = "mano", forma = "recorte", sonidos = "recortes", trama = "carton", acabado = "liso",
+            descripcion = "Cartón, cinta adhesiva y etiquetas: todo parece recortado a mano y suena a papel."),
+        Tema("acuario", "Acuario de DIPPO", 0xFFFF9B54, 0xFF35C6D8, 0xFFFFD6A0, "oscuro", "acuario",
+            fondo = 0xFF073245, tinta = 0xFFE9FBFF, fuente = "redonda", forma = "burbuja", sonidos = "acuario", trama = "mar", acabado = "vidrio",
+            descripcion = "El mar de DIPPO: luz que baja desde arriba, burbujas detrás de tus juegos y tarjetas como gotas."),
+        Tema("salon", "Salón Recreativo", 0xFF2BE9FF, 0xFFFF3EA5, 0xFFFFD23E, "oscuro", "marquesina",
+            fondo = 0xFF120A24, tinta = 0xFFFDF6FF, fuente = "arcade", forma = "neon", sonidos = "salon", trama = "marquesina", acabado = "liso",
+            descripcion = "Una máquina de salón: luces que corren, bordes de neón y sonidos de ficha."),
+        Tema("constelacion", "Constelación", 0xFFFFD36B, 0xFF8FA2FF, 0xFFF4E6B0, "oscuro", "constelacion",
+            fondo = 0xFF0C1030, tinta = 0xFFEEF0FF, fuente = "fina", forma = "estelar", sonidos = "constelacion", trama = "constelacion", acabado = "liso",
+            descripcion = "Cielo de noche: estrellas que se unen con líneas de luz detrás de todo, letra fina y campanitas."),
+        Tema("r_nieve", "Nieve", 0xFF38A3D8, 0xFF7DD3FC, 0xFFE0F2FE, "claro", "nieve_viva",
+            pistaBase = "nieve", fondo = 0xFFE4F2FA, tinta = 0xFF0E2A3D, fuente = "redonda", forma = "cristal", sonidos = "constelacion", trama = "cielo", acabado = "vidrio",
+            descripcion = "Cae nieve y se junta en los bordes mientras no tocas nada; al moverte se sacude."),
+        Tema("r_lava", "Lava", 0xFFFF5A1F, 0xFFFFB347, 0xFFFFD36B, "oscuro", "lava_viva",
+            pistaBase = "neon", fondo = 0xFF1A0705, tinta = 0xFFFFF3EA, fuente = "sans", forma = "bisel", trama = "ondas", acabado = "brillo",
+            descripcion = "Sigue la temperatura real de tu consola: fresca son brasas tranquilas; caliente, la lava sube y brilla."),
+        Tema("r_bosque", "Bosque", 0xFF9BE15D, 0xFFFFB020, 0xFF2EC4A6, "oscuro", "bosque_vivo",
+            pistaBase = "bosque", fondo = 0xFF0E2A1F, tinta = 0xFFEFFBE6, fuente = "suave", forma = "capsula", sonidos = "bloques", trama = "puntos", acabado = "degradado",
+            descripcion = "Cambia con la hora de verdad: hojas de día, naranjo al atardecer y luciérnagas de noche."),
+        Tema("r_medianoche", "Luna", 0xFFB7A6FF, 0xFF3B82F6, 0xFF22D3EE, "oscuro", "luna_viva",
+            pistaBase = "medianoche", fondo = 0xFF0B0A24, tinta = 0xFFEEEAFF, fuente = "fina", forma = "estelar", sonidos = "constelacion", trama = "cielo", acabado = "liso",
+            descripcion = "La luna muestra la fase real de esta noche y cada tanto cruza una estrella fugaz."),
+        Tema("r_oceano", "Marea", 0xFF38BDF8, 0xFF14B8A6, 0xFFA5F3FC, "oscuro", "marea_viva",
+            pistaBase = "oceano", fondo = 0xFF0B3550, tinta = 0xFFEAFAFF, fuente = "redonda", forma = "burbuja", sonidos = "acuario", trama = "mar", acabado = "vidrio",
+            descripcion = "La marea es tu batería: llena es marea alta, casi vacía aparece la arena."),
+        Tema("r_sakura", "Sakura", 0xFFE0568A, 0xFFB388FF, 0xFFFFD6E0, "claro", "sakura_viva",
+            pistaBase = "sakura", fondo = 0xFFFFF1F5, tinta = 0xFF3A1A26, fuente = "suave", forma = "capsula", sonidos = "burbuja", trama = "puntos", acabado = "degradado",
+            descripcion = "Caen pétalos que se juntan abajo si te quedas quieto; al moverte, el viento los barre."),
+        Tema("r_portatil", "Portátil", 0xFF8BAC0F, 0xFF306230, 0xFF9BBC0F, "gb", "lcd_viva",
+            pistaBase = "portatil", fuente = "pixel", forma = "pixel", sonidos = "retro", trama = "lcd", acabado = "liso",
+            descripcion = "La pantalla verde de las portátiles de antes, con su rejilla de puntos."),
+        Tema("r_fogata", "Fogata", 0xFFFF6A1F, 0xFFFFB020, 0xFFFFE08A, "oscuro", "fogata",
+            pistaBase = "bosque", fondo = 0xFF140C08, tinta = 0xFFFFF1E0, fuente = "mano", forma = "bisel", sonidos = "recortes", trama = "diagonal", acabado = "brillo",
+            descripcion = "Una fogata al pie de la pantalla que crece con tu racha de días jugando."),
+    )
+
+    /** Ids de los temas de antes → el tema nuevo más parecido (para quien tenía uno elegido). */
+    val MIGRAR = mapOf(
+        "diptico_vidrio" to "diptico", "bloques" to "cartucho", "medianoche" to "r_medianoche", "atardecer" to "aurora", "sakura" to "r_sakura",
+        "arcade" to "salon", "oceano" to "r_oceano", "bosque" to "r_bosque", "lava" to "r_lava", "portatil" to "r_portatil", "chile" to "cartucho",
+        "cyber" to "salon", "menta" to "aurora", "lavanda" to "r_sakura", "dorado" to "constelacion", "hielo" to "r_nieve", "fuego" to "r_fogata",
+        "monocromo" to "oled", "cereza" to "r_sakura", "desierto" to "r_fogata", "patagonia" to "r_nieve", "retro80" to "salon", "r_atardecer" to "aurora",
     )
 
     /**
      * Temas nuevos de la tienda: cada uno cambia el fondo, la forma de las tarjetas, cómo se marca lo elegido,
      * la letra de los títulos, la decoración y los sonidos. Diseños propios de Díptico.
      */
-    val nuevos = listOf(
-        Tema("recortes", "Recortes", 0xFFC94A22, 0xFF2F6F8F, 0xFFE8B23A, "claro", "cintas",
-            fondo = 0xFFD9BF95, tinta = 0xFF2A2016, fuente = "mano", forma = "recorte", sonidos = "recortes", trama = "carton", acabado = "liso",
-            descripcion = "Cartón, cinta adhesiva y etiquetas: todo parece recortado a mano. Lo elegido se marca con línea de tijera y suena a papel."),
-        Tema("acuario", "Acuario de DIPPO", 0xFFFF9B54, 0xFF35C6D8, 0xFFFFD6A0, "oscuro", "acuario",
-            fondo = 0xFF073245, tinta = 0xFFE9FBFF, fuente = "redonda", forma = "burbuja", sonidos = "acuario", trama = "mar", acabado = "vidrio",
-            descripcion = "El mar de DIPPO: luz que baja desde arriba, burbujas al moverte y tarjetas que flotan como gotas."),
-        Tema("salon", "Salón Recreativo", 0xFF2BE9FF, 0xFFFF3EA5, 0xFFFFD23E, "oscuro", "marquesina",
-            fondo = 0xFF120A24, tinta = 0xFFFDF6FF, fuente = "arcade", forma = "neon", sonidos = "salon", trama = "marquesina", acabado = "liso",
-            descripcion = "Una máquina de salón: luces que corren arriba, pantalla con líneas, bordes de neón y sonidos de ficha."),
-        Tema("constelacion", "Constelación", 0xFFFFD36B, 0xFF8FA2FF, 0xFFF4E6B0, "oscuro", "constelacion",
-            fondo = 0xFF0C1030, tinta = 0xFFEEF0FF, fuente = "fina", forma = "estelar", sonidos = "constelacion", trama = "constelacion", acabado = "liso",
-            descripcion = "Cielo de noche: estrellas que se unen con líneas de luz, letra fina y campanitas de cristal."),
-    )
+    val nuevos: List<Tema> = emptyList()
 
     /**
      * Temas remasterizados: los clásicos de siempre rehechos completos, cada uno con algo especial que sigue al equipo
      * o al día de verdad. El original queda en la pestaña «Clásicos».
      */
-    val remasterizados = listOf(
-        Tema("r_nieve", "Nieve", 0xFF38A3D8, 0xFF7DD3FC, 0xFFE0F2FE, "claro", "nieve_viva",
-            pistaBase = "nieve", fondo = 0xFFE4F2FA, tinta = 0xFF0E2A3D, fuente = "redonda", forma = "cristal", sonidos = "constelacion", trama = "cielo", acabado = "vidrio",
-            descripcion = "Cae nieve y se va juntando en los bordes mientras no tocas nada; al moverte se sacude. Si te quedas quieto un rato, la pantalla se empaña."),
-        Tema("r_lava", "Lava", 0xFFFF5A1F, 0xFFFFB347, 0xFFFFD36B, "oscuro", "lava_viva",
-            pistaBase = "neon", fondo = 0xFF1A0705, tinta = 0xFFFFF3EA, fuente = "sans", forma = "bisel", trama = "ondas", acabado = "brillo",
-            descripcion = "Sigue la temperatura real de tu consola: fresca son brasas tranquilas; caliente, la lava sube y brilla. Si se calienta mucho, late en rojo para avisarte."),
-        Tema("r_bosque", "Bosque", 0xFF9BE15D, 0xFFFFB020, 0xFF2EC4A6, "oscuro", "bosque_vivo",
-            pistaBase = "bosque", fondo = 0xFF0E2A1F, tinta = 0xFFEFFBE6, fuente = "suave", forma = "capsula", sonidos = "bloques", trama = "puntos", acabado = "degradado",
-            descripcion = "Cambia con la hora de verdad: de día caen hojas entre rayos de luz, al atardecer todo se pone naranjo y de noche salen luciérnagas."),
-        Tema("r_medianoche", "Medianoche", 0xFFB7A6FF, 0xFF3B82F6, 0xFF22D3EE, "oscuro", "luna_viva",
-            pistaBase = "medianoche", fondo = 0xFF0B0A24, tinta = 0xFFEEEAFF, fuente = "fina", forma = "estelar", sonidos = "constelacion", trama = "cielo", acabado = "liso",
-            descripcion = "La luna muestra la fase real de esta noche y cada tanto cruza una estrella fugaz. Pensado para jugar de noche."),
-        Tema("r_oceano", "Océano", 0xFF38BDF8, 0xFF14B8A6, 0xFFA5F3FC, "oscuro", "marea_viva",
-            pistaBase = "oceano", fondo = 0xFF0B3550, tinta = 0xFFEAFAFF, fuente = "redonda", forma = "burbuja", sonidos = "acuario", trama = "mar", acabado = "vidrio",
-            descripcion = "La marea es tu batería: llena es marea alta, casi vacía aparece la arena. Al enchufarla, suben burbujas."),
-        Tema("r_sakura", "Sakura", 0xFFFF8FB5, 0xFFB388FF, 0xFFFFD6E0, "claro", "sakura_viva",
-            pistaBase = "sakura", fondo = 0xFFFFF1F5, tinta = 0xFF3A1A26, fuente = "suave", forma = "capsula", sonidos = "burbuja", trama = "puntos", acabado = "degradado",
-            descripcion = "Caen pétalos y se van juntando abajo si te quedas quieto; cuando vuelves a moverte, una ráfaga de viento los barre."),
-        Tema("r_portatil", "Portátil clásica", 0xFF8BAC0F, 0xFF306230, 0xFF9BBC0F, "gb", "lcd_viva",
-            pistaBase = "portatil", fuente = "pixel", forma = "pixel", sonidos = "retro", trama = "lcd", acabado = "liso",
-            descripcion = "Una pantalla verde de las de antes, con su rejilla de puntos. Como esas portátiles, se pone más pálida cuando la batería baja."),
-        Tema("r_atardecer", "Atardecer", 0xFFFF7A59, 0xFFFF5D8F, 0xFFFFC93C, "auto", "cielo_vivo",
-            pistaBase = "cartucho", fuente = "redonda", trama = "cielo", acabado = "degradado",
-            descripcion = "El cielo sigue la hora real: rosado al amanecer, celeste de día, naranjo al atardecer y azul de noche, con el sol o la luna avanzando."),
-        Tema("r_fogata", "Fogata", 0xFFFF6A1F, 0xFFFFB020, 0xFFFFE08A, "oscuro", "fogata",
-            pistaBase = "bosque", fondo = 0xFF140C08, tinta = 0xFFFFF1E0, fuente = "mano", forma = "bisel", sonidos = "recortes", trama = "diagonal", acabado = "brillo",
-            descripcion = "Una fogata al pie de la pantalla que crece con tu racha de días jugando. Si un día faltas, quedan las brasas."),
-    )
+    val remasterizados: List<Tema> = emptyList()
 
     /** Los originales que tienen versión remasterizada (pestaña «Clásicos»). */
-    val clasicos: List<Tema> get() = listOf("hielo", "lava", "bosque", "medianoche", "oceano", "sakura", "portatil", "atardecer", "fuego")
-        .mapNotNull { id -> incluidos.firstOrNull { it.id == id } }
-        .map { it.copy(descripcion = it.descripcion.ifBlank { "El tema de siempre, tal como era." }) }
+    val clasicos: List<Tema> = emptyList()
 
-    val iniciales = listOf(
-        "diptico" to "La identidad original del frontend, con una paleta pensada para acompañar las carátulas.",
-        "diptico_vidrio" to "Para quien prefiere una interfaz sobria, con transparencias suaves y controles bien definidos.",
-        "bloques" to "Una vuelta a los juegos de construcción, con letras pixeladas, esquinas escalonadas y sonidos de madera.",
-        "papel" to "Para leer a plena luz. Recuerda a una libreta de juegos, con líneas de papel y controles discretos.",
-        "oled" to "Para jugar en la oscuridad y dejar que destaque el arte. Mantiene negro puro y botones discretos.",
-    ).map { (id, descripcion) ->
-        val tema = incluidos.first { it.id == id }.copy(descripcion = descripcion)
-        when (id) {
-            "papel" -> tema.copy(trama = "papel", forma = "recta", acabado = "liso")
-            "oled" -> tema.copy(acabado = "liso")
-            else -> tema
-        }
-    }
+    /** El catálogo de la tienda (todos los temas de Colección viva). */
+    val iniciales: List<Tema> get() = incluidos
 
     // ---------- Celebraciones del mundo ----------
 

@@ -37,7 +37,7 @@ class Revision153Test {
             oscuro = oscuro, experiencia = Experiencia(movimiento = false),
             inicio = if (widgets) "widgets" else "heroe", modoPantallas = "dos", dosDisponibles = true)
         Diptico.fijarParaPrueba(e)
-        Estilo.tema = Temas.incluidos.first { it.id == "diptico_vidrio" }
+        Estilo.tema = cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["diptico_vidrio"] ?: "diptico_vidrio") } ?: l[0] }
         Estilo.materialInterfaz = "glass"
         Idioma.fijar(ApplicationProvider.getApplicationContext(), "es")
         Estilo.decoraciones = false
