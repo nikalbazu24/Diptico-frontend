@@ -709,3 +709,12 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Capturas t466–t481. `fix/revision-capturas` ahora sube también los APK al borrador (APK de prueba sin publicar).
 - Falta: Estudio (4) y Ajustes (5) con el estilo nuevo (siguen con su diseño), 6d como pantalla propia (hoy usa la búsqueda de imágenes
   «c_portada»), 6e (en una pantalla se usa `ColeccionUnica`), colecciones (pestaña vacía).
+- RONDA 2 pedida por Nicolás (16 nov 14:38) — NO entregar APK hasta terminar todo; mostrar capturas paso a paso:
+  1. Todo muy chico (sobre todo abajo): escalar proporcional y llenar la pantalla (zoom en `LienzoBoceto`, diseños relativos, no offsets fijos).
+  2. Widgets: mantener el look nuevo pero con la personalización del modelo anterior (mover, cambiar tamaño, estilos: editor viejo).
+  3. Consolas 3D arriba y vistas de abajo deben ser lo predeterminado y fácil de encontrar (entrar por las carpetas; B vuelve a ellas).
+  4. Dock de abajo más grande. 5. Botones de abajo se esconden con temas/colores (decoraciones encima o colores).
+  6. Al cambiar de juego la caja de arriba se queda pegada y quieta: cambio animado + flotar como antes.
+  7. X Ficha = la caja se da vuelta y muestra la info del juego (no texto abajo).
+  8. Temas: Claude eligió eliminar los actuales y crear temas nuevos para Colección viva, manteniendo fechas especiales y calendario.
+  9. Terminar lo que faltaba: Estudio (4) y Ajustes (5) con el estilo nuevo, 6d pantalla propia, 6e, pestaña Colecciones.
