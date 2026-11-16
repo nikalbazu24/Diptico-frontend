@@ -114,9 +114,9 @@ fun LienzoBoceto(ancho: Float, alto: Float, modifier: Modifier = Modifier, fondo
 }
 
 /** Zoom de cada pantalla: la de abajo de la Thor es la más chica. */
-const val ZOOM_ARRIBA = 1.45f
-const val ZOOM_ABAJO = 1.65f
-const val ZOOM_UNA = 1.35f
+const val ZOOM_ARRIBA = 1.3f
+const val ZOOM_ABAJO = 1.38f
+const val ZOOM_UNA = 1.25f
 
 val LocalAltoLienzo = staticCompositionLocalOf { 1080f }
 
@@ -293,3 +293,30 @@ fun Modifier.veloColeccion(fondo: Color): Modifier = this
  * con la vista previa real. Con las pantallas intercambiadas, al revés.
  */
 fun menuIntercambiado(e: Estado): Boolean = e.intercambiar != (e.extra.coleccionViva && e.configurado && !e.unaPantalla)
+
+/** El dock de apps a la medida de 5 apps, en una píldora de vidrio (si no hay apps fijadas, invita a fijarlas). */
+@Composable
+fun DockCV(e: Estado, tam: Float = 60f, modifier: Modifier = Modifier) {
+    val esc = LocalEscala.current
+    Row(modifier.height(esc.d(tam + 20f)).vidrio((tam + 20f) / 2f, fuerte = true).padding(horizontal = esc.d(10)),
+        verticalAlignment = Alignment.CenterVertically) {
+        FilaDock(e, tam, conCajon = true)
+    }
+}
+
+/** Pistas en una sola línea fina, sin caja (para que no ocupen espacio). */
+@Composable
+fun PistasFinas(vararg pistas: Pair<String, String>, modifier: Modifier = Modifier) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(22), Alignment.CenterHorizontally)) {
+        pistas.forEach { (t, d) ->
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                Box(Modifier.border(1.5.dp, col.sub, RoundedCornerShape(50)).padding(horizontal = esc.d(8), vertical = esc.d(1))) {
+                    TB(t, 15f, color = col.sub, peso = FontWeight.ExtraBold, traducir = false)
+                }
+                TB(d, 17f, color = col.sub)
+            }
+        }
+    }
+}

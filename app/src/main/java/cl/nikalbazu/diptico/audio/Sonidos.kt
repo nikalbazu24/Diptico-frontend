@@ -121,6 +121,12 @@ object Sonidos {
     fun jugar() { tocar("jugar") }
     /** Al entrar a una consola (Colección viva): un acorde corto y propio de Díptico, no el de la consola real. */
     fun encendido() { if (tocar("encendido") == 0) tocar("abrir") }
+    /** Cada consola tiene su propio tono de encendido (el mismo acorde, afinado distinto según la consola: siempre suena igual para ella). */
+    fun encendido(consolaId: String) {
+        val tonos = floatArrayOf(0.75f, 0.84f, 0.89f, 1f, 1.12f, 1.19f, 1.26f, 1.33f, 1.5f)
+        val t = tonos[Math.floorMod(consolaId.hashCode(), tonos.size)]
+        if (tocar("encendido", t) == 0) tocar("abrir")
+    }
 
     private var ultimoBorde = 0L
 

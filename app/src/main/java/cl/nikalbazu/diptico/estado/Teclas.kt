@@ -130,6 +130,12 @@ object Teclas {
         if (abajo) presionadas += code else if (arriba) presionadas -= code
         if (abajo) cl.nikalbazu.diptico.ui.Vivo.toque()
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
+        // Mantener Select (en cualquier parte): intercambia las pantallas de arriba y abajo.
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla) {
+            consumidas += code
+            Diptico.intercambiar()
+            return true
+        }
         // Abriendo un juego con la pantalla de carga: B la cancela; lo demás espera.
         // Iniciando sesión con Discord: B cierra el panel; A pide otro código si hubo un error.
         e.extra.discordLogin?.let { l ->
@@ -174,7 +180,7 @@ object Teclas {
                 when (code) {
                     KeyEvent.KEYCODE_BUTTON_THUMBR, KeyEvent.KEYCODE_BUTTON_X -> { if (arriba && j != null) Diptico.girarCaja(true); return true }
                     KeyEvent.KEYCODE_BUTTON_SELECT -> {
-                        if (arriba) Diptico.elegirVistaColeccion(when (e.extra.vistaColeccion) { "estante" -> "cuadricula"; "cuadricula" -> "lista"; else -> "estante" })
+                        if (arriba && ev.repeatCount == 0) Diptico.elegirVistaColeccion(when (e.extra.vistaColeccion) { "estante" -> "cuadricula"; "cuadricula" -> "lista"; else -> "estante" })
                         return true
                     }
                 }
