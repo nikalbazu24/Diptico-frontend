@@ -663,3 +663,9 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `extra.temaPrueba` + `probarTema` (Y, 30 s, `aplicarTema` lo antepone a la fiesta; `elegirTema` lo quita), X = `personalizarTemaElegido`.
 - Falta: editor de temas en 8 submenús (Apariencia, Fondos, Colores, Efectos, Sonidos, Decoraciones, Componentes, Instalados).
   Traducciones `extras34.tsv` (siguiente: extras35). Capturas t441–t450.
+- Ronda 2 del boceto (16 nov, mismo lienzo, esperando visto bueno): tienda con pestañas Temas/Remasterizados/Widgets/Música.
+  Widgets nuevos (8): ¿Qué juego hoy?, Te extraña, Tu semana, Colección, Logro más cercano, Equipo, Recuerdo, Radio del tema.
+  Remasterizados (reemplazan al viejo, el original queda en «Clásicos»): Nieve (se acumula y se sacude), Lava (temperatura real),
+  Bosque (hora real), Medianoche (fase real de la luna), Océano (marea = batería), Sakura (pétalos que se juntan).
+  Música viva: partes A/B/C/puente + capas (base, melodía, ritmo, adornos, ambiente) mezcladas según hora y pantalla, descansos
+  cada 6–9 min, cambia de instrumento tras 20 min; rehacer las 13 pistas con `herramientas/componer*.py`.
