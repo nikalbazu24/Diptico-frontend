@@ -273,6 +273,7 @@ fun Diptico.abrirWeb(url: String) {
 internal fun Diptico.guardarTextoPanel() {
     val e = estado.value
     val t = e.borrador.trim()
+    if (guardarTextoWidget(e.textoPara, t)) { cerrarPanel(); return }
     when (e.textoPara) {
         "reporte_fallas" -> { confirmarReporte(t); return }
         "titulo" -> e.fichaDe?.let { c -> cambiarDatos(c) { it.copy(titulo = t.ifEmpty { null }) } }

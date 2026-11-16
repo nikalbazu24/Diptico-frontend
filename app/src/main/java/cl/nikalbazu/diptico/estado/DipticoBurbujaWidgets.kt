@@ -197,7 +197,7 @@ fun Diptico.controlesEstudio(e: Estado = estado.value): List<Control> = when (e.
 
 
 fun Diptico.elegirGrupoEditorWidget(grupo: Int) = actualizar {
-    it.copy(navegacion = it.navegacion.copy(grupoEditorWidget = grupo.coerceIn(0, 2)), indice = 1)
+    it.copy(navegacion = it.navegacion.copy(grupoEditorWidget = grupo.coerceIn(0, 3)), indice = 1)
 }
 
 
@@ -207,11 +207,14 @@ fun Diptico.buscarEnCatalogoWidgets(texto: String) = actualizar {
 
 
 internal fun Diptico.organizarControlesWidget(e: Estado, controles: List<Control>): List<Control> {
-    val grupo = e.navegacion.grupoEditorWidget
-    val grupos = listOf("Posición y tamaño", "Aspecto", "Más")
+    // Los widgets útiles tienen su propio grupo «Contenido» (liga, equipo, ciudad, nombre…), y va primero.
+    val conContenido = controles.any { it.grupo == "Contenido" }
+    val grupos = (if (conContenido) listOf("Contenido") else emptyList()) + listOf("Posición y tamaño", "Aspecto", "Más")
+    val nombres = (if (conContenido) listOf("Contenido") else emptyList()) + listOf("Tamaño", "Diseño", "Más ajustes")
+    val grupo = e.navegacion.grupoEditorWidget.coerceIn(0, grupos.size - 1)
     val selector = Control("Personalizar", "chips", grupo = "",
-        elecciones = listOf("Tamaño", "Diseño", "Más ajustes"), elegida = grupo,
-        elegir = { elegirGrupoEditorWidget(it) }) { elegirGrupoEditorWidget((grupo + 1).mod(3)) }
+        elecciones = nombres, elegida = grupo,
+        elegir = { elegirGrupoEditorWidget(it) }) { elegirGrupoEditorWidget((grupo + 1).mod(grupos.size)) }
     return listOf(controles.first(), selector) + controles.drop(1).filter { it.grupo == grupos[grupo] }
 }
 
@@ -276,11 +279,27 @@ internal fun Diptico.controlesWidget(e: Estado): List<Control> {
         avisar("Estilo copiado a todos los widgets")
     }
     l += Control("Quitar este widget", "accion", "Quitar", "Más", Icono.BORRAR) { quitarWidget(i) }
+    l += controlesUtil(e, w.tipo)
     return l
 }
 
 
 internal fun Diptico.controlesAgregar(e: Estado): List<Control> {
+    val todos = controlesAgregarTodos(e)
+    if (!e.extra.coleccionViva || e.navegacion.buscarWidgets.isNotBlank()) return todos
+    // Colección viva: la tienda por categorías (la primera fila elige la categoría).
+    val cat = e.extra.tiendaCat.coerceIn(0, CATEGORIAS_WIDGETS.size - 1)
+    val nombre = CATEGORIAS_WIDGETS[cat]
+    val items = if (cat == 0) PARA_TI.mapNotNull { t -> todos.firstOrNull { it.extra == t } } + todos.filter { it.extra in TIPOS_UTILES && it.extra !in PARA_TI }
+        else todos.filter { categoriaWidget(it.extra) == nombre }
+    return listOf(Control("Categoría", "chips", nombre, "", elecciones = CATEGORIAS_WIDGETS, elegida = cat,
+        elegir = { elegirCategoriaWidgets(it) }, menos = { elegirCategoriaWidgets((cat - 1).mod(CATEGORIAS_WIDGETS.size)) },
+    ) { elegirCategoriaWidgets((cat + 1).mod(CATEGORIAS_WIDGETS.size)) }) + items
+}
+
+fun Diptico.elegirCategoriaWidgets(k: Int) = actualizar { it.copy(extra = it.extra.copy(tiendaCat = k), indice = 0) }
+
+private fun Diptico.controlesAgregarTodos(e: Estado): List<Control> {
     val tipos = e.widgets.withIndex().filter { (!it.value.tipo.startsWith("imagen") && !it.value.tipo.startsWith("video")) || it.value.visible }
     return tipos.map { (k, w) ->
         Control(
@@ -293,11 +312,13 @@ internal fun Diptico.controlesAgregar(e: Estado): List<Control> {
                 val (columna, fila) = e.celdaCatalogo
                 actualizar { it.copy(celdaCatalogo = null) }
                 ponerEnCelda(k, columna, fila)
+                if (w.tipo in TIPOS_UTILES) abrirAjustesWidget(k)
             } else {
                 alternarWidget(k)
                 if (estado.value.widgets[k].visible) {
                     actualizar { it.copy(widgetSel = k) }
                     avisar("${Widgets.nombre(w.tipo)} agregado")
+                    if (w.tipo in TIPOS_UTILES) abrirAjustesWidget(k)
                 }
             }
         }

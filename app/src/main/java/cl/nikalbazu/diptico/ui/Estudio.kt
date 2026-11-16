@@ -53,6 +53,8 @@ fun PanelEstudio(e: Estado) {
     val esc = LocalEscala.current
     val lateral = e.unaPantalla
     val controles = remember(e) { Diptico.controlesEstudio(e) }
+    // Colección viva con dos pantallas: «Agregar» es la tienda de widgets por categorías, con vista previa en vivo.
+    if (e.estudioPestana == 1 && e.extra.coleccionViva && !lateral) { TiendaWidgetsAbajo(e, controles); return }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
         Column(
             (if (lateral && !esc.angosta) Modifier.fillMaxHeight().fillMaxWidth(0.5f)
