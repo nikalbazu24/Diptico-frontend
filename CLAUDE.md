@@ -669,3 +669,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   Bosque (hora real), Medianoche (fase real de la luna), Océano (marea = batería), Sakura (pétalos que se juntan).
   Música viva: partes A/B/C/puente + capas (base, melodía, ritmo, adornos, ambiente) mezcladas según hora y pantalla, descansos
   cada 6–9 min, cambia de instrumento tras 20 min; rehacer las 13 pistas con `herramientas/componer*.py`.
+- Ronda 2 APROBADA y hecha (16 nov, Opus, misma rama): `Temas.remasterizados` (r_nieve, r_lava, r_bosque, r_medianoche, r_oceano,
+  r_sakura, r_portatil, r_atardecer, r_fogata) con decoraciones vivas en `ui/DecoracionViva.kt` (`Temas.DECORACIONES_VIVAS`; `Vivo.toque()`
+  desde `Teclas.manejar` y un pointerInput Initial en `Lienzo`; lecturas de `Termica` cada 20 s; `Vivo.faseLuna`, `pruebaQuieto/Hora/Racha`
+  para capturas). `Temas.clasicos` = los originales. Pestañas de "temas": Nuevos 0, Remasterizados 1, Widgets 2, Incluidos 3, Calendario 4,
+  Exclusivos 5, Mis temas 6, Clásicos 7. Widgets en `ui/WidgetsVivos.kt` (`WIDGETS_VIVOS`, `WidgetVivo`; `Tarjeta` pasó a internal),
+  tienda en `estado/DipticoTiendaWidgets.kt` (`itemsTiendaWidgets`, `ponerWidgetDesdeTienda`, `callarMusicaUnaHora` con `extra.musicaCalla`),
+  `PreviaWidgetTienda` en Galeria.kt, `TuAno.ultimosDias/recuerdo`. Música viva: `herramientas/musica_viva.py` (recetas por canción, partes
+  a/b/c/p × d/n → `res/raw/viva_<id>_<parte>_<animo>.ogg`, 104 archivos, 16 MB; las `diptico_*.ogg` se borraron). `Musica`: `crearParteViva`,
+  `alTerminarParte` (descanso cada 6–9 min), `aplicarPiel` (tono cada 20 min con PlaybackParams), `saltarParte`, `lugar` ("ajustes" calma).
+  Traducciones `extras35.tsv` (siguiente: extras36). Capturas t451–t464. Falta: editor de temas en 8 submenús.
