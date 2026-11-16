@@ -261,3 +261,22 @@ fun Diptico.usarVariante(clave: String, k: String) {
 /** El nombre corto de la consola de la caja abierta en el Estudio (para la cabecera). */
 fun nombreConsolaEstudio(e: Estado): String =
     e.juegosPorClave[e.extra.cajaJuego]?.consolaId?.let { Consolas.porId(it)?.bonito }.orEmpty()
+
+/** Quita una variante guardada (la caja en uso no cambia). Sus imágenes se borran solo si nadie más las usa. */
+fun Diptico.quitarVariante(k: String) {
+    val v = estado.value.extra.caras[k] ?: return
+    guardarCaras(k, null)
+    scope.launch(Dispatchers.IO) { CajasLocales.borrarSinUso(app, v, estado.value.extra.caras.values) }
+    val clave = estado.value.extra.cajaJuego
+    val n = EstudioCajas.variantes(estado.value.extra.caras, clave).size
+    actualizar { it.copy(extra = it.extra.copy(cajaSel = it.extra.cajaSel.coerceAtMost(n + 1))) }
+    avisar("Quité «${v.nombre ?: "la variante"}»")
+}
+
+/** X en el Estudio: en Variantes, sobre una variante, la quita; en lo demás abre o cierra la caja. */
+fun Diptico.xEstudio() {
+    val e = estado.value
+    val lista = EstudioCajas.variantes(e.extra.caras, e.extra.cajaJuego)
+    if (e.extra.estudioTab == 3 && e.extra.cajaSel < lista.size) quitarVariante(lista[e.extra.cajaSel].first)
+    else alternarAperturaEstudio()
+}

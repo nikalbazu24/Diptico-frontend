@@ -399,7 +399,7 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
             lista += (listOf(Opcion(
                 "Clave de SteamGridDB", if (e.claveSgdb.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
                 "Gratis en steamgriddb.com: entra, ve a Preferencias › API y copia tu clave. Trae arte grande y logos.",
-            ) { abrirClave() }) + opcionesRaspadores(e)).map { if (it.grupo.isNullOrBlank()) it.copy(grupo = "Portadas e imágenes") else it }
+            ) { abrirClave() }) + opcionesRaspadores(e)).map { if (it.grupo.isNullOrBlank()) it.copy(grupo = servicioDe(it.titulo)) else it }
         }
         Seccion.ESENCIAL -> lista += opcionesEsenciales(e)
         Seccion.MAS -> lista += opcionesMas(e)
@@ -858,6 +858,8 @@ internal fun Diptico.submenus(s: Seccion, partes: List<Seccion>): List<Opcion> {
             "Los marcos, títulos y temas que regalan los logros de DIPPO. Los que ya ganaste se usan con un toque.", grupo = "DIPPO",
         ) { abrirGaleria("logros_dippo", 1) })
     }
+    // Cuentas: una fila por servicio, con solo lo suyo adentro (conectar, probar, sincronizar, estado, desvincular).
+    if (s == Seccion.G_CUENTAS) return cuentasPorServicio(estado.value, todas)
     // Lo más usado de la sección va a la vista (en este orden); si faltan, se completa con la primera de cada grupo.
     val principales = mutableListOf<Opcion>()
     for (t in PRINCIPALES[s].orEmpty()) todas.firstOrNull { it.titulo == t && it !in principales }?.let { principales += it }
@@ -890,7 +892,6 @@ private val PRINCIPALES: Map<Seccion, List<String>> = mapOf(
     Seccion.G_JUEGOS to listOf(TITULO_EMU_CONSOLAS, TITULO_EMU_JUEGOS, "Modo turbo al jugar", "Optimizar ahora"),
     Seccion.G_DIPPO to listOf("Hablar con DIPPO", "Logros de DIPPO", "Premios de los logros", "DIPPO en el inicio", "Avisos de DIPPO en la campana", "Temperatura y consejos al jugar"),
     Seccion.G_CONTROLES to listOf("Sticks", "Música de Díptico", "Volumen"),
-    Seccion.G_CUENTAS to listOf("Iniciar sesión con Discord", "Tu cuenta de Discord", "Mostrar «Jugando a…» en Discord", "Conectar RetroAchievements", "Clave de SteamGridDB", "ScreenScraper"),
     Seccion.G_SISTEMA to listOf("Respaldar ahora", "Idioma", "Buscar actualizaciones", "Ver las novedades de esta versión", "Recorrido por Díptico", "Enviar informe de fluidez"),
 )
 
@@ -941,4 +942,42 @@ fun Diptico.cambiarEnFila(d: Int): Boolean {
         return true
     }
     return false
+}
+
+
+/** El servicio de una opción de Cuentas por su título (las de un solo paso se llaman como el servicio). */
+private fun servicioDe(titulo: String): String = when {
+    titulo.contains("SteamGridDB") -> "SteamGridDB"
+    titulo.startsWith("ScreenScraper") -> "ScreenScraper"
+    titulo.startsWith("IGDB") -> "IGDB"
+    titulo.startsWith("TheGamesDB") -> "TheGamesDB"
+    titulo.startsWith("RAWG") -> "RAWG"
+    else -> "Portadas e imágenes"
+}
+
+/**
+ * Ajustes › Cuentas y conexiones: cada servicio en su propia fila. Si tiene varias opciones abre su submenú (solo
+ * las suyas); si tiene una sola, la fila es esa opción. El valor dice si está conectado.
+ */
+private fun Diptico.cuentasPorServicio(e: Estado, todas: List<Opcion>): List<Opcion> {
+    val porServicio = todas.groupBy { it.grupo ?: "" }
+    val orden = listOf("Discord", "RetroAchievements", "ScreenScraper", "TheGamesDB", "SteamGridDB", "IGDB", "RAWG")
+    val servicios = porServicio.keys.sortedBy { orden.indexOf(it).let { i -> if (i < 0) 99 else i } }
+    return servicios.map { nombre ->
+        val ops = porServicio.getValue(nombre)
+        if (ops.size == 1) ops.first().copy(grupo = null)
+        else {
+            val conectado = when (nombre) {
+                "Discord" -> e.extra.discordUsuario.isNotBlank()
+                "RetroAchievements" -> e.usuarioRA.isNotBlank() && e.claveRA.isNotBlank()
+                else -> false
+            }
+            val titulo = nombre.ifBlank { "Otras conexiones" }
+            Opcion(
+                titulo, if (conectado) "Conectado ✓ ›" else "Sin conectar ›", Icono.MUNDO,
+                "Todo lo de $titulo, y nada de otros servicios: conectar, ver tu cuenta, lo que se comparte y desconectar.",
+                sub = ops.map { it.copy(grupo = titulo) },
+            ) { abrirSubOpciones(titulo) }
+        }
+    }
 }

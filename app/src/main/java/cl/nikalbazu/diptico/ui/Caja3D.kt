@@ -439,9 +439,11 @@ fun Caja3D(
     val lateral = franjaLateral(consola.id)
     val franja = if (e.banda && frenteExacto == null) (if (lateral) 0.1f else franjaDe(estuche)) else 0f
     val aspecto = (plantilla?.aspecto ?: aspectoCaja(frenteReal, consola).let { if (lateral) it / (1f - franja) else it * (1f - franja) }).coerceIn(0.55f, 1.6f)
-    val info = infoReverso(e, juego, consola, aspecto)
+    // El color elegido en el Estudio también tiñe las caras que arma Díptico (frente sin portada, lomo y reverso).
+    val colorCaja = caras?.color?.let { Color(it) } ?: consola.color
+    val info = infoReverso(e, juego, consola, aspecto).let { if (caras?.color != null) it.copy(color = colorCaja.toArgb(), estuche = estuche) else it.copy(estuche = estuche) }
     val logo = e.logo?.let { Uri.parse(it) }
-    val datosFrente = InfoFrente(juego.titulo, consola.bonito, consola.color.toArgb(), estuche, portadaUri, logo, aspecto, if (detalle) 640 else 360, franja, lateral)
+    val datosFrente = InfoFrente(juego.titulo, consola.bonito, colorCaja.toArgb(), estuche, portadaUri, logo, aspecto, if (detalle) 640 else 360, franja, lateral)
     // Las caras reales (si aparecieron) o las armadas por Díptico.
     val reversoReal = if (detalle) rememberImagen(caras?.reverso?.let { Uri.parse(it) }, 900) else null
     val lomoReal = rememberImagen(caras?.lomo?.let { Uri.parse(it) }, 720)
@@ -461,7 +463,7 @@ fun Caja3D(
     val reverso = reversoReal?.asAndroidBitmap() ?: reversoHecho
     val lomo = lomoReal?.asAndroidBitmap() ?: lomoHecho
     // El color de los cantos: cartón impreso (el de la consola) o plástico.
-    val base = caras?.color?.let { Color(it) } ?: consola.color
+    val base = colorCaja
     val canto = when {
         material == "translucido" -> lerp(base, Color(0xFF9AA4B8), 0.45f).copy(alpha = 0.62f)
         material == "carton" -> lerp(base, Color(0xFF7A6A4E), 0.35f)

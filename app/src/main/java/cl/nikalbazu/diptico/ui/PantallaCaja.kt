@@ -350,7 +350,7 @@ private fun PestanaVariantes(e: Estado, g: CarasGuardadas?, variantes: List<Pair
     val esc = LocalEscala.current
     val sel = e.extra.cajaSel
     val portada = e.juegosPorClave[e.extra.cajaJuego]?.portada
-    variantes.forEachIndexed { i, (_, v) ->
+    variantes.forEachIndexed { i, (k, v) ->
         val enUso = EstudioCajas.misma(v, g)
         Row(
             Modifier.fillMaxWidth().casilla(sel == i, enUso) { Diptico.usarEstudio(i) }.padding(esc.d(8)),
@@ -366,6 +366,12 @@ private fun PestanaVariantes(e: Estado, g: CarasGuardadas?, variantes: List<Pair
                 )
             }
             if (enUso) Texto("En uso", 11.5f, color = Color(0xFF7BE7B9), lineas = 1)
+            Spacer(Modifier.width(esc.d(8)))
+            // Quitar esta variante (X con el mando sobre la fila).
+            Box(
+                Modifier.clip(CircleShape).background(Color.White.copy(alpha = 0.08f)).clickable { Diptico.quitarVariante(k) }
+                    .padding(horizontal = esc.d(10), vertical = esc.d(5)),
+            ) { Texto(if (sel == i) "X Quitar" else "Quitar", 11f, color = Color(0xFFD9D7EA), lineas = 1) }
         }
     }
     val n = variantes.size

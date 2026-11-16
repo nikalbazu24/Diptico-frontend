@@ -49,9 +49,18 @@ data class EmuRevisado(
     val pagina: String = "",
     /** Por qué no se puede actualizar desde aquí (tienda, web, sin APK…). */
     val aviso: String = "",
+    /** Cuándo se publicó la versión más nueva y dónde (GitHub o el Forgejo del emulador). */
+    val publicada: Long = 0L,
+    val origen: String = "",
+    /** Nombre del archivo APK elegido (para decir para qué procesador es). */
+    val archivo: String = "",
 )
 
 object EmuladoresAlDia {
+    /** Emulador que la persona aceptó desinstalar para poner la versión nueva (paquete y APK ya bajado). */
+    @Volatile
+    var pendiente: Pair<String, File>? = null
+
     val FUENTES = listOf(
         FuenteEmulador("Eden", listOf("dev.eden.eden_emulator", "dev.legacy.eden_emulator"), "eden-emu/eden", "git.eden-emu.dev", "https://eden-emu.dev"),
         FuenteEmulador("NovaS", listOf("io.github.nova5emu.novas"), "nova5emu/novas", web = "https://github.com/nova5emu/novas/releases"),
@@ -255,7 +264,9 @@ fun Diptico.revisarEmuladores(silencioso: Boolean = false) {
                     ?: return@map em.copy(aviso = "No encontré su APK publicado: revisa su página")
                 val (pub, url, bytes) = r
                 em.copy(
-                    ultima = pub.etiqueta, url = url, bytes = bytes, notas = pub.notas,
+                    ultima = pub.etiqueta, url = url, bytes = bytes, notas = pub.notas, publicada = pub.fecha,
+                    origen = if (f.host.isBlank()) "GitHub · ${f.repo}" else "${f.host} · ${f.repo}",
+                    archivo = url.substringAfterLast('/').substringBefore('?'),
                     nueva = EmuladoresAlDia.esMasNueva(em.version, pub.etiqueta, em.instaladoEn, pub.fecha),
                 )
             }
@@ -319,11 +330,20 @@ fun Diptico.actualizarEmulador(paquete: String) {
         val firma = withContext(Dispatchers.IO) { EmuladoresAlDia.mismaFirma(app, apk, paquete) }
         if (firma == false) {
             actualizar { it.copy(extra = it.extra.copy(emusDescarga = null)) }
+            // Firmas distintas: Android solo deja cambiar desinstalando la de ahora. Nada se borra sin que la persona lo confirme
+            // (manteniendo A) y la desinstalación la hace Android con su propia ventana.
             mostrarDialogo(Dialogo("firma-distinta", "${em.nombre} viene firmado distinto",
-                "Tu ${em.nombre} se instaló desde otra fuente (por ejemplo Play Store), y Android no deja poner encima una versión firmada por otro. " +
-                    "Para cambiarte a la de su página: guarda tus partidas, desinstálalo y vuelve a tocar «Actualizar» (quedará como instalación nueva).",
-                Icono.CLAVE, si = "Abrir su página", no = "Entendido")) { if (em.pagina.isNotBlank()) abrirWeb(em.pagina) }
-            apk.delete()
+                "Tu ${em.nombre} vino de otra fuente (por ejemplo Play Store) y Android no deja poner encima una versión firmada por otro. " +
+                    "Para cambiar hay que desinstalarlo, y al hacerlo Android borra sus datos internos: ajustes y, si las guarda adentro, tus partidas. " +
+                    "Díptico no puede respaldar los datos privados de otra app: antes exporta tus partidas desde el emulador o déjalas en una carpeta tuya. " +
+                    "Después tampoco hay garantía de que sus próximas versiones mantengan tus datos.",
+                Icono.CLAVE,
+                lineas = listOf("1. Respalda tus partidas desde el emulador", "2. Mantén A: Android te pregunta si lo desinstalas", "3. Al terminar, instalo la versión nueva sola"),
+                si = "Desinstalar y actualizar", no = "Ahora no", mantener = true, peligro = true,
+            ), no = { apk.delete() }) {
+                EmuladoresAlDia.pendiente = paquete to apk
+                abrirIntent(android.content.Intent(android.content.Intent.ACTION_DELETE, android.net.Uri.parse("package:$paquete")), "Android no deja desinstalar ${em.nombre} desde aquí")
+            }
             return@launch
         }
         actualizar { it.copy(extra = it.extra.copy(emusAvance = 1f)) }
@@ -400,18 +420,42 @@ internal fun Diptico.entradasEmuladores(e: Estado): List<EntradaNativa> {
             accion = when { bajando -> ""; em.nueva -> "Actualizar"; em.pagina.isNotBlank() && em.ultima == null -> "Abrir su página"; else -> "Abrir" },
             lista = em.ultima != null && !em.nueva,
             ayuda = buildString {
-                append("Instalado: ${em.version}. ")
-                if (em.ultima != null) append("Más nueva en su página: ${em.ultima}. ")
+                append("Instalado: ${em.version}")
+                if (em.instaladoEn > 0) append(" (" + fechaCorta(em.instaladoEn) + ")")
+                append(". ")
+                if (em.ultima != null) {
+                    append("Más nueva: ${em.ultima}")
+                    if (em.publicada > 0) append(", publicada el " + fechaCorta(em.publicada))
+                    if (em.origen.isNotBlank()) append(" en ${em.origen}")
+                    append(". ")
+                }
                 append(uso).append('.')
             },
             consejos = listOfNotNull(
                 em.notas.takeIf { it.isNotBlank() }?.let { "Novedades: " + it.replace("\n", " · ").take(220) },
                 em.aviso.takeIf { it.isNotBlank() },
                 if (em.bytes > 0) "Descarga de ${em.bytes / 1_048_576} MB" else null,
+                compatibilidad(em.archivo),
             ),
         )
     }
     return lista
+}
+
+/** «16/11/2026». */
+internal fun fechaCorta(ms: Long): String =
+    java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.ROOT).format(java.util.Date(ms))
+
+/** Para qué procesador viene el APK, según su nombre (solo se dice si se sabe). */
+internal fun compatibilidad(archivo: String): String? {
+    val n = archivo.lowercase()
+    return when {
+        n.isBlank() -> null
+        "arm64" in n || "aarch64" in n || "v8a" in n -> "Hecho para ARM64: el procesador de tu consola"
+        "universal" in n -> "APK universal: sirve en cualquier equipo Android"
+        "x86" in n -> "Ojo: este APK es para x86, no para tu consola"
+        else -> "APK: $archivo"
+    }
 }
 
 /** «hace 3 h», «ayer», «hace 2 días». */
@@ -439,3 +483,17 @@ internal fun Diptico.usarEntradaEmulador(id: String) {
     }
 }
 
+
+
+/** Android avisó que se desinstaló [paquete]: si era el que esperaba la versión nueva, la instala al tiro. */
+internal fun Diptico.instalarTrasDesinstalar(paquete: String?) {
+    val (pkg, apk) = EmuladoresAlDia.pendiente ?: return
+    if (paquete != pkg) return
+    EmuladoresAlDia.pendiente = null
+    if (!apk.isFile) { avisar("Se perdió la descarga: toca «Actualizar» otra vez"); return }
+    scope.launch {
+        avisar("Listo, ahora instalo la versión nueva")
+        try { withContext(Dispatchers.IO) { Actualizador.instalarApk(app, apk, pkg) } }
+        catch (_: Exception) { avisar("Android no aceptó la instalación. Prueba de nuevo desde Emuladores al día") }
+    }
+}

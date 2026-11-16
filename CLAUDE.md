@@ -642,3 +642,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `Sonidos.notaJuego(i)` (pentatónica de 2 octavas ida y vuelta, `gradoDe`), llamada en `moverJuego`; ajuste «Sonidos al recorrer juegos»
   (almacén `notasJuegos`). Traducciones `extras32.tsv` (siguiente: extras33). Capturas t435–t440. Pendiente del Estudio: galería con
   varios candidatos por proveedor y comparar lado a lado, encuadre por cara, borrar una variante suelta.
+
+## Cuentas y emuladores (15 nov, noche, rama `fix/cuentas-emuladores`, Opus; Novedades `cuentas-emuladores-2.0-73`)
+- 2.0-72 (Estudio de Cajas + notas) publicada como v1.1-beta.538. Nicolás: canal público por defecto, seguir con lo pendiente.
+- Cuentas: `submenus` con `s == G_CUENTAS` → `cuentasPorServicio` (una fila por servicio; varias opciones = submenú propio, una = directa;
+  valor «Conectado ✓ ›»). Raspadores con `servicioDe(titulo)` como grupo. Se quitó G_CUENTAS de `PRINCIPALES`.
+- Emuladores: `EmuRevisado.publicada/origen/archivo`, `fechaCorta`, `compatibilidad(archivo)`; firma distinta = diálogo con `mantener`
+  que abre ACTION_DELETE y guarda `EmuladoresAlDia.pendiente`; `instalarTrasDesinstalar` (desde el receptor de PACKAGE_REMOVED) instala solo.
+- Estudio: `quitarVariante`, `xEstudio` (X en Variantes quita). Traducciones `extras33.tsv` (siguiente: extras34).

@@ -1599,6 +1599,7 @@ object Diptico {
         androidx.core.content.ContextCompat.registerReceiver(app, object : android.content.BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_PACKAGE_REMOVED && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+                if (intent.action == Intent.ACTION_PACKAGE_REMOVED) instalarTrasDesinstalar(intent.data?.schemeSpecificPart)
                 publicarJuegos()
                 if (estado.value.panel == Panel.APPS) cargarApps()
             }
