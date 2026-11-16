@@ -360,6 +360,10 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 }
             }
             lista += Opcion(
+                "Diseño Colección viva", if (e.extra.coleccionViva) "Sí" else "No", Icono.TEMA,
+                "El diseño nuevo: arte del juego en grande, cajas en 3D, carpetas con la historia de cada consola y widgets que toman tu tema. Apágalo para volver al de antes.",
+            ) { alternarColeccionViva(!estado.value.extra.coleccionViva) }
+            lista += Opcion(
                 "Tamaño de letra", nombreTam(e.tamTexto), Icono.TEXTO,
                 "Agranda todas las letras de Díptico. Se nota al instante.",
             ) {

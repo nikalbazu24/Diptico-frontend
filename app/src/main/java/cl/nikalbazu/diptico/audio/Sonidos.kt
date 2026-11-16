@@ -48,7 +48,7 @@ object Sonidos {
             .build()
         recursos = ctx.applicationContext
         pool = p
-        val nombres = listOf("nota", "mover", "consola", "aceptar", "atras", "abrir", "jugar", "borde", "pagina", "deslizar", "tecla", "si", "no", "levantar", "soltar", "aviso")
+        val nombres = listOf("nota", "mover", "consola", "aceptar", "atras", "abrir", "jugar", "borde", "pagina", "deslizar", "tecla", "si", "no", "levantar", "soltar", "aviso", "encendido")
         for (prefijo in listOf("", "b_", "r_", "u_")) cargar(prefijo, nombres)
     }
 
@@ -119,6 +119,8 @@ object Sonidos {
     fun atras() { tocar("atras") }
     fun abrir() { tocar("abrir") }
     fun jugar() { tocar("jugar") }
+    /** Al entrar a una consola (Colección viva): un acorde corto y propio de Díptico, no el de la consola real. */
+    fun encendido() { if (tocar("encendido") == 0) tocar("abrir") }
 
     private var ultimoBorde = 0L
 

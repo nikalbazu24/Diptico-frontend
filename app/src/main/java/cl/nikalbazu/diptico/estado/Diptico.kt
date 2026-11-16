@@ -416,6 +416,26 @@ data class EstadoExtra(
     val estudioCara: Int = 0,
     val estudioVista: Int = 0,
     val estudioAbierta: Boolean = false,
+    /** Colección viva (el rediseño aprobado el 16 nov 2026): inicio, carpetas y widgets nuevos. Apagado = el de antes. */
+    val coleccionViva: Boolean = true,
+    /** La caja de arriba girada mostrando el reverso (abajo pasa al carrete de imágenes) y la imagen elegida del carrete. */
+    val cajaGirada: Boolean = false,
+    val carreteSel: Int = 0,
+    /** Cómo se ven los juegos dentro de una consola: "estante" (3D), "cuadricula" o "lista". */
+    val vistaColeccion: String = "estante",
+    /** Cómo se ven las carpetas: "icono", "diptico", "repisa" o "carpeta". */
+    val vistaCarpetasCV: String = "diptico",
+    /** Qué juegos van junto al ícono de cada carpeta: "ultimos", "favoritos" o "elegidos"; y cuántos (1–3). */
+    val juegosCarpeta: String = "ultimos",
+    val cuantosCarpeta: Int = 3,
+    /** Consolas que muestran su logo en vez del nombre. */
+    val logoConsolas: Set<String> = emptySet(),
+    /** Pestaña de arriba en la pantalla de carpetas: 0 Consolas, 1 Colecciones. */
+    val pestanaCarpetas: Int = 0,
+    /** Editando los widgets (bordes punteados y ✕). */
+    val editandoWidgetsCV: Boolean = false,
+    /** Widgets de Colección viva que la persona quitó (ver WIDGETS_CV). */
+    val widgetsCVOcultos: Set<String> = emptySet(),
     /** Tema que se está probando 30 s desde la tienda (null = ninguno) y la vista de la previa (0 Inicio … 4 Ficha). */
     val temaPrueba: String? = null,
     /** Hasta cuándo se calla la música de Díptico (widget «Radio del tema» › Silencio 1 h). 0 = no se calla. */
@@ -1056,6 +1076,13 @@ object Diptico {
                 dippoInicio = almacen.bool("dippoInicio", true),
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoDatos = almacen.bool("dippoDatos", true),
+                coleccionViva = almacen.bool("coleccionViva", true),
+                widgetsCVOcultos = almacen.texto("widgetsCVOcultos", "").split("|").filter { it.isNotBlank() }.toSet(),
+                vistaColeccion = almacen.texto("vistaColeccion", "estante"),
+                vistaCarpetasCV = almacen.texto("vistaCarpetasCV", "diptico"),
+                juegosCarpeta = almacen.texto("juegosCarpeta", "ultimos"),
+                cuantosCarpeta = (almacen.texto("cuantosCarpeta", "3").toIntOrNull() ?: 3).coerceIn(1, 3),
+                logoConsolas = almacen.texto("logoConsolas", "").split("|").filter { it.isNotBlank() }.toSet(),
                 carpetaTodos = almacen.bool("carpetaTodos2", false),
                 emusAuto = almacen.bool("emusAuto", true),
                 emusRevisado = almacen.texto("emusRevisado").toLongOrNull() ?: 0L,

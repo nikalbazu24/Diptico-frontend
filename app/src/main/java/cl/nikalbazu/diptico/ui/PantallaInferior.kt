@@ -110,6 +110,11 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
         Box(Modifier.fillMaxSize().then(if (conLupa) Modifier else Modifier.difuminar(e))) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
+                coleccionVivaActiva(e) -> when {
+                    e.inicio == "widgets" -> TiendaWidgetsCV(e)
+                    e.enSistemas -> CarpetasAbajoCV(e)
+                    else -> ColeccionAbajo(e)
+                }
                 else -> Box(Modifier.fillMaxSize()) {
                 // La barra de abajo flota encima: el contenido corre por detrás y solo deja el aire que pide [LocalAireAbajo].
                 val conFranja = e.extra.franjaAbajo

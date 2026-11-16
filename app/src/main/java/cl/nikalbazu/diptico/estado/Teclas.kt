@@ -153,6 +153,40 @@ object Teclas {
             }
             return true
         }
+        // Colección viva: R3 gira la caja (y abajo el carrete), Select cambia la vista; en las carpetas X opciones, Y seguir o ícono.
+        if (cl.nikalbazu.diptico.ui.coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && !e.conTeclado && e.dialogo == null &&
+            e.extra.perfilEn < 0 && e.extra.anioEn < 0 && e.extra.amigosEn < 0 && e.novedades < 0 && e.inicio != "widgets") {
+            val j = e.seleccionado
+            if (e.extra.cajaGirada && !e.enSistemas) {
+                val total = (if (j?.portada != null) 1 else 0) + (if (j?.arte != null) 1 else 0) + 6
+                if (abajo) when (code) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> Diptico.moverCarrete(-1, total)
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> Diptico.moverCarrete(1, total)
+                }
+                if (arriba) when {
+                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_THUMBR -> Diptico.girarCaja(false)
+                    esY(code) -> j?.let { Diptico.abrirCajaJuego(it.clave) }
+                    esA(code) -> Diptico.jugar()
+                }
+                if (code != KeyEvent.KEYCODE_BUTTON_START && code != KeyEvent.KEYCODE_BUTTON_MODE && code != KeyEvent.KEYCODE_HOME) return true
+            } else if (!e.enSistemas) {
+                when (code) {
+                    KeyEvent.KEYCODE_BUTTON_THUMBR -> { if (arriba && j != null) Diptico.girarCaja(true); return true }
+                    KeyEvent.KEYCODE_BUTTON_SELECT -> {
+                        if (arriba) Diptico.elegirVistaColeccion(when (e.extra.vistaColeccion) { "estante" -> "cuadricula"; "cuadricula" -> "lista"; else -> "estante" })
+                        return true
+                    }
+                }
+            } else {
+                val id = e.consolaSel
+                when {
+                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> { if (arriba) Diptico.siguienteVistaCarpetas(); return true }
+                    code == KeyEvent.KEYCODE_BUTTON_X -> { if (arriba) Diptico.abrirEditarConsola(id); return true }
+                    esY(code) -> { if (arriba) ultimoDeConsola(e, id)?.let { Diptico.seguirCon(it) } ?: Diptico.cambiarIconoCarpeta(id); return true }
+                    esA(code) -> { if (arriba && id != "todo") Diptico.entrarConsolaCV(id); return id != "todo" }
+                }
+            }
+        }
         // Lugar en la vitrina: cruceta mueve la pieza, L1/R1 cambian de pieza, L2/R2 tamaño, X caja, Y difuminado, A/B/Start listo.
         if (e.extra.edicionVitrina != null) {
             if (abajo) when (code) {

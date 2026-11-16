@@ -45,7 +45,7 @@ fun pantallaActual(): Int {
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Raiz ${rol}") }
-    val barra = e.configurado && rol != Rol.INFERIOR && !nuevoDisenoDosPantallas(e) && !(rol == Rol.UNICA && disenoUnicoNuevo(e))
+    val barra = e.configurado && rol != Rol.INFERIOR && !coleccionVivaActiva(e) && !nuevoDisenoDosPantallas(e) && !(rol == Rol.UNICA && disenoUnicoNuevo(e))
     val esc = LocalEscala.current
     CompositionLocalProvider(
         LocalPantallaId provides miPantalla,
@@ -90,7 +90,17 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                         !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
                         tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
                         tienda -> ControlesTiendaTemas(e)
+                        rol == Rol.UNICA && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO -> when {
+                            e.inicio == "widgets" -> WidgetsCV(e, unaPantalla = true)
+                            e.enSistemas -> CarpetasUnicaCV(e)
+                            else -> ColeccionUnica(e)
+                        }
                         rol == Rol.UNICA -> PantallaUnica(e)
+                        rol == Rol.SUPERIOR && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && e.fichaFijada == null -> when {
+                            e.inicio == "widgets" -> WidgetsCV(e, unaPantalla = false)
+                            e.enSistemas -> CarpetasArribaCV(e)
+                            else -> ColeccionArriba(e)
+                        }
                         rol == Rol.SUPERIOR -> if (e.fichaFijada != null && e.panel == Panel.NINGUNO && e.sesion == null) {
                             PantallaSuperior(e.copy(juegoSel = e.fichaFijada, consolaSel = "todo"))
                         } else PantallaSuperior(e)

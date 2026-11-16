@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "tienda-musica-2.0-75"
-    const val NOMBRE = "La tienda y la música, en su lugar"
+    const val ID = "coleccion-viva-2.0-76"
+    const val NOMBRE = "Colección viva"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -567,9 +567,17 @@ object Novedades {
             Pagina("Widgets nuevos", "En la tienda, pestaña Widgets: DIPPO te propone qué jugar, Te extraña, Tu semana, Tu equipo, Un recuerdo y Radio del tema. A los pone en tu inicio.", Icono.APPS, 0xFF9BE15D),
             Pagina("Música viva", "Las 13 canciones de Díptico se rehicieron en partes que se mezclan distinto cada vez: cambian con la hora y en Ajustes se calman. Cada tanto hay un silencio corto y después de 20 minutos cambian de tono.", Icono.MUSICA, 0xFFFF9B54),
         )),
-        Version(ID, "La tienda y la música, en su lugar", listOf(
+        Version("tienda-musica-2.0-75", "La tienda y la música, en su lugar", listOf(
             Pagina("La tienda nueva, a la vista", "Ajustes › Estilo › Tienda de temas abre la tienda nueva: Nuevos, Remasterizados, Widgets y los demás. Los temas para descargar quedaron en «Temas de la comunidad».", Icono.PALETA, 0xFF6B4EFF),
             Pagina("Ahora sí suena la música viva", "Los temas traían una canción corta que tapaba a la nueva. Ahora todos los temas suenan con la música viva; solo «Mi tema» puede llevar una canción tuya.", Icono.MUSICA, 0xFFFF9B54),
+        )),
+        Version(ID, "Colección viva", listOf(
+            Pagina("Un Díptico nuevo", "Arriba, el arte del juego a pantalla completa con su caja en 3D; abajo, tus consolas, un estante de cajas y tus apps. Todo en su lugar, sin nada encima.", Icono.PORTADA, 0xFF3B6BFF),
+            Pagina("Gira la caja", "Toca la caja o aprieta R3: viaja al centro y muestra el reverso. Abajo aparece el carrete con todas sus imágenes.", Icono.CHISPA, 0xFF6B4EFF),
+            Pagina("Tus consolas, con su historia", "En las carpetas, cada consola cuenta su historia y se ve en 3D (gírala con el dedo). Elige su ícono, su vista y si muestra el nombre o el logo.", Icono.MANDO, 0xFFFF9B54),
+            Pagina("Cuatro vistas de carpetas", "Ícono, Díptico, Repisa y Carpeta (Select las cambia). Junto a cada ícono elige qué juegos se ven: los últimos, tus favoritos o los que tú quieras.", Icono.CARPETA, 0xFF35C6D8),
+            Pagina("Widgets que toman tu tema", "Continuar, Tu semana, DIPPO, ¿Qué juego hoy?, Equipo y más. Cambian de color, forma y letra con tu tema. «Editar widgets» los quita o los agrega.", Icono.APPS, 0xFF9BE15D),
+            Pagina("¿Lo quieres como antes?", "Ajustes › Estilo › «Diseño Colección viva» lo apaga y vuelve el de antes.", Icono.AJUSTES, 0xFFB9BBD6),
         )),
     )
 

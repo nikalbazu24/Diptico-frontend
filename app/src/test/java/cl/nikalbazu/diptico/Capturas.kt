@@ -1651,6 +1651,42 @@ class Capturas {
         try { foto("463_tienda_widgets", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 2), Rol.INFERIOR, mi = 1) }
         finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
     }
+    // ---------- Colección viva (bocetos 1–7 aprobados el 16 nov 2026) ----------
+    private fun cv(e: Estado = conRecientes(base()), extra: (EstadoExtra) -> EstadoExtra = { it }) =
+        e.copy(consolaSel = "snes", juegoSel = "snes/1", appsFijadas = listOf("com.android.settings", "com.android.chrome"), extra = extra(e.extra.copy(coleccionViva = true)))
+    @Test fun t466_cv_arriba() = foto("466_cv_arriba", cv(), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t467_cv_abajo() = foto("467_cv_abajo", cv(), Rol.INFERIOR, mi = 1)
+    @Test fun t468_cv_arriba_girada() = foto("468_cv_arriba_girada", cv { it.copy(cajaGirada = true) }, Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t469_cv_carrete() = foto("469_cv_carrete", cv { it.copy(cajaGirada = true) }, Rol.INFERIOR, mi = 1)
+    @Test fun t470_cv_una() = foto("470_cv_una", cv().copy(modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Config(qualifiers = ABAJO)
+    @Test fun t471_cv_abajo_cuadricula() = foto("471_cv_abajo_cuadricula", cv { it.copy(vistaColeccion = "cuadricula") }, Rol.INFERIOR, mi = 1)
+    @Test fun t472_cv_carpetas_arriba() = foto("472_cv_carpetas_arriba", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t473_cv_carpetas_abajo_diptico() = foto("473_cv_carpetas_abajo_diptico", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t474_cv_carpetas_abajo_repisa() = foto("474_cv_carpetas_abajo_repisa", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(vistaCarpetasCV = "repisa") }, Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t475_cv_carpetas_abajo_carpeta() = foto("475_cv_carpetas_abajo_carpeta", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(vistaCarpetasCV = "carpeta") }, Rol.INFERIOR, mi = 1)
+    @Test fun t476_cv_carpetas_una() = foto("476_cv_carpetas_una", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)), Rol.UNICA)
+    @Test fun t477_cv_carpetas_ps2_3d() = foto("477_cv_carpetas_ps2_3d", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(consolaSel = "ps2"), Rol.SUPERIOR)
+    @Test fun t478_cv_widgets() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("478_cv_widgets", cv().copy(inicio = "widgets"), Rol.SUPERIOR) } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Test fun t479_cv_widgets_editando_sakura() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("479_cv_widgets_editando_sakura", cv { it.copy(editandoWidgetsCV = true) }.copy(inicio = "widgets"), Rol.SUPERIOR, tema = Temas.remasterizados.firstOrNull { it.id == "r_sakura" }) }
+        finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t480_cv_tienda_widgets() = foto("480_cv_tienda_widgets", cv().copy(inicio = "widgets"), Rol.INFERIOR, mi = 1)
+    @Test fun t481_cv_widgets_una() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("481_cv_widgets_una", cv().copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA) } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
     @Test fun t464_tienda_widgets_previa_arriba() {
         cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
         try { foto("464_tienda_widgets_previa", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 0), Rol.SUPERIOR, mi = 1) }
