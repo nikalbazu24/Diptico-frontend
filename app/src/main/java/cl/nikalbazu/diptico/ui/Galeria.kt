@@ -320,6 +320,17 @@ private fun TarjetaTema(it: Diptico.ItemGaleria, activo: Boolean, oscuro: Boolea
         Box(Modifier.fillMaxWidth().aspectRatio(1.5f).clip(RoundedCornerShape(esc.d(12)))) {
             val t = it.tema
             if (t != null) PreviaTema(t, oscuro, animar = animar && animarUnRato(t.id))
+            else if (it.id in WIDGETS_VIVOS) {
+                // Los widgets de la tienda: su ícono sobre un color propio de cada uno.
+                val (c1, c2) = when (it.id) {
+                    "dippoPropone" -> Color(0xFFFF9B54) to Color(0xFFFF5D8F); "teExtrana" -> Color(0xFFC08BFF) to Color(0xFF6B4EFF)
+                    "tuSemana" -> Color(0xFF5FE0B1) to Color(0xFF2E8FC4); "equipo" -> Color(0xFF7AD7FF) to Color(0xFF3B6BD8)
+                    "recuerdo" -> Color(0xFF9AA8FF) to Color(0xFF5A3FA8); else -> Color(0xFFFFB48F) to Color(0xFFE0603A)
+                }
+                Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(c1, c2))), contentAlignment = Alignment.Center) {
+                    IconoDiptico(cl.nikalbazu.diptico.estado.Widgets.icono(it.id), Color.White, 40f)
+                }
+            }
             else Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Uva, Coral))), contentAlignment = Alignment.Center) {
                 IconoDiptico(Icono.CHISPA, Color.White, 30f)
             }
@@ -695,9 +706,8 @@ private fun PreviaWidgetTienda(e: Estado, item: Diptico.ItemGaleria) {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
         Texto(item.nombre, 22f, lineas = 1)
         Detalle(item.detalle, 13f, lineas = 2)
-        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-            val ancho = if (w.an >= 3) 0.86f else 0.5f
-            Box(Modifier.fillMaxWidth(ancho).aspectRatio(w.an.toFloat() / w.al.coerceAtLeast(1) * 1.15f)) {
+        Box(Modifier.fillMaxWidth().weight(1f).padding(vertical = esc.d(6)), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxHeight(if (w.al >= 2) 0.9f else 0.45f).aspectRatio(w.an.toFloat() / w.al.coerceAtLeast(1) * 1.15f, matchHeightConstraintsFirst = true)) {
                 androidx.compose.runtime.CompositionLocalProvider(LocalWidget provides w) { ContenidoWidget(e, w, w.an, w.al) }
             }
         }

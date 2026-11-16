@@ -1640,7 +1640,7 @@ class Capturas {
                 inicio = "widgets",
                 widgets = listOf(
                     Widget("dippoPropone", 0, 0, 3, 2), Widget("tuSemana", 3, 0, 3, 2),
-                    Widget("recuerdo", 0, 2, 3, 2), Widget("equipo", 3, 2, 2, 2), Widget("radio", 5, 2, 1, 2),
+                    Widget("recuerdo", 0, 2, 3, 2), Widget("equipo", 3, 2, 3, 1), Widget("radio", 3, 3, 3, 1),
                 ) + Widgets.porDefecto.filter { it.tipo !in setOf("dippoPropone", "tuSemana", "recuerdo", "equipo", "radio") }.map { it.copy(visible = false) },
             ), Rol.SUPERIOR)
         } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null; cl.nikalbazu.diptico.estado.Termica.pruebaLectura = null }
