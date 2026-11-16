@@ -1700,6 +1700,9 @@ class Capturas {
         }
         foto("483_cv_widgets_utiles", e, Rol.SUPERIOR)
     }
+    @Config(qualifiers = ABAJO)
+    @Test fun t484_cv_icono_carpeta() = foto("484_cv_icono_carpeta",
+        cv().copy(panel = Panel.IMAGENES, candidatoPara = "c_portada", consolaEditando = "snes", nombreImagen = "Super Nintendo", fuenteImagen = "todas", indice = 2), Rol.INFERIOR, mi = 1)
     @Test fun t481_cv_widgets_una() {
         cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
         try { foto("481_cv_widgets_una", cv().copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA) } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
