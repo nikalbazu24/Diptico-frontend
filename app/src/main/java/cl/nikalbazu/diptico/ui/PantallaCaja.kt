@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -107,29 +108,44 @@ private fun InspeccionCaja(e: Estado, j: cl.nikalbazu.diptico.data.Juego, c: cl.
     )
     val fijo by animateFloatAsState(when (vista) { 2 -> 82f; 3 -> 180f; else -> 26f }, spring(dampingRatio = 0.8f, stiffness = 120f), label = "giro")
     val abierta by animateFloatAsState(if (e.extra.estudioAbierta) 1f else 0f, tween(620), label = "tapa")
-    Box(Modifier.fillMaxSize()) {
+    val caja: @Composable (Modifier) -> Unit = { m ->
         Caja3D(
-            datosCaja(e, j, c), j, c, Modifier.fillMaxSize(0.94f).align(Alignment.Center),
+            datosCaja(e, j, c), j, c, m,
             giroY = { if (vista == 0) gira.value else fijo }, giroX = { -7f }, caras = g, apertura = { abierta },
         )
-        if (grande) {
-            Column(Modifier.align(Alignment.TopStart).padding(esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(3))) {
-                Etiqueta(c.bonito + " · Estudio de Cajas", Coral, 11f)
-                Texto(j.titulo, 24f, lineas = 2, modifier = Modifier.widthIn(max = esc.d(320)))
+    }
+    val pastillas: @Composable (Modifier) -> Unit = { m ->
+        Row(m.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+            listOf("Girar", "Frente", "Lomo", "Reverso").forEachIndexed { i, t ->
+                Pastilla(t, vista == i && !e.extra.estudioAbierta, grande) { Diptico.vistaEstudio(i) }
+            }
+            Pastilla(if (e.extra.estudioAbierta) "Cerrar" else "Abrir", e.extra.estudioAbierta, grande) { Diptico.alternarAperturaEstudio() }
+        }
+    }
+    if (grande) {
+        // Con la pantalla entera para la caja: los datos a la izquierda y la caja a la derecha, sin taparse.
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(0.34f).fillMaxHeight().padding(esc.d(6)), verticalArrangement = Arrangement.spacedBy(esc.d(4))) {
+                Etiqueta(c.bonito, Coral, 11f)
+                Etiqueta("Estudio de Cajas", p.tenue, 10f)
+                Texto(j.titulo, 24f, lineas = 3)
                 Detalle(
                     (EstudioCajas.plantilla(g?.plantilla)?.nombre ?: "Forma de la consola") + " · " + EstudioCajas.nombreMaterial(g?.material),
-                    12.5f, lineas = 1,
+                    12.5f, lineas = 2,
                 )
                 if (g?.tiene == true && g.caras().none(CajasLocales::esRemota)) SelloGuardada()
+                Spacer(Modifier.weight(1f))
+                Detalle("Select: cambiar vista\nX: abrir la caja\nY: jugar ya", 11.5f, color = p.tenue)
             }
-            Detalle("Select: cambiar vista\nX: abrir la caja\nY: jugar ya", 11.5f, color = p.tenue,
-                modifier = Modifier.align(Alignment.TopEnd).padding(esc.d(6)))
+            Column(Modifier.weight(0.66f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+                caja(Modifier.weight(1f).fillMaxWidth())
+                pastillas(Modifier.padding(bottom = esc.d(4)))
+            }
         }
-        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(4)), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-            listOf("Girar", "Frente", "Lomo", "Reverso").forEachIndexed { i, t ->
-                Pastilla(t, vista == i && !e.extra.estudioAbierta) { Diptico.vistaEstudio(i) }
-            }
-            Pastilla(if (e.extra.estudioAbierta) "Cerrar" else "Abrir", e.extra.estudioAbierta) { Diptico.alternarAperturaEstudio() }
+    } else {
+        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            caja(Modifier.weight(1f).fillMaxWidth())
+            pastillas(Modifier.padding(bottom = esc.d(2)))
         }
     }
 }
@@ -150,13 +166,13 @@ private fun SelloGuardada() {
 }
 
 @Composable
-private fun Pastilla(texto: String, activa: Boolean, alTocar: () -> Unit) {
+private fun Pastilla(texto: String, activa: Boolean, grande: Boolean, alTocar: () -> Unit) {
     val esc = LocalEscala.current
     Box(
         Modifier.clip(CircleShape).then(if (activa) Modifier.fondoBoton(Uva) else Modifier.background(Color(0xBF141422)))
             .border(esc.d(1), if (activa) Color.White else Color.White.copy(alpha = 0.12f), CircleShape)
-            .clickable { alTocar() }.padding(horizontal = esc.d(12), vertical = esc.d(6)),
-    ) { Texto(texto, 12f, color = if (activa) SobreUva else Color(0xFFD9D7EA), lineas = 1) }
+            .clickable { alTocar() }.padding(horizontal = esc.d(if (grande) 12 else 9), vertical = esc.d(if (grande) 6 else 5)),
+    ) { Texto(texto, if (grande) 12f else 10.5f, color = if (activa) SobreUva else Color(0xFFD9D7EA), lineas = 1) }
 }
 
 /** El panel de abajo (o de la derecha): DIPPO, pestañas y lo de cada pestaña. */
@@ -196,7 +212,7 @@ private fun PanelCajas(e: Estado, clave: String, g: CarasGuardadas?) {
                 else -> PestanaVariantes(e, g, variantes)
             }
         }
-        Pistas("L1/R1" to "Pestaña", "A" to "Elegir", "X" to "Abrir", "Y" to "Jugar", "B" to "Volver")
+        Pistas("L1/R1" to "Pestaña", "A" to "Elegir", "Y" to "Jugar", "B" to "Volver")
     }
 }
 
@@ -219,7 +235,7 @@ private fun PestanaCaras(e: Estado, g: CarasGuardadas?) {
     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
         EstudioCajas.CARAS.forEachIndexed { i, nombre ->
             val valor = when (i) { 0 -> g?.frente; 1 -> g?.lomo; 2 -> g?.reverso; else -> g?.disco }
-            Column(Modifier.weight(1f).casilla(sel == i, e.extra.estudioCara == i) { Diptico.usarEstudio(i) }.padding(esc.d(7))) {
+            Column(Modifier.weight(1f).casilla(sel == i, e.extra.estudioCara == i) { Diptico.usarEstudio(i) }.padding(esc.d(7)), horizontalAlignment = Alignment.CenterHorizontally) {
                 MiniCara(valor, if (i == 0) e.juegosPorClave[e.extra.cajaJuego]?.portada else null, i == 3)
                 Spacer(Modifier.height(esc.d(5)))
                 Texto(nombre, 13f, lineas = 1)
@@ -257,7 +273,7 @@ private fun MiniCara(valor: String?, respaldo: Uri?, disco: Boolean) {
     val esc = LocalEscala.current
     val img = rememberImagen((valor?.let { Uri.parse(it) }) ?: respaldo, 240)
     Box(
-        Modifier.fillMaxWidth().aspectRatio(if (disco) 1f else 0.75f).clip(if (disco) CircleShape else RoundedCornerShape(esc.d(6)))
+        Modifier.height(esc.d(78)).aspectRatio(if (disco) 1f else 0.75f).clip(if (disco) CircleShape else RoundedCornerShape(esc.d(6)))
             .background(Brush.linearGradient(listOf(Color(0xFF2A2547), Color(0xFF151526)))),
         contentAlignment = Alignment.Center,
     ) {
@@ -340,7 +356,7 @@ private fun PestanaVariantes(e: Estado, g: CarasGuardadas?, variantes: List<Pair
             Modifier.fillMaxWidth().casilla(sel == i, enUso) { Diptico.usarEstudio(i) }.padding(esc.d(8)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.width(esc.d(34))) { MiniCara(v.frente, portada, false) }
+            Box(Modifier.height(esc.d(44)).width(esc.d(34)).clip(RoundedCornerShape(esc.d(4)))) { MiniCara(v.frente, portada, false) }
             Spacer(Modifier.width(esc.d(10)))
             Column(Modifier.weight(1f)) {
                 Texto(v.nombre ?: "Variante", 13.5f, lineas = 1)
