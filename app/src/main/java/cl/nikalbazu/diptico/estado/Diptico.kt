@@ -256,7 +256,7 @@ object Widgets {
         Widget("progreso", 0, 0, 3, 2, false),
         Widget("dippoPropone", 0, 0, 3, 2, false), Widget("teExtrana", 0, 0, 3, 2, false), Widget("tuSemana", 0, 0, 3, 2, false),
         Widget("equipo", 0, 0, 2, 2, false), Widget("recuerdo", 0, 0, 3, 2, false), Widget("radio", 0, 0, 3, 1, false),
-    )
+    ) + WIDGETS_UTILES.map { (tipo, tam) -> Widget(tipo, 0, 0, tam.first, tam.second, false) }
 
     /** El inicio nuevo (9 nov 2026): seguir jugando, tu progreso, música y lo último que jugaste. */
     val inicioNuevo = listOf(
@@ -289,6 +289,7 @@ object Widgets {
         "equipo" -> "Batería, temperatura y espacio libre de tu consola"
         "recuerdo" -> "Lo que jugabas hace una semana, un mes o un año"
         "radio" -> "La música del tema: otra parte, pausa o silencio por una hora"
+        in UTILES_DESCRIPCION -> UTILES_DESCRIPCION.getValue(tipo)
         else -> "Tu imagen o GIF animado"
     }
 
@@ -306,6 +307,7 @@ object Widgets {
         "progreso" -> Icono.TROFEO
         "dippoPropone" -> Icono.BISA; "teExtrana" -> Icono.CORAZON; "tuSemana" -> Icono.RELOJ
         "equipo" -> Icono.BATERIA; "recuerdo" -> Icono.PORTADA; "radio" -> Icono.MUSICA
+        in UTILES_ICONO -> UTILES_ICONO.getValue(tipo)
         else -> Icono.PORTADA
     }
 
@@ -338,6 +340,7 @@ object Widgets {
         "progreso" -> "Tu progreso"
         "dippoPropone" -> "DIPPO te propone"; "teExtrana" -> "Te extraña"; "tuSemana" -> "Tu semana"
         "equipo" -> "Tu equipo"; "recuerdo" -> "Un recuerdo"; "radio" -> "Radio del tema"
+        in UTILES_NOMBRE -> UTILES_NOMBRE.getValue(tipo)
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -430,6 +433,10 @@ data class EstadoExtra(
     val cuantosCarpeta: Int = 4,
     /** Ícono de las carpetas: cuántas por fila (pellizcar con dos dedos). */
     val columnasIconoCV: Int = 4,
+    /** Ajustes propios de cada widget útil (tipo → clave → valor): liga y equipo, nombre del contador, ciudad… */
+    val confWidgets: Map<String, Map<String, String>> = emptyMap(),
+    /** Categoría elegida en la tienda de widgets (Colección viva). */
+    val tiendaCat: Int = 0,
     /** Consolas que muestran su logo en vez del nombre. */
     val logoConsolas: Set<String> = emptySet(),
     /** Pestaña de arriba en la pantalla de carpetas: 0 Consolas, 1 Colecciones. */
@@ -1090,6 +1097,7 @@ object Diptico {
                 juegosCarpeta = almacen.texto("juegosCarpeta", "ultimos"),
                 cuantosCarpeta = (almacen.texto("cuantosCarpeta", "4").toIntOrNull() ?: 4).coerceIn(1, 5),
                 columnasIconoCV = (almacen.texto("columnasIconoCV", "4").toIntOrNull() ?: 4).coerceIn(2, 6),
+                confWidgets = ConfWidgets.leer(almacen.texto("confWidgets", "")),
                 logoConsolas = almacen.texto("logoConsolas", "").split("|").filter { it.isNotBlank() }.toSet(),
                 carpetaTodos = almacen.bool("carpetaTodos2", false),
                 emusAuto = almacen.bool("emusAuto", true),

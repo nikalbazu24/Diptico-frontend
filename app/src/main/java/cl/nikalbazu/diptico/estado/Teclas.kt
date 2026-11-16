@@ -905,6 +905,7 @@ object Teclas {
      * Zona "panel": la cruceta recorre las opciones; B vuelve a la grilla. Start o B en la grilla: listo.
      */
     private fun estudio(ev: KeyEvent, e: Estado): Boolean {
+        val tiendaCV = e.estudioPestana == 1 && e.extra.coleccionViva && !e.unaPantalla && !e.estudioMover
         val code = ev.keyCode
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
@@ -952,8 +953,12 @@ object Teclas {
                 return true
             }
             when {
+                // Tienda de widgets de Colección viva: la cruceta recorre la grilla de 2 y L1/R1 cambian de categoría.
+                tiendaCV && d != null && e.indice > 0 -> Diptico.moverIndice(if (d.second != 0) d.second * 2 else d.first)
                 d != null && d.second != 0 -> Diptico.moverIndice(d.second)
                 d != null -> Diptico.cambiarControl(d.first)
+                tiendaCV && code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount == 0 -> Diptico.elegirCategoriaWidgets((e.extra.tiendaCat - 1).mod(CATEGORIAS_WIDGETS.size))
+                tiendaCV && code == KeyEvent.KEYCODE_BUTTON_R1 && ev.repeatCount == 0 -> Diptico.elegirCategoriaWidgets((e.extra.tiendaCat + 1).mod(CATEGORIAS_WIDGETS.size))
                 code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount == 0 -> Diptico.cambiarPestanaEstudio(-1)
                 code == KeyEvent.KEYCODE_BUTTON_R1 && ev.repeatCount == 0 -> Diptico.cambiarPestanaEstudio(1)
                 code == KeyEvent.KEYCODE_BUTTON_L2 && ev.repeatCount == 0 -> Diptico.cambiarPagina(-1)

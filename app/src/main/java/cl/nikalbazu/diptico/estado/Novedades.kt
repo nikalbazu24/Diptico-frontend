@@ -578,6 +578,8 @@ object Novedades {
             Pagina("Cuatro vistas de carpetas", "Ícono, Díptico, Repisa y Carpeta: Select las cambia. En Ícono, pellizca con dos dedos para agrandar o achicar. Mantén Select para intercambiar las pantallas donde estés.", Icono.CARPETA, 0xFF35C6D8),
             Pagina("Widgets que toman tu tema", "Continuar, Tu semana, DIPPO, ¿Qué juego hoy?, Equipo y más. Cambian de color, forma y letra con tu tema. «Editar widgets» los quita o los agrega.", Icono.APPS, 0xFF9BE15D),
             Pagina("Temas nuevos", "Los temas se rehicieron para este diseño: Colección, Aurora, Cartucho, Papel, Negro puro, Acuario, Salón, Constelación, y los vivos Nieve, Lava, Bosque, Luna, Marea, Sakura, Portátil y Fogata. Las fechas especiales siguen en el Calendario.", Icono.PALETA, 0xFFFF5D8F),
+            Pagina("Widgets 2.0", "Desliza la portada hacia el lado y llegas a tus widgets. Mantén presionado un lugar vacío para agregar uno ahí, y estíralos desde la esquina: su contenido se acomoda al tiro.", Icono.APPS, 0xFF6B4EFF),
+            Pagina("Widgets útiles", "Marcador en vivo, próximo partido y tabla (fútbol chileno, Libertadores, NBA y más), contador, marcador para jugar con otros, dados, cuenta regresiva, nota, clima, feriados de Chile y hora en el mundo.", Icono.TROFEO, 0xFFFF5D5D),
             Pagina("¿Lo quieres como antes?", "Ajustes › Estilo › «Diseño Colección viva» lo apaga y vuelve el de antes.", Icono.AJUSTES, 0xFFB9BBD6),
         )),
     )

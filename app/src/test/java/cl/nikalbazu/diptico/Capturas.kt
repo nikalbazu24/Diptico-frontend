@@ -1683,6 +1683,23 @@ class Capturas {
     }
     @Config(qualifiers = ABAJO)
     @Test fun t480_cv_tienda_widgets() = foto("480_cv_tienda_widgets", cv().copy(inicio = "widgets"), Rol.INFERIOR, mi = 1)
+    // Widgets 2.0: la tienda abajo con categorías y vista previa en vivo, y los widgets útiles arriba.
+    @Config(qualifiers = ABAJO)
+    @Test fun t482_cv_tienda_widgets_categorias() = foto("482_cv_tienda_widgets_categorias",
+        cv { it.copy(tiendaCat = 2) }.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 1, indice = 1), Rol.INFERIOR, mi = 1)
+    @Test fun t483_cv_widgets_utiles() {
+        val utiles = mapOf("contador" to Triple(0, 0, 2 to 2), "dados" to Triple(2, 0, 2 to 2), "regresiva" to Triple(4, 0, 2 to 2),
+            "marcadorMesa" to Triple(0, 2, 3 to 2), "nota" to Triple(3, 2, 3 to 1), "horaMundo" to Triple(3, 3, 3 to 1))
+        val conf = mapOf("contador" to mapOf("nombre" to "Victorias en Mario Kart", "valor" to "12"),
+            "marcadorMesa" to mapOf("a" to "Nico", "b" to "Cami", "pa" to "7", "pb" to "5"),
+            "nota" to mapOf("texto" to "Comprar pilas para el control"))
+        val e = cv { it.copy(confWidgets = conf) }.let { e0 ->
+            e0.copy(inicio = "widgets", widgets = e0.widgets.map { w ->
+                utiles[w.tipo]?.let { (x, y, t) -> w.copy(x = x, y = y, an = t.first, al = t.second, visible = true, pagina = 0) } ?: w.copy(visible = false)
+            })
+        }
+        foto("483_cv_widgets_utiles", e, Rol.SUPERIOR)
+    }
     @Test fun t481_cv_widgets_una() {
         cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
         try { foto("481_cv_widgets_una", cv().copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA) } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }

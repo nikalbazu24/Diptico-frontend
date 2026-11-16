@@ -92,15 +92,14 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                         !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
                         tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
                         tienda -> ControlesTiendaTemas(e)
-                        rol == Rol.UNICA && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && e.inicio != "widgets" -> when {
-                            e.enSistemas -> CarpetasUnicaCV(e)
-                            else -> ColeccionUnica(e)
-                        }
+                        // Colección viva: la portada y los widgets son dos páginas que se deslizan con el dedo.
+                        rol == Rol.UNICA && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && !e.editandoWidgets -> InicioDeslizable(
+                            e, portada = { if (e.enSistemas) CarpetasUnicaCV(e) else ColeccionUnica(e) }, widgets = { PantallaInicio(e) },
+                        )
                         rol == Rol.UNICA -> PantallaUnica(e)
-                        rol == Rol.SUPERIOR && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && e.fichaFijada == null && e.inicio != "widgets" -> when {
-                            e.enSistemas -> CarpetasArribaCV(e)
-                            else -> ColeccionArriba(e)
-                        }
+                        rol == Rol.SUPERIOR && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && e.fichaFijada == null && !e.editandoWidgets -> InicioDeslizable(
+                            e, portada = { if (e.enSistemas) CarpetasArribaCV(e) else ColeccionArriba(e) }, widgets = { PantallaInicio(e) },
+                        )
                         rol == Rol.SUPERIOR -> if (e.fichaFijada != null && e.panel == Panel.NINGUNO && e.sesion == null) {
                             PantallaSuperior(e.copy(juegoSel = e.fichaFijada, consolaSel = "todo"))
                         } else PantallaSuperior(e)

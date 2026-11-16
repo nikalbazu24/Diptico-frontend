@@ -291,7 +291,14 @@ private fun Grilla(e: Estado, pagina: Int, m: MedidasEditorWidgets, arrastre: Ar
     val densidad = LocalDensity.current
     Box(
         modifier.padding(esc.d(MARGEN_GRILLA)).pointerInput(e.editandoWidgets, m) {
-            if (!e.editandoWidgets) detectTapGestures(onLongPress = { Diptico.editarWidgets() })
+            // Mantener presionado: sobre un widget, lo edita; en un lugar vacío, abre «Agregar aquí» en esa celda.
+            if (!e.editandoWidgets) detectTapGestures(onLongPress = { o ->
+                val x = (o.x / m.pasoX).toInt(); val y = (o.y / m.pasoY).toInt()
+                val ahora = Diptico.estado.value
+                val ocupado = ahora.widgets.any { it.visible && it.pagina == pagina && x >= it.x && x < it.x + it.an && y >= it.y && y < it.y + it.al }
+                Diptico.editarWidgets()
+                if (!ocupado) Diptico.abrirBurbuja(x, y)
+            })
             else detectTapGestures(
                 onLongPress = { o -> Diptico.abrirBurbuja((o.x / m.pasoX).toInt(), (o.y / m.pasoY).toInt()) },
                 onTap = { Diptico.cerrarBurbuja() },
@@ -487,6 +494,7 @@ internal fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, a
         w.tipo.startsWith("coleccion-") -> WidgetColeccion(e, w.tipo.removePrefix("coleccion-"), an, al)
         w.tipo.startsWith("imagen") -> WidgetImagen(w)
         w.tipo.startsWith("video") -> WidgetVideo(w, e.sesion == null)
+        w.tipo in TIPOS_UTILES -> WidgetUtil(e, w.tipo, an, al)
         w.tipo in planWidgets -> WidgetPlanPartida(e, w.tipo, an, al)
         an == 1 && w.tipo !in herramientasWidgets -> WidgetMini(e, w.tipo, al)
         else -> WidgetVista(e, w.tipo, an, al)
