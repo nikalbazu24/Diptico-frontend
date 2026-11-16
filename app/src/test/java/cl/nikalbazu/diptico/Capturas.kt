@@ -485,7 +485,7 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t88_galeria_temas() = foto("88_galeria_de_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", indice = 2), Rol.INFERIOR)
 
-    @Test fun t89_galeria_temas_arriba() = foto("89_galeria_temas_arriba", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 3, indice = 3), Rol.SUPERIOR)
+    @Test fun t89_galeria_temas_arriba() = foto("89_galeria_temas_arriba", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 4, indice = 3), Rol.SUPERIOR)
 
     @Config(qualifiers = ABAJO)
     @Test fun t90_mis_colores() = foto("90_mis_colores", base().copy(panel = Panel.GALERIA, galeria = "colores", indice = 9), Rol.INFERIOR)
@@ -1431,9 +1431,9 @@ class Capturas {
     @Test fun t371_nativos_una() = foto("371_nativos_una", conNativos(0, 2).copy(modoPantallas = "una_negra"), Rol.UNICA)
     // Temas: el calendario (cada fiesta con su estilo completo) y los exclusivos con candado.
     @Config(qualifiers = ABAJO)
-    @Test fun t372_temas_calendario() = foto("372_temas_calendario", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 3, indice = 1), Rol.INFERIOR, mi = 1)
+    @Test fun t372_temas_calendario() = foto("372_temas_calendario", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 4, indice = 1), Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
-    @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 4, indice = 0), Rol.INFERIOR, mi = 1)
+    @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 5, indice = 0), Rol.INFERIOR, mi = 1)
     @Test fun t374_tema_exclusivo_arriba() = foto("374_tema_exclusivo_aurora", base(), Rol.SUPERIOR, tema = Temas.exclusivos[0].tema)
     @Test fun t375_tema_fiesta_navidad() = foto("375_tema_fiesta_navidad", base(), Rol.SUPERIOR, tema = Temas.fiestas.first { it.id == "navidad" }.tema)
     // Emuladores al día: DIPPO arriba con su resumen, los que tienen versión nueva primero.
@@ -1626,6 +1626,36 @@ class Capturas {
     @Test fun t460_remaster_fogata() = viva("460_remaster_fogata", "r_fogata", racha = 9)
     @Config(qualifiers = ABAJO)
     @Test fun t461_tienda_remasterizados() = foto("461_tienda_remasterizados", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 1, indice = 0), Rol.INFERIOR, mi = 1)
+    // ---------- Widgets nuevos de la tienda ----------
+    private fun conFilasSemana(): List<cl.nikalbazu.diptico.estado.TuAno.Fila> {
+        val hoy = java.time.LocalDate.now()
+        fun f(d: Long, clave: String, min: Int) = cl.nikalbazu.diptico.estado.TuAno.Fila(hoy.minusDays(d).toString(), clave, min * 60L, 1)
+        return listOf(f(0, "snes/1", 40), f(1, "ps2/3", 95), f(2, "snes/1", 20), f(4, "n64/7", 70), f(5, "ps2/3", 130), f(6, "snes/1", 15), f(30, "genesis/6", 55))
+    }
+    @Test fun t462_widgets_vivos_inicio() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        cl.nikalbazu.diptico.estado.Termica.pruebaLectura = cl.nikalbazu.diptico.estado.Termica.Lectura(39f, 0f, 0, Float.NaN, false, 64, cl.nikalbazu.diptico.estado.Termica.Nivel.TIBIA)
+        try {
+            foto("462_widgets_vivos_inicio", conRecientes(base()).copy(
+                inicio = "widgets",
+                widgets = listOf(
+                    Widget("dippoPropone", 0, 0, 3, 2), Widget("tuSemana", 3, 0, 3, 2),
+                    Widget("recuerdo", 0, 2, 3, 2), Widget("equipo", 3, 2, 2, 2), Widget("radio", 5, 2, 1, 2),
+                ) + Widgets.porDefecto.filter { it.tipo !in setOf("dippoPropone", "tuSemana", "recuerdo", "equipo", "radio") }.map { it.copy(visible = false) },
+            ), Rol.SUPERIOR)
+        } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null; cl.nikalbazu.diptico.estado.Termica.pruebaLectura = null }
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t463_tienda_widgets() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("463_tienda_widgets", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 2), Rol.INFERIOR, mi = 1) }
+        finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Test fun t464_tienda_widgets_previa_arriba() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("464_tienda_widgets_previa", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 0), Rol.SUPERIOR, mi = 1) }
+        finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
     @Test fun t429_ajustes_tres_columnas() = foto("429_ajustes_tres_columnas", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 1, extra = it.extra.copy(equipoTipo = "portatil", equipoNombre = "AYN Odin 2 Portal")) }, Rol.UNICA)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
@@ -1670,7 +1700,7 @@ class Capturas {
     )
     @Config(qualifiers = ABAJO)
 
-    @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 5), Rol.INFERIOR, mi = 1)
+    @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 6), Rol.INFERIOR, mi = 1)
 
     @Test fun visual_cristal_y_barra() = foto("visual_cristal_y_barra", base(), Rol.SUPERIOR, tema = Temas.incluidos.first { it.id == "diptico_vidrio" })
 

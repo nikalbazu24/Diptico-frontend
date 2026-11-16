@@ -222,7 +222,7 @@ internal fun Diptico.instalarTemaComunidad(entrada: TemaComunidad) {
             guardarTemasPropios(listOf(tema) + estado.value.temasPropios.filterNot { it.id == tema.id })
             elegirTema(tema.id)
             val actual = estado.value
-            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 5)
+            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 6)
             avisar(if (actual.fiesta != null) "${tema.nombre} instalado" else "${tema.nombre} instalado y aplicado")
         }.onFailure { avisar(it.message ?: "No pude instalar este tema.") }
     }

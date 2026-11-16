@@ -254,6 +254,8 @@ object Widgets {
         Widget("colaJuegos", 0, 0, 3, 2, false),
         Widget("tengo20", 0, 0, 3, 1, false),
         Widget("progreso", 0, 0, 3, 2, false),
+        Widget("dippoPropone", 0, 0, 3, 2, false), Widget("teExtrana", 0, 0, 3, 2, false), Widget("tuSemana", 0, 0, 3, 2, false),
+        Widget("equipo", 0, 0, 2, 2, false), Widget("recuerdo", 0, 0, 3, 2, false), Widget("radio", 0, 0, 3, 1, false),
     )
 
     /** El inicio nuevo (9 nov 2026): seguir jugando, tu progreso, música y lo último que jugaste. */
@@ -281,6 +283,12 @@ object Widgets {
         "colaJuegos" -> "Ordena los juegos que quieres empezar o terminar"
         "tengo20" -> "Sugiere juegos que sueles jugar en sesiones breves"
         "progreso" -> "Cuánto te queda en tu juego, tu racha de días y el próximo logro de DIPPO"
+        "dippoPropone" -> "DIPPO te propone qué jugar según la hora y lo que venías jugando"
+        "teExtrana" -> "Un juego que te gustaba y dejaste a medias, con tu último paso"
+        "tuSemana" -> "Cuánto jugaste cada día de esta semana y tu mejor día"
+        "equipo" -> "Batería, temperatura y espacio libre de tu consola"
+        "recuerdo" -> "Lo que jugabas hace una semana, un mes o un año"
+        "radio" -> "La música del tema: otra parte, pausa o silencio por una hora"
         else -> "Tu imagen o GIF animado"
     }
 
@@ -296,6 +304,8 @@ object Widgets {
         "colaJuegos" -> Icono.BIBLIOTECA
         "tengo20" -> Icono.RELOJ
         "progreso" -> Icono.TROFEO
+        "dippoPropone" -> Icono.BISA; "teExtrana" -> Icono.CORAZON; "tuSemana" -> Icono.RELOJ
+        "equipo" -> Icono.BATERIA; "recuerdo" -> Icono.PORTADA; "radio" -> Icono.MUSICA
         else -> Icono.PORTADA
     }
 
@@ -326,6 +336,8 @@ object Widgets {
         "temporizador" -> "Temporizador"; "cronometro" -> "Cronómetro"; "buscar" -> "Buscar juegos"
         "proximaPartida" -> "Mi próxima partida"; "colaJuegos" -> "Cola de juegos"; "tengo20" -> "Tengo 20 minutos"
         "progreso" -> "Tu progreso"
+        "dippoPropone" -> "DIPPO te propone"; "teExtrana" -> "Te extraña"; "tuSemana" -> "Tu semana"
+        "equipo" -> "Tu equipo"; "recuerdo" -> "Un recuerdo"; "radio" -> "Radio del tema"
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -406,6 +418,8 @@ data class EstadoExtra(
     val estudioAbierta: Boolean = false,
     /** Tema que se está probando 30 s desde la tienda (null = ninguno) y la vista de la previa (0 Inicio … 4 Ficha). */
     val temaPrueba: String? = null,
+    /** Hasta cuándo se calla la música de Díptico (widget «Radio del tema» › Silencio 1 h). 0 = no se calla. */
+    val musicaCalla: Long = 0L,
     val previaTema: Int = 0,
     /** Carpetas en modo edición (tiemblan y se pueden mover) y la que está tomada para moverla con la cruceta. */
     val ordenandoCarpetas: Boolean = false,
@@ -1190,7 +1204,9 @@ object Diptico {
                     else -> e.pista
                 }
                 // Se calla mientras grabas una nota de voz o escuchas una.
-                listOf(e.listo && e.musica && e.aLaVista > 0 && e.sesion == null && e.grabando == 0L, pista, e.volumen, e.carpetaMusica)
+                Musica.lugar = if (e.panel == Panel.MENU) "ajustes" else "inicio"
+                val callada = e.extra.musicaCalla > System.currentTimeMillis()
+                listOf(e.listo && e.musica && !callada && e.aLaVista > 0 && e.sesion == null && e.grabando == 0L, pista, e.volumen, e.carpetaMusica)
             }.distinctUntilChanged().collect { (sonar, pista, vol, carpetaM) ->
                 Musica.sincronizar(sonar as Boolean, pista as String, vol as Float, carpetaM as Uri?)
             }
@@ -2427,7 +2443,7 @@ object Diptico {
         "marcos" -> listOf("Marcos")
         "titulos" -> listOf("Títulos")
         "artes" -> listOf("Artes", "Portadas")
-        "temas" -> listOf("Nuevos", "Remasterizados", "Incluidos", "Calendario", "Exclusivos", "Mis temas", "Clásicos")
+        "temas" -> listOf("Nuevos", "Remasterizados", "Widgets", "Incluidos", "Calendario", "Exclusivos", "Mis temas", "Clásicos")
         "importar_temas" -> listOf("Importar temas")
         "tienda_temas" -> categoriasTienda
         "decoraciones" -> listOf("Instalados", "Tienda de temas", "Calendario")
@@ -2588,16 +2604,18 @@ object Diptico {
                 0 -> Temas.nuevos.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
                 // Remasterizados: los clásicos rehechos, cada uno con algo que sigue al equipo o al día de verdad.
                 1 -> Temas.remasterizados.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
-                2 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
+                // Widgets nuevos: se ponen en tu inicio con A (los que ya están, se marcan).
+                2 -> itemsTiendaWidgets(e)
+                3 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
                 // Calendario: cada fiesta es un tema completo; se ve sola en su fecha (con «Fechas especiales») o se usa cuando quieras.
-                3 -> Temas.calendario().map { (fi, dia) ->
+                4 -> Temas.calendario().map { (fi, dia) ->
                     val hoy = dia == java.time.LocalDate.now()
                     ItemGaleria(fi.tema.id, fi.nombre, (if (hoy) "Hoy · " else "${dia.dayOfMonth}/${dia.monthValue} · ") + fi.donde, actual.id == fi.tema.id, fi.tema) {
                         elegirTema(fi.tema.id)
                     }
                 }
                 // Exclusivos: se ganan con los logros difíciles de DIPPO; antes se ven con candado.
-                4 -> Temas.exclusivos.map { x ->
+                5 -> Temas.exclusivos.map { x ->
                     val libre = x.logro in hechosDippo()
                     val logro = LogrosDippo.LISTA.firstOrNull { it.id == x.logro }
                     ItemGaleria(x.tema.id, x.tema.nombre,
@@ -2607,7 +2625,7 @@ object Diptico {
                     }
                 }
                 // Clásicos: los temas de antes, tal como eran, para quien prefiera el original de un remasterizado.
-                6 -> Temas.clasicos.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
+                7 -> Temas.clasicos.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
                 else -> temasPersonales(e).map { t ->
                     ItemGaleria(t.id, t.nombre, t.descripcion.ifBlank { "Tema guardado en tu consola" }, actual.id == t.id, t) {
                         elegirTema(t.id)

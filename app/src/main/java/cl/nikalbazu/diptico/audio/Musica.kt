@@ -25,19 +25,19 @@ object Musica {
     data class Pista(val id: String, val nombre: String, val estilo: String, val recurso: Int)
 
     val pistas = listOf(
-        Pista("bisagra", "Bisagra", "Lofi tranquilo", R.raw.diptico_bisagra),
-        Pista("cartucho", "Cartucho", "Arcade alegre", R.raw.diptico_cartucho),
-        Pista("medianoche", "Medianoche", "Ambiente suave", R.raw.diptico_medianoche),
-        Pista("fantasma", "Fantasma", "Misterio de Halloween", R.raw.diptico_fantasma),
-        Pista("nieve", "Nieve", "Cascabeles de Navidad", R.raw.diptico_nieve),
-        Pista("sakura", "Sakura", "Flauta y koto japonés", R.raw.diptico_sakura),
-        Pista("neon", "Neón", "Synthwave arcade", R.raw.diptico_neon),
-        Pista("oceano", "Océano", "Olas y calma", R.raw.diptico_oceano),
-        Pista("bosque", "Bosque", "Folk con flauta", R.raw.diptico_bosque),
-        Pista("portatil", "Portátil", "Chiptune clásico", R.raw.diptico_portatil),
-        Pista("fiesta", "Fiesta", "Carnaval y celebración", R.raw.diptico_fiesta),
-        Pista("cueca", "Cueca", "Guitarra, acordeón y palmas", R.raw.diptico_cueca),
-        Pista("bloques", "Bloques", "Piano tranquilo para construir", R.raw.diptico_bloques),
+        Pista("bisagra", "Bisagra", "Lofi tranquilo", R.raw.viva_bisagra_a_d),
+        Pista("cartucho", "Cartucho", "Arcade alegre", R.raw.viva_cartucho_a_d),
+        Pista("medianoche", "Medianoche", "Ambiente suave", R.raw.viva_medianoche_a_d),
+        Pista("fantasma", "Fantasma", "Misterio de Halloween", R.raw.viva_fantasma_a_d),
+        Pista("nieve", "Nieve", "Cascabeles de Navidad", R.raw.viva_nieve_a_d),
+        Pista("sakura", "Sakura", "Flauta y koto japonés", R.raw.viva_sakura_a_d),
+        Pista("neon", "Neón", "Synthwave arcade", R.raw.viva_neon_a_d),
+        Pista("oceano", "Océano", "Olas y calma", R.raw.viva_oceano_a_d),
+        Pista("bosque", "Bosque", "Folk con flauta", R.raw.viva_bosque_a_d),
+        Pista("portatil", "Portátil", "Chiptune clásico", R.raw.viva_portatil_a_d),
+        Pista("fiesta", "Fiesta", "Carnaval y celebración", R.raw.viva_fiesta_a_d),
+        Pista("cueca", "Cueca", "Guitarra, acordeón y palmas", R.raw.viva_cueca_a_d),
+        Pista("bloques", "Bloques", "Piano tranquilo para construir", R.raw.viva_bloques_a_d),
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -53,6 +53,21 @@ object Musica {
     private var cola: List<Uri> = emptyList()
     private var enCola = 0
     private var mezcla = 0
+
+    // ---------- Música viva ----------
+    // Cada canción viene en partes (a, b, c y p = respiro) y en dos ánimos (d = día, n = noche). En vez de repetir un
+    // tramo, se van encadenando en otro orden, según la hora y la pantalla; cada 6 a 9 minutos hay un descanso corto
+    // y después de 20 minutos cambia el tono, para que no canse.
+    private var viva: Pista? = null
+    private var ultimaParte = ""
+    private var inicioViva = 0L
+    private var proximoDescanso = 0L
+    private var descansando = false
+
+    /** Dónde está la persona: "ajustes" pide algo más calmado. Lo fija Díptico al cambiar de pantalla. */
+    @Volatile var lugar: String = "inicio"
+
+    private val NOMBRES_PARTE = mapOf("a" to "Tema", "b" to "Vuelta", "c" to "Brillo", "p" to "Respiro")
 
     /** Nombre de lo que está sonando ahora, para mostrarlo. */
     var titulo: String = ""
@@ -124,6 +139,7 @@ object Musica {
         // Otra app (un juego, un emulador) se quedó con el sonido: al volver a Díptico se retoma, salvo que
         // otra cosa siga sonando de verdad (Spotify, YouTube Music…).
         if (focoPerdido && !retomarSiSePuede()) return
+        if (descansando) return
         if (mp?.isPlaying != true) {
             if (!pedirFoco()) return
             mp?.start()
@@ -160,6 +176,8 @@ object Musica {
         fundido?.cancel()
         val anterior = mp
         sonando = clave
+        viva = null
+        descansando = false
         scope.launch {
             // Se apaga lo anterior suave y entra lo nuevo.
             if (anterior != null) {
@@ -187,10 +205,19 @@ object Musica {
                 else -> if (pista.startsWith("archivo:")) {
                     crearDeArchivo(Uri.parse(pista.removePrefix("archivo:"))) ?: crearDeRecurso(pistas[0], enBucle = true)
                 } else {
-                    crearDeRecurso(pistas.firstOrNull { it.id == pista } ?: pistas[0], enBucle = true)
+                    val p = pistas.firstOrNull { it.id == pista } ?: pistas[0]
+                    if (tieneViva(p)) {
+                        viva = p
+                        inicioViva = System.currentTimeMillis()
+                        proximoDescanso = inicioViva + espera()
+                        ultimaParte = ""
+                        crearParteViva(p, primera = true)
+                    } else crearDeRecurso(p, enBucle = true)
                 }
             }
             if (nuevo == null) return@launch
+            if (viva != null && pista != viva?.id) viva = null
+            descansando = false
             mp = nuevo
             if (!pedirFoco()) {
                 focoPerdido = true
@@ -199,9 +226,106 @@ object Musica {
             focoPerdido = false
             nuevo.setVolume(0f, 0f)
             nuevo.start()
+            aplicarPiel(nuevo)
             fundir(volumenMax)
         }
     }
+
+    private fun idViva(p: Pista, parte: String, animo: String) =
+        app.resources.getIdentifier("viva_${p.id}_${parte}_$animo", "raw", app.packageName)
+
+    private fun tieneViva(p: Pista) = idViva(p, "b", "d") != 0
+
+    private fun espera() = (6 * 60_000L) + (Math.random() * 3 * 60_000L).toLong()
+
+    /** Elige qué parte sigue: nunca la misma dos veces; en Ajustes, sobre todo respiros y de noche. */
+    private fun siguienteParte(primera: Boolean): Pair<String, String> {
+        val hora = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        val calma = lugar == "ajustes"
+        val animo = if (calma || hora < 7 || hora >= 20) "n" else "d"
+        val opciones = when {
+            primera -> listOf("a")
+            calma -> listOf("p", "p", "a", "c")
+            else -> listOf("a", "b", "b", "c", "c", "p")
+        }.filter { it != ultimaParte }.ifEmpty { listOf("a") }
+        return opciones.random() to animo
+    }
+
+    private fun crearParteViva(p: Pista, primera: Boolean = false): MediaPlayer? {
+        val (parte, animo) = siguienteParte(primera)
+        val id = idViva(p, parte, animo).takeIf { it != 0 } ?: return crearDeRecurso(p, enBucle = true)
+        return try {
+            val afd = app.resources.openRawResourceFd(id)
+            MediaPlayer().apply {
+                setAudioAttributes(atributos())
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                isLooping = false
+                prepare()
+                setOnCompletionListener { scope.launch { alTerminarParte() } }
+            }.also {
+                ultimaParte = parte
+                titulo = "${p.nombre} · ${NOMBRES_PARTE[parte]}"
+            }
+        } catch (e: Exception) {
+            crearDeRecurso(p, enBucle = true)
+        }
+    }
+
+    /** Después de 20 minutos la canción cambia de tono (sube, después baja) para que no se sienta igual. */
+    private fun aplicarPiel(m: MediaPlayer) {
+        if (viva == null) return
+        val vueltas = ((System.currentTimeMillis() - inicioViva) / (20 * 60_000L)).toInt()
+        val tono = floatArrayOf(1f, 1.1225f, 0.8909f)[vueltas % 3]
+        if (tono == 1f) return
+        try { m.playbackParams = m.playbackParams.setPitch(tono).setSpeed(1f) } catch (_: Exception) {}
+    }
+
+    private suspend fun alTerminarParte() {
+        val p = viva ?: return
+        if (!debe) return
+        val viejo = mp
+        if (System.currentTimeMillis() >= proximoDescanso) {
+            // Un descanso de 15 a 30 s: silencio, y después vuelve con otra parte.
+            descansando = true
+            proximoDescanso = System.currentTimeMillis() + espera()
+            delay(15_000L + (Math.random() * 15_000L).toLong())
+            descansando = false
+            if (viva !== p || mp !== viejo) return
+        }
+        val nuevo = crearParteViva(p) ?: return
+        mp = nuevo
+        try { viejo?.release() } catch (_: Exception) {}
+        nuevo.setVolume(nivel, nivel)
+        if (debe && !focoPerdido) {
+            nuevo.start()
+            aplicarPiel(nuevo)
+        }
+    }
+
+    /** Pasar a otra parte de inmediato (desde el widget «Radio del tema»), con un fundido corto. */
+    fun saltarParte() {
+        val p = viva ?: return
+        if (!::app.isInitialized) return
+        fundir(0f) {
+            scope.launch {
+                val viejo = mp
+                val nuevo = crearParteViva(p) ?: return@launch
+                mp = nuevo
+                descansando = false
+                try { viejo?.release() } catch (_: Exception) {}
+                nuevo.setVolume(0f, 0f)
+                if (debe && !focoPerdido) {
+                    nuevo.start()
+                    aplicarPiel(nuevo)
+                    fundir(volumenMax)
+                }
+            }
+        }
+    }
+
+    /** ¿Está sonando la música viva de Díptico (y no una canción tuya)? */
+    val esViva: Boolean get() = viva != null
 
     private fun atributos() = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_MEDIA)

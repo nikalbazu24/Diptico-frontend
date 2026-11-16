@@ -475,7 +475,7 @@ private val herramientasWidgets = setOf("temporizador", "cronometro", "buscar")
 internal val LocalWidget = androidx.compose.runtime.compositionLocalOf<cl.nikalbazu.diptico.estado.Widget?> { null }
 
 @Composable
-private fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = null, contenido: @Composable () -> Unit) {
+internal fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = null, contenido: @Composable () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val w = LocalWidget.current
@@ -512,6 +512,10 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
     val compacto = al == 1
     if (tipo == "progreso") {
         WidgetProgreso(e, an, al)
+        return
+    }
+    if (tipo in WIDGETS_VIVOS) {
+        WidgetVivo(e, tipo, an, al)
         return
     }
     if (tipo in planWidgets) {
