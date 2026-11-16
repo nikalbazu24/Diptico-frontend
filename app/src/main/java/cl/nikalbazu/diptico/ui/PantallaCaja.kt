@@ -531,10 +531,10 @@ private fun PanelEstudioCV(e: Estado, clave: String, g: CarasGuardadas?) {
             }
             // Pie: botones grandes.
             Row(Modifier.fillMaxWidth().height(esc.d(100)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                BotonTecla("Y", "Jugar", principal = true) { val k = clave; Diptico.cerrarCajaJuego(); Diptico.elegirJuego(k); Diptico.jugar() }
-                BotonTecla("Select", "Ver de otro lado") { Diptico.siguienteVistaEstudio() }
+                BotonTecla("Y", "Jugar", principal = true, onClick = { val k = clave; Diptico.cerrarCajaJuego(); Diptico.elegirJuego(k); Diptico.jugar() })
+                BotonTecla("Select", "Ver de otro lado", onClick = { Diptico.siguienteVistaEstudio() })
                 Spacer(Modifier.weight(1f))
-                BotonTecla("B", "Volver") { Diptico.cerrarCajaJuego() }
+                BotonTecla("B", "Volver", onClick = { Diptico.cerrarCajaJuego() })
             }
         }
     }
