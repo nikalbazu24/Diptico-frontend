@@ -689,3 +689,23 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Lienzo: https://claude.ai/artifact/VTCZof8gamwjrsQTPU1HKj (Main = Thor arriba, ThorAbajo, Odin interactivo, EstudioArriba/Abajo/Odin,
   AjustesArriba/Abajo/Odin). Fuentes Fredoka (títulos) + Nunito; fondo #07080f/#0b0c16, vidrio rgba(18,20,36,.55) con borde .12,
   selección = relleno #F4F3FA o anillo blanco 3–4 px; caja 3D rotateY 24° sin pedestal, solo sombra en el piso.
+
+## Colección viva implementada (16 nov, rama `fix/coleccion-viva`, Opus; Novedades `coleccion-viva-2.0-76`) — SIN PUBLICAR
+- Bocetos aprobados por Nicolás («hazlo tal cual»): lienzo VTCZof8gamwjrsQTPU1HKj. Especificación: `docs/coleccion-viva.md`.
+- `ui/ColeccionBase.kt`: `LienzoBoceto(1920|1240, 1080)` da un `Escala` donde 1 unidad = 1 px del boceto (así `esc.d(96)` es el margen del boceto
+  y todo componente viejo sale a escala), `ColoresColeccion`/`coloresColeccion()` (oscuro = colores del boceto; otro tema = su paleta), `TB`,
+  `BotonTecla`, `PistaTecla`, `ChipDato`, `PildoraVidrio`, `BotonRedondo`, `HoraBateria`, `DippoFrase`, `veloColeccion`.
+- `ui/ColeccionInicio.kt`: `ColeccionArriba` (1), `ColeccionAbajo` (2: consolas L1/R1, `EstanteCV`, `RejillaCV`, `ListaCV`, `BarraAbajoCV`),
+  `CarreteCV` (2b), `ColeccionUnica` (3/3b), `CajaVitrinaCV` (tocar o R3 = `girarCaja`: viaja al centro ×1.34 y muestra el reverso).
+- `ui/ColeccionCarpetas.kt`: `CarpetasArribaCV` (6a), `CarpetasAbajoCV` (6b), `CarpetasUnicaCV` (6c), `RejillaCarpetasCV` con vistas
+  icono/diptico/repisa/carpeta, `Consola3D` (giro de 72 cuadros desde `assets/consolas3d/<id>.webp`, 8×9 de 480×345, una hoja en memoria).
+- `ui/ColeccionWidgets.kt`: `WidgetsCV` (7a/7c, cuadrícula 6×3 con `acomodar`), `TiendaWidgetsCV` (7b). Ocultos en `extra.widgetsCVOcultos`.
+- `estado/DipticoColeccion.kt`: `HistoriaConsolas`, `Modelos3D` (19 créditos de Sketchfab; N64 = CC BY-NC, PS3 = CC BY-NC-SA), acciones.
+  Giros: `/home/claude/ps2work/render.py` (model-viewer + playwright) y ajuste de encuadre; mapa glb→id en `ps2work/mapa.txt`.
+- Raiz/PantallaInferior: con `coleccionVivaActiva(e)` y sin panel se dibujan las pantallas nuevas. `EstadoExtra.coleccionViva` = false por
+  defecto (para las pruebas viejas) pero el almacén lo carga en true. Ajustes › Estilo › «Diseño Colección viva».
+- Teclas: R3 gira la caja; con la caja girada ◀▶ carrete, B/R3 vuelven; Select cambia vista; en carpetas X opciones, Y seguir/ícono, A entra con
+  `Sonidos.encendido()` (`res/raw/sfx_encendido.ogg`, acorde propio).
+- Capturas t466–t481. `fix/revision-capturas` ahora sube también los APK al borrador (APK de prueba sin publicar).
+- Falta: Estudio (4) y Ajustes (5) con el estilo nuevo (siguen con su diseño), 6d como pantalla propia (hoy usa la búsqueda de imágenes
+  «c_portada»), 6e (en una pantalla se usa `ColeccionUnica`), colecciones (pestaña vacía).
