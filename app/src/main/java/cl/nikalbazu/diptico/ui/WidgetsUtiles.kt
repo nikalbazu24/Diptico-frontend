@@ -477,7 +477,7 @@ private fun WHoraMundo(e: Estado, an: Int, al: Int) {
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Detalle(n, 10.5f, lineas = 1)
                     Texto(t.format(DateTimeFormatter.ofPattern("HH:mm")), if (al >= 2) 24f else 18f, lineas = 1, traducir = false)
-                    if (al >= 2 || an >= 3) Detalle(if (n == "Aquí") "" else (if (dif >= 0) "+$dif h" else "$dif h") + if (t.toLocalDate() != ahora.toLocalDate()) " · otro día" else "", 10f, lineas = 1)
+                    if (al >= 2) Detalle(if (n == "Aquí") "" else (if (dif >= 0) "+$dif h" else "$dif h") + if (t.toLocalDate() != ahora.toLocalDate()) " · otro día" else "", 10f, lineas = 1)
                 }
             }
         }

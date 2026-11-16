@@ -49,11 +49,11 @@ val UTILES_ICONO = mapOf(
 )
 
 /** Categorías de la tienda: cada widget en la suya. */
-val CATEGORIAS_WIDGETS = listOf("Para ti", "Deportes", "Contadores", "Tiempo y fechas", "Díptico", "Más")
+val CATEGORIAS_WIDGETS = listOf("Para ti", "Deportes", "Contadores", "Fechas", "Díptico", "Más")
 fun categoriaWidget(tipo: String): String = when {
     tipo in setOf("marcador", "proximoPartido", "tabla") -> "Deportes"
     tipo in setOf("contador", "marcadorMesa", "dados", "temporizador", "cronometro") -> "Contadores"
-    tipo in setOf("regresiva", "clima", "feriados", "horaMundo", "reloj", "fiesta") -> "Tiempo y fechas"
+    tipo in setOf("regresiva", "clima", "feriados", "horaMundo", "reloj", "fiesta") -> "Fechas"
     tipo in setOf("nota", "musica", "radio", "accesos", "notificaciones", "bateria", "equipo", "apps", "frase", "buscar") ||
         tipo == "imagen" || tipo == "video" -> "Más"
     else -> "Díptico"
