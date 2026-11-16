@@ -105,6 +105,9 @@ object CajasLocales {
         reverso = nuevo.reverso ?: antes.reverso, lomo = nuevo.lomo ?: antes.lomo, buscado = maxOf(nuevo.buscado, antes.buscado),
         frente = nuevo.frente ?: antes.frente, origen = if (nuevo.tiene) nuevo.origen ?: antes.origen else antes.origen,
         disco = nuevo.disco ?: antes.disco,
+        // Lo que eligió la persona en el Estudio (forma, color, material) se queda aunque cambien las imágenes.
+        plantilla = nuevo.plantilla ?: antes.plantilla, color = nuevo.color ?: antes.color, material = nuevo.material ?: antes.material,
+        nombre = nuevo.nombre ?: antes.nombre,
     )
 
     /** ¿Quedan enlaces por bajar? */
@@ -129,7 +132,7 @@ object CajasLocales {
         }
         return m.mapValues { (_, g) ->
             val n = g.copy(frente = una(g.frente), lomo = una(g.lomo), reverso = una(g.reverso), disco = una(g.disco))
-            if (!n.tiene && g.tiene) n.copy(origen = null, buscado = 0L) else n
+            if (!n.tiene && g.tiene) n.copy(origen = if (g.propia && n.conEstilo) "propia" else null, buscado = 0L) else n
         }
     }
 
@@ -146,7 +149,7 @@ object CajasLocales {
         }
         val m = CarasGuardadas.leer(texto).mapValues { (_, g) ->
             g.copy(frente = una(g.frente), lomo = una(g.lomo), reverso = una(g.reverso), disco = una(g.disco))
-        }.filterValues { it.tiene }
+        }.filterValues { it.tiene || it.conEstilo }
         return CarasGuardadas.escribir(m)
     }
 

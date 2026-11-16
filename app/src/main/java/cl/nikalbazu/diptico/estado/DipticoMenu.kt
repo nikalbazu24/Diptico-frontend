@@ -666,6 +666,16 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 if (v) Sonidos.aceptar()
             }
             lista += Opcion(
+                "Sonidos al recorrer juegos", if (Sonidos.notas) "Notas" else "Clic", Icono.MUSICA,
+                "Al pasar de un juego a otro suena una nota que sube y baja, como tocar una melodía con tu biblioteca. Cada juego tiene siempre su nota. Con «Clic» suena el sonido de siempre.",
+            ) {
+                val v = !Sonidos.notas
+                almacen.guardarBool("notasJuegos", v)
+                Sonidos.notas = v
+                actualizar { it.copy(extra = it.extra.copy(notasJuegos = v)) }
+                if (v) { Sonidos.notaJuego(0); scope.launch { kotlinx.coroutines.delay(140); Sonidos.notaJuego(2); kotlinx.coroutines.delay(140); Sonidos.notaJuego(4) } }
+            }
+            lista += Opcion(
                 "Juego de sonidos", nombrePaqueteSonidos(e.paqueteSonidos), Icono.VOLUMEN,
                 "Del tema: cada tema trae los suyos. Clásicos: campanitas suaves. Bloques: madera y pops. Retro: 8 bits. Burbuja: gotitas.",
                 menos = { cambiarPaqueteSonidos(-1) },

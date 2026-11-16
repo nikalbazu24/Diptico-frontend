@@ -320,6 +320,9 @@ fun Diptico.archivoElegido(uri: Uri) {
             avisar("Ahora marca dónde quedaste")
         }
         archivoPara.startsWith("caja:") -> cajaDesdeImagen(archivoPara.removePrefix("caja:"), android.net.Uri.parse(u))
+        archivoPara.startsWith("cara:") -> archivoPara.removePrefix("cara:").let { r ->
+            caraDesdeImagen(r.substringAfter(':'), r.substringBefore(':').toIntOrNull() ?: 0, android.net.Uri.parse(u))
+        }
         archivoPara.startsWith("icono:") -> {
             val id = archivoPara.removePrefix("icono:")
             val m = estado.value.iconosPropios + (id to u)

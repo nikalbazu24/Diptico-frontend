@@ -59,6 +59,12 @@ object CajasComunidad {
         return Caras(guardar(frente, File(destino, "frente.jpg")), guardar(canto, File(destino, "lomo.jpg")), guardar(reverso, File(destino, "reverso.jpg")))
     }
 
+    /** Una cara suelta desde una imagen del equipo (Estudio de Cajas › Importar imagen), reducida como las demás. */
+    fun guardarCara(ctx: Context, uri: Uri, destino: File): File? {
+        val bmp = leer(ctx, uri, 2400) ?: return null
+        return guardar(bmp, destino)
+    }
+
     /** Sube una caja a la base compartida. null = quedó guardada; si no, el motivo en palabras simples. */
     fun subir(clave: String, titulo: String, consola: String, caras: Caras): String? {
         if (!disponible) return "Esta versión no tiene configurado el receptor de Drive"

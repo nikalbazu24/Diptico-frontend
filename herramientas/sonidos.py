@@ -43,3 +43,20 @@ guardar("sfx_atras", mezclar((0, nota(1175, 0.1, 32)), (0.05, nota(784, 0.14, 26
 guardar("sfx_abrir", mezclar((0, nota(659, 0.2, 14)), (0.04, nota(988, 0.2, 14)), (0.08, nota(1319, 0.22, 12))), 0.42)
 guardar("sfx_jugar", mezclar((0, nota(523, 0.3, 9)), (0.07, nota(784, 0.3, 9)), (0.14, nota(1047, 0.35, 8)), (0.21, nota(1568, 0.45, 7))), 0.5)
 print("listo")
+
+
+def nota_dippo(f, dur=0.42):
+    """La nota de Díptico al recorrer juegos: una «cajita de luz» (entre celesta y marimba), con un brillo suave
+    al golpe y dos voces apenas desafinadas para que suene cálida. Original, sin muestras de otros instrumentos."""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    cuerpo = (np.sin(2 * np.pi * f * t) + np.sin(2 * np.pi * f * 1.003 * t)) * 0.5 * np.exp(-t * 7.5)
+    brillo = 0.32 * np.sin(2 * np.pi * f * 2.0 * t) * np.exp(-t * 14)
+    campana = 0.16 * np.sin(2 * np.pi * f * 3.93 * t) * np.exp(-t * 26)
+    golpe = 0.10 * np.sin(2 * np.pi * f * 6.1 * t) * np.exp(-t * 70)
+    x = (cuerpo + brillo + campana + golpe) * np.minimum(t / 0.004, 1)
+    return x
+
+
+if len(sys.argv) > 2 and sys.argv[2] == "nota":
+    guardar("sfx_nota", nota_dippo(523.25), 0.34)
