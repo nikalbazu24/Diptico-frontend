@@ -59,7 +59,7 @@ internal fun Diptico.temasPersonales(e: Estado): List<Tema> {
 }
 
 
-fun Diptico.todosLosTemas(e: Estado = estado.value): List<Tema> = Temas.iniciales + temasPersonales(e) + temasExclusivosGanados()
+fun Diptico.todosLosTemas(e: Estado = estado.value): List<Tema> = Temas.iniciales + Temas.nuevos + temasPersonales(e) + temasExclusivosGanados()
 
 
 /** Los temas exclusivos cuyo logro de DIPPO ya ganaste. */
@@ -134,7 +134,8 @@ fun Diptico.aplicarTema() {
     val elegido = todosLosTemas(e).firstOrNull { it.id == e.tema }
         ?: Temas.fiestas.firstOrNull { it.tema.id == e.tema }?.tema
         ?: Temas.incluidos[0]
-    val baseVisual = conAdorno(e, fiesta?.tema ?: elegido)
+    val prueba = e.extra.temaPrueba?.let { temaPorId(e, it) }
+    val baseVisual = conAdorno(e, prueba ?: fiesta?.tema ?: elegido)
     // El color de la consola elegida tiñe el acento, pero las decoraciones del tema se quedan siempre (antes se apagaban
     // al entrar a una consola con color propio, y por eso solo se veían en algunas carpetas).
     val activo = if (e.experiencia.universo && e.colorUniverso != 0L) baseVisual.copy(acento = e.colorUniverso, acento2 = e.colorUniverso) else baseVisual
@@ -149,6 +150,10 @@ fun Diptico.aplicarTema() {
 
 
 fun Diptico.elegirTema(id: String) {
+    if (estado.value.extra.temaPrueba != null) {
+        trabajoPrueba?.cancel()
+        actualizar { it.copy(extra = it.extra.copy(temaPrueba = null)) }
+    }
     if (id != estado.value.tema) sumarDippo("temas")
     almacen.guardarTexto("tema", id)
     actualizar { it.copy(tema = id) }
@@ -217,7 +222,7 @@ internal fun Diptico.instalarTemaComunidad(entrada: TemaComunidad) {
             guardarTemasPropios(listOf(tema) + estado.value.temasPropios.filterNot { it.id == tema.id })
             elegirTema(tema.id)
             val actual = estado.value
-            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 1)
+            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 4)
             avisar(if (actual.fiesta != null) "${tema.nombre} instalado" else "${tema.nombre} instalado y aplicado")
         }.onFailure { avisar(it.message ?: "No pude instalar este tema.") }
     }
@@ -264,4 +269,65 @@ internal fun Diptico.opcionesTemas(e: Estado): List<Opcion> {
         editarMiTema { it.copy(base = when (it.base) { "auto" -> "oscuro"; "oscuro" -> "oled"; "oled" -> "claro"; else -> "auto" }) }
     }
     return lista
+}
+
+
+/** Busca un tema por su id en todas partes: nuevos, incluidos, los tuyos, el calendario y los exclusivos. */
+internal fun Diptico.temaPorId(e: Estado, id: String): Tema? =
+    todosLosTemas(e).firstOrNull { it.id == id }
+        ?: Temas.fiestas.firstOrNull { it.tema.id == id }?.tema
+        ?: Temas.exclusivos.firstOrNull { it.tema.id == id }?.tema
+        ?: Temas.incluidos.firstOrNull { it.id == id }
+
+private var trabajoPrueba: Job? = null
+
+/** Duración de la prueba de un tema desde la tienda. */
+internal const val PRUEBA_TEMA_MS = 30_000L
+
+/**
+ * Pone un tema de verdad, en las dos pantallas, por 30 segundos: después vuelve el tuyo solo.
+ * Así se ve cómo queda en el inicio, la biblioteca, los menús y las fichas reales. A lo deja puesto; Y otra vez lo quita.
+ */
+fun Diptico.probarTema(id: String) {
+    val e = estado.value
+    if (e.extra.temaPrueba == id) { terminarPruebaTema(false); return }
+    val t = temaPorId(e, id) ?: return
+    if (id == e.tema) { avisar("Ya estás usando ${t.nombre}"); return }
+    actualizar { it.copy(extra = it.extra.copy(temaPrueba = id)) }
+    aplicarTema()
+    avisar("Probando ${t.nombre} por 30 segundos · A lo deja puesto")
+    trabajoPrueba?.cancel()
+    trabajoPrueba = scope.launch {
+        delay(PRUEBA_TEMA_MS)
+        terminarPruebaTema(true)
+    }
+}
+
+fun Diptico.terminarPruebaTema(avisarFin: Boolean) {
+    trabajoPrueba?.cancel()
+    trabajoPrueba = null
+    if (estado.value.extra.temaPrueba == null) return
+    actualizar { it.copy(extra = it.extra.copy(temaPrueba = null)) }
+    aplicarTema()
+    if (avisarFin) avisar("Volvió tu tema de siempre")
+}
+
+/** Nombres de las vistas de la previa de temas, que se cambian con L2/R2. */
+val VISTAS_PREVIA_TEMA = listOf("Inicio", "Biblioteca", "Widgets", "Menús", "Ficha")
+
+fun Diptico.cambiarPreviaTema(d: Int) {
+    actualizar { it.copy(extra = it.extra.copy(previaTema = (it.extra.previaTema + d).mod(VISTAS_PREVIA_TEMA.size))) }
+}
+
+/** X en la tienda: abre «Mezclar mi tema» partiendo del tema elegido, para cambiarle fondo, colores, efectos o sonidos. */
+fun Diptico.personalizarTemaElegido() {
+    val e = estado.value
+    val item = itemsGaleria(e).getOrNull(e.indice) ?: return
+    val t = item.tema ?: return
+    if (t.id != e.tema) elegirTema(t.id)
+    abrirGaleria("mezclar_tema")
+}
+
+fun Diptico.fijarPreviaTema(i: Int) {
+    actualizar { it.copy(extra = it.extra.copy(previaTema = i.coerceIn(0, VISTAS_PREVIA_TEMA.size - 1))) }
 }

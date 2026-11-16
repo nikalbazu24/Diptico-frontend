@@ -182,7 +182,7 @@ fun Modifier.fondoBoton(color: Color): Modifier = if (Estilo.glass) this.tinteCr
     drawRect(Color.White.copy(alpha = 0.18f), size = androidx.compose.ui.geometry.Size(b, size.height))
     drawRect(Color.Black.copy(alpha = 0.3f), topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - b), size = androidx.compose.ui.geometry.Size(size.width, b))
     drawRect(Color.Black.copy(alpha = 0.22f), topLeft = androidx.compose.ui.geometry.Offset(size.width - b, 0f), size = androidx.compose.ui.geometry.Size(b, size.height))
-} else when (Estilo.efecto) {
+} else if (Estilo.tema.forma in FORMAS_CON_ELEGIDO) this.fondoElegidoTema(color, Estilo.tema.forma) else when (Estilo.efecto) {
     "degradado" -> this.background(
         Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(color, Color.White, 0.2f), color, androidx.compose.ui.graphics.lerp(color, Color.Black, 0.28f))),
     )
@@ -594,4 +594,58 @@ fun Modifier.desenfoqueAnimado(radio: () -> androidx.compose.ui.unit.Dp): Modifi
     val px = radio().toPx()
     renderEffect = if (px > 0.5f) androidx.compose.ui.graphics.BlurEffect(px, px, androidx.compose.ui.graphics.TileMode.Clamp) else null
     clip = px > 0.5f
+}
+
+
+/** Formas de los temas nuevos que traen su propia manera de marcar lo elegido. */
+internal val FORMAS_CON_ELEGIDO = setOf("recorte", "burbuja", "neon", "estelar")
+
+/**
+ * Cómo se marca lo elegido en cada tema nuevo: Recortes con línea punteada de tijera, Acuario con el brillo de una burbuja,
+ * Salón con borde de neón y líneas de pantalla, Constelación con una estrellita que titila en la esquina.
+ */
+@Composable
+internal fun Modifier.fondoElegidoTema(color: Color, forma: String): Modifier = when (forma) {
+    "recorte" -> this.background(color).drawWithContent {
+        drawContent()
+        val m = 3.5f * density
+        val claro = if (color.luminance() > 0.5f) Color.Black.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.75f)
+        drawRect(claro, topLeft = androidx.compose.ui.geometry.Offset(m, m),
+            size = androidx.compose.ui.geometry.Size(size.width - 2 * m, size.height - 2 * m),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(1.4f * density,
+                pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(5f * density, 3.5f * density))))
+    }
+    "burbuja" -> this.background(color).drawWithContent {
+        drawContent()
+        val r = size.minDimension
+        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.42f), Color.Transparent),
+            center = androidx.compose.ui.geometry.Offset(size.width * 0.22f, size.height * 0.2f), radius = r * 0.7f), radius = r * 0.7f,
+            center = androidx.compose.ui.geometry.Offset(size.width * 0.22f, size.height * 0.2f))
+        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.14f))))
+    }
+    "neon" -> this.background(androidx.compose.ui.graphics.lerp(color, Color.Black, 0.55f)).drawWithContent {
+        drawContent()
+        val paso = 3f * density
+        var y = 0f
+        while (y < size.height) { drawRect(Color.White.copy(alpha = 0.05f), topLeft = androidx.compose.ui.geometry.Offset(0f, y), size = androidx.compose.ui.geometry.Size(size.width, density)); y += paso }
+        val b = 2.2f * density
+        drawRect(color.copy(alpha = 0.35f), style = androidx.compose.ui.graphics.drawscope.Stroke(b * 3f))
+        drawRect(color, style = androidx.compose.ui.graphics.drawscope.Stroke(b))
+    }
+    else -> {
+        val inf = androidx.compose.animation.core.rememberInfiniteTransition(label = "estrella")
+        val brillo by inf.animateFloat(0.35f, 1f,
+            androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(1300), androidx.compose.animation.core.RepeatMode.Reverse), label = "b")
+        this.background(androidx.compose.ui.graphics.lerp(color, Color.Black, 0.18f)).drawWithContent {
+            drawContent()
+            drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Color(0xFFFFE7A6).copy(alpha = 0.85f), Color.Transparent)),
+                size = androidx.compose.ui.geometry.Size(size.width, 1.2f * density))
+            val c = androidx.compose.ui.geometry.Offset(size.width - 10f * density, 9f * density)
+            val r = 4.5f * density * (0.7f + 0.3f * brillo)
+            val tinte = Color.White.copy(alpha = brillo)
+            drawLine(tinte, c.copy(x = c.x - r), c.copy(x = c.x + r), 1.2f * density)
+            drawLine(tinte, c.copy(y = c.y - r), c.copy(y = c.y + r), 1.2f * density)
+            drawCircle(Color(0xFFFFE7A6).copy(alpha = 0.45f * brillo), r * 0.9f, c)
+        }
+    }
 }

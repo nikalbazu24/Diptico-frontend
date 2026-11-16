@@ -485,7 +485,7 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t88_galeria_temas() = foto("88_galeria_de_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", indice = 2), Rol.INFERIOR)
 
-    @Test fun t89_galeria_temas_arriba() = foto("89_galeria_temas_arriba", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 1, indice = 3), Rol.SUPERIOR)
+    @Test fun t89_galeria_temas_arriba() = foto("89_galeria_temas_arriba", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 3), Rol.SUPERIOR)
 
     @Config(qualifiers = ABAJO)
     @Test fun t90_mis_colores() = foto("90_mis_colores", base().copy(panel = Panel.GALERIA, galeria = "colores", indice = 9), Rol.INFERIOR)
@@ -1431,9 +1431,9 @@ class Capturas {
     @Test fun t371_nativos_una() = foto("371_nativos_una", conNativos(0, 2).copy(modoPantallas = "una_negra"), Rol.UNICA)
     // Temas: el calendario (cada fiesta con su estilo completo) y los exclusivos con candado.
     @Config(qualifiers = ABAJO)
-    @Test fun t372_temas_calendario() = foto("372_temas_calendario", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 1, indice = 1), Rol.INFERIOR, mi = 1)
+    @Test fun t372_temas_calendario() = foto("372_temas_calendario", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 1), Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
-    @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 0), Rol.INFERIOR, mi = 1)
+    @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 3, indice = 0), Rol.INFERIOR, mi = 1)
     @Test fun t374_tema_exclusivo_arriba() = foto("374_tema_exclusivo_aurora", base(), Rol.SUPERIOR, tema = Temas.exclusivos[0].tema)
     @Test fun t375_tema_fiesta_navidad() = foto("375_tema_fiesta_navidad", base(), Rol.SUPERIOR, tema = Temas.fiestas.first { it.id == "navidad" }.tema)
     // Emuladores al día: DIPPO arriba con su resumen, los que tienen versión nueva primero.
@@ -1585,6 +1585,22 @@ class Capturas {
     @Test fun t439_estudio_variantes() = foto("439_estudio_variantes", estudio(3, 2, CarasGuardadas(null, null, 1L, plantilla = "ps2")), Rol.INFERIOR)
     @Test fun t440_estudio_una() = foto("440_estudio_una_pantalla", estudio(1, 1, CarasGuardadas(null, null, 1L, plantilla = "ps2", color = 0xFF1B2F7AL)).let {
         it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
+    // ---------- Temas nuevos y tienda ----------
+    private fun nuevo(id: String) = Temas.nuevos.first { it.id == id }
+    private fun tienda(i: Int, vista: Int) = base().let { it.copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 0, indice = i, extra = it.extra.copy(previaTema = vista)) }
+    @Test fun t441_tema_recortes_arriba() = foto("441_tema_recortes_arriba", base().copy(tema = "recortes"), Rol.SUPERIOR, nuevo("recortes"))
+    @Config(qualifiers = ABAJO)
+    @Test fun t442_tema_recortes_abajo() = foto("442_tema_recortes_abajo", base().copy(tema = "recortes"), Rol.INFERIOR, nuevo("recortes"))
+    @Test fun t443_tema_acuario_arriba() = foto("443_tema_acuario_arriba", base().copy(tema = "acuario"), Rol.SUPERIOR, nuevo("acuario"))
+    @Config(qualifiers = ABAJO)
+    @Test fun t444_tema_salon_abajo() = foto("444_tema_salon_abajo", base().copy(tema = "salon"), Rol.INFERIOR, nuevo("salon"))
+    @Test fun t445_tema_constelacion_menu() = foto("445_tema_constelacion_menu", base().copy(tema = "constelacion", panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 1), Rol.SUPERIOR, nuevo("constelacion"))
+    @Config(qualifiers = ABAJO)
+    @Test fun t446_tienda_nuevos_abajo() = foto("446_tienda_nuevos_abajo", tienda(1, 0), Rol.INFERIOR, mi = 1)
+    @Test fun t447_tienda_previa_biblioteca() = foto("447_tienda_previa_biblioteca", tienda(0, 1), Rol.SUPERIOR, mi = 1)
+    @Test fun t448_tienda_previa_menus() = foto("448_tienda_previa_menus", tienda(2, 3), Rol.SUPERIOR, mi = 1)
+    @Test fun t449_tienda_previa_ficha() = foto("449_tienda_previa_ficha", tienda(3, 4), Rol.SUPERIOR, mi = 1)
+    @Test fun t450_tienda_una_pantalla() = foto("450_tienda_una_pantalla", tienda(1, 2).let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     @Test fun t429_ajustes_tres_columnas() = foto("429_ajustes_tres_columnas", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 1, extra = it.extra.copy(equipoTipo = "portatil", equipoNombre = "AYN Odin 2 Portal")) }, Rol.UNICA)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
@@ -1629,7 +1645,7 @@ class Capturas {
     )
     @Config(qualifiers = ABAJO)
 
-    @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 3), Rol.INFERIOR, mi = 1)
+    @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 4), Rol.INFERIOR, mi = 1)
 
     @Test fun visual_cristal_y_barra() = foto("visual_cristal_y_barra", base(), Rol.SUPERIOR, tema = Temas.incluidos.first { it.id == "diptico_vidrio" })
 

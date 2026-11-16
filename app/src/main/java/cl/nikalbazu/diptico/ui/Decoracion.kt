@@ -54,6 +54,10 @@ fun Decoracion(tema: Tema, animada: Boolean = true) {
             in adornosDeJuego -> 14
             "estrellas" -> 26
             "bloques" -> 16
+            "cintas" -> 7
+            "acuario" -> 16
+            "marquesina" -> 1
+            "constelacion" -> 22
             "fuegos" -> 5
             "faroles" -> 9
             "murcielagos" -> 7
@@ -69,7 +73,9 @@ fun Decoracion(tema: Tema, animada: Boolean = true) {
     val colores = listOf(Color(tema.acento), Color(tema.acento2), Color(tema.acento3))
     Canvas(Modifier.fillMaxSize()) {
         val u = size.minDimension / 400f
-        for (p in particulas) {
+        if (tema.decor == "marquesina") marquesina(tiempo, u, colores)
+        if (tema.decor == "constelacion") estrellaFugaz(tiempo, u)
+        for ((indice, p) in particulas.withIndex()) {
             val c = colores[p.color]
             when (tema.decor) {
                 in adornosDeJuego -> {
@@ -129,6 +135,46 @@ fun Decoracion(tema: Tema, animada: Boolean = true) {
                 "estrellas" -> {
                     val brillo = (sin(tiempo * 2f * p.v + p.fase) + 1f) / 2f
                     estrella(Offset(p.x * size.width, p.y * size.height * 0.75f), (3f + 4f * p.t) * u, Color.White.copy(alpha = 0.15f + 0.5f * brillo))
+                }
+                "cintas" -> {
+                    // Trozos de cinta adhesiva pegados que se mecen apenas, y algún sello de goma.
+                    val c0 = Offset(p.x * size.width, p.y * size.height)
+                    rotate(-14f + p.fase * 5f + sin(tiempo * 0.7f + p.fase) * 3f, pivot = c0) {
+                        if (p.color == 2) {
+                            drawCircle(Color(tema.acento).copy(alpha = 0.32f), 16f * u * p.t, c0, style = Stroke(2.2f * u,
+                                pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(5f * u, 3f * u))))
+                        } else {
+                            drawRect(Color(0xFFFFECAA).copy(alpha = 0.42f), Offset(c0.x - 22f * u * p.t, c0.y - 6f * u), Size(44f * u * p.t, 12f * u))
+                            drawRect(Color.White.copy(alpha = 0.18f), Offset(c0.x - 22f * u * p.t, c0.y - 6f * u), Size(44f * u * p.t, 3f * u))
+                        }
+                    }
+                }
+                "acuario" -> {
+                    if (indice == 0) {
+                        // DIPPO nada despacio por el fondo, de un lado al otro.
+                        val x = ((tiempo * 0.018f) % 1.3f) - 0.15f
+                        val y = 0.7f + sin(tiempo * 0.6f) * 0.05f
+                        dippoNadando(Offset(x * size.width, y * size.height), 14f * u, tiempo)
+                    } else {
+                        val y = 1.05f - ((p.y + tiempo * 0.045f * p.v) % 1.15f)
+                        val x = p.x + sin(tiempo * 0.9f + p.fase) * 0.02f
+                        val centro = Offset(x * size.width, y * size.height)
+                        val r = (3f + 6f * p.t) * u
+                        drawCircle(Color(0xFFC8F5FF).copy(alpha = 0.5f), r, centro, style = Stroke(1.4f * u))
+                        drawCircle(Color.White.copy(alpha = 0.45f), r * 0.28f, centro + Offset(-r * 0.35f, -r * 0.35f))
+                    }
+                }
+                "constelacion" -> {
+                    val brillo = (sin(tiempo * 1.6f * p.v + p.fase) + 1f) / 2f
+                    val c0 = Offset(p.x * size.width, p.y * size.height * 0.85f)
+                    estrella(c0, (2.5f + 3.5f * p.t) * u, Color(0xFFFFE7A6).copy(alpha = 0.12f + 0.55f * brillo))
+                    // Algunas se unen con la siguiente cuando las dos brillan.
+                    val otra = particulas.getOrNull(indice + 1)
+                    if (otra != null && indice % 3 == 0 && brillo > 0.55f) {
+                        val c1 = Offset(otra.x * size.width, otra.y * size.height * 0.85f)
+                        if ((c1 - c0).getDistance() < size.minDimension * 0.45f)
+                            drawLine(Color(0xFFFFE7A6).copy(alpha = 0.22f * (brillo - 0.55f) / 0.45f), c0, c1, 1f * u)
+                    }
                 }
                 "murcielagos" -> {
                     val x = ((p.x + tiempo * 0.04f * p.v) % 1.2f) - 0.1f
@@ -274,4 +320,47 @@ private fun DrawScope.adornoFestivo(decor: String, r: Float, indice: Int) {
             }, color, style = Stroke(r * .09f))
         }
     }
+}
+
+
+/** Las luces de la marquesina del Salón Recreativo: una fila de ampolletas arriba que se encienden en cadena. */
+private fun DrawScope.marquesina(t: Float, u: Float, colores: List<Color>) {
+    val paso = 22f * u
+    val n = (size.width / paso).toInt() + 1
+    val y = 6f * u
+    drawRect(Color.Black.copy(alpha = 0.35f), size = Size(size.width, 12f * u))
+    for (i in 0 until n) {
+        val encendida = ((i + (t * 6f).toInt()) % 3) == 0
+        val c = if (encendida) colores[2] else colores[2].copy(alpha = 0.25f)
+        val centro = Offset(i * paso + paso / 2, y)
+        if (encendida) drawCircle(c.copy(alpha = 0.25f), 6f * u, centro)
+        drawCircle(c, 2.6f * u, centro)
+    }
+}
+
+/** Constelación: de vez en cuando cruza una estrella fugaz. */
+private fun DrawScope.estrellaFugaz(t: Float, u: Float) {
+    val ciclo = 9f
+    val k = (t % ciclo) / 1.1f
+    if (k > 1f) return
+    val vuelta = (t / ciclo).toInt()
+    val inicio = Offset(size.width * (0.2f + (vuelta * 0.37f) % 0.6f), size.height * 0.08f)
+    val cabeza = inicio + Offset(k * 160f * u, k * 70f * u)
+    val cola = cabeza - Offset(46f * u, 20f * u)
+    drawLine(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.8f * (1f - k))), cola, cabeza),
+        cola, cabeza, 1.6f * u)
+}
+
+/** DIPPO chiquito nadando: cabeza redonda naranja, visor oscuro y cuatro tentáculos que se mueven. */
+private fun DrawScope.dippoNadando(c: Offset, r: Float, t: Float) {
+    val cuerpo = Color(0xFFFF9B54).copy(alpha = 0.55f)
+    for (i in 0 until 4) {
+        val x = c.x - r * 0.7f + i * r * 0.47f
+        val ola = sin(t * 4f + i) * r * 0.25f
+        drawLine(cuerpo, Offset(x, c.y + r * 0.5f), Offset(x + ola - r * 0.4f, c.y + r * 1.4f), r * 0.28f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+    }
+    drawCircle(cuerpo, r, c)
+    drawRoundRect(Color(0xFF1B1F33).copy(alpha = 0.6f), Offset(c.x - r * 0.62f, c.y - r * 0.36f), Size(r * 1.24f, r * 0.6f), CornerRadius(r * 0.3f))
+    drawCircle(Color(0xFF8FE8FF).copy(alpha = 0.8f), r * 0.13f, Offset(c.x - r * 0.25f, c.y - r * 0.06f))
+    drawCircle(Color(0xFF8FE8FF).copy(alpha = 0.8f), r * 0.13f, Offset(c.x + r * 0.25f, c.y - r * 0.06f))
 }

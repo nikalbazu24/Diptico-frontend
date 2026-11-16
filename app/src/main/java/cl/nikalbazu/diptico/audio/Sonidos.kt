@@ -11,7 +11,8 @@ object Sonidos {
     private var pool: SoundPool? = null
     private var recursos: Context? = null
     private val cargados = HashSet<String>()
-    private val tematicos = setOf("tuberias", "ruta_monstruos", "reliquias", "estacion_orbital", "sueno_estelar", "pista_turbo")
+    private val tematicos = setOf("tuberias", "ruta_monstruos", "reliquias", "estacion_orbital", "sueno_estelar", "pista_turbo",
+        "recortes", "acuario", "salon", "constelacion")
     val JUEGOS_DE_TEMA = setOf("bloques", "retro", "burbuja") + tematicos
     private val ids = HashMap<String, Int>()
     private var ultimoMover = 0L

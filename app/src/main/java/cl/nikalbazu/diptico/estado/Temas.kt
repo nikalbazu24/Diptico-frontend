@@ -60,9 +60,10 @@ data class Tema(
 data class Fiesta(val id: String, val nombre: String, val donde: String, val tema: Tema, val paises: Set<String> = emptySet())
 
 object Temas {
-    val FUENTES = setOf("", "pixel", "sans", "serif", "mono", "redonda", "suave")
-    val FORMAS = setOf("", "pixel", "cristal", "recta", "bisel", "capsula")
-    val TRAMAS = setOf("cielo", "ondas", "puntos", "barrido", "diagonal", "lcd", "reticula", "papel", "rombos")
+    val FUENTES = setOf("", "pixel", "sans", "serif", "mono", "redonda", "suave", "mano", "arcade", "fina")
+    val FORMAS = setOf("", "pixel", "cristal", "recta", "bisel", "capsula", "recorte", "burbuja", "neon", "estelar")
+    val TRAMAS = setOf("cielo", "ondas", "puntos", "barrido", "diagonal", "lcd", "reticula", "papel", "rombos",
+        "carton", "mar", "marquesina", "constelacion")
     val ACABADOS = setOf("liso", "degradado", "brillo", "vidrio")
     val DECORACIONES = listOf("nada", "nieve", "hojas", "murcielagos", "petalos", "confeti", "corazones",
         "estrellas", "faroles", "burbujas", "fuegos", "bloques", "muerdago", "campanas", "chupallas", "volantines",
@@ -95,6 +96,10 @@ object Temas {
             "hojas", "petalos" -> listOf("hojas", "petalos", "destellos")
             "estrellas", "nieve" -> listOf("estrellas", "destellos")
             "burbujas" -> listOf("destellos", "estrellas")
+            "cintas" -> listOf("confeti", "hojas")
+            "acuario" -> listOf("burbujas", "destellos")
+            "marquesina" -> listOf("monedas", "destellos")
+            "constelacion" -> listOf("estrellas", "destellos")
             "fuegos", "confeti" -> listOf("confeti", "fuegos")
             "murcielagos" -> listOf("faroles", "estrellas")
             "bloques" -> listOf("monedas", "destellos")
@@ -111,6 +116,8 @@ object Temas {
         "muerdago" -> "Muérdago"; "campanas" -> "Campanas"; "chupallas" -> "Chupallas"; "volantines" -> "Volantines"
         "monedas" -> "Monedas"; "esferas" -> "Esferas"; "reliquias" -> "Reliquias"
         "orbitas" -> "Órbitas"; "destellos" -> "Destellos"; "anillos" -> "Anillos"
+        "cintas" -> "Cintas y sellos"; "acuario" -> "Burbujas y luz de mar"; "marquesina" -> "Luces de marquesina"
+        "constelacion" -> "Constelaciones"
         else -> "Sin decoración"
     }
 
@@ -150,6 +157,25 @@ object Temas {
         Tema("desierto", "Desierto de Atacama", 0xFFD97706, 0xFFB45309, 0xFF7DD3FC, "oscuro", "estrellas"),
         Tema("patagonia", "Patagonia", 0xFF0EA5E9, 0xFF64748B, 0xFFE0F2FE, decor = "nieve"),
         Tema("retro80", "Retro 80", 0xFFFF6EC7, 0xFF7B61FF, 0xFF00E5FF, "oscuro"),
+    )
+
+    /**
+     * Temas nuevos de la tienda: cada uno cambia el fondo, la forma de las tarjetas, cómo se marca lo elegido,
+     * la letra de los títulos, la decoración y los sonidos. Diseños propios de Díptico.
+     */
+    val nuevos = listOf(
+        Tema("recortes", "Recortes", 0xFFC94A22, 0xFF2F6F8F, 0xFFE8B23A, "claro", "cintas",
+            fondo = 0xFFD9BF95, tinta = 0xFF2A2016, fuente = "mano", forma = "recorte", sonidos = "recortes", trama = "carton", acabado = "liso",
+            descripcion = "Cartón, cinta adhesiva y etiquetas: todo parece recortado a mano. Lo elegido se marca con línea de tijera y suena a papel."),
+        Tema("acuario", "Acuario de DIPPO", 0xFFFF9B54, 0xFF35C6D8, 0xFFFFD6A0, "oscuro", "acuario",
+            fondo = 0xFF073245, tinta = 0xFFE9FBFF, fuente = "redonda", forma = "burbuja", sonidos = "acuario", trama = "mar", acabado = "vidrio",
+            descripcion = "El mar de DIPPO: luz que baja desde arriba, burbujas al moverte y tarjetas que flotan como gotas."),
+        Tema("salon", "Salón Recreativo", 0xFF2BE9FF, 0xFFFF3EA5, 0xFFFFD23E, "oscuro", "marquesina",
+            fondo = 0xFF120A24, tinta = 0xFFFDF6FF, fuente = "arcade", forma = "neon", sonidos = "salon", trama = "marquesina", acabado = "liso",
+            descripcion = "Una máquina de salón: luces que corren arriba, pantalla con líneas, bordes de neón y sonidos de ficha."),
+        Tema("constelacion", "Constelación", 0xFFFFD36B, 0xFF8FA2FF, 0xFFF4E6B0, "oscuro", "constelacion",
+            fondo = 0xFF0C1030, tinta = 0xFFEEF0FF, fuente = "fina", forma = "estelar", sonidos = "constelacion", trama = "constelacion", acabado = "liso",
+            descripcion = "Cielo de noche: estrellas que se unen con líneas de luz, letra fina y campanitas de cristal."),
     )
 
     val iniciales = listOf(

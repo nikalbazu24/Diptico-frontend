@@ -105,6 +105,7 @@ Díptico uses **Kotlin and Jetpack Compose**. GitHub Actions runs tests, builds 
 - Launch rules and base system catalog from [ES-DE](https://es-de.org) (MIT).
 - Covers from [libretro-thumbnails](https://github.com/libretro-thumbnails) and icons from [retroarch-assets](https://github.com/libretro/retroarch-assets).
 - Tiny5, the pixel font for the block theme, under SIL Open Font License 1.1.
+- Kalam, Press Start 2P and Josefin Sans (Cutouts, Arcade Hall and Constellation themes), under SIL Open Font License 1.1.
 - Game history from Wikipedia.
 
 Made in Chile by [@Nikalbazu24](https://github.com/Nikalbazu24).
