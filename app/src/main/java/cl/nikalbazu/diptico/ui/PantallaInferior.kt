@@ -110,8 +110,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
         Box(Modifier.fillMaxSize().then(if (conLupa) Modifier else Modifier.difuminar(e))) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
-                coleccionVivaActiva(e) -> when {
-                    e.inicio == "widgets" -> TiendaWidgetsCV(e)
+                coleccionVivaActiva(e) && !e.editandoWidgets -> when {
                     e.enSistemas -> CarpetasAbajoCV(e)
                     else -> ColeccionAbajo(e)
                 }
@@ -205,8 +204,8 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
         when (panel) {
             // Con dos pantallas, el menú va arriba (la pantalla grande) y aquí la ayuda con su vista previa.
             // Con las pantallas cambiadas, el menú ocupa esta pantalla entera sobre su propio fondo (sin el inicio asomándose detrás).
-            Panel.MENU -> if (!conAyuda && !e.intercambiar) AyudaMenu(e)
-                else if (e.intercambiar && !conAyuda) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
+            Panel.MENU -> if (!conAyuda && !menuIntercambiado(e)) AyudaMenu(e)
+                else if (menuIntercambiado(e) && !conAyuda) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
                 else PanelMenu(e, conAyuda)
             Panel.RAPIDO -> VentanaJuego(e)
             Panel.BUSCAR -> PanelBuscar(e)

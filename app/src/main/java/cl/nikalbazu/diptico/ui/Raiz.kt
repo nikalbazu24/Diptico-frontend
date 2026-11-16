@@ -92,14 +92,12 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                         !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
                         tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
                         tienda -> ControlesTiendaTemas(e)
-                        rol == Rol.UNICA && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO -> when {
-                            e.inicio == "widgets" -> WidgetsCV(e, unaPantalla = true)
+                        rol == Rol.UNICA && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && e.inicio != "widgets" -> when {
                             e.enSistemas -> CarpetasUnicaCV(e)
                             else -> ColeccionUnica(e)
                         }
                         rol == Rol.UNICA -> PantallaUnica(e)
-                        rol == Rol.SUPERIOR && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && e.fichaFijada == null -> when {
-                            e.inicio == "widgets" -> WidgetsCV(e, unaPantalla = false)
+                        rol == Rol.SUPERIOR && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && e.fichaFijada == null && e.inicio != "widgets" -> when {
                             e.enSistemas -> CarpetasArribaCV(e)
                             else -> ColeccionArriba(e)
                         }

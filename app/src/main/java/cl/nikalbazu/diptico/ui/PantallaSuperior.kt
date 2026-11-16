@@ -69,7 +69,7 @@ fun PantallaSuperior(e: Estado) {
     androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("PantallaSuperior") }
     if (e.panel == Panel.MENU) {
         // El menú siempre en la pantalla de arriba; la ayuda queda abajo.
-        if (!e.intercambiar) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
+        if (!menuIntercambiado(e)) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
         else AyudaMenu(e)
         return
     }
