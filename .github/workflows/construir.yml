@@ -190,8 +190,9 @@ jobs:
         run: |
           zip=$(find distribucion -name 'Capturas-*.zip' | head -1)
           test -n "$zip"
+          apks=$(find distribucion -name 'Diptico-*.apk' | tr '\n' ' ')
           gh release delete revision-capturas --yes --cleanup-tag -R "$GITHUB_REPOSITORY" || true
-          gh release create revision-capturas "$zip" --draft --title "Revisión de capturas" --notes "Borrador temporal para revisar las pantallas." --target "$GITHUB_SHA" -R "$GITHUB_REPOSITORY"
+          gh release create revision-capturas "$zip" $apks --draft --title "Revisión de capturas" --notes "Borrador temporal para revisar las pantallas." --target "$GITHUB_SHA" -R "$GITHUB_REPOSITORY"
 
   distribuir_beta:
     needs: [apk, gestos_widgets]
