@@ -67,7 +67,7 @@ object Temas {
     val ACABADOS = setOf("liso", "degradado", "brillo", "vidrio")
     val DECORACIONES = listOf("nada", "nieve", "hojas", "murcielagos", "petalos", "confeti", "corazones",
         "estrellas", "faroles", "burbujas", "fuegos", "bloques", "muerdago", "campanas", "chupallas", "volantines",
-        "monedas", "esferas", "reliquias", "orbitas", "destellos", "anillos")
+        "monedas", "esferas", "reliquias", "orbitas", "destellos", "anillos", "cintas", "acuario", "marquesina", "constelacion")
 
     data class AdornosFestivos(val titulo: String, val temaId: String, val opciones: List<String>)
 

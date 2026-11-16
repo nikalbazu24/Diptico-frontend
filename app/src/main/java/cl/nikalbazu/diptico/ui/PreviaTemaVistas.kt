@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +61,20 @@ fun PreviaTemaVista(t: Tema, oscuro: Boolean, vista: Int, animar: Boolean = fals
             }
         }
     }
+}
+
+/**
+ * La decoración de una vista previa se mueve unos segundos cada vez que cambias de tema o de vista y después se queda quieta:
+ * se alcanza a ver cómo se mueve sin gastar batería mientras lees.
+ */
+@Composable
+internal fun animarUnRato(clave: Any, ms: Long = 8000): Boolean {
+    var animar by androidx.compose.runtime.remember(clave) { androidx.compose.runtime.mutableStateOf(true) }
+    androidx.compose.runtime.LaunchedEffect(clave) {
+        kotlinx.coroutines.delay(ms)
+        animar = false
+    }
+    return animar
 }
 
 private fun formaDe(t: Tema, dp: Dp): Shape = formaTema(dp, 0, Redondeada(dp), t.forma)
@@ -241,7 +257,7 @@ fun VistaTiendaTema(e: Estado, item: Diptico.ItemGaleria, compacta: Boolean = fa
             }
         }
         Box(Modifier.weight(1f).fillMaxWidth().clip(Redondeada(esc.d(16)))) {
-            PreviaTemaVista(tema, e.oscuro, e.extra.previaTema, animar = Estilo.efectosCompletos)
+            PreviaTemaVista(tema, e.oscuro, e.extra.previaTema, animar = Estilo.efectosCompletos && animarUnRato(tema.id + e.extra.previaTema))
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {

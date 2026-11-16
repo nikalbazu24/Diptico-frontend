@@ -315,7 +315,7 @@ private fun TarjetaTema(it: Diptico.ItemGaleria, activo: Boolean, oscuro: Boolea
     ) {
         Box(Modifier.fillMaxWidth().aspectRatio(1.5f).clip(RoundedCornerShape(esc.d(12)))) {
             val t = it.tema
-            if (t != null) PreviaTema(t, oscuro, animar = animar)
+            if (t != null) PreviaTema(t, oscuro, animar = animar && animarUnRato(t.id))
             else Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Uva, Coral))), contentAlignment = Alignment.Center) {
                 IconoDiptico(Icono.CHISPA, Color.White, 30f)
             }
