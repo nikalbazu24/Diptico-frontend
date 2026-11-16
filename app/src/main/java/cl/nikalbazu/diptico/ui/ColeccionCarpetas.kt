@@ -1,5 +1,8 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import android.graphics.BitmapFactory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
@@ -386,14 +389,14 @@ fun RejillaCarpetasCV(e: Estado, modifier: Modifier, unaPantalla: Boolean) {
     // Pellizcar con dos dedos (vista Ícono): abrir agranda los íconos (menos por fila), cerrar los achica.
     val columnasAhora = androidx.compose.runtime.rememberUpdatedState(columnas)
     val pellizco = if (vista != "icono") Modifier else Modifier.pointerInput(Unit) {
-        androidx.compose.foundation.gestures.awaitEachGesture {
-            androidx.compose.foundation.gestures.awaitFirstDown(requireUnconsumed = false)
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false)
             var acumulado = 1f
             while (true) {
                 val ev = awaitPointerEvent()
                 if (ev.changes.none { it.pressed }) break
                 if (ev.changes.count { it.pressed } >= 2) {
-                    acumulado *= androidx.compose.foundation.gestures.calculateZoom(ev)
+                    acumulado *= ev.calculateZoom()
                     ev.changes.forEach { it.consume() }
                     if (acumulado > 1.18f) { Diptico.ajustarColumnasIcono(columnasAhora.value - 1); acumulado = 1f }
                     if (acumulado < 0.85f) { Diptico.ajustarColumnasIcono(columnasAhora.value + 1); acumulado = 1f }

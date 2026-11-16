@@ -1,5 +1,6 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.foundation.gestures.detectDragGestures
 import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -271,7 +272,7 @@ fun CajaFlotanteCV(e: Estado, j: Juego, girada: Boolean, pose: Float = 26f) {
             Modifier.fillMaxSize().testTag("caja-vitrina")
                 .graphicsLayer { translationY = (ola?.value?.let { kotlin.math.sin(it * 2f) * 10f } ?: 0f) * density }
                 .pointerInput(clave) {
-                    androidx.compose.foundation.gestures.detectDragGestures(
+                    detectDragGestures(
                         onDragEnd = { dedo = 0f; dedoV = 0f }, onDragCancel = { dedo = 0f; dedoV = 0f },
                     ) { ch, d -> ch.consume(); dedo += d.x / (density * 1.2f); dedoV = (dedoV - d.y / (density * 1.6f)).coerceIn(-55f, 55f) }
                 }
