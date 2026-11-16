@@ -102,7 +102,7 @@ internal fun IconoCarpetaCV(e: Estado, lista: List<ImagenWeb>) {
                             .background(if (accion) col.acento.copy(alpha = .18f) else Color(0xFF1B1D2E))
                             .border(if (activa) 4.dp else 1.dp, if (activa) col.texto else Color.White.copy(alpha = .12f), RoundedCornerShape(esc.d(30)))
                             .clickable { if (activa) Diptico.usarCandidato(i) else Diptico.elegirIndice(i) }, contentAlignment = Alignment.Center) {
-                            if (accion) Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                            if (accion) Column(Modifier.padding(esc.d(14)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
                                 IconoDiptico(when (x.url) { "accion:archivos" -> Icono.CARPETA; "accion:quitar" -> Icono.BORRAR; else -> Icono.CLAVE }, col.texto, 40f, acento = Coral)
                                 TB(x.fuente, 18f, lineas = 2)
                             } else {
