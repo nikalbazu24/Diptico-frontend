@@ -87,7 +87,8 @@ object Modelos3D {
 
 fun Diptico.alternarColeccionViva(v: Boolean) {
     almacen.guardarBool("coleccionViva", v)
-    actualizar { it.copy(extra = it.extra.copy(coleccionViva = v)) }
+    if (v) almacen.guardarTexto("vistaConsolas", "carpetas")
+    actualizar { if (v) it.copy(vistaConsolas = "carpetas", enSistemas = true, extra = it.extra.copy(coleccionViva = true)) else it.copy(extra = it.extra.copy(coleccionViva = false)) }
 }
 
 /** Toca la caja (o R3): gira al reverso y abajo pasa al carrete; de nuevo, vuelve. */
@@ -125,10 +126,10 @@ fun Diptico.siguienteVistaCarpetas() {
 
 /** Columnas de la rejilla de carpetas según la vista (para que la cruceta suba y baje bien). */
 fun columnasCarpetasCV(v: String, unaPantalla: Boolean): Int = when (v) {
-    "icono" -> if (unaPantalla) 3 else 4
+    "icono" -> 3
     "repisa" -> 1
-    "carpeta" -> 3
-    else -> 2
+    "carpeta" -> if (unaPantalla) 3 else 2
+    else -> if (unaPantalla) 2 else 1
 }
 
 fun Diptico.elegirJuegosCarpeta(modo: String) {

@@ -987,7 +987,12 @@ object Diptico {
         val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_L3)
             .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
         val vistaGuardada = almacen.texto("vistaConsolas", "arriba")
-        val vistaConsolas = vistaConsolasCompatible(vistaGuardada)
+        // Colección viva: una vez a todos, se entra por las carpetas (consolas en 3D arriba) y los juegos van en el estante 3D.
+        if (almacen.bool("coleccionViva", true) && !almacen.bool("cvPredeterminado1", false)) {
+            almacen.guardarBool("cvPredeterminado1", true)
+            almacen.guardarTexto("vistaConsolas", "carpetas"); almacen.guardarTexto("vistaColeccion", "estante"); almacen.guardarTexto("vista", "carrusel")
+        }
+        val vistaConsolas = if (almacen.bool("coleccionViva", true)) "carpetas" else vistaConsolasCompatible(vistaGuardada)
         if (vistaConsolas != vistaGuardada) almacen.guardarTexto("vistaConsolas", vistaConsolas)
         _estado.value = Estado(
             navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma2", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
@@ -1047,7 +1052,7 @@ object Diptico {
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
             // La visualización nueva (PS5 con caja arriba, íconos abajo) es la de siempre ahora: se pone una vez a todos.
-            vista = almacen.also { if (!it.bool("visualPs5", false)) { it.guardarTexto("vista", "iconos"); it.guardarTexto("portadaArriba", "ps5"); it.guardarBool("visualPs5", true) } }.texto("vista", "iconos").let { if (it in setOf("mosaicos", "xbox", "iconos", "cuadricula", "lista", "carrusel")) it else "iconos" },
+            vista = almacen.also { if (!it.bool("visualPs5", false)) { it.guardarTexto("vista", "iconos"); it.guardarTexto("portadaArriba", "ps5"); it.guardarBool("visualPs5", true) } }.texto("vista", "iconos").let { if (it in setOf("mosaicos", "xbox", "iconos", "cuadricula", "lista", "carrusel")) it else "iconos" }.let { v -> if (almacen.bool("coleccionViva", true)) when (almacen.texto("vistaColeccion", "estante")) { "cuadricula" -> "cuadricula"; "lista" -> "lista"; else -> "carrusel" } else v },
             vistaConsolas = vistaConsolas,
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },

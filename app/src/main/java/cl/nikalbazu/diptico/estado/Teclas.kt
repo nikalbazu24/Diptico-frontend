@@ -166,12 +166,13 @@ object Teclas {
                 if (arriba) when {
                     esB(code) || code == KeyEvent.KEYCODE_BUTTON_THUMBR -> Diptico.girarCaja(false)
                     esY(code) -> j?.let { Diptico.abrirCajaJuego(it.clave) }
+                    code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.abrirFicha()
                     esA(code) -> Diptico.jugar()
                 }
                 if (code != KeyEvent.KEYCODE_BUTTON_START && code != KeyEvent.KEYCODE_BUTTON_MODE && code != KeyEvent.KEYCODE_HOME) return true
             } else if (!e.enSistemas) {
                 when (code) {
-                    KeyEvent.KEYCODE_BUTTON_THUMBR -> { if (arriba && j != null) Diptico.girarCaja(true); return true }
+                    KeyEvent.KEYCODE_BUTTON_THUMBR, KeyEvent.KEYCODE_BUTTON_X -> { if (arriba && j != null) Diptico.girarCaja(true); return true }
                     KeyEvent.KEYCODE_BUTTON_SELECT -> {
                         if (arriba) Diptico.elegirVistaColeccion(when (e.extra.vistaColeccion) { "estante" -> "cuadricula"; "cuadricula" -> "lista"; else -> "estante" })
                         return true

@@ -92,28 +92,42 @@ fun coloresColeccion(): ColoresColeccion {
     )
 }
 
-/** Un lienzo del tamaño del boceto, centrado y escalado para llenar la pantalla. */
+/**
+ * Un lienzo del tamaño del boceto, escalado para llenar la pantalla. [zoom] agranda todo (las pantallas de la Thor son chicas:
+ * sin zoom, 1 px del boceto queda en ~0,38 dp y la letra sale de 8–10 sp). El lienzo lógico queda de (ancho/zoom × alto/zoom) y
+ * crece hacia el lado que sobre; por eso los diseños se arman en franjas relativas, no con posiciones fijas.
+ */
 @Composable
-fun LienzoBoceto(ancho: Float, alto: Float, modifier: Modifier = Modifier, fondo: Color? = null, contenido: @Composable BoxScope.() -> Unit) {
+fun LienzoBoceto(ancho: Float, alto: Float, modifier: Modifier = Modifier, fondo: Color? = null, zoom: Float = 1f, contenido: @Composable BoxScope.() -> Unit) {
     val base = LocalEscala.current
     val colores = coloresColeccion()
     BoxWithConstraints(modifier.fillMaxSize().then(if (fondo != null) Modifier.background(fondo) else Modifier), contentAlignment = Alignment.Center) {
-        // El lienzo usa todo el ancho y todo el alto: si la pantalla es más ancha o más alta que el boceto, crece hacia ese lado.
-        val s = minOf(maxWidth.value / ancho, maxHeight.value / alto).coerceAtLeast(0.01f)
+        val s = (minOf(maxWidth.value / ancho, maxHeight.value / alto) * zoom * base.texto.coerceIn(0.85f, 1.3f)).coerceAtLeast(0.01f)
         val w = maxWidth.value / s
         val h = maxHeight.value / s
         CompositionLocalProvider(
-            LocalEscala provides Escala(s, w, base.texto),
+            LocalEscala provides Escala(s, w, 1f),
             LocalColeccion provides colores,
+            LocalAltoLienzo provides h,
         ) {
             Box(Modifier.requiredSize((w * s).dp, (h * s).dp), content = contenido)
         }
     }
 }
 
-/** El ancho y alto del lienzo en píxeles del boceto (puede ser algo más que el boceto si la pantalla es más larga). */
+/** Zoom de cada pantalla: la de abajo de la Thor es la más chica. */
+const val ZOOM_ARRIBA = 1.45f
+const val ZOOM_ABAJO = 1.65f
+const val ZOOM_UNA = 1.35f
+
+val LocalAltoLienzo = staticCompositionLocalOf { 1080f }
+
+/** El ancho y alto del lienzo en píxeles del boceto (con zoom, menos que el boceto). */
 @Composable
 fun anchoLienzo(): Float = LocalEscala.current.ancho
+
+@Composable
+fun altoLienzo(): Float = LocalAltoLienzo.current
 
 /** Forma redondeada que respeta la forma del tema. */
 @Composable
