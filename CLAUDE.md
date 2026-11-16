@@ -726,3 +726,10 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   Temas, Widgets, Calendario, Exclusivos, Mis temas. Widgets = el inicio de siempre (`PantallaInicio`, editor viejo) con `EncabezadoWidgetsCV` y
   tarjetas de vidrio del tema (`Tarjeta` con `decorEnFondo`); `WidgetsCV`/`TiendaWidgetsCV` quedaron sin uso. Ajustes: `menuIntercambiado(e)`
   pone las opciones abajo y la explicación arriba. Migración `cvPredeterminado1`: se entra por las carpetas (vistaConsolas "carpetas").
+- RONDA 3 (16 nov, 15:55): sin selector de vistas en pantalla (solo Select); en su lugar `DockCV` (vidrio, `FilaDock` 5 apps + cajón);
+  `PistasFinas` (una línea chica) reemplaza barras de botones repetidos; ZOOM_ARRIBA 1.3 / ABAJO 1.38 / UNA 1.25. Mantener Select
+  (repeatCount 12) intercambia pantallas en cualquier lado. `Sonidos.encendido(consolaId)` (tono por consola, sin botón).
+  Consolas 3D con **Filament** (`filament-android/gltfio/utils` rango `[1.51,1.60)`; 1.54.0 fijo no se encontró en Maven):
+  `VisorConsola` (TextureView transparente, `ModelViewer`, giro libre, gira solo tras 2 s); glb optimizados (gltf-transform, 512 px)
+  en `assets/consolas3d/<id>.glb` (las hojas webp se borraron). En Robolectric se dibuja un reemplazo. Íconos de carpetas con pellizco
+  (`ajustarColumnasIcono`, 2..6), `RejillaCV` cuadrada, caja de arriba se gira en X e Y con resorte al soltar.
