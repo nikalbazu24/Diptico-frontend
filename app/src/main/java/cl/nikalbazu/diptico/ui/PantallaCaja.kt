@@ -87,7 +87,7 @@ fun PantallaCaja(e: Estado, rol: Rol) {
             }
             if (muestraControles) {
                 Column(Modifier.weight(if (muestraCaja) 1.15f else 1f).widthIn(max = esc.d(640)).fillMaxHeight()) {
-                    PanelEstudio(e, clave, g)
+                    PanelCajas(e, clave, g)
                 }
             }
         }
@@ -161,7 +161,7 @@ private fun Pastilla(texto: String, activa: Boolean, alTocar: () -> Unit) {
 
 /** El panel de abajo (o de la derecha): DIPPO, pestañas y lo de cada pestaña. */
 @Composable
-private fun PanelEstudio(e: Estado, clave: String, g: CarasGuardadas?) {
+private fun PanelCajas(e: Estado, clave: String, g: CarasGuardadas?) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val tab = e.extra.estudioTab
@@ -183,7 +183,7 @@ private fun PanelEstudio(e: Estado, clave: String, g: CarasGuardadas?) {
             EstudioCajas.PESTANAS.forEachIndexed { i, t ->
                 Box(
                     Modifier.weight(1f).clip(RoundedCornerShape(esc.d(9))).then(if (tab == i) Modifier.fondoBoton(Uva) else Modifier)
-                        .clickable { Diptico.elegirPestanaEstudio(i) }.padding(vertical = esc.d(7)),
+                        .clickable { Diptico.elegirPestanaCajas(i) }.padding(vertical = esc.d(7)),
                     contentAlignment = Alignment.Center,
                 ) { Texto(t, 13f, color = if (tab == i) SobreUva else p.tenue, lineas = 1) }
             }
