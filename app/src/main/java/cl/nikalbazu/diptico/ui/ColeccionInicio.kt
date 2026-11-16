@@ -189,8 +189,9 @@ fun ColeccionArriba(e: Estado) {
                     InfoJuegoCV(e, j, c, tamTitulo = 92f)
                 }
                 // La caja: flota, se gira con el dedo y entra animada al cambiar de juego.
-                val ladoAlto = altoU * (0.86f + 0.1f * t)
-                val ladoAncho = minOf(anchoU * 0.36f, ladoAlto * 0.78f)
+                // Marco casi cuadrado: así llenan su lugar tanto las cajas altas (PS2) como las anchas (SNES, N64).
+                val ladoAlto = altoU * (0.92f + 0.08f * t)
+                val ladoAncho = minOf(anchoU * (0.42f + 0.2f * t), ladoAlto * 1.05f)
                 Box(Modifier.align(androidx.compose.ui.BiasAlignment(0.74f * (1f - t), 0f)).size(esc.d(ladoAncho), esc.d(ladoAlto))) {
                     CajaFlotanteCV(e, j, girada)
                 }
@@ -345,9 +346,9 @@ fun EstanteCV(e: Estado, modifier: Modifier, vecinas: Int = 2) {
     androidx.compose.foundation.layout.BoxWithConstraints(modifier) {
         val anchoU = maxWidth.value / esc.factor
         val altoU = maxHeight.value / esc.factor
-        val alto = altoU * 0.9f
-        val ancho = alto * 0.74f
-        val paso = ancho * 0.95f
+        val alto = altoU * 0.94f
+        val ancho = alto * 1.0f
+        val paso = ancho * 0.8f
         val umbral = paso * esc.factor * 0.5f
         Box(Modifier.fillMaxSize().pointerInput(lista.size) {
             detectHorizontalDragGestures(onDragEnd = { arrastre = 0f }) { ch, dx ->
