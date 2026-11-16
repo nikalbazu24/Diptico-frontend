@@ -128,7 +128,7 @@ fun Diptico.pestanaEstudio(d: Int) {
     Sonidos.pagina()
 }
 
-fun Diptico.elegirPestanaEstudio(t: Int) {
+fun Diptico.elegirPestanaCajas(t: Int) {
     actualizar { it.copy(extra = it.extra.copy(estudioTab = t.coerceIn(0, EstudioCajas.PESTANAS.size - 1), cajaSel = 0)) }
 }
 
