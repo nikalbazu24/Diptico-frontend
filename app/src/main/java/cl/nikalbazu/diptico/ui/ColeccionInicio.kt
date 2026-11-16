@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.compose.animation.togetherWith
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.key
 import cl.nikalbazu.diptico.data.Consola
@@ -127,121 +128,152 @@ private fun fraseDippo(e: Estado, j: Juego?): String {
 
 // ———————————————————————————— 1 · Thor arriba ————————————————————————————
 
-@Composable
-fun ColeccionArriba(e: Estado) {
-    val j = e.seleccionado
-    val c = j?.let { Consolas.porId(it.consolaId) }
-    LienzoBoceto(1920f, 1080f, fondo = LocalColeccion.current.fondo) {
-        val esc = LocalEscala.current
-        val col = LocalColeccion.current
-        val girada = e.extra.cajaGirada
-        // Arte del juego a pantalla completa (si no hay, un degradado con el color de la consola).
-        if (j != null) {
-            androidx.compose.animation.Crossfade(j.clave, animationSpec = androidx.compose.animation.core.tween(320), label = "arte") { _ ->
-                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf((c?.color ?: col.acento).copy(alpha = .55f), col.fondo)))) {
-                    ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize())
-                }
-            }
-        }
-        Box(Modifier.fillMaxSize().veloColeccion(col.fondo))
-
-        // Barra: consola a la izquierda; hora, batería y perfil a la derecha.
-        Row(Modifier.fillMaxWidth().padding(start = esc.d(96), end = esc.d(96), top = esc.d(44)), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(esc.d(18))) {
-            PildoraVidrio(64f, onClick = { Diptico.volverASistemas() }) {
-                Box(Modifier.size(esc.d(16)).clip(CircleShape).background(c?.color ?: col.acento))
-                TB(c?.let { it.bonito } ?: "Tus juegos", 28f, titulo = true, peso = FontWeight.SemiBold)
-                if (e.visibles.isNotEmpty()) TB("${e.indiceSel + 1} de ${e.visibles.size}", 22f, color = col.sub, traducir = false)
-            }
-            Spacer(Modifier.weight(1f))
-            HoraBateria()
-            BotonPerfil(72f)
-        }
-
-        if (j == null) {
-            Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(96))) {
-                TB("Aún no hay juegos aquí", 72f, titulo = true)
-                TB("Elige tu carpeta de juegos en Ajustes › Biblioteca.", 28f, color = col.sub)
-            }
-            return@LienzoBoceto
-        }
-
-        val info by animateFloatAsState(if (girada) 0f else 1f, tween(duracionMovimiento(320)), label = "info")
-        // Información del juego.
-        Column(Modifier.offset(esc.d(96), esc.d(210)).width(esc.d(820)).alpha(info), verticalArrangement = Arrangement.spacedBy(esc.d(22))) {
-            TB((c?.bonito ?: "").uppercase(), 24f, color = lerpClaro(c?.color ?: col.acento), peso = FontWeight.ExtraBold, espaciado = 3.4f, traducir = false)
-            val logo = rememberImagen(j.logo, 900)
-            if (logo != null) Image(logo, j.titulo, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart,
-                modifier = Modifier.heightIn(max = esc.d(240)).widthIn(max = esc.d(760)))
-            else TB(j.titulo, 118f, titulo = true, lineas = 2, interlineado = 116f, sombra = true, traducir = false)
-            val resumen = resumenJuego(j, c)
-            if (resumen.isNotBlank()) TB(resumen, 28f, color = Color(0xFFD3D5EA).siOscuro(col), peso = FontWeight.SemiBold, lineas = 3, interlineado = 39f, modifier = Modifier.widthIn(max = esc.d(720)), traducir = false)
-            val chips = chipsJuego(e, j).ifEmpty { listOf("Aún sin jugar con Díptico") }
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(12))) { chips.take(3).forEach { ChipDato(it) } }
-            val pct = avance(e, j)
-            val paso = e.datos[j.clave]?.paso.orEmpty()
-            if (pct != null || paso.isNotBlank()) Column(Modifier.widthIn(max = esc.d(640)), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                if (pct != null) Box(Modifier.fillMaxWidth().height(esc.d(8)).clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .14f))) {
-                    Box(Modifier.fillMaxWidth(pct / 100f).fillMaxHeight().background(Brush.horizontalGradient(listOf(Color(0xFF6B4EFF), c?.color ?: Color(0xFF3B6BFF)))))
-                }
-                if (paso.isNotBlank()) TB("Tu próximo paso: $paso", 24f, color = Color(0xFFC7C9E0).siOscuro(col), peso = FontWeight.SemiBold, lineas = 2, traducir = false,
-                    modifier = Modifier.clickable { Diptico.abrirPaso() })
-            }
-        }
-        // Acciones.
-        Row(Modifier.align(Alignment.BottomStart).padding(start = esc.d(96), bottom = esc.d(92)).alpha(info), horizontalArrangement = Arrangement.spacedBy(esc.d(18))) {
-            BotonTecla("A", if ((e.datos[j.clave]?.tiempo ?: 0L) > 0) "Continuar" else "Jugar", { Diptico.jugar() }, principal = true, letra = 32f)
-            BotonTecla("X", "Ficha", { Diptico.abrirFicha() })
-            BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) })
-        }
-        // La caja 3D: girada 24°, sin pedestal. Al tocarla viaja al centro, crece y muestra el reverso.
-        CajaVitrinaCV(e, j, c ?: return@LienzoBoceto, x = 1240f, y = 210f, ancho = 400f, alto = 560f, centroX = 960f - 200f, girada = girada)
-        // DIPPO: una línea discreta abajo a la derecha (no tapa nada).
-        if (e.extra.dippoInicio && !girada) DippoFrase(fraseDippo(e, j), Modifier.align(Alignment.BottomEnd).padding(end = esc.d(96), bottom = esc.d(104)))
-        if (girada) Row(Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(60)), horizontalArrangement = Arrangement.spacedBy(esc.d(40))) {
-            PistaTecla("R3", "Volver a girar"); PistaTecla("B", "Volver")
-        }
-    }
-}
-
-/** Un color más claro del color de la consola, para el «GÉNERO · AÑO» (como #9DB6FF para el azul de PS2). */
 private fun lerpClaro(c: Color): Color = androidx.compose.ui.graphics.lerp(c, Color.White, 0.55f)
 
 private fun Color.siOscuro(col: ColoresColeccion): Color = if (col.texto.luminance() > 0.5f) this else col.sub
 
 
+// ———————————————————————————— 1 · Thor arriba ————————————————————————————
+
+/** El fondo del tema en Colección viva: la decoración va DETRÁS de todo (encima tapaba los botones). */
+@Composable
+fun FondoTemaCV() {
+    if (Estilo.decoraciones && Estilo.tema.decor != "nada") Decoracion(Estilo.tema, animada = !Estilo.decorQuieta)
+}
+
+@Composable
+fun ColeccionArriba(e: Estado) {
+    val j = e.seleccionado
+    val c = j?.let { Consolas.porId(it.consolaId) }
+    LienzoBoceto(1920f, 1080f, fondo = LocalColeccion.current.fondo, zoom = ZOOM_ARRIBA) {
+        val esc = LocalEscala.current
+        val col = LocalColeccion.current
+        val girada = e.extra.cajaGirada && j != null
+        val mov = LocalMovimiento.current
+        val t by animateFloatAsState(if (girada) 1f else 0f, tween(if (mov) duracionMovimiento(650) else 0, easing = CurvaPosarse), label = "girada")
+        // Arte del juego a pantalla completa (si no hay, el color de la consola); se funde al cambiar de juego.
+        if (j != null) androidx.compose.animation.Crossfade(j.clave, animationSpec = tween(380), label = "arte") { clave ->
+            val jj = e.visibles.firstOrNull { it.clave == clave } ?: j
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf((Consolas.porId(jj.consolaId)?.color ?: col.acento).copy(alpha = .55f), col.fondo)))) {
+                ArteJuego(jj, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize())
+            }
+        }
+        Box(Modifier.fillMaxSize().veloColeccion(col.fondo))
+        FondoTemaCV()
+        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(64), vertical = esc.d(30))) {
+            // Franja 1 · barra: consola · hora, batería y perfil.
+            Row(Modifier.fillMaxWidth().height(esc.d(72)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
+                PildoraVidrio(60f, onClick = { Diptico.volverASistemas() }) {
+                    Box(Modifier.size(esc.d(16)).clip(CircleShape).background(c?.color ?: col.acento))
+                    TB(c?.bonito ?: "Tus juegos", 26f, titulo = true, peso = FontWeight.SemiBold)
+                    if (e.visibles.isNotEmpty()) TB("${e.indiceSel + 1} de ${e.visibles.size}", 20f, color = col.sub, traducir = false)
+                }
+                Spacer(Modifier.weight(1f))
+                HoraBateria(60f, 24f)
+                BotonPerfil(64f)
+            }
+            if (j == null) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                    TB("Aún no hay juegos aquí", 64f, titulo = true)
+                    TB("Elige tu carpeta de juegos en Ajustes › Biblioteca.", 24f, color = col.sub)
+                }
+                return@Column
+            }
+            // Franja 2 · la información a la izquierda y la caja a la derecha (al darse vuelta, la caja va al centro).
+            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                val anchoU = maxWidth.value / esc.factor
+                val altoU = maxHeight.value / esc.factor
+                Column(Modifier.fillMaxHeight().width(esc.d(anchoU * 0.56f)).graphicsLayer { alpha = 1f - t; translationX = -60f * t },
+                    verticalArrangement = Arrangement.spacedBy(esc.d(16), Alignment.CenterVertically)) {
+                    InfoJuegoCV(e, j, c, tamTitulo = 92f)
+                }
+                // La caja: flota, se gira con el dedo y entra animada al cambiar de juego.
+                val ladoAlto = altoU * (0.86f + 0.1f * t)
+                val ladoAncho = minOf(anchoU * 0.36f, ladoAlto * 0.78f)
+                Box(Modifier.align(androidx.compose.ui.BiasAlignment(0.74f * (1f - t), 0f)).size(esc.d(ladoAncho), esc.d(ladoAlto))) {
+                    CajaFlotanteCV(e, j, girada)
+                }
+            }
+            // Franja 3 · acciones a la izquierda y DIPPO a la derecha, cada uno en su lugar.
+            Row(Modifier.fillMaxWidth().height(esc.d(92)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
+                if (girada) {
+                    PistaTecla("X", "Ver la ficha completa", 24f); PistaTecla("R3", "Volver a girar", 24f); PistaTecla("B", "Volver", 24f)
+                    Spacer(Modifier.weight(1f))
+                } else {
+                    BotonTecla("A", if ((e.datos[j.clave]?.tiempo ?: 0L) > 0) "Continuar" else "Jugar", { Diptico.jugar() }, alto = 84f, principal = true, letra = 30f)
+                    BotonTecla("X", "Ficha", { Diptico.girarCaja(true) }, alto = 84f, letra = 28f)
+                    BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) }, alto = 84f, letra = 28f)
+                    Spacer(Modifier.weight(1f))
+                    if (e.extra.dippoInicio) DippoFrase(fraseDippo(e, j), cara = 56f, letra = 22f, maxAncho = 520f)
+                }
+            }
+        }
+    }
+}
+
+/** Género/consola, título (o logo), resumen, chips y el próximo paso. */
+@Composable
+private fun InfoJuegoCV(e: Estado, j: Juego, c: Consola?, tamTitulo: Float, compacta: Boolean = false) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    TB((c?.bonito ?: "").uppercase(), 22f, color = lerpClaro(c?.color ?: col.acento), peso = FontWeight.ExtraBold, espaciado = 3.2f, traducir = false)
+    val logo = rememberImagen(j.logo, 900)
+    if (logo != null) Image(logo, j.titulo, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart,
+        modifier = Modifier.heightIn(max = esc.d(tamTitulo * 2f)).fillMaxWidth())
+    else TB(j.titulo, tamTitulo, titulo = true, lineas = 2, interlineado = tamTitulo, sombra = true, traducir = false)
+    val resumen = resumenJuego(j, c)
+    if (resumen.isNotBlank() && !compacta) TB(resumen, 26f, color = Color(0xFFD3D5EA).siOscuro(col), peso = FontWeight.SemiBold, lineas = 3, interlineado = 36f, traducir = false)
+    val chips = chipsJuego(e, j).ifEmpty { listOf("Aún sin jugar con Díptico") }
+    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(12))) { chips.take(3).forEach { ChipDato(it, 22f) } }
+    val pct = avance(e, j)
+    val paso = e.datos[j.clave]?.paso.orEmpty()
+    if (pct != null) Box(Modifier.fillMaxWidth(0.85f).height(esc.d(10)).clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .14f))) {
+        Box(Modifier.fillMaxWidth(pct / 100f).fillMaxHeight().background(Brush.horizontalGradient(listOf(col.acento, c?.color ?: col.acento))))
+    }
+    if (paso.isNotBlank()) TB("Tu próximo paso: $paso", 24f, color = Color(0xFFC7C9E0).siOscuro(col), peso = FontWeight.SemiBold, lineas = 2, traducir = false,
+        modifier = Modifier.clickable { Diptico.abrirPaso() })
+}
+
 /**
- * La caja 3D del juego elegido en su lugar del boceto. Con [girada] viaja hacia [centroX], crece ×1.34 y gira 180°
- * (el reverso). Se puede girar con el dedo; al soltar vuelve a su pose.
+ * La caja del juego elegido: entra deslizándose al cambiar de juego, flota y se mece como antes, se gira con el dedo y,
+ * con [girada], da la vuelta y muestra el reverso con la información del juego.
  */
 @Composable
-fun CajaVitrinaCV(e: Estado, j: Juego, c: Consola, x: Float, y: Float, ancho: Float, alto: Float, centroX: Float, girada: Boolean, pose: Float = 24f) {
-    val esc = LocalEscala.current
+fun CajaFlotanteCV(e: Estado, j: Juego, girada: Boolean, pose: Float = 26f) {
     val mov = LocalMovimiento.current
-    val t by animateFloatAsState(if (girada) 1f else 0f, tween(if (mov) duracionMovimiento(700) else 0, easing = CurvaPosarse), label = "giro-caja")
-    var dedo by remember { mutableStateOf(0f) }
-    val dedoAnim by animateFloatAsState(dedo, if (dedo == 0f) androidx.compose.animation.core.spring(0.55f, 220f) else tween(0), label = "dedo")
-    val xActual = x + (centroX - x) * t
-    val escala = 1f + 0.34f * t
-    // Sombra en el piso.
-    Box(Modifier.offset(esc.d(xActual - 20f), esc.d(y + alto + 80f)).size(esc.d(ancho * 1.1f * escala), esc.d(60)).graphicsLayer { alpha = 1f - 0.4f * t }
-        .background(Brush.radialGradient(listOf(Color.Black.copy(alpha = .6f), Color.Transparent))))
-    Box(
-        Modifier.offset(esc.d(xActual), esc.d(y)).size(esc.d(ancho), esc.d(alto + 40f))
-            .graphicsLayer { scaleX = escala; scaleY = escala }
-            .testTag("caja-vitrina")
-            .pointerInput(j.clave) {
-                detectHorizontalDragGestures(onDragEnd = { dedo = 0f }, onDragCancel = { dedo = 0f }) { ch, dx -> ch.consume(); dedo += dx / 3f }
-            }
-            .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { Diptico.girarCaja() },
-    ) {
-        Caja3D(
-            datosCaja(e, j, c), j, c, Modifier.fillMaxSize(),
-            giroY = { pose * (1f - t) + 180f * t + dedoAnim },
-            giroX = { -3f },
-            caras = e.extra.caras[j.clave],
-            detalle = true, sombraPiso = false,
-        )
+    val indice = e.indiceSel
+    androidx.compose.animation.AnimatedContent(
+        targetState = j.clave,
+        transitionSpec = {
+            val adelante = e.visibles.indexOfFirst { it.clave == targetState } >= e.visibles.indexOfFirst { it.clave == initialState }
+            if (!mov) androidx.compose.animation.EnterTransition.None togetherWith androidx.compose.animation.ExitTransition.None
+            else (androidx.compose.animation.slideInHorizontally(tween(420, easing = CurvaPosarse)) { if (adelante) it / 2 else -it / 2 } +
+                androidx.compose.animation.fadeIn(tween(300)) + androidx.compose.animation.scaleIn(tween(420), initialScale = 0.9f)) togetherWith
+                (androidx.compose.animation.slideOutHorizontally(tween(320)) { if (adelante) -it / 2 else it / 2 } + androidx.compose.animation.fadeOut(tween(220)))
+        },
+        label = "caja-${indice >= 0}", modifier = Modifier.fillMaxSize(),
+    ) { clave ->
+        val jj = e.visibles.firstOrNull { it.clave == clave } ?: j
+        val cc = Consolas.porId(jj.consolaId) ?: return@AnimatedContent
+        val t by animateFloatAsState(if (girada) 1f else 0f, tween(if (mov) duracionMovimiento(700) else 0, easing = CurvaPosarse), label = "giro")
+        val ola = if (mov) androidx.compose.animation.core.rememberInfiniteTransition(label = "flotar").animateFloat(
+            0f, (2 * Math.PI).toFloat(), androidx.compose.animation.core.infiniteRepeatable(tween(7000, easing = androidx.compose.animation.core.LinearEasing)), label = "ola",
+        ) else null
+        var dedo by remember { mutableStateOf(0f) }
+        val dedoAnim by animateFloatAsState(dedo, if (dedo == 0f) androidx.compose.animation.core.spring(0.55f, 220f) else tween(0), label = "dedo")
+        Box(
+            Modifier.fillMaxSize().testTag("caja-vitrina")
+                .graphicsLayer { translationY = (ola?.value?.let { kotlin.math.sin(it * 2f) * 10f } ?: 0f) * density }
+                .pointerInput(clave) { detectHorizontalDragGestures(onDragEnd = { dedo = 0f }, onDragCancel = { dedo = 0f }) { ch, dx -> ch.consume(); dedo += dx / 3f } }
+                .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { Diptico.girarCaja() },
+        ) {
+            Caja3D(
+                datosCaja(e, jj, cc), jj, cc, Modifier.fillMaxSize(),
+                giroY = { pose * (1f - t) + 180f * t + dedoAnim + (ola?.value?.let { kotlin.math.sin(it) * 6f } ?: 0f) * (1f - t) },
+                giroX = { -5f + (ola?.value?.let { kotlin.math.cos(it) * 2f } ?: 0f) },
+                caras = e.extra.caras[jj.clave], detalle = true, sombraPiso = true,
+            )
+        }
     }
 }
 
@@ -249,51 +281,234 @@ fun CajaVitrinaCV(e: Estado, j: Juego, c: Consola, x: Float, y: Float, ancho: Fl
 
 @Composable
 fun ColeccionAbajo(e: Estado) {
-    LienzoBoceto(1240f, 1080f, fondo = LocalColeccion.current.fondo2) {
+    LienzoBoceto(1240f, 1080f, fondo = LocalColeccion.current.fondo2, zoom = ZOOM_ABAJO) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         val c = e.seleccionado?.let { Consolas.porId(it.consolaId) } ?: Consolas.porId(e.consolaSel)
         Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf((c?.color ?: col.acento).copy(alpha = .22f), Color.Transparent), radius = 900f)))
-        // Fila de arriba: DIPPO, buscar, widgets y apps.
-        Row(Modifier.fillMaxWidth().padding(start = esc.d(40), end = esc.d(40), top = esc.d(32)).height(esc.d(76)),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-            Box(Modifier.size(esc.d(76)).clip(CircleShape).background(col.texto.copy(alpha = .07f)).border(1.dp, col.borde, CircleShape)
-                .clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) { cl.nikalbazu.diptico.bisa.AvatarBisa(48f * esc.factor) }
-            Row(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .07f)).border(1.dp, col.borde, RoundedCornerShape(50))
-                .clickable { Diptico.abrirBuscar() }.padding(horizontal = esc.d(26)), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                IconoDiptico(Icono.BUSCAR, col.sub, 30f)
-                TB("Buscar en tu colección", 26f, color = col.sub, peso = FontWeight.SemiBold)
+        FondoTemaCV()
+        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(28), vertical = esc.d(22)), verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
+            // Fila de arriba: DIPPO · buscar · el dock de apps (grande) · widgets · apps.
+            Row(Modifier.fillMaxWidth().height(esc.d(80)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                Box(Modifier.size(esc.d(80)).clip(CircleShape).background(col.texto.copy(alpha = .07f)).border(1.dp, col.borde, CircleShape)
+                    .clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) { cl.nikalbazu.diptico.bisa.AvatarBisa(56f * esc.factor) }
+                BotonRedondo(Icono.BUSCAR, 80f, { Diptico.abrirBuscar() }, descripcion = "Buscar")
+                Row(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(50)).background(col.vidrio).border(1.dp, col.borde, RoundedCornerShape(50))
+                    .padding(horizontal = esc.d(10)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                    FilaDock(e, 62f, conCajon = false)
+                }
+                BotonRedondo(Icono.APPS, 80f, { Diptico.fijarInicio("widgets") }, descripcion = "Widgets")
+                BotonRedondo(Icono.MENU, 80f, { Diptico.abrirApps() }, descripcion = "Apps")
             }
-            BotonRedondo(Icono.APPS, 76f, { Diptico.fijarInicio("widgets") }, descripcion = "Widgets")
-            BotonRedondo(Icono.MENU, 76f, { Diptico.abrirApps() }, descripcion = "Apps")
+            if (e.extra.cajaGirada && e.seleccionado != null) {
+                CarreteCV(e, e.seleccionado!!, Modifier.weight(1f))
+                return@Column
+            }
+            // Consolas: L1 · píldoras · R1.
+            FilaConsolasCV(e, Modifier.fillMaxWidth().height(esc.d(80)), alto = 72f)
+            // Los juegos de la consola, en la vista elegida.
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                when (e.extra.vistaColeccion) {
+                    "cuadricula" -> RejillaCV(e, columnas = 4, Modifier.fillMaxSize())
+                    "lista" -> ListaCV(e, Modifier.fillMaxSize())
+                    else -> Column(Modifier.fillMaxSize()) {
+                        EstanteCV(e, Modifier.fillMaxWidth().weight(1f))
+                        val j = e.seleccionado
+                        Column(Modifier.fillMaxWidth().padding(top = esc.d(6)), horizontalAlignment = Alignment.CenterHorizontally) {
+                            TB(j?.titulo ?: "", 40f, titulo = true, traducir = false)
+                            TB("${e.indiceSel + 1} de ${e.visibles.size} · ◀ ▶ recorrer · A jugar", 21f, color = col.sub)
+                        }
+                    }
+                }
+            }
+            BarraAbajoCV(e, Modifier.fillMaxWidth())
         }
-        if (e.extra.cajaGirada && e.seleccionado != null) {
-            CarreteCV(e, e.seleccionado!!, Modifier.padding(top = esc.d(136)))
-            return@LienzoBoceto
-        }
-        // Consolas: L1 · píldoras · R1.
-        FilaConsolasCV(e, Modifier.offset(esc.d(40), esc.d(136)).width(esc.d(anchoLienzo() - 80f)).height(esc.d(104)))
-        // Los juegos de la consola, en la vista elegida.
-        Box(Modifier.fillMaxWidth().offset(y = esc.d(260)).height(esc.d(680 - 0f))) {
-            when (e.extra.vistaColeccion) {
-                "cuadricula" -> RejillaCV(e, columnas = 5, Modifier.fillMaxSize().padding(horizontal = esc.d(40)))
-                "lista" -> ListaCV(e, Modifier.fillMaxSize().padding(horizontal = esc.d(40)))
-                else -> Column(Modifier.fillMaxSize()) {
-                    EstanteCV(e, Modifier.fillMaxWidth().height(esc.d(500)))
-                    val j = e.seleccionado
-                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                        TB(j?.let { it.titulo } ?: "", 44f, titulo = true, traducir = false)
-                        TB("${e.indiceSel + 1} de ${e.visibles.size} · ◀ ▶ para recorrer · A jugar", 22f, color = col.sub)
+    }
+}
+
+/**
+ * El estante 3D: la elegida al centro (grande), las vecinas giradas ±48° mostrando el lomo. Los tamaños salen del alto que
+ * le toca, así llena su franja en cualquier pantalla.
+ */
+@Composable
+fun EstanteCV(e: Estado, modifier: Modifier, vecinas: Int = 2) {
+    val esc = LocalEscala.current
+    val lista = e.visibles
+    val sel = e.indiceSel
+    val mov = LocalMovimiento.current
+    val pos by animateFloatAsState(sel.toFloat(), if (mov) androidx.compose.animation.core.spring(0.85f, 300f) else tween(0), label = "estante")
+    val ola = if (mov) androidx.compose.animation.core.rememberInfiniteTransition(label = "flotar-estante").animateFloat(
+        0f, (2 * Math.PI).toFloat(), androidx.compose.animation.core.infiniteRepeatable(tween(6000, easing = androidx.compose.animation.core.LinearEasing)), label = "ola",
+    ) else null
+    var arrastre by remember { mutableStateOf(0f) }
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier) {
+        val anchoU = maxWidth.value / esc.factor
+        val altoU = maxHeight.value / esc.factor
+        val alto = altoU * 0.9f
+        val ancho = alto * 0.74f
+        val paso = ancho * 0.95f
+        val umbral = paso * esc.factor * 0.5f
+        Box(Modifier.fillMaxSize().pointerInput(lista.size) {
+            detectHorizontalDragGestures(onDragEnd = { arrastre = 0f }) { ch, dx ->
+                ch.consume(); arrastre += dx
+                if (arrastre > umbral * density) { arrastre = 0f; Diptico.moverJuego(-1) }
+                if (arrastre < -umbral * density) { arrastre = 0f; Diptico.moverJuego(1) }
+            }
+        }) {
+            val centro = anchoU / 2f
+            Box(Modifier.offset(esc.d(centro - ancho * 0.9f), esc.d(altoU - 30f)).size(esc.d(ancho * 1.8f), esc.d(30))
+                .background(Brush.radialGradient(listOf(Color.Black.copy(alpha = .5f), Color.Transparent))))
+            val desde = (sel - vecinas - 1).coerceAtLeast(0)
+            val hasta = (sel + vecinas + 1).coerceAtMost(lista.size - 1)
+            for (i in desde..hasta) {
+                val j = lista[i]
+                val c = Consolas.porId(j.consolaId) ?: continue
+                val k = i - pos
+                val cerca = (1f - abs(k)).coerceIn(0f, 1f)
+                val escala = 0.78f + 0.22f * cerca
+                val w = ancho * escala
+                val h = alto * escala
+                val x = centro + k * paso - w / 2f
+                val y = (altoU - h) / 2f + (1f - cerca) * altoU * 0.04f
+                key(j.clave) {
+                    Box(
+                        Modifier.offset(esc.d(x), esc.d(y)).size(esc.d(w), esc.d(h)).zIndex(10f - abs(k))
+                            .graphicsLayer {
+                                alpha = if (abs(k) > vecinas + 0.5f) 0f else 0.7f + 0.3f * cerca
+                                translationY = if (i == sel) (ola?.value?.let { kotlin.math.sin(it * 2f) * 5f } ?: 0f) * density else 0f
+                            }
+                            .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {
+                                if (i == sel) Diptico.jugar() else Diptico.elegirJuego(j.clave)
+                            },
+                    ) {
+                        Caja3D(
+                            datosCaja(e, j, c), j, c, Modifier.fillMaxSize(),
+                            giroY = {
+                                val kk = i - pos
+                                val base = if (abs(kk) < 1f) 14f * (1f - abs(kk)) + (if (kk < 0) 48f else -48f) * abs(kk) else if (kk < 0) 48f else -48f
+                                base + if (i == sel) (ola?.value?.let { kotlin.math.sin(it) * 5f } ?: 0f) else 0f
+                            },
+                            giroX = { -4f }, caras = e.extra.caras[j.clave], detalle = i == sel, sombraPiso = false,
+                        )
                     }
                 }
             }
         }
-        BarraAbajoCV(e, Modifier.align(Alignment.BottomCenter).padding(start = esc.d(40), end = esc.d(40), bottom = esc.d(36)))
     }
 }
 
-/** L1 · las consolas como píldoras con su punto de color (la elegida en blanco) · R1. */
+/** La barra de abajo: vistas (Estante 3D, Cuadrícula, Lista) · Colecciones · opciones del juego · ajustes. */
+@Composable
+fun BarraAbajoCV(e: Estado, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    Row(modifier.height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+        Row(Modifier.clip(RoundedCornerShape(50)).background(col.vidrio).border(1.dp, col.borde, RoundedCornerShape(50)).padding(esc.d(5)),
+            horizontalArrangement = Arrangement.spacedBy(esc.d(3))) {
+            listOf("estante" to "Estante", "cuadricula" to "Cuadrícula", "lista" to "Lista").forEach { (v, n) ->
+                val on = e.extra.vistaColeccion == v
+                Box(Modifier.height(esc.d(70)).clip(RoundedCornerShape(50)).background(if (on) col.elegido else Color.Transparent)
+                    .clickable { Diptico.elegirVistaColeccion(v) }.padding(horizontal = esc.d(18)), contentAlignment = Alignment.Center) {
+                    TB(n, 22f, color = if (on) col.enElegido else col.texto, peso = FontWeight.ExtraBold)
+                }
+            }
+        }
+        Spacer(Modifier.weight(1f))
+        BotonRedondo(Icono.CARPETA, 80f, { Diptico.elegirPestanaCarpetas(1); Diptico.volverASistemas() }, descripcion = "Colecciones")
+        BotonRedondo(Icono.EDITAR, 80f, { Diptico.abrirRapido() }, descripcion = "Opciones del juego")
+        BotonRedondo(Icono.AJUSTES, 80f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
+    }
+}
+
+// ———————————————————————————— 3 · una pantalla ————————————————————————————
+
+@Composable
+fun ColeccionUnica(e: Estado) {
+    val j = e.seleccionado
+    val c = j?.let { Consolas.porId(it.consolaId) }
+    LienzoBoceto(1920f, 1080f, fondo = LocalColeccion.current.fondo, zoom = ZOOM_UNA) {
+        val esc = LocalEscala.current
+        val col = LocalColeccion.current
+        val girada = e.extra.cajaGirada && j != null
+        if (j != null) androidx.compose.animation.Crossfade(j.clave, animationSpec = tween(380), label = "arte") { clave ->
+            val jj = e.visibles.firstOrNull { it.clave == clave } ?: j
+            ArteJuego(jj, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize())
+        }
+        Box(Modifier.fillMaxSize().veloColeccion(col.fondo))
+        FondoTemaCV()
+        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(44), vertical = esc.d(20)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
+            // Franja 1 · barra: consola · buscar, apps, widgets, ajustes · DIPPO, hora y batería, perfil.
+            Row(Modifier.fillMaxWidth().height(esc.d(72)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                PildoraVidrio(62f, onClick = { Diptico.volverASistemas() }) {
+                    Box(Modifier.size(esc.d(16)).clip(CircleShape).background(c?.color ?: col.acento))
+                    TB(c?.bonito ?: "Tus juegos", 24f, titulo = true, peso = FontWeight.SemiBold)
+                    if (e.visibles.isNotEmpty()) TB("${e.indiceSel + 1} de ${e.visibles.size}", 19f, color = col.sub, traducir = false)
+                }
+                BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, descripcion = "Buscar")
+                BotonRedondo(Icono.MENU, 64f, { Diptico.abrirApps() }, descripcion = "Apps")
+                BotonRedondo(Icono.APPS, 64f, { Diptico.fijarInicio("widgets") }, descripcion = "Widgets")
+                BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
+                Spacer(Modifier.weight(1f))
+                if (e.extra.dippoInicio) Box(Modifier.size(esc.d(64)).clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) {
+                    cl.nikalbazu.diptico.bisa.AvatarBisa(56f * esc.factor)
+                }
+                HoraBateria(58f, 22f)
+                BotonPerfil(60f)
+            }
+            if (j == null) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                    TB("Aún no hay juegos aquí", 56f, titulo = true)
+                    TB("Elige tu carpeta de juegos en Ajustes › Biblioteca.", 24f, color = col.sub)
+                }
+                return@Column
+            }
+            if (girada) {
+                // 3b · el reverso grande a la izquierda y el carrete a la derecha, en la misma pantalla.
+                Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(24))) {
+                    Box(Modifier.weight(0.42f).fillMaxHeight()) { CajaFlotanteCV(e, j, girada = true) }
+                    CarreteCV(e, j, Modifier.weight(0.58f).fillMaxHeight(), compacto = true)
+                }
+                return@Column
+            }
+            // Franja 2 · el juego: información y botones a la izquierda, la caja a la derecha.
+            Row(Modifier.fillMaxWidth().weight(1.15f), horizontalArrangement = Arrangement.spacedBy(esc.d(24))) {
+                Column(Modifier.weight(0.6f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
+                    InfoJuegoCV(e, j, c, tamTitulo = 72f, compacta = true)
+                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                        BotonTecla("A", if ((e.datos[j.clave]?.tiempo ?: 0L) > 0) "Continuar" else "Jugar", { Diptico.jugar() }, alto = 72f, principal = true, letra = 26f)
+                        BotonTecla("X", "Ficha", { Diptico.girarCaja(true) }, alto = 72f, letra = 24f)
+                        BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) }, alto = 72f, letra = 24f)
+                    }
+                }
+                Box(Modifier.weight(0.4f).fillMaxHeight().padding(vertical = esc.d(4))) { CajaFlotanteCV(e, j, girada = false) }
+            }
+            // Franja 3 · el estante: título, vistas y dock arriba; las cajas debajo (sin tapar nada).
+            Column(Modifier.fillMaxWidth().weight(1f).clip(redondo(28f)).background(col.fondo.copy(alpha = .55f)).padding(horizontal = esc.d(18), vertical = esc.d(10))) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                    TB("Tus juegos", 26f, titulo = true)
+                    listOf("estante" to "Estante", "cuadricula" to "Cuadrícula", "lista" to "Lista").forEach { (v, n) ->
+                        val on = e.extra.vistaColeccion == v
+                        Box(Modifier.height(esc.d(46)).clip(RoundedCornerShape(50)).background(if (on) col.elegido else col.vidrio)
+                            .clickable { Diptico.elegirVistaColeccion(v) }.padding(horizontal = esc.d(16)), contentAlignment = Alignment.Center) {
+                            TB(n, 19f, color = if (on) col.enElegido else col.texto, peso = FontWeight.ExtraBold)
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    FilaDock(e, 56f, conCajon = false)
+                }
+                Box(Modifier.fillMaxWidth().weight(1f)) {
+                    when (e.extra.vistaColeccion) {
+                        "cuadricula" -> RejillaCV(e, columnas = 7, Modifier.fillMaxSize().padding(top = esc.d(8)))
+                        "lista" -> ListaCV(e, Modifier.fillMaxSize().padding(top = esc.d(8)))
+                        else -> EstanteCV(e, Modifier.fillMaxSize(), vecinas = 4)
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 @Composable
 fun FilaConsolasCV(e: Estado, modifier: Modifier, alto: Float = 76f) {
     val esc = LocalEscala.current
@@ -333,60 +548,6 @@ private fun TeclaHombro(t: String, onClick: () -> Unit) {
 }
 
 /** El estante 3D: la elegida al centro con anillo blanco; las vecinas más chicas, giradas ±48° mostrando el lomo. */
-@Composable
-fun EstanteCV(e: Estado, modifier: Modifier, ancho: Float = 250f, alto: Float = 350f, paso: Float = 235f, vecinas: Int = 2) {
-    val esc = LocalEscala.current
-    val col = LocalColeccion.current
-    val lista = e.visibles
-    val sel = e.indiceSel
-    val mov = LocalMovimiento.current
-    val pos by animateFloatAsState(sel.toFloat(), if (mov) androidx.compose.animation.core.spring(0.85f, 300f) else tween(0), label = "estante")
-    var arrastre by remember { mutableStateOf(0f) }
-    androidx.compose.foundation.layout.BoxWithConstraints(modifier.pointerInput(lista.size) {
-        detectHorizontalDragGestures(onDragEnd = { arrastre = 0f }) { ch, dx ->
-            ch.consume(); arrastre += dx
-            val umbral = paso * esc.factor * density * 0.5f
-            if (arrastre > umbral) { arrastre = 0f; Diptico.moverJuego(-1) }
-            if (arrastre < -umbral) { arrastre = 0f; Diptico.moverJuego(1) }
-        }
-    }) {
-        val anchoU = maxWidth.value / esc.factor
-        val centro = anchoU / 2f
-        // Sombra en el piso de la elegida.
-        Box(Modifier.offset(esc.d(centro - 290f), esc.d(30f + alto + 112f)).size(esc.d(580), esc.d(40))
-            .background(Brush.radialGradient(listOf(Color.Black.copy(alpha = .55f), Color.Transparent))))
-        val desde = (sel - vecinas - 1).coerceAtLeast(0)
-        val hasta = (sel + vecinas + 1).coerceAtMost(lista.size - 1)
-        for (i in desde..hasta) {
-            val j = lista[i]
-            val c = Consolas.porId(j.consolaId) ?: continue
-            val k = i - pos
-            val cerca = (1f - abs(k)).coerceIn(0f, 1f)
-            val w = 200f + (ancho - 200f) * cerca
-            val h = 280f + (alto - 280f) * cerca
-            val x = centro + k * paso - w / 2f
-            val y = 30f + (95f - 30f) * (1f - cerca)
-            key(j.clave) {
-                Box(
-                    Modifier.offset(esc.d(x), esc.d(y)).size(esc.d(w), esc.d(h)).zIndex(10f - abs(k))
-                        .graphicsLayer { alpha = if (abs(k) > vecinas + 0.5f) 0f else 0.78f + 0.22f * cerca }
-                        .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {
-                            if (i == sel) Diptico.jugar() else Diptico.elegirJuego(j.clave)
-                        },
-                ) {
-                    Caja3D(
-                        datosCaja(e, j, c), j, c, Modifier.fillMaxSize(),
-                        giroY = { val kk = i - pos; if (abs(kk) < 1f) 14f * (1f - abs(kk)) + (if (kk < 0) 48f else -48f) * abs(kk) else if (kk < 0) 48f else -48f },
-                        giroX = { -3f }, caras = e.extra.caras[j.clave], detalle = i == sel, sombraPiso = false,
-                    )
-                }
-            }
-        }
-    }
-}
-
-
-/** Cuadrícula de portadas (vista «Cuadrícula»): la elegida con anillo blanco. */
 @Composable
 fun RejillaCV(e: Estado, columnas: Int, modifier: Modifier) {
     val esc = LocalEscala.current
@@ -433,34 +594,6 @@ fun ListaCV(e: Estado, modifier: Modifier) {
 
 /** La barra de abajo: vistas · dock de apps · Colecciones · opciones del juego · ajustes. */
 @Composable
-fun BarraAbajoCV(e: Estado, modifier: Modifier, conDock: Boolean = true) {
-    val esc = LocalEscala.current
-    val col = LocalColeccion.current
-    Row(modifier.fillMaxWidth().height(esc.d(96)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-        Row(Modifier.clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .07f)).border(1.dp, col.borde, RoundedCornerShape(50)).padding(esc.d(6)),
-            horizontalArrangement = Arrangement.spacedBy(esc.d(4))) {
-            listOf("estante" to "Estante 3D", "cuadricula" to "Cuadrícula", "lista" to "Lista").forEach { (v, n) ->
-                val on = e.extra.vistaColeccion == v
-                Box(Modifier.height(esc.d(76)).clip(RoundedCornerShape(50)).background(if (on) col.elegido else Color.Transparent)
-                    .clickable { Diptico.elegirVistaColeccion(v) }.padding(horizontal = esc.d(22)), contentAlignment = Alignment.Center) {
-                    TB(n, 22f, color = if (on) col.enElegido else col.sub, peso = FontWeight.ExtraBold)
-                }
-            }
-        }
-        if (conDock) FilaDock(e, 56f, Modifier.weight(1f), conCajon = false) else Spacer(Modifier.weight(1f))
-        Row(Modifier.height(esc.d(88)).clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .07f)).border(1.dp, col.borde, RoundedCornerShape(50))
-            .clickable { Diptico.elegirPestanaCarpetas(1); Diptico.volverASistemas() }.padding(horizontal = esc.d(24)),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-            IconoDiptico(Icono.CARPETA, col.texto, 28f)
-            TB("Colecciones", 22f)
-        }
-        BotonRedondo(Icono.EDITAR, 88f, { Diptico.abrirRapido() }, descripcion = "Opciones del juego")
-        BotonRedondo(Icono.AJUSTES, 88f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
-    }
-}
-
-/** 2b · el carrete: la imagen grande, de dónde sale y las miniaturas (con la caja girada arriba). */
-@Composable
 fun CarreteCV(e: Estado, j: Juego, modifier: Modifier, compacto: Boolean = false) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
@@ -503,91 +636,3 @@ fun CarreteCV(e: Estado, j: Juego, modifier: Modifier, compacto: Boolean = false
 
 // ———————————————————————————— 3 · una pantalla ————————————————————————————
 
-@Composable
-fun ColeccionUnica(e: Estado) {
-    val j = e.seleccionado
-    val c = j?.let { Consolas.porId(it.consolaId) }
-    LienzoBoceto(1920f, 1080f, fondo = LocalColeccion.current.fondo) {
-        val esc = LocalEscala.current
-        val col = LocalColeccion.current
-        val girada = e.extra.cajaGirada && j != null
-        if (j != null) androidx.compose.animation.Crossfade(j.clave, animationSpec = tween(320), label = "arte") { _ ->
-            ArteJuego(j, preferirArte = true, maxLado = 1280, modifier = Modifier.fillMaxSize())
-        }
-        Box(Modifier.fillMaxSize().veloColeccion(col.fondo))
-        // Franja 1 · barra compacta (88): consola · búsqueda, apps, widgets, ajustes · DIPPO, hora y batería, perfil.
-        Row(Modifier.fillMaxWidth().height(esc.d(88)).padding(horizontal = esc.d(48)).offset(y = esc.d(20)),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-            PildoraVidrio(64f, onClick = { Diptico.volverASistemas() }) {
-                Box(Modifier.size(esc.d(16)).clip(CircleShape).background(c?.color ?: col.acento))
-                TB(c?.let { it.bonito } ?: "Tus juegos", 26f, titulo = true, peso = FontWeight.SemiBold)
-                if (e.visibles.isNotEmpty()) TB("${e.indiceSel + 1} de ${e.visibles.size}", 20f, color = col.sub, traducir = false)
-            }
-            BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, descripcion = "Buscar")
-            BotonRedondo(Icono.MENU, 64f, { Diptico.abrirApps() }, descripcion = "Apps")
-            BotonRedondo(Icono.APPS, 64f, { Diptico.fijarInicio("widgets") }, descripcion = "Widgets")
-            BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
-            Spacer(Modifier.weight(1f))
-            if (e.extra.dippoInicio) Box(Modifier.size(esc.d(64)).clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) {
-                cl.nikalbazu.diptico.bisa.AvatarBisa(56f * esc.factor)
-            }
-            HoraBateria(60f, 24f)
-            BotonPerfil(64f)
-        }
-        if (j == null) {
-            Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(96))) {
-                TB("Aún no hay juegos aquí", 64f, titulo = true)
-                TB("Elige tu carpeta de juegos en Ajustes › Biblioteca.", 26f, color = col.sub)
-            }
-            return@LienzoBoceto
-        }
-        val alto = LocalEscala.current.let { 1080f }
-        if (girada) {
-            // 3b · reverso con zoom a la izquierda y el carrete a la derecha, en la misma pantalla.
-            CajaVitrinaCV(e, j, c ?: return@LienzoBoceto, x = 260f, y = 190f, ancho = 380f, alto = 530f, centroX = 260f, girada = true)
-            CarreteCV(e, j, Modifier.padding(start = esc.d(900), top = esc.d(130)), compacto = true)
-            return@LienzoBoceto
-        }
-        // Franja 2 · el juego: información a la izquierda, caja a la derecha.
-        Column(Modifier.offset(esc.d(96), esc.d(150)).width(esc.d(1000)), verticalArrangement = Arrangement.spacedBy(esc.d(16))) {
-            TB((c?.bonito ?: "").uppercase(), 22f, color = lerpClaro(c?.color ?: col.acento), peso = FontWeight.ExtraBold, espaciado = 3f, traducir = false)
-            val logo = rememberImagen(j.logo, 800)
-            if (logo != null) Image(logo, j.titulo, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart,
-                modifier = Modifier.heightIn(max = esc.d(170)).widthIn(max = esc.d(700)))
-            else TB(j.titulo, 92f, titulo = true, lineas = 2, interlineado = 92f, sombra = true, traducir = false)
-            val resumen = resumenJuego(j, c)
-            if (resumen.isNotBlank()) TB(resumen, 24f, color = col.sub, peso = FontWeight.SemiBold, lineas = 2, interlineado = 33f, modifier = Modifier.widthIn(max = esc.d(860)), traducir = false)
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) { chipsJuego(e, j).ifEmpty { listOf("Aún sin jugar con Díptico") }.take(3).forEach { ChipDato(it, 21f) } }
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(14)), modifier = Modifier.padding(top = esc.d(6))) {
-                BotonTecla("A", if ((e.datos[j.clave]?.tiempo ?: 0L) > 0) "Continuar" else "Jugar", { Diptico.jugar() }, alto = 76f, principal = true, letra = 26f)
-                BotonTecla("X", "Ficha", { Diptico.abrirFicha() }, alto = 76f, letra = 24f)
-                BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) }, alto = 76f, letra = 24f)
-            }
-        }
-        CajaVitrinaCV(e, j, c ?: return@LienzoBoceto, x = 1420f, y = 140f, ancho = 300f, alto = 420f, centroX = 1420f, girada = false)
-        // Franja 3 · el estante: una fila de cajas, sin tapar nada de arriba.
-        Box(Modifier.fillMaxWidth().offset(y = esc.d(alto - 400f)).height(esc.d(400))) {
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, col.fondo.copy(alpha = .9f)))))
-            Row(Modifier.padding(start = esc.d(48), top = esc.d(18)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(18))) {
-                TB("Tus juegos", 26f, titulo = true)
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                    listOf("estante" to "Estante 3D", "cuadricula" to "Cuadrícula", "lista" to "Lista").forEach { (v, n) ->
-                        val on = e.extra.vistaColeccion == v
-                        Box(Modifier.height(esc.d(44)).clip(RoundedCornerShape(50)).background(if (on) col.elegido else col.vidrio)
-                            .clickable { Diptico.elegirVistaColeccion(v) }.padding(horizontal = esc.d(16)), contentAlignment = Alignment.Center) {
-                            TB(n, 18f, color = if (on) col.enElegido else col.texto, peso = FontWeight.ExtraBold)
-                        }
-                    }
-                }
-                Spacer(Modifier.weight(1f))
-                FilaDock(e, 48f, conCajon = false)
-                Spacer(Modifier.width(esc.d(48)))
-            }
-            when (e.extra.vistaColeccion) {
-                "cuadricula" -> RejillaCV(e, columnas = 8, Modifier.fillMaxSize().padding(start = esc.d(48), end = esc.d(48), top = esc.d(90)))
-                "lista" -> ListaCV(e, Modifier.fillMaxSize().padding(start = esc.d(48), end = esc.d(48), top = esc.d(90)))
-                else -> EstanteCV(e, Modifier.fillMaxSize().padding(top = esc.d(60)), ancho = 190f, alto = 260f, paso = 200f, vecinas = 4)
-            }
-        }
-    }
-}

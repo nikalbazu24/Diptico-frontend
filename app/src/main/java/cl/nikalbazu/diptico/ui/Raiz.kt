@@ -45,6 +45,8 @@ fun pantallaActual(): Int {
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Raiz ${rol}") }
+    val cv = coleccionVivaActiva(e)
+    androidx.compose.runtime.SideEffect { if (Estilo.decorEnFondo != cv) Estilo.decorEnFondo = cv }
     val barra = e.configurado && rol != Rol.INFERIOR && !coleccionVivaActiva(e) && !nuevoDisenoDosPantallas(e) && !(rol == Rol.UNICA && disenoUnicoNuevo(e))
     val esc = LocalEscala.current
     CompositionLocalProvider(
