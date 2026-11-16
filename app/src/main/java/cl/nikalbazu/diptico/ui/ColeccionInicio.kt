@@ -535,7 +535,7 @@ fun FilaConsolasCV(e: Estado, modifier: Modifier, alto: Float = 76f) {
 }
 
 @Composable
-private fun TeclaHombro(t: String, onClick: () -> Unit) {
+internal fun TeclaHombro(t: String, onClick: () -> Unit) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     Box(Modifier.clip(RoundedCornerShape(esc.d(10))).border(2.dp, col.tenue.copy(alpha = .6f), RoundedCornerShape(esc.d(10))).clickable(onClick = onClick)
