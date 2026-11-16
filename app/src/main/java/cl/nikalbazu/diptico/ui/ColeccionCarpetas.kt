@@ -95,7 +95,7 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     val mov = LocalMovimiento.current
-    val hoja by produceState<ImageBitmap?>(null, c.id) { value = withContext(Dispatchers.IO) { HojasGiro.de(ctx, c.id) } }
+    val hoja by produceState<ImageBitmap?>(null, c.id) { value = withContext(Dispatchers.IO) { HojasGiro.de(ctx, Modelos3D.idDe(c.id)) } }
     var angulo by remember(c.id) { mutableStateOf(18f) }
     var vel by remember { mutableStateOf(0f) }
     var tocando by remember { mutableStateOf(false) }

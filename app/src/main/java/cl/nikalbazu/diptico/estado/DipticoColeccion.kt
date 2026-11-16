@@ -58,9 +58,29 @@ object HistoriaConsolas {
 object Modelos3D {
     data class Modelo(val archivo: String, val nombre: String, val autor: String, val licencia: String)
     private val modelos = mapOf(
+        "snes" to Modelo("snes", "Snes Reworked", "Manny Ruiz", "CC BY 4.0"),
+        "gba" to Modelo("gba", "Gameboy Advance - Zelda Concept", "yassineCGI", "CC BY 4.0"),
+        "switch" to Modelo("switch", "Nintendo Switch Console", "eltayerkebulan", "CC BY 4.0"),
+        "psp" to Modelo("psp", "Sony PSP", "Ilya Ostrovsky", "CC BY 4.0"),
+        "n64" to Modelo("n64", "Nintendo 64", "DevonCarlson", "CC BY-NC 4.0"),
+        "gbc" to Modelo("gbc", "Game Boy Color", "MaximePages", "CC BY 4.0"),
+        "gb" to Modelo("gb", "Gameboy", "danteizq", "CC BY 4.0"),
+        "psx" to Modelo("psx", "Playstation 1", "Felipe Vallerino", "CC BY 4.0"),
+        "switch2" to Modelo("switch2", "Nintendo Switch 2", "davibiem.1111", "CC BY 4.0"),
+        "n3ds" to Modelo("n3ds", "Nintendo 3DS XL", "Joshua P.", "CC BY 4.0"),
+        "xbox360" to Modelo("xbox360", "Classic Xbox 360 - White Edition", "Anand Stephen", "CC BY 4.0"),
+        "androidgames" to Modelo("androidgames", "Android Logo (Animation)", "Anthony Yanez", "CC BY 4.0"),
+        "ports" to Modelo("ports", "USB memory", "Marsoft", "CC BY 4.0"),
+        "gc" to Modelo("gc", "Low poly Nintendo Gamecube", "LuisAR", "CC BY 4.0"),
+        "wii" to Modelo("wii", "Nintendo Wii", "MacDrawz", "CC BY 4.0"),
+        "ps3" to Modelo("ps3", "Playstation 3", "Smoggybeard", "CC BY-NC-SA 4.0"),
+        "wiiu" to Modelo("wiiu", "Wii U GamePad controller & stand", "synthetic worlds", "CC BY 4.0"),
         "ps2" to Modelo("ps2", "classic ps2", "jei3323", "CC BY 4.0"),
+        "ps4" to Modelo("ps4", "classic ps4", "jei3323", "CC BY 4.0"),
     )
-    fun de(id: String): Modelo? = modelos[id]
+    private val alias = mapOf("sfc" to "snes", "snesna" to "snes", "android" to "androidgames", "androidapps" to "androidgames")
+    fun idDe(id: String): String = alias[id] ?: id
+    fun de(id: String): Modelo? = modelos[idDe(id)]
     fun credito(id: String): String? = de(id)?.let { "Modelo «${it.nombre}» de ${it.autor} · ${it.licencia}" }
     fun todos(): List<Pair<String, Modelo>> = modelos.toList()
 }

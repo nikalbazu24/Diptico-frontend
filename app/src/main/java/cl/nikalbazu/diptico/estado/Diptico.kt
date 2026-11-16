@@ -417,7 +417,7 @@ data class EstadoExtra(
     val estudioVista: Int = 0,
     val estudioAbierta: Boolean = false,
     /** Colección viva (el rediseño aprobado el 16 nov 2026): inicio, carpetas y widgets nuevos. Apagado = el de antes. */
-    val coleccionViva: Boolean = true,
+    val coleccionViva: Boolean = false,
     /** La caja de arriba girada mostrando el reverso (abajo pasa al carrete de imágenes) y la imagen elegida del carrete. */
     val cajaGirada: Boolean = false,
     val carreteSel: Int = 0,
