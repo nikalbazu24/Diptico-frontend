@@ -485,7 +485,7 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t88_galeria_temas() = foto("88_galeria_de_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", indice = 2), Rol.INFERIOR)
 
-    @Test fun t89_galeria_temas_arriba() = foto("89_galeria_temas_arriba", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 3), Rol.SUPERIOR)
+    @Test fun t89_galeria_temas_arriba() = foto("89_galeria_temas_arriba", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 3, indice = 3), Rol.SUPERIOR)
 
     @Config(qualifiers = ABAJO)
     @Test fun t90_mis_colores() = foto("90_mis_colores", base().copy(panel = Panel.GALERIA, galeria = "colores", indice = 9), Rol.INFERIOR)
@@ -1431,9 +1431,9 @@ class Capturas {
     @Test fun t371_nativos_una() = foto("371_nativos_una", conNativos(0, 2).copy(modoPantallas = "una_negra"), Rol.UNICA)
     // Temas: el calendario (cada fiesta con su estilo completo) y los exclusivos con candado.
     @Config(qualifiers = ABAJO)
-    @Test fun t372_temas_calendario() = foto("372_temas_calendario", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 1), Rol.INFERIOR, mi = 1)
+    @Test fun t372_temas_calendario() = foto("372_temas_calendario", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 3, indice = 1), Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
-    @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 3, indice = 0), Rol.INFERIOR, mi = 1)
+    @Test fun t373_temas_exclusivos() = foto("373_temas_exclusivos", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 4, indice = 0), Rol.INFERIOR, mi = 1)
     @Test fun t374_tema_exclusivo_arriba() = foto("374_tema_exclusivo_aurora", base(), Rol.SUPERIOR, tema = Temas.exclusivos[0].tema)
     @Test fun t375_tema_fiesta_navidad() = foto("375_tema_fiesta_navidad", base(), Rol.SUPERIOR, tema = Temas.fiestas.first { it.id == "navidad" }.tema)
     // Emuladores al día: DIPPO arriba con su resumen, los que tienen versión nueva primero.
@@ -1601,6 +1601,31 @@ class Capturas {
     @Test fun t448_tienda_previa_menus() = foto("448_tienda_previa_menus", tienda(2, 3), Rol.SUPERIOR, mi = 1)
     @Test fun t449_tienda_previa_ficha() = foto("449_tienda_previa_ficha", tienda(3, 4), Rol.SUPERIOR, mi = 1)
     @Test fun t450_tienda_una_pantalla() = foto("450_tienda_una_pantalla", tienda(1, 2).let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
+    // ---------- Temas remasterizados (con algo vivo: quietud, hora, calor, batería, racha) ----------
+    private fun remaster(id: String) = Temas.remasterizados.first { it.id == id }
+    private fun viva(nombre: String, id: String, rol: Rol = Rol.SUPERIOR, quieto: Float? = null, hora: Float? = null,
+                     calor: cl.nikalbazu.diptico.estado.Termica.Nivel? = null, bateria: Int = 80, cargando: Boolean = false, racha: Int? = null) {
+        val v = cl.nikalbazu.diptico.ui.Vivo
+        v.pruebaQuieto = quieto; v.pruebaHora = hora; v.pruebaRacha = racha
+        cl.nikalbazu.diptico.estado.Termica.pruebaLectura = cl.nikalbazu.diptico.estado.Termica.Lectura(
+            38f, 0f, 0, Float.NaN, cargando, bateria, calor ?: cl.nikalbazu.diptico.estado.Termica.Nivel.FRESCA)
+        try { foto(nombre, base().copy(tema = id), rol, remaster(id)) }
+        finally { v.pruebaQuieto = null; v.pruebaHora = null; v.pruebaRacha = null; cl.nikalbazu.diptico.estado.Termica.pruebaLectura = null }
+    }
+    @Test fun t451_remaster_nieve_quieto() = viva("451_remaster_nieve_quieto", "r_nieve", quieto = 110f)
+    @Test fun t452_remaster_lava_caliente() = viva("452_remaster_lava_caliente", "r_lava", calor = cl.nikalbazu.diptico.estado.Termica.Nivel.CALIENTE)
+    @Test fun t453_remaster_bosque_noche() = viva("453_remaster_bosque_noche", "r_bosque", hora = 22.5f)
+    @Test fun t454_remaster_bosque_dia() = viva("454_remaster_bosque_dia", "r_bosque", hora = 11f)
+    @Test fun t455_remaster_medianoche() = viva("455_remaster_medianoche", "r_medianoche")
+    @Config(qualifiers = ABAJO)
+    @Test fun t456_remaster_oceano_poca_bateria() = viva("456_remaster_oceano_poca_bateria", "r_oceano", Rol.INFERIOR, bateria = 18, cargando = true)
+    @Test fun t457_remaster_sakura_quieto() = viva("457_remaster_sakura_quieto", "r_sakura", quieto = 80f)
+    @Config(qualifiers = ABAJO)
+    @Test fun t458_remaster_portatil() = viva("458_remaster_portatil", "r_portatil", Rol.INFERIOR, bateria = 25)
+    @Test fun t459_remaster_atardecer() = viva("459_remaster_atardecer", "r_atardecer", hora = 18.5f)
+    @Test fun t460_remaster_fogata() = viva("460_remaster_fogata", "r_fogata", racha = 9)
+    @Config(qualifiers = ABAJO)
+    @Test fun t461_tienda_remasterizados() = foto("461_tienda_remasterizados", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 1, indice = 0), Rol.INFERIOR, mi = 1)
     @Test fun t429_ajustes_tres_columnas() = foto("429_ajustes_tres_columnas", base().let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, panel = Panel.MENU, seccion = Seccion.G_ESTILO, enOpciones = true, indice = 1, extra = it.extra.copy(equipoTipo = "portatil", equipoNombre = "AYN Odin 2 Portal")) }, Rol.UNICA)
     @Test fun t415_ports_detalle() = foto("415_ports_detalle", base().copy(extra = EstadoExtra(nativosEn = 1, nativosPestana = 1, nativosSel = 0)), Rol.SUPERIOR)
     // Carpetas en modo oscuro (opción «Tono de las carpetas») con un tema claro, para ver que se fuerza.
@@ -1645,7 +1670,7 @@ class Capturas {
     )
     @Config(qualifiers = ABAJO)
 
-    @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 4), Rol.INFERIOR, mi = 1)
+    @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 5), Rol.INFERIOR, mi = 1)
 
     @Test fun visual_cristal_y_barra() = foto("visual_cristal_y_barra", base(), Rol.SUPERIOR, tema = Temas.incluidos.first { it.id == "diptico_vidrio" })
 

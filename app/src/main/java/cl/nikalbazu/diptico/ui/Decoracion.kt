@@ -35,6 +35,7 @@ private data class Particula(val x: Float, val y: Float, val v: Float, val t: Fl
 @Composable
 fun Decoracion(tema: Tema, animada: Boolean = true) {
     if (tema.decor == "nada") return
+    if (tema.decor in cl.nikalbazu.diptico.estado.Temas.DECORACIONES_VIVAS) { DecoracionViva(tema, animada); return }
     var tiempo by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(tema.decor, animada) {
         if (!animada) return@LaunchedEffect

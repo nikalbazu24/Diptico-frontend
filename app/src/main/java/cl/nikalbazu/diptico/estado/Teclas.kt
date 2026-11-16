@@ -128,6 +128,7 @@ object Teclas {
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
         if (abajo) presionadas += code else if (arriba) presionadas -= code
+        if (abajo) cl.nikalbazu.diptico.ui.Vivo.toque()
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
         // Abriendo un juego con la pantalla de carga: B la cancela; lo demás espera.
         // Iniciando sesión con Discord: B cierra el panel; A pide otro código si hubo un error.

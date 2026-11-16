@@ -2427,7 +2427,7 @@ object Diptico {
         "marcos" -> listOf("Marcos")
         "titulos" -> listOf("Títulos")
         "artes" -> listOf("Artes", "Portadas")
-        "temas" -> listOf("Nuevos", "Incluidos", "Calendario", "Exclusivos", "Mis temas")
+        "temas" -> listOf("Nuevos", "Remasterizados", "Incluidos", "Calendario", "Exclusivos", "Mis temas", "Clásicos")
         "importar_temas" -> listOf("Importar temas")
         "tienda_temas" -> categoriasTienda
         "decoraciones" -> listOf("Instalados", "Tienda de temas", "Calendario")
@@ -2586,16 +2586,18 @@ object Diptico {
         return when (e.galeria) {
             "temas" -> when (e.galeriaPestana) {
                 0 -> Temas.nuevos.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
-                1 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
+                // Remasterizados: los clásicos rehechos, cada uno con algo que sigue al equipo o al día de verdad.
+                1 -> Temas.remasterizados.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
+                2 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
                 // Calendario: cada fiesta es un tema completo; se ve sola en su fecha (con «Fechas especiales») o se usa cuando quieras.
-                2 -> Temas.calendario().map { (fi, dia) ->
+                3 -> Temas.calendario().map { (fi, dia) ->
                     val hoy = dia == java.time.LocalDate.now()
                     ItemGaleria(fi.tema.id, fi.nombre, (if (hoy) "Hoy · " else "${dia.dayOfMonth}/${dia.monthValue} · ") + fi.donde, actual.id == fi.tema.id, fi.tema) {
                         elegirTema(fi.tema.id)
                     }
                 }
                 // Exclusivos: se ganan con los logros difíciles de DIPPO; antes se ven con candado.
-                3 -> Temas.exclusivos.map { x ->
+                4 -> Temas.exclusivos.map { x ->
                     val libre = x.logro in hechosDippo()
                     val logro = LogrosDippo.LISTA.firstOrNull { it.id == x.logro }
                     ItemGaleria(x.tema.id, x.tema.nombre,
@@ -2604,6 +2606,8 @@ object Diptico {
                         if (libre) elegirTema(x.tema.id) else avisar("🔒 Gana el logro «${logro?.titulo}» para usar este tema")
                     }
                 }
+                // Clásicos: los temas de antes, tal como eran, para quien prefiera el original de un remasterizado.
+                6 -> Temas.clasicos.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
                 else -> temasPersonales(e).map { t ->
                     ItemGaleria(t.id, t.nombre, t.descripcion.ifBlank { "Tema guardado en tu consola" }, actual.id == t.id, t) {
                         elegirTema(t.id)

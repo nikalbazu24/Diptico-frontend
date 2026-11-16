@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -260,7 +261,15 @@ fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f,
         val f = corto / (base / zoom.coerceIn(0.6f, 1.6f))
         val ancho = maxWidth.value / f
         CompositionLocalProvider(LocalEscala provides Escala(f, ancho, tamTexto), LocalPaleta provides paleta) {
-            Box(Modifier.fillMaxSize()) {
+            // Un toque en cualquier parte avisa a las decoraciones vivas (sin quitarle el toque a nadie).
+            Box(Modifier.fillMaxSize().pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        Vivo.toque()
+                    }
+                }
+            }) {
                 contenido()
                 if (Estilo.decoraciones && Estilo.tema.decor != "nada") Decoracion(Estilo.tema, animada = !Estilo.decorQuieta)
             }
