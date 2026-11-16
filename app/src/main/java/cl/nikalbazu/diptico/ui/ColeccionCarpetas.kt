@@ -86,32 +86,71 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
     val col = LocalColeccion.current
     val id = Modelos3D.idDe(c.id)
     val existe = remember(id) { runCatching { ctx.assets.list("consolas3d")?.contains("$id.glb") == true }.getOrDefault(false) }
-    if (!existe || SIN_GPU) {
+    if (!existe || SIN_GPU || !Motor3D.permitido(ctx)) {
+        // Sin modelo (o con el 3D en pausa en este equipo): el ícono grande de la consola.
         Box(modifier.testTag("consola-3d"), contentAlignment = Alignment.Center) {
-            Box(Modifier.fillMaxSize(0.8f).border(3.dp, col.texto.copy(alpha = .25f), RoundedCornerShape(esc.d(32))), contentAlignment = Alignment.Center) {
-                TB(if (existe) c.bonito else "Aquí va el modelo 3D de ${c.bonito}", 24f, color = col.tenue, lineas = 2)
-            }
+            IconoConsola(c, 260f, c.color.copy(alpha = .22f))
         }
         return
     }
     val girar = LocalMovimiento.current
-    androidx.compose.runtime.key(id) {
-        androidx.compose.ui.viewinterop.AndroidView(
-            factory = { cx -> VisorConsola(cx, id, girar) },
-            modifier = modifier.testTag("consola-3d"),
-            onRelease = { it.liberar() },
-        )
+    // UN solo visor por pantalla: al cambiar de consola cambia el modelo, no se arma otro motor.
+    androidx.compose.ui.viewinterop.AndroidView(
+        factory = { cx -> Motor3D.visorPara(cx) },
+        update = { it.mostrar(id, girar) },
+        modifier = modifier.testTag("consola-3d"),
+        onRelease = { it.pausar() },
+    )
+}
+
+/**
+ * Un solo motor de Filament para toda la app (crear y destruir motores seguido botaba la app) y un visor
+ * guardado por pantalla. Seguro: mientras el 3D se dibuja queda marcado; si la app se cae dibujando, al
+ * volver a abrirla el 3D queda en pausa en este equipo y se muestran los íconos.
+ */
+internal object Motor3D {
+    private const val PREFS = "motor3d"
+    private var revisado = false
+    private var bloqueado = false
+    val engine: com.google.android.filament.Engine by lazy {
+        com.google.android.filament.utils.Utils.init()
+        com.google.android.filament.Engine.create()
+    }
+    private val visores = java.util.WeakHashMap<android.content.Context, VisorConsola>()
+
+    fun permitido(ctx: android.content.Context): Boolean {
+        if (!revisado) {
+            revisado = true
+            val p = ctx.getSharedPreferences(PREFS, 0)
+            // La pausa vale para esta versión: una versión nueva vuelve a intentar el 3D.
+            val clave = "pausa_" + cl.nikalbazu.diptico.BuildConfig.VERSION_NAME
+            if (p.getBoolean("dibujando", false)) p.edit().putBoolean(clave, true).putBoolean("dibujando", false).apply()
+            bloqueado = p.getBoolean(clave, false)
+        }
+        return !bloqueado
+    }
+    fun marcar(ctx: android.content.Context, dibujando: Boolean) =
+        ctx.getSharedPreferences(PREFS, 0).edit().putBoolean("dibujando", dibujando).apply()
+    /** Desde Ajustes: vuelve a intentar el 3D. */
+    fun reactivar(ctx: android.content.Context) { ctx.getSharedPreferences(PREFS, 0).edit().clear().apply(); bloqueado = false }
+
+    fun visorPara(cx: android.content.Context): VisorConsola {
+        val v = visores[cx]
+        if (v != null && v.parent == null) return v
+        return VisorConsola(cx).also { visores[cx] = it }
     }
 }
 
-/** El visor de Filament: fondo transparente, luz suave, giro libre con el dedo y giro solo cuando está quieto. */
-private class VisorConsola(ctx: android.content.Context, id: String, private val girar: Boolean) :
+/** El visor: fondo transparente, luz suave, giro libre con el dedo y giro solo cuando está quieto. */
+internal class VisorConsola(ctx: android.content.Context) :
     android.view.TextureView(ctx), android.view.Choreographer.FrameCallback {
-    companion object { var listo = false }
+    private val engine = Motor3D.engine
     private val ui = com.google.android.filament.android.UiHelper(com.google.android.filament.android.UiHelper.ContextErrorPolicy.DONT_CHECK).apply { isOpaque = false }
-    private val engine: com.google.android.filament.Engine
     private val visor: com.google.android.filament.utils.ModelViewer
-    private var vivo = true
+    private var corriendo = false
+    private var girar = true
+    private var idActual: String? = null
+    private var pedido = 0
     private var ultimoToque = 0L
     private var angulo = 0f
     private val base = FloatArray(16)
@@ -119,56 +158,79 @@ private class VisorConsola(ctx: android.content.Context, id: String, private val
     private val fin = FloatArray(16)
 
     init {
-        if (!listo) { com.google.android.filament.utils.Utils.init(); listo = true }
         isOpaque = false
-        engine = com.google.android.filament.Engine.create()
         visor = com.google.android.filament.utils.ModelViewer(this, engine, ui)
         visor.view.blendMode = com.google.android.filament.View.BlendMode.TRANSLUCENT
         visor.renderer.clearOptions = visor.renderer.clearOptions.apply { clear = true }
         visor.scene.skybox = null
         visor.scene.indirectLight = com.google.android.filament.IndirectLight.Builder()
             .irradiance(1, floatArrayOf(1f, 1f, 1f)).intensity(32_000f).build(engine)
-        val bytes = ctx.assets.open("consolas3d/$id.glb").use { it.readBytes() }
-        val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size).order(java.nio.ByteOrder.nativeOrder()).put(bytes)
-        buffer.rewind()
-        visor.loadModelGlb(buffer)
-        visor.transformToUnitCube()
-        visor.asset?.let { a ->
-            val tm = engine.transformManager
-            tm.getTransform(tm.getInstance(a.root), base)
-        }
         setOnTouchListener { v, ev ->
             ultimoToque = android.os.SystemClock.uptimeMillis()
             if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) v.parent?.requestDisallowInterceptTouchEvent(true)
-            visor.onTouch(v, ev)
+            if (visor.asset != null) visor.onTouch(v, ev)
             true
         }
+    }
+
+    /** Cambia el modelo sin rehacer nada: el archivo se lee aparte y se carga al siguiente cuadro. */
+    fun mostrar(id: String, girarSolo: Boolean) {
+        girar = girarSolo
+        if (id == idActual) return
+        idActual = id
+        val n = ++pedido
+        val app = context.applicationContext
+        Thread {
+            val bytes = runCatching { app.assets.open("consolas3d/$id.glb").use { it.readBytes() } }.getOrNull() ?: return@Thread
+            post {
+                if (n != pedido) return@post
+                runCatching {
+                    visor.destroyModel()
+                    val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size).order(java.nio.ByteOrder.nativeOrder()).put(bytes)
+                    buffer.rewind()
+                    visor.loadModelGlb(buffer)
+                    visor.transformToUnitCube()
+                    visor.asset?.let { a -> val tm = engine.transformManager; tm.getTransform(tm.getInstance(a.root), base) }
+                    angulo = 0f
+                }
+            }
+        }.apply { isDaemon = true }.start()
+    }
+
+    override fun onAttachedToWindow() { super.onAttachedToWindow(); seguir() }
+    override fun onDetachedFromWindow() { pausar(); super.onDetachedFromWindow() }
+    override fun onWindowVisibilityChanged(v: Int) {
+        super.onWindowVisibilityChanged(v)
+        if (v == android.view.View.VISIBLE) seguir() else pausar()
+    }
+
+    private fun seguir() {
+        if (corriendo || !isAttachedToWindow) return
+        corriendo = true
+        Motor3D.marcar(context, true)
         android.view.Choreographer.getInstance().postFrameCallback(this)
+    }
+
+    fun pausar() {
+        if (!corriendo) return
+        corriendo = false
+        android.view.Choreographer.getInstance().removeFrameCallback(this)
+        Motor3D.marcar(context, false)
     }
 
     override fun doFrame(frameTimeNanos: Long) {
-        if (!vivo) return
+        if (!corriendo) return
         android.view.Choreographer.getInstance().postFrameCallback(this)
+        val a = visor.asset ?: return
         // Quieta 2 s después de soltarla, vuelve a girar sola (suave, a 60 cuadros).
         if (girar && android.os.SystemClock.uptimeMillis() - ultimoToque > 2000) {
             angulo = (angulo + 0.35f) % 360f
-            visor.asset?.let { a ->
-                android.opengl.Matrix.setRotateM(rot, 0, angulo, 0f, 1f, 0f)
-                android.opengl.Matrix.multiplyMM(fin, 0, rot, 0, base, 0)
-                val tm = engine.transformManager
-                tm.setTransform(tm.getInstance(a.root), fin)
-            }
+            android.opengl.Matrix.setRotateM(rot, 0, angulo, 0f, 1f, 0f)
+            android.opengl.Matrix.multiplyMM(fin, 0, rot, 0, base, 0)
+            val tm = engine.transformManager
+            tm.setTransform(tm.getInstance(a.root), fin)
         }
         visor.render(frameTimeNanos)
-    }
-
-    fun liberar() {
-        if (!vivo) return
-        vivo = false
-        android.view.Choreographer.getInstance().removeFrameCallback(this)
-        runCatching { visor.destroyModel() }
-        runCatching { ui.detach() }
-        runCatching { engine.destroy() }
     }
 }
 
@@ -192,12 +254,13 @@ fun CarpetasArribaCV(e: Estado) {
             }
             if (c == null) { TB("Aún no hay consolas", 64f, titulo = true); return@Column }
             // Cambio de consola: la de antes se aleja y la nueva llega (zoom out / zoom in).
+            Box(Modifier.fillMaxWidth().weight(1f)) {
             androidx.compose.animation.AnimatedContent(
                 targetState = c.id,
                 transitionSpec = {
                     (androidx.compose.animation.fadeIn(tween(d1)) + androidx.compose.animation.scaleIn(tween(d2, easing = CurvaPosarse), initialScale = 0.86f)) togetherWith
                         (androidx.compose.animation.fadeOut(tween(d3)) + androidx.compose.animation.scaleOut(tween(d4), targetScale = 0.86f))
-                }, label = "consola", modifier = Modifier.fillMaxWidth().weight(1f),
+                }, label = "consola", modifier = Modifier.fillMaxSize(),
             ) { id ->
                 val k = Consolas.porId(id) ?: return@AnimatedContent
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(esc.d(28))) {
@@ -205,11 +268,14 @@ fun CarpetasArribaCV(e: Estado) {
                         InfoConsolaCV(e, k, tamNombre = 72f, lineasHistoria = 2)
                         OpcionesConsolaCV(e, k, columnas = 3)
                     }
-                    Column(Modifier.weight(0.44f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Consola3D(k, Modifier.fillMaxWidth().weight(1f))
-                        Modelos3D.credito(k.id)?.let { TB("$it · gírala con el dedo", 16f, color = col.tenue, lineas = 1, traducir = false) }
-                    }
+                    Spacer(Modifier.weight(0.44f))
                 }
+            }
+            // La consola 3D va fuera de la animación: un solo visor que cambia de modelo.
+            Column(Modifier.fillMaxWidth(0.44f).fillMaxHeight().align(Alignment.CenterEnd), horizontalAlignment = Alignment.CenterHorizontally) {
+                Consola3D(c, Modifier.fillMaxWidth().weight(1f))
+                Modelos3D.credito(c.id)?.let { TB("$it · gírala con el dedo", 16f, color = col.tenue, lineas = 1, traducir = false) }
+            }
             }
             // Acciones a la izquierda; a la derecha cómo cambiar de consola y de vista, en una línea fina.
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
