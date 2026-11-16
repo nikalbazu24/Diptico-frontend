@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "temas-tienda-2.0-74"
-    const val NOMBRE = "Temas vivos, widgets y música viva"
+    const val ID = "tienda-musica-2.0-75"
+    const val NOMBRE = "La tienda y la música, en su lugar"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -558,7 +558,7 @@ object Novedades {
             Pagina("Firmas distintas, sin sustos", "Si un emulador vino de otra tienda, te explico qué datos se pueden perder y, solo si mantienes A, Android te pregunta si lo desinstalas. Cuando termina, instalo la versión nueva sola.", Icono.CLAVE, 0xFFE0603A),
             Pagina("Borrar una variante", "En el Estudio de Cajas › Variantes ahora puedes quitar una variante suelta: con X sobre ella o tocando «Quitar».", Icono.BORRAR, 0xFFFFB547),
         )),
-        Version(ID, "Temas vivos, widgets y música viva", listOf(
+        Version("temas-tienda-2.0-74", "Temas vivos, widgets y música viva", listOf(
             Pagina("Cuatro temas que cambian todo", "En la tienda de temas, pestaña Nuevos: Recortes, Acuario de DIPPO, Salón Recreativo y Constelación. Cada uno trae su fondo, su forma de tarjetas, su manera de marcar lo elegido, su letra, su decoración y sus sonidos.", Icono.PALETA, 0xFFC94A22),
             Pagina("Míralo en cinco pantallas", "Arriba ves cómo queda el tema en el Inicio, la Biblioteca, los Widgets, los Menús y la Ficha. Cámbialas con L2 y R2, o tocándolas.", Icono.PORTADA, 0xFF35C6D8),
             Pagina("Pruébalo 30 segundos", "Con Y el tema se pone de verdad en las dos pantallas por 30 segundos y después vuelve el tuyo solo. Si te gusta, A lo deja puesto.", Icono.ESTRELLA, 0xFFFFD36B),
@@ -566,6 +566,10 @@ object Novedades {
             Pagina("Temas remasterizados", "Nueve clásicos rehechos, y cada uno sigue algo de verdad: la nieve se junta si no tocas nada, la lava sube con el calor de la consola, la marea es tu batería, la luna es la de esta noche y la fogata crece con tu racha. Los originales quedan en «Clásicos».", Icono.CHISPA, 0xFF7DD3FC),
             Pagina("Widgets nuevos", "En la tienda, pestaña Widgets: DIPPO te propone qué jugar, Te extraña, Tu semana, Tu equipo, Un recuerdo y Radio del tema. A los pone en tu inicio.", Icono.APPS, 0xFF9BE15D),
             Pagina("Música viva", "Las 13 canciones de Díptico se rehicieron en partes que se mezclan distinto cada vez: cambian con la hora y en Ajustes se calman. Cada tanto hay un silencio corto y después de 20 minutos cambian de tono.", Icono.MUSICA, 0xFFFF9B54),
+        )),
+        Version(ID, "La tienda y la música, en su lugar", listOf(
+            Pagina("La tienda nueva, a la vista", "Ajustes › Estilo › Tienda de temas abre la tienda nueva: Nuevos, Remasterizados, Widgets y los demás. Los temas para descargar quedaron en «Temas de la comunidad».", Icono.PALETA, 0xFF6B4EFF),
+            Pagina("Ahora sí suena la música viva", "Los temas traían una canción corta que tapaba a la nueva. Ahora todos los temas suenan con la música viva; solo «Mi tema» puede llevar una canción tuya.", Icono.MUSICA, 0xFFFF9B54),
         )),
     )
 

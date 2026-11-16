@@ -5223,7 +5223,9 @@ object Diptico {
     // ---------- Música según el tema ----------
 
     /** Qué pista va con cada tema y cada fiesta. */
-    fun musicaDeTema(t: Tema): String = (if (::app.isInitialized) TiendaTemas.pista(app, t) else null) ?: pistaIncluidaDeTema(t)
+    // Solo «Mi tema» usa una canción propia en bucle: los temas de la tienda suenan con la música viva (antes traían
+    // un tramo corto que se repetía y tapaba a la nueva).
+    fun musicaDeTema(t: Tema): String = (if (::app.isInitialized && t.id == "mio") TiendaTemas.pista(app, t) else null) ?: pistaIncluidaDeTema(t)
 
     internal fun pistaIncluidaDeTema(t: Tema): String = t.pistaBase.takeIf { id -> Musica.pistas.any { it.id == id } } ?: when (t.id.removePrefix("fiesta_")) {
         "fiestaspatrias", "chile" -> "cueca"
