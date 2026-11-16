@@ -186,7 +186,7 @@ internal class VisorConsola(ctx: android.content.Context) :
         visor.scene.indirectLight = com.google.android.filament.IndirectLight.Builder()
             .irradiance(1, floatArrayOf(1f, 1f, 1f)).intensity(30_000f).build(engine)
         // Sin sombras ni efectos caros: es un adorno, tiene que ser liviano.
-        visor.view.isShadowingEnabled = false
+        visor.view.setShadowingEnabled(false)
         setOnTouchListener { v, ev ->
             ultimoToque = android.os.SystemClock.uptimeMillis()
             when (ev.actionMasked) {
