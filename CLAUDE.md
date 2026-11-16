@@ -679,3 +679,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   a/b/c/p × d/n → `res/raw/viva_<id>_<parte>_<animo>.ogg`, 104 archivos, 16 MB; las `diptico_*.ogg` se borraron). `Musica`: `crearParteViva`,
   `alTerminarParte` (descanso cada 6–9 min), `aplicarPiel` (tono cada 20 min con PlaybackParams), `saltarParte`, `lugar` ("ajustes" calma).
   Traducciones `extras35.tsv` (siguiente: extras36). Capturas t451–t464. Falta: editor de temas en 8 submenús.
+- v1.1-beta.554 (16 nov, Novedades `tienda-musica-2.0-75`): «Tienda de temas» ahora abre la galería "temas" (antes abría la de
+  descargas, por eso Nicolás no veía nada nuevo); la de descargas = «Temas de la comunidad»; «Elegir tema» quitado. `musicaDeTema`
+  ignora la canción propia de los temas instalados salvo «mio» (tapaba la música viva). Traducciones `extras36.tsv` (siguiente: extras37).
+
+## Rediseño «Colección viva» (16 nov, Opus) — BOCETOS ESPERANDO APROBACIÓN, NO PROGRAMAR ANTES
+- Encargo de Nicolás (adjunto): iiSU + Cocoon + BoxShelf sin copiar; Thor y Odin con distribuciones propias; NO tocar código del
+  rediseño hasta aprobación; luego implementar fiel con especificación visual y verificar con capturas; no publicar sin su permiso.
+- Lienzo: https://claude.ai/artifact/VTCZof8gamwjrsQTPU1HKj (Main = Thor arriba, ThorAbajo, Odin interactivo, EstudioArriba/Abajo/Odin,
+  AjustesArriba/Abajo/Odin). Fuentes Fredoka (títulos) + Nunito; fondo #07080f/#0b0c16, vidrio rgba(18,20,36,.55) con borde .12,
+  selección = relleno #F4F3FA o anillo blanco 3–4 px; caja 3D rotateY 24° sin pedestal, solo sombra en el piso.
