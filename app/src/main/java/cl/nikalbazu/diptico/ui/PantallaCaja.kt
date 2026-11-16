@@ -1,6 +1,9 @@
 package cl.nikalbazu.diptico.ui
 
 import android.net.Uri
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -87,7 +90,8 @@ fun PantallaCaja(e: Estado, rol: Rol) {
                 }
             }
             if (muestraControles) {
-                Column(Modifier.weight(if (muestraCaja) 1.15f else 1f).widthIn(max = esc.d(640)).fillMaxHeight()) {
+                if (!muestraCaja && coleccionVivaActiva(e)) Box(Modifier.weight(1f).fillMaxHeight()) { PanelEstudioCV(e, clave, g) }
+                else Column(Modifier.weight(if (muestraCaja) 1.15f else 1f).widthIn(max = esc.d(640)).fillMaxHeight()) {
                     PanelCajas(e, clave, g)
                 }
             }
@@ -414,5 +418,124 @@ private fun FuenteCaja(nombre: String, estado: String, modifier: Modifier) {
     ) {
         Texto(nombre, 12.5f, lineas = 1, traducir = false)
         Texto(texto, 11.5f, color = color, lineas = 1)
+    }
+}
+
+
+/**
+ * Estudio de Cajas en la pantalla de abajo con el diseño Colección viva (boceto 4): pestañas grandes con L1/R1,
+ * las cuatro caras como tarjetas con su imagen y de dónde viene, las acciones de la cara elegida, las fuentes
+ * y un pie con botones grandes. Forma, Acabado y Variantes usan sus casillas de siempre, agrandadas.
+ */
+@Composable
+private fun PanelEstudioCV(e: Estado, clave: String, g: CarasGuardadas?) {
+    val base = LocalEscala.current
+    val tab = e.extra.estudioTab
+    val sel = e.extra.cajaSel
+    val variantes = EstudioCajas.variantes(e.extra.caras, clave)
+    LienzoBoceto(1240f, 1080f, zoom = ZOOM_ABAJO) {
+        val esc = LocalEscala.current
+        val col = LocalColeccion.current
+        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(36), vertical = esc.d(24)), verticalArrangement = Arrangement.spacedBy(esc.d(16))) {
+            // Pestañas
+            Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                TeclaHombro("L1") { Diptico.pestanaEstudio(-1) }
+                Row(Modifier.weight(1f).fillMaxHeight().vidrio(42f).padding(esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                    EstudioCajas.PESTANAS.forEachIndexed { i, t ->
+                        Box(Modifier.weight(1f).fillMaxHeight().clip(CircleShape).background(if (tab == i) col.texto else Color.Transparent)
+                            .clickable { Diptico.elegirPestanaCajas(i) }, contentAlignment = Alignment.Center) {
+                            TB(t, 24f, color = if (tab == i) col.fondo else col.sub, peso = FontWeight.ExtraBold)
+                        }
+                    }
+                }
+                TeclaHombro("R1") { Diptico.pestanaEstudio(1) }
+            }
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(esc.d(16))) {
+                if (tab == 0) {
+                    // DIPPO cuenta qué tiene la caja.
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
+                        AvatarBisa(92f, cara = if (g?.frente != null && g.reverso != null) CaraDippo.FELIZ else CaraDippo.NORMAL)
+                        TB(EstudioCajas.comentario(g, tab, variantes.size), 22f, color = col.sub, lineas = 2)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
+                        EstudioCajas.CARAS.forEachIndexed { i, nombre ->
+                            val valor = when (i) { 0 -> g?.frente; 1 -> g?.lomo; 2 -> g?.reverso; else -> g?.disco }
+                            val foco = sel == i
+                            val falta = valor == null && i != 0
+                            Column(
+                                Modifier.weight(1f).clip(RoundedCornerShape(esc.d(24)))
+                                    .background(if (foco) col.acento.copy(alpha = .2f) else Color.White.copy(alpha = .06f))
+                                    .border(if (foco) 3.dp else 1.dp, if (foco) col.texto else Color.White.copy(alpha = .1f), RoundedCornerShape(esc.d(24)))
+                                    .clickable { Diptico.usarEstudio(i) }.padding(esc.d(16)),
+                                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(8)),
+                            ) {
+                                val img = rememberImagen((valor?.let { Uri.parse(it) }) ?: if (i == 0) e.juegosPorClave[clave]?.portada else null, 300)
+                                Box(
+                                    Modifier.height(esc.d(160)).aspectRatio(if (i == 3) 1f else 0.74f).clip(if (i == 3) CircleShape else RoundedCornerShape(esc.d(8)))
+                                        .background(Brush.linearGradient(listOf(Color(0xFF2A2547), Color(0xFF151526))))
+                                        .then(if (falta) Modifier.border(2.dp, Color.White.copy(alpha = .35f), if (i == 3) CircleShape else RoundedCornerShape(esc.d(8))) else Modifier),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    if (img != null) Image(img, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                                    else TB("+", 48f, color = col.tenue)
+                                }
+                                TB(nombre, 28f, titulo = true)
+                                TB(EstudioCajas.procedencia(g, i), 19f, color = if (falta) Color(0xFFFFB48F) else Color(0xFF9DB6FF), peso = FontWeight.Bold, lineas = 2)
+                            }
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                        ACCIONES_CARA.forEachIndexed { k, (t, d, ic) ->
+                            val i = 4 + k
+                            val foco = sel == i
+                            Row(
+                                Modifier.weight(1f).height(esc.d(96)).clip(RoundedCornerShape(esc.d(48)))
+                                    .background(if (foco) col.texto else Color.White.copy(alpha = .07f))
+                                    .border(1.dp, Color.White.copy(alpha = .14f), RoundedCornerShape(esc.d(48)))
+                                    .clickable { Diptico.usarEstudio(i) }.padding(horizontal = esc.d(18)),
+                                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
+                            ) {
+                                IconoDiptico(ic, if (foco) col.fondo else col.texto, 44f, acento = Coral)
+                                TB(t, 21f, color = if (foco) col.fondo else col.texto, peso = FontWeight.ExtraBold, lineas = 2)
+                            }
+                        }
+                    }
+                    val f = e.extra.cajaFuentes
+                    if (f.any { it.isNotEmpty() }) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                        listOf("Comunidad", "ScreenScraper", "TheGamesDB").forEachIndexed { i, n ->
+                            val (texto, color) = when (f.getOrElse(i) { "" }) {
+                                "buscando" -> "Buscando…" to Ambar
+                                "hallada" -> "¡La encontré!" to Verde
+                                "no" -> "No está" to col.tenue
+                                "sin" -> "No conectada" to col.tenue
+                                else -> "—" to col.tenue
+                            }
+                            Column(Modifier.weight(1f).vidrio(20f).padding(esc.d(16))) {
+                                TB(n, 22f, peso = FontWeight.ExtraBold, traducir = false)
+                                TB(texto, 20f, color = color, peso = FontWeight.Bold)
+                            }
+                        }
+                    }
+                } else {
+                    // Las casillas de siempre, al tamaño de esta pantalla.
+                    CompositionLocalProvider(LocalEscala provides Escala(base.factor * 1.45f, base.ancho, base.texto)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(base.d(8))) {
+                            when (tab) {
+                                1 -> PestanaForma(e, g)
+                                2 -> PestanaAcabado(e, g)
+                                else -> PestanaVariantes(e, g, variantes)
+                            }
+                        }
+                    }
+                }
+            }
+            // Pie: botones grandes.
+            Row(Modifier.fillMaxWidth().height(esc.d(100)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
+                BotonTecla("Y", "Jugar", principal = true, onClick = { val k = clave; Diptico.cerrarCajaJuego(); Diptico.elegirJuego(k); Diptico.jugar() })
+                BotonTecla("Select", "Ver de otro lado", onClick = { Diptico.siguienteVistaEstudio() })
+                Spacer(Modifier.weight(1f))
+                BotonTecla("B", "Volver", onClick = { Diptico.cerrarCajaJuego() })
+            }
+        }
     }
 }
