@@ -650,3 +650,9 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Emuladores: `EmuRevisado.publicada/origen/archivo`, `fechaCorta`, `compatibilidad(archivo)`; firma distinta = diálogo con `mantener`
   que abre ACTION_DELETE y guarda `EmuladoresAlDia.pendiente`; `instalarTrasDesinstalar` (desde el receptor de PACKAGE_REMOVED) instala solo.
 - Estudio: `quitarVariante`, `xEstudio` (X en Variantes quita). Traducciones `extras33.tsv` (siguiente: extras34).
+
+## Boceto temas y tienda (15 nov, noche, Opus) — esperando visto bueno de Nicolás
+- Lienzo PWh7wsWBvDx8chtgESPdXA (Main: tienda en la Thor, arriba vista previa real en Inicio/Biblioteca/Widgets/Menús/Ficha, abajo
+  pestañas Nuevos/Incluidos/Calendario/Exclusivos/Mis temas; Editor con 8 submenús; UnaPantalla para la Odin 2).
+- 4 temas nuevos que cambian fondo, forma de tarjetas, selección, letra y sonidos: Recortes (cartón y cinta), Acuario de DIPPO (burbujas),
+  Salón Recreativo (marquesina y neón, distinto de «Arcade neón»), Constelación (estrellas unidas por luz). Y = probar 30 s.
