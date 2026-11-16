@@ -167,7 +167,7 @@ fun CarpetasArribaCV(e: Estado) {
                 val k = Consolas.porId(id) ?: return@AnimatedContent
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(esc.d(28))) {
                     Column(Modifier.weight(0.56f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(14), Alignment.CenterVertically)) {
-                        InfoConsolaCV(e, k, tamNombre = 84f, lineasHistoria = 3)
+                        InfoConsolaCV(e, k, tamNombre = 72f, lineasHistoria = 2)
                         OpcionesConsolaCV(e, k, columnas = 3)
                     }
                     Column(Modifier.weight(0.44f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -227,7 +227,7 @@ fun InfoConsolaCV(e: Estado, c: Consola, tamNombre: Float, lineasHistoria: Int =
 
 /** Las 6 opciones de la consola (X): ícono, vista, color, emulador, fondo y música, nombre o logo. */
 @Composable
-fun OpcionesConsolaCV(e: Estado, c: Consola, columnas: Int) {
+fun OpcionesConsolaCV(e: Estado, c: Consola, columnas: Int, alto: Float = 78f) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     val opciones = listOf(
@@ -243,7 +243,7 @@ fun OpcionesConsolaCV(e: Estado, c: Consola, columnas: Int) {
         opciones.chunked(columnas).forEach { fila ->
             Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 fila.forEach { (n, v, accion) ->
-                    Column(Modifier.weight(1f).height(esc.d(80)).vidrio(20f, fuerte = true).clickable { accion() }.padding(horizontal = esc.d(16)),
+                    Column(Modifier.weight(1f).height(esc.d(alto)).vidrio(20f, fuerte = true).clickable { accion() }.padding(horizontal = esc.d(16)),
                         verticalArrangement = Arrangement.Center) {
                         TB(n, 18f, color = col.sub)
                         TB(v, 22f, peso = FontWeight.ExtraBold, traducir = false)
@@ -425,7 +425,7 @@ private fun CarpetaDiptico(e: Estado, c: Consola, elegida: Boolean, una: Boolean
     val alto = if (una) 150f else 150f
     val forma = RoundedCornerShape(esc.d(26))
     Row(Modifier.fillMaxWidth().height(esc.d(alto)).clip(forma).background(col.vidrioFuerte).border(1.dp, col.borde, forma).then(anilloCV(elegida, forma)).clickable(onClick = onClick)) {
-        IconoCarpetaCV(e, c, Modifier.width(esc.d(alto)).fillMaxHeight(), 44f)
+        IconoCarpetaCV(e, c, Modifier.width(esc.d(if (una) alto * 0.7f else alto)).fillMaxHeight(), 40f)
         Box(Modifier.width(esc.d(6)).fillMaxHeight().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = .35f), Color.White.copy(alpha = .08f)))))
         Column(Modifier.weight(1f).fillMaxHeight().padding(esc.d(16)), verticalArrangement = Arrangement.SpaceBetween) {
             MiniJuegos(e, c, 46f, 64f)
@@ -521,9 +521,9 @@ fun CarpetasUnicaCV(e: Estado) {
             Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(26))) {
                 // Izquierda: la consola, su historia, sus opciones y A/Y.
                 Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
-                    InfoConsolaCV(e, c, tamNombre = 70f, lineasHistoria = 3)
-                    OpcionesConsolaCV(e, c, columnas = 3)
-                    AccionesConsolaCV(e, c, alto = 70f)
+                    InfoConsolaCV(e, c, tamNombre = 60f, lineasHistoria = 2)
+                    OpcionesConsolaCV(e, c, columnas = 3, alto = 70f)
+                    AccionesConsolaCV(e, c, alto = 64f)
                 }
                 // Derecha: la consola en 3D, qué juegos van junto al ícono y las carpetas.
                 Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
