@@ -120,6 +120,8 @@ fun PantallaInicio(e: Estado) {
         // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
         if (!e.editandoWidgets && !Estilo.glass && p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         if (!e.editandoWidgets) TramaTema()
+        // Colección viva: la decoración del tema va aquí, detrás de los widgets.
+        if (Estilo.decorEnFondo && Estilo.decoraciones && Estilo.tema.decor != "nada") Decoracion(Estilo.tema, animada = !Estilo.decorQuieta)
         }
         CompositionLocalProvider(LocalFondoVentanaCristal provides fondo) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
@@ -138,6 +140,9 @@ fun PantallaInicio(e: Estado) {
                     12f, lineas = 1,
                 )
                 Spacer(Modifier.height(esc.d(10)))
+            } else if (Estilo.decorEnFondo) {
+                EncabezadoWidgetsCV(e)
+                Spacer(Modifier.height(esc.d(8)))
             } else if (e.saludoInicio || e.sesion == null) {
                 EncabezadoWidgets(e)
                 Spacer(Modifier.height(esc.d(8)))
@@ -145,6 +150,26 @@ fun PantallaInicio(e: Estado) {
             PaginasWidgets(e, Modifier.fillMaxWidth().weight(1f))
         }
     }
+    }
+}
+
+/** Colección viva: Portada | Widgets · Editar widgets · hora y batería · tu perfil (como el boceto 7a). */
+@Composable
+private fun EncabezadoWidgetsCV(e: Estado) {
+    val esc = LocalEscala.current
+    val p = LocalPaleta.current
+    @Composable
+    fun Pildora(t: String, on: Boolean, accion: () -> Unit) {
+        Box(Modifier.clip(RoundedCornerShape(50)).background(if (on) Uva else p.tinta.copy(alpha = 0.08f)).border(esc.d(1), p.tinta.copy(alpha = if (on) 0f else 0.12f), RoundedCornerShape(50))
+            .clickable(onClick = accion).padding(horizontal = esc.d(12), vertical = esc.d(6))) { Texto(t, 13f, color = if (on) SobreUva else p.tinta, lineas = 1) }
+    }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+        Pildora("Portada", false) { Diptico.fijarInicio("heroe") }
+        Pildora("Widgets", true) {}
+        Pildora("Editar widgets", false) { Diptico.editarWidgets() }
+        Spacer(Modifier.weight(1f))
+        RelojBateria()
+        PerfilArriba(40f)
     }
 }
 
@@ -491,7 +516,12 @@ internal fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nu
         "solido" -> Modifier.background(Brush.linearGradient(listOf(acento.copy(alpha = 0.9f * op), acento.copy(alpha = 0.65f * op))))
         "contorno" -> Modifier.border(esc.d(2), acento.copy(alpha = 0.8f), forma)
         "sinfondo" -> Modifier
-        else -> Modifier.background(Brush.verticalGradient(listOf(base.copy(alpha = 0.9f * op), base.copy(alpha = 0.7f * op))))
+        // Colección viva: el vidrio del tema, con su borde fino (el mismo de todo el diseño nuevo).
+        else -> if (Estilo.decorEnFondo) {
+            val oscura = p.fondo.luminance() < 0.3f
+            val vidrio = propio ?: if (oscura) androidx.compose.ui.graphics.lerp(p.fondo, p.tinta, 0.07f) else Color.White
+            Modifier.background(vidrio.copy(alpha = (if (oscura) 0.66f else 0.78f) * op)).border(esc.d(1), p.tinta.copy(alpha = 0.12f), forma)
+        } else Modifier.background(Brush.verticalGradient(listOf(base.copy(alpha = 0.9f * op), base.copy(alpha = 0.7f * op))))
             .border(esc.d(1), Color.White.copy(alpha = 0.06f), forma)
     }
     Box(

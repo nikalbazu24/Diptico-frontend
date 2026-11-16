@@ -287,3 +287,9 @@ fun DippoFrase(frase: String, modifier: Modifier = Modifier, cara: Float = 52f, 
 fun Modifier.veloColeccion(fondo: Color): Modifier = this
     .background(Brush.horizontalGradient(0f to fondo.copy(alpha = .92f), .34f to fondo.copy(alpha = .72f), .62f to fondo.copy(alpha = .1f), 1f to Color.Transparent))
     .background(Brush.verticalGradient(0f to Color.Transparent, .66f to Color.Transparent, 1f to fondo.copy(alpha = .85f)))
+
+/**
+ * Ajustes con Colección viva (boceto 5): las secciones y opciones van ABAJO (se tocan con el dedo) y arriba la explicación
+ * con la vista previa real. Con las pantallas intercambiadas, al revés.
+ */
+fun menuIntercambiado(e: Estado): Boolean = e.intercambiar != (e.extra.coleccionViva && e.configurado && !e.unaPantalla)
