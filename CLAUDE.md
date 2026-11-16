@@ -733,3 +733,18 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `VisorConsola` (TextureView transparente, `ModelViewer`, giro libre, gira solo tras 2 s); glb optimizados (gltf-transform, 512 px)
   en `assets/consolas3d/<id>.glb` (las hojas webp se borraron). En Robolectric se dibuja un reemplazo. Íconos de carpetas con pellizco
   (`ajustarColumnasIcono`, 2..6), `RejillaCV` cuadrada, caja de arriba se gira en X e Y con resorte al soltar.
+- Cierre al moverse (16 nov, tarde): cada `Consola3D` creaba un Engine de Filament y `AnimatedContent` tenía dos a la vez → caída nativa
+  sin informe. Ahora `Motor3D` (un Engine por proceso) + `VisorConsola` guardado por Context que cambia el modelo (`mostrar(id)`, archivo
+  leído en otro hilo); el visor va FUERA del AnimatedContent en 6a. Seguro: prefs `motor3d` marca «dibujando»; si la app se cae dibujando,
+  `pausa_<versión>` muestra el ícono en vez del 3D hasta la versión siguiente. Beta.581 de prueba entregada.
+- Estudio abajo con diseño CV (`PanelEstudioCV` en PantallaCaja.kt, solo con dos pantallas y sin la caja en la misma pantalla).
+- 6d: `IconoCarpetaCV` (ui/IconoCarpetaCV.kt) se dibuja desde `PanelImagenes` con `candidatoPara == "c_portada"` y Colección viva.
+- Widgets 2.0 (boceto 8a/8b aprobado, lienzo VTCZof8gamwjrsQTPU1HKj): en CV la portada y los widgets van en `InicioDeslizable` (Raiz, arriba y
+  una pantalla); mantener presionado un lugar vacío → `editarWidgets` + `abrirBurbuja(x, y)` (con dos pantallas abre la tienda abajo con
+  `celdaCatalogo`). Tienda CV = `TiendaWidgetsAbajo` (pestaña 1 de `PanelEstudio`): `controlesAgregar` en CV = fila «Categoría» (chips,
+  `extra.tiendaCat`, `CATEGORIAS_WIDGETS`) + widgets de esa categoría; L1/R1 cambian categoría (`tiendaCV` en `Teclas.estudio`), cruceta en
+  grilla de 2. Al agregar un widget útil se abren sus ajustes (grupo «Contenido» primero en `organizarControlesWidget`).
+  Widgets útiles: `estado/WidgetsUtiles.kt` (`WIDGETS_UTILES`, nombres/íconos/descripciones, `extra.confWidgets` en almacén `confWidgets`,
+  `Estado.conf`, `Diptico.confWidget`, `controlesUtil`, texto «wconf:<tipo>:<clave>» en `guardarTextoPanel`, `Red` con caché, `Deportes`
+  (ESPN público: scoreboard, teams, schedule, standings), `Clima` (Open-Meteo), `Feriados` (apis.digital.gob.cl con respaldo fijo)) y
+  `ui/WidgetsUtiles.kt` (`WidgetUtil`, se dibuja según an×al; `ContenidoWidget` lo llama antes del caso 1 columna). Capturas t482–t484.
