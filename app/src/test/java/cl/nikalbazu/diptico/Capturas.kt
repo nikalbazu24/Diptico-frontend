@@ -226,7 +226,7 @@ class Capturas {
     )
 
     @Config(qualifiers = ABAJO)
-    @Test fun t39_tema_sakura_claro() = foto("39_tema_sakura_claro", base().copy(oscuro = false), Rol.INFERIOR, Temas.incluidos.first { it.id == "sakura" })
+    @Test fun t39_tema_sakura_claro() = foto("39_tema_sakura_claro", base().copy(oscuro = false), Rol.INFERIOR, cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["sakura"] ?: "sakura") } ?: l[0] })
 
     @Config(qualifiers = ABAJO)
     @Test fun t40_editar_widgets() = foto("40_editar_widgets", base().copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 1, indice = 2), Rol.INFERIOR)
@@ -299,7 +299,7 @@ class Capturas {
 
     @Test fun t54_previa_tema() = foto(
         "54_menu_vista_previa_tema",
-        base().copy(panel = Panel.MENU, seccion = Seccion.TEMAS, enOpciones = true, indice = 2 + Temas.incluidos.indexOfFirst { it.id == "chile" }),
+        base().copy(panel = Panel.MENU, seccion = Seccion.TEMAS, enOpciones = true, indice = 2 + 0),
         Rol.SUPERIOR,
     )
 
@@ -310,9 +310,9 @@ class Capturas {
     @Test fun t57_previa_botones() = foto("57_menu_vista_previa_botones", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 1, efecto = "vidrio"), Rol.SUPERIOR)
 
     @Config(qualifiers = ABAJO)
-    @Test fun t58_tema_chile() = foto("58_tema_chile", base(), Rol.INFERIOR, Temas.incluidos.first { it.id == "chile" })
+    @Test fun t58_tema_chile() = foto("58_tema_chile", base(), Rol.INFERIOR, cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["chile"] ?: "chile") } ?: l[0] })
 
-    @Test fun t59_tema_cyber() = foto("59_tema_cyberpunk", base(), Rol.SUPERIOR, Temas.incluidos.first { it.id == "cyber" })
+    @Test fun t59_tema_cyber() = foto("59_tema_cyberpunk", base(), Rol.SUPERIOR, cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["cyber"] ?: "cyber") } ?: l[0] })
 
     @Test fun t60_inicio_paginas() = foto(
         "60_inicio_pagina_2",
@@ -521,7 +521,7 @@ class Capturas {
 
     // ---------- v0.9 ----------
 
-    private val bloques get() = Temas.incluidos.first { it.id == "bloques" }
+    private val bloques get() = cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["bloques"] ?: "bloques") } ?: l[0] }
     private fun conRecientes(e: Estado) = e.copy(
         datos = e.datos + mapOf(
             "gba/2" to DatosJuego(tiempo = 5400, ultimo = 5L, favorito = true), "psx/3" to DatosJuego(tiempo = 1800, ultimo = 4L),
@@ -1586,7 +1586,7 @@ class Capturas {
     @Test fun t440_estudio_una() = foto("440_estudio_una_pantalla", estudio(1, 1, CarasGuardadas(null, null, 1L, plantilla = "ps2", color = 0xFF1B2F7AL)).let {
         it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     // ---------- Temas nuevos y tienda ----------
-    private fun nuevo(id: String) = Temas.nuevos.first { it.id == id }
+    private fun nuevo(id: String) = Temas.incluidos.firstOrNull { it.id == id } ?: Temas.incluidos[0]
     private fun tienda(i: Int, vista: Int) = base().let { it.copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 0, indice = i, extra = it.extra.copy(previaTema = vista)) }
     @Test fun t441_tema_recortes_arriba() = foto("441_tema_recortes_arriba", base().copy(tema = "recortes"), Rol.SUPERIOR, nuevo("recortes"))
     @Config(qualifiers = ABAJO)
@@ -1602,7 +1602,7 @@ class Capturas {
     @Test fun t449_tienda_previa_ficha() = foto("449_tienda_previa_ficha", tienda(3, 4), Rol.SUPERIOR, mi = 1)
     @Test fun t450_tienda_una_pantalla() = foto("450_tienda_una_pantalla", tienda(1, 2).let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     // ---------- Temas remasterizados (con algo vivo: quietud, hora, calor, batería, racha) ----------
-    private fun remaster(id: String) = Temas.remasterizados.first { it.id == id }
+    private fun remaster(id: String) = Temas.incluidos.firstOrNull { it.id == id } ?: Temas.incluidos[0]
     private fun viva(nombre: String, id: String, rol: Rol = Rol.SUPERIOR, quieto: Float? = null, hora: Float? = null,
                      calor: cl.nikalbazu.diptico.estado.Termica.Nivel? = null, bateria: Int = 80, cargando: Boolean = false, racha: Int? = null) {
         val v = cl.nikalbazu.diptico.ui.Vivo
@@ -1678,7 +1678,7 @@ class Capturas {
     }
     @Test fun t479_cv_widgets_editando_sakura() {
         cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
-        try { foto("479_cv_widgets_editando_sakura", cv { it.copy(editandoWidgetsCV = true) }.copy(inicio = "widgets"), Rol.SUPERIOR, tema = Temas.remasterizados.firstOrNull { it.id == "r_sakura" }) }
+        try { foto("479_cv_widgets_editando_sakura", cv { it.copy(editandoWidgetsCV = true) }.copy(inicio = "widgets"), Rol.SUPERIOR, tema = Temas.incluidos.firstOrNull { it.id == "r_sakura" }) }
         finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
     }
     @Config(qualifiers = ABAJO)
@@ -1738,7 +1738,7 @@ class Capturas {
 
     @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 6), Rol.INFERIOR, mi = 1)
 
-    @Test fun visual_cristal_y_barra() = foto("visual_cristal_y_barra", base(), Rol.SUPERIOR, tema = Temas.incluidos.first { it.id == "diptico_vidrio" })
+    @Test fun visual_cristal_y_barra() = foto("visual_cristal_y_barra", base(), Rol.SUPERIOR, tema = cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["diptico_vidrio"] ?: "diptico_vidrio") } ?: l[0] })
 
     @Test fun visual_catalogo_widgets_arriba() = foto("visual_catalogo_widgets_arriba",
         base().copy(inicio = "widgets", panel = Panel.ESTUDIO, editandoWidgets = true, estudioPestana = 1,

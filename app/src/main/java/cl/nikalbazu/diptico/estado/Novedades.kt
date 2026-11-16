@@ -577,6 +577,7 @@ object Novedades {
             Pagina("Tus consolas, con su historia", "En las carpetas, cada consola cuenta su historia y se ve en 3D (gírala con el dedo). Elige su ícono, su vista y si muestra el nombre o el logo.", Icono.MANDO, 0xFFFF9B54),
             Pagina("Cuatro vistas de carpetas", "Ícono, Díptico, Repisa y Carpeta (Select las cambia). Junto a cada ícono elige qué juegos se ven: los últimos, tus favoritos o los que tú quieras.", Icono.CARPETA, 0xFF35C6D8),
             Pagina("Widgets que toman tu tema", "Continuar, Tu semana, DIPPO, ¿Qué juego hoy?, Equipo y más. Cambian de color, forma y letra con tu tema. «Editar widgets» los quita o los agrega.", Icono.APPS, 0xFF9BE15D),
+            Pagina("Temas nuevos", "Los temas se rehicieron para este diseño: Colección, Aurora, Cartucho, Papel, Negro puro, Acuario, Salón, Constelación, y los vivos Nieve, Lava, Bosque, Luna, Marea, Sakura, Portátil y Fogata. Las fechas especiales siguen en el Calendario.", Icono.PALETA, 0xFFFF5D8F),
             Pagina("¿Lo quieres como antes?", "Ajustes › Estilo › «Diseño Colección viva» lo apaga y vuelve el de antes.", Icono.AJUSTES, 0xFFB9BBD6),
         )),
     )

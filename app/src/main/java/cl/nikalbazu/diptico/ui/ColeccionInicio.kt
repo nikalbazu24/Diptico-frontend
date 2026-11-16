@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.key
