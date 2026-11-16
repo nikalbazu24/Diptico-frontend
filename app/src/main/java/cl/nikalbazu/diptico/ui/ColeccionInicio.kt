@@ -473,7 +473,7 @@ fun ColeccionUnica(e: Estado) {
                 return@Column
             }
             // Franja 2 · el juego: información y botones a la izquierda, la caja a la derecha.
-            Row(Modifier.fillMaxWidth().weight(1.15f), horizontalArrangement = Arrangement.spacedBy(esc.d(24))) {
+            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(24))) {
                 Column(Modifier.weight(0.6f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
                     InfoJuegoCV(e, j, c, tamTitulo = 72f, compacta = true)
                     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
@@ -485,7 +485,7 @@ fun ColeccionUnica(e: Estado) {
                 Box(Modifier.weight(0.4f).fillMaxHeight().padding(vertical = esc.d(4))) { CajaFlotanteCV(e, j, girada = false) }
             }
             // Franja 3 · el estante: título, vistas y dock arriba; las cajas debajo (sin tapar nada).
-            Column(Modifier.fillMaxWidth().weight(1f).clip(redondo(28f)).background(col.fondo.copy(alpha = .55f)).padding(horizontal = esc.d(18), vertical = esc.d(10))) {
+            Column(Modifier.fillMaxWidth().weight(1.25f).clip(redondo(28f)).background(col.fondo.copy(alpha = .55f)).padding(horizontal = esc.d(18), vertical = esc.d(10))) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
                     TB("Tus juegos", 26f, titulo = true)
                     listOf("estante" to "Estante", "cuadricula" to "Cuadrícula", "lista" to "Lista").forEach { (v, n) ->
@@ -601,13 +601,13 @@ fun CarreteCV(e: Estado, j: Juego, modifier: Modifier, compacto: Boolean = false
     val col = LocalColeccion.current
     val imgs = imagenesCarrete(e, j)
     val sel = e.extra.carreteSel.coerceIn(0, (imgs.size - 1).coerceAtLeast(0))
-    Column(modifier.fillMaxSize().padding(horizontal = esc.d(40)), verticalArrangement = Arrangement.spacedBy(esc.d(22))) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
+    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
+        Column {
+            Column {
                 TB("IMÁGENES DE ${j.titulo.uppercase()}", 20f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 2.4f, traducir = false)
                 TB(imgs.getOrNull(sel)?.first ?: "Sin imágenes todavía", 34f, titulo = true)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            Row(Modifier.padding(top = esc.d(8)), horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 listOf("ScreenScraper", "SteamGridDB", "TheGamesDB").forEach { f ->
                     Box(Modifier.height(esc.d(48)).vidrio(24f).clickable { Diptico.abrirCajaJuego(j.clave) }.padding(horizontal = esc.d(16)), contentAlignment = Alignment.Center) {
                         TB(f, 18f, peso = FontWeight.ExtraBold, traducir = false)
@@ -630,8 +630,8 @@ fun CarreteCV(e: Estado, j: Juego, modifier: Modifier, compacto: Boolean = false
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().padding(bottom = esc.d(36)), horizontalArrangement = Arrangement.SpaceBetween) {
-            PistaTecla("◀ ▶", "Recorrer"); PistaTecla("Y", "Buscar imágenes"); PistaTecla("R3", "Girar la caja"); PistaTecla("B", "Volver")
+        Row(Modifier.fillMaxWidth().padding(bottom = esc.d(8)), horizontalArrangement = Arrangement.SpaceBetween) {
+            PistaTecla("◀ ▶", "Recorrer", 20f); PistaTecla("Y", "Buscar", 20f); PistaTecla("B", "Volver", 20f)
         }
     }
 }

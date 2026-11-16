@@ -718,3 +718,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   7. X Ficha = la caja se da vuelta y muestra la info del juego (no texto abajo).
   8. Temas: Claude eligió eliminar los actuales y crear temas nuevos para Colección viva, manteniendo fechas especiales y calendario.
   9. Terminar lo que faltaba: Estudio (4) y Ajustes (5) con el estilo nuevo, 6d pantalla propia, 6e, pestaña Colecciones.
+- RONDA 2 hecha (16 nov, tarde): `LienzoBoceto(zoom)` con ZOOM_ARRIBA 1.45 / ZOOM_ABAJO 1.65 / ZOOM_UNA 1.35 y pantallas en franjas
+  (Column/Row con weight); `CajaFlotanteCV` (AnimatedContent al cambiar de juego, flota con `ola`, X/R3/tocar = girar al reverso; X con la caja
+  girada = ficha completa); `EstanteCV` con marco cuadrado; dock grande arriba en la de abajo; decoración del tema DETRÁS (`Estilo.decorEnFondo`,
+  `FondoTemaCV`); `coloresColeccion()` sale siempre de la paleta del tema. Temas: catálogo nuevo `Temas.incluidos` (17, ids viejos de
+  remasterizados/nuevos se conservan), `Temas.MIGRAR` para los ids de antes; nuevos/remasterizados/clasicos vacíos; galería "temas" con pestañas
+  Temas, Widgets, Calendario, Exclusivos, Mis temas. Widgets = el inicio de siempre (`PantallaInicio`, editor viejo) con `EncabezadoWidgetsCV` y
+  tarjetas de vidrio del tema (`Tarjeta` con `decorEnFondo`); `WidgetsCV`/`TiendaWidgetsCV` quedaron sin uso. Ajustes: `menuIntercambiado(e)`
+  pone las opciones abajo y la explicación arriba. Migración `cvPredeterminado1`: se entra por las carpetas (vistaConsolas "carpetas").
