@@ -193,14 +193,14 @@ class NavegacionTest {
 
     @Test fun decoracionPorTemaSeDespliegaYConservaLaIntensidadAlCambiarElAdorno() {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
-        Diptico.fijarParaPrueba(Estado(configurado = true, intro = false, tema = "cartucho", temaFestivo = false))
+        Diptico.fijarParaPrueba(Estado(configurado = true, intro = false, tema = "salon", temaFestivo = false))
         Diptico.abrirDecoraciones()
         fun elegir(id: String) = Diptico.elegirIndice(Diptico.itemsGaleria().indexOfFirst { it.id == id })
-        elegir("decor-tema:cartucho")
+        elegir("decor-tema:salon")
         elegir("decor-intensidad:1")
         elegir("decor-tipo:monedas")
-        assertEquals("monedas", Diptico.estado.value.adornosPorTema["cartucho"])
-        assertEquals("1", Diptico.estado.value.intensidadPorTema["cartucho"])
+        assertEquals("monedas", Diptico.estado.value.adornosPorTema["salon"])
+        assertEquals("1", Diptico.estado.value.intensidadPorTema["salon"])
         Diptico.cerrarPanel()
         assertNull(Diptico.estado.value.decoracionAbierta)
         assertEquals(Panel.GALERIA, Diptico.estado.value.panel)
