@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "estudio-cajas-2.0-72"
-    const val NOMBRE = "Estudio de Cajas"
+    const val ID = "cuentas-emuladores-2.0-73"
+    const val NOMBRE = "Cuentas y emuladores claros"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -544,13 +544,19 @@ object Novedades {
             Pagina("Juegos de PS2 en su carpeta", "Díptico ahora encuentra los juegos guardados cada uno en su propia carpeta (ps2/Juego/Juego.iso) y los .bin de PS2 que venían con un .cue. También reconoce carpetas como «PlayStation 2» o «Sony - PlayStation 2».", Icono.CARPETA, 0xFF3BA8FF),
             Pagina("Te cuento qué encontré", "Ajustes › Biblioteca › Volver a buscar juegos ahora termina con un resumen: juegos nuevos, los que ya estaban, y qué archivos dejé fuera y por qué.", Icono.BUSCAR, 0xFF8B5CF6),
         )),
-        Version(ID, "Estudio de Cajas", listOf(
+        Version("estudio-cajas-2.0-72", "Estudio de Cajas", listOf(
             Pagina("Estudio de Cajas", "En Personalizar de cada juego: la caja 3D a tu gusto. Arriba la ves girar, de frente, de lomo o de reverso, y con X se abre. Abajo: Caras, Forma, Acabado y Variantes. DIPPO te va contando qué tiene la caja.", Icono.PORTADA, 0xFFE0603A),
             Pagina("Cada cara con su procedencia", "Frente, lomo, reverso y disco dicen de dónde salieron (tu imagen, la comunidad, ScreenScraper o TheGamesDB). Puedes buscar arte, importar una imagen para una sola cara o devolverla a la de Díptico.", Icono.BUSCAR, 0xFF3BA8FF),
             Pagina("Forma, color y material", "Doce formas con medidas de cajas reales (PS2, PS1, Blu-ray, UMD, Switch, DS, GameCube, Wii, cartón de SNES, GBA, PC y Android), siete colores y cuatro materiales: Brillo de vitrina, Mate suave, Cartón de época y Cristal de humo.", Icono.PALETA, 0xFF8B5CF6),
             Pagina("Variantes", "Guarda versiones de la misma caja (la original, la tuya, la de coleccionista) y cambia entre ellas. Al cambiar, la de ahora se guarda sola para que nunca se pierda.", Icono.ESTRELLA, 0xFFFFB547),
             Pagina("Una melodía al recorrer tus juegos", "Al pasar de un juego a otro suena una nota de «cajita de luz» que sube y baja por una escala que nunca desafina. Cada juego tiene su nota. Se cambia en Ajustes › Controles y sonido.", Icono.MUSICA, 0xFF23C486),
             Pagina("Personalizar más ordenado", "Primero Nombre, Portada, Imagen grande, Logo y Música; después Lugar en la vitrina, un solo Ajustar encuadre (eliges la imagen primero) y el Estudio de Cajas.", Icono.AJUSTES, 0xFF2EC4A6),
+        )),
+        Version(ID, "Cuentas y emuladores claros", listOf(
+            Pagina("Cada cuenta en su lugar", "En Ajustes › Cuentas y conexiones cada servicio tiene su propia fila: Discord, RetroAchievements, ScreenScraper, TheGamesDB, SteamGridDB… Adentro está solo lo suyo y la fila dice si está conectado.", Icono.MUNDO, 0xFF3BA8FF),
+            Pagina("Emuladores con todos sus datos", "Emuladores al día muestra la versión que tienes y cuándo la instalaste, la nueva con su fecha y de dónde viene, el tamaño, sus novedades y si el APK es para el procesador de tu consola.", Icono.EMULADOR, 0xFF7C6CFF),
+            Pagina("Firmas distintas, sin sustos", "Si un emulador vino de otra tienda, te explico qué datos se pueden perder y, solo si mantienes A, Android te pregunta si lo desinstalas. Cuando termina, instalo la versión nueva sola.", Icono.CLAVE, 0xFFE0603A),
+            Pagina("Borrar una variante", "En el Estudio de Cajas › Variantes ahora puedes quitar una variante suelta: con X sobre ella o tocando «Quitar».", Icono.BORRAR, 0xFFFFB547),
         )),
     )
 

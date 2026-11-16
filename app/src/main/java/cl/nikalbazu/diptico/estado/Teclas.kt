@@ -185,7 +185,7 @@ object Teclas {
             if (arriba) when {
                 esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.cerrarCajaJuego()
                 esA(code) -> Diptico.usarEstudio()
-                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.alternarAperturaEstudio()
+                code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.xEstudio()
                 code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.siguienteVistaEstudio()
                 esY(code) -> { val k = e.extra.cajaJuego; Diptico.cerrarCajaJuego(); Diptico.elegirJuego(k); Diptico.jugar() }
             }
