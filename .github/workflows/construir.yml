@@ -172,6 +172,27 @@ jobs:
       - name: Probar los gestos del editor
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --no-daemon
 
+  capturas_revision:
+    # Solo en la rama de revisión: deja las fotos en un borrador para revisarlas sin descargar artefactos.
+    needs: [apk]
+    if: github.ref == 'refs/heads/fix/revision-capturas'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Diptico-APK
+          path: distribucion
+      - name: Subir las fotos a un borrador
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip=$(find distribucion -name 'Capturas-*.zip' | head -1)
+          test -n "$zip"
+          gh release delete revision-capturas --yes --cleanup-tag -R "$GITHUB_REPOSITORY" || true
+          gh release create revision-capturas "$zip" --draft --title "Revisión de capturas" --notes "Borrador temporal para revisar las pantallas." --target "$GITHUB_SHA" -R "$GITHUB_REPOSITORY"
+
   distribuir_beta:
     needs: [apk, gestos_widgets]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.preparar_firma)
