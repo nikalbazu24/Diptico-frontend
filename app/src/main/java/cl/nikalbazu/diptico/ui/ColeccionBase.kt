@@ -229,8 +229,10 @@ fun HoraBateria(alto: Float = 64f, letra: Float = 26f) {
     PildoraVidrio(alto) {
         TB(hora, letra, peso = FontWeight.ExtraBold, traducir = false)
         Box(Modifier.width(esc.d(2)).height(esc.d(letra)).background(c.texto.copy(alpha = 0.2f)))
-        PilaDibujo(bateria, letra)
-        TB("$bateria %", letra * 0.92f, traducir = false)
+        if (bateria in 0..100) {
+            PilaDibujo(bateria, letra)
+            TB("$bateria %", letra * 0.92f, traducir = false)
+        }
     }
 }
 

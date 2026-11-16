@@ -172,7 +172,7 @@ private fun TarjetaCV(e: Estado, w: WidgetCV) {
                 if (j == null) { TB("Aún no juegas nada", 36f, titulo = true); return@MarcoWidget }
                 TB(j.titulo, 44f, titulo = true, lineas = 2, interlineado = 44f, traducir = false)
                 val c = Consolas.porId(j.consolaId)
-                TB("${c?.nombreLargo ?: ""} · ${haceCuanto(e.datos[j.clave]?.ultimo ?: 0L).lowercase()}", 21f, color = col.sub, traducir = false)
+                TB("${c?.bonito ?: ""} · ${haceCuanto(e.datos[j.clave]?.ultimo ?: 0L).lowercase()}", 21f, color = col.sub, traducir = false)
                 Box(Modifier.weight(1f).fillMaxWidth().clip(redondo(16f))) { ArteJuego(j, preferirArte = true, maxLado = 640, modifier = Modifier.fillMaxSize()) }
                 val d = e.extra.duraciones[j.clave]
                 val jugado = e.datos[j.clave]?.tiempo ?: 0L
@@ -262,7 +262,7 @@ private fun TarjetaCV(e: Estado, w: WidgetCV) {
                 Box(Modifier.size(esc.d(14)).clip(CircleShape).background(color))
                 TB((l?.let { "${maxOf(it.bateria, it.procesador).toInt()} °C · " } ?: "") + texto, 20f, peso = FontWeight.ExtraBold, traducir = false)
             }
-            BarraDato("Batería $bat %", bat / 100f)
+            if (bat in 0..100) BarraDato("Batería $bat %", bat / 100f)
             if (libres.second > 0) BarraDato("Espacio ${(libres.second - libres.first) / 1_000_000_000} / ${libres.second / 1_000_000_000} GB",
                 1f - libres.first.toFloat() / libres.second)
         }
@@ -299,9 +299,9 @@ private fun TarjetaCV(e: Estado, w: WidgetCV) {
         "recuerdo" -> MarcoWidget(e, w) {
             val r = remember { runCatching { TuAno.recuerdo() }.getOrNull() }
             val j = r?.first?.let { f -> e.juegos.firstOrNull { it.clave == f.clave } }
-            TB(r?.let { "EL ${it.first.fecha.split("-").reversed().joinToString("/")}" } ?: "HACE UN TIEMPO", 17f, color = col.sub, espaciado = 2.4f, traducir = false)
+            TB(r?.takeIf { j != null }?.let { "EL ${it.first.fecha.split("-").reversed().joinToString("/")}" } ?: "HACE UN TIEMPO", 17f, color = col.sub, espaciado = 2.4f, traducir = false)
             TB(j?.let { "Jugabas ${it.titulo}" } ?: "Aquí aparecerán tus recuerdos", 30f, titulo = true, lineas = 2, traducir = false)
-            if (r != null) TB("${formatoTiempo(r.second)} ese día · ${j?.let { Consolas.porId(it.consolaId)?.nombreLargo } ?: ""}", 20f, color = col.sub, traducir = false)
+            if (r != null && j != null) TB("${formatoTiempo(r.second)} ese día · ${j?.let { Consolas.porId(it.consolaId)?.bonito } ?: ""}", 20f, color = col.sub, traducir = false)
             Spacer(Modifier.weight(1f))
             if (j != null) ChipWidget("Ver la ficha") { Diptico.abrirFichaDe(j.clave, 0) }
         }

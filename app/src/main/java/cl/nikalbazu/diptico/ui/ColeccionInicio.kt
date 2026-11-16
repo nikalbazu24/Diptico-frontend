@@ -150,7 +150,7 @@ fun ColeccionArriba(e: Estado) {
             horizontalArrangement = Arrangement.spacedBy(esc.d(18))) {
             PildoraVidrio(64f, onClick = { Diptico.volverASistemas() }) {
                 Box(Modifier.size(esc.d(16)).clip(CircleShape).background(c?.color ?: col.acento))
-                TB(c?.let { it.nombreLargo } ?: "Tus juegos", 28f, titulo = true, peso = FontWeight.SemiBold)
+                TB(c?.let { it.bonito } ?: "Tus juegos", 28f, titulo = true, peso = FontWeight.SemiBold)
                 if (e.visibles.isNotEmpty()) TB("${e.indiceSel + 1} de ${e.visibles.size}", 22f, color = col.sub, traducir = false)
             }
             Spacer(Modifier.weight(1f))
@@ -316,7 +316,7 @@ fun FilaConsolasCV(e: Estado, modifier: Modifier, alto: Float = 76f) {
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
                 ) {
                     Box(Modifier.size(esc.d(14)).clip(CircleShape).background(k?.color ?: col.acento))
-                    TB(k?.let { it.nombreLargo } ?: "Todos", 23f, color = if (elegida) col.enElegido else col.sub, peso = FontWeight.ExtraBold)
+                    TB(k?.let { it.bonito } ?: "Todos", 23f, color = if (elegida) col.enElegido else col.sub, peso = FontWeight.ExtraBold)
                 }
             }
         }
@@ -379,7 +379,6 @@ fun EstanteCV(e: Estado, modifier: Modifier, ancho: Float = 250f, alto: Float = 
                         giroY = { val kk = i - pos; if (abs(kk) < 1f) 14f * (1f - abs(kk)) + (if (kk < 0) 48f else -48f) * abs(kk) else if (kk < 0) 48f else -48f },
                         giroX = { -3f }, caras = e.extra.caras[j.clave], detalle = i == sel, sombraPiso = false,
                     )
-                    if (i == sel) Box(Modifier.fillMaxSize().padding(esc.d(6)).border(esc.d(4), col.elegido, RoundedCornerShape(esc.d(8))))
                 }
             }
         }
@@ -521,7 +520,7 @@ fun ColeccionUnica(e: Estado) {
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
             PildoraVidrio(64f, onClick = { Diptico.volverASistemas() }) {
                 Box(Modifier.size(esc.d(16)).clip(CircleShape).background(c?.color ?: col.acento))
-                TB(c?.let { it.nombreLargo } ?: "Tus juegos", 26f, titulo = true, peso = FontWeight.SemiBold)
+                TB(c?.let { it.bonito } ?: "Tus juegos", 26f, titulo = true, peso = FontWeight.SemiBold)
                 if (e.visibles.isNotEmpty()) TB("${e.indiceSel + 1} de ${e.visibles.size}", 20f, color = col.sub, traducir = false)
             }
             BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, descripcion = "Buscar")

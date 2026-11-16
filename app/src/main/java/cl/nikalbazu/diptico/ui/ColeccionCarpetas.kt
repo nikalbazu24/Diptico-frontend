@@ -118,7 +118,7 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
         val h = hoja
         if (h == null) {
             Box(Modifier.fillMaxSize(0.8f).border(3.dp, col.texto.copy(alpha = .25f), RoundedCornerShape(esc.d(32))), contentAlignment = Alignment.Center) {
-                TB("Aquí va el modelo 3D de ${c.nombreLargo}", 24f, color = col.tenue, lineas = 2)
+                TB("Aquí va el modelo 3D de ${c.bonito}", 24f, color = col.tenue, lineas = 2)
             }
             return@Box
         }
@@ -178,7 +178,7 @@ fun CarpetasArribaCV(e: Estado) {
         // L1 ◀ nombre ▶ R1 y el sonido de encendido.
         Row(Modifier.align(Alignment.BottomEnd).padding(end = esc.d(96), bottom = esc.d(92)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
             BotonTecla("L1", "◀", { Diptico.cambiarConsola(-1) }, alto = 72f, letra = 26f)
-            TB(c.nombreLargo, 30f, titulo = true)
+            TB(c.bonito, 30f, titulo = true)
             BotonTecla("R1", "▶", { Diptico.cambiarConsola(1) }, alto = 72f, letra = 26f)
             Box(Modifier.height(esc.d(64)).vidrio(32f).clickable { cl.nikalbazu.diptico.audio.Sonidos.encendido() }.padding(horizontal = esc.d(22)), contentAlignment = Alignment.Center) {
                 TB("♪ Sonido de encendido", 20f)
@@ -200,16 +200,16 @@ fun InfoConsolaCV(e: Estado, c: Consola, tamNombre: Float) {
         val conLogo = c.id in e.extra.logoConsolas
         val logoUri = e.consolasPropias[c.id]?.logo?.let { android.net.Uri.parse(it) }
         val logo = if (conLogo) rememberImagen(logoUri, 900) else null
-        if (conLogo && logo != null) androidx.compose.foundation.Image(logo, c.nombreLargo, contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+        if (conLogo && logo != null) androidx.compose.foundation.Image(logo, c.bonito, contentScale = androidx.compose.ui.layout.ContentScale.Fit,
             alignment = Alignment.CenterStart, modifier = Modifier.height(esc.d(tamNombre * 1.3f)).fillMaxWidth())
         else if (conLogo) Box(Modifier.size(esc.d(620), esc.d(150)).border(3.dp, col.texto.copy(alpha = .3f), RoundedCornerShape(esc.d(24)))
             .clickable { Diptico.cambiarIconoCarpeta(c.id) }, contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                TB("Logo de ${c.nombreLargo}", 24f, peso = FontWeight.ExtraBold)
+                TB("Logo de ${c.bonito}", 24f, peso = FontWeight.ExtraBold)
                 TB("Elígelo en Ajustes › Tus consolas › Logo", 17f, color = col.tenue)
             }
         }
-        else TB(e.consolasPropias[c.id]?.nombre ?: c.nombreLargo, tamNombre, titulo = true, lineas = 2, interlineado = tamNombre * 0.95f, traducir = false)
+        else TB(e.consolasPropias[c.id]?.nombre ?: c.bonito, tamNombre, titulo = true, lineas = 2, interlineado = tamNombre * 0.95f, traducir = false)
         Box(Modifier.height(esc.d(48)).clip(RoundedCornerShape(50)).background(col.vidrio).border(1.dp, col.texto.copy(alpha = .18f), RoundedCornerShape(50))
             .clickable { Diptico.alternarLogoConsola(c.id) }.padding(horizontal = esc.d(20)), contentAlignment = Alignment.Center) {
             TB(if (conLogo) "Mostrar el nombre" else "Mostrar el logo", 19f, peso = FontWeight.ExtraBold)
@@ -372,7 +372,7 @@ private fun CarpetaIcono(e: Estado, c: Consola, elegida: Boolean, una: Boolean, 
     val forma = RoundedCornerShape(esc.d(lado * 0.25f))
     Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
         IconoCarpetaCV(e, c, Modifier.graphicsLayer { scaleX = if (elegida) 1.06f else 1f; scaleY = scaleX }.size(esc.d(lado)).clip(forma).then(anilloCV(elegida, forma)), lado * 0.4f)
-        TB(c.nombreLargo, if (una) 20f else 22f, color = if (elegida) col.texto else col.sub)
+        TB(c.bonito, if (una) 20f else 22f, color = if (elegida) col.texto else col.sub)
     }
 }
 
@@ -402,7 +402,7 @@ private fun CarpetaDiptico(e: Estado, c: Consola, elegida: Boolean, una: Boolean
         Column(Modifier.weight(1f).fillMaxHeight().padding(esc.d(16)), verticalArrangement = Arrangement.SpaceBetween) {
             MiniJuegos(e, c, if (una) 52f else 56f, if (una) 74f else 78f)
             Column {
-                TB(c.nombreLargo, if (una) 25f else 28f, titulo = true, peso = FontWeight.SemiBold)
+                TB(c.bonito, if (una) 25f else 28f, titulo = true, peso = FontWeight.SemiBold)
                 TB("${e.juegosPorConsola[c.id].orEmpty().size} juegos", if (una) 18f else 20f, color = col.sub)
             }
         }
@@ -422,7 +422,7 @@ private fun CarpetaRepisa(e: Estado, c: Consola, elegida: Boolean, una: Boolean,
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(20))) {
         Column(Modifier.width(esc.d(200)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
             IconoCarpetaCV(e, c, Modifier.size(esc.d(56)).clip(RoundedCornerShape(esc.d(16))), 24f)
-            TB(c.nombreLargo, 26f, titulo = true, peso = FontWeight.SemiBold)
+            TB(c.bonito, 24f, titulo = true, peso = FontWeight.SemiBold, lineas = 2, interlineado = 26f)
             TB("${juegos.size} juegos", 19f, color = col.sub)
         }
         // Los lomos de pie sobre la repisa (los primeros juegos de la consola, con su portada recortada).
@@ -464,7 +464,7 @@ private fun CarpetaClasica(e: Estado, c: Consola, elegida: Boolean, una: Boolean
             verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
             IconoCarpetaCV(e, c, Modifier.size(esc.d(if (una) 52f else 60f)).clip(RoundedCornerShape(esc.d(16))), 22f)
             Column {
-                TB(c.nombreLargo, if (una) 23f else 26f, titulo = true, peso = FontWeight.SemiBold)
+                TB(c.bonito, if (una) 23f else 26f, titulo = true, peso = FontWeight.SemiBold)
                 TB("${e.juegosPorConsola[c.id].orEmpty().size} juegos", 19f, color = col.sub)
             }
         }
@@ -506,7 +506,7 @@ fun CarpetasUnicaCV(e: Estado) {
                 ChipElegir(n, e.extra.juegosCarpeta == m) { Diptico.elegirJuegosCarpeta(m) }
             }
             Spacer(Modifier.weight(1f))
-            (1..3).forEach { q -> ChipElegir(if (q == 1) "1 juego" else "$q juegos", e.extra.cuantosCarpeta == q) { Diptico.elegirCuantosCarpeta(q) } }
+            (1..3).forEach { q -> ChipElegir("$q", e.extra.cuantosCarpeta == q) { Diptico.elegirCuantosCarpeta(q) } }
         }
         RejillaCarpetasCV(e, Modifier.offset(esc.d(908), esc.d(578)).size(esc.d(964), esc.d(1080f - 578f - 134f)), unaPantalla = true)
         // Abajo a la derecha: DIPPO y el dock de apps.
