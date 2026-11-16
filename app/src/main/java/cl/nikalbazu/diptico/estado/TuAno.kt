@@ -65,6 +65,29 @@ object TuAno {
         guardar(l)
     }
 
+    /** Segundos jugados en cada uno de los últimos [n] días (el último es hoy). */
+    fun ultimosDias(n: Int = 7, hoy: LocalDate = LocalDate.now()): List<Pair<LocalDate, Long>> {
+        val por = (pruebaFilas ?: cargar()).groupBy { it.fecha }.mapValues { (_, l) -> l.sumOf { it.segundos } }
+        return (n - 1 downTo 0).map { d -> hoy.minusDays(d.toLong()).let { it to (por[it.toString()] ?: 0L) } }
+    }
+
+    /**
+     * Un recuerdo: lo que jugaste hace un año, un mes o una semana (en ese orden); si no hay de esos días,
+     * uno de hace más de una semana que cambia cada día. Devuelve la fila y hace cuántos días fue.
+     */
+    fun recuerdo(hoy: LocalDate = LocalDate.now()): Pair<Fila, Long>? {
+        val viejas = (pruebaFilas ?: cargar()).mapNotNull { f ->
+            runCatching { LocalDate.parse(f.fecha) }.getOrNull()?.takeIf { !it.isAfter(hoy.minusDays(7)) }?.let { f to it }
+        }
+        if (viejas.isEmpty()) return null
+        for (o in listOf(hoy.minusYears(1), hoy.minusMonths(1), hoy.minusWeeks(1))) {
+            viejas.filter { it.second == o }.maxByOrNull { it.first.segundos }?.let { return it.first to java.time.temporal.ChronoUnit.DAYS.between(o, hoy) }
+        }
+        val distintas = viejas.sortedBy { it.first.fecha }.distinctBy { it.first.clave }
+        val (f, d) = distintas[hoy.dayOfYear % distintas.size]
+        return f to java.time.temporal.ChronoUnit.DAYS.between(d, hoy)
+    }
+
     data class Resumen(
         val anio: Int,
         val segundos: Long,

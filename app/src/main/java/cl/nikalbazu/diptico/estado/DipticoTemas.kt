@@ -59,7 +59,7 @@ internal fun Diptico.temasPersonales(e: Estado): List<Tema> {
 }
 
 
-fun Diptico.todosLosTemas(e: Estado = estado.value): List<Tema> = Temas.iniciales + Temas.nuevos + temasPersonales(e) + temasExclusivosGanados()
+fun Diptico.todosLosTemas(e: Estado = estado.value): List<Tema> = (Temas.iniciales + Temas.nuevos + Temas.remasterizados + temasPersonales(e) + temasExclusivosGanados() + Temas.clasicos).distinctBy { it.id }
 
 
 /** Los temas exclusivos cuyo logro de DIPPO ya ganaste. */
@@ -222,7 +222,7 @@ internal fun Diptico.instalarTemaComunidad(entrada: TemaComunidad) {
             guardarTemasPropios(listOf(tema) + estado.value.temasPropios.filterNot { it.id == tema.id })
             elegirTema(tema.id)
             val actual = estado.value
-            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 4)
+            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 6)
             avisar(if (actual.fiesta != null) "${tema.nombre} instalado" else "${tema.nombre} instalado y aplicado")
         }.onFailure { avisar(it.message ?: "No pude instalar este tema.") }
     }

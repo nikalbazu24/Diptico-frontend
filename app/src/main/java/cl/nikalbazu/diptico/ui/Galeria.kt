@@ -209,6 +209,10 @@ fun PanelGaleria(e: Estado, conPrevia: Boolean = false) {
 /** En una pantalla, la vista previa y la acción están junto a la galería. */
 @Composable
 private fun VistaPreviaGaleria(e: Estado, item: Diptico.ItemGaleria, modifier: Modifier, compacta: Boolean = false) {
+    if (e.galeria == "temas" && item.id in WIDGETS_VIVOS) {
+        Box(modifier.padding(LocalEscala.current.d(8))) { PreviaWidgetTienda(e, item) }
+        return
+    }
     val tema = item.tema ?: return
     val esc = LocalEscala.current
     val p = LocalPaleta.current
@@ -529,6 +533,7 @@ fun VistaGaleria(e: Estado) {
                 }
             }
             e.galeria in setOf("filtros", "orden", "variantes_juego", "copias_srm") && it != null -> Column { Texto(it.nombre, 28f); Detalle(it.detalle, 16f) }
+            e.galeria == "temas" && it != null && it.id in WIDGETS_VIVOS -> PreviaWidgetTienda(e, it)
             e.galeria == "temas" && it?.tema != null -> VistaTiendaTema(e, it)
             e.galeria in setOf("temas", "importar_temas", "mezclar_tema", "tienda_temas", "decoraciones") && it?.tema != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.fillMaxWidth(0.8f).aspectRatio(1.6f).clip(RoundedCornerShape(esc.d(26)))) { PreviaTema(it.tema, e.oscuro) }
@@ -680,3 +685,22 @@ private fun TarjetaCaja(e: Estado, it: Diptico.ItemGaleria, activo: Boolean, alP
     }
 }
 
+
+
+/** La vista previa de un widget de la tienda: el widget de verdad, con tus datos, en su tamaño. */
+@Composable
+private fun PreviaWidgetTienda(e: Estado, item: Diptico.ItemGaleria) {
+    val esc = LocalEscala.current
+    val w = e.widgets.firstOrNull { it.tipo == item.id } ?: cl.nikalbazu.diptico.estado.Widget(item.id, 0, 0, 3, 2)
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        Texto(item.nombre, 22f, lineas = 1)
+        Detalle(item.detalle, 13f, lineas = 2)
+        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+            val ancho = if (w.an >= 3) 0.86f else 0.5f
+            Box(Modifier.fillMaxWidth(ancho).aspectRatio(w.an.toFloat() / w.al.coerceAtLeast(1) * 1.15f)) {
+                androidx.compose.runtime.CompositionLocalProvider(LocalWidget provides w) { ContenidoWidget(e, w, w.an, w.al) }
+            }
+        }
+        Detalle("A: ${if (item.enUso) "quitar de tu inicio" else "poner en tu inicio"} · Para moverlo o cambiar su tamaño, mantén presionado en el inicio", 11.5f, lineas = 2)
+    }
+}
