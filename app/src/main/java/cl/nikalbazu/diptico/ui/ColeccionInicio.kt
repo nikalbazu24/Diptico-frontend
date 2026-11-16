@@ -172,6 +172,7 @@ fun ColeccionArriba(e: Estado) {
                     if (e.visibles.isNotEmpty()) TB("${e.indiceSel + 1} de ${e.visibles.size}", 20f, color = col.sub, traducir = false)
                 }
                 Spacer(Modifier.weight(1f))
+                BotonWidgetsCV()
                 HoraBateria(60f, 24f)
                 BotonPerfil(64f)
             }
@@ -631,3 +632,14 @@ fun CarreteCV(e: Estado, j: Juego, modifier: Modifier, compacto: Boolean = false
 
 // ———————————————————————————— 3 · una pantalla ————————————————————————————
 
+
+
+/** Botón a la vista para llegar a los widgets (también se llega deslizando la portada hacia el lado). */
+@Composable
+internal fun BotonWidgetsCV() {
+    val esc = LocalEscala.current
+    PildoraVidrio(60f, onClick = { Diptico.fijarInicio("widgets") }) {
+        IconoDiptico(Icono.APPS, LocalColeccion.current.texto, 28f, acento = Coral)
+        TB("Widgets", 22f, peso = FontWeight.ExtraBold)
+    }
+}
