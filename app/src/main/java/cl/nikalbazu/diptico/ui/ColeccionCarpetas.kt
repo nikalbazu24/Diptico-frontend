@@ -133,12 +133,13 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
         }
     }, contentAlignment = Alignment.Center) {
         // Cada consola es su propio contenido: al cambiar de carpeta la de antes se va y la nueva entra.
+        val t1 = duracionMovimiento(260); val t2 = duracionMovimiento(380); val t3 = duracionMovimiento(180)
         androidx.compose.animation.AnimatedContent(
             targetState = c, contentKey = { it.id },
             transitionSpec = {
-                (androidx.compose.animation.fadeIn(tween(duracionMovimiento(260))) +
-                    androidx.compose.animation.scaleIn(tween(duracionMovimiento(380), easing = CurvaPosarse), initialScale = 0.9f)) togetherWith
-                    androidx.compose.animation.fadeOut(tween(duracionMovimiento(180)))
+                (androidx.compose.animation.fadeIn(tween(t1)) +
+                    androidx.compose.animation.scaleIn(tween(t2, easing = CurvaPosarse), initialScale = 0.9f)) togetherWith
+                    androidx.compose.animation.fadeOut(tween(t3))
             }, label = "consola-img", modifier = Modifier.fillMaxSize(),
         ) { k -> ImagenConsola(k, ola, { giro.value + stickY }, { giroX.value + stickX }) }
     }
