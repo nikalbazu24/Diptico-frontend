@@ -1724,7 +1724,7 @@ class Capturas {
     private fun cfg(paso: PasoTuto, indice: Int = 0) = cv().copy(configurado = false, pasoTuto = paso, indice = indice, modoElegido = true, modoPantallas = "dos")
     @Test fun t504_config_tu_arriba() = foto("504_config_tu_arriba", cfg(PasoTuto.BIENVENIDA).copy(nombre = "Nicolás"), Rol.SUPERIOR)
     @Config(qualifiers = ABAJO)
-    @Test fun t505_config_tu_abajo() = foto("505_config_tu_abajo", cfg(PasoTuto.BIENVENIDA, 2).copy(nombre = "Nicolás"), Rol.INFERIOR, mi = 1)
+    @Test fun t505_config_tu_abajo() = foto("505_config_tu_abajo", cfg(PasoTuto.BIENVENIDA, 1).copy(nombre = "Nicolás"), Rol.INFERIOR, mi = 1)
     @Test fun t506_config_juegos_arriba() = foto("506_config_juegos_arriba", cfg(PasoTuto.CARPETA), Rol.SUPERIOR)
     @Config(qualifiers = ABAJO)
     @Test fun t507_config_emuladores_abajo() = foto("507_config_emuladores_abajo", cfg(PasoTuto.EMULADORES, 1), Rol.INFERIOR, mi = 1)
@@ -1771,6 +1771,12 @@ class Capturas {
     }
     @Test fun t520_emblema_arriba() = foto("520_emblema_arriba", conArte(cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas"))), Rol.SUPERIOR)
     @Test fun t521_emblema_una() = foto("521_emblema_una", conArte(cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false))), Rol.UNICA)
+    @Config(qualifiers = ABAJO)
+    @Test fun t523_config_juegos_abajo() = foto("523_config_juegos_abajo", cfg(PasoTuto.CARPETA, 1), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t524_config_listo_abajo() = foto("524_config_listo_abajo", cfg(PasoTuto.LISTO).copy(nombre = "Nicolás"), Rol.INFERIOR, mi = 1)
+    @Test fun t525_emblema_historico() = foto("525_emblema_historico", conArte(cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas"))).let { e ->
+        e.copy(juegos = e.juegos.map { if (it.clave == "snes/1") it.copy(titulo = "Super Mario World") else it }) }.copy(modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
     @Test fun t522_config_estilo_emblema() = foto("522_config_estilo_emblema", conArte(cfg(PasoTuto.APARIENCIA, 2)), Rol.SUPERIOR)
     // Menú de un widget (boceto 11): abajo con dos pantallas, al costado con una.
     private fun conSemana(e: Estado) = e.copy(widgets = e.widgets.map { if (it.tipo == "tuSemana") it.copy(visible = true, x = 3, y = 2, an = 3, al = 2, pagina = 0) else if (it.tipo == "recientes") it.copy(visible = false) else it })

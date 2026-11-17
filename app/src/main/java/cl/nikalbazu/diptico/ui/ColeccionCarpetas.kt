@@ -231,7 +231,7 @@ private fun FondoJuegoEmblema(fondo: FondoConsola, modifier: Modifier) {
                     .background(Color.Black.copy(alpha = .38f)).padding(horizontal = esc.d(18), vertical = esc.d(8)),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
             ) {
-                TB(if (f.modo == "emblema") "TU MÁS JUGADO" else "DE FONDO", 15f, color = Color.White.copy(alpha = .7f), peso = FontWeight.ExtraBold, espaciado = 2f)
+                TB(when (f.modo) { "historico" -> "EMBLEMA"; "emblema" -> "TU MÁS JUGADO"; else -> "DE FONDO" }, 15f, color = Color.White.copy(alpha = .7f), peso = FontWeight.ExtraBold, espaciado = 2f)
                 TB(f.juego, 20f, color = Color.White, peso = FontWeight.ExtraBold, traducir = false)
             }
         }

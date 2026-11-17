@@ -90,19 +90,20 @@ private fun focoDe(k: Int, una: Boolean): Foco? = if (una) when (k) {
     else -> null
 }
 
-/** El «pruébalo» de cada paso: qué hay que hacer y qué responde DIPPO al lograrlo. */
-private fun retoDe(k: Int): Pair<String, String>? = when (k) {
-    1 -> "gatillo" to "¡Eso! Así saltas de consola en consola."
-    3 -> "gatillo2" to "¡Bien! Ahí viven tus widgets."
-    5 -> "select" to "¡Así se cambia la vista!"
-    6 -> "toque" to "¡Hola, hola! Cuando quieras, pregúntame."
-    else -> null
-}
+/** El «pruébalo» de cada paso (obligatorio): qué hay que hacer y qué responde DIPPO al lograrlo. */
+private fun retoDe(k: Int): Pair<String, String>? = RecorridoVivo.retoDe(k)?.let { it to when (it) {
+    "gatillo" -> "¡Eso! Así saltas de consola en consola."
+    "x" -> "¡Así se abre! Ahí cambias su color, ícono y fondo."
+    "gatillo2" -> "¡Bien! Ahí viven tus widgets."
+    "select" -> "¡Así se cambia la vista!"
+    else -> "¡Hola, hola! Cuando quieras, pregúntame."
+} }
 
-private fun pistaReto(k: Int) = when (k) { 1 -> "Aprieta L1 o R1"; 3 -> "Aprieta L2 o R2"; 5 -> "Aprieta Select"; 6 -> "Tócame"; else -> "" }
+private fun pistaReto(k: Int) = when (k) { 1 -> "Aprieta L1 o R1"; 2 -> "Aprieta X"; 3 -> "Aprieta L2 o R2"; 5 -> "Aprieta Select"; 6 -> "Tócame"; else -> "" }
 
 private fun fraseDe(que: String): String = when (que) {
     "toque" -> "¡Jiji, cosquillas!"
+    "falta" -> "¡Primero pruébalo! Mira lo que te pido abajo."
     "gatillo" -> "L1 y R1 cambian de consola."
     "gatillo2" -> "L2 y R2 te llevan a Tu espacio."
     "select" -> "Select cambia la vista."
@@ -132,7 +133,7 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
     fun reaccionar(que: String) {
         alcance.launch {
             val cumple = reto != null && reto.first == que && !retoHecho
-            if (cumple) retoHecho = true
+            if (cumple) { retoHecho = true; RecorridoVivo.hecho = k }
             frase = if (cumple) reto!!.second else fraseDe(que)
             caraReaccion = if (cumple) CaraDippo.CELEBRANDO else if (que == "toque") CaraDippo.SORPRENDIDO else CaraDippo.FELIZ
             if (anima) launch { salto.animateTo(-36f, tween(140)); salto.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = 360f)) }
@@ -157,7 +158,7 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
         val pulso = rememberInfiniteTransition(label = "halo").animateFloat(.55f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "p")
         Canvas(
             Modifier.fillMaxSize()
-                .clickable(interactionSource = null, indication = null) { if (reto == null || retoHecho) Diptico.moverNovedades(1) },
+                .clickable(interactionSource = null, indication = null) { if (reto == null || retoHecho) Diptico.moverNovedades(1) else reaccionar("falta") },
         ) {
             val u = size.width / w
             val velo = Color(0xFF030308).copy(alpha = .74f)
@@ -228,12 +229,12 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
                     val p2 = rememberInfiniteTransition(label = "reto").animateFloat(.6f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "r")
                     Box(Modifier.graphicsLayer { alpha = if (retoHecho) 1f else p2.value }.clip(RoundedCornerShape(50))
                         .background(if (retoHecho) Color(0xFF2EC4A6) else Color(0xFF6B4EFF))
-                        .clickable { if (!retoHecho) reaccionar(reto.first) }.padding(horizontal = esc.d(18), vertical = esc.d(8))) {
+.padding(horizontal = esc.d(18), vertical = esc.d(8))) {
                         TB(if (retoHecho) "¡Eso! ✓" else pistaReto(k), 19f, color = Color.White, peso = FontWeight.ExtraBold)
                     }
                 }
                 Spacer(Modifier.weight(1f))
-                TB(if (reto != null && !retoHecho) "B saltar" else if (k == paginas.size - 1) "A ¡A jugar!" else "A siguiente · B saltar", 17f, color = Color(0xFF4A4B63), peso = FontWeight.ExtraBold)
+                TB(if (reto != null && !retoHecho) "Hazlo para seguir" else if (k == paginas.size - 1) "A ¡A jugar!" else "A siguiente", 17f, color = Color(0xFF4A4B63), peso = FontWeight.ExtraBold)
             }
         }
     }

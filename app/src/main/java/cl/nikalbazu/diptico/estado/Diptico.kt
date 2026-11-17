@@ -2931,7 +2931,8 @@ object Diptico {
     fun aceptar() {
         val e = estado.value
         if (!e.configurado && e.panel == Panel.NINGUNO) {
-            val op = opcionesTuto().getOrNull(e.indice) ?: return
+            // El último lugar (después de las opciones) es el botón «Siguiente» fijo de abajo.
+            val op = opcionesTuto().getOrNull(e.indice) ?: run { siguientePaso(); return }
             op.accion()
             return
         }
@@ -5139,8 +5140,8 @@ object Diptico {
                 "«Vidrio» deja las carpetas transparentes, con el color de la consola difuminado y el fondo asomando. Las otras son opacas: oscuras (cómodas de noche), claras como papel, o «Según el tema».",
                 listOf("vidrio", "auto", "oscuro", "claro"), listOf("Vidrio", "Según el tema", "Oscuras", "Claras"), e.extra.carpetasTono) { elegirTonoCarpetas(it) },
             opcionLista("Detrás de cada consola", Icono.PORTADA,
-                "En el inicio, de fondo detrás de cada consola: su juego más jugado (difuminado) o la consola sola. Cada consola lo puede cambiar en su configuración › Fondo.",
-                listOf("emblema", "consola"), listOf("Su juego más jugado", "La consola"), e.extra.fondoConsolas) { elegirFondoConsolas(it) },
+                "En el inicio, de fondo detrás de cada consola: su juego emblema (el que hizo historia en esa consola, como God of War en PS2, si lo tienes; si no, tu más jugado) o la consola sola. Cada consola lo puede cambiar en su configuración › Fondo.",
+                listOf("emblema", "consola"), listOf("Su juego emblema", "La consola"), e.extra.fondoConsolas) { elegirFondoConsolas(it) },
             Opcion("Ordenar carpetas", "A tu gusto", Icono.VISTA,
                 "Las carpetas tiemblan y las mueves arrastrando con el dedo, o con A y la cruceta. También se entra manteniendo una carpeta presionada. B o «Listo» termina.") {
                 cerrarPanel(); empezarOrdenCarpetas()

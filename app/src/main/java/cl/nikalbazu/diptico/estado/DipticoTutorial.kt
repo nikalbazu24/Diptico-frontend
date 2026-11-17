@@ -67,30 +67,45 @@ fun nombrePasoTuto(p: PasoTuto) = when (p) {
 }
 
 /** Los temas que se ofrecen la primera vez (los cuatro primeros incluidos). */
-internal val TEMAS_INICIALES: List<Tema> get() = Temas.incluidos.take(4)
+internal val TEMAS_INICIALES: List<Tema> get() = Temas.incluidos
 
-
-internal fun Diptico.indiceInicial(p: PasoTuto, e: Estado): Int = when (p) {
-    PasoTuto.PANTALLAS -> if (!e.modoElegido) (if (e.dosDisponibles) 0 else 1)
-        else listOf("dos", "una_negra", "una_libre").indexOf(e.modoPantallas).coerceAtLeast(0)
-    PasoTuto.TEXTO -> tamanos.indexOfFirst { kotlin.math.abs(it - e.tamTexto) < 0.01f }.coerceAtLeast(0)
-    PasoTuto.DISPOSICION -> if (e.intercambiar) 1 else 0
-    PasoTuto.JUEGOS -> if (e.pantallaJuegos == "abajo") 1 else 0
-    PasoTuto.MUSICA -> if (!e.musica) 4 else ordenPistas.indexOf(e.pista).let { if (it < 0) 5 else it }
-    PasoTuto.APARIENCIA -> if (e.tema == "diptico_vidrio") 2 else if (e.oscuro) 0 else 1
-    else -> 0
-}
 
 
 internal fun Diptico.irAPaso(p: PasoTuto) {
-    actualizar { it.copy(pasoTuto = p, indice = indiceInicial(p, it), panel = Panel.NINGUNO) }
+    actualizar { it.copy(pasoTuto = p, indice = 0, panel = Panel.NINGUNO) }
+}
+
+/** ↑↓ en la configuración: de fila en fila; el último lugar es «Siguiente». */
+fun Diptico.moverConfig(d: Int) {
+    val n = opcionesTuto().size
+    actualizar { it.copy(indice = (it.indice + d).coerceIn(0, n)) }
+    cl.nikalbazu.diptico.audio.Sonidos.mover()
+}
+
+/** ◀▶ en la configuración: cambia la opción de la fila (personaje, color, tema…) sin moverse de ella. */
+fun Diptico.ladoConfig(d: Int) {
+    val o = opcionesTuto().getOrNull(estado.value.indice) ?: return
+    val menos = o.menos ?: return
+    if (d < 0) menos() else o.accion()
+    cl.nikalbazu.diptico.audio.Sonidos.mover()
+}
+
+/** Qué dice el botón fijo de abajo. */
+fun Diptico.textoSiguiente(e: Estado): String = when (e.pasoTuto) {
+    PasoTuto.LISTO -> "Empezar el recorrido"
+    PasoTuto.CARPETA -> if (e.juegos.isEmpty()) "Seguir sin juegos" else "Siguiente"
+    else -> "Siguiente"
 }
 
 
 fun Diptico.siguientePaso() {
     val pasos = pasosTuto()
-    val i = pasos.indexOf(estado.value.pasoTuto)
-    if (i < 0 || i >= pasos.size - 1) terminarConfiguracion() else irAPaso(pasos[i + 1])
+    val e = estado.value
+    // Al dejar «Tus juegos» con juegos encontrados, las portadas se bajan de fondo.
+    if (e.pasoTuto == PasoTuto.CARPETA && e.juegos.isNotEmpty() && e.descarga == null && e.sinPortada > 0) descargarPortadas(todo = false)
+    val i = pasos.indexOf(e.pasoTuto)
+    if (i < 0 || i >= pasos.size - 1) terminarConfiguracion(recorrido = true) else irAPaso(pasos[i + 1])
+    cl.nikalbazu.diptico.audio.Sonidos.aceptar()
 }
 
 
@@ -122,14 +137,22 @@ fun Diptico.opcionesTuto(): List<Opcion> {
     return when (e.pasoTuto) {
         PasoTuto.BIENVENIDA -> {
             val per = e.extra.perfil.personaje
-            val ids = listOf(INICIAL) + PERSONAJES.map { it.first }
+            val ids = PERSONAJES.map { it.first } + INICIAL
             val k = ids.indexOf(per).coerceAtLeast(0)
+            val colores = Perfil.COLORES
+            val c = colores.indexOfFirst { it.second == e.extra.perfil.color }.coerceAtLeast(0)
+            val conDiscord = e.extra.discordUsuario.isNotBlank()
             listOf(
-                Opcion("Siguiente", "Toma unos 2 minutos", Icono.JUGAR) { siguientePaso() },
                 Opcion("Tu nombre", e.nombre.ifBlank { "Toca para escribir" }, Icono.TITULO) { abrirTexto("nombre", e.nombre) },
                 Opcion("Tu personaje", nombrePersonaje(per), Icono.BISA,
-                    menos = { cambiarPerfil { it.copy(personaje = ids[(k - 1).mod(ids.size)], foto = "") } },
-                ) { cambiarPerfil { it.copy(personaje = ids[(k + 1).mod(ids.size)], foto = "") } },
+                    menos = { cambiarPerfil { it.copy(personaje = ids[(k - 1).mod(ids.size)], foto = "", fotoDiscord = false) } },
+                ) { cambiarPerfil { it.copy(personaje = ids[(k + 1).mod(ids.size)], foto = "", fotoDiscord = false) } },
+                Opcion("Tu color", colores[c].first, Icono.PALETA,
+                    menos = { cambiarPerfil { it.copy(color = colores[(c - 1).mod(colores.size)].second) } },
+                ) { cambiarPerfil { it.copy(color = colores[(c + 1).mod(colores.size)].second) } },
+                Opcion("Foto de Discord", when { e.extra.perfil.fotoDiscord -> "En uso ✓"; conDiscord -> "Usar la de ${e.extra.discordUsuario}"; else -> "Conectar (opcional)" }, Icono.PERFIL) {
+                    if (!conDiscord) iniciarDiscord() else cambiarPerfil { it.copy(fotoDiscord = !it.fotoDiscord) }
+                },
                 Opcion("Idioma", (Idioma.IDIOMAS.firstOrNull { it.first == e.idioma }?.second ?: e.idioma), Icono.IDIOMA) {
                     val l = Idioma.IDIOMAS.map { it.first }
                     cambiarIdioma(l[(l.indexOf(estado.value.idioma) + 1).mod(l.size)])
@@ -189,26 +212,12 @@ fun Diptico.opcionesTuto(): List<Opcion> {
             },
         )
         PasoTuto.CARPETA -> when {
-            !e.tieneCarpeta -> listOf(
-                Opcion("Elegir carpeta de juegos", "La que tiene snes, psx, nds…", Icono.CARPETA) { pedirCarpeta?.invoke(Carpeta.JUEGOS) },
-                Opcion("Hacerlo después", "Puedes elegirla desde el menú", Icono.CONTINUAR) { siguientePaso() },
-            )
             e.escaneando -> emptyList()
-            e.juegos.isEmpty() -> listOf(
-                Opcion("Elegir otra carpeta", icono = Icono.CARPETA) { pedirCarpeta?.invoke(Carpeta.JUEGOS) },
-                Opcion("Continuar sin juegos", icono = Icono.CONTINUAR) { siguientePaso() },
-            )
             else -> listOf(
-                Opcion("Continuar", "${e.juegos.size} juegos encontrados · las portadas se bajan solas", Icono.CHECK) {
-                    // Las portadas se bajan de fondo (antes era un paso aparte).
-                    if (estado.value.descarga == null && estado.value.sinPortada > 0) descargarPortadas(todo = false)
-                    siguientePaso()
-                },
-                Opcion("Elegir otra carpeta", icono = Icono.CARPETA) { pedirCarpeta?.invoke(Carpeta.JUEGOS) },
+                Opcion(if (e.tieneCarpeta) "Elegir otra carpeta" else "Elegir la carpeta de juegos", "La que tiene snes, ps2, gba…", Icono.CARPETA) { pedirCarpeta?.invoke(Carpeta.JUEGOS) },
             )
         }
-        PasoTuto.EMULADORES -> listOf(Opcion("Siguiente", if (e.consolasEmu.all { emuladorListo(it) }) "Todas listas para jugar" else "Las que faltan se arreglan después", Icono.CHECK) { siguientePaso() }) +
-            e.consolasEmu.map { c ->
+        PasoTuto.EMULADORES -> e.consolasEmu.map { c ->
                 Opcion(c.bonito, if (emuladorListo(c)) nombreEmulador(c) else "Falta: ${c.sugerido}", Icono.EMULADOR, activa = emuladorListo(c)) { ciclarEmulador(c) }
             }
         PasoTuto.PORTS -> listOf(
@@ -274,20 +283,16 @@ fun Diptico.opcionesTuto(): List<Opcion> {
             val temas = TEMAS_INICIALES
             val t = temas.indexOfFirst { it.id == e.tema }.coerceAtLeast(0)
             listOf(
-                Opcion("Siguiente", icono = Icono.CHECK) { siguientePaso() },
                 Opcion("Tema", temas.getOrNull(t)?.nombre ?: "", Icono.TEMA,
                     menos = { elegirTema(temas[(t - 1).mod(temas.size)].id) }) { elegirTema(temas[(t + 1).mod(temas.size)].id) },
-                Opcion("Detrás de cada consola", if (e.extra.fondoConsolas == "consola") "La consola" else "Su juego más jugado", Icono.PORTADA,
+                Opcion("Detrás de cada consola", if (e.extra.fondoConsolas == "consola") "La consola" else "Su juego emblema", Icono.PORTADA,
                     menos = { elegirFondoConsolas(if (estado.value.extra.fondoConsolas == "consola") "emblema" else "consola") },
                 ) { elegirFondoConsolas(if (estado.value.extra.fondoConsolas == "consola") "emblema" else "consola") },
                 Opcion("Música y sonidos", if (e.musica) "Encendidos" else "Apagados", Icono.MUSICA, activa = e.musica) { fijarMusica(!estado.value.musica) },
             )
         }
         PasoTuto.CONTROLES -> listOf(Opcion("Continuar", "Cuando quieras", Icono.CHECK) { siguientePaso() })
-        PasoTuto.LISTO -> listOf(
-            Opcion("Muéstrame cómo se usa", "Un recorrido de 2 minutos con DIPPO, probando cada botón", Icono.TUTORIAL) { terminarConfiguracion(recorrido = true) },
-            Opcion("Ya sé, llévame a mi colección", "Todo esto se cambia después en Ajustes", Icono.JUGAR) { terminarConfiguracion(recorrido = false) },
-        )
+        PasoTuto.LISTO -> emptyList()
     }
 }
 

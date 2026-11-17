@@ -355,6 +355,13 @@ object Teclas {
                 KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> RecorridoVivo.avisar("gatillo2")
                 KeyEvent.KEYCODE_BUTTON_THUMBL, KeyEvent.KEYCODE_BUTTON_THUMBR -> RecorridoVivo.avisar("stick")
             }
+            // El recorrido de la primera vez es obligatorio: no se salta y cada paso con reto pide hacerlo de verdad.
+            if (e.recorrido) {
+                if (arriba && esA(code)) {
+                    if (RecorridoVivo.puedeSeguir(e.novedades)) Diptico.moverNovedades(1) else RecorridoVivo.avisar("falta")
+                }
+                return true
+            }
             if (abajo && ev.repeatCount == 0) when (code) {
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverNovedades(-1)
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverNovedades(1)
@@ -478,13 +485,13 @@ object Teclas {
             return false
         }
 
-        // Tutorial guiado (sin paneles abiertos).
+        // Configuración de la primera vez: ↑↓ entre filas (la última es «Siguiente»), ◀▶ cambian la fila, A usa,
+        // Start pasa al paso siguiente desde donde estés y B vuelve.
         if (!e.configurado && e.panel == Panel.NINGUNO) {
             if (abajo) {
                 val d = dir(code)
                 if (d != null) {
-                    Diptico.moverIndice(if (d.first + d.second < 0) -1 else 1)
-                    Diptico.marcarProbado("cruceta")
+                    if (d.second != 0) Diptico.moverConfig(d.second) else Diptico.ladoConfig(d.first)
                     return true
                 }
                 return esA(code) || esB(code) || code in botonesControl
@@ -493,9 +500,8 @@ object Teclas {
                 when {
                     esA(code) -> Diptico.aceptar()
                     esB(code) -> Diptico.atras()
-                    code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.marcarProbado("gatillos")
-                    code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.marcarProbado("Y")
-                    code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.marcarProbado("Start")
+                    code == KeyEvent.KEYCODE_BUTTON_START || code == KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.siguientePaso()
+                    code == KeyEvent.KEYCODE_BUTTON_L1 -> Diptico.pasoAnterior()
                     code in botonesControl -> Unit
                     else -> return false
                 }

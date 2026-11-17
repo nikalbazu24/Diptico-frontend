@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,7 +67,7 @@ private fun dichoDe(e: Estado): DichoPaso = when (e.pasoTuto) {
         DichoPaso("Todas tus consolas tienen con qué jugar. ¡Bien!", "Cada consola puede usar otro emulador cuando quieras.", CaraDippo.CELEBRANDO)
         else DichoPaso("Para jugar hacen falta emuladores. Te marqué los que faltan.",
             "Toca una consola para elegir su emulador. Los que faltan se instalan después en Ajustes › Emuladores al día.", CaraDippo.PENSANDO)
-    PasoTuto.APARIENCIA -> DichoPaso("¿Cómo quieres que se vea? Detrás de cada consola puedo poner su juego más jugado.",
+    PasoTuto.APARIENCIA -> DichoPaso("¿Cómo quieres que se vea? Detrás de cada consola puedo poner el juego que la hizo famosa.",
         "Lo ves cambiar al instante.", CaraDippo.FELIZ)
     else -> DichoPaso("¡Listo${if (e.nombre.isNotBlank()) ", ${e.nombre}" else ""}! Tu colección ya está armada.",
         "¿Te muestro dónde está cada cosa? Toma dos minutos.", CaraDippo.CELEBRANDO)
@@ -80,7 +81,14 @@ fun ConfigArribaCV(e: Estado, modifier: Modifier = Modifier) {
         val col = LocalColeccion.current
         Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(col.acento.copy(alpha = .35f), Color.Transparent), radius = 1500f)))
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(80), vertical = esc.d(40)), verticalArrangement = Arrangement.spacedBy(esc.d(30))) {
-            FilaPasos(e)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(30))) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
+                    MarcaLogo(46f); TB("Díptico", 40f, titulo = true, traducir = false)
+                }
+                Spacer(Modifier.weight(1f))
+                FilaPasos(e)
+            }
+            BarraProgreso(e)
             Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(60))) {
                 val d = dichoDe(e)
                 Column(Modifier.width(esc.d(minOf(720f, anchoLienzo() * .4f))).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(26), Alignment.CenterVertically)) {
@@ -123,6 +131,18 @@ private fun FilaPasos(e: Estado) {
     }
 }
 
+/** Una barra fina con el avance de la configuración. */
+@Composable
+private fun BarraProgreso(e: Estado) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val pasos = Diptico.pasosTuto(e)
+    val f by androidx.compose.animation.core.animateFloatAsState((pasos.indexOf(e.pasoTuto) + 1f) / pasos.size, tween(500), label = "avance")
+    Box(Modifier.fillMaxWidth().height(esc.d(8)).clip(CircleShape).background(col.texto.copy(alpha = .08f))) {
+        Box(Modifier.fillMaxWidth(f).fillMaxHeight().clip(CircleShape).background(Brush.horizontalGradient(listOf(col.acento, Color(0xFFFF9B54)))))
+    }
+}
+
 /** La vista previa de cada paso: lo que vas armando. */
 @Composable
 private fun PreviaPaso(e: Estado, paso: PasoTuto) {
@@ -130,7 +150,7 @@ private fun PreviaPaso(e: Estado, paso: PasoTuto) {
     val col = LocalColeccion.current
     when (paso) {
         PasoTuto.BIENVENIDA -> Row(
-            Modifier.fillMaxWidth(.95f).vidrio(56f, fuerte = true).padding(esc.d(56)),
+            Modifier.fillMaxWidth(.95f).vidrio(56f, fuerte = true).border(4.dp, Color(e.extra.perfil.color), RoundedCornerShape(esc.d(56))).padding(esc.d(56)),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(40)),
         ) {
             FotoPerfil(e.extra.perfil, 230f)
@@ -151,24 +171,7 @@ private fun PreviaPaso(e: Estado, paso: PasoTuto) {
                 if (c != null) Consola3D(c, Modifier.align(Alignment.CenterEnd).padding(end = esc.d(40)).fillMaxHeight(.7f).aspectRatio(1.4f))
             }
         }
-        else -> {
-            val listas = e.consolasEmu.count { Diptico.emuladorListo(it) }
-            val datos = listOf(
-                "${e.juegos.size}" to "juegos en tu colección", "${e.consolasConJuegos.size}" to "consolas",
-                "$listas/${e.consolasEmu.size}" to "listas para jugar", (Diptico.todosLosTemas(e).firstOrNull { it.id == e.tema }?.nombre ?: "") to "tu tema",
-            )
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(esc.d(22))) {
-                datos.chunked(if (anchoLienzo() < 1500f) 1 else 2).forEach { fila ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(22))) {
-                        fila.forEach { (n, t) ->
-                            Column(Modifier.weight(1f).vidrio(36f).padding(horizontal = esc.d(30), vertical = esc.d(26))) {
-                                TB(n, 64f, titulo = true, traducir = false, lineas = 1); TB(t, 26f, color = col.sub, peso = FontWeight.ExtraBold, lineas = 2)
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        else -> Estante(e, conEmulador = false)
     }
 }
 
@@ -211,7 +214,11 @@ private fun Estante(e: Estado, conEmulador: Boolean) {
     }
 }
 
-/** La pantalla de abajo (o la mitad derecha con una pantalla): los controles del paso. */
+/**
+ * La pantalla de abajo (o la mitad derecha con una pantalla): los controles del paso, cada uno en su fila con su propio
+ * desplazamiento (◀▶ cambia dentro de la fila, ↑↓ pasa de fila). «Siguiente» queda fijo abajo: Start o R1 lo aprietan desde
+ * cualquier fila, así nunca hay que subir a buscarlo.
+ */
 @Composable
 fun ConfigAbajoCV(e: Estado, modifier: Modifier = Modifier) {
     LienzoBoceto(1240f, 1080f, modifier.testTag("config-abajo"), fondo = LocalColeccion.current.fondo, zoom = if (e.unaPantalla || !e.dosDisponibles) 1f else ZOOM_ABAJO) {
@@ -219,70 +226,117 @@ fun ConfigAbajoCV(e: Estado, modifier: Modifier = Modifier) {
         val col = LocalColeccion.current
         val opciones = Diptico.opcionesTuto()
         val pasos = Diptico.pasosTuto(e)
-        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(32)), verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
-                TB(nombrePasoTuto(e.pasoTuto), 46f, titulo = true)
-                TB("Paso ${pasos.indexOf(e.pasoTuto) + 1} de ${pasos.size}", 20f, color = col.sub, peso = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = esc.d(8)))
+        val enSiguiente = e.indice >= opciones.size
+        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(44), vertical = esc.d(34)), verticalArrangement = Arrangement.spacedBy(esc.d(20))) {
+            Column(verticalArrangement = Arrangement.spacedBy(esc.d(4))) {
+                TB("PASO ${pasos.indexOf(e.pasoTuto) + 1} DE ${pasos.size}", 18f, color = col.acento, peso = FontWeight.ExtraBold, espaciado = 3f)
+                TB(tituloPaso(e.pasoTuto), 50f, titulo = true)
+                TB(subtituloPaso(e), 22f, color = col.sub, lineas = 2)
             }
-            when (e.pasoTuto) {
-                PasoTuto.BIENVENIDA -> Personajes(e)
-                PasoTuto.CARPETA -> BotonCarpeta(e)
-                PasoTuto.APARIENCIA -> MuestrasTemas(e)
-                else -> Unit
+            if (e.pasoTuto == PasoTuto.CARPETA) BotonCarpeta(e)
+            if (e.pasoTuto == PasoTuto.LISTO) ResumenListo(e, Modifier.fillMaxWidth().weight(1f))
+            else {
+                if (opciones.isEmpty() && e.escaneando) Row(Modifier.fillMaxWidth().height(esc.d(90)).vidrio(28f).padding(horizontal = esc.d(26)), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(esc.d(16))) { Girador(30f); TB("Buscando tus juegos…", 26f) }
+                val lista = rememberLazyListState()
+                LaunchedEffect(e.indice, e.pasoTuto) { if (opciones.isNotEmpty() && !enSiguiente) lista.animateScrollToItem((e.indice - 1).coerceAtLeast(0)) }
+                LazyColumn(Modifier.fillMaxWidth().weight(1f), state = lista, verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
+                    itemsIndexed(opciones) { i, o ->
+                        if (e.pasoTuto == PasoTuto.CARPETA) return@itemsIndexed
+                        FilaConfig(e, o, i == e.indice) { Diptico.elegirIndice(i) }
+                    }
+                }
             }
-            if (opciones.isEmpty()) Row(Modifier.fillMaxWidth().height(esc.d(90)).vidrio(28f).padding(horizontal = esc.d(26)), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(esc.d(16))) { Girador(30f); TB("Buscando…", 26f) }
-            val lista = rememberLazyListState()
-            LaunchedEffect(e.indice, e.pasoTuto) { if (opciones.isNotEmpty()) lista.animateScrollToItem((e.indice.coerceIn(0, opciones.size - 1) - 1).coerceAtLeast(0)) }
-            LazyColumn(Modifier.fillMaxWidth().weight(1f), state = lista, verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                itemsIndexed(opciones) { i, o -> FilaConfig(o, i == e.indice, principal = i == 0) { Diptico.elegirIndice(i) } }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (pasos.indexOf(e.pasoTuto) > 0) BotonTecla("B", "Atrás", { Diptico.pasoAnterior() }, alto = 72f, letra = 24f)
+            // El pie fijo: Atrás y Siguiente.
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(18))) {
+                if (pasos.indexOf(e.pasoTuto) > 0) BotonTecla("B", "Atrás", { Diptico.pasoAnterior() }, alto = 84f, letra = 26f)
                 Spacer(Modifier.weight(1f))
-                PistasFinas("✥" to "Elegir", "A" to "Usar")
+                if (!enSiguiente) TB("Start", 18f, color = col.tenue, peso = FontWeight.ExtraBold, traducir = false)
+                val brillo = if (enSiguiente) 1f else .0f
+                Row(
+                    Modifier.height(esc.d(96)).clip(CircleShape)
+                        .background(if (enSiguiente) col.elegido else col.texto.copy(alpha = .12f))
+                        .border(if (enSiguiente) 4.dp else 1.dp, if (enSiguiente) col.texto.copy(alpha = brillo) else col.borde, CircleShape)
+                        .clickable { Diptico.siguientePaso() }.testTag("config-siguiente").padding(horizontal = esc.d(40)),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
+                ) {
+                    TB(Diptico.textoSiguiente(e), 30f, color = if (enSiguiente) col.enElegido else col.texto, titulo = true)
+                    TB("›", 38f, color = if (enSiguiente) col.enElegido else col.texto, titulo = true, traducir = false)
+                }
             }
         }
     }
 }
 
-/** Lo que Raiz dibuja mientras no estás configurado: la mitad que toca a esta pantalla y, encima, los paneles (teclado). */
-@Composable
-fun ConfigPantalla(e: Estado, rol: Rol) {
-    // Con dos pantallas, la configuración ya las usa a las dos (se puede cambiar después en Ajustes).
-    LaunchedEffect(e.dosDisponibles) { if (e.dosDisponibles && !e.modoElegido) Diptico.elegirModo("dos") }
-    Box(Modifier.fillMaxSize()) {
-        when {
-            rol == Rol.UNICA || !e.dosDisponibles -> ConfigUnicaCV(e)
-            rol == Rol.INFERIOR -> ConfigAbajoCV(e)
-            else -> ConfigArribaCV(e)
-        }
-        if (rol != Rol.INFERIOR || !e.dosDisponibles) Paneles(e, conAyuda = true)
-    }
+private fun tituloPaso(p: PasoTuto) = when (p) {
+    PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"
+    PasoTuto.APARIENCIA -> "Tu estilo"; else -> "¡Todo listo!"
 }
 
-/** Una opción grande; si se puede cambiar hacia los lados, con ‹ › a mano. */
+private fun subtituloPaso(e: Estado) = when (e.pasoTuto) {
+    PasoTuto.BIENVENIDA -> "Cómo te llamas y cómo te ves. Todo se cambia después."
+    PasoTuto.CARPETA -> "Elige la carpeta donde guardas tus juegos."
+    PasoTuto.EMULADORES -> "Con qué se abre cada consola. ◀ ▶ cambia el emulador."
+    PasoTuto.APARIENCIA -> "El tema, lo que va detrás de cada consola y el sonido."
+    else -> "Ahora DIPPO te muestra cómo se usa. Toma dos minutos."
+}
+
+/** Una fila de la configuración. Personaje, color y tema traen su propia tira que se desliza sola hacia lo elegido. */
 @Composable
-private fun FilaConfig(o: Opcion, elegida: Boolean, principal: Boolean, onClick: () -> Unit) {
+private fun FilaConfig(e: Estado, o: Opcion, elegida: Boolean, onClick: () -> Unit) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    val fondo = when { principal && elegida -> col.elegido; elegida -> col.texto.copy(alpha = .12f); else -> col.texto.copy(alpha = .05f) }
-    val tinta = if (principal && elegida) col.enElegido else col.texto
-    Row(
-        Modifier.fillMaxWidth().height(esc.d(100)).clip(RoundedCornerShape(esc.d(30))).background(fondo)
-            .border(if (elegida && !principal) 3.dp else 1.dp, if (elegida && !principal) col.texto else col.borde, RoundedCornerShape(esc.d(30)))
-            .clickable(onClick = onClick).padding(horizontal = esc.d(26)),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(18)),
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(esc.d(30)))
+            .background(if (elegida) col.texto.copy(alpha = .10f) else col.texto.copy(alpha = .04f))
+            .border(if (elegida) 3.dp else 1.dp, if (elegida) col.texto else col.borde, RoundedCornerShape(esc.d(30)))
+            .clickable(onClick = onClick).padding(horizontal = esc.d(26), vertical = esc.d(18)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(12)),
     ) {
-        o.activa?.let { Box(Modifier.size(esc.d(20)).clip(CircleShape).background(if (it) Color(0xFF2EC4A6) else Color(0xFFFFD29A))) }
-        Column(Modifier.weight(1f)) {
-            TB(o.titulo, 27f, color = tinta, peso = FontWeight.ExtraBold)
-            if (o.valor.isNotBlank()) TB(o.valor, 18f, color = tinta.copy(alpha = .7f), peso = FontWeight.Bold, traducir = false)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
+            o.activa?.let { Box(Modifier.size(esc.d(18)).clip(CircleShape).background(if (it) Color(0xFF2EC4A6) else Color(0xFFFFD29A))) }
+            Column(Modifier.weight(1f)) {
+                TB(o.titulo, 27f, peso = FontWeight.ExtraBold)
+                if (o.valor.isNotBlank()) TB(o.valor, 19f, color = col.sub, peso = FontWeight.Bold, traducir = false)
+            }
+            if (o.menos != null) {
+                BotonFlecha("‹") { o.menos.invoke() }
+                BotonFlecha("›") { o.accion() }
+            }
         }
-        if (o.menos != null) {
-            BotonFlecha("‹") { o.menos.invoke() }
-            BotonFlecha("›") { o.accion() }
+        when (o.titulo) {
+            "Tu personaje" -> TiraElegible(PERSONAJES.map { it.first } + INICIAL, e.extra.perfil.personaje) { id, on ->
+                Box(Modifier.size(esc.d(96)).clip(CircleShape).border(if (on) 4.dp else 0.dp, col.texto, CircleShape)
+                    .clickable { Diptico.cambiarPerfil { it.copy(personaje = id, foto = "", fotoDiscord = false) } }, contentAlignment = Alignment.Center) {
+                    FotoPerfil(e.extra.perfil.copy(fotoDiscord = false), 84f, anillo = false, personaje = id)
+                }
+            }
+            "Tu color" -> TiraElegible(Perfil.COLORES.map { it.second }, e.extra.perfil.color) { c, on ->
+                Box(Modifier.size(esc.d(64)).clip(CircleShape).background(Color(c)).border(if (on) 5.dp else 0.dp, col.texto, CircleShape)
+                    .clickable { Diptico.cambiarPerfil { it.copy(color = c) } })
+            }
+            "Tema" -> TiraElegible(TEMAS_INICIALES, TEMAS_INICIALES.firstOrNull { it.id == e.tema }) { t, on ->
+                Column(Modifier.width(esc.d(150)).clip(RoundedCornerShape(esc.d(20))).border(if (on) 4.dp else 1.dp, if (on) col.texto else col.borde, RoundedCornerShape(esc.d(20)))
+                    .clickable { Diptico.elegirTema(t.id) }) {
+                    Box(Modifier.fillMaxWidth().height(esc.d(64)).background(Brush.linearGradient(listOf(Color(t.acento), Color(if (t.fondo != 0L) t.fondo else 0xFF07080F)))))
+                    TB(t.nombre, 17f, peso = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = esc.d(12), vertical = esc.d(8)))
+                }
+            }
+            else -> Unit
         }
+    }
+}
+
+/** Una tira horizontal que se desliza sola para mostrar lo elegido (y se puede deslizar con el dedo). */
+@Composable
+private fun <T> TiraElegible(items: List<T>, elegido: T?, item: @Composable (T, Boolean) -> Unit) {
+    val esc = LocalEscala.current
+    val estado = androidx.compose.foundation.lazy.rememberLazyListState()
+    val i = items.indexOf(elegido).coerceAtLeast(0)
+    LaunchedEffect(i) { estado.animateScrollToItem((i - 2).coerceAtLeast(0)) }
+    androidx.compose.foundation.lazy.LazyRow(state = estado, horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
+        verticalAlignment = Alignment.CenterVertically) {
+        items(items.size) { k -> item(items[k], k == i && elegido != null) }
     }
 }
 
@@ -295,61 +349,47 @@ private fun BotonFlecha(t: String, accion: () -> Unit) {
     }
 }
 
-/** Paso «Tú»: los personajes para elegir con el dedo. */
-@Composable
-private fun Personajes(e: Estado) {
-    val esc = LocalEscala.current
-    val col = LocalColeccion.current
-    val ids = PERSONAJES.map { it.first }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-        ids.forEach { id ->
-            val on = e.extra.perfil.personaje == id
-            Box(Modifier.weight(1f).aspectRatio(1f).clip(RoundedCornerShape(esc.d(24))).background(col.texto.copy(alpha = if (on) .14f else .05f))
-                .border(if (on) 3.dp else 1.dp, if (on) col.texto else col.borde, RoundedCornerShape(esc.d(24)))
-                .clickable { Diptico.cambiarPerfil { it.copy(personaje = id, foto = "") } }, contentAlignment = Alignment.Center) {
-                FotoPerfil(e.extra.perfil, 92f, anillo = false, personaje = id)
-            }
-        }
-    }
-}
-
 /** Paso «Tus juegos»: el botón grande para elegir la carpeta. */
 @Composable
 private fun BotonCarpeta(e: Estado) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
+    val on = e.indice == 0
     Row(
-        Modifier.fillMaxWidth().height(esc.d(150)).clip(RoundedCornerShape(esc.d(40))).background(col.elegido)
+        Modifier.fillMaxWidth().height(esc.d(170)).clip(RoundedCornerShape(esc.d(40))).background(if (on) col.elegido else col.texto.copy(alpha = .08f))
             .clickable { Diptico.pedirCarpeta?.invoke(Carpeta.JUEGOS) }.padding(horizontal = esc.d(34)),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(24)),
     ) {
-        Box(Modifier.size(esc.d(90)).clip(RoundedCornerShape(esc.d(26))).background(col.enElegido), contentAlignment = Alignment.Center) {
-            IconoDiptico(Icono.CARPETA, col.elegido, 50f)
+        val tinta = if (on) col.enElegido else col.texto
+        Box(Modifier.size(esc.d(100)).clip(RoundedCornerShape(esc.d(28))).background(tinta), contentAlignment = Alignment.Center) {
+            IconoDiptico(Icono.CARPETA, if (on) col.elegido else col.fondo, 54f)
         }
-        Column {
-            TB(if (e.tieneCarpeta) "Carpeta elegida ✓" else "Elegir la carpeta de juegos", 34f, color = col.enElegido, titulo = true)
-            TB(if (e.tieneCarpeta) "Toca para elegir otra" else "La que tiene snes, ps2, gba…", 19f, color = col.enElegido.copy(alpha = .7f), peso = FontWeight.ExtraBold)
+        Column(Modifier.weight(1f)) {
+            TB(if (e.tieneCarpeta) "Carpeta elegida ✓" else "Elegir la carpeta de juegos", 36f, color = tinta, titulo = true)
+            TB(if (e.escaneando) "Buscando…" else if (e.tieneCarpeta) "${e.juegos.size} juegos en ${e.consolasConJuegos.size} consolas · A elige otra" else "La que tiene una carpeta por consola: snes, ps2, gba…",
+                20f, color = tinta.copy(alpha = .75f), peso = FontWeight.ExtraBold, lineas = 2)
         }
     }
 }
 
-/** Paso «Tu estilo»: los temas en muestras para tocar. */
+/** Paso «Listo»: lo que quedó armado. */
 @Composable
-private fun MuestrasTemas(e: Estado) {
+private fun ResumenListo(e: Estado, modifier: Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-        TEMAS_INICIALES.forEach { t ->
-            val on = t.id == e.tema
-            Column(
-                Modifier.weight(1f).clip(RoundedCornerShape(esc.d(26))).background(col.texto.copy(alpha = if (on) .1f else .04f))
-                    .border(if (on) 3.dp else 1.dp, if (on) col.texto else col.borde, RoundedCornerShape(esc.d(26)))
-                    .clickable { Diptico.elegirTema(t.id) }.padding(esc.d(12)),
-                verticalArrangement = Arrangement.spacedBy(esc.d(8)),
-            ) {
-                Box(Modifier.fillMaxWidth().height(esc.d(70)).clip(RoundedCornerShape(esc.d(18)))
-                    .background(Brush.linearGradient(listOf(Color(t.acento), Color(if (t.fondo != 0L) t.fondo else 0xFF07080F)))))
-                TB(t.nombre, 19f, peso = FontWeight.ExtraBold)
+    val listas = e.consolasEmu.count { Diptico.emuladorListo(it) }
+    val datos = listOf(
+        "${e.juegos.size}" to "juegos", "${e.consolasConJuegos.size}" to "consolas",
+        "$listas/${e.consolasEmu.size}" to "listas para jugar", (Diptico.todosLosTemas(e).firstOrNull { it.id == e.tema }?.nombre ?: "") to "tu tema",
+    )
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(esc.d(16))) {
+        datos.chunked(2).forEach { fila ->
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
+                fila.forEach { (n, t) ->
+                    Column(Modifier.weight(1f).vidrio(30f).padding(horizontal = esc.d(26), vertical = esc.d(20))) {
+                        TB(n, 50f, titulo = true, traducir = false, lineas = 1); TB(t, 21f, color = col.sub, peso = FontWeight.ExtraBold)
+                    }
+                }
             }
         }
     }
@@ -359,7 +399,25 @@ private fun MuestrasTemas(e: Estado) {
 @Composable
 fun ConfigUnicaCV(e: Estado) {
     Row(Modifier.fillMaxSize().background(LocalColeccion.current.fondo)) {
-        ConfigArribaCV(e, Modifier.weight(1.15f))
-        ConfigAbajoCV(e, Modifier.weight(.85f))
+        ConfigArribaCV(e, Modifier.weight(1.1f))
+        ConfigAbajoCV(e, Modifier.weight(.9f))
+    }
+}
+
+/** Lo que Raiz dibuja mientras no estás configurado: la mitad que toca a esta pantalla y, encima, los paneles (teclado). */
+@Composable
+fun ConfigPantalla(e: Estado, rol: Rol) {
+    // Con dos pantallas, la configuración ya las usa a las dos (se puede cambiar después en Ajustes).
+    LaunchedEffect(e.dosDisponibles) { if (e.dosDisponibles && !e.modoElegido) Diptico.elegirModo("dos") }
+    Box(Modifier.fillMaxSize()) {
+        // Con dos pantallas cada una muestra SU mitad (arriba DIPPO y la vista previa, abajo los controles), aunque esta
+        // pantalla haya nacido como «única» antes de elegir el modo: así nada se repite.
+        val dos = e.dosDisponibles && e.modoPantallas == "dos"
+        when {
+            rol == Rol.INFERIOR -> ConfigAbajoCV(e)
+            dos -> ConfigArribaCV(e)
+            else -> ConfigUnicaCV(e)
+        }
+        if (rol != Rol.INFERIOR) Paneles(e, conAyuda = true)
     }
 }
