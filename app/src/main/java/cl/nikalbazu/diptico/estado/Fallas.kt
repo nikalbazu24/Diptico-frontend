@@ -46,6 +46,41 @@ object Fallas {
             try { File(app.filesDir, ARCHIVO).writeText(depurar(informe(app, "Díptico se cerró de golpe (hilo ${hilo.name})", error))) } catch (_: Throwable) {}
             previo?.uncaughtException(hilo, error)
         }
+        revisarSalidaAnterior(app)
+    }
+
+    /**
+     * Las caídas «nativas» (del motor 3D, por ejemplo) y los bloqueos no pasan por el manejador de arriba. Android sí guarda
+     * por qué se cerró la app la última vez: si fue una de esas, se arma el informe con lo legible de su rastro.
+     */
+    private fun revisarSalidaAnterior(app: Context) {
+        if (Build.VERSION.SDK_INT < 30) return
+        try {
+            val am = app.getSystemService(android.app.ActivityManager::class.java) ?: return
+            val p = app.getSharedPreferences("fallas", 0)
+            val visto = p.getLong("salidaVista", 0L)
+            val salida = am.getHistoricalProcessExitReasons(app.packageName, 0, 5).firstOrNull() ?: return
+            if (salida.timestamp <= visto) return
+            p.edit().putLong("salidaVista", salida.timestamp).apply()
+            val tipo = when (salida.reason) {
+                android.app.ApplicationExitInfo.REASON_CRASH_NATIVE -> "una caída nativa (motor 3D, sonido o video)"
+                android.app.ApplicationExitInfo.REASON_ANR -> "un bloqueo (la app dejó de responder)"
+                android.app.ApplicationExitInfo.REASON_LOW_MEMORY -> "falta de memoria"
+                else -> return
+            }
+            if (File(app.filesDir, ARCHIVO).exists()) return
+            val rastro = try {
+                salida.traceInputStream?.use { it.readBytes() }?.let { b ->
+                    // El rastro nativo viene en binario: se guardan solo los textos legibles (bibliotecas y funciones).
+                    Regex("[\\x20-\\x7E]{6,}").findAll(String(b, Charsets.ISO_8859_1)).map { it.value }
+                        .filter { it.contains(".so") || it.contains("::") || it.contains("Abort") || it.contains("signal") || it.contains("filament", true) || it.startsWith("\"") }
+                        .distinct().take(80).joinToString("\n")
+                }
+            } catch (_: Throwable) { null }
+            val texto = informe(app, "Díptico se cerró por $tipo", null) + "\n\nDescripción de Android: ${salida.description ?: "—"}" +
+                "\nMemoria usada: ${salida.pss / 1024} MB\n" + (rastro?.let { "\nRastro:\n${it.take(6000)}" } ?: "")
+            File(app.filesDir, ARCHIVO).writeText(depurar(texto))
+        } catch (_: Throwable) {}
     }
 
     /** Un error que no cerró Díptico (una tarea de fondo que falló): se guardan los últimos para el reporte. */

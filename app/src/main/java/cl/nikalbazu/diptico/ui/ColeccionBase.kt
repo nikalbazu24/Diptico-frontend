@@ -309,13 +309,15 @@ fun DockCV(e: Estado, tam: Float = 60f, modifier: Modifier = Modifier) {
 fun PistasFinas(vararg pistas: Pair<String, String>, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(22), Alignment.CenterHorizontally)) {
+    // Una píldora de vidrio con las teclas bien legibles (antes era una línea chica y gris).
+    Row(modifier.height(esc.d(62)).vidrio(31f).padding(horizontal = esc.d(20)), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(esc.d(22), Alignment.CenterHorizontally)) {
         pistas.forEach { (t, d) ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                Box(Modifier.border(1.5.dp, col.sub, RoundedCornerShape(50)).padding(horizontal = esc.d(8), vertical = esc.d(1))) {
-                    TB(t, 15f, color = col.sub, peso = FontWeight.ExtraBold, traducir = false)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(9))) {
+                Box(Modifier.height(esc.d(38)).clip(RoundedCornerShape(50)).background(col.texto).padding(horizontal = esc.d(11)), contentAlignment = Alignment.Center) {
+                    TB(t, 17f, color = col.fondo, peso = FontWeight.ExtraBold, traducir = false, lineas = 1)
                 }
-                TB(d, 17f, color = col.sub)
+                TB(d, 21f, peso = FontWeight.Bold, lineas = 1)
             }
         }
     }
