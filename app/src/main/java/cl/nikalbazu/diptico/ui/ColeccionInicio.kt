@@ -165,7 +165,7 @@ fun ColeccionArriba(e: Estado) {
         FondoTemaCV()
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(64), vertical = esc.d(30))) {
             // Franja 1 · barra: consola · hora, batería y perfil.
-            Row(Modifier.fillMaxWidth().height(esc.d(72)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
+            Row(Modifier.fillMaxWidth().height(esc.d(92)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
                 PildoraVidrio(60f, onClick = { Diptico.volverASistemas() }) {
                     Box(Modifier.size(esc.d(16)).clip(CircleShape).background(c?.color ?: col.acento))
                     TB(c?.bonito ?: "Tus juegos", 26f, titulo = true, peso = FontWeight.SemiBold)
@@ -174,7 +174,7 @@ fun ColeccionArriba(e: Estado) {
                 Spacer(Modifier.weight(1f))
                 BotonWidgetsCV()
                 HoraBateria(60f, 24f)
-                BotonPerfil(64f)
+                BotonPerfil(82f)
             }
             if (j == null) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
@@ -209,7 +209,7 @@ fun ColeccionArriba(e: Estado) {
                     BotonTecla("X", "Ficha", { Diptico.girarCaja(true) }, alto = 84f, letra = 28f)
                     BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) }, alto = 84f, letra = 28f)
                     Spacer(Modifier.weight(1f))
-                    if (e.extra.dippoInicio) DippoFrase(fraseDippo(e, j), cara = 56f, letra = 22f, maxAncho = 520f)
+                    if (e.extra.dippoInicio && anchoLienzo() >= 1500f) DippoFrase(fraseDippo(e, j), cara = 56f, letra = 22f, maxAncho = 520f)
                 }
             }
         }
@@ -455,7 +455,7 @@ fun ColeccionUnica(e: Estado) {
                     cl.nikalbazu.diptico.bisa.AvatarBisa(56f * esc.factor)
                 }
                 HoraBateria(58f, 22f)
-                BotonPerfil(60f)
+                BotonPerfil(76f)
             }
             if (j == null) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {

@@ -120,9 +120,6 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.core:core-ktx:1.13.1")
     // Colección viva: las consolas en 3D de verdad (Filament de Google, sin internet): se giran libres y fluidas.
-    implementation("com.google.android.filament:filament-android:[1.51,1.60)")
-    implementation("com.google.android.filament:gltfio-android:[1.51,1.60)")
-    implementation("com.google.android.filament:filament-utils-android:[1.51,1.60)")
     // Aplica los perfiles de arranque (de Compose y de Díptico) aunque el APK no venga de Play Store: arranque y listas más fluidos.
     implementation("androidx.profileinstaller:profileinstaller:1.3.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")

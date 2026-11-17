@@ -88,7 +88,7 @@ object Modelos3D {
     private val frentes = mapOf("gba" to -90f, "n64" to 90f, "ps3" to 90f, "switch" to 180f, "wii" to -90f)
     fun frente(id: String): Float = frentes[idDe(id)] ?: 0f
     fun de(id: String): Modelo? = modelos[idDe(id)]
-    fun credito(id: String): String? = de(id)?.let { "Modelo «${it.nombre}» de ${it.autor} · ${it.licencia}" }
+    fun credito(id: String): String? = de(id)?.let { "Imagen del modelo «${it.nombre}» de ${it.autor} · ${it.licencia}" }
     fun todos(): List<Pair<String, Modelo>> = modelos.toList()
 }
 
