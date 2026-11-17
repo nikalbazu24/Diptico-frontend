@@ -15,6 +15,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,15 +43,26 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composable () -> Unit, widgets: @Composable () -> Unit) {
     val esc = LocalEscala.current
     val pager = rememberPagerState(initialPage = if (e.inicio == "widgets") 1 else 0) { 2 }
-    // El botón, el atajo o DIPPO cambiaron el inicio: la página se mueve sola.
+    // El botón, el atajo o DIPPO cambiaron el inicio: la página se mueve sola. Si ya iba moviéndose (L2/R2 seguidos),
+    // la animación nueva reemplaza a la anterior en vez de quedarse esperando: antes se cortaba a medio camino y la
+    // página quedaba pegada entre las dos.
+    var objetivoProg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     LaunchedEffect(e.inicio) {
         val objetivo = if (e.inicio == "widgets") 1 else 0
-        if (pager.currentPage != objetivo && !pager.isScrollInProgress) pager.animateScrollToPage(objetivo)
+        if (pager.currentPage == objetivo && pager.currentPageOffsetFraction == 0f) return@LaunchedEffect
+        objetivoProg = objetivo
+        try { pager.animateScrollToPage(objetivo) } finally { if (objetivoProg == objetivo) objetivoProg = -1 }
     }
-    // Deslizaste con el dedo: se guarda en qué página quedaste.
-    LaunchedEffect(pager.settledPage) {
-        Diptico.fijarInicio(if (pager.settledPage == 1) "widgets" else "heroe")
+    // Deslizaste con el dedo: se guarda en qué página quedaste (solo si fue el dedo, no un cambio pedido por botón).
+    LaunchedEffect(pager) {
+        androidx.compose.runtime.snapshotFlow { pager.settledPage }.collect { p ->
+            if (objetivoProg == -1) Diptico.fijarInicio(if (p == 1) "widgets" else "heroe")
+        }
     }
+    // Los widgets se componen la primera vez que se visitan y después quedan listos: volver a ellos ya no los arma
+    // de cero (eso era el tirón al ir y volver seguido).
+    var visitoWidgets by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(e.inicio == "widgets") }
+    if (e.inicio == "widgets") visitoWidgets = true
     val alcance = androidx.compose.runtime.rememberCoroutineScope()
     // Red de seguridad: si algo de la página se queda con el arrastre, un deslizamiento largo igual cambia de página.
     val respaldo = Modifier.pointerInput(e.editandoWidgets) {
@@ -78,7 +91,7 @@ fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composa
     }
     Box(modifier.fillMaxSize().testTag("inicio-deslizable").then(respaldo)) {
         HorizontalPager(
-            state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 0,
+            state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = if (visitoWidgets) 1 else 0,
             userScrollEnabled = !e.editandoWidgets,
             // Basta con arrastrar un cuarto de la pantalla para cambiar de página.
             flingBehavior = androidx.compose.foundation.pager.PagerDefaults.flingBehavior(state = pager, snapPositionalThreshold = 0.25f),

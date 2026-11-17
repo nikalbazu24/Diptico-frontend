@@ -345,7 +345,11 @@ object Teclas {
         if (e.novedades >= 0) {
             // En el recorrido de DIPPO, los demás botones le hacen reaccionar (y algunos cumplen el «pruébalo»).
             if (e.recorrido && abajo && ev.repeatCount == 0) when (code) {
-                KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> RecorridoVivo.avisar("gatillo")
+                KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> {
+                    Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1)
+                    RecorridoVivo.avisar("gatillo")
+                }
+                KeyEvent.KEYCODE_BUTTON_SELECT -> RecorridoVivo.avisar("select")
                 KeyEvent.KEYCODE_BUTTON_X -> RecorridoVivo.avisar("x")
                 KeyEvent.KEYCODE_BUTTON_Y -> RecorridoVivo.avisar("y")
                 KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> RecorridoVivo.avisar("gatillo2")
@@ -565,27 +569,26 @@ object Teclas {
             if (abajo && ev.repeatCount == 0) Diptico.pasoEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
             return true
         }
-        // En Tu espacio, la tienda (abajo, o al costado con una pantalla) se maneja con el control.
+        // En Tu espacio: la Galería de widgets (su propia pantalla) se maneja con el control; sin ella, Y la abre,
+        // X entra a editar y B vuelve al inicio.
         if (cvLibre && e.inicio == "widgets" && e.widgetFoco < 0) {
-            val conTienda = !e.unaPantalla || e.extra.tiendaLado
             val d = dir(code)
-            when {
-                conTienda && d != null -> { if (abajo) Diptico.moverTiendaEspacio(d.first, d.second); return true }
-                conTienda && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) -> {
-                    if (abajo && ev.repeatCount == 0) Diptico.categoriaEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
-                }
-                conTienda && esA(code) -> { if (abajo && ev.repeatCount == 0) Diptico.usarTiendaEspacio(); return true }
-                code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && ev.repeatCount == 0) Diptico.entrarWidgets(); return true }
-                code == KeyEvent.KEYCODE_BUTTON_X -> {
-                    if (abajo && ev.repeatCount == 0) { if (e.unaPantalla) Diptico.alternarTiendaLado() else Diptico.editarWidgets() }
-                    return true
-                }
-                esB(code) -> {
-                    if (abajo && ev.repeatCount == 0) {
-                        if (e.extra.tiendaLado) Diptico.alternarTiendaLado() else Diptico.pasoEspacio(-(e.paginaInicio + 1))
+            val una = ev.repeatCount == 0
+            if (e.extra.galeria) {
+                when {
+                    d != null -> { if (abajo) Diptico.moverTiendaEspacio(d.first, d.second, if (e.unaPantalla) 1 else 2); return true }
+                    code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1 -> {
+                        if (abajo && una) Diptico.categoriaEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
                     }
-                    return true
+                    code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.cambiarTamGaleria(1); return true }
+                    esA(code) -> { if (abajo && una) Diptico.agregarDesdeGaleria(); return true }
+                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.cerrarGaleriaWidgets(); return true }
                 }
+            } else when {
+                code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.abrirGaleriaWidgets(); return true }
+                code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.editarWidgets(); return true }
+                esA(code) && e.espacioVacio() -> { if (abajo && una) Diptico.agregarSugeridos(); return true }
+                esB(code) -> { if (abajo && una) Diptico.pasoEspacio(-(e.paginaInicio + 1)); return true }
             }
         }
 

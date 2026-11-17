@@ -44,6 +44,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -185,7 +186,9 @@ private fun ImagenConsola(c: Consola, ola: State<Float>, giroY: () -> Float, gir
 
 /** El fondo de la pantalla de la consola: su propia imagen, enorme y difuminada, teñida con su color. */
 @Composable
-fun FondoConsolaCV(c: Consola?, modifier: Modifier = Modifier) {
+fun FondoConsolaCV(e: Estado, c: Consola?, modifier: Modifier = Modifier) {
+    val fondo = rememberFondo(e, c)
+    if (fondo.imagen != null) { FondoJuegoEmblema(fondo, modifier); return }
     val ctx = LocalContext.current
     val id = c?.let { Modelos3D.idDe(it.id) } ?: ""
     var img by remember(id) { mutableStateOf(ImagenesConsola.fondoEnMemoria(id)) }
@@ -200,6 +203,41 @@ fun FondoConsolaCV(c: Consola?, modifier: Modifier = Modifier) {
     }
 }
 
+/** El fondo de la consola, calculado solo cuando cambia algo que lo afecta (no en cada cuadro). */
+@Composable
+fun rememberFondo(e: Estado, c: Consola?): FondoConsola =
+    remember(c?.id, e.consolasPropias[c?.id ?: ""], e.extra.fondoConsolas, e.juegosPorConsola[c?.id ?: ""], e.datos) { fondoDeConsola(e, c) }
+
+/**
+ * El juego emblema de fondo: su imagen grande apenas difuminada (que se note cuál es) y oscurecida hacia el lado del
+ * texto, con su nombre en una píldora chica abajo a la derecha. Cambia con un fundido al pasar de consola.
+ */
+@Composable
+private fun FondoJuegoEmblema(fondo: FondoConsola, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    androidx.compose.animation.Crossfade(fondo, animationSpec = tween(duracionMovimiento(480)), label = "emblema", modifier = modifier) { f ->
+        Box(Modifier.fillMaxSize()) {
+            val img = rememberImagen(f.imagen, 1280)
+            if (img != null) androidx.compose.foundation.Image(img, contentDescription = f.juego,
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop, alpha = .78f,
+                modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = 1.06f; scaleY = 1.06f }
+                    .then(if (android.os.Build.VERSION.SDK_INT >= 31) Modifier.blur(esc.d(5)) else Modifier))
+            // Oscurece donde va el texto (izquierda y abajo) para que se lea, y deja el arte más limpio a la derecha.
+            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(col.fondo.copy(alpha = .9f), col.fondo.copy(alpha = .45f), col.fondo.copy(alpha = .2f)))))
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent, col.fondo.copy(alpha = .75f)))))
+            if (img != null && f.juego != null) Row(
+                Modifier.align(Alignment.BottomEnd).padding(end = esc.d(64), bottom = esc.d(26)).clip(RoundedCornerShape(50))
+                    .background(Color.Black.copy(alpha = .38f)).padding(horizontal = esc.d(18), vertical = esc.d(8)),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
+            ) {
+                TB(if (f.modo == "emblema") "TU MÁS JUGADO" else "DE FONDO", 15f, color = Color.White.copy(alpha = .7f), peso = FontWeight.ExtraBold, espaciado = 2f)
+                TB(f.juego, 20f, color = Color.White, peso = FontWeight.ExtraBold, traducir = false)
+            }
+        }
+    }
+}
+
 // ———————————————————————————— 6a · Thor arriba ————————————————————————————
 
 @Composable
@@ -209,8 +247,9 @@ fun CarpetasArribaCV(e: Estado) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         val color = c?.color ?: col.acento
-        FondoConsolaCV(c, Modifier.fillMaxSize())
-        Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(color.copy(alpha = .38f), Color.Transparent), radius = 1600f)))
+        FondoConsolaCV(e, c, Modifier.fillMaxSize())
+        val conArte = rememberFondo(e, c).imagen != null
+        Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(color.copy(alpha = if (conArte) .14f else .38f), Color.Transparent), radius = 1600f)))
         FondoTemaCV()
         val d1 = duracionMovimiento(280); val d2 = duracionMovimiento(360); val d3 = duracionMovimiento(180); val d4 = duracionMovimiento(220)
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(64), vertical = esc.d(28))) {
@@ -509,6 +548,7 @@ fun RejillaCarpetasCV(e: Estado, modifier: Modifier, unaPantalla: Boolean) {
             val elegida = i == sel
             val entrar = { if (elegida) Diptico.entrarConsolaCV(id) else Diptico.elegirConsola(id) }
             when (vista) {
+                "grande" -> CarpetaGrande(e, c, elegida, unaPantalla, entrar)
                 "icono" -> CarpetaIcono(e, c, elegida, unaPantalla, entrar)
                 "repisa" -> CarpetaRepisa(e, c, elegida, unaPantalla, entrar)
                 "carpeta" -> CarpetaClasica(e, c, elegida, unaPantalla, entrar)
@@ -544,6 +584,43 @@ private fun CarpetaIcono(e: Estado, c: Consola, elegida: Boolean, una: Boolean, 
         IconoCarpetaCV(e, c, Modifier.fillMaxWidth(0.88f).aspectRatio(1f).graphicsLayer { scaleX = if (elegida) 1.05f else 1f; scaleY = scaleX }
             .clip(forma).then(anilloCV(elegida, forma)), 40f)
         TB(c.bonito, 20f, color = if (elegida) col.texto else col.sub)
+    }
+}
+
+/**
+ * Vista «Grandes»: una tarjeta del color de la consola con su foto de estudio, el nombre y cuántos juegos tiene.
+ * Tres por fila con dos pantallas (cuatro con una): grandes, ordenadas y fáciles de apuntar con el dedo.
+ */
+@Composable
+private fun CarpetaGrande(e: Estado, c: Consola, elegida: Boolean, una: Boolean, onClick: () -> Unit) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val forma = RoundedCornerShape(esc.d(34))
+    val ctx = LocalContext.current
+    val id = Modelos3D.idDe(c.id)
+    val propia = e.consolasPropias[c.id]?.portadaCarpeta
+    var img by remember(id) { mutableStateOf(ImagenesConsola.enMemoria(id)) }
+    LaunchedEffect(id) { if (img == null && propia == null && ImagenesConsola.hay(ctx, id)) img = withContext(Dispatchers.IO) { ImagenesConsola.cargar(ctx, id) } }
+    val n = e.juegosPorConsola[c.id]?.size ?: 0
+    Box(
+        Modifier.fillMaxWidth().aspectRatio(if (una) 1.05f else 1.18f)
+            .graphicsLayer { scaleX = if (elegida) 1.04f else 1f; scaleY = scaleX }
+            .clip(forma).background(Brush.linearGradient(listOf(c.color, Color(0xFF141526))))
+            .then(anilloCV(elegida, forma)).clickable(onClick = onClick).testTag("carpeta-grande-${c.id}"),
+    ) {
+        val pintura = img
+        when {
+            propia != null -> PortadaCarpetaRuta(propia, c.id, Modifier.fillMaxSize(), maxLado = 360)
+            pintura != null -> androidx.compose.foundation.Image(pintura, contentDescription = null, contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                filterQuality = androidx.compose.ui.graphics.FilterQuality.Low,
+                modifier = Modifier.fillMaxWidth(0.78f).fillMaxHeight(0.66f).align(Alignment.TopEnd).padding(top = esc.d(12), end = esc.d(10)))
+            else -> Box(Modifier.align(Alignment.TopEnd).padding(esc.d(18))) { IconoConsola(c, 70f, Color.Transparent) }
+        }
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = .55f))))
+        Column(Modifier.align(Alignment.BottomStart).padding(esc.d(20))) {
+            TB(c.bonito, 24f, color = Color.White, peso = FontWeight.ExtraBold, lineas = 1)
+            TB("$n juegos", 17f, color = Color.White.copy(alpha = .78f), peso = FontWeight.Bold, traducir = false, lineas = 1)
+        }
     }
 }
 
@@ -651,8 +728,9 @@ fun CarpetasUnicaCV(e: Estado) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         val color = c?.color ?: col.acento
-        FondoConsolaCV(c, Modifier.fillMaxSize())
-        Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(color.copy(alpha = .38f), Color.Transparent), radius = 1500f)))
+        FondoConsolaCV(e, c, Modifier.fillMaxSize())
+        val conArte = rememberFondo(e, c).imagen != null
+        Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(color.copy(alpha = if (conArte) .14f else .38f), Color.Transparent), radius = 1500f)))
         FondoTemaCV()
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
             // Franja 1: vistas · hora, batería y perfil.

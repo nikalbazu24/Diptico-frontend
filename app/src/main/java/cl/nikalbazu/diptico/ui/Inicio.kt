@@ -155,10 +155,11 @@ fun PantallaInicio(e: Estado) {
             // Tu espacio (Colección viva): vacío, DIPPO propone; con una pantalla la tienda entra por el costado.
             val cv = e.extra.coleccionViva && !e.editandoWidgets
             Row(Modifier.fillMaxWidth().weight(1f)) {
-                if (cv && e.espacioVacio()) EspacioVacioCV(e, Modifier.weight(1f).fillMaxHeight())
+                if (cv && e.extra.galeria && !e.unaPantalla) GaleriaArribaCV(e, Modifier.weight(1f).fillMaxHeight())
+                else if (cv && e.espacioVacio()) EspacioVacioCV(e, Modifier.weight(1f).fillMaxHeight())
                 else PaginasWidgets(e, Modifier.weight(1f).fillMaxHeight())
                 androidx.compose.animation.AnimatedVisibility(
-                    visible = cv && e.unaPantalla && e.extra.tiendaLado,
+                    visible = cv && e.unaPantalla && e.extra.galeria,
                     enter = androidx.compose.animation.slideInHorizontally { it } + androidx.compose.animation.fadeIn(),
                     exit = androidx.compose.animation.slideOutHorizontally { it } + androidx.compose.animation.fadeOut(),
                 ) { TiendaLadoCV(e, Modifier.width(esc.d(300)).fillMaxHeight()) }

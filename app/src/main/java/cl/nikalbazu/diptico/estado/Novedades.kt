@@ -610,30 +610,14 @@ object Novedades {
     /** Recorrido por las opciones y funciones: se muestra la primera vez, al terminar de configurar Díptico. */
     /** El recorrido de la primera vez, contado por DIPPO: seis pasos cortos. Se puede ver de nuevo en Ajustes. */
     val RECORRIDO = listOf(
-        Pagina(
-            "¡Hola! Soy DIPPO", "Soy el pulpito que vive en tu Díptico. Te muestro lo importante en un ratito. A para seguir, B para saltar.",
-            Icono.BISA, 0xFFFF7A59, "A · B",
-        ),
-        Pagina(
-            "Una consola, dos pantallas", "Arriba se luce tu juego, con su arte grande. Abajo eliges la consola y el juego.",
-            Icono.PANTALLAS, 0xFF6B4EFF,
-        ),
-        Pagina(
-            "Elige y juega", "Muévete con la cruceta o el stick. L1 y R1 cambian de consola, A juega y X abre la ficha del juego.",
-            Icono.JUGAR, 0xFF2EC4A6, "L1 · R1 · A",
-        ),
-        Pagina(
-            "Yo te ayudo", "Tócame para preguntarme qué jugar o cómo pasar una parte. Mis mensajes salen sobre mi cabeza: deslízalos si molestan.",
-            Icono.BISA, 0xFFFF7A59, "Tócame",
-        ),
-        Pagina(
-            "Tu perfil", "Tu foto está en la esquina: ahí ves tus horas y logros. Con Start + A la abres con el mando.",
-            Icono.PERFIL, 0xFFE64FA0, "Start + A",
-        ),
-        Pagina(
-            "¡A jugar!", "Start abre Ajustes y cada opción explica qué hace. De vez en cuando te contaré trucos escondidos. ¡Nos vemos!",
-            Icono.AJUSTES, 0xFF3BA8FF, "Start",
-        ),
+        Pagina("Esta es tu colección", "Arriba ves la consola elegida y, detrás, su juego más jugado. A para seguir, B para saltar.", Icono.BISA, 0xFFFF7A59, "A · B"),
+        Pagina("Cambia de consola", "Con L1 y R1 pasas de una consola a otra. ¡Prueba!", Icono.MANDO, 0xFF6B4EFF, "L1 · R1"),
+        Pagina("Tus carpetas", "Abajo están tus carpetas. A entra a una; X la personaliza: su color, su ícono, su fondo y su emulador.", Icono.CARPETA, 0xFF2EC4A6, "A · X"),
+        Pagina("Tu espacio", "L2 y R2 te llevan a Tu espacio: tus widgets, en páginas que puedes agrandar. ¡Prueba!", Icono.APPS, 0xFF3BA8FF, "L2 · R2"),
+        Pagina("Tus apps", "Estas son tus apps fijadas. Mantén presionada una para quitarla, o toca «+» para agregar otra.", Icono.APPS, 0xFFFF9B54, ""),
+        Pagina("Cambia la vista", "Select cambia cómo se ven las carpetas. Si lo mantienes, las pantallas se intercambian. ¡Prueba!", Icono.VISTA, 0xFFE64FA0, "Select"),
+        Pagina("Y yo vivo aquí", "Tócame cuando quieras: te ayudo, te sugiero juegos y te cuento trucos.", Icono.BISA, 0xFFFF7A59, "Tócame"),
+        Pagina("¡A jugar!", "Start abre Ajustes y cada opción explica qué hace. Start + A abre tu perfil. ¡Nos vemos!", Icono.AJUSTES, 0xFF3BA8FF, "Start"),
     )
 }
 

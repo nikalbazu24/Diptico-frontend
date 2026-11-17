@@ -190,8 +190,10 @@ data class ConsolaPropia(
     val logo: String? = null,
     val musica: String? = null,
     val portadaCarpeta: String? = null,
+    /** Qué va detrás de la consola en el inicio: null = lo de Ajustes; "emblema", "juego:<clave>", "imagen" (el hero) o "consola". */
+    val fondo: String? = null,
 ) {
-    val vacia: Boolean get() = nombre.isNullOrBlank() && color == 0L && hero == null && logo == null && musica == null && portadaCarpeta == null
+    val vacia: Boolean get() = nombre.isNullOrBlank() && color == 0L && hero == null && logo == null && musica == null && portadaCarpeta == null && fondo == null
 }
 
 /** Forma de las cajas de una consola en el estante. */
@@ -427,7 +429,7 @@ data class EstadoExtra(
     /** Cómo se ven los juegos dentro de una consola: "estante" (3D), "cuadricula" o "lista". */
     val vistaColeccion: String = "estante",
     /** Cómo se ven las carpetas: "icono", "diptico", "repisa" o "carpeta". */
-    val vistaCarpetasCV: String = "diptico",
+    val vistaCarpetasCV: String = "grande",
     /** Qué juegos van junto al ícono de cada carpeta: "ultimos", "favoritos" o "elegidos"; y cuántos (1–3). */
     val juegosCarpeta: String = "ultimos",
     val cuantosCarpeta: Int = 4,
@@ -440,9 +442,19 @@ data class EstadoExtra(
     /** Tu espacio: el widget elegido en la tienda (sin entrar al editor) y si la tienda está abierta al lado (una pantalla). */
     val espacioSel: Int = 0,
     val tiendaLado: Boolean = false,
+    /** La Galería de widgets abierta (su propia pantalla) y el tamaño elegido para el que vas a agregar. */
+    val galeria: Boolean = false,
+    val galeriaTam: Int = 0,
     /** Tu espacio: cuántas pantallas de ancho y de alto mide cada página de widgets (1 a 3; se desliza para ver el resto). */
     val paginaAncho: Int = 1,
     val paginaAlto: Int = 1,
+    /** Galería de widgets: abierta en su propia pantalla (Y desde Tu espacio) y el tamaño elegido del widget marcado. */
+    val galeriaAbierta: Boolean = false,
+    val galeriaTam: Int = 0,
+    /** Detrás de cada consola: "emblema" (su juego más jugado, difuminado) o "consola" (la foto de la consola). */
+    val fondoConsolas: String = "emblema",
+    /** El juego emblema que eligió la persona para cada consola (consola → clave del juego). */
+    val emblemas: Map<String, String> = emptyMap(),
     /** Las apps se abrieron desde el «+» del dock: elegir una la fija y vuelve. */
     val fijandoDock: Boolean = false,
     /** Consolas que muestran su logo en vez del nombre. */
@@ -469,6 +481,8 @@ data class EstadoExtra(
     val dippoAvisos: Boolean = true,
     /** Tono de las carpetas: "vidrio" (transparentes y difuminadas), "auto" (según el tema), "oscuro" o "claro". */
     val carpetasTono: String = "vidrio",
+    /** Qué va detrás de cada consola en el inicio (si la consola no dice otra cosa): "emblema" (su juego más jugado) o "consola". */
+    val fondoConsolas: String = "emblema",
     /** Estilo de íconos solo para las carpetas de consolas ("igual" = el mismo que el resto). */
     val iconosCarpetas: String = "igual",
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -1014,6 +1028,11 @@ object Diptico {
             almacen.guardarBool("cvPredeterminado1", true)
             almacen.guardarTexto("vistaConsolas", "carpetas"); almacen.guardarTexto("vistaColeccion", "estante"); almacen.guardarTexto("vista", "carrusel")
         }
+        // Carpetas grandes y ordenadas (las del recorrido): la vista por defecto, una vez a todos.
+        if (!almacen.bool("carpetasGrandes1", false)) {
+            almacen.guardarBool("carpetasGrandes1", true)
+            almacen.guardarTexto("vistaCarpetasCV", "grande")
+        }
         val vistaConsolas = if (almacen.bool("coleccionViva", true)) "carpetas" else vistaConsolasCompatible(vistaGuardada)
         if (vistaConsolas != vistaGuardada) almacen.guardarTexto("vistaConsolas", vistaConsolas)
         _estado.value = Estado(
@@ -1106,9 +1125,11 @@ object Diptico {
                 coleccionViva = almacen.bool("coleccionViva", true),
                 paginaAncho = (almacen.texto("paginaAncho", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
                 paginaAlto = (almacen.texto("paginaAlto", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
+                fondoConsolas = almacen.texto("fondoConsolas", "emblema"),
+                emblemas = almacen.texto("emblemas", "").split("|").mapNotNull { l -> l.split("=", limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }.toMap(),
                 widgetsCVOcultos = almacen.texto("widgetsCVOcultos", "").split("|").filter { it.isNotBlank() }.toSet(),
                 vistaColeccion = almacen.texto("vistaColeccion", "estante"),
-                vistaCarpetasCV = almacen.texto("vistaCarpetasCV", "diptico"),
+                vistaCarpetasCV = almacen.texto("vistaCarpetasCV", "grande"),
                 juegosCarpeta = almacen.texto("juegosCarpeta", "ultimos"),
                 cuantosCarpeta = (almacen.texto("cuantosCarpeta", "4").toIntOrNull() ?: 4).coerceIn(1, 5),
                 columnasIconoCV = (almacen.texto("columnasIconoCV", "4").toIntOrNull() ?: 4).coerceIn(2, 6),
@@ -1125,6 +1146,7 @@ object Diptico {
                 estiloCarpetas = almacen.texto("estiloCarpetas", "tarjeta"),
                 termica = almacen.bool("termica", true),
                 dippoAvisos = almacen.bool("dippoAvisos", true),
+                fondoConsolas = almacen.texto("fondoConsolas", "emblema"),
                 carpetasTono = (if (almacen.texto("carpetasVidrio1", "") == "") { almacen.guardarTexto("carpetasVidrio1", "si"); almacen.guardarTexto("carpetasTono", "vidrio"); "vidrio" } else almacen.texto("carpetasTono", "vidrio")),
                 iconosCarpetas = almacen.texto("iconosCarpetas", "igual"),
                 dippoColor = almacen.texto("dippoColor", "hora"),
@@ -1767,14 +1789,15 @@ object Diptico {
         else -> "Dos pantallas"
     }
 
-    fun terminarConfiguracion() {
+    fun terminarConfiguracion(recorrido: Boolean = true) {
         if (!estado.value.modoElegido) elegirModo(if (estado.value.dosDisponibles) "dos" else "una_negra")
         // La distribución que mejor le queda a este equipo (consola de dos pantallas, portátil, teléfono, tablet o tele).
         optimizarParaEquipo(silencioso = true)
         almacen.configurado = true
         // Primera vez: recorrido por las opciones y funciones. Al cerrarlo se ofrece Díptico como inicio de Android.
         almacen.guardarTexto("novedadesVistas", Novedades.ID)
-        actualizar { it.copy(configurado = true, panel = Panel.NINGUNO, indice = 0, novedades = 0, recorrido = true) }
+        actualizar { it.copy(configurado = true, panel = Panel.NINGUNO, indice = 0, novedades = if (recorrido) 0 else -1, recorrido = recorrido) }
+        if (!recorrido) ofrecerInicio()
     }
 
     /** Para que Díptico sea siempre lo primero: se ofrece como app de inicio de Android. */
@@ -5124,6 +5147,9 @@ object Diptico {
             opcionLista("Tono de las carpetas", Icono.CARPETA,
                 "«Vidrio» deja las carpetas transparentes, con el color de la consola difuminado y el fondo asomando. Las otras son opacas: oscuras (cómodas de noche), claras como papel, o «Según el tema».",
                 listOf("vidrio", "auto", "oscuro", "claro"), listOf("Vidrio", "Según el tema", "Oscuras", "Claras"), e.extra.carpetasTono) { elegirTonoCarpetas(it) },
+            opcionLista("Detrás de cada consola", Icono.PORTADA,
+                "En el inicio, de fondo detrás de cada consola: su juego más jugado (difuminado) o la consola sola. Cada consola lo puede cambiar en su configuración › Fondo.",
+                listOf("emblema", "consola"), listOf("Su juego más jugado", "La consola"), e.extra.fondoConsolas) { elegirFondoConsolas(it) },
             Opcion("Ordenar carpetas", "A tu gusto", Icono.VISTA,
                 "Las carpetas tiemblan y las mueves arrastrando con el dedo, o con A y la cruceta. También se entra manteniendo una carpeta presionada. B o «Listo» termina.") {
                 cerrarPanel(); empezarOrdenCarpetas()
@@ -5797,7 +5823,7 @@ object Diptico {
         o.keys().asSequence().associateWith { k ->
             val c = o.getJSONObject(k)
             fun txt(n: String) = c.optString(n, "").ifEmpty { null }
-            ConsolaPropia(txt("nombre"), c.optLong("color", 0L), txt("hero"), txt("logo"), txt("musica"), txt("portadaCarpeta"))
+            ConsolaPropia(txt("nombre"), c.optLong("color", 0L), txt("hero"), txt("logo"), txt("musica"), txt("portadaCarpeta"), txt("fondo"))
         }
     } catch (e: Exception) {
         emptyMap()
@@ -5805,7 +5831,7 @@ object Diptico {
 
     internal fun escribirConsolasPropias(m: Map<String, ConsolaPropia>): String = org.json.JSONObject().apply {
         m.forEach { (k, c) ->
-            put(k, org.json.JSONObject().put("nombre", c.nombre ?: "").put("color", c.color).put("hero", c.hero ?: "").put("logo", c.logo ?: "").put("musica", c.musica ?: "").put("portadaCarpeta", c.portadaCarpeta ?: ""))
+            put(k, org.json.JSONObject().put("nombre", c.nombre ?: "").put("color", c.color).put("hero", c.hero ?: "").put("logo", c.logo ?: "").put("musica", c.musica ?: "").put("portadaCarpeta", c.portadaCarpeta ?: "").put("fondo", c.fondo ?: ""))
         }
     }.toString()
 
@@ -5858,7 +5884,7 @@ object Diptico {
                 "Corre esta consola antes o después (← →). Así quedan en el orden que tú quieras.",
                 menos = { moverConsola(id, -1) },
             ) { moverConsola(id, 1) }.copy(grupo = "Carpeta"),
-            Opcion("Imagen grande (hero)", if (p.hero != null) "Propia ✓" else "Buscar", Icono.PORTADA, "El fondo de esta consola: de SteamGridDB, fotos de Wikipedia o tus archivos.") { buscarCandidatos("c_hero") }.copy(grupo = "Imágenes"),
+        ) + opcionesFondoConsola(e, c) + listOf(
             Opcion("Logo", if (p.logo != null) "Propio ✓" else "Buscar", Icono.ESTRELLA, "Un logo que reemplaza al nombre en la vista grande: de SteamGridDB, Wikipedia o tus archivos.") { buscarCandidatos("c_logo") }.copy(grupo = "Imágenes"),
             Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) }.copy(grupo = "Cajas"),
             Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(id) }.copy(grupo = "Cajas"),
@@ -5866,7 +5892,7 @@ object Diptico {
             (if (c.sinEmulador) Opcion("Emulador", "No necesita", Icono.MANDO, ayuda = "Esta consola no necesita emulador.") {} else opcionEmuladorConsola(c).copy(titulo = "Emulador", icono = Icono.MANDO)).copy(grupo = "Juego y sonido"),
             Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") }.copy(grupo = "Juego y sonido"),
             Opcion("Quitar imágenes y música propias", icono = Icono.BORRAR, ayuda = "Quita las imágenes y la música que elegiste para esta consola.") {
-                cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null, portadaCarpeta = null) }
+                cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null, portadaCarpeta = null, fondo = null) }
                 if (estado.value.iconosPropios.containsKey(id)) {
                     val m = estado.value.iconosPropios - id
                     almacen.guardarTexto("iconosPropios", escribirMapa(m))

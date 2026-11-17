@@ -55,7 +55,7 @@ import cl.nikalbazu.diptico.estado.Novedades
 @Composable
 fun TourNovedades(e: Estado) {
     // La primera vez el recorrido lo cuenta DIPPO.
-    if (e.recorrido) { RecorridoDippo(e); return }
+    if (e.recorrido) { RecorridoDippo(e, Rol.UNICA); return }
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val paginas = Diptico.paginasTour(e)

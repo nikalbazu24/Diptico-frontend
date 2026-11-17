@@ -54,14 +54,20 @@ import kotlinx.coroutines.withContext
 
 
 /** La configuración de la primera vez: solo lo que hace falta para jugar. Lo demás tiene buenos valores y se cambia en Ajustes. */
-fun Diptico.pasosTuto(e: Estado = estado.value): List<PasoTuto> = buildList {
-    add(PasoTuto.BIENVENIDA)
-    if (e.dosDisponibles) add(PasoTuto.PANTALLAS)
-    add(PasoTuto.CARPETA)
-    if (e.consolasConJuegos.any { !emuladorListo(it) }) add(PasoTuto.EMULADORES)
-    add(PasoTuto.APARIENCIA)
-    add(PasoTuto.LISTO)
+fun Diptico.pasosTuto(e: Estado = estado.value): List<PasoTuto> = listOf(
+    // Boceto 13b: Tú · Tus juegos · Para jugar · Tu estilo · Listo. Las dos pantallas se usan solas si están
+    // (se cambia en Ajustes); por eso ya no hay un paso para elegirlas.
+    PasoTuto.BIENVENIDA, PasoTuto.CARPETA, PasoTuto.EMULADORES, PasoTuto.APARIENCIA, PasoTuto.LISTO,
+)
+
+/** Los nombres cortos de cada paso, para la fila de arriba. */
+fun nombrePasoTuto(p: PasoTuto) = when (p) {
+    PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"
+    PasoTuto.APARIENCIA -> "Tu estilo"; PasoTuto.LISTO -> "Listo"; else -> p.name.lowercase()
 }
+
+/** Los temas que se ofrecen la primera vez (los cuatro primeros incluidos). */
+internal val TEMAS_INICIALES: List<Tema> get() = Temas.incluidos.take(4)
 
 
 internal fun Diptico.indiceInicial(p: PasoTuto, e: Estado): Int = when (p) {
@@ -114,13 +120,22 @@ fun Diptico.reiniciarTutorial() {
 fun Diptico.opcionesTuto(): List<Opcion> {
     val e = estado.value
     return when (e.pasoTuto) {
-        PasoTuto.BIENVENIDA -> listOf(
-            Opcion("¡Comencemos!", "Toma unos 2 minutos", Icono.JUGAR) { siguientePaso() },
-            Opcion("Idioma", (Idioma.IDIOMAS.firstOrNull { it.first == e.idioma }?.second ?: e.idioma), Icono.IDIOMA) {
-                val l = Idioma.IDIOMAS.map { it.first }
-                cambiarIdioma(l[(l.indexOf(estado.value.idioma) + 1).mod(l.size)])
-            },
-        )
+        PasoTuto.BIENVENIDA -> {
+            val per = e.extra.perfil.personaje
+            val ids = listOf(INICIAL) + PERSONAJES.map { it.first }
+            val k = ids.indexOf(per).coerceAtLeast(0)
+            listOf(
+                Opcion("Siguiente", "Toma unos 2 minutos", Icono.JUGAR) { siguientePaso() },
+                Opcion("Tu nombre", e.nombre.ifBlank { "Toca para escribir" }, Icono.TITULO) { abrirTexto("nombre", e.nombre) },
+                Opcion("Tu personaje", nombrePersonaje(per), Icono.BISA,
+                    menos = { cambiarPerfil { it.copy(personaje = ids[(k - 1).mod(ids.size)], foto = "") } },
+                ) { cambiarPerfil { it.copy(personaje = ids[(k + 1).mod(ids.size)], foto = "") } },
+                Opcion("Idioma", (Idioma.IDIOMAS.firstOrNull { it.first == e.idioma }?.second ?: e.idioma), Icono.IDIOMA) {
+                    val l = Idioma.IDIOMAS.map { it.first }
+                    cambiarIdioma(l[(l.indexOf(estado.value.idioma) + 1).mod(l.size)])
+                },
+            )
+        }
         PasoTuto.PANTALLAS -> listOf(
             Opcion(
                 "Dos pantallas",
@@ -192,13 +207,10 @@ fun Diptico.opcionesTuto(): List<Opcion> {
                 Opcion("Elegir otra carpeta", icono = Icono.CARPETA) { pedirCarpeta?.invoke(Carpeta.JUEGOS) },
             )
         }
-        PasoTuto.EMULADORES -> listOf(Opcion("Continuar", icono = Icono.CHECK) { siguientePaso() }) + e.consolasEmu.map { c ->
-            Opcion(
-                c.bonito,
-                if (emuladorListo(c)) nombreEmulador(c) else "Falta: ${c.sugerido}",
-                Icono.EMULADOR,
-            ) { ciclarEmulador(c) }
-        }
+        PasoTuto.EMULADORES -> listOf(Opcion("Siguiente", if (e.consolasEmu.all { emuladorListo(it) }) "Todas listas para jugar" else "Las que faltan se arreglan después", Icono.CHECK) { siguientePaso() }) +
+            e.consolasEmu.map { c ->
+                Opcion(c.bonito, if (emuladorListo(c)) nombreEmulador(c) else "Falta: ${c.sugerido}", Icono.EMULADOR, activa = emuladorListo(c)) { ciclarEmulador(c) }
+            }
         PasoTuto.PORTS -> listOf(
             Opcion(
                 "Elegir mis ports",
@@ -258,14 +270,23 @@ fun Diptico.opcionesTuto(): List<Opcion> {
                 }
             },
         )
-        PasoTuto.APARIENCIA -> listOf(
-            Opcion("Díptico de noche", "Estante y tonos oscuros", Icono.TEMA) { elegirAparienciaInicial(0); siguientePaso() },
-            Opcion("Díptico de día", "Estante y tonos claros", Icono.TEMA) { elegirAparienciaInicial(1); siguientePaso() },
-        )
+        PasoTuto.APARIENCIA -> {
+            val temas = TEMAS_INICIALES
+            val t = temas.indexOfFirst { it.id == e.tema }.coerceAtLeast(0)
+            listOf(
+                Opcion("Siguiente", icono = Icono.CHECK) { siguientePaso() },
+                Opcion("Tema", temas.getOrNull(t)?.nombre ?: "", Icono.TEMA,
+                    menos = { elegirTema(temas[(t - 1).mod(temas.size)].id) }) { elegirTema(temas[(t + 1).mod(temas.size)].id) },
+                Opcion("Detrás de cada consola", if (e.extra.fondoConsolas == "consola") "La consola" else "Su juego más jugado", Icono.PORTADA,
+                    menos = { elegirFondoConsolas(if (estado.value.extra.fondoConsolas == "consola") "emblema" else "consola") },
+                ) { elegirFondoConsolas(if (estado.value.extra.fondoConsolas == "consola") "emblema" else "consola") },
+                Opcion("Música y sonidos", if (e.musica) "Encendidos" else "Apagados", Icono.MUSICA, activa = e.musica) { fijarMusica(!estado.value.musica) },
+            )
+        }
         PasoTuto.CONTROLES -> listOf(Opcion("Continuar", "Cuando quieras", Icono.CHECK) { siguientePaso() })
         PasoTuto.LISTO -> listOf(
-            Opcion("¡Empezar a jugar!", icono = Icono.JUGAR) { terminarConfiguracion() },
-            Opcion("¿Cómo te llama DIPPO?", e.nombre.ifBlank { "Opcional" }, Icono.BISA) { abrirTexto("nombre", e.nombre) },
+            Opcion("Muéstrame cómo se usa", "Un recorrido de 2 minutos con DIPPO, probando cada botón", Icono.TUTORIAL) { terminarConfiguracion(recorrido = true) },
+            Opcion("Ya sé, llévame a mi colección", "Todo esto se cambia después en Ajustes", Icono.JUGAR) { terminarConfiguracion(recorrido = false) },
         )
     }
 }
