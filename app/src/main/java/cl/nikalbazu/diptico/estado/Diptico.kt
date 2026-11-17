@@ -448,13 +448,6 @@ data class EstadoExtra(
     /** Tu espacio: cuántas pantallas de ancho y de alto mide cada página de widgets (1 a 3; se desliza para ver el resto). */
     val paginaAncho: Int = 1,
     val paginaAlto: Int = 1,
-    /** Galería de widgets: abierta en su propia pantalla (Y desde Tu espacio) y el tamaño elegido del widget marcado. */
-    val galeriaAbierta: Boolean = false,
-    val galeriaTam: Int = 0,
-    /** Detrás de cada consola: "emblema" (su juego más jugado, difuminado) o "consola" (la foto de la consola). */
-    val fondoConsolas: String = "emblema",
-    /** El juego emblema que eligió la persona para cada consola (consola → clave del juego). */
-    val emblemas: Map<String, String> = emptyMap(),
     /** Las apps se abrieron desde el «+» del dock: elegir una la fija y vuelve. */
     val fijandoDock: Boolean = false,
     /** Consolas que muestran su logo en vez del nombre. */
@@ -1125,8 +1118,6 @@ object Diptico {
                 coleccionViva = almacen.bool("coleccionViva", true),
                 paginaAncho = (almacen.texto("paginaAncho", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
                 paginaAlto = (almacen.texto("paginaAlto", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
-                fondoConsolas = almacen.texto("fondoConsolas", "emblema"),
-                emblemas = almacen.texto("emblemas", "").split("|").mapNotNull { l -> l.split("=", limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }.toMap(),
                 widgetsCVOcultos = almacen.texto("widgetsCVOcultos", "").split("|").filter { it.isNotBlank() }.toSet(),
                 vistaColeccion = almacen.texto("vistaColeccion", "estante"),
                 vistaCarpetasCV = almacen.texto("vistaCarpetasCV", "grande"),
