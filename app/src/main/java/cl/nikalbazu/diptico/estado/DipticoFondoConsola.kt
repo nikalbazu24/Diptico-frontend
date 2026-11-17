@@ -87,10 +87,12 @@ internal fun Diptico.opcionesFondoConsola(e: Estado, c: Consola): List<Opcion> {
     val id = c.id
     val modo = modoFondo(e, id)
     val i = MODOS_FONDO.indexOf(modo).coerceAtLeast(0)
-    fun poner(m: String) = when (m) {
-        "juego" -> fijarFondoConsola(id, "juego:" + (juegoEmblema(e, id)?.clave ?: ""))
-        "imagen" -> { fijarFondoConsola(id, "imagen"); if (e.consolasPropias[id]?.hero == null) buscarFondoConsola(id) }
-        else -> fijarFondoConsola(id, m)
+    fun poner(m: String) {
+        when (m) {
+            "juego" -> fijarFondoConsola(id, "juego:" + (juegoEmblema(e, id)?.clave ?: ""))
+            "imagen" -> { fijarFondoConsola(id, "imagen"); if (e.consolasPropias[id]?.hero == null) buscarFondoConsola(id) }
+            else -> fijarFondoConsola(id, m)
+        }
     }
     val fondo = fondoDeConsola(e, c)
     val lista = mutableListOf(

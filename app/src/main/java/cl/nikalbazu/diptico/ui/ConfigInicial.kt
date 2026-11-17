@@ -91,8 +91,9 @@ fun ConfigArribaCV(e: Estado, modifier: Modifier = Modifier) {
                     }
                     TB(d.nota, 21f, color = col.sub, lineas = 3)
                 }
+                val dEntra = duracionMovimiento(320); val dSale = duracionMovimiento(200)
                 AnimatedContent(e.pasoTuto, Modifier.weight(1f).fillMaxHeight(), label = "previa",
-                    transitionSpec = { (fadeIn(tween(duracionMovimiento(320))) + slideInHorizontally { it / 8 }) togetherWith fadeOut(tween(duracionMovimiento(200))) },
+                    transitionSpec = { (fadeIn(tween(dEntra)) + slideInHorizontally { it / 8 }) togetherWith fadeOut(tween(dSale)) },
                 ) { paso -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { PreviaPaso(e, paso) } }
             }
         }
