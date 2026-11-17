@@ -1,5 +1,6 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -252,7 +253,8 @@ fun HoraBateria(alto: Float = 64f, letra: Float = 26f) {
     val c = LocalColeccion.current
     val hora = rememberHora()
     val bateria = rememberBateria()
-    PildoraVidrio(alto) {
+    // Tocarla abre la hora en grande arriba, como antes del diseño nuevo.
+    PildoraVidrio(alto, Modifier.testTag("hora-bateria-cv"), onClick = { cl.nikalbazu.diptico.estado.Diptico.alternarReloj() }) {
         TB(hora, letra, peso = FontWeight.ExtraBold, traducir = false)
         Box(Modifier.width(esc.d(2)).height(esc.d(letra)).background(c.texto.copy(alpha = 0.2f)))
         if (bateria in 0..100) {
@@ -306,7 +308,8 @@ fun Modifier.veloColeccion(fondo: Color): Modifier = this
  * Ajustes con Colección viva (boceto 5): las secciones y opciones van ABAJO (se tocan con el dedo) y arriba la explicación
  * con la vista previa real. Con las pantallas intercambiadas, al revés.
  */
-fun menuIntercambiado(e: Estado): Boolean = e.intercambiar != (e.extra.coleccionViva && e.configurado && !e.unaPantalla)
+/** Ajustes: la lista va arriba y la demostración abajo (como siempre); al intercambiar pantallas se invierte. */
+fun menuIntercambiado(e: Estado): Boolean = e.intercambiar
 
 /** El dock de apps a la medida de 5 apps, en una píldora de vidrio (si no hay apps fijadas, invita a fijarlas). */
 @Composable
