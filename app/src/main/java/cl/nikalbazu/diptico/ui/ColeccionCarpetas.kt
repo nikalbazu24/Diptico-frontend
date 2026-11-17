@@ -82,25 +82,24 @@ private val SIN_GPU = android.os.Build.FINGERPRINT == "robolectric"
 @Composable
 fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
-    val esc = LocalEscala.current
-    val col = LocalColeccion.current
     val id = Modelos3D.idDe(c.id)
     val existe = remember(id) { runCatching { ctx.assets.list("consolas3d")?.contains("$id.glb") == true }.getOrDefault(false) }
-    if (!existe || SIN_GPU || !Motor3D.permitido(ctx)) {
-        // Sin modelo (o con el 3D en pausa en este equipo): el ícono grande de la consola.
-        Box(modifier.testTag("consola-3d"), contentAlignment = Alignment.Center) {
-            IconoConsola(c, 260f, c.color.copy(alpha = .22f))
-        }
-        return
+    val icono: @Composable () -> Unit = {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { IconoConsola(c, 260f, c.color.copy(alpha = .22f)) }
     }
+    if (SIN_GPU || !Motor3D.permitido(ctx)) { Box(modifier.testTag("consola-3d")) { icono() }; return }
     val girar = LocalMovimiento.current
-    // UN solo visor por pantalla: al cambiar de consola cambia el modelo, no se arma otro motor.
-    androidx.compose.ui.viewinterop.AndroidView(
-        factory = { cx -> Motor3D.visorPara(cx) ?: android.view.View(cx) },
-        update = { (it as? VisorConsola)?.mostrar(id, girar) },
-        modifier = modifier.testTag("consola-3d"),
-        onRelease = { (it as? VisorConsola)?.pausar() },
-    )
+    // El visor queda SIEMPRE montado (sacarlo y volver a ponerlo es lo más delicado del motor): una consola sin modelo
+    // solo vacía el visor y se ve su ícono encima.
+    Box(modifier.testTag("consola-3d")) {
+        androidx.compose.ui.viewinterop.AndroidView(
+            factory = { cx -> Motor3D.visorPara(cx) ?: android.view.View(cx) },
+            update = { (it as? VisorConsola)?.mostrar(if (existe) id else null, girar) },
+            modifier = Modifier.fillMaxSize(),
+            onRelease = { (it as? VisorConsola)?.pausar() },
+        )
+        if (!existe) icono()
+    }
 }
 
 /**
@@ -208,11 +207,16 @@ internal class VisorConsola(ctx: android.content.Context) :
     private fun pedirCuadros(n: Int = 2) { cuadrosPendientes = maxOf(cuadrosPendientes, n) }
 
     /** Cambia el modelo sin rehacer nada: el archivo se lee aparte y se carga en el hilo de la pantalla. */
-    fun mostrar(id: String, girarSolo: Boolean) {
+    fun mostrar(id: String?, girarSolo: Boolean) {
         girar = girarSolo
         if (id == idActual) return
         idActual = id
         val n = ++pedido
+        if (id == null) {
+            // Consola sin modelo: se vacía el visor (se ve su ícono encima).
+            post { if (n == pedido) runCatching { visor.destroyModel(); pedirCuadros(2) } }
+            return
+        }
         val app = context.applicationContext
         Thread {
             // Si se pasa de consola en consola rápido, solo se carga la última (cargar y soltar seguido es lo más delicado).
@@ -228,7 +232,8 @@ internal class VisorConsola(ctx: android.content.Context) :
                     visor.loadModelGlb(buffer)
                     visor.transformToUnitCube()
                     visor.asset?.let { a -> val tm = engine.transformManager; tm.getTransform(tm.getInstance(a.root), base) }
-                    yaw = 25f; pitch = 0f; velYaw = 0f
+                    // Parte mostrando su frente, apenas girada (tres cuartos), como en el boceto.
+                    yaw = Modelos3D.frente(id) + 25f; pitch = 0f; velYaw = 0f
                     aplicarGiro()
                     pedirCuadros(4)
                 }
@@ -695,7 +700,7 @@ private fun CarpetaClasica(e: Estado, c: Consola, elegida: Boolean, una: Boolean
         juegos.forEachIndexed { k, j ->
             val pw = if (una) 70f else 86f
             Box(Modifier.offset(esc.d(30f + k * (pw - 6f)), esc.d(4f - k * 2f)).size(esc.d(pw), esc.d(pw * 1.38f))
-                .graphicsLayer { rotationZ = listOf(-7f, 5f, -3f)[k] }.clip(RoundedCornerShape(esc.d(6)))) {
+                .graphicsLayer { rotationZ = listOf(-7f, 5f, -3f, 6f, -4f)[k % 5] }.clip(RoundedCornerShape(esc.d(6)))) {
                 ArteJuego(j, preferirArte = false, maxLado = 200, modifier = Modifier.fillMaxSize())
             }
         }

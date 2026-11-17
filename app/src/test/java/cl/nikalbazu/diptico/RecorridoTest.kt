@@ -45,6 +45,9 @@ class RecorridoTest {
         juego("1", "snes", "Leyenda del Bosque"), juego("2", "gba", "Cohete Rojo"), juego("3", "psx", "Bahía Neón"),
         juego("4", "nds", "Ruta Estelar"), juego("5", "ps2", "Caballero de Papel"), juego("6", "n64", "Pixel Kart"),
         juego("7", "snes", "Torre de Cristal"), juego("8", "gc", "Isla Tormenta"),
+        // Una consola con muchos juegos (las vistas muestran hasta 5 junto al ícono) y consolas sin modelo 3D.
+        juego("9", "snes", "Río Lunar"), juego("10", "snes", "Valle Eco"), juego("11", "snes", "Faro Norte"), juego("12", "snes", "Ciudad Musgo"),
+        juego("13", "nds", "Dos Caminos"), juego("14", "rpgmaker", "Aldea Perdida"), juego("15", "megadrive", "Turbo Costa"),
     )
 
     private fun inicial(dos: Boolean) = Estado(
@@ -127,7 +130,7 @@ class RecorridoTest {
     private fun caminos() {
         // Carpetas: cambiar de consola y de vista, entrar y salir.
         repeat(6) { tecla(R1) }; repeat(3) { tecla(L1) }
-        repeat(5) { tecla(SEL) }
+        repeat(4) { Diptico.elegirCuantosCarpeta(5); tecla(SEL); repeat(3) { tecla(R1) } }
         repeat(4) { tecla(DER) }; tecla(ABA); tecla(IZQ)
         tecla(A); repeat(3) { tecla(DER) }; tecla(SEL); tecla(SEL); tecla(R3); tecla(DER); tecla(R3); tecla(B)
         tecla(X); tecla(ABA); tecla(B); volverAlInicio()
