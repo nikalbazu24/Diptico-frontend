@@ -1729,6 +1729,11 @@ class Capturas {
     @Test fun t497_cv_espacio_editando() = foto("497_cv_espacio_editando", cv().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0), Rol.SUPERIOR, avance = 220)
     @Test fun t498_cv_espacio_una_tienda() = foto("498_cv_espacio_una_tienda", cv { it.copy(tiendaLado = true) }.copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
     @Test fun t499_cv_espacio_ancho() = foto("499_cv_espacio_ancho", cv { it.copy(paginaAncho = 2) }.copy(inicio = "widgets"), Rol.SUPERIOR)
+    // Mantener presionado un widget: su menú de edición abajo (Qué muestra, Tamaño, Diseño, Más ajustes).
+    @Config(qualifiers = ABAJO)
+    @Test fun t500_cv_editar_widget_abajo() = foto("500_cv_editar_widget_abajo",
+        cv().let { e0 -> e0.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, estudioZona = "panel", indice = 0,
+            widgetSel = e0.widgets.indexOfFirst { it.tipo == "recientes" }) }, Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
     @Test fun t484_cv_icono_carpeta() = foto("484_cv_icono_carpeta",
         cv().copy(panel = Panel.IMAGENES, candidatoPara = "c_portada", consolaEditando = "snes", nombreImagen = "Super Nintendo", fuenteImagen = "todas", indice = 2), Rol.INFERIOR, mi = 1)
