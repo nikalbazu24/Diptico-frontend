@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.runtime.State
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.semantics.contentDescription
@@ -106,12 +107,7 @@ internal object ImagenesConsola {
  */
 @Composable
 fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
-    val ctx = LocalContext.current
     val id = Modelos3D.idDe(c.id)
-    val existe = remember(id) { ImagenesConsola.hay(ctx, id) }
-    val img by produceState(ImagenesConsola.enMemoria(id), id) {
-        if (value == null && existe) value = withContext(Dispatchers.IO) { ImagenesConsola.cargar(ctx, id) }
-    }
     val mover = LocalMovimiento.current
     val ola = if (mover) {
         val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "flota")
@@ -120,8 +116,11 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
     } else remember { mutableStateOf(0f) }
     val giro = remember { Animatable(0f) }
     val giroX = remember { Animatable(0f) }
+    // El stick derecho la inclina igual que el dedo; al soltarlo vuelve sola.
+    val stickY by animateFloatAsState(GiroCaja.x * 30f, androidx.compose.animation.core.spring(0.7f, 180f), label = "stickY")
+    val stickX by animateFloatAsState(-GiroCaja.y * 18f, androidx.compose.animation.core.spring(0.7f, 180f), label = "stickX")
     val alcance = rememberCoroutineScope()
-    Box(modifier.testTag("consola-3d").pointerInput(id) {
+    Box(modifier.testTag("consola-3d").pointerInput(Unit) {
         detectDragGestures(
             onDragEnd = {
                 alcance.launch { giro.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = .45f, stiffness = 120f)) }
@@ -133,9 +132,32 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
             alcance.launch { giroX.snapTo((giroX.value - d.y * 0.10f).coerceIn(-16f, 16f)) }
         }
     }, contentAlignment = Alignment.Center) {
+        // Cada consola es su propio contenido: al cambiar de carpeta la de antes se va y la nueva entra.
+        val t1 = duracionMovimiento(260); val t2 = duracionMovimiento(380); val t3 = duracionMovimiento(180)
+        androidx.compose.animation.AnimatedContent(
+            targetState = c, contentKey = { it.id },
+            transitionSpec = {
+                (androidx.compose.animation.fadeIn(tween(t1)) +
+                    androidx.compose.animation.scaleIn(tween(t2, easing = CurvaPosarse), initialScale = 0.9f)) togetherWith
+                    androidx.compose.animation.fadeOut(tween(t3))
+            }, label = "consola-img", modifier = Modifier.fillMaxSize(),
+        ) { k -> ImagenConsola(k, ola, { giro.value + stickY }, { giroX.value + stickX }) }
+    }
+}
+
+@Composable
+private fun ImagenConsola(c: Consola, ola: State<Float>, giroY: () -> Float, giroX: () -> Float) {
+    val ctx = LocalContext.current
+    val id = Modelos3D.idDe(c.id)
+    val existe = remember(id) { ImagenesConsola.hay(ctx, id) }
+    var img by remember(id) { mutableStateOf(ImagenesConsola.enMemoria(id)) }
+    LaunchedEffect(id) {
+        if (img == null && existe) img = withContext(Dispatchers.IO) { ImagenesConsola.cargar(ctx, id) }
+    }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         val pintura = img
         if (pintura == null) {
-            IconoConsola(c, 260f, c.color.copy(alpha = .22f))
+            if (!existe) IconoConsola(c, 260f, c.color.copy(alpha = .22f))
         } else {
             // Sombra en el piso: un óvalo difuso que se achica cuando la consola sube.
             Canvas(Modifier.fillMaxSize()) {
@@ -153,8 +175,8 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
                 filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
                 modifier = Modifier.fillMaxSize(0.86f).graphicsLayer {
                     translationY = ola.value * size.height * 0.025f - size.height * 0.03f
-                    rotationY = giro.value
-                    rotationX = giroX.value
+                    rotationY = giroY()
+                    rotationX = giroX()
                     cameraDistance = 14f * density
                 })
         }
@@ -166,8 +188,9 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
 fun FondoConsolaCV(c: Consola?, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val id = c?.let { Modelos3D.idDe(it.id) } ?: ""
-    val img by produceState(ImagenesConsola.fondoEnMemoria(id), id) {
-        if (value == null && id.isNotEmpty() && ImagenesConsola.hay(ctx, id)) value = withContext(Dispatchers.IO) { ImagenesConsola.fondo(ctx, id) }
+    var img by remember(id) { mutableStateOf(ImagenesConsola.fondoEnMemoria(id)) }
+    LaunchedEffect(id) {
+        if (img == null && id.isNotEmpty() && ImagenesConsola.hay(ctx, id)) img = withContext(Dispatchers.IO) { ImagenesConsola.fondo(ctx, id) }
     }
     androidx.compose.animation.Crossfade(img, animationSpec = tween(duracionMovimiento(420)), label = "fondo", modifier = modifier) { pintura ->
         if (pintura != null) androidx.compose.foundation.Image(pintura, contentDescription = null,

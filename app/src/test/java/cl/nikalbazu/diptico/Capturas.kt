@@ -1707,6 +1707,12 @@ class Capturas {
     @Test fun t486_cv_estudio_abajo() = foto("486_cv_estudio_abajo", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
     @Test fun t487_cv_colecciones_abajo() = foto("487_cv_colecciones_abajo", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(pestanaCarpetas = 1) }, Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ARRIBA)
+    @Test fun t488_cv_estudio_arriba() = foto("488_cv_estudio_arriba", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.SUPERIOR, mi = 0)
+    @Config(qualifiers = ABAJO)
+    @Test fun t489_cv_estudio_arriba_en_abajo() = foto("489_cv_estudio_arriba_en_abajo", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.SUPERIOR, mi = 1)
+    @Config(qualifiers = ARRIBA)
+    @Test fun t490_cv_estudio_abajo_en_arriba() = foto("490_cv_estudio_abajo_en_arriba", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.INFERIOR, mi = 0)
     @Config(qualifiers = ABAJO)
     @Test fun t484_cv_icono_carpeta() = foto("484_cv_icono_carpeta",
         cv().copy(panel = Panel.IMAGENES, candidatoPara = "c_portada", consolaEditando = "snes", nombreImagen = "Super Nintendo", fuenteImagen = "todas", indice = 2), Rol.INFERIOR, mi = 1)

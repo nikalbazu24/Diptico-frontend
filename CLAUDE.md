@@ -769,3 +769,13 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `Modelos3D.alias`: nds/3ds → n3ds, rpgmaker/gahvoria → ports (el pendrive). `Modelos3D.frente(id)` = giro para que cada modelo parta de
   frente (+25° de pose); `herramientas/frentes3d.py` arma la hoja para revisarlo. `Fallas`: el rastro nativo prioriza líneas de filament/abort/SIG.
   `RecorridoTest` ahora con más juegos, consolas sin modelo y la vista Carpeta (561/544 botones sin caídas).
+- Beta.605 de prueba (17 nov, 00:20): informe 23:10 = SIGSEGV en `filament::gltfio::ResourceLoader::asyncCancelLoad` (VisorConsola) con
+  1,1 GB. **Filament fuera** (dependencias y `assets/consolas3d` borrados; APK 87 → 50 MB). `Consola3D` ahora dibuja `assets/consolas/<id>.webp`
+  (fotos de estudio hechas con `herramientas/consolas_png.py` desde los .glb, fondo transparente; DS = foto de Evan-Amos, dominio público,
+  que Nicolás adjuntó: la sesión no llega a Wikimedia), flota, se inclina con el dedo; `ImagenesConsola` (LruCache) y `FondoConsolaCV`
+  (la misma imagen a 1/16 estirada = difuminado). «Reconocer nombres» (libretro, `identificarNombres`) borrado. `LienzoBoceto`: la escala la
+  manda el alto (mín. 62 % del ancho del boceto) → con pantallas intercambiadas ya no queda en miniatura; 6a con `anchoLienzo() < 1350`
+  pone la consola arriba y la info abajo. `PerfilArriba` sin «Tu perfil», reloj pegado a la foto; fotos más grandes (BotonPerfil con
+  `requiredSize`, no se aplasta). 6b: dock izq., hora+foto der., abajo `BotonPestanaCV` Consolas (MANDO) / Colecciones (BIBLIOTECA) y DIPPO
+  al medio, sin pistas. Estudio CV con zoom 1.08 y DIPPO chico. `enElegido` legible en temas de color medio (`legibleSobre`).
+  BotonTecla: teclas largas (Select) en píldora. Capturas t485–t487.

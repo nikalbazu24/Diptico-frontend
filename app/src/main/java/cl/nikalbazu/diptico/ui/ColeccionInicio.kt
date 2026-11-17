@@ -76,6 +76,10 @@ import kotlin.math.abs
 /** ¿Va el diseño nuevo en esta pantalla? Solo en el inicio de siempre (sin partida ni paneles que lo reemplacen). */
 fun coleccionVivaActiva(e: Estado): Boolean = e.extra.coleccionViva && e.configurado && e.sesion == null && e.inicio != "widgets_viejo"
 
+/** El stick derecho mueve la caja o la consola: en la vitrina de cajas y en el inicio de Colección viva (sin ventanas encima). */
+fun stickDerechoGira(e: Estado): Boolean = vitrinaActiva(e) || (coleccionVivaActiva(e) && e.panel == Panel.NINGUNO &&
+    e.inicio != "widgets" && !e.editandoWidgets && e.extra.carga == null)
+
 // ———————————————————————————— datos que comparten las pantallas ————————————————————————————
 
 /** Un resumen corto del juego (de su ficha guardada), sin pedir nada a internet. */
@@ -269,6 +273,9 @@ fun CajaFlotanteCV(e: Estado, j: Juego, girada: Boolean, pose: Float = 26f) {
         var dedoV by remember { mutableStateOf(0f) }
         val dedoAnim by animateFloatAsState(dedo, if (dedo == 0f) androidx.compose.animation.core.spring(0.6f, 140f) else androidx.compose.animation.core.spring(1f, 2000f), label = "dedo")
         val dedoVAnim by animateFloatAsState(dedoV, if (dedoV == 0f) androidx.compose.animation.core.spring(0.6f, 140f) else androidx.compose.animation.core.spring(1f, 2000f), label = "dedoV")
+        // El stick derecho la gira como si la tuvieras en la mano; al soltarlo vuelve a su pose.
+        val stickY by animateFloatAsState(GiroCaja.x * 75f, androidx.compose.animation.core.spring(0.7f, 180f), label = "stickY")
+        val stickX by animateFloatAsState(-GiroCaja.y * 32f, androidx.compose.animation.core.spring(0.7f, 180f), label = "stickX")
         Box(
             Modifier.fillMaxSize().testTag("caja-vitrina")
                 .graphicsLayer { translationY = (ola?.value?.let { kotlin.math.sin(it * 2f) * 10f } ?: 0f) * density }
@@ -281,8 +288,8 @@ fun CajaFlotanteCV(e: Estado, j: Juego, girada: Boolean, pose: Float = 26f) {
         ) {
             Caja3D(
                 datosCaja(e, jj, cc), jj, cc, Modifier.fillMaxSize(),
-                giroY = { pose * (1f - t) + 180f * t + dedoAnim + (ola?.value?.let { kotlin.math.sin(it) * 6f } ?: 0f) * (1f - t) },
-                giroX = { -5f + dedoVAnim + (ola?.value?.let { kotlin.math.cos(it) * 2f } ?: 0f) },
+                giroY = { pose * (1f - t) + 180f * t + dedoAnim + stickY + (ola?.value?.let { kotlin.math.sin(it) * 6f } ?: 0f) * (1f - t) },
+                giroX = { -5f + dedoVAnim + stickX + (ola?.value?.let { kotlin.math.cos(it) * 2f } ?: 0f) },
                 caras = e.extra.caras[jj.clave], detalle = true, sombraPiso = true,
             )
         }

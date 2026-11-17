@@ -1119,8 +1119,9 @@ object Teclas {
     fun movimiento(ev: MotionEvent): Boolean {
         if (ev.source and InputDevice.SOURCE_JOYSTICK != InputDevice.SOURCE_JOYSTICK || ev.action != MotionEvent.ACTION_MOVE) return false
         stickIzq.cambiar(direccion(ev.getAxisValue(MotionEvent.AXIS_X), ev.getAxisValue(MotionEvent.AXIS_Y)))
-        // En la vitrina de cajas el stick derecho gira la caja del centro (de forma continua, como tenerla en la mano).
-        if (cl.nikalbazu.diptico.ui.vitrinaActiva(Diptico.estado.value)) {
+        // En la vitrina de cajas y en el inicio de Colección viva el stick derecho SOLO mueve la caja o la consola
+        // (de forma continua, como tenerla en la mano); no cambia de consola ni desplaza.
+        if (cl.nikalbazu.diptico.ui.stickDerechoGira(Diptico.estado.value)) {
             val gx = ev.getAxisValue(MotionEvent.AXIS_Z)
             val gy = ev.getAxisValue(MotionEvent.AXIS_RZ)
             cl.nikalbazu.diptico.ui.GiroCaja.x = if (kotlin.math.abs(gx) > 0.15f) gx else 0f
