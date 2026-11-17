@@ -830,3 +830,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   propias de personaje/color/tema, foto de Discord, sin repetir pantallas), recorrido obligatorio (`RecorridoVivo.puedeSeguir`, B no lo cierra)
   y nítido, intro con tus consolas y portadas. Tu espacio: sticks y cruceta se quedan en los widgets. Secciones de Personalizar consola con scroll.
   Esperando que Nicolás pruebe y diga «publica» para fusionar a main (2.0-76).
+
+## Beta.638 (17 nov, tarde, Sonnet; sin publicar)
+- Intro: al actualizar ya no se salta (`intro = false` quitado del arranque); `terminarIntro` reinicia `introInicio` (si no, «volver a configurar» la terminaba al tiro).
+- Carpetas «Grandes»: tarjeta cuadrada (aspect 1) con nombre y juegos debajo; ícono propio con `ContentScale.Fit` sobre fondo neutro (sin degradado del color de la consola).
+  `IconoCarpetaCV` (resto de vistas) tampoco pinta el degradado si hay ícono propio. Pellizco de dos dedos también en «Grandes» (`extra.columnasGrandesCV`, 0 = automático; `Diptico.ajustarColumnasGrandes`).
+- Zoom de la pantalla de abajo al despertar: NO se encontró la causa leyendo código; solo se reinicia `GiroCaja` en `alEncender`. Pedir a Nicolás el informe de fluidez / un video si vuelve.
+- Beta.639 (17 nov, tarde, Sonnet): paso nuevo `PasoTuto.CUENTAS` («Tus cuentas», entre Para jugar y Tu estilo, todo opcional): filas de Discord, RA usuario/clave,
+  SteamGridDB, ScreenScraper/IGDB/TheGamesDB/RAWG (`opcionesRaspadores`) e IA de DIPPO; vista previa `PreviaCuentas` (N de 7 conectados). Usa los mismos paneles CLAVE/GALERIA que Ajustes (`Paneles` va en ConfigPantalla).

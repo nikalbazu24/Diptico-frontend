@@ -46,7 +46,7 @@ enum class Panel { WIDGET, ENCUADRE, APPS, EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO
 enum class Carpeta { JUEGOS, MEDIA, MUSICA, PARTIDAS }
 
 /** Pasos del tutorial guiado del primer arranque. */
-enum class PasoTuto { BIENVENIDA, PANTALLAS, TEXTO, DISPOSICION, JUEGOS, CARPETA, EMULADORES, PORTS, PORTADAS, MUSICA, APARIENCIA, CONTROLES, LISTO }
+enum class PasoTuto { BIENVENIDA, PANTALLAS, TEXTO, DISPOSICION, JUEGOS, CARPETA, EMULADORES, CUENTAS, PORTS, PORTADAS, MUSICA, APARIENCIA, CONTROLES, LISTO }
 
 /** Íconos propios de Díptico (se dibujan en ui/Iconos.kt). */
 enum class Icono {

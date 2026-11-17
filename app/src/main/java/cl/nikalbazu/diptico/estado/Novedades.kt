@@ -581,7 +581,7 @@ object Novedades {
             Pagina("Temas nuevos", "Los temas se rehicieron para este diseño: Colección, Aurora, Cartucho, Papel, Negro puro, Acuario, Salón, Constelación, y los vivos Nieve, Lava, Bosque, Luna, Marea, Sakura, Portátil y Fogata. Las fechas especiales siguen en el Calendario.", Icono.PALETA, 0xFFFF5D8F),
             Pagina("Tu espacio y la Galería de widgets", "L2 y R2 te llevan a Tu espacio: páginas de widgets que agrandas hasta tres pantallas. La Galería de widgets (Y) tiene su propia pantalla: eliges uno, su tamaño, y ves dónde va a quedar. Mantén presionado un widget para elegir qué muestra.", Icono.APPS, 0xFF6B4EFF),
             Pagina("Widgets útiles", "Marcador en vivo, próximo partido y tabla (fútbol chileno, Libertadores, NBA y más), contador, marcador para jugar con otros, dados, cuenta regresiva, nota, clima, feriados de Chile y hora en el mundo.", Icono.TROFEO, 0xFFFF5D5D),
-            Pagina("Un comienzo nuevo", "Intro nueva, configuración en cinco pasos con DIPPO y un recorrido donde él te muestra cada parte y te hace probar los botones. Lo vuelves a ver desde Ajustes.", Icono.BISA, 0xFFFF7A59),
+            Pagina("Un comienzo nuevo", "Intro nueva, configuración en seis pasos con DIPPO (uno para conectar tus cuentas y claves: Discord, RetroAchievements, SteamGridDB, TheGamesDB, ScreenScraper, IGDB, RAWG y la IA de DIPPO) y un recorrido donde él te muestra cada parte y te hace probar los botones. Lo vuelves a ver desde Ajustes.", Icono.BISA, 0xFFFF7A59),
             Pagina("¿Lo quieres como antes?", "Ajustes › Estilo › «Diseño Colección viva» lo apaga y vuelve el de antes.", Icono.AJUSTES, 0xFFB9BBD6),
         )),
     )
