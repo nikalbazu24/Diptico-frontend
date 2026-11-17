@@ -756,3 +756,10 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `BotonWidgetsCV` (píldora «Widgets») junto a la hora en `ColeccionArriba` y `CarpetasArribaCV`.
   `RecorridoTest` (en el CI de todas las ramas): una y dos pantallas, caminos pensados + 400 botones al azar; imprime «RECORRIDO …».
   Las caídas nativas de Filament NO se ven en Robolectric (allí el 3D es un reemplazo): eso solo se prueba en la Thor.
+- Beta.594 de prueba (16 nov, 22:30): el «desaparece» del video era que `aplicarGiro` giraba alrededor de la CÁMARA (la base trae la
+  traslación a (0,0,−4)); ahora gira sobre el centro del modelo. Cambio de modelo espera 280 ms (solo carga la última consola).
+  `Fallas.revisarSalidaAnterior`: con `ApplicationExitInfo` (API 30+) arma informe de caídas nativas/ANR/memoria con lo legible del rastro.
+  Widgets: `Tarjeta` recorta antes de pintar (fondo ya no queda cuadrado). Dock predeterminado (`estado/DipticoDock.kt`, una vez con
+  `dockInicial1`), «+» en `FilaDock` → `abrirAppsParaFijar` (`extra.fijandoDock`), mantener una app del dock la quita.
+  6a/6c: `PersonalizarConsolaCV` (una tarjeta con resumen, X) reemplaza la grilla de 6 opciones; `PistasFinas` ahora en píldora grande.
+  Si sigue cayéndose: pedir a Nicolás que abra Díptico después de la caída y mande el informe (debería traer el rastro nativo).

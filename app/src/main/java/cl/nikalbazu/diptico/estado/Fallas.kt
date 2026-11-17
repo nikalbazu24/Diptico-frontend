@@ -72,13 +72,16 @@ object Fallas {
             val rastro = try {
                 salida.traceInputStream?.use { it.readBytes() }?.let { b ->
                     // El rastro nativo viene en binario: se guardan solo los textos legibles (bibliotecas y funciones).
-                    Regex("[\\x20-\\x7E]{6,}").findAll(String(b, Charsets.ISO_8859_1)).map { it.value }
-                        .filter { it.contains(".so") || it.contains("::") || it.contains("Abort") || it.contains("signal") || it.contains("filament", true) || it.startsWith("\"") }
-                        .distinct().take(80).joinToString("\n")
+                    val textos = Regex("[\\x20-\\x7E]{6,}").findAll(String(b, Charsets.ISO_8859_1)).map { it.value }.toList()
+                    // Primero lo que dice qué se rompió (señal, mensaje de aborto, motor 3D, sonido, video), después el resto.
+                    val clave = Regex("(?i)filament|gltf|abort|SIG[A-Z]+|fault|libGLES|adreno|vulkan|egl|cl\\.nikalbazu|libc\\+\\+|assert|OutOfMemory")
+                    val primero = textos.filter { clave.containsMatchIn(it) }.distinct().take(60)
+                    val resto = textos.filter { (it.contains(".so") || it.contains("::")) && it !in primero }.distinct().take(40)
+                    (primero + listOf("— resto —") + resto).joinToString("\n")
                 }
             } catch (_: Throwable) { null }
             val texto = informe(app, "Díptico se cerró por $tipo", null) + "\n\nDescripción de Android: ${salida.description ?: "—"}" +
-                "\nMemoria usada: ${salida.pss / 1024} MB\n" + (rastro?.let { "\nRastro:\n${it.take(6000)}" } ?: "")
+                "\nMemoria usada: ${salida.pss / 1024} MB\n" + (rastro?.let { "\nRastro:\n${it.take(9000)}" } ?: "")
             File(app.filesDir, ARCHIVO).writeText(depurar(texto))
         } catch (_: Throwable) {}
     }
