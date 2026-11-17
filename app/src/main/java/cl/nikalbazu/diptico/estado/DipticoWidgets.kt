@@ -332,7 +332,7 @@ fun Diptico.opcionesWidget(e: Estado = estado.value): List<Opcion> {
             listOf(
                 Opcion("Carga", if (b.nivel >= 0) "${b.nivel}%" else "—", Icono.BATERIA) {},
                 Opcion("Estado", b.estado, Icono.BATERIA) {},
-                Opcion("Temperatura", if (b.temperatura > 0f) "${"%.1f".format(b.temperatura)} °C" else "—", Icono.INFO, if (b.temperatura >= 42f) "Está tibia: una pausa le viene bien." else "") {},
+                Opcion("Temperatura", if (b.temperatura > 0f) Termica.texto(b.temperatura) else "—", Icono.INFO, if (b.temperatura >= 42f) "Está tibia: una pausa le viene bien." else "") {},
                 Opcion("Voltaje", if (b.voltaje > 0) "${"%.2f".format(b.voltaje / 1000f)} V" else "—", Icono.INFO) {},
                 Opcion("Salud", b.salud, Icono.CORAZON) {},
                 Opcion("Modo de efectos", nombreFluidez(e.fluidez), Icono.CHISPA, "En ahorro Díptico apaga difuminados y decoraciones para gastar menos.") {

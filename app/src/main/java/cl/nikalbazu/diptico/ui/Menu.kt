@@ -659,7 +659,7 @@ fun EstadoChico(conFoto: Boolean = true) {
         val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }
         Box(Modifier.size(esc.d(20), esc.d(10)).border(esc.d(1.5f), p.tinta.copy(alpha = 0.7f), RoundedCornerShape(esc.d(3))).padding(esc.d(2))) {
             Box(Modifier.fillMaxHeight().fillMaxWidth(((if (bateria < 0) 50 else bateria) / 100f).coerceIn(0.08f, 1f))
-                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono))
+                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono.copy(alpha = latidoCarga(cargando))))
         }
         Texto(if (bateria >= 0) "$bateria%" else "—", 12f, color = p.tinta, traducir = false, lineas = 1)
     }

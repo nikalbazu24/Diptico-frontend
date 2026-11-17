@@ -253,29 +253,31 @@ fun HoraBateria(alto: Float = 64f, letra: Float = 26f) {
     val c = LocalColeccion.current
     val hora = rememberHora()
     val bateria = rememberBateria()
+    val cargando = rememberCargando()
     // Tocarla abre la hora en grande arriba, como antes del diseño nuevo.
     PildoraVidrio(alto, Modifier.testTag("hora-bateria-cv"), onClick = { cl.nikalbazu.diptico.estado.Diptico.alternarReloj() }) {
         TB(hora, letra, peso = FontWeight.ExtraBold, traducir = false)
         Box(Modifier.width(esc.d(2)).height(esc.d(letra)).background(c.texto.copy(alpha = 0.2f)))
         if (bateria in 0..100) {
-            PilaDibujo(bateria, letra)
-            TB("$bateria %", letra * 0.92f, traducir = false)
+            PilaDibujo(bateria, letra, cargando)
+            TB(if (cargando) "⚡$bateria %" else "$bateria %", letra * 0.92f, traducir = false)
         }
     }
 }
 
 /** La pila del boceto: contorno, relleno según la carga y el botoncito. */
 @Composable
-fun PilaDibujo(carga: Int, alto: Float) {
+fun PilaDibujo(carga: Int, alto: Float, cargando: Boolean = false) {
     val esc = LocalEscala.current
     val c = LocalColeccion.current
+    val latido = latidoCarga(cargando)
     androidx.compose.foundation.Canvas(Modifier.size(esc.d(alto * 1.55f), esc.d(alto * 0.85f))) {
         val w = size.width; val h = size.height
         val k = w / 40f
         drawRoundRect(c.texto, androidx.compose.ui.geometry.Offset(1 * k, 1 * k), androidx.compose.ui.geometry.Size(34 * k, h - 2 * k),
             androidx.compose.ui.geometry.CornerRadius(5 * k), style = androidx.compose.ui.graphics.drawscope.Stroke(2 * k))
         val lleno = (28f * (carga.coerceIn(0, 100) / 100f)).coerceAtLeast(2f)
-        drawRoundRect(if (carga <= 15) Color(0xFFFF6B6B) else c.texto, androidx.compose.ui.geometry.Offset(4 * k, 4 * k),
+        drawRoundRect((if (cargando) Color(0xFF38BDF8) else if (carga <= 15) Color(0xFFFF6B6B) else c.texto).copy(alpha = latido), androidx.compose.ui.geometry.Offset(4 * k, 4 * k),
             androidx.compose.ui.geometry.Size(lleno * k, h - 8 * k), androidx.compose.ui.geometry.CornerRadius(3 * k))
         drawRoundRect(c.texto, androidx.compose.ui.geometry.Offset(36 * k, h * 0.32f), androidx.compose.ui.geometry.Size(3 * k, h * 0.36f),
             androidx.compose.ui.geometry.CornerRadius(1.5f * k))

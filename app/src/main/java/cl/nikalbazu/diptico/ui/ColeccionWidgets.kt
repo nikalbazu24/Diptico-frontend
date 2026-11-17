@@ -260,7 +260,7 @@ private fun TarjetaCV(e: Estado, w: WidgetCV) {
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
                 Box(Modifier.size(esc.d(14)).clip(CircleShape).background(color))
-                TB((l?.let { "${maxOf(it.bateria, it.procesador).toInt()} °C · " } ?: "") + texto, 20f, peso = FontWeight.ExtraBold, traducir = false)
+                TB((l?.let { "${Termica.texto(it.grados)} · " } ?: "") + texto, 20f, peso = FontWeight.ExtraBold, traducir = false)
             }
             if (bat in 0..100) BarraDato("Batería $bat %", bat / 100f)
             if (libres.second > 0) BarraDato("Espacio ${(libres.second - libres.first) / 1_000_000_000} / ${libres.second / 1_000_000_000} GB",
