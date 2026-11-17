@@ -67,6 +67,8 @@ private fun dichoDe(e: Estado): DichoPaso = when (e.pasoTuto) {
         DichoPaso("Todas tus consolas tienen con qué jugar. ¡Bien!", "Cada consola puede usar otro emulador cuando quieras.", CaraDippo.CELEBRANDO)
         else DichoPaso("Para jugar hacen falta emuladores. Te marqué los que faltan.",
             "Toca una consola para elegir su emulador. Los que faltan se instalan después en Ajustes › Emuladores al día.", CaraDippo.PENSANDO)
+    PasoTuto.CUENTAS -> DichoPaso("Si tienes cuentas, conéctalas ahora: así traigo portadas, cajas y logros de verdad.",
+        "Todo es opcional y se puede hacer después en Ajustes › Cuentas y conexiones.", CaraDippo.PENSANDO)
     PasoTuto.APARIENCIA -> DichoPaso("¿Cómo quieres que se vea? Detrás de cada consola puedo poner el juego que la hizo famosa.",
         "Lo ves cambiar al instante.", CaraDippo.FELIZ)
     else -> DichoPaso("¡Listo${if (e.nombre.isNotBlank()) ", ${e.nombre}" else ""}! Tu colección ya está armada.",
@@ -143,6 +145,35 @@ private fun BarraProgreso(e: Estado) {
     }
 }
 
+/** Qué servicios ya están conectados (una pastilla por servicio). */
+@Composable
+private fun PreviaCuentas(e: Estado) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val c = e.raspadores
+    val servicios = listOf(
+        "Discord" to e.extra.discordUsuario.isNotBlank(),
+        "RetroAchievements" to (e.usuarioRA.isNotBlank() && e.claveRA.isNotBlank()),
+        "SteamGridDB" to e.claveSgdb.isNotBlank(),
+        "ScreenScraper" to c.screenscraper,
+        "TheGamesDB" to c.conTgdb,
+        "IGDB" to c.igdb,
+        "RAWG" to c.conRawg,
+    )
+    Column(Modifier.fillMaxWidth(.95f).vidrio(56f, fuerte = true).padding(esc.d(48)), verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
+        TB("${servicios.count { it.second }} de ${servicios.size} conectados", 44f, titulo = true, traducir = false)
+        servicios.chunked(2).forEach { fila ->
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
+                fila.forEach { (n, ok) ->
+                    Box(Modifier.weight(1f).clip(RoundedCornerShape(esc.d(30))).background(if (ok) col.acento.copy(alpha = .25f) else Color.White.copy(alpha = .06f)).padding(horizontal = esc.d(24), vertical = esc.d(14))) {
+                        TB((if (ok) "✓ " else "") + n, 26f, color = if (ok) col.texto else col.sub, peso = FontWeight.ExtraBold, traducir = false)
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** La vista previa de cada paso: lo que vas armando. */
 @Composable
 private fun PreviaPaso(e: Estado, paso: PasoTuto) {
@@ -160,6 +191,7 @@ private fun PreviaPaso(e: Estado, paso: PasoTuto) {
             }
         }
         PasoTuto.CARPETA, PasoTuto.EMULADORES -> Estante(e, conEmulador = paso == PasoTuto.EMULADORES)
+        PasoTuto.CUENTAS -> PreviaCuentas(e)
         PasoTuto.APARIENCIA -> {
             val c = e.consolasConJuegos.firstOrNull()
             Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(esc.d(40))).border(4.dp, col.acento, RoundedCornerShape(esc.d(40)))) {
@@ -269,7 +301,7 @@ fun ConfigAbajoCV(e: Estado, modifier: Modifier = Modifier) {
 }
 
 private fun tituloPaso(p: PasoTuto) = when (p) {
-    PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"
+    PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"; PasoTuto.CUENTAS -> "Tus cuentas"
     PasoTuto.APARIENCIA -> "Tu estilo"; else -> "¡Todo listo!"
 }
 
@@ -277,6 +309,7 @@ private fun subtituloPaso(e: Estado) = when (e.pasoTuto) {
     PasoTuto.BIENVENIDA -> "Cómo te llamas y cómo te ves. Todo se cambia después."
     PasoTuto.CARPETA -> "Elige la carpeta donde guardas tus juegos."
     PasoTuto.EMULADORES -> "Con qué se abre cada consola. ◀ ▶ cambia el emulador."
+    PasoTuto.CUENTAS -> "Discord, RetroAchievements, SteamGridDB, TheGamesDB, ScreenScraper… Todo opcional."
     PasoTuto.APARIENCIA -> "El tema, lo que va detrás de cada consola y el sonido."
     else -> "Ahora DIPPO te muestra cómo se usa. Toma dos minutos."
 }

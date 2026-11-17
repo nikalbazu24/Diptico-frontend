@@ -836,3 +836,5 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Carpetas «Grandes»: tarjeta cuadrada (aspect 1) con nombre y juegos debajo; ícono propio con `ContentScale.Fit` sobre fondo neutro (sin degradado del color de la consola).
   `IconoCarpetaCV` (resto de vistas) tampoco pinta el degradado si hay ícono propio. Pellizco de dos dedos también en «Grandes» (`extra.columnasGrandesCV`, 0 = automático; `Diptico.ajustarColumnasGrandes`).
 - Zoom de la pantalla de abajo al despertar: NO se encontró la causa leyendo código; solo se reinicia `GiroCaja` en `alEncender`. Pedir a Nicolás el informe de fluidez / un video si vuelve.
+- Beta.639 (17 nov, tarde, Sonnet): paso nuevo `PasoTuto.CUENTAS` («Tus cuentas», entre Para jugar y Tu estilo, todo opcional): filas de Discord, RA usuario/clave,
+  SteamGridDB, ScreenScraper/IGDB/TheGamesDB/RAWG (`opcionesRaspadores`) e IA de DIPPO; vista previa `PreviaCuentas` (N de 7 conectados). Usa los mismos paneles CLAVE/GALERIA que Ajustes (`Paneles` va en ConfigPantalla).

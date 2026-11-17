@@ -55,15 +55,15 @@ import kotlinx.coroutines.withContext
 
 /** La configuración de la primera vez: solo lo que hace falta para jugar. Lo demás tiene buenos valores y se cambia en Ajustes. */
 fun Diptico.pasosTuto(e: Estado = estado.value): List<PasoTuto> = listOf(
-    // Boceto 13b: Tú · Tus juegos · Para jugar · Tu estilo · Listo. Las dos pantallas se usan solas si están
+    // Boceto 13b + Cuentas (opcional): Tú · Tus juegos · Para jugar · Tus cuentas · Tu estilo · Listo. Las dos pantallas se usan solas si están
     // (se cambia en Ajustes); por eso ya no hay un paso para elegirlas.
-    PasoTuto.BIENVENIDA, PasoTuto.CARPETA, PasoTuto.EMULADORES, PasoTuto.APARIENCIA, PasoTuto.LISTO,
+    PasoTuto.BIENVENIDA, PasoTuto.CARPETA, PasoTuto.EMULADORES, PasoTuto.CUENTAS, PasoTuto.APARIENCIA, PasoTuto.LISTO,
 )
 
 /** Los nombres cortos de cada paso, para la fila de arriba. */
 fun nombrePasoTuto(p: PasoTuto) = when (p) {
     PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"
-    PasoTuto.APARIENCIA -> "Tu estilo"; PasoTuto.LISTO -> "Listo"; else -> p.name.lowercase()
+    PasoTuto.CUENTAS -> "Tus cuentas"; PasoTuto.APARIENCIA -> "Tu estilo"; PasoTuto.LISTO -> "Listo"; else -> p.name.lowercase()
 }
 
 /** Los temas que se ofrecen la primera vez (los cuatro primeros incluidos). */
@@ -220,6 +220,26 @@ fun Diptico.opcionesTuto(): List<Opcion> {
         PasoTuto.EMULADORES -> e.consolasEmu.map { c ->
                 Opcion(c.bonito, if (emuladorListo(c)) nombreEmulador(c) else "Falta: ${c.sugerido}", Icono.EMULADOR, activa = emuladorListo(c)) { ciclarEmulador(c) }
             }
+        PasoTuto.CUENTAS -> {
+            // Todo lo que se conecta, en un solo lugar y todo opcional: Discord, RetroAchievements, las fuentes de portadas y la IA.
+            val x = e.extra
+            val conDiscord = x.discordUsuario.isNotBlank()
+            listOf(
+                Opcion("Discord", if (conDiscord) x.discordUsuario + " ✓" else "Con un código QR", Icono.MUNDO,
+                    "Tus amigos y tu foto de perfil. Aparece un código QR: lo escaneas con el teléfono. Nunca escribes tu contraseña aquí.") {
+                    if (!estado.value.extra.discordUsuario.isNotBlank()) iniciarDiscord() else avisar("Discord ya está conectado")
+                },
+                Opcion("RetroAchievements · usuario", e.usuarioRA.ifBlank { "Opcional" }, Icono.TROFEO,
+                    "Tu usuario de retroachievements.org, para ver tus logros en la ficha de cada juego.") { abrirTexto("ra_usuario", estado.value.usuarioRA) },
+                Opcion("RetroAchievements · clave", if (e.claveRA.isBlank()) "Pegar" else "Guardada ✓", Icono.CLAVE,
+                    "Tu «Web API Key», en retroachievements.org › Settings. Solo se guarda en tu consola.") { abrirTexto("ra_clave") },
+                Opcion("SteamGridDB", if (e.claveSgdb.isNotBlank()) "Conectada ✓" else "Opcional", Icono.CLAVE,
+                    "Arte grande y logos. Clave gratis en steamgriddb.com › Preferencias › API.") { abrirClave() },
+            ) + opcionesRaspadores(e).map { it.copy(valor = if (it.valor == "✓") "Conectada ✓" else if (it.valor == "Añadir") "Opcional" else it.valor) } + listOf(
+                Opcion("IA de DIPPO", textoMotor(e), Icono.CHISPA,
+                    "Su cerebro: la IA de tu consola (gratis), Gemini o ChatGPT. Cada persona usa su propia clave.") { abrirGaleria("ia") },
+            )
+        }
         PasoTuto.PORTS -> listOf(
             Opcion(
                 "Elegir mis ports",
