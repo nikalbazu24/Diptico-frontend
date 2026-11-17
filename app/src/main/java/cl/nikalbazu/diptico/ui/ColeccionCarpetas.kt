@@ -199,7 +199,7 @@ fun CarpetasArribaCV(e: Estado) {
             if (c == null) { TB("Aún no hay consolas", 64f, titulo = true); return@Column }
             // En la pantalla angosta (con las pantallas intercambiadas) la consola va arriba y su información abajo,
             // a todo el ancho; en la ancha, lado a lado.
-            val angosto = anchoLienzo() < 1500f
+            val angosto = anchoLienzo() < 1350f
             Box(Modifier.fillMaxWidth().weight(1f)) {
             // Cambio de consola: la de antes se aleja y la nueva llega (zoom out / zoom in).
             androidx.compose.animation.AnimatedContent(
@@ -234,7 +234,7 @@ fun CarpetasArribaCV(e: Estado) {
                 Modelos3D.credito(c.id)?.let { TB(it, 16f, color = col.tenue, lineas = 1, traducir = false) }
             }
             }
-            // Acciones a la izquierda; a la derecha cómo cambiar de consola y de vista, en una línea fina (solo si cabe).
+            // Acciones a la izquierda; a la derecha cómo cambiar de consola y de vista (solo si cabe).
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
                 AccionesConsolaCV(e, c, alto = 80f)
                 Spacer(Modifier.weight(1f))

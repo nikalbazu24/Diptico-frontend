@@ -474,7 +474,7 @@ private fun PanelEstudioCV(e: Estado, clave: String, g: CarasGuardadas?) {
                             ) {
                                 val img = rememberImagen((valor?.let { Uri.parse(it) }) ?: if (i == 0) e.juegosPorClave[clave]?.portada else null, 300)
                                 Box(
-                                    Modifier.height(esc.d(128)).aspectRatio(if (i == 3) 1f else 0.74f).clip(if (i == 3) CircleShape else RoundedCornerShape(esc.d(8)))
+                                    Modifier.height(esc.d(210)).aspectRatio(if (i == 3) 1f else 0.74f).clip(if (i == 3) CircleShape else RoundedCornerShape(esc.d(8)))
                                         .background(Brush.linearGradient(listOf(Color(0xFF2A2547), Color(0xFF151526))))
                                         .then(if (falta) Modifier.border(2.dp, Color.White.copy(alpha = .35f), if (i == 3) CircleShape else RoundedCornerShape(esc.d(8))) else Modifier),
                                     contentAlignment = Alignment.Center,
@@ -492,7 +492,7 @@ private fun PanelEstudioCV(e: Estado, clave: String, g: CarasGuardadas?) {
                             val i = 4 + k
                             val foco = sel == i
                             Row(
-                                Modifier.weight(1f).height(esc.d(70)).clip(RoundedCornerShape(esc.d(35)))
+                                Modifier.weight(1f).height(esc.d(80)).clip(RoundedCornerShape(esc.d(40)))
                                     .background(if (foco) col.texto else Color.White.copy(alpha = .07f))
                                     .border(1.dp, Color.White.copy(alpha = .14f), RoundedCornerShape(esc.d(35)))
                                     .clickable { Diptico.usarEstudio(i) }.padding(horizontal = esc.d(12)),
