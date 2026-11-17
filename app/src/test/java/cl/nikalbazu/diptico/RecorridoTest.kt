@@ -55,6 +55,10 @@ class RecorridoTest {
     ).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }
 
     private val historial = ArrayDeque<String>()
+    private var pasos = 0
+    private val vistos = mutableSetOf<String>()
+
+    private fun resumen(nombre: String) = println("RECORRIDO $nombre: $pasos botones sin caídas · pantallas visitadas: ${vistos.sorted().joinToString(", ")}")
 
     private fun tecla(code: Int, largo: Boolean = false) {
         historial.addLast(KeyEvent.keyCodeToString(code) + if (largo) " (mantener)" else "")
@@ -67,6 +71,16 @@ class RecorridoTest {
             }
             regla.mainClock.advanceTimeBy(260)
             regla.waitForIdle()
+            pasos++
+            Diptico.estado.value.let { e ->
+                vistos += when {
+                    e.editandoWidgets -> "editor de widgets"
+                    e.panel != Panel.NINGUNO -> "panel " + e.panel.name.lowercase()
+                    e.inicio == "widgets" -> "widgets"
+                    e.enSistemas -> "carpetas"
+                    else -> "portada de juegos"
+                }
+            }
         } catch (t: Throwable) {
             fail("Se cayó después de: ${historial.joinToString(" → ")}\n${t.stackTraceToString().take(2500)}")
         }
@@ -150,8 +164,8 @@ class RecorridoTest {
         }
     }
 
-    @Test fun dosPantallas() { abrir(dos = true); caminos(); azar(7, 400) }
+    @Test fun dosPantallas() { abrir(dos = true); caminos(); azar(7, 400); resumen("dos pantallas") }
 
     @Config(qualifiers = "w731dp-h411dp-land-xhdpi")
-    @Test fun unaPantalla() { abrir(dos = false); caminos(); azar(11, 400) }
+    @Test fun unaPantalla() { abrir(dos = false); caminos(); azar(11, 400); resumen("una pantalla") }
 }

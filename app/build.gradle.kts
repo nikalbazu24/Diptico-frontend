@@ -101,6 +101,9 @@ android {
                 it.systemProperty("roborazzi.test.record", "true")
                 it.maxHeapSize = "3g"
                 it.testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                // Que se vea qué pruebas pasaron y el resumen del recorrido automático.
+                it.testLogging.events("passed", "failed", "skipped")
+                it.testLogging.showStandardStreams = true
             }
         }
     }
