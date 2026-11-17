@@ -86,8 +86,15 @@ fun coloresColeccion(): ColoresColeccion {
         vidrioFuerte = if (oscura) vidrio.copy(alpha = 0.78f) else Color.White.copy(alpha = 0.86f),
         borde = p.tinta.copy(alpha = if (oscura) 0.12f else 0.16f),
         texto = p.tinta, sub = p.tenue, tenue = p.tenue.copy(alpha = 0.8f),
-        elegido = if (oscura) p.tinta else acento, enElegido = if (oscura) p.fondo else Color.White, acento = acento, radio = radio,
+        elegido = if (oscura) p.tinta else acento, enElegido = if (oscura) legibleSobre(p.tinta, p.fondo) else Color.White, acento = acento, radio = radio,
     )
+}
+
+/** El fondo del tema si se lee bien sobre [claro]; si no (temas de color medio, como el azul), casi negro. */
+private fun legibleSobre(claro: Color, preferido: Color): Color {
+    val a = claro.luminance() + 0.05f
+    val b = preferido.luminance() + 0.05f
+    return if (maxOf(a, b) / minOf(a, b) >= 4.5f) preferido else Color(0xFF0B0C16)
 }
 
 /**
@@ -100,7 +107,10 @@ fun LienzoBoceto(ancho: Float, alto: Float, modifier: Modifier = Modifier, fondo
     val base = LocalEscala.current
     val colores = coloresColeccion()
     BoxWithConstraints(modifier.fillMaxSize().then(if (fondo != null) Modifier.background(fondo) else Modifier), contentAlignment = Alignment.Center) {
-        val s = (minOf(maxWidth.value / ancho, maxHeight.value / alto) * zoom * base.texto.coerceIn(0.85f, 1.3f)).coerceAtLeast(0.01f)
+        // La escala la manda el ALTO: así, con las pantallas intercambiadas, el diseño ancho de arriba en la pantalla
+        // más angosta de abajo no queda en miniatura. Solo si queda muy angosto (menos del 62 % del ancho del boceto)
+        // se achica para que quepa.
+        val s = (minOf(maxHeight.value / alto * zoom, maxWidth.value / (ancho * 0.62f)) * base.texto.coerceIn(0.85f, 1.3f)).coerceAtLeast(0.01f)
         val w = maxWidth.value / s
         val h = maxHeight.value / s
         CompositionLocalProvider(
@@ -315,7 +325,7 @@ fun PistasFinas(vararg pistas: Pair<String, String>, modifier: Modifier = Modifi
         pistas.forEach { (t, d) ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(9))) {
                 Box(Modifier.height(esc.d(38)).clip(RoundedCornerShape(50)).background(col.texto).padding(horizontal = esc.d(11)), contentAlignment = Alignment.Center) {
-                    TB(t, 17f, color = col.fondo, peso = FontWeight.ExtraBold, traducir = false, lineas = 1)
+                    TB(t, 17f, color = col.enElegido, peso = FontWeight.ExtraBold, traducir = false, lineas = 1)
                 }
                 TB(d, 21f, peso = FontWeight.Bold, lineas = 1)
             }

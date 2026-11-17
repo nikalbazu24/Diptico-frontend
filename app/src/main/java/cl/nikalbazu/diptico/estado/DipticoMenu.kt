@@ -720,10 +720,6 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 abrirFicha(); buscarCandidatos("portada")
             }
             lista += Opcion(
-                "Reconocer nombres de juegos", icono = Icono.TITULO,
-                ayuda = "Busca el nombre oficial de cada juego en libretro (gratis). Se hace solo al buscar juegos nuevos.",
-            ) { identificarNombres(avisarAlFinal = true) }
-            lista += Opcion(
                 "Reconocer nombres con IA", if (llaveNube(e) == null) "Necesita IA en la nube" else "Para los que faltan", Icono.CHISPA,
                 "La IA reconoce los juegos que libretro no conoce (Switch, PS3, archivos con nombres raros) y les pone su nombre real.",
             ) { identificarConIA() }

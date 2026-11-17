@@ -168,8 +168,7 @@ private fun EncabezadoWidgetsCV(e: Estado) {
         Pildora("Widgets", true) {}
         Pildora("Editar widgets", false) { Diptico.editarWidgets() }
         Spacer(Modifier.weight(1f))
-        RelojBateria()
-        PerfilArriba(40f)
+        PerfilArriba(54f, conReloj = true)
     }
 }
 

@@ -574,7 +574,7 @@ object Novedades {
         Version(ID, "Colección viva", listOf(
             Pagina("Un Díptico nuevo", "Arriba, el arte del juego a pantalla completa con su caja en 3D; abajo, tus consolas, un estante de cajas y tus apps. Todo en su lugar, sin nada encima.", Icono.PORTADA, 0xFF3B6BFF),
             Pagina("Gira la caja", "Toca la caja o aprieta R3: viaja al centro y muestra el reverso. Abajo aparece el carrete con todas sus imágenes.", Icono.CHISPA, 0xFF6B4EFF),
-            Pagina("Tus consolas, con su historia", "En las carpetas, cada consola cuenta su historia y se ve en 3D de verdad: gírala con el dedo hacia cualquier lado. Al entrar suena su propio encendido.", Icono.MANDO, 0xFFFF9B54),
+            Pagina("Tus consolas, con su historia", "En las carpetas, cada consola cuenta su historia y aparece en grande, flotando sobre un fondo de su color: inclínala con el dedo. Al entrar suena su propio encendido.", Icono.MANDO, 0xFFFF9B54),
             Pagina("Cuatro vistas de carpetas", "Ícono, Díptico, Repisa y Carpeta: Select las cambia. En Ícono, pellizca con dos dedos para agrandar o achicar. Mantén Select para intercambiar las pantallas donde estés.", Icono.CARPETA, 0xFF35C6D8),
             Pagina("Widgets que toman tu tema", "Continuar, Tu semana, DIPPO, ¿Qué juego hoy?, Equipo y más. Cambian de color, forma y letra con tu tema. «Editar widgets» los quita o los agrega.", Icono.APPS, 0xFF9BE15D),
             Pagina("Temas nuevos", "Los temas se rehicieron para este diseño: Colección, Aurora, Cartucho, Papel, Negro puro, Acuario, Salón, Constelación, y los vivos Nieve, Lava, Bosque, Luna, Marea, Sakura, Portátil y Fogata. Las fechas especiales siguen en el Calendario.", Icono.PALETA, 0xFFFF5D8F),

@@ -85,7 +85,7 @@ fun WidgetsCV(e: Estado, unaPantalla: Boolean) {
             if (e.extra.editandoWidgetsCV) PildoraTexto("Tienda de widgets", false) { Diptico.abrirGaleria("temas", 2) }
             Spacer(Modifier.weight(1f))
             HoraBateria(56f, 22f)
-            PerfilArriba(64f)
+            BotonPerfil(80f)
         }
         val abajo = if (unaPantalla) 150f else 40f
         val visibles = WIDGETS_CV.filter { it.id !in e.extra.widgetsCVOcultos }

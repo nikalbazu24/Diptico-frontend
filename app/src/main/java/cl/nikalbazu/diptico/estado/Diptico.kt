@@ -1625,7 +1625,6 @@ object Diptico {
                     if (fallas < carpetas.size) {
                         actualizar { it.copy(indice = if (it.configurado) it.indice else it.indice.coerceAtMost(1)) }
                         bajarIconosFaltantes()
-                        identificarNombres()
                     }
                     if (informe != null) mostrarInformeEscaneo(informe, anterior, lista, fallas, carpetas.size)
                     break
@@ -5194,42 +5193,6 @@ object Diptico {
         "com.spotify.music" to "Spotify",
         "com.google.android.apps.youtube.music" to "YT Music",
     )
-
-    // ---------- Reconocer los nombres de los juegos ----------
-
-    /** Busca el nombre oficial de los juegos en la lista de libretro (sin bajar imágenes). */
-    fun identificarNombres(avisarAlFinal: Boolean = false) {
-        if (!estado.value.titulosBonitos) return
-        // Solo las consolas que libretro conoce (los fan games y los ports ya traen su nombre): así no se reintenta en cada arranque.
-        val pendientes = crudos.filter { medios[it.clave]?.titulo == null && Consolas.porId(it.consolaId)?.libretro != null }
-        if (pendientes.isEmpty()) {
-            if (avisarAlFinal) avisar("Todos tus juegos ya tienen nombre")
-            return
-        }
-        trabajo("nombres", "Reconociendo nombres")
-        scope.launch {
-            val hay = withContext(Dispatchers.IO) { Descargas.hayInternet() }
-            if (!hay) {
-                terminarTrabajo("nombres")
-                if (avisarAlFinal) avisar("Necesito internet para reconocer los nombres")
-                return@launch
-            }
-            var n = 0
-            pendientes.forEachIndexed { i, j ->
-                val c = Consolas.porId(j.consolaId) ?: return@forEachIndexed
-                if (i % 10 == 0) trabajo("nombres", "Reconociendo nombres", i / pendientes.size.toFloat())
-                val t = withContext(Dispatchers.IO) { try { Descargas.identificar(app, j, c) } catch (ex: Exception) { null } }
-                if (t != null) {
-                    medios = medios + (j.clave to (medios[j.clave] ?: MediosJuego()).copy(titulo = t))
-                    n++
-                }
-            }
-            withContext(Dispatchers.IO) { almacen.guardarMedios(medios) }
-            publicarJuegos()
-            terminarTrabajo("nombres")
-            if (avisarAlFinal || n > 0) avisar("Reconocí el nombre de $n juegos")
-        }
-    }
 
     /** Pide a la IA el nombre de los juegos que no se reconocieron (Switch, PS3, archivos con nombres raros…). */
     fun identificarConIA() {

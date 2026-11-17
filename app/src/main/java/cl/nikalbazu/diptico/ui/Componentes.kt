@@ -307,8 +307,7 @@ fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabaj
         verticalAlignment = if (perfil) Alignment.CenterVertically else Alignment.Top,
     ) {
         // Con tu foto a la derecha: la hora y la batería arriba y el logo debajo, en una columna (como en la vitrina de cajas).
-        if (perfil) Column(verticalArrangement = Arrangement.spacedBy(esc.d(6))) { RelojBateria(); Logo(15f) }
-        else Box(Modifier.padding(top = esc.d(4))) { Logo(15f) }
+        Box(Modifier.padding(top = esc.d(4))) { Logo(15f) }
         Spacer(Modifier.width(esc.d(14)))
         PildoraTrabajos(trabajos)
         Spacer(Modifier.weight(1f))
@@ -316,7 +315,7 @@ fun BarraSuperior(modifier: Modifier, inicio: Float = 28f, trabajos: List<Trabaj
         Campana()
         if (perfil) {
             // Tu perfil en grande, al final de la barra (tipo iiSU), con la hora y la batería en su píldora al lado.
-            PerfilArriba()
+            PerfilArriba(conReloj = true)
         } else Row(
             Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.alternarReloj() }.padding(horizontal = esc.d(6), vertical = esc.d(2)),
             verticalAlignment = Alignment.CenterVertically,

@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import cl.nikalbazu.diptico.data.Consola
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.*
@@ -70,234 +72,106 @@ import kotlin.math.abs
  * Colección viva · carpetas de consolas (bocetos 6a, 6b y 6c; docs/coleccion-viva.md).
  */
 
-// ———————————————————————————— la consola en 3D ————————————————————————————
-
-/** En las pruebas (Robolectric) no hay GPU: ahí la consola se muestra con un marcador. */
-private val SIN_GPU = android.os.Build.FINGERPRINT == "robolectric"
+// ———————————————————————————— la consola ————————————————————————————
 
 /**
- * La consola en 3D de verdad: el modelo .glb que mandó Nicolás (va en el equipo, sin internet) dibujado con Filament.
- * Se gira libre con el dedo hacia cualquier lado (y se acerca con dos dedos), sin saltos; si nadie la toca, gira sola despacio.
+ * Imágenes de las consolas: una foto de estudio de cada una (hecha en el computador a partir de los modelos 3D,
+ * con fondo transparente) que va dentro de la app. Antes se dibujaban en 3D en vivo con Filament, pero ese motor
+ * se caía en la Thor y usaba más de 1 GB de memoria; una imagen pesa ~25 KB y no se cae.
+ * Se guardan las últimas en memoria para que cambiar de consola sea instantáneo.
+ */
+internal object ImagenesConsola {
+    private val cache = android.util.LruCache<String, ImageBitmap>(6)
+    private val fondos = android.util.LruCache<String, ImageBitmap>(6)
+    fun hay(ctx: android.content.Context, id: String): Boolean =
+        runCatching { ctx.assets.list("consolas")?.contains("$id.webp") == true }.getOrDefault(false)
+    fun enMemoria(id: String): ImageBitmap? = cache.get(id)
+    fun fondoEnMemoria(id: String): ImageBitmap? = fondos.get(id)
+    /** La imagen entera (solo en un hilo de fondo). */
+    fun cargar(ctx: android.content.Context, id: String): ImageBitmap? = cache.get(id) ?: runCatching {
+        ctx.assets.open("consolas/$id.webp").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
+    }.getOrNull()?.also { cache.put(id, it) }
+    /** Una versión diminuta (≈40 px): estirada a pantalla completa se ve como un difuminado suave, sin costo. */
+    fun fondo(ctx: android.content.Context, id: String): ImageBitmap? = fondos.get(id) ?: runCatching {
+        val o = BitmapFactory.Options().apply { inSampleSize = 16 }
+        ctx.assets.open("consolas/$id.webp").use { BitmapFactory.decodeStream(it, null, o) }?.asImageBitmap()
+    }.getOrNull()?.also { fondos.put(id, it) }
+}
+
+/**
+ * La consola: su imagen flotando suave, con sombra en el piso. Con el dedo se inclina hacia los lados y vuelve sola.
+ * (Se sigue llamando Consola3D para no cambiar las pantallas que la usan.)
  */
 @Composable
 fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val id = Modelos3D.idDe(c.id)
-    val existe = remember(id) { runCatching { ctx.assets.list("consolas3d")?.contains("$id.glb") == true }.getOrDefault(false) }
-    val icono: @Composable () -> Unit = {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { IconoConsola(c, 260f, c.color.copy(alpha = .22f)) }
+    val existe = remember(id) { ImagenesConsola.hay(ctx, id) }
+    val img by produceState(ImagenesConsola.enMemoria(id), id) {
+        if (value == null && existe) value = withContext(Dispatchers.IO) { ImagenesConsola.cargar(ctx, id) }
     }
-    if (SIN_GPU || !Motor3D.permitido(ctx)) { Box(modifier.testTag("consola-3d")) { icono() }; return }
-    val girar = LocalMovimiento.current
-    // El visor queda SIEMPRE montado (sacarlo y volver a ponerlo es lo más delicado del motor): una consola sin modelo
-    // solo vacía el visor y se ve su ícono encima.
-    Box(modifier.testTag("consola-3d")) {
-        androidx.compose.ui.viewinterop.AndroidView(
-            factory = { cx -> Motor3D.visorPara(cx) ?: android.view.View(cx) },
-            update = { (it as? VisorConsola)?.mostrar(if (existe) id else null, girar) },
-            modifier = Modifier.fillMaxSize(),
-            onRelease = { (it as? VisorConsola)?.pausar() },
-        )
-        if (!existe) icono()
+    val mover = LocalMovimiento.current
+    val ola = if (mover) {
+        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "flota")
+        t.animateFloat(-1f, 1f, androidx.compose.animation.core.infiniteRepeatable(tween(3200, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+            androidx.compose.animation.core.RepeatMode.Reverse), label = "ola")
+    } else remember { mutableStateOf(0f) }
+    val giro = remember { Animatable(0f) }
+    val giroX = remember { Animatable(0f) }
+    val alcance = rememberCoroutineScope()
+    Box(modifier.testTag("consola-3d").pointerInput(id) {
+        androidx.compose.foundation.gestures.detectDragGestures(
+            onDragEnd = {
+                alcance.launch { giro.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = .45f, stiffness = 120f)) }
+                alcance.launch { giroX.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = .45f, stiffness = 120f)) }
+            },
+        ) { cambio, d ->
+            cambio.consume()
+            alcance.launch { giro.snapTo((giro.value + d.x * 0.12f).coerceIn(-28f, 28f)) }
+            alcance.launch { giroX.snapTo((giroX.value - d.y * 0.10f).coerceIn(-16f, 16f)) }
+        }
+    }, contentAlignment = Alignment.Center) {
+        val pintura = img
+        if (pintura == null) {
+            IconoConsola(c, 260f, c.color.copy(alpha = .22f))
+        } else {
+            // Sombra en el piso: un óvalo difuso que se achica cuando la consola sube.
+            Canvas(Modifier.fillMaxSize()) {
+                val k = 1f - ola.value * 0.06f
+                val w = size.width * 0.62f * k
+                val h = size.height * 0.07f * k
+                val cy = size.height * 0.9f
+                drawOval(Brush.radialGradient(listOf(Color.Black.copy(alpha = .45f), Color.Transparent),
+                    center = androidx.compose.ui.geometry.Offset(size.width / 2, cy), radius = w / 2),
+                    topLeft = androidx.compose.ui.geometry.Offset(size.width / 2 - w / 2, cy - h / 2),
+                    size = androidx.compose.ui.geometry.Size(w, h))
+            }
+            androidx.compose.foundation.Image(pintura, contentDescription = c.nombre,
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
+                modifier = Modifier.fillMaxSize(0.86f).graphicsLayer {
+                    translationY = ola.value * size.height * 0.025f - size.height * 0.03f
+                    rotationY = giro.value
+                    rotationX = giroX.value
+                    cameraDistance = 14f * density
+                })
+        }
     }
 }
 
-/**
- * Un solo motor de Filament para toda la app y un visor guardado por pantalla que cambia de modelo.
- * Seguro: antes de tocar el motor queda anotado «dibujando»; si la app se cae ahí (esas caídas no dejan informe),
- * al volver a abrirla el 3D queda en pausa en esta versión y se ven los íconos. Lo mismo si se cierra dos veces seguidas.
- */
-internal object Motor3D {
-    private const val PREFS = "motor3d"
-    private var revisado = false
-    private var bloqueado = false
-    val engine: com.google.android.filament.Engine by lazy {
-        com.google.android.filament.utils.Utils.init()
-        com.google.android.filament.Engine.create()
+/** El fondo de la pantalla de la consola: su propia imagen, enorme y difuminada, teñida con su color. */
+@Composable
+fun FondoConsolaCV(c: Consola?, modifier: Modifier = Modifier) {
+    val ctx = LocalContext.current
+    val id = c?.let { Modelos3D.idDe(it.id) } ?: ""
+    val img by produceState(ImagenesConsola.fondoEnMemoria(id), id) {
+        if (value == null && id.isNotEmpty() && ImagenesConsola.hay(ctx, id)) value = withContext(Dispatchers.IO) { ImagenesConsola.fondo(ctx, id) }
     }
-    private val visores = java.util.WeakHashMap<android.content.Context, VisorConsola>()
-    private fun clave() = "pausa_" + cl.nikalbazu.diptico.BuildConfig.VERSION_NAME
-
-    fun permitido(ctx: android.content.Context): Boolean {
-        if (!revisado) {
-            revisado = true
-            val p = ctx.getSharedPreferences(PREFS, 0)
-            if (p.getBoolean("dibujando", false)) p.edit().putBoolean(clave(), true).putBoolean("dibujando", false).commit()
-            bloqueado = p.getBoolean(clave(), false)
-        }
-        return !bloqueado
-    }
-    fun marcar(ctx: android.content.Context, dibujando: Boolean) =
-        ctx.getSharedPreferences(PREFS, 0).edit().putBoolean("dibujando", dibujando).commit()
-    /** Igual que [marcar], sin esperar al disco (para el paso a primer plano y al fondo). */
-    fun marcarLuego(ctx: android.content.Context, dibujando: Boolean) =
-        ctx.getSharedPreferences(PREFS, 0).edit().putBoolean("dibujando", dibujando).apply()
-    fun pausarPorSeguridad(ctx: android.content.Context) {
-        ctx.getSharedPreferences(PREFS, 0).edit().putBoolean(clave(), true).putBoolean("dibujando", false).commit()
-        bloqueado = true; revisado = true
-    }
-    fun reactivar(ctx: android.content.Context) { ctx.getSharedPreferences(PREFS, 0).edit().clear().commit(); bloqueado = false }
-
-    fun visorPara(cx: android.content.Context): VisorConsola? {
-        visores[cx]?.let { if (it.parent == null) return it }
-        // Anotado ANTES de crear el motor: si se cae al crearlo, la próxima vez no se intenta.
-        marcar(cx, true)
-        val v = runCatching { VisorConsola(cx) }.getOrNull()
-        marcar(cx, false)
-        if (v == null) { pausarPorSeguridad(cx); return null }
-        visores[cx] = v
-        return v
-    }
-}
-
-/**
- * El visor: fondo transparente, la consola siempre al centro y del mismo tamaño (el modelo se ajusta a un cubo).
- * El dedo la gira (horizontal = alrededor, vertical = inclinar, con tope); al soltarla sigue con la inercia, vuelve a su
- * inclinación con suavidad y a los 2,5 s gira sola despacio. Solo se dibuja cuando algo cambia (máx. 60 cuadros).
- */
-internal class VisorConsola(ctx: android.content.Context) :
-    android.view.TextureView(ctx), android.view.Choreographer.FrameCallback {
-    private val engine = Motor3D.engine
-    private val ui = com.google.android.filament.android.UiHelper(com.google.android.filament.android.UiHelper.ContextErrorPolicy.DONT_CHECK).apply { isOpaque = false }
-    private val visor = com.google.android.filament.utils.ModelViewer(this, engine, ui)
-    private var corriendo = false
-    private var girar = true
-    private var idActual: String? = null
-    private var pedido = 0
-    private var ultimoToque = 0L
-    private var yaw = 25f
-    private var pitch = 0f
-    private var velYaw = 0f
-    private var tocando = false
-    private var lx = 0f
-    private var ly = 0f
-    private var cuadrosPendientes = 0
-    private val base = FloatArray(16)
-    private val m1 = FloatArray(16)
-    private val m2 = FloatArray(16)
-    private val fin = FloatArray(16)
-
-    init {
-        isOpaque = false
-        visor.view.blendMode = com.google.android.filament.View.BlendMode.TRANSLUCENT
-        visor.renderer.clearOptions = visor.renderer.clearOptions.apply { clear = true }
-        visor.scene.skybox = null
-        visor.scene.indirectLight = com.google.android.filament.IndirectLight.Builder()
-            .irradiance(1, floatArrayOf(1f, 1f, 1f)).intensity(30_000f).build(engine)
-        // Sin sombras ni efectos caros: es un adorno, tiene que ser liviano.
-        visor.view.setShadowingEnabled(false)
-        setOnTouchListener { v, ev ->
-            ultimoToque = android.os.SystemClock.uptimeMillis()
-            when (ev.actionMasked) {
-                android.view.MotionEvent.ACTION_DOWN -> { v.parent?.requestDisallowInterceptTouchEvent(true); tocando = true; velYaw = 0f; lx = ev.x; ly = ev.y }
-                android.view.MotionEvent.ACTION_MOVE -> {
-                    val dx = ev.x - lx; val dy = ev.y - ly; lx = ev.x; ly = ev.y
-                    val grados = 360f / (width.coerceAtLeast(1) * 1.1f)
-                    yaw += dx * grados              // el dedo a la derecha la gira hacia la derecha
-                    pitch = (pitch + dy * grados).coerceIn(-35f, 35f)
-                    velYaw = dx * grados
-                    pedirCuadros()
-                }
-                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> { tocando = false; pedirCuadros() }
-            }
-            true
-        }
-    }
-
-    private fun pedirCuadros(n: Int = 2) { cuadrosPendientes = maxOf(cuadrosPendientes, n) }
-
-    /** Cambia el modelo sin rehacer nada: el archivo se lee aparte y se carga en el hilo de la pantalla. */
-    fun mostrar(id: String?, girarSolo: Boolean) {
-        girar = girarSolo
-        if (id == idActual) return
-        idActual = id
-        val n = ++pedido
-        if (id == null) {
-            // Consola sin modelo: se vacía el visor (se ve su ícono encima).
-            post { if (n == pedido) runCatching { visor.destroyModel(); pedirCuadros(2) } }
-            return
-        }
-        val app = context.applicationContext
-        Thread {
-            // Si se pasa de consola en consola rápido, solo se carga la última (cargar y soltar seguido es lo más delicado).
-            Thread.sleep(280)
-            if (n != pedido) return@Thread
-            val bytes = runCatching { app.assets.open("consolas3d/$id.glb").use { it.readBytes() } }.getOrNull() ?: return@Thread
-            post {
-                if (n != pedido) return@post
-                runCatching {
-                    visor.destroyModel()
-                    val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size).order(java.nio.ByteOrder.nativeOrder()).put(bytes)
-                    buffer.rewind()
-                    visor.loadModelGlb(buffer)
-                    visor.transformToUnitCube()
-                    visor.asset?.let { a -> val tm = engine.transformManager; tm.getTransform(tm.getInstance(a.root), base) }
-                    // Parte mostrando su frente, apenas girada (tres cuartos), como en el boceto.
-                    yaw = Modelos3D.frente(id) + 25f; pitch = 0f; velYaw = 0f
-                    aplicarGiro()
-                    pedirCuadros(4)
-                }
-            }
-        }.apply { isDaemon = true }.start()
-    }
-
-    /**
-     * Gira la consola sobre SU centro. `transformToUnitCube` la deja centrada en (0, 0, −4) frente a la cámara: el giro
-     * se arma como «llevar al origen → girar → devolver a su lugar». (Antes giraba alrededor de la cámara y se salía de la
-     * pantalla o quedaba cortada: era el «desaparece» del video.)
-     */
-    private fun aplicarGiro() {
-        val a = visor.asset ?: return
-        val cx = base[12]; val cy = base[13]; val cz = base[14]
-        android.opengl.Matrix.setRotateM(m1, 0, pitch, 1f, 0f, 0f)
-        android.opengl.Matrix.setRotateM(m2, 0, yaw, 0f, 1f, 0f)
-        android.opengl.Matrix.multiplyMM(fin, 0, m1, 0, m2, 0)          // R = Rx · Ry
-        android.opengl.Matrix.setIdentityM(m1, 0)
-        android.opengl.Matrix.translateM(m1, 0, -cx, -cy, -cz)
-        android.opengl.Matrix.multiplyMM(m2, 0, m1, 0, base, 0)         // T(−c) · base: centrada en el origen
-        android.opengl.Matrix.multiplyMM(m1, 0, fin, 0, m2, 0)          // R · …
-        m1[12] += cx; m1[13] += cy; m1[14] += cz                        // T(c) · …
-        val tm = engine.transformManager
-        tm.setTransform(tm.getInstance(a.root), m1)
-    }
-
-    override fun onAttachedToWindow() { super.onAttachedToWindow(); seguir() }
-    override fun onDetachedFromWindow() { pausar(); super.onDetachedFromWindow() }
-    override fun onWindowVisibilityChanged(v: Int) {
-        super.onWindowVisibilityChanged(v)
-        if (v == android.view.View.VISIBLE) seguir() else pausar()
-    }
-
-    private fun seguir() {
-        if (corriendo || !isAttachedToWindow) return
-        corriendo = true
-        Motor3D.marcarLuego(context, true)
-        pedirCuadros(4)
-        android.view.Choreographer.getInstance().postFrameCallback(this)
-    }
-
-    fun pausar() {
-        if (!corriendo) return
-        corriendo = false
-        android.view.Choreographer.getInstance().removeFrameCallback(this)
-        Motor3D.marcarLuego(context, false)
-    }
-
-    override fun doFrame(frameTimeNanos: Long) {
-        if (!corriendo) return
-        android.view.Choreographer.getInstance().postFrameCallback(this)
-        if (visor.asset == null) return
-        var cambio = false
-        if (!tocando) {
-            // Inercia al soltar, y la inclinación vuelve sola a su lugar.
-            if (kotlin.math.abs(velYaw) > 0.05f) { yaw += velYaw; velYaw *= 0.92f; cambio = true } else velYaw = 0f
-            if (kotlin.math.abs(pitch) > 0.1f) { pitch *= 0.9f; cambio = true } else if (pitch != 0f) { pitch = 0f; cambio = true }
-            if (girar && velYaw == 0f && android.os.SystemClock.uptimeMillis() - ultimoToque > 2500) { yaw += 0.25f; cambio = true }
-        }
-        if (cambio) { aplicarGiro(); pedirCuadros(1) }
-        if (cuadrosPendientes <= 0) return
-        cuadrosPendientes--
-        visor.render(frameTimeNanos)
+    androidx.compose.animation.Crossfade(img, animationSpec = tween(duracionMovimiento(420)), label = "fondo", modifier = modifier) { pintura ->
+        if (pintura != null) androidx.compose.foundation.Image(pintura, contentDescription = null,
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            filterQuality = androidx.compose.ui.graphics.FilterQuality.Low,
+            alpha = .30f, modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = 1.25f; scaleY = 1.25f })
     }
 }
 
@@ -310,18 +184,22 @@ fun CarpetasArribaCV(e: Estado) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         val color = c?.color ?: col.acento
+        FondoConsolaCV(c, Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(color.copy(alpha = .38f), Color.Transparent), radius = 1600f)))
         FondoTemaCV()
         val d1 = duracionMovimiento(280); val d2 = duracionMovimiento(360); val d3 = duracionMovimiento(180); val d4 = duracionMovimiento(220)
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(64), vertical = esc.d(28))) {
-            Row(Modifier.fillMaxWidth().height(esc.d(70)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
+            Row(Modifier.fillMaxWidth().height(esc.d(92)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
                 TB("TUS CONSOLAS", 20f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 3f)
                 Spacer(Modifier.weight(1f))
-                BotonWidgetsCV(); HoraBateria(60f, 24f); BotonPerfil(64f)
+                BotonWidgetsCV(); HoraBateria(60f, 24f); BotonPerfil(82f)
             }
             if (c == null) { TB("Aún no hay consolas", 64f, titulo = true); return@Column }
-            // Cambio de consola: la de antes se aleja y la nueva llega (zoom out / zoom in).
+            // En la pantalla angosta (con las pantallas intercambiadas) la consola va arriba y su información abajo,
+            // a todo el ancho; en la ancha, lado a lado.
+            val angosto = anchoLienzo() < 1500f
             Box(Modifier.fillMaxWidth().weight(1f)) {
+            // Cambio de consola: la de antes se aleja y la nueva llega (zoom out / zoom in).
             androidx.compose.animation.AnimatedContent(
                 targetState = c.id,
                 transitionSpec = {
@@ -330,7 +208,13 @@ fun CarpetasArribaCV(e: Estado) {
                 }, label = "consola", modifier = Modifier.fillMaxSize(),
             ) { id ->
                 val k = Consolas.porId(id) ?: return@AnimatedContent
-                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(esc.d(28))) {
+                if (angosto) {
+                    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
+                        Spacer(Modifier.weight(1f))
+                        InfoConsolaCV(e, k, tamNombre = 64f, lineasHistoria = 3)
+                        PersonalizarConsolaCV(e, k)
+                    }
+                } else Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(esc.d(28))) {
                     Column(Modifier.weight(0.56f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(14), Alignment.CenterVertically)) {
                         InfoConsolaCV(e, k, tamNombre = 72f, lineasHistoria = 2)
                         PersonalizarConsolaCV(e, k)
@@ -338,22 +222,25 @@ fun CarpetasArribaCV(e: Estado) {
                     Spacer(Modifier.weight(0.44f))
                 }
             }
-            // La consola 3D va fuera de la animación: un solo visor que cambia de modelo.
-            Column(Modifier.fillMaxWidth(0.44f).fillMaxHeight().align(Alignment.CenterEnd), horizontalAlignment = Alignment.CenterHorizontally) {
+            // La consola va fuera de la animación: cambia de imagen con su propio fundido.
+            if (angosto) {
+                Column(Modifier.fillMaxWidth().fillMaxHeight(0.46f).align(Alignment.TopCenter), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Consola3D(c, Modifier.fillMaxWidth().weight(1f))
+                }
+            } else Column(Modifier.fillMaxWidth(0.44f).fillMaxHeight().align(Alignment.CenterEnd), horizontalAlignment = Alignment.CenterHorizontally) {
                 Consola3D(c, Modifier.fillMaxWidth().weight(1f))
-                Modelos3D.credito(c.id)?.let { TB("$it · gírala con el dedo", 16f, color = col.tenue, lineas = 1, traducir = false) }
+                Modelos3D.credito(c.id)?.let { TB(it, 16f, color = col.tenue, lineas = 1, traducir = false) }
             }
             }
-            // Acciones a la izquierda; a la derecha cómo cambiar de consola y de vista, en una línea fina.
+            // Acciones a la izquierda; a la derecha cómo cambiar de consola y de vista, en una línea fina (solo si cabe).
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
                 AccionesConsolaCV(e, c, alto = 80f)
                 Spacer(Modifier.weight(1f))
-                PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas")
+                if (!angosto) PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas")
             }
         }
     }
 }
-
 
 @Composable
 fun InfoConsolaCV(e: Estado, c: Consola, tamNombre: Float, lineasHistoria: Int = 4) {
@@ -476,29 +363,42 @@ fun CarpetasAbajoCV(e: Estado) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         FondoTemaCV()
-        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(26), vertical = esc.d(20)), verticalArrangement = Arrangement.spacedBy(esc.d(14))) {
-            // Arriba: DIPPO · Consolas | Colecciones · las vistas (Ícono, Díptico, Repisa, Carpeta).
-            Row(Modifier.fillMaxWidth().height(esc.d(76)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                if (e.extra.dippoInicio) Box(Modifier.size(esc.d(72)).clip(CircleShape).background(col.vidrio).clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) {
-                    cl.nikalbazu.diptico.bisa.AvatarBisa(52f * esc.factor)
-                }
-                listOf("Consolas", "Colecciones").forEachIndexed { i, n ->
-                    val on = e.extra.pestanaCarpetas == i
-                    Box(Modifier.height(esc.d(64)).clip(RoundedCornerShape(50)).background(if (on) col.elegido else col.vidrio)
-                        .then(if (on) Modifier else Modifier.border(1.dp, col.borde, RoundedCornerShape(50)))
-                        .clickable { Diptico.elegirPestanaCarpetas(i) }.padding(horizontal = esc.d(20)), contentAlignment = Alignment.Center) {
-                        TB(n, 23f, color = if (on) col.enElegido else col.texto, peso = FontWeight.ExtraBold)
-                    }
-                }
+        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(24), vertical = esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
+            // Arriba: el dock de apps a la izquierda; la hora, la batería y tu foto a la derecha.
+            Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                DockCV(e, 52f)
                 Spacer(Modifier.weight(1f))
-                // El dock de apps a la medida de 5 apps (las vistas se cambian con Select, no hace falta otro botón).
-                DockCV(e, 54f)
+                HoraBateria(56f, 22f)
+                BotonPerfil(70f)
             }
             if (e.extra.pestanaCarpetas == 1) ColeccionesCV(e, Modifier.fillMaxWidth().weight(1f))
             else RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1f), unaPantalla = false)
-            PistasFinas("A" to "Entrar", "X" to "Opciones", "Select" to nombreVistaCarpetas(e.extra.vistaCarpetasCV), modifier = Modifier.fillMaxWidth())
+            // Abajo, sin instrucciones: Consolas en la esquina izquierda, DIPPO al medio y Colecciones a la derecha.
+            Box(Modifier.fillMaxWidth().height(esc.d(92))) {
+                BotonPestanaCV(Icono.MANDO, "Consolas", e.extra.pestanaCarpetas == 0, Modifier.align(Alignment.CenterStart)) { Diptico.elegirPestanaCarpetas(0) }
+                if (e.extra.dippoInicio) Box(Modifier.align(Alignment.Center).size(esc.d(88)).clip(CircleShape).clickable { Diptico.abrirAsistente() },
+                    contentAlignment = Alignment.Center) {
+                    cl.nikalbazu.diptico.bisa.AvatarBisa(78f * esc.factor)
+                }
+                BotonPestanaCV(Icono.BIBLIOTECA, "Colecciones", e.extra.pestanaCarpetas == 1, Modifier.align(Alignment.CenterEnd)) { Diptico.elegirPestanaCarpetas(1) }
+            }
         }
     }
+}
+
+/** Botón redondo de esquina con un ícono: lleno cuando es la pestaña que se ve. */
+@Composable
+private fun BotonPestanaCV(icono: Icono, nombre: String, on: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    Box(
+        modifier.size(esc.d(80)).clip(CircleShape).background(if (on) col.elegido else col.vidrio)
+            .then(if (on) Modifier else Modifier.border(1.dp, col.borde, CircleShape))
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = nombre }
+            .testTag("pestana-$nombre"),
+        contentAlignment = Alignment.Center,
+    ) { IconoDiptico(icono, if (on) col.enElegido else col.texto, 40f) }
 }
 
 /** Colecciones: por ahora, tus favoritos y lo jugado hace poco como carpetas especiales. */
@@ -726,14 +626,15 @@ fun CarpetasUnicaCV(e: Estado) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         val color = c?.color ?: col.acento
+        FondoConsolaCV(c, Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(color.copy(alpha = .38f), Color.Transparent), radius = 1500f)))
         FondoTemaCV()
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
             // Franja 1: vistas · hora, batería y perfil.
-            Row(Modifier.fillMaxWidth().height(esc.d(70)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+            Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
                 DockCV(e, 52f)
                 Spacer(Modifier.weight(1f))
-                HoraBateria(56f, 22f); BotonPerfil(58f)
+                HoraBateria(56f, 22f); BotonPerfil(74f)
             }
             if (c == null) return@Column
             Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(26))) {
