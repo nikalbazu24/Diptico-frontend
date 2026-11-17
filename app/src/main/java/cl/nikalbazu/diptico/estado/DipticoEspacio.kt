@@ -104,11 +104,14 @@ fun nombreTamPagina(an: Int, al: Int): String = when {
 fun Diptico.pasoEspacio(d: Int) {
     val e = estado.value
     if (e.inicio != "widgets") {
-        actualizar { it.copy(widgetFoco = -1, paginaInicio = if (d > 0) 0 else (it.paginas - 1).coerceAtLeast(0)) }
-        fijarInicio("widgets")
+        almacen.guardarTexto("inicio", "widgets")
+        actualizar { it.copy(inicio = "widgets", widgetFoco = -1, paginaInicio = if (d > 0) 0 else (it.paginas - 1).coerceAtLeast(0)) }
     } else {
         val p = e.paginaInicio + d
-        if (p < 0 || p >= e.paginas) { actualizar { it.copy(widgetFoco = -1, extra = it.extra.copy(tiendaLado = false)) }; fijarInicio("heroe") }
+        if (p < 0 || p >= e.paginas) {
+            almacen.guardarTexto("inicio", "heroe")
+            actualizar { it.copy(inicio = "heroe", widgetFoco = -1, extra = it.extra.copy(tiendaLado = false)) }
+        }
         else irAPagina(p)
     }
     Sonidos.mover()
