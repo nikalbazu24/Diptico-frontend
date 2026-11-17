@@ -16,13 +16,4 @@ import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.VistaPartida
 
-@Composable
-private fun AccionMesa(titulo: String, icono: Icono, modifier: Modifier, accion: () -> Unit) {
-    val esc = LocalEscala.current
-    Row(modifier.clip(RoundedCornerShape(esc.d(12))).background(Color.White.copy(alpha = .10f))
-        .clickable(onClick = accion).padding(horizontal = esc.d(10), vertical = esc.d(9)),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-        IconoDiptico(icono, Coral, 15f)
-        Texto(titulo, 12f, color = Color.White, lineas = 1)
-    }
-}
+

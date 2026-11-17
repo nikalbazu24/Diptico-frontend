@@ -45,11 +45,6 @@ fun Diptico.agregarSugeridos() {
     avisar("Listo: ya tienes tres widgets")
 }
 
-/** X en Tu espacio: la tienda completa, navegable con el control. */
-fun Diptico.abrirTiendaEspacio() {
-    editarWidgets()
-    actualizar { it.copy(estudioPestana = 1, indice = 1, estudioZona = "panel") }
-}
 
 /** Una página más en Tu espacio (también sin entrar al editor). */
 fun Diptico.agregarPaginaEspacio() {
@@ -162,13 +157,7 @@ fun Diptico.ponerEnEspacio(tipo: String) {
     }
 }
 
-fun Diptico.usarTiendaEspacio() {
-    val e = estado.value
-    tiposTiendaEspacio(e.extra.tiendaCat).getOrNull(e.extra.espacioSel)?.let { ponerEnEspacio(it) }
-}
 
-/** Una pantalla: la tienda entra o sale por el costado de Tu espacio. */
-fun Diptico.alternarTiendaLado() = actualizar { it.copy(extra = it.extra.copy(tiendaLado = !it.extra.tiendaLado, espacioSel = 0)) }
 
 /** Personalizar consola › «Ver sus juegos». */
 fun Diptico.verJuegosConsola(id: String) {

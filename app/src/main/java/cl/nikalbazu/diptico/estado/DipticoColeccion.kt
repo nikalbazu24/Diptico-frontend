@@ -170,7 +170,6 @@ fun Diptico.alternarLogoConsola(id: String) {
 
 fun Diptico.elegirPestanaCarpetas(i: Int) = actualizar { it.copy(extra = it.extra.copy(pestanaCarpetas = i)) }
 
-fun Diptico.alternarEditarWidgetsCV() = actualizar { it.copy(extra = it.extra.copy(editandoWidgetsCV = !it.extra.editandoWidgetsCV)) }
 
 /**
  * Los juegos que van junto al ícono de una carpeta: los últimos jugados, los favoritos o los que eligió la persona
@@ -214,8 +213,4 @@ fun Diptico.quitarWidgetCV(id: String) {
     actualizar { it.copy(extra = it.extra.copy(widgetsCVOcultos = s)) }
 }
 
-fun Diptico.ponerWidgetCV(id: String) {
-    val s = estado.value.extra.widgetsCVOcultos - id
-    almacen.guardarTexto("widgetsCVOcultos", s.joinToString("|"))
-    actualizar { it.copy(extra = it.extra.copy(widgetsCVOcultos = s)) }
-}
+

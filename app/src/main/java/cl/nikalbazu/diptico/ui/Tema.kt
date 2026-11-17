@@ -92,7 +92,6 @@ fun conContraste(p: Paleta): Paleta = p.copy(
 )
 
 val Uva: Color get() = Color(Estilo.tema.acento)
-val UvaSombra: Color get() = lerp(Uva, Color.Black, 0.22f)
 val Coral: Color get() = Color(Estilo.tema.acento2)
 val Sol: Color get() = Color(Estilo.tema.acento3)
 val Tinta = Color(0xFF1C1A33)
