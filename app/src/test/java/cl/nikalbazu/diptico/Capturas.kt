@@ -1729,6 +1729,31 @@ class Capturas {
     @Test fun t497_cv_espacio_editando() = foto("497_cv_espacio_editando", cv().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0), Rol.SUPERIOR, avance = 220)
     @Test fun t498_cv_espacio_una_tienda() = foto("498_cv_espacio_una_tienda", cv { it.copy(tiendaLado = true) }.copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
     @Test fun t499_cv_espacio_ancho() = foto("499_cv_espacio_ancho", cv { it.copy(paginaAncho = 2) }.copy(inicio = "widgets"), Rol.SUPERIOR)
+    // Menú de un widget (boceto 11): abajo con dos pantallas, al costado con una.
+    private fun conSemana(e: Estado) = e.copy(widgets = e.widgets.map { if (it.tipo == "tuSemana") it.copy(visible = true, x = 3, y = 2, an = 3, al = 2, pagina = 0) else if (it.tipo == "recientes") it.copy(visible = false) else it })
+    @Config(qualifiers = ABAJO)
+    @Test fun t500_cv_menu_widget_abajo() {
+        val e = conSemana(cv())
+        val i = e.widgets.indexOfFirst { it.tipo == "tuSemana" }
+        foto("500_cv_menu_widget_abajo", e.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, widgetSel = i, indice = 2, estudioZona = "panel"), Rol.INFERIOR, mi = 1)
+    }
+    @Test fun t501_cv_menu_widget_arriba() {
+        val e = conSemana(cv())
+        val i = e.widgets.indexOfFirst { it.tipo == "tuSemana" }
+        foto("501_cv_menu_widget_arriba", e.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, widgetSel = i, indice = 2, estudioZona = "panel"), Rol.SUPERIOR, avance = 240)
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t502_cv_menu_widget_aspecto() {
+        val e = cv()
+        val i = e.widgets.indexOfFirst { it.tipo == "juego" && it.visible }.coerceAtLeast(0)
+        foto("502_cv_menu_widget_aspecto", e.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, widgetSel = i, indice = 2, estudioZona = "panel",
+            navegacion = e.navegacion.copy(grupoEditorWidget = 2)), Rol.INFERIOR, mi = 1)
+    }
+    @Test fun t503_cv_menu_widget_una() {
+        val e = conSemana(cv())
+        val i = e.widgets.indexOfFirst { it.tipo == "tuSemana" }
+        foto("503_cv_menu_widget_una", e.copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false, editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, widgetSel = i, indice = 2, estudioZona = "panel"), Rol.UNICA)
+    }
     // Mantener presionado un widget: su menú de edición abajo (Qué muestra, Tamaño, Diseño, Más ajustes).
     @Config(qualifiers = ABAJO)
     @Test fun t500_cv_editar_widget_abajo() = foto("500_cv_editar_widget_abajo",

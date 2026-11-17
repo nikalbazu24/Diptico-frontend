@@ -74,6 +74,9 @@ object ConfWidgets {
 
 fun Estado.conf(tipo: String, clave: String, def: String = ""): String = extra.confWidgets[tipo]?.get(clave)?.takeIf { it.isNotEmpty() } ?: def
 
+/** Una parte del widget que se puede esconder desde «Qué muestra» (por defecto se ve). */
+fun Estado.ver(tipo: String, clave: String): Boolean = conf(tipo, clave, "si") != "no"
+
 fun Diptico.confWidget(tipo: String, cambios: Map<String, String>) {
     val actual = estado.value.extra.confWidgets
     val nuevo = actual + (tipo to (actual[tipo].orEmpty() + cambios))
@@ -138,6 +141,10 @@ internal fun Diptico.controlesUtil(e: Estado, tipo: String): List<Control> {
     }
     fun escribir(titulo: String, clave: String, valor: String) = Control(titulo, "accion", valor.ifEmpty { "Escribir" }, g, Icono.LAPIZ,
         ayuda = "Se escribe con el teclado de Díptico.") { abrirTexto("wconf:$tipo:$clave", e.conf(tipo, clave)) }
+    // «Mostrar»: un interruptor por cada parte del widget (se guarda «no» al apagarla).
+    fun ver(titulo: String, clave: String) = Control(titulo, "interruptor", if (e.ver(tipo, clave)) "Sí" else "No", g) {
+        confWidget(tipo, clave, if (estado.value.ver(tipo, clave)) "no" else "si")
+    }
     return when (tipo) {
         "marcador", "proximoPartido", "tabla" -> {
             val liga = Deportes.liga(e.conf(tipo, "liga", Deportes.LIGAS[0].id))
@@ -186,8 +193,14 @@ internal fun Diptico.controlesUtil(e: Estado, tipo: String): List<Control> {
         "recientes", "favoritos" -> listOf(
             chips("De qué consola", "consola", listOf("Todas" to "") + e.consolasConJuegos.map { it.bonito to it.id }, ""),
             chips("Cuántos juegos", "cuantos", listOf("Según el tamaño" to "", "2" to "2", "3" to "3", "4" to "4", "6" to "6", "8" to "8"), ""),
+            ver("Título arriba", "titulo"),
         )
-        "juego" -> listOf(chips("Qué juego", "cual", listOf("El que elijas" to "elegido", "El último que jugaste" to "ultimo", "Un favorito" to "favorito"), "elegido"))
+        "juego" -> listOf(
+            chips("Qué juego", "cual", listOf("El que elijas" to "elegido", "El último que jugaste" to "ultimo", "Un favorito" to "favorito"), "elegido"),
+            ver("Nombre de la consola", "consola"), ver("Botón Jugar", "boton"),
+        )
+        "tuSemana" -> listOf(ver("Total de horas", "total"), ver("Barras por día", "barras"), ver("Mejor día y racha", "frase"))
+        "proximaPartida" -> listOf(ver("Tu próximo paso", "paso"), ver("Aviso de mapa guardado", "mapa"))
         "reloj" -> listOf(chips("Fecha", "fecha", listOf("Sí" to "si", "No" to "no"), "si"))
         "consolas" -> listOf(chips("Íconos de las consolas", "iconos", listOf("Sí" to "si", "No" to "no"), "si"))
         else -> emptyList()
