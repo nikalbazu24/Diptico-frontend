@@ -825,3 +825,8 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Limpieza: `ui/Tutorial.kt` borrado (Rol y Girador viven en `ui/Comun.kt`), 27 funciones sin uso fuera. Un intento anterior a medias había
   dejado `DipticoEmblema.kt` y campos duplicados: borrados; se conservó la vista de carpetas «grande» (por defecto, migración `carpetasGrandes1`).
 - Capturas t504–t522. Novedades `coleccion-viva-2.0-76` actualizadas (sigue sin publicar: se publica con todo esto).
+- Beta.636 (17 nov, tarde): emblema HISTÓRICO por consola (`EMBLEMAS_CLASICOS` en DipticoFondoConsola.kt: God of War en PS2, Ocarina en N64…;
+  el primero que tengas en la biblioteca, si no tu más jugado), configuración rehecha (Siguiente fijo abajo, Start avanza, filas con tiras
+  propias de personaje/color/tema, foto de Discord, sin repetir pantallas), recorrido obligatorio (`RecorridoVivo.puedeSeguir`, B no lo cierra)
+  y nítido, intro con tus consolas y portadas. Tu espacio: sticks y cruceta se quedan en los widgets. Secciones de Personalizar consola con scroll.
+  Esperando que Nicolás pruebe y diga «publica» para fusionar a main (2.0-76).
