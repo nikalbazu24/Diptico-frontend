@@ -45,15 +45,6 @@ fun Diptico.agregarSugeridos() {
     avisar("Listo: ya tienes tres widgets")
 }
 
-/** Agrega o encuentra un widget desde la tienda de abajo sin entrar al editor. */
-fun Diptico.usarTiendaEspacio(c: Diptico.Control) {
-    val e = estado.value
-    val w = e.widgets.firstOrNull { it.tipo == c.extra }
-    if (w != null && w.visible) { irAPagina(w.pagina); return }
-    c.accion()
-    guardarWidgets(estado.value.widgets)
-}
-
 /** X en Tu espacio: la tienda completa, navegable con el control. */
 fun Diptico.abrirTiendaEspacio() {
     editarWidgets()
