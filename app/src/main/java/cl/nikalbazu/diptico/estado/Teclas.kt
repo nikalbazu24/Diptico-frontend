@@ -591,6 +591,7 @@ object Teclas {
                     esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.cerrarGaleriaWidgets(); return true }
                 }
             } else when {
+                d != null -> { if (abajo) Diptico.entrarWidgets(); return true }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.abrirGaleriaWidgets(); return true }
                 code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.editarWidgets(); return true }
                 esA(code) && e.espacioVacio() -> { if (abajo && una) Diptico.agregarSugeridos(); return true }
@@ -1138,6 +1139,12 @@ object Teclas {
             return
         }
         val enInicio = libre && e.inicio == "widgets" && e.panel == Panel.NINGUNO && !e.editandoWidgets && !e.ordenando
+        // Colección viva: en Tu espacio los dos sticks se quedan en los widgets (o en la Galería), nunca en las consolas de atrás.
+        if (enInicio && e.extra.coleccionViva) {
+            if (e.extra.galeria) pulsar(d, 0)
+            else if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
+            return
+        }
         if (enInicio && deWidgets) {
             if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
             return

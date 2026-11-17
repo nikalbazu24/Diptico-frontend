@@ -30,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -77,7 +79,7 @@ fun ConsolaOpcionesCV(e: Estado, angosto: Boolean = false) {
                 }
                 if (!angosto) HoraBateria(58f, 23f)
             }
-            if (angosto) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+            if (angosto) Row(Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
                 grupos.forEach { g ->
                     val on = g == grupo
                     Box(Modifier.height(esc.d(58)).clip(CircleShape).background(if (on) col.elegido else col.vidrio).border(1.dp, col.borde, CircleShape)
@@ -87,7 +89,11 @@ fun ConsolaOpcionesCV(e: Estado, angosto: Boolean = false) {
                 }
             }
             Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(36))) {
-                if (!angosto) Column(Modifier.width(esc.d(360)).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
+                // Las secciones se deslizan (con el dedo o solas al elegir con L1/R1) si no caben todas.
+                val desliza = androidx.compose.foundation.rememberScrollState()
+                val altoSeccion = with(androidx.compose.ui.platform.LocalDensity.current) { esc.d(108).toPx() }
+                LaunchedEffect(grupo) { desliza.animateScrollTo(((grupos.indexOf(grupo) - 1).coerceAtLeast(0) * altoSeccion).toInt()) }
+                if (!angosto) Column(Modifier.width(esc.d(360)).fillMaxHeight().verticalScroll(desliza), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
                     grupos.forEach { g ->
                         val on = g == grupo
                         Row(
