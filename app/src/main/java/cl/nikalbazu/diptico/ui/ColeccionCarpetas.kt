@@ -59,6 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.semantics.contentDescription
 import cl.nikalbazu.diptico.data.Consola
 import cl.nikalbazu.diptico.data.Consolas
@@ -120,7 +122,7 @@ fun Consola3D(c: Consola, modifier: Modifier = Modifier) {
     val giroX = remember { Animatable(0f) }
     val alcance = rememberCoroutineScope()
     Box(modifier.testTag("consola-3d").pointerInput(id) {
-        androidx.compose.foundation.gestures.detectDragGestures(
+        detectDragGestures(
             onDragEnd = {
                 alcance.launch { giro.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = .45f, stiffness = 120f)) }
                 alcance.launch { giroX.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = .45f, stiffness = 120f)) }
