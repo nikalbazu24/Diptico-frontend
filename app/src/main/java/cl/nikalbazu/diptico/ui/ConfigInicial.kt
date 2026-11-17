@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 private data class DichoPaso(val texto: String, val nota: String, val cara: CaraDippo)
 
 private fun dichoDe(e: Estado): DichoPaso = when (e.pasoTuto) {
+    PasoTuto.PANTALLAS -> DichoPaso("Veo que tu consola tiene dos pantallas. ¿Cómo quieres usar Díptico?",
+        "Si hoy eliges dos y mañana prefieres una sola, se cambia en Ajustes › Pantallas › Modo de pantallas.", CaraDippo.NORMAL)
     PasoTuto.BIENVENIDA -> DichoPaso("¡Hola! Soy DIPPO, el que vive en tu Díptico. ¿Cómo te llamo?",
         "Tu nombre y tu personaje salen en tu perfil y en el saludo de cada día.", CaraDippo.FELIZ)
     PasoTuto.CARPETA -> when {
@@ -147,6 +149,23 @@ private fun BarraProgreso(e: Estado) {
 
 /** Qué servicios ya están conectados (una pastilla por servicio). */
 @Composable
+private fun PreviaPantallas(e: Estado) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val dos = e.modoPantallas == "dos"
+    Column(Modifier.fillMaxWidth(.95f).vidrio(56f, fuerte = true).padding(esc.d(48)), verticalArrangement = Arrangement.spacedBy(esc.d(20)),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        TB(if (dos) "Dos pantallas" else "Una pantalla", 44f, titulo = true, traducir = false)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+            val m = Modifier.width(esc.d(360)).height(esc.d(190)).clip(RoundedCornerShape(esc.d(24))).border(4.dp, col.acento, RoundedCornerShape(esc.d(24)))
+            Box(m.background(Color.White.copy(alpha = .10f)), contentAlignment = Alignment.Center) { TB("Juego y vitrina", 24f, color = col.sub, peso = FontWeight.ExtraBold) }
+            if (dos) Box(m.background(Color.White.copy(alpha = .06f)), contentAlignment = Alignment.Center) { TB("Tu biblioteca y controles", 24f, color = col.sub, peso = FontWeight.ExtraBold) }
+        }
+        TB(if (dos) "Arriba lo que juegas, abajo eliges." else "Todo cabe en una: Díptico se adapta.", 28f, color = col.sub, peso = FontWeight.ExtraBold)
+    }
+}
+
+@Composable
 private fun PreviaCuentas(e: Estado) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
@@ -192,6 +211,7 @@ private fun PreviaPaso(e: Estado, paso: PasoTuto) {
         }
         PasoTuto.CARPETA, PasoTuto.EMULADORES -> Estante(e, conEmulador = paso == PasoTuto.EMULADORES)
         PasoTuto.CUENTAS -> PreviaCuentas(e)
+        PasoTuto.PANTALLAS -> PreviaPantallas(e)
         PasoTuto.APARIENCIA -> {
             val c = e.consolasConJuegos.firstOrNull()
             Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(esc.d(40))).border(4.dp, col.acento, RoundedCornerShape(esc.d(40)))) {
@@ -301,11 +321,12 @@ fun ConfigAbajoCV(e: Estado, modifier: Modifier = Modifier) {
 }
 
 private fun tituloPaso(p: PasoTuto) = when (p) {
-    PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"; PasoTuto.CUENTAS -> "Tus cuentas"
+    PasoTuto.PANTALLAS -> "Tus pantallas"; PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"; PasoTuto.CUENTAS -> "Tus cuentas"
     PasoTuto.APARIENCIA -> "Tu estilo"; else -> "¡Todo listo!"
 }
 
 private fun subtituloPaso(e: Estado) = when (e.pasoTuto) {
+    PasoTuto.PANTALLAS -> "Dos pantallas o una sola. Después se puede cambiar."
     PasoTuto.BIENVENIDA -> "Cómo te llamas y cómo te ves. Todo se cambia después."
     PasoTuto.CARPETA -> "Elige la carpeta donde guardas tus juegos."
     PasoTuto.EMULADORES -> "Con qué se abre cada consola. ◀ ▶ cambia el emulador."

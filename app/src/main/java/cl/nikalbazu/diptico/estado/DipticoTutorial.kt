@@ -55,14 +55,15 @@ import kotlinx.coroutines.withContext
 
 /** La configuración de la primera vez: solo lo que hace falta para jugar. Lo demás tiene buenos valores y se cambia en Ajustes. */
 fun Diptico.pasosTuto(e: Estado = estado.value): List<PasoTuto> = listOf(
-    // Boceto 13b + Cuentas (opcional): Tú · Tus juegos · Para jugar · Tus cuentas · Tu estilo · Listo. Las dos pantallas se usan solas si están
-    // (se cambia en Ajustes); por eso ya no hay un paso para elegirlas.
-    PasoTuto.BIENVENIDA, PasoTuto.CARPETA, PasoTuto.EMULADORES, PasoTuto.CUENTAS, PasoTuto.APARIENCIA, PasoTuto.LISTO,
+    // Tus pantallas (solo si el equipo tiene dos) · Tú · Tus juegos · Para jugar · Tus cuentas · Tu estilo · Listo.
+    // Quien elige dos pantallas puede pasar después a una sola en Ajustes › Pantallas › Modo de pantallas.
+    listOfNotNull(if (e.dosDisponibles) PasoTuto.PANTALLAS else null) +
+        listOf(PasoTuto.BIENVENIDA, PasoTuto.CARPETA, PasoTuto.EMULADORES, PasoTuto.CUENTAS, PasoTuto.APARIENCIA, PasoTuto.LISTO)
 )
 
 /** Los nombres cortos de cada paso, para la fila de arriba. */
 fun nombrePasoTuto(p: PasoTuto) = when (p) {
-    PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"
+    PasoTuto.PANTALLAS -> "Tus pantallas"; PasoTuto.BIENVENIDA -> "Tú"; PasoTuto.CARPETA -> "Tus juegos"; PasoTuto.EMULADORES -> "Para jugar"
     PasoTuto.CUENTAS -> "Tus cuentas"; PasoTuto.APARIENCIA -> "Tu estilo"; PasoTuto.LISTO -> "Listo"; else -> p.name.lowercase()
 }
 
@@ -171,7 +172,7 @@ fun Diptico.opcionesTuto(): List<Opcion> {
                     avisar("Este equipo tiene una sola pantalla. Elige \"Una pantalla\".")
                 }
             },
-            Opcion("Una pantalla", if (e.dosDisponibles) "La de abajo queda en negro" else "Todo en tu pantalla", Icono.UNA) {
+            Opcion("Una pantalla", if (e.dosDisponibles) "La versión de una pantalla; la de abajo queda en negro" else "Todo en tu pantalla", Icono.UNA) {
                 elegirModo("una_negra"); siguientePaso()
             },
             Opcion("Una pantalla, abajo libre", "Para usar otra app abajo", Icono.LIBRE, apagada = !e.dosDisponibles) {

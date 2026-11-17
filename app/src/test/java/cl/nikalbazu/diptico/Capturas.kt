@@ -1730,6 +1730,8 @@ class Capturas {
     @Test fun t507_config_emuladores_abajo() = foto("507_config_emuladores_abajo", cfg(PasoTuto.EMULADORES, 1), Rol.INFERIOR, mi = 1)
     @Test fun t526_config_cuentas_arriba() = foto("526_config_cuentas_arriba", cfg(PasoTuto.CUENTAS, 1), Rol.SUPERIOR)
     @Test fun t526_config_cuentas_abajo() = foto("526_config_cuentas_abajo", cfg(PasoTuto.CUENTAS, 1), Rol.INFERIOR, mi = 1)
+    @Test fun t527_config_pantallas_arriba() = foto("527_config_pantallas_arriba", cfg(PasoTuto.PANTALLAS, 0), Rol.SUPERIOR)
+    @Test fun t527_config_pantallas_abajo() = foto("527_config_pantallas_abajo", cfg(PasoTuto.PANTALLAS, 0), Rol.INFERIOR, mi = 1)
     @Test fun t508_config_estilo_arriba() = foto("508_config_estilo_arriba", cfg(PasoTuto.APARIENCIA, 1), Rol.SUPERIOR)
     @Config(qualifiers = ABAJO)
     @Test fun t508_config_estilo_abajo() = foto("508_config_estilo_abajo", cfg(PasoTuto.APARIENCIA, 1), Rol.INFERIOR, mi = 1)
