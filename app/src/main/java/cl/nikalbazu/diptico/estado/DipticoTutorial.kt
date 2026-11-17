@@ -59,7 +59,6 @@ fun Diptico.pasosTuto(e: Estado = estado.value): List<PasoTuto> = listOf(
     // Quien elige dos pantallas puede pasar después a una sola en Ajustes › Pantallas › Modo de pantallas.
     listOfNotNull(if (e.dosDisponibles) PasoTuto.PANTALLAS else null) +
         listOf(PasoTuto.BIENVENIDA, PasoTuto.CARPETA, PasoTuto.EMULADORES, PasoTuto.CUENTAS, PasoTuto.APARIENCIA, PasoTuto.LISTO)
-)
 
 /** Los nombres cortos de cada paso, para la fila de arriba. */
 fun nombrePasoTuto(p: PasoTuto) = when (p) {
