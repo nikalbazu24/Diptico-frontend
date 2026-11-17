@@ -838,3 +838,7 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - Zoom de la pantalla de abajo al despertar: NO se encontró la causa leyendo código; solo se reinicia `GiroCaja` en `alEncender`. Pedir a Nicolás el informe de fluidez / un video si vuelve.
 - Beta.639 (17 nov, tarde, Sonnet): paso nuevo `PasoTuto.CUENTAS` («Tus cuentas», entre Para jugar y Tu estilo, todo opcional): filas de Discord, RA usuario/clave,
   SteamGridDB, ScreenScraper/IGDB/TheGamesDB/RAWG (`opcionesRaspadores`) e IA de DIPPO; vista previa `PreviaCuentas` (N de 7 conectados). Usa los mismos paneles CLAVE/GALERIA que Ajustes (`Paneles` va en ConfigPantalla).
+
+## Beta.643 (17 nov, noche, Sonnet; sin publicar)
+- Vuelve el paso `PasoTuto.PANTALLAS` («Tus pantallas») como PRIMERO de la configuración, solo si `e.dosDisponibles` (en equipos de una pantalla no aparece).
+  Dos / Una (abajo en negro) / Una con abajo libre; `PreviaPantallas`; DIPPO avisa que se cambia después en Ajustes › Pantallas › Modo de pantallas. Capturas t527.
