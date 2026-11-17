@@ -787,3 +787,17 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   con ZOOM_ABAJO y las caras repartiendo el alto). Consolas: concepto «pantalla apagada y colores originales», sin arte de juegos
   (GBA índigo, pantallas de GB/GBC/PSP/Switch/Wii U apagadas, etiquetas lisas en N64/SNES, Android sin texto). Herramientas en
   `herramientas/consolas/` (ver LEEME). Capturas t488–t490.
+
+## Personalizar consola + Tu espacio (17 nov, rama `fix/coleccion-viva`, Opus) — SIN PUBLICAR
+- Bocetos aprobados («tal cual»): lienzo VTCZof8gamwjrsQTPU1HKj, filas 9 (consola) y 10 (Widgets 3.0).
+- Consola (`ui/ConsolaCV.kt`): `ConsolaOpcionesCV` arriba (secciones = `Opcion.grupo`: Carpeta, Imágenes, Cajas, Juego y sonido,
+  Restaurar; `opcionesEditarConsola` reordenada por sección + «Nombre o logo»; L1/R1 = `seccionEditarConsola`), `ConsolaVivaCV` abajo
+  (Consola3D, horas/juegos/terminados, emulador, «Así se verá» Carpeta/Caja/Fondo según sección, más jugado + Jugar, dato de DIPPO,
+  `verJuegosConsola`, `azarDeConsola`, intercambiar). Una pantalla: las dos lado a lado (zoom 1).
+- Tu espacio (`estado/DipticoEspacio.kt`, `ui/EspacioCV.kt`): `vaciarEspacioUnaVez` (clave `espacioVacio1`), `sugeridosEspacio` +
+  `agregarSugeridos`, L2/R2 = `pasoEspacio` (tira Inicio · pág 1 · pág 2…; en Teclas antes del bloque de widgets), abajo `EspacioAbajoCV`
+  (Editar/Buscar/Fondo, `PaginasEspacio`: ‹ › + − y tamaño `extra.paginaAncho/paginaAlto` 1–3 pantallas, tienda `tiposTiendaEspacio`
+  con `extra.tiendaCat/espacioSel`, A = `ponerEnEspacio`). Una pantalla: `extra.tiendaLado` (X) con `TiendaLadoCV`. Página extendida:
+  fuera del editor se desliza (`horizontalScroll/verticalScroll`), en el editor se ve entera achicada. Widgets tiemblan al editar (CeldaWidget).
+- Textos sin «Thor» (se habla de consolas de dos pantallas / tu consola). Ajustes: lista arriba, demostración abajo (`menuIntercambiado = intercambiar`).
+  `HoraBateria` del diseño nuevo abre el reloj grande. Capturas t491–t499.

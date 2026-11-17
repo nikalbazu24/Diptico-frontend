@@ -317,9 +317,9 @@ private fun Grilla(e: Estado, pagina: Int, m: MedidasEditorWidgets, arrastre: Ar
             if (!e.editandoWidgets) detectTapGestures(onLongPress = { o ->
                 val x = (o.x / m.pasoX).toInt(); val y = (o.y / m.pasoY).toInt()
                 val ahora = Diptico.estado.value
-                val ocupado = ahora.widgets.any { it.visible && it.pagina == pagina && x >= it.x && x < it.x + it.an && y >= it.y && y < it.y + it.al }
-                Diptico.editarWidgets()
-                if (!ocupado) Diptico.abrirBurbuja(x, y)
+                val tocado = ahora.widgets.firstOrNull { it.visible && it.pagina == pagina && x >= it.x && x < it.x + it.an && y >= it.y && y < it.y + it.al }
+                if (tocado != null) Diptico.editarEsteWidget(tocado.tipo)
+                else { Diptico.editarWidgets(); Diptico.abrirBurbuja(x, y) }
             })
             else detectTapGestures(
                 onLongPress = { o -> Diptico.abrirBurbuja((o.x / m.pasoX).toInt(), (o.y / m.pasoY).toInt()) },
@@ -506,6 +506,12 @@ private fun BurbujaAgregar(e: Estado, celda: Pair<Int, Int>, celdaAn: Float, cel
 /** Mientras se recorren las carpetas, la vitrina cambia sin mover la selección real de la biblioteca. */
 @Composable
 private fun juegoDelWidget(e: Estado): Juego? {
+    // Qué juego muestra (se elige en su menú de edición › Qué muestra).
+    when (e.conf("juego", "cual", "elegido")) {
+        "ultimo" -> return e.datos.entries.filter { it.value.ultimo > 0 }.maxByOrNull { it.value.ultimo }?.let { e.juegosPorClave[it.key] } ?: e.seleccionado
+        "favorito" -> return e.juegos.filter { e.datos[it.clave]?.favorito == true }.let { f ->
+            f.getOrNull(((System.currentTimeMillis() / 3_600_000L) % f.size.coerceAtLeast(1)).toInt()) } ?: e.seleccionado
+    }
     if (!e.eligiendoConsola || e.vistaConsolas !in Diptico.VISTAS_CARPETAS ||
         e.editandoWidgets || e.panel != Panel.NINGUNO || e.sesion != null) return e.seleccionado
     val juegos = e.visibles
@@ -518,6 +524,13 @@ private fun juegoDelWidget(e: Estado): Juego? {
         }
     }
     return juegos[indice]
+}
+
+/** Mantener presionado un widget abre SU menú de edición (no el editor en general). */
+@Composable
+internal fun alMantenerWidget(): () -> Unit {
+    val w = LocalWidget.current
+    return { Diptico.editarEsteWidget(w?.tipo) }
 }
 
 /** El contenido de cada widget según su tipo y su tamaño (1×1, angosto, una fila o grande). */
@@ -569,7 +582,7 @@ internal fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nu
     Box(
         // Primero se recorta a la forma redondeada y después se pinta: así el fondo no queda cuadrado bajo el borde redondo.
         modifier.fillMaxSize().clip(forma).then(fondo)
-            .combinedClickable(onClick = { if (alPulsar != null) alPulsar() else w?.let { Diptico.abrirWidgetTipo(it.tipo) } }, onLongClick = { Diptico.editarWidgets() })
+            .combinedClickable(onClick = { if (alPulsar != null) alPulsar() else w?.let { Diptico.abrirWidgetTipo(it.tipo) } }, onLongClick = alMantenerWidget())
             .padding(esc.d(12)),
     ) {
         CompositionLocalProvider(LocalPaleta provides (if (Estilo.glass) paletaLecturaCristal(p, LocalCristal.current.niveles.widgets) else p)) { contenido() }
@@ -612,7 +625,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
                 Box(
                     Modifier.fillMaxSize().clip(forma).background(p.superficie)
-                        .combinedClickable(onClick = { Diptico.jugarJuegoMostrado(j.clave) }, onLongClick = { Diptico.editarWidgets() }),
+                        .combinedClickable(onClick = { Diptico.jugarJuegoMostrado(j.clave) }, onLongClick = alMantenerWidget()),
                 ) {
                     ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize())
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
@@ -692,7 +705,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Texto(rememberHora(), if (al >= 3) 72f else if (tam >= 2) 58f else 44f, interlineado = if (al >= 3) 74f else if (tam >= 2) 60f else 46f, lineas = 1)
-                Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 14f, lineas = 2)
+                if (e.conf("reloj", "fecha", "si") == "si") Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 14f, lineas = 2)
             }
         }
         "bateria" -> Tarjeta {
@@ -740,7 +753,9 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         }
         "musica" -> WidgetMusica(tam, compacto)
         "favoritos" -> Tarjeta {
-            val favs = e.juegos.filter { e.datos[it.clave]?.favorito == true }.take(if (variante == 1) al * 2 else if (tam >= 3) 6 else if (tam == 2) 4 else 2)
+            val deConsola = e.conf("favoritos", "consola")
+            val favs = e.juegos.filter { e.datos[it.clave]?.favorito == true && (deConsola.isEmpty() || it.consolaId == deConsola) }
+                .take(e.conf("favoritos", "cuantos").toIntOrNull() ?: if (variante == 1) al * 2 else if (tam >= 3) 6 else if (tam == 2) 4 else 2)
             Column {
                 Etiqueta("Favoritos", Coral, 11f)
                 Spacer(Modifier.height(esc.d(8)))
@@ -918,10 +933,11 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             }
         }
         "recientes" -> Tarjeta {
-            val limite = if (variante == 1) al * 2 else if (tam >= 3) 5 else if (tam == 2) 3 else 2
-            val recientes = remember(e.datos, e.juegos, limite) {
+            val limite = e.conf("recientes", "cuantos").toIntOrNull() ?: if (variante == 1) al * 2 else if (tam >= 3) 5 else if (tam == 2) 3 else 2
+            val deConsola = e.conf("recientes", "consola")
+            val recientes = remember(e.datos, e.juegos, limite, deConsola) {
                 e.datos.entries.asSequence().filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }
-                    .mapNotNull { (k, _) -> e.juegosPorClave[k] }.take(limite).toList()
+                    .mapNotNull { (k, _) -> e.juegosPorClave[k] }.filter { deConsola.isEmpty() || it.consolaId == deConsola }.take(limite).toList()
             }
             Column {
                 Etiqueta("Jugados hace poco", p.tenue, 11f)
@@ -961,7 +977,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 Texto("${e.juegos.size} juegos", 26f)
                 Detalle("en ${e.consolasConJuegos.size} consolas", 13f)
                 Spacer(Modifier.height(esc.d(6)))
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                if (e.conf("consolas", "iconos", "si") == "si") Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
                     e.consolasConJuegos.take(if (tam >= 2) 8 else 4).forEach { IconoConsola(it, 24f, p.superficie) }
                 }
             }
@@ -1264,7 +1280,7 @@ internal fun WidgetImagen(w: cl.nikalbazu.diptico.estado.Widget) {
                     else -> Modifier
                 },
             )
-            .combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = { Diptico.editarWidgets() }),
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = alMantenerWidget()),
     ) {
         if (w.uri == null) {
             Column(Modifier.fillMaxSize().clip(forma).background(LocalPaleta.current.superficie.copy(alpha = 0.6f)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -1294,7 +1310,7 @@ internal fun WidgetVideo(w: cl.nikalbazu.diptico.estado.Widget, activo: Boolean)
         if (!listo) return@LaunchedEffect
         try { if (activo) reproductor.start() else reproductor.pause() } catch (_: Exception) {}
     }
-    Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = { Diptico.editarWidgets() })) {
+    Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = alMantenerWidget())) {
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { c ->
                 android.view.TextureView(c).apply {
@@ -1362,7 +1378,7 @@ private fun WidgetMini(e: Estado, tipo: String, al: Int) {
     }
     if (portada != null) {
         val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
-        Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { if (tipo == "juego") Diptico.jugarJuegoMostrado(portada.clave) else Diptico.abrirWidgetTipo(tipo) }, onLongClick = { Diptico.editarWidgets() })) {
+        Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { if (tipo == "juego") Diptico.jugarJuegoMostrado(portada.clave) else Diptico.abrirWidgetTipo(tipo) }, onLongClick = alMantenerWidget())) {
             ArteJuego(portada, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize())
             if (tipo != "juego") Box(Modifier.align(Alignment.TopEnd).padding(esc.d(5)).size(esc.d(22)).clip(CircleShape).background(Color.Black.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
                 IconoDiptico(Widgets.icono(tipo), Color.White, 12f)
@@ -1450,7 +1466,7 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
         Modifier.fillMaxSize().clip(forma)
             .background(Brush.linearGradient(listOf(Color(0xFF34295A), Color(0xFF17132A))))
             .border(esc.d(1.5f), Uva.copy(alpha = 0.55f), forma)
-            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("asistente") }, onLongClick = { Diptico.editarWidgets() }),
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("asistente") }, onLongClick = alMantenerWidget()),
     ) {
         // Un brillo que respira detrás de DIPPO.
         Box(Modifier.align(Alignment.CenterStart).size(esc.d(140)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.35f), Color.Transparent))))
@@ -1690,7 +1706,7 @@ private fun WidgetAtajo(e: Estado, clave: String, al: Int) {
     val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
     Box(
         Modifier.fillMaxSize().clip(forma).background(LocalPaleta.current.superficie)
-            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("atajo-$clave") }, onLongClick = { Diptico.editarWidgets() }),
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("atajo-$clave") }, onLongClick = alMantenerWidget()),
     ) {
         if (j == null) {
             Detalle("Juego no encontrado", 11f, modifier = Modifier.align(Alignment.Center).padding(esc.d(6)))

@@ -188,3 +188,16 @@ fun Diptico.seccionEditarConsola(d: Int) {
     actualizar { it.copy(indice = i) }
     Sonidos.mover()
 }
+
+/**
+ * Mantener presionado un widget: entra al modo edición con ESE widget elegido y abre su menú de edición
+ * en la otra pantalla (con una pantalla, en el panel del editor). «Listo» lo cierra todo.
+ */
+fun Diptico.editarEsteWidget(tipo: String?) {
+    val e = estado.value
+    val i = e.widgets.indexOfFirst { it.tipo == tipo && it.visible }
+    if (i < 0) { editarWidgets(); return }
+    if (e.widgets[i].pagina != e.paginaInicio) actualizar { it.copy(paginaInicio = e.widgets[i].pagina) }
+    abrirAjustesWidget(i)
+    cl.nikalbazu.diptico.audio.Vibracion.elegir()
+}

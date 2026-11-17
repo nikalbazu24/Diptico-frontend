@@ -182,6 +182,14 @@ internal fun Diptico.controlesUtil(e: Estado, tipo: String): List<Control> {
             chips("Ciudad 1", "zona1", ZONAS.map { it.first to it.second }, "Asia/Tokyo"),
             chips("Ciudad 2", "zona2", ZONAS.map { it.first to it.second }, "America/New_York"),
         )
+        // Los widgets de siempre también eligen qué muestran.
+        "recientes", "favoritos" -> listOf(
+            chips("De qué consola", "consola", listOf("Todas" to "") + e.consolasConJuegos.map { it.bonito to it.id }, ""),
+            chips("Cuántos juegos", "cuantos", listOf("Según el tamaño" to "", "2" to "2", "3" to "3", "4" to "4", "6" to "6", "8" to "8"), ""),
+        )
+        "juego" -> listOf(chips("Qué juego", "cual", listOf("El que elijas" to "elegido", "El último que jugaste" to "ultimo", "Un favorito" to "favorito"), "elegido"))
+        "reloj" -> listOf(chips("Fecha", "fecha", listOf("Sí" to "si", "No" to "no"), "si"))
+        "consolas" -> listOf(chips("Íconos de las consolas", "iconos", listOf("Sí" to "si", "No" to "no"), "si"))
         else -> emptyList()
     }
 }
