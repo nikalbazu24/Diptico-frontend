@@ -134,9 +134,9 @@ fun EspacioAbajoCV(e: Estado) {
                     .testTag("abrir-galeria").padding(horizontal = esc.d(36)),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(28)),
             ) {
-                MosaicoGaleria(Modifier.size(esc.d(220), esc.d(150)))
+                MosaicoGaleria(Modifier.size(esc.d(170), esc.d(120)))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                    TB("Galería de widgets", 46f, titulo = true)
+                    TB("Galería de widgets", 40f, titulo = true)
                     TB("${totalGaleria()} widgets para tu espacio. Lo que eliges va a la página que estás mirando.", 20f, color = col.texto.copy(alpha = .85f), lineas = 2)
                 }
                 PistaTecla("Y", "Abrir")
@@ -336,6 +336,7 @@ fun GaleriaArribaCV(e: Estado, modifier: Modifier = Modifier) {
                 Column(Modifier.fillMaxWidth().weight(1f).vidrio(40f).padding(esc.d(28)), verticalArrangement = Arrangement.spacedBy(esc.d(16))) {
                     TB(if (w?.visible == true) "Ya está en la Pág ${w.pagina + 1}" else "Va a la Pág ${e.paginaInicio + 1}", 32f, titulo = true)
                     MapaPagina(e, tipo, an, al, Modifier.fillMaxWidth().weight(1f))
+                    if (w?.visible != true && !cabeEnPagina(e, tipo, an, al)) TB("En esta página no cabe de ese tamaño: va a otra página.", 18f, color = Color(0xFFFFD29A), peso = FontWeight.ExtraBold, lineas = 2)
                     TB("Después lo mueves o estiras desde Editar.", 18f, color = col.sub)
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
@@ -344,6 +345,16 @@ fun GaleriaArribaCV(e: Estado, modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+/** ¿Cabe el widget de [an]×[al] en algún hueco de la página que estás mirando? */
+private fun cabeEnPagina(e: Estado, tipo: String, an: Int, al: Int): Boolean {
+    val cols = Widgets.COLUMNAS.coerceAtLeast(1); val filas = Widgets.FILAS.coerceAtLeast(1)
+    val enPagina = e.widgets.filter { it.visible && it.pagina == e.paginaInicio && it.tipo != tipo }
+    for (y in 0..filas - al) for (x in 0..cols - an) {
+        if (enPagina.none { o -> x < o.x + o.an && o.x < x + an && y < o.y + o.al && o.y < y + al }) return true
+    }
+    return false
 }
 
 /** El mapa de la página: los widgets que ya están y, punteado, dónde quedaría el nuevo. */

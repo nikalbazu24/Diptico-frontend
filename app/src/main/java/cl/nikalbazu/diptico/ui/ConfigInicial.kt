@@ -83,13 +83,13 @@ fun ConfigArribaCV(e: Estado, modifier: Modifier = Modifier) {
             FilaPasos(e)
             Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(60))) {
                 val d = dichoDe(e)
-                Column(Modifier.width(esc.d(620)).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(22), Alignment.CenterVertically)) {
-                    cl.nikalbazu.diptico.bisa.AvatarBisa(190f * esc.factor, cara = d.cara)
-                    Box(Modifier.clip(RoundedCornerShape(topStart = esc.d(8), topEnd = esc.d(36), bottomEnd = esc.d(36), bottomStart = esc.d(36)))
-                        .background(Color(0xFFF4F3FA)).padding(horizontal = esc.d(30), vertical = esc.d(24))) {
-                        TB(d.texto, 30f, color = Color(0xFF12131F), peso = FontWeight.ExtraBold, lineas = 3)
+                Column(Modifier.width(esc.d(minOf(720f, anchoLienzo() * .4f))).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(26), Alignment.CenterVertically)) {
+                    cl.nikalbazu.diptico.bisa.AvatarBisa(260f * esc.factor, cara = d.cara)
+                    Box(Modifier.clip(RoundedCornerShape(topStart = esc.d(10), topEnd = esc.d(44), bottomEnd = esc.d(44), bottomStart = esc.d(44)))
+                        .background(Color(0xFFF4F3FA)).padding(horizontal = esc.d(36), vertical = esc.d(30))) {
+                        TB(d.texto, 40f, color = Color(0xFF12131F), peso = FontWeight.ExtraBold, lineas = 4)
                     }
-                    TB(d.nota, 21f, color = col.sub, lineas = 3)
+                    TB(d.nota, 27f, color = col.sub, lineas = 3)
                 }
                 val dEntra = duracionMovimiento(320); val dSale = duracionMovimiento(200)
                 AnimatedContent(e.pasoTuto, Modifier.weight(1f).fillMaxHeight(), label = "previa",
@@ -110,14 +110,14 @@ private fun FilaPasos(e: Estado) {
         pasos.forEachIndexed { i, p ->
             val on = i == actual
             Row(
-                Modifier.height(esc.d(56)).clip(CircleShape).background(if (on) col.elegido else col.texto.copy(alpha = .06f))
+                Modifier.height(esc.d(72)).clip(CircleShape).background(if (on) col.elegido else col.texto.copy(alpha = .06f))
                     .clickable(enabled = i < actual) { Diptico.irAPaso(p) }.padding(start = esc.d(8), end = esc.d(22)),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
             ) {
-                Box(Modifier.size(esc.d(42)).clip(CircleShape).background(if (on) col.enElegido else col.texto.copy(alpha = .1f)), contentAlignment = Alignment.Center) {
-                    TB(if (i < actual) "✓" else "${i + 1}", 19f, color = if (on) col.elegido else col.texto, peso = FontWeight.ExtraBold, traducir = false)
+                Box(Modifier.size(esc.d(54)).clip(CircleShape).background(if (on) col.enElegido else col.texto.copy(alpha = .1f)), contentAlignment = Alignment.Center) {
+                    TB(if (i < actual) "✓" else "${i + 1}", 25f, color = if (on) col.elegido else col.texto, peso = FontWeight.ExtraBold, traducir = false)
                 }
-                TB(nombrePasoTuto(p), 21f, color = if (on) col.enElegido else if (i < actual) col.texto else col.tenue, peso = FontWeight.ExtraBold)
+                TB(nombrePasoTuto(p), 27f, color = if (on) col.enElegido else if (i < actual) col.texto else col.tenue, peso = FontWeight.ExtraBold)
             }
         }
     }
@@ -130,13 +130,13 @@ private fun PreviaPaso(e: Estado, paso: PasoTuto) {
     val col = LocalColeccion.current
     when (paso) {
         PasoTuto.BIENVENIDA -> Row(
-            Modifier.width(esc.d(700)).vidrio(48f, fuerte = true).padding(esc.d(44)),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(30)),
+            Modifier.fillMaxWidth(.95f).vidrio(56f, fuerte = true).padding(esc.d(56)),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(40)),
         ) {
-            FotoPerfil(e.extra.perfil, 150f)
-            Column(verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                TB(e.nombre.ifBlank { "Tu nombre" }, 60f, titulo = true, color = if (e.nombre.isBlank()) col.tenue else col.texto, traducir = false)
-                TB("Coleccionista desde hoy", 22f, color = col.sub, peso = FontWeight.ExtraBold)
+            FotoPerfil(e.extra.perfil, 230f)
+            Column(verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                TB(e.nombre.ifBlank { "Tu nombre" }, 84f, titulo = true, color = if (e.nombre.isBlank()) col.tenue else col.texto, traducir = false)
+                TB("Coleccionista desde hoy", 30f, color = col.sub, peso = FontWeight.ExtraBold)
             }
         }
         PasoTuto.CARPETA, PasoTuto.EMULADORES -> Estante(e, conEmulador = paso == PasoTuto.EMULADORES)
@@ -158,11 +158,11 @@ private fun PreviaPaso(e: Estado, paso: PasoTuto) {
                 "$listas/${e.consolasEmu.size}" to "listas para jugar", (Diptico.todosLosTemas(e).firstOrNull { it.id == e.tema }?.nombre ?: "") to "tu tema",
             )
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(esc.d(22))) {
-                datos.chunked(2).forEach { fila ->
+                datos.chunked(if (anchoLienzo() < 1500f) 1 else 2).forEach { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(22))) {
                         fila.forEach { (n, t) ->
-                            Column(Modifier.weight(1f).vidrio(32f).padding(horizontal = esc.d(30), vertical = esc.d(26))) {
-                                TB(n, 54f, titulo = true, traducir = false); TB(t, 21f, color = col.sub, peso = FontWeight.ExtraBold)
+                            Column(Modifier.weight(1f).vidrio(36f).padding(horizontal = esc.d(30), vertical = esc.d(26))) {
+                                TB(n, 64f, titulo = true, traducir = false, lineas = 1); TB(t, 26f, color = col.sub, peso = FontWeight.ExtraBold, lineas = 2)
                             }
                         }
                     }
@@ -191,15 +191,16 @@ private fun Estante(e: Estado, conEmulador: Boolean) {
                 fila.forEach { c ->
                     val lista = Diptico.emuladorListo(c)
                     Column(
-                        Modifier.weight(1f).height(esc.d(190)).clip(RoundedCornerShape(esc.d(32)))
-                            .background(Brush.linearGradient(listOf(c.color, Color(0xFF141526)))).padding(esc.d(22)),
+                        Modifier.weight(1f).height(esc.d(230)).clip(RoundedCornerShape(esc.d(36)))
+                            .background(Brush.linearGradient(listOf(c.color, Color(0xFF141526)))).padding(esc.d(26)),
                         verticalArrangement = Arrangement.Bottom,
                     ) {
-                        TB(c.nombre, 23f, color = Color.White, peso = FontWeight.ExtraBold)
-                        TB("${e.juegosPorConsola[c.id]?.size ?: 0} juegos", 17f, color = Color.White.copy(alpha = .8f), peso = FontWeight.ExtraBold)
+                        val n = e.juegosPorConsola[c.id]?.size ?: 0
+                        TB(c.nombre, 32f, color = Color.White, peso = FontWeight.ExtraBold)
+                        TB(if (n == 1) "1 juego" else "$n juegos", 23f, color = Color.White.copy(alpha = .8f), peso = FontWeight.ExtraBold)
                         if (conEmulador) Box(Modifier.padding(top = esc.d(8)).clip(CircleShape)
-                            .background(if (lista) Color(0xFF2EC4A6) else Color(0xFFFFD29A)).padding(horizontal = esc.d(14), vertical = esc.d(5))) {
-                            TB(if (lista) "✓ Lista" else "Falta emulador", 15f, color = Color(0xFF12131F), peso = FontWeight.ExtraBold)
+                            .background(if (lista) Color(0xFF2EC4A6) else Color(0xFFFFD29A)).padding(horizontal = esc.d(16), vertical = esc.d(6))) {
+                            TB(if (lista) "✓ Lista" else "Falta emulador", 20f, color = Color(0xFF12131F), peso = FontWeight.ExtraBold)
                         }
                     }
                 }
@@ -232,7 +233,7 @@ fun ConfigAbajoCV(e: Estado, modifier: Modifier = Modifier) {
             if (opciones.isEmpty()) Row(Modifier.fillMaxWidth().height(esc.d(90)).vidrio(28f).padding(horizontal = esc.d(26)), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(esc.d(16))) { Girador(30f); TB("Buscando…", 26f) }
             val lista = rememberLazyListState()
-            LaunchedEffect(e.indice, e.pasoTuto) { if (opciones.isNotEmpty()) lista.animateScrollToItem(e.indice.coerceIn(0, opciones.size - 1)) }
+            LaunchedEffect(e.indice, e.pasoTuto) { if (opciones.isNotEmpty()) lista.animateScrollToItem((e.indice.coerceIn(0, opciones.size - 1) - 1).coerceAtLeast(0)) }
             LazyColumn(Modifier.fillMaxWidth().weight(1f), state = lista, verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
                 itemsIndexed(opciones) { i, o -> FilaConfig(o, i == e.indice, principal = i == 0) { Diptico.elegirIndice(i) } }
             }
