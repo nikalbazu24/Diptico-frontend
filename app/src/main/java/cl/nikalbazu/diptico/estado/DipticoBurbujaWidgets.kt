@@ -210,7 +210,7 @@ internal fun Diptico.organizarControlesWidget(e: Estado, controles: List<Control
     // Los widgets útiles tienen su propio grupo «Contenido» (liga, equipo, ciudad, nombre…), y va primero.
     val conContenido = controles.any { it.grupo == "Contenido" }
     val grupos = (if (conContenido) listOf("Contenido") else emptyList()) + listOf("Posición y tamaño", "Aspecto", "Más")
-    val nombres = (if (conContenido) listOf("Qué muestra") else emptyList()) + listOf("Tamaño", "Diseño", "Más ajustes")
+    val nombres = (if (conContenido) listOf("Qué muestra") else emptyList()) + listOf("Tamaño y lugar", "Aspecto", "Más")
     val grupo = e.navegacion.grupoEditorWidget.coerceIn(0, grupos.size - 1)
     val selector = Control("Personalizar", "chips", grupo = "",
         elecciones = nombres, elegida = grupo,

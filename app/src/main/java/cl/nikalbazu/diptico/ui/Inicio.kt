@@ -129,7 +129,8 @@ fun PantallaInicio(e: Estado) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
             if (e.editandoWidgets) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Box(Modifier.weight(1f)) { Texto("Organizar widgets", 20f, lineas = 1) }
+                    val enEdicion = e.widgets.getOrNull(e.widgetSel)?.takeIf { e.extra.coleccionViva && it.visible && e.panel == Panel.ESTUDIO && e.estudioPestana == 0 }
+                    Box(Modifier.weight(1f)) { Texto(if (enEdicion != null) "Editando: " + Widgets.nombre(enEdicion.tipo) else "Organizar widgets", 20f, lineas = 1) }
                     Box(
                         Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
                             .padding(horizontal = esc.d(14), vertical = esc.d(8)),
@@ -137,7 +138,9 @@ fun PantallaInicio(e: Estado) {
                 }
                 Spacer(Modifier.height(esc.d(2)))
                 Detalle(
-                    if (e.unaPantalla) "Arrastra para mover o quitar · estira desde la esquina"
+                    if (e.extra.coleccionViva && e.panel == Panel.ESTUDIO && e.estudioPestana == 0)
+                        (if (e.unaPantalla) "El menú está al costado · arrastra para mover · estira desde la esquina" else "El menú está en la otra pantalla · arrastra para mover · estira desde la esquina")
+                    else if (e.unaPantalla) "Arrastra para mover o quitar · estira desde la esquina"
                     else "Arrastra para mover o quitar · agrega desde la otra pantalla",
                     12f, lineas = 1,
                 )
@@ -630,11 +633,13 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                     ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize())
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
                     Column(Modifier.align(Alignment.BottomStart).padding(esc.d(14))) {
-                        Etiqueta(Consolas.porId(j.consolaId)?.nombre ?: "", Sol, 11f)
+                        if (e.ver("juego", "consola")) Etiqueta(Consolas.porId(j.consolaId)?.nombre ?: "", Sol, 11f)
                         Texto(j.titulo, if (tam >= 2) 22f else 17f, color = Color.White, lineas = 2, sombra = true)
-                        Spacer(Modifier.height(esc.d(6)))
-                        Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
-                            Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                        if (e.ver("juego", "boton")) {
+                            Spacer(Modifier.height(esc.d(6)))
+                            Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
+                                Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                            }
                         }
                     }
                 }
@@ -652,11 +657,13 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                         }
                         Spacer(Modifier.width(esc.d(14)))
                         Column(Modifier.weight(1f)) {
-                            Etiqueta(c?.nombre ?: "", Coral, 11f)
+                            if (e.ver("juego", "consola")) Etiqueta(c?.nombre ?: "", Coral, 11f)
                             Texto(j.titulo, if (tam >= 2) 22f else 17f, lineas = 2, interlineado = if (tam >= 2) 25f else 20f)
-                            Spacer(Modifier.height(esc.d(8)))
-                            Box(Modifier.clip(RoundedCornerShape(50)).background(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
-                                Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                            if (e.ver("juego", "boton")) {
+                                Spacer(Modifier.height(esc.d(8)))
+                                Box(Modifier.clip(RoundedCornerShape(50)).background(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
+                                    Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                                }
                             }
                         }
                     }
@@ -940,8 +947,10 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                     .mapNotNull { (k, _) -> e.juegosPorClave[k] }.filter { deConsola.isEmpty() || it.consolaId == deConsola }.take(limite).toList()
             }
             Column {
-                Etiqueta("Jugados hace poco", p.tenue, 11f)
-                Spacer(Modifier.height(esc.d(8)))
+                if (e.ver("recientes", "titulo")) {
+                    Etiqueta("Jugados hace poco", p.tenue, 11f)
+                    Spacer(Modifier.height(esc.d(8)))
+                }
                 if (recientes.isEmpty()) Detalle("Todavía no juegas nada con Díptico", 14f)
                 if (variante == 1) { ListaJuegosWidget(recientes); return@Column }
                 Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
@@ -1171,8 +1180,8 @@ private fun WidgetPlanPartida(e: Estado, tipo: String, an: Int, al: Int) {
                 val paso = e.datos[primero.clave]?.paso.orEmpty()
                 val mapa = e.mapas[primero.clave]
                 if (tipo == "proximaPartida") {
-                    Detalle(paso.ifBlank { "Anota dónde quedaste" }, 12f, lineas = 2)
-                    if (mapa != null) Detalle("Mapa guardado", 11f, lineas = 1)
+                    if (e.ver(tipo, "paso")) Detalle(paso.ifBlank { "Anota dónde quedaste" }, 12f, lineas = 2)
+                    if (mapa != null && e.ver(tipo, "mapa")) Detalle("Mapa guardado", 11f, lineas = 1)
                 } else Detalle(juegos.drop(1).take(2).joinToString(" · ") { it.titulo }
                     .ifBlank { if (tipo == "tengo20") "Según tus sesiones anteriores" else "Un juego en la cola" }, 12f, lineas = 2)
             }

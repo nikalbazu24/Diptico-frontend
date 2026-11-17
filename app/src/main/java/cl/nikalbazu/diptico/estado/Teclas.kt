@@ -937,6 +937,7 @@ object Teclas {
      */
     private fun estudio(ev: KeyEvent, e: Estado): Boolean {
         val tiendaCV = e.estudioPestana == 1 && e.extra.coleccionViva && !e.unaPantalla && !e.estudioMover
+        val menuCV = e.estudioPestana == 0 && e.extra.coleccionViva && !e.estudioMover
         val code = ev.keyCode
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
@@ -988,6 +989,9 @@ object Teclas {
                 tiendaCV && d != null && e.indice > 0 -> Diptico.moverIndice(if (d.second != 0) d.second * 2 else d.first)
                 d != null && d.second != 0 -> Diptico.moverIndice(d.second)
                 d != null -> Diptico.cambiarControl(d.first)
+                // Menú de un widget (Colección viva): L1/R1 pasan de pestaña (Qué muestra, Tamaño y lugar, Aspecto, Más).
+                menuCV && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) && ev.repeatCount == 0 ->
+                    Diptico.pasoPestanaWidget(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1)
                 tiendaCV && code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount == 0 -> Diptico.elegirCategoriaWidgets((e.extra.tiendaCat - 1).mod(CATEGORIAS_WIDGETS.size))
                 tiendaCV && code == KeyEvent.KEYCODE_BUTTON_R1 && ev.repeatCount == 0 -> Diptico.elegirCategoriaWidgets((e.extra.tiendaCat + 1).mod(CATEGORIAS_WIDGETS.size))
                 code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount == 0 -> Diptico.cambiarPestanaEstudio(-1)
@@ -1013,7 +1017,8 @@ object Teclas {
             }
             when {
                 esA(code) -> Diptico.aceptarControl()
-                esB(code) -> Diptico.zonaEstudio("grilla")
+                // Con el menú de un widget, B es «Listo»: guarda y cierra el menú.
+                esB(code) -> if (menuCV) Diptico.terminarEdicion() else Diptico.zonaEstudio("grilla")
                 code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
                 code == KeyEvent.KEYCODE_BUTTON_Y -> { if (e.estudioPestana != 0) Diptico.elegirPestanaEstudio(0); Diptico.alternarMoverWidget() }
                 code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.cambiarEstiloWidget()

@@ -55,6 +55,13 @@ fun PanelEstudio(e: Estado) {
     val controles = remember(e) { Diptico.controlesEstudio(e) }
     // Colección viva con dos pantallas: «Agregar» es la tienda de widgets por categorías, con vista previa en vivo.
     if (e.estudioPestana == 1 && e.extra.coleccionViva && !lateral) { TiendaWidgetsAbajo(e, controles); return }
+    // Colección viva: el menú de un widget (se abre al mantenerlo presionado; «Listo» o B lo cierran).
+    if (e.estudioPestana == 0 && e.extra.coleccionViva) {
+        if (lateral && !esc.angosta) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+            Box(Modifier.fillMaxHeight().fillMaxWidth(0.42f)) { MenuWidgetCV(e, controles, lateral = true) }
+        } else MenuWidgetCV(e, controles, lateral = false)
+        return
+    }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
         Column(
             (if (lateral && !esc.angosta) Modifier.fillMaxHeight().fillMaxWidth(0.5f)

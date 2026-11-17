@@ -137,9 +137,9 @@ private fun TuSemana(e: Estado, al: Int) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Etiqueta("Tu semana", Coral, 10.5f)
                 Spacer(Modifier.weight(1f))
-                Texto(formatoTiempo(total), 13f, lineas = 1, traducir = false)
+                if (e.ver("tuSemana", "total")) Texto(formatoTiempo(total), 13f, lineas = 1, traducir = false)
             }
-            if (al >= 2) Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.Bottom) {
+            if (al >= 2 && e.ver("tuSemana", "barras")) Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.Bottom) {
                 for ((dia, seg) in dias) {
                     Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
                         val hoy = dia == LocalDate.now()
@@ -152,7 +152,7 @@ private fun TuSemana(e: Estado, al: Int) {
                     }
                 }
             }
-            Detalle(when {
+            if (e.ver("tuSemana", "frase")) Detalle(when {
                 mejor == null -> "Esta semana todavía no juegas."
                 racha > 1 -> "Llevas $racha días seguidos. Tu mejor día: ${mejor.first.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.forLanguageTag(Idioma.actual))}."
                 else -> "Tu mejor día: ${mejor.first.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.forLanguageTag(Idioma.actual))}."

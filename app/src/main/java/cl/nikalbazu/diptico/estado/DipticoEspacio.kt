@@ -201,3 +201,12 @@ fun Diptico.editarEsteWidget(tipo: String?) {
     abrirAjustesWidget(i)
     cl.nikalbazu.diptico.audio.Vibracion.elegir()
 }
+
+/** L1/R1 en el menú de un widget: la pestaña anterior o siguiente. */
+fun Diptico.pasoPestanaWidget(d: Int) {
+    val e = estado.value
+    val n = controlesEstudio(e).getOrNull(1)?.elecciones?.size ?: return
+    if (n <= 0) return
+    elegirGrupoEditorWidget((e.navegacion.grupoEditorWidget + d).mod(n))
+    Sonidos.mover()
+}
