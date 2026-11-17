@@ -122,8 +122,8 @@ fun Diptico.elegirVistaColeccion(v: String) {
     actualizar { it.copy(vista = vista, extra = it.extra.copy(vistaColeccion = v)) }
 }
 
-val VISTAS_CARPETAS_CV = listOf("icono", "diptico", "repisa", "carpeta")
-fun nombreVistaCarpetas(v: String) = when (v) { "icono" -> "Ícono"; "repisa" -> "Repisa"; "carpeta" -> "Carpeta"; else -> "Díptico" }
+val VISTAS_CARPETAS_CV = listOf("grande", "icono", "diptico", "repisa", "carpeta")
+fun nombreVistaCarpetas(v: String) = when (v) { "grande" -> "Grandes"; "icono" -> "Ícono"; "repisa" -> "Repisa"; "carpeta" -> "Carpeta"; else -> "Díptico" }
 
 fun Diptico.elegirVistaCarpetas(v: String) {
     almacen.guardarTexto("vistaCarpetasCV", v)
@@ -137,6 +137,7 @@ fun Diptico.siguienteVistaCarpetas() {
 
 /** Columnas de la rejilla de carpetas según la vista (para que la cruceta suba y baje bien). */
 fun columnasCarpetasCV(v: String, unaPantalla: Boolean): Int = when (v) {
+    "grande" -> if (unaPantalla) 4 else 3
     "icono" -> -1
     "repisa" -> 1
     "carpeta" -> if (unaPantalla) 3 else 2

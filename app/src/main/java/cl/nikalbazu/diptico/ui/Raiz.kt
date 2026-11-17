@@ -89,7 +89,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                     val moverAtras = LocalMovimiento.current && !encima
                     CompositionLocalProvider(LocalMovimiento provides moverAtras) {
                     when {
-                        !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
+                        !e.configurado -> ConfigPantalla(e, rol)
                         tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
                         tienda -> ControlesTiendaTemas(e)
                         // Colección viva: la portada y los widgets son dos páginas que se deslizan con el dedo.
@@ -146,7 +146,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 AnimatedVisibility(
                     visible = e.novedades >= 0 && !e.intro,
                     enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.95f), exit = fadeOut(tween(260)),
-                ) { if (rol == Rol.INFERIOR) NovedadesCompania(e) else TourNovedades(e) }
+                ) { if (e.recorrido) RecorridoDippo(e, rol) else if (rol == Rol.INFERIOR) NovedadesCompania(e) else TourNovedades(e) }
                 val sc = e.sesion
                 AnimatedVisibility(
                     visible = e.continuacion > 0L && sc != null && !sc.dosPantallas && miPantalla != sc.displayId && e.datos[sc.clave]?.lupa != true,

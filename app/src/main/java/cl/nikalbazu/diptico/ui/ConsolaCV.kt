@@ -49,7 +49,7 @@ import cl.nikalbazu.diptico.estado.*
 private fun gruposDe(l: List<Opcion>): List<String> = l.map { it.grupo ?: "Carpeta" }.distinct()
 
 private val NOTAS_SECCION = mapOf(
-    "Carpeta" to "cómo se ve en la biblioteca", "Imágenes" to "fondo y logo", "Cajas" to "forma de los estuches",
+    "Carpeta" to "cómo se ve en la biblioteca", "Fondo" to "lo que va detrás en el inicio", "Imágenes" to "su logo", "Cajas" to "forma de los estuches",
     "Juego y sonido" to "emulador y música", "Restaurar" to "dejarla como venía",
 )
 
@@ -274,7 +274,7 @@ private fun AccesoConsola(texto: String, modifier: Modifier, accion: () -> Unit)
 private fun AsiSeVera(e: Estado, c: Consola, grupo: String, juego: cl.nikalbazu.diptico.data.Juego?, modifier: Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    val auto = when (grupo) { "Cajas" -> 1; "Imágenes", "Juego y sonido" -> 2; else -> 0 }
+    val auto = when (grupo) { "Cajas" -> 1; "Fondo", "Imágenes", "Juego y sonido" -> 2; else -> 0 }
     var elegida by remember(grupo) { mutableIntStateOf(auto) }
     Column(modifier.vidrio(36f).padding(esc.d(22)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
         TB("ASÍ SE VERÁ", 17f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 2f)
@@ -290,7 +290,13 @@ private fun AsiSeVera(e: Estado, c: Consola, grupo: String, juego: cl.nikalbazu.
             when (elegida) {
                 0 -> PortadaCarpeta(e, c.id, Modifier.fillMaxHeight().aspectoCuadrado().clip(RoundedCornerShape(esc.d(30))).border(4.dp, col.texto, RoundedCornerShape(esc.d(30))))
                 1 -> if (juego != null) CajaJuego(juego, c, Modifier.fillMaxHeight(0.92f), estuche = true) else TB("Sin juegos todavía", 19f, color = col.sub)
-                else -> MiniPantalla(711f, 400f, Modifier.fillMaxSize()) { VistaSistema(e.copy(consolaSel = c.id, panel = Panel.NINGUNO)) }
+                else -> Box(Modifier.fillMaxHeight().aspectRatio(16f / 9f).clip(RoundedCornerShape(esc.d(26))).border(3.dp, col.texto.copy(alpha = .5f), RoundedCornerShape(esc.d(26)))) {
+                    FondoConsolaCV(e, c, Modifier.fillMaxSize())
+                    Column(Modifier.align(Alignment.CenterStart).padding(start = esc.d(24))) {
+                        TB(c.nombre, 34f, titulo = true)
+                        TB(nombreModoFondo(modoFondo(e, c.id)), 15f, color = col.sub, peso = FontWeight.ExtraBold)
+                    }
+                }
             }
         }
     }

@@ -110,12 +110,15 @@ fun Diptico.pasoEspacio(d: Int) {
         val p = e.paginaInicio + d
         if (p < 0 || p >= e.paginas) {
             almacen.guardarTexto("inicio", "heroe")
-            actualizar { it.copy(inicio = "heroe", widgetFoco = -1, extra = it.extra.copy(tiendaLado = false)) }
+            actualizar { it.copy(inicio = "heroe", widgetFoco = -1, extra = it.extra.copy(tiendaLado = false, galeria = false)) }
         }
         else irAPagina(p)
     }
     Sonidos.mover()
 }
+
+/** Cuántos widgets hay en toda la Galería. */
+fun totalGaleria(): Int = Widgets.porDefecto.map { it.tipo }.filter { it != "imagen" && it != "video" }.distinct().size
 
 /** Los widgets que muestra la tienda de Tu espacio en una categoría (sin los que necesitan un archivo). */
 fun tiposTiendaEspacio(cat: Int): List<String> {
@@ -212,4 +215,47 @@ fun Diptico.pasoPestanaWidget(d: Int) {
     if (n <= 0) return
     elegirGrupoEditorWidget((e.navegacion.grupoEditorWidget + d).mod(n))
     Sonidos.mover()
+}
+
+// ———————————————— Galería de widgets (su propia pantalla, boceto 12a–12c) ————————————————
+
+fun Diptico.abrirGaleriaWidgets() {
+    actualizar { it.copy(extra = it.extra.copy(galeria = true, tiendaLado = it.unaPantalla, espacioSel = 0, galeriaTam = 0)) }
+    Sonidos.aceptar()
+}
+
+fun Diptico.cerrarGaleriaWidgets() {
+    actualizar { it.copy(extra = it.extra.copy(galeria = false, tiendaLado = false)) }
+    Sonidos.atras()
+}
+
+/** Los tamaños que se ofrecen para un widget: como viene y los de siempre, sin repetir y que quepan en la página. */
+fun tamanosGaleria(e: Estado, tipo: String): List<Pair<Int, Int>> {
+    val w = e.widgets.firstOrNull { it.tipo == tipo }
+    val base = listOfNotNull(w?.let { it.an to it.al }) + listOf(1 to 1, 2 to 1, 2 to 2, 3 to 2)
+    return base.distinct().filter { (an, al) -> an <= Widgets.COLUMNAS && al <= Widgets.FILAS }
+}
+
+fun Diptico.cambiarTamGaleria(d: Int) {
+    val e = estado.value
+    val tipo = tiposTiendaEspacio(e.extra.tiendaCat).getOrNull(e.extra.espacioSel) ?: return
+    val n = tamanosGaleria(e, tipo).size.coerceAtLeast(1)
+    actualizar { it.copy(extra = it.extra.copy(galeriaTam = (it.extra.galeriaTam + d).mod(n))) }
+    Sonidos.mover()
+}
+
+fun Diptico.elegirTamGaleria(i: Int) = actualizar { it.copy(extra = it.extra.copy(galeriaTam = i)) }
+
+/** A en la Galería: agrega el widget elegido con el tamaño elegido (si ya está, salta a su página). */
+fun Diptico.agregarDesdeGaleria() {
+    val e = estado.value
+    val tipo = tiposTiendaEspacio(e.extra.tiendaCat).getOrNull(e.extra.espacioSel) ?: return
+    val i = e.widgets.indexOfFirst { it.tipo == tipo }
+    if (i < 0) return
+    val w = e.widgets[i]
+    if (!w.visible) {
+        val (an, al) = tamanosGaleria(e, tipo).getOrNull(e.extra.galeriaTam) ?: (w.an to w.al)
+        actualizar { s -> s.copy(widgets = s.widgets.toMutableList().also { it[i] = w.copy(an = an, al = al) }) }
+    }
+    ponerEnEspacio(tipo)
 }
