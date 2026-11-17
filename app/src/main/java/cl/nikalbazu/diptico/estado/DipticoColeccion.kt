@@ -162,6 +162,14 @@ fun Diptico.ajustarColumnasIcono(n: Int) {
     actualizar { it.copy(extra = it.extra.copy(columnasIconoCV = v)) }
 }
 
+/** Carpetas «Grandes»: cuántas por fila (2–6), también pellizcando con dos dedos. */
+fun Diptico.ajustarColumnasGrandes(n: Int) {
+    val v = n.coerceIn(2, 6)
+    if (v == estado.value.extra.columnasGrandesCV) return
+    almacen.guardarTexto("columnasGrandesCV", v.toString())
+    actualizar { it.copy(extra = it.extra.copy(columnasGrandesCV = v)) }
+}
+
 fun Diptico.alternarLogoConsola(id: String) {
     val s = estado.value.extra.logoConsolas.let { if (id in it) it - id else it + id }
     almacen.guardarTexto("logoConsolas", s.joinToString("|"))

@@ -435,6 +435,8 @@ data class EstadoExtra(
     val cuantosCarpeta: Int = 4,
     /** Ícono de las carpetas: cuántas por fila (pellizcar con dos dedos). */
     val columnasIconoCV: Int = 4,
+    /** Carpetas «Grandes»: cuántas por fila (0 = según el equipo); también se ajusta pellizcando. */
+    val columnasGrandesCV: Int = 0,
     /** Ajustes propios de cada widget útil (tipo → clave → valor): liga y equipo, nombre del contador, ciudad… */
     val confWidgets: Map<String, Map<String, String>> = emptyMap(),
     /** Categoría elegida en la tienda de widgets (Colección viva). */
@@ -1124,6 +1126,7 @@ object Diptico {
                 juegosCarpeta = almacen.texto("juegosCarpeta", "ultimos"),
                 cuantosCarpeta = (almacen.texto("cuantosCarpeta", "4").toIntOrNull() ?: 4).coerceIn(1, 5),
                 columnasIconoCV = (almacen.texto("columnasIconoCV", "4").toIntOrNull() ?: 4).coerceIn(2, 6),
+                columnasGrandesCV = (almacen.texto("columnasGrandesCV", "0").toIntOrNull() ?: 0).coerceIn(0, 6),
                 confWidgets = ConfWidgets.leer(almacen.texto("confWidgets", "")),
                 logoConsolas = almacen.texto("logoConsolas", "").split("|").filter { it.isNotBlank() }.toSet(),
                 carpetaTodos = almacen.bool("carpetaTodos2", false),
@@ -1237,10 +1240,10 @@ object Diptico {
         revisarCajasGuardadas()
         // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
         if (!estado.value.configurado) almacen.guardarTexto("novedadesVistas", Novedades.ID)
-        // Recién actualizado: el tour sale al tiro, sin esperar la animación de entrada.
+        // Recién actualizado: el tour (y el recorrido de DIPPO) sale cuando termina la animación de entrada, no antes.
         else if (almacen.texto("novedadesVistas") != Novedades.ID) {
             val desde = almacen.texto("novedadesVistas")
-            actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = desde, intro = false) }
+            actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = desde) }
         }
         aplicarArranque()
         vigilarFila()
@@ -1381,6 +1384,7 @@ object Diptico {
     }
 
     fun terminarIntro() {
+        introInicio = 0L // la próxima vez (volver a configurar) arranca de cero
         if (estado.value.intro) actualizar { it.copy(intro = false) }
         // Al prender la consola de cero: después de la animación, la bienvenida.
         if (bienvenidaPendiente) {
@@ -1402,6 +1406,8 @@ object Diptico {
     /** La pantalla se encendió después de [ausencia] ms apagada. Se llama desde [Inicio]. */
     fun alEncender(ausencia: Long, estabaJugando: Boolean) {
         val e = estado.value
+        // Al despertar no puede quedar nada «a medias» del gesto anterior (stick o dedos que nunca se soltaron).
+        cl.nikalbazu.diptico.ui.GiroCaja.x = 0f; cl.nikalbazu.diptico.ui.GiroCaja.y = 0f
         if (!e.configurado || e.intro) return
         if (e.sesion != null) {
             if (estabaJugando && ausencia > 0L) actualizar { it.copy(sesion = it.sesion?.let { s -> s.copy(inicio = s.inicio + ausencia) }) }

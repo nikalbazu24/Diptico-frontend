@@ -474,13 +474,15 @@ fun RejillaCarpetasCV(e: Estado, modifier: Modifier, unaPantalla: Boolean) {
     val ids = e.pestanas.filter { it != "todo" }
     val sel = ids.indexOf(e.consolaSel).coerceAtLeast(0)
     val vista = e.extra.vistaCarpetasCV
-    val columnas = columnasCarpetasCV(vista, unaPantalla).let { if (it < 0) e.extra.columnasIconoCV else it }
+    val columnas = columnasCarpetasCV(vista, unaPantalla).let {
+        if (it < 0) e.extra.columnasIconoCV else if (vista == "grande" && e.extra.columnasGrandesCV > 0) e.extra.columnasGrandesCV else it
+    }
     androidx.compose.runtime.SideEffect { Teclas.carrilesCarpetas = columnas }
     val estado = rememberLazyGridState()
     LaunchedEffect(sel, vista) { estado.animateScrollToItem((sel - columnas).coerceAtLeast(0)) }
-    // Pellizcar con dos dedos (vista Ícono): abrir agranda los íconos (menos por fila), cerrar los achica.
+    // Pellizcar con dos dedos (vistas Ícono y Grandes): abrir agranda las carpetas (menos por fila), cerrar las achica.
     val columnasAhora = androidx.compose.runtime.rememberUpdatedState(columnas)
-    val pellizco = if (vista != "icono") Modifier else Modifier.pointerInput(Unit) {
+    val pellizco = if (vista != "icono" && vista != "grande") Modifier else Modifier.pointerInput(Unit) {
         awaitEachGesture {
             awaitFirstDown(requireUnconsumed = false)
             var acumulado = 1f
@@ -490,8 +492,11 @@ fun RejillaCarpetasCV(e: Estado, modifier: Modifier, unaPantalla: Boolean) {
                 if (ev.changes.count { it.pressed } >= 2) {
                     acumulado *= ev.calculateZoom()
                     ev.changes.forEach { it.consume() }
-                    if (acumulado > 1.18f) { Diptico.ajustarColumnasIcono(columnasAhora.value - 1); acumulado = 1f }
-                    if (acumulado < 0.85f) { Diptico.ajustarColumnasIcono(columnasAhora.value + 1); acumulado = 1f }
+                    val cambio = if (acumulado > 1.18f) -1 else if (acumulado < 0.85f) 1 else 0
+                    if (cambio != 0) {
+                        if (vista == "grande") Diptico.ajustarColumnasGrandes(columnasAhora.value + cambio) else Diptico.ajustarColumnasIcono(columnasAhora.value + cambio)
+                        acumulado = 1f
+                    }
                 }
             }
         }
@@ -526,7 +531,9 @@ private fun anilloCV(elegida: Boolean, forma: androidx.compose.ui.graphics.Shape
 @Composable
 private fun IconoCarpetaCV(e: Estado, c: Consola, modifier: Modifier, sigla: Float) {
     val propia = e.consolasPropias[c.id]?.portadaCarpeta
-    Box(modifier.background(Brush.linearGradient(listOf(c.color, Color(0xFF0D0F1C)))), contentAlignment = Alignment.Center) {
+    // Con un ícono propio NO va el degradado del color de la consola detrás: el ícono reemplaza a la carpeta por completo.
+    val fondo = if (propia != null) Modifier.background(Color(0xFF10121F)) else Modifier.background(Brush.linearGradient(listOf(c.color, Color(0xFF0D0F1C))))
+    Box(modifier.then(fondo), contentAlignment = Alignment.Center) {
         if (propia != null) PortadaCarpetaRuta(propia, c.id, Modifier.fillMaxSize(), maxLado = 360)
         else IconoConsola(c, sigla, Color.Transparent)
     }
@@ -559,24 +566,27 @@ private fun CarpetaGrande(e: Estado, c: Consola, elegida: Boolean, una: Boolean,
     var img by remember(id) { mutableStateOf(ImagenesConsola.enMemoria(id)) }
     LaunchedEffect(id) { if (img == null && propia == null && ImagenesConsola.hay(ctx, id)) img = withContext(Dispatchers.IO) { ImagenesConsola.cargar(ctx, id) } }
     val n = e.juegosPorConsola[c.id]?.size ?: 0
-    Box(
-        Modifier.fillMaxWidth().aspectRatio(if (una) 1.05f else 1.18f)
-            .graphicsLayer { scaleX = if (elegida) 1.04f else 1f; scaleY = scaleX }
-            .clip(forma).background(Brush.linearGradient(listOf(c.color, Color(0xFF141526))))
-            .then(anilloCV(elegida, forma)).clickable(onClick = onClick).testTag("carpeta-grande-${c.id}"),
-    ) {
-        val pintura = img
-        when {
-            propia != null -> PortadaCarpetaRuta(propia, c.id, Modifier.fillMaxSize(), maxLado = 360)
-            pintura != null -> androidx.compose.foundation.Image(pintura, contentDescription = null, contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                filterQuality = androidx.compose.ui.graphics.FilterQuality.Low,
-                modifier = Modifier.fillMaxWidth(0.78f).fillMaxHeight(0.66f).align(Alignment.TopEnd).padding(top = esc.d(12), end = esc.d(10)))
-            else -> Box(Modifier.align(Alignment.TopEnd).padding(esc.d(18))) { IconoConsola(c, 70f, Color.Transparent) }
+    Column(Modifier.fillMaxWidth().clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        // La tarjeta es un cuadrado: o tu ícono tal cual (sin recortar ni color de la consola detrás), o la foto de la consola.
+        Box(
+            Modifier.fillMaxWidth().aspectRatio(1f)
+                .graphicsLayer { scaleX = if (elegida) 1.04f else 1f; scaleY = scaleX }
+                .clip(forma).background(if (propia != null) Color(0xFF10121F) else Color.Transparent)
+                .then(if (propia == null) Modifier.background(Brush.linearGradient(listOf(c.color, Color(0xFF141526)))) else Modifier)
+                .then(anilloCV(elegida, forma)).testTag("carpeta-grande-${c.id}"),
+        ) {
+            val pintura = img
+            when {
+                propia != null -> PortadaCarpetaRuta(propia, c.id, Modifier.fillMaxSize(), maxLado = 512, escala = androidx.compose.ui.layout.ContentScale.Fit)
+                pintura != null -> androidx.compose.foundation.Image(pintura, contentDescription = null, contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                    filterQuality = androidx.compose.ui.graphics.FilterQuality.Low,
+                    modifier = Modifier.fillMaxSize(0.86f).align(Alignment.Center))
+                else -> Box(Modifier.align(Alignment.Center)) { IconoConsola(c, 70f, Color.Transparent) }
+            }
         }
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = .55f))))
-        Column(Modifier.align(Alignment.BottomStart).padding(esc.d(20))) {
-            TB(c.bonito, 24f, color = Color.White, peso = FontWeight.ExtraBold, lineas = 1)
-            TB(cuantosJuegos(n), 17f, color = Color.White.copy(alpha = .78f), peso = FontWeight.Bold, traducir = false, lineas = 1)
+        Column(Modifier.fillMaxWidth().padding(horizontal = esc.d(4))) {
+            TB(c.bonito, 22f, color = if (elegida) col.texto else col.sub, peso = FontWeight.ExtraBold, lineas = 1)
+            TB(cuantosJuegos(n), 16f, color = col.sub.copy(alpha = .8f), peso = FontWeight.Bold, traducir = false, lineas = 1)
         }
     }
 }
