@@ -61,7 +61,7 @@ fun ConsolaOpcionesCV(e: Estado, angosto: Boolean = false) {
     val grupos = gruposDe(opciones)
     val actual = opciones.getOrNull(e.indice)
     val grupo = actual?.grupo ?: grupos.firstOrNull() ?: "Carpeta"
-    LienzoBoceto(if (angosto) 1240f else 1920f, 1080f, Modifier.testTag("consola-opciones-cv"), fondo = LocalColeccion.current.fondo, zoom = if (angosto) ZOOM_UNA else ZOOM_ARRIBA) {
+    LienzoBoceto(if (angosto) 1240f else 1920f, 1080f, Modifier.testTag("consola-opciones-cv"), fondo = LocalColeccion.current.fondo, zoom = if (angosto) 1f else ZOOM_ARRIBA) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf((c?.color ?: col.acento).copy(alpha = .30f), Color.Transparent))))
@@ -69,7 +69,7 @@ fun ConsolaOpcionesCV(e: Estado, angosto: Boolean = false) {
             // Encabezado
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(20))) {
                 if (c != null) Box(Modifier.size(esc.d(84)).clip(RoundedCornerShape(esc.d(26))).background(c.color.copy(alpha = .35f)), contentAlignment = Alignment.Center) {
-                    IconoConsola(c, 56f * esc.factor, Color.Transparent)
+                    IconoConsola(c, 56f, Color.Transparent)
                 }
                 Column(Modifier.weight(1f)) {
                     TB("PERSONALIZAR", 19f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 2.6f)
@@ -109,7 +109,11 @@ fun ConsolaOpcionesCV(e: Estado, angosto: Boolean = false) {
                     val deGrupo = opciones.withIndex().filter { (it.value.grupo ?: "Carpeta") == grupo }
                     TB("${grupo.uppercase()} · ${deGrupo.size} OPCIONES", 19f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 2.6f, modifier = Modifier.padding(start = esc.d(8)))
                     val lista = rememberLazyListState()
-                    LaunchedEffect(e.indice) { val k = deGrupo.indexOfFirst { it.index == e.indice }; if (k >= 0) lista.animateScrollToItem(k) }
+                    LaunchedEffect(e.indice, grupo) {
+                        val k = deGrupo.indexOfFirst { it.index == e.indice }
+                        val vistos = lista.layoutInfo.visibleItemsInfo.filter { it.offset >= 0 && it.offset + it.size <= lista.layoutInfo.viewportEndOffset }.map { it.index }
+                        if (k >= 0 && k !in vistos) lista.animateScrollToItem(k)
+                    }
                     LazyColumn(state = lista, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
                         itemsIndexed(deGrupo) { _, (i, o) ->
                             val on = i == e.indice
@@ -121,11 +125,13 @@ fun ConsolaOpcionesCV(e: Estado, angosto: Boolean = false) {
                                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16)),
                             ) {
                                 TB(o.titulo, 27f, peso = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
-                                if (o.menos != null && on) Box(Modifier.size(esc.d(52)).clip(CircleShape).background(col.texto.copy(alpha = .08f)).clickable { o.menos.invoke() }, contentAlignment = Alignment.Center) { TB("◀", 20f, traducir = false) }
-                                Box(Modifier.height(esc.d(52)).clip(CircleShape).background(if (on) col.elegido else col.texto.copy(alpha = .08f)).padding(horizontal = esc.d(20)), contentAlignment = Alignment.Center) {
-                                    TB(o.valor.ifEmpty { "›" }, 21f, color = if (on) col.enElegido else col.texto, peso = FontWeight.ExtraBold, traducir = o.valor.isEmpty())
+                                Row(Modifier.height(esc.d(52)).clip(CircleShape).background(if (on) col.elegido else col.texto.copy(alpha = .08f)),
+                                    verticalAlignment = Alignment.CenterVertically) {
+                                    if (o.menos != null && on) Box(Modifier.fillMaxHeight().clickable { o.menos.invoke() }.padding(horizontal = esc.d(14)), contentAlignment = Alignment.Center) { TB("◀", 17f, color = col.enElegido, traducir = false) }
+                                    TB(o.valor.ifEmpty { "›" }, 21f, color = if (on) col.enElegido else col.texto, peso = FontWeight.ExtraBold, traducir = o.valor.isEmpty(),
+                                        modifier = Modifier.padding(horizontal = if (o.menos != null && on) 0.dp else esc.d(20)))
+                                    if (o.menos != null && on) Box(Modifier.fillMaxHeight().clickable { o.accion() }.padding(horizontal = esc.d(14)), contentAlignment = Alignment.Center) { TB("▶", 17f, color = col.enElegido, traducir = false) }
                                 }
-                                if (o.menos != null && on) Box(Modifier.size(esc.d(52)).clip(CircleShape).background(col.texto.copy(alpha = .08f)).clickable { o.accion() }, contentAlignment = Alignment.Center) { TB("▶", 20f, traducir = false) }
                             }
                         }
                     }
@@ -163,7 +169,7 @@ fun ConsolaVivaCV(e: Estado) {
     val c = Consolas.porId(e.consolaEditando)
     val opciones = remember(e) { Diptico.opcionesEditarConsola(e) }
     val grupo = opciones.getOrNull(e.indice)?.grupo ?: "Carpeta"
-    LienzoBoceto(1240f, 1080f, Modifier.testTag("consola-viva-cv"), fondo = LocalColeccion.current.fondo, zoom = if (e.unaPantalla) ZOOM_UNA else ZOOM_ABAJO) {
+    LienzoBoceto(1240f, 1080f, Modifier.testTag("consola-viva-cv"), fondo = LocalColeccion.current.fondo, zoom = if (e.unaPantalla) 1f else ZOOM_ABAJO) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         if (c == null) {
@@ -191,7 +197,7 @@ fun ConsolaVivaCV(e: Estado) {
                 Column(Modifier.weight(0.95f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(10), Alignment.CenterVertically)) {
                     TB(c.bonito, 48f, titulo = true, lineas = 2)
                     ficha?.let { TB("${it.marca.lowercase().replaceFirstChar { ch -> ch.uppercase() }} · ${it.anio}", 22f, color = col.sub, traducir = false) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
                         ChipCifra(if (seg >= 3600) "${seg / 3600} h" else "${seg / 60} min", "jugadas")
                         ChipCifra("${juegos.size}", "juegos")
                         ChipCifra("$terminados", "terminados")
@@ -215,9 +221,9 @@ fun ConsolaVivaCV(e: Estado) {
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16)),
                     ) {
                         if (favorito != null) {
-                            ArteJuego(favorito, preferirArte = false, maxLado = 256, modifier = Modifier.size(esc.d(96)).clip(RoundedCornerShape(esc.d(18))))
+                            ArteJuego(favorito, preferirArte = false, maxLado = 256, modifier = Modifier.size(esc.d(84)).clip(RoundedCornerShape(esc.d(18))))
                             Column(Modifier.weight(1f)) {
-                                TB("TU MÁS JUGADO", 16f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 2f)
+                                TB("MÁS JUGADO", 14f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 1.5f)
                                 TB(favorito.titulo, 25f, titulo = true, lineas = 2, traducir = false)
                                 val t = e.datos[favorito.clave]?.tiempo ?: 0L
                                 TB(if (t >= 3600) "${t / 3600} h" else "${t / 60} min", 18f, color = col.sub, traducir = false)
@@ -251,9 +257,9 @@ fun ConsolaVivaCV(e: Estado) {
 private fun ChipCifra(cifra: String, texto: String) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    Row(Modifier.vidrio(24f).padding(horizontal = esc.d(18), vertical = esc.d(10)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-        TB(cifra, 28f, titulo = true, traducir = false)
-        TB(texto, 18f, color = col.sub)
+    Row(Modifier.vidrio(24f).padding(horizontal = esc.d(14), vertical = esc.d(9)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        TB(cifra, 25f, titulo = true, traducir = false)
+        TB(texto, 16f, color = col.sub)
     }
 }
 
@@ -271,8 +277,8 @@ private fun AsiSeVera(e: Estado, c: Consola, grupo: String, juego: cl.nikalbazu.
     val auto = when (grupo) { "Cajas" -> 1; "Imágenes", "Juego y sonido" -> 2; else -> 0 }
     var elegida by remember(grupo) { mutableIntStateOf(auto) }
     Column(modifier.vidrio(36f).padding(esc.d(22)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
+        TB("ASÍ SE VERÁ", 17f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 2f)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-            TB("ASÍ SE VERÁ", 17f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 2f, modifier = Modifier.weight(1f))
             listOf("Carpeta", "Caja", "Fondo").forEachIndexed { i, n ->
                 val on = i == elegida
                 Box(Modifier.height(esc.d(42)).clip(CircleShape).background(if (on) col.elegido else col.texto.copy(alpha = .08f)).clickable { elegida = i }.padding(horizontal = esc.d(16)), contentAlignment = Alignment.Center) {

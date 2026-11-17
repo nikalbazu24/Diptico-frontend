@@ -91,7 +91,7 @@ internal fun EspacioVacioCV(e: Estado, modifier: Modifier = Modifier) {
                         verticalArrangement = Arrangement.spacedBy(esc.d(8)),
                     ) {
                         Box(Modifier.size(esc.d(52)).clip(RoundedCornerShape(esc.d(16))).background(col.acento.copy(alpha = .35f)), contentAlignment = Alignment.Center) {
-                            IconoDiptico(Widgets.icono(tipo), col.texto, 28f * esc.factor)
+                            IconoDiptico(Widgets.icono(tipo), col.texto, 34f)
                         }
                         TB(Widgets.nombre(tipo), 23f, peso = FontWeight.ExtraBold)
                         TB(porque, 18f, color = col.sub, lineas = 2, traducir = false)
@@ -113,12 +113,12 @@ fun EspacioAbajoCV(e: Estado) {
     LienzoBoceto(1240f, 1080f, Modifier.testTag("espacio-abajo"), fondo = LocalColeccion.current.fondo, zoom = ZOOM_ABAJO) {
         val esc = LocalEscala.current
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(30)), verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
-            Row(Modifier.fillMaxWidth().height(esc.d(150)), horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
+            Row(Modifier.fillMaxWidth().height(esc.d(130)), horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
                 AccesoEspacio("Editar", Icono.LAPIZ, Modifier.weight(1f)) { Diptico.editarWidgets() }
                 AccesoEspacio("Buscar", Icono.BUSCAR, Modifier.weight(1f)) { Diptico.abrirBuscar() }
                 AccesoEspacio("Fondo", Icono.PORTADA, Modifier.weight(1f)) { Diptico.pedirArchivoPara("fondoInicio", "image/*") }
-                PaginasEspacio(e, Modifier.weight(2.3f).fillMaxHeight())
             }
+            PaginasEspacio(e, Modifier.fillMaxWidth().height(esc.d(150)))
             TiendaEspacioCV(e, Modifier.fillMaxWidth().weight(1f), columnas = 2)
         }
     }
@@ -142,7 +142,7 @@ private fun AccesoEspacio(t: String, icono: Icono, modifier: Modifier, accion: (
     val col = LocalColeccion.current
     Column(modifier.fillMaxHeight().vidrio(34f).clickable(onClick = accion), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(esc.d(10), Alignment.CenterVertically)) {
-        IconoDiptico(icono, col.texto, 40f * esc.factor, acento = Coral)
+        IconoDiptico(icono, col.texto, 44f, acento = Coral)
         TB(t, 21f, peso = FontWeight.ExtraBold)
     }
 }
@@ -217,7 +217,7 @@ private fun TiendaEspacioCV(e: Estado, modifier: Modifier, columnas: Int, conMar
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16)),
                 ) {
                     Box(Modifier.size(esc.d(120)).clip(RoundedCornerShape(esc.d(24))).background(col.acento.copy(alpha = .30f)), contentAlignment = Alignment.Center) {
-                        IconoDiptico(Widgets.icono(tipo), col.texto, 52f * esc.factor, acento = Coral)
+                        IconoDiptico(Widgets.icono(tipo), col.texto, 56f, acento = Coral)
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
                         TB(Widgets.nombre(tipo), 24f, peso = FontWeight.ExtraBold, lineas = 1)
@@ -232,6 +232,6 @@ private fun TiendaEspacioCV(e: Estado, modifier: Modifier, columnas: Int, conMar
                 }
             }
         }
-        PistasFinas("L1 R1" to "Categoría", "A" to "Agregar", "Y" to "Ir a tus widgets", "L2 R2" to "Inicio y páginas", "B" to "Volver al inicio")
+        PistasFinas("L1 R1" to "Categoría", "A" to "Agregar", "Y" to "Tus widgets", "L2 R2" to "Inicio")
     }
 }
