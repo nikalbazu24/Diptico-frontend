@@ -215,6 +215,9 @@ internal class VisorConsola(ctx: android.content.Context) :
         val n = ++pedido
         val app = context.applicationContext
         Thread {
+            // Si se pasa de consola en consola rápido, solo se carga la última (cargar y soltar seguido es lo más delicado).
+            Thread.sleep(280)
+            if (n != pedido) return@Thread
             val bytes = runCatching { app.assets.open("consolas3d/$id.glb").use { it.readBytes() } }.getOrNull() ?: return@Thread
             post {
                 if (n != pedido) return@post
@@ -233,14 +236,24 @@ internal class VisorConsola(ctx: android.content.Context) :
         }.apply { isDaemon = true }.start()
     }
 
+    /**
+     * Gira la consola sobre SU centro. `transformToUnitCube` la deja centrada en (0, 0, −4) frente a la cámara: el giro
+     * se arma como «llevar al origen → girar → devolver a su lugar». (Antes giraba alrededor de la cámara y se salía de la
+     * pantalla o quedaba cortada: era el «desaparece» del video.)
+     */
     private fun aplicarGiro() {
         val a = visor.asset ?: return
+        val cx = base[12]; val cy = base[13]; val cz = base[14]
         android.opengl.Matrix.setRotateM(m1, 0, pitch, 1f, 0f, 0f)
         android.opengl.Matrix.setRotateM(m2, 0, yaw, 0f, 1f, 0f)
-        android.opengl.Matrix.multiplyMM(fin, 0, m1, 0, m2, 0)
-        android.opengl.Matrix.multiplyMM(m2, 0, fin, 0, base, 0)
+        android.opengl.Matrix.multiplyMM(fin, 0, m1, 0, m2, 0)          // R = Rx · Ry
+        android.opengl.Matrix.setIdentityM(m1, 0)
+        android.opengl.Matrix.translateM(m1, 0, -cx, -cy, -cz)
+        android.opengl.Matrix.multiplyMM(m2, 0, m1, 0, base, 0)         // T(−c) · base: centrada en el origen
+        android.opengl.Matrix.multiplyMM(m1, 0, fin, 0, m2, 0)          // R · …
+        m1[12] += cx; m1[13] += cy; m1[14] += cz                        // T(c) · …
         val tm = engine.transformManager
-        tm.setTransform(tm.getInstance(a.root), m2)
+        tm.setTransform(tm.getInstance(a.root), m1)
     }
 
     override fun onAttachedToWindow() { super.onAttachedToWindow(); seguir() }
@@ -315,7 +328,7 @@ fun CarpetasArribaCV(e: Estado) {
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(esc.d(28))) {
                     Column(Modifier.weight(0.56f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(14), Alignment.CenterVertically)) {
                         InfoConsolaCV(e, k, tamNombre = 72f, lineasHistoria = 2)
-                        OpcionesConsolaCV(e, k, columnas = 3)
+                        PersonalizarConsolaCV(e, k)
                     }
                     Spacer(Modifier.weight(0.44f))
                 }
@@ -330,7 +343,7 @@ fun CarpetasArribaCV(e: Estado) {
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
                 AccionesConsolaCV(e, c, alto = 80f)
                 Spacer(Modifier.weight(1f))
-                PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas")
+                PistasFinas("L1 R1" to "Consola", "Select" to "Vista", "Mantén Select" to "Pantallas")
             }
         }
     }
@@ -373,6 +386,46 @@ fun InfoConsolaCV(e: Estado, c: Consola, tamNombre: Float, lineasHistoria: Int =
 
 
 /** Las 6 opciones de la consola (X): ícono, vista, color, emulador, fondo y música, nombre o logo. */
+/**
+ * Las opciones de la consola juntas en una sola tarjeta ordenada (antes eran seis casillas sueltas): un resumen de cómo
+ * está cada cosa y un solo lugar para cambiarlas (X).
+ */
+@Composable
+fun PersonalizarConsolaCV(e: Estado, c: Consola) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val cp = e.consolasPropias[c.id]
+    val resumen = listOf(
+        "Vista" to nombreVistaCarpetas(e.extra.vistaCarpetasCV),
+        "Emulador" to Diptico.nombreEmulador(c),
+        "Ícono" to if (cp?.portadaCarpeta != null) "Propio" else "Original",
+        "Color" to if ((cp?.color ?: 0L) != 0L) "Propio" else "Original",
+        "Música" to if (cp?.musica != null) "Propia" else "Del tema",
+    )
+    Row(
+        Modifier.fillMaxWidth().height(esc.d(132)).vidrio(30f, fuerte = true).clickable { Diptico.abrirEditarConsola(c.id) }
+            .padding(horizontal = esc.d(22)),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(20)),
+    ) {
+        Box(Modifier.size(esc.d(84)).clip(RoundedCornerShape(esc.d(24))).background(c.color.copy(alpha = .3f)), contentAlignment = Alignment.Center) {
+            IconoDiptico(Icono.AJUSTES, col.texto, 44f, acento = Coral)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            TB("Personalizar ${c.bonito}", 28f, titulo = true, lineas = 1)
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                resumen.forEach { (n, v) ->
+                    Row(Modifier.clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .08f)).padding(horizontal = esc.d(12), vertical = esc.d(5)),
+                        horizontalArrangement = Arrangement.spacedBy(esc.d(5))) {
+                        TB(n, 16f, color = col.sub, lineas = 1)
+                        TB(v, 16f, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
+                    }
+                }
+            }
+        }
+        Box(Modifier.size(esc.d(54)).clip(CircleShape).border(2.dp, col.texto, CircleShape), contentAlignment = Alignment.Center) { TB("X", 22f, peso = FontWeight.ExtraBold, traducir = false) }
+    }
+}
+
 @Composable
 fun OpcionesConsolaCV(e: Estado, c: Consola, columnas: Int, alto: Float = 78f) {
     val esc = LocalEscala.current
@@ -407,6 +460,7 @@ private fun AccionesConsolaCV(e: Estado, c: Consola, alto: Float = 84f) {
     val esc = LocalEscala.current
     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
         BotonTecla("A", "Entrar", { Diptico.entrarConsolaCV(c.id) }, alto = alto, principal = true, letra = 28f)
+        BotonTecla("X", "Personalizar", { Diptico.abrirEditarConsola(c.id) }, alto = alto, letra = 24f)
         ultimoDeConsola(e, c.id)?.let { j -> BotonTecla("Y", "Seguir con ${j.titulo}", { Diptico.seguirCon(j) }, alto = alto, letra = 24f) }
             ?: BotonTecla("Y", "Cambiar ícono", { Diptico.cambiarIconoCarpeta(c.id) }, alto = alto, letra = 24f)
     }
@@ -684,7 +738,7 @@ fun CarpetasUnicaCV(e: Estado) {
                 // Izquierda: la consola, su historia, sus opciones y A/Y.
                 Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
                     InfoConsolaCV(e, c, tamNombre = 60f, lineasHistoria = 2)
-                    OpcionesConsolaCV(e, c, columnas = 3, alto = 70f)
+                    PersonalizarConsolaCV(e, c)
                     AccionesConsolaCV(e, c, alto = 64f)
                 }
                 // Derecha: la consola en 3D, qué juegos van junto al ícono y las carpetas.

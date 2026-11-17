@@ -437,6 +437,8 @@ data class EstadoExtra(
     val confWidgets: Map<String, Map<String, String>> = emptyMap(),
     /** Categoría elegida en la tienda de widgets (Colección viva). */
     val tiendaCat: Int = 0,
+    /** Las apps se abrieron desde el «+» del dock: elegir una la fija y vuelve. */
+    val fijandoDock: Boolean = false,
     /** Consolas que muestran su logo en vez del nombre. */
     val logoConsolas: Set<String> = emptySet(),
     /** Pestaña de arriba en la pantalla de carpetas: 0 Consolas, 1 Colecciones. */
@@ -996,6 +998,11 @@ object Diptico {
         val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_L3)
             .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
         val vistaGuardada = almacen.texto("vistaConsolas", "arriba")
+        // Dock predeterminado: si nunca se fijaron apps, se llena una vez con las que ya están en el equipo.
+        if (!almacen.bool("dockInicial1", false)) {
+            almacen.guardarBool("dockInicial1", true)
+            if (almacen.texto("appsFijadas").isBlank()) almacen.guardarTexto("appsFijadas", dockPredeterminado(ctx).joinToString(","))
+        }
         // Colección viva: una vez a todos, se entra por las carpetas (consolas en 3D arriba) y los juegos van en el estante 3D.
         if (almacen.bool("coleccionViva", true) && !almacen.bool("cvPredeterminado1", false)) {
             almacen.guardarBool("cvPredeterminado1", true)
@@ -2931,7 +2938,7 @@ object Diptico {
             Panel.GALERIA -> itemsGaleria(e).getOrNull(e.indice)?.accion?.invoke()
             Panel.ESTUDIO -> aceptarControl()
             Panel.EDITAR_CONSOLA -> opcionesEditarConsola().getOrNull(e.indice)?.accion?.invoke()
-            Panel.APPS -> appsVisibles(e).getOrNull(e.indice)?.let { abrirPaquete(it.paquete) }
+            Panel.APPS -> appsVisibles(e).getOrNull(e.indice)?.let { if (!fijarDesdeDock(it.paquete)) abrirPaquete(it.paquete) }
             Panel.ASISTENTE -> elementosAsistente().getOrNull(e.indice)?.accion?.invoke()
             Panel.CENTRO -> {
                 if (e.cortina == "avisos") Avisos.lista.value.getOrNull(e.indice)?.let { abrirAviso(it) }
@@ -5598,6 +5605,7 @@ object Diptico {
         if (e.appsMoviendo != null) { moverAppA(i); cerrarOpcionesApp() }
         else {
             actualizar { it.copy(indice = i) }
+            if (e.extra.fijandoDock) { appsVisibles().getOrNull(i)?.let { fijarDesdeDock(it.paquete) }; return }
             if (e.unaPantalla || i == e.indice) appsVisibles().getOrNull(i)?.let { abrirPaquete(it.paquete) }
         }
     }
@@ -5650,8 +5658,23 @@ object Diptico {
 
     /** Abre el cajón con todas las apps de la consola (las carga la primera vez, sin trabar nada). */
     fun abrirApps() {
-        actualizar { it.copy(panel = Panel.APPS, indice = 0, appsPestana = if (it.appsFijadas.isNotEmpty()) 1 else 0) }
+        actualizar { it.copy(panel = Panel.APPS, indice = 0, appsPestana = if (it.appsFijadas.isNotEmpty()) 1 else 0, extra = it.extra.copy(fijandoDock = false)) }
         cargarApps()
+    }
+
+    /** Desde el «+» del dock: todas las apps, y la que elijas queda en el dock. */
+    fun abrirAppsParaFijar() {
+        actualizar { it.copy(panel = Panel.APPS, indice = 0, appsPestana = 0, extra = it.extra.copy(fijandoDock = true)) }
+        cargarApps()
+        avisar("Elige la app que quieres en tu dock")
+    }
+
+    private fun fijarDesdeDock(paquete: String): Boolean {
+        if (!estado.value.extra.fijandoDock) return false
+        if (paquete !in estado.value.appsFijadas) alternarFijada(paquete)
+        actualizar { it.copy(extra = it.extra.copy(fijandoDock = false)) }
+        cerrarPanel()
+        return true
     }
 
     fun cargarApps() {

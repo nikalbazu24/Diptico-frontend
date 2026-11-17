@@ -533,7 +533,8 @@ internal fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nu
             .border(esc.d(1), Color.White.copy(alpha = 0.06f), forma)
     }
     Box(
-        modifier.fillMaxSize().then(fondo).clip(forma)
+        // Primero se recorta a la forma redondeada y después se pinta: así el fondo no queda cuadrado bajo el borde redondo.
+        modifier.fillMaxSize().clip(forma).then(fondo)
             .combinedClickable(onClick = { if (alPulsar != null) alPulsar() else w?.let { Diptico.abrirWidgetTipo(it.tipo) } }, onLongClick = { Diptico.editarWidgets() })
             .padding(esc.d(12)),
     ) {
