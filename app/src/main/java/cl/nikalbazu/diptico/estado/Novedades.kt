@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "temas-tienda-2.0-74"
-    const val NOMBRE = "Temas vivos, widgets y música viva"
+    const val ID = "coleccion-viva-2.0-76"
+    const val NOMBRE = "Colección viva"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -558,7 +558,7 @@ object Novedades {
             Pagina("Firmas distintas, sin sustos", "Si un emulador vino de otra tienda, te explico qué datos se pueden perder y, solo si mantienes A, Android te pregunta si lo desinstalas. Cuando termina, instalo la versión nueva sola.", Icono.CLAVE, 0xFFE0603A),
             Pagina("Borrar una variante", "En el Estudio de Cajas › Variantes ahora puedes quitar una variante suelta: con X sobre ella o tocando «Quitar».", Icono.BORRAR, 0xFFFFB547),
         )),
-        Version(ID, "Temas vivos, widgets y música viva", listOf(
+        Version("temas-tienda-2.0-74", "Temas vivos, widgets y música viva", listOf(
             Pagina("Cuatro temas que cambian todo", "En la tienda de temas, pestaña Nuevos: Recortes, Acuario de DIPPO, Salón Recreativo y Constelación. Cada uno trae su fondo, su forma de tarjetas, su manera de marcar lo elegido, su letra, su decoración y sus sonidos.", Icono.PALETA, 0xFFC94A22),
             Pagina("Míralo en cinco pantallas", "Arriba ves cómo queda el tema en el Inicio, la Biblioteca, los Widgets, los Menús y la Ficha. Cámbialas con L2 y R2, o tocándolas.", Icono.PORTADA, 0xFF35C6D8),
             Pagina("Pruébalo 30 segundos", "Con Y el tema se pone de verdad en las dos pantallas por 30 segundos y después vuelve el tuyo solo. Si te gusta, A lo deja puesto.", Icono.ESTRELLA, 0xFFFFD36B),
@@ -566,6 +566,23 @@ object Novedades {
             Pagina("Temas remasterizados", "Nueve clásicos rehechos, y cada uno sigue algo de verdad: la nieve se junta si no tocas nada, la lava sube con el calor de la consola, la marea es tu batería, la luna es la de esta noche y la fogata crece con tu racha. Los originales quedan en «Clásicos».", Icono.CHISPA, 0xFF7DD3FC),
             Pagina("Widgets nuevos", "En la tienda, pestaña Widgets: DIPPO te propone qué jugar, Te extraña, Tu semana, Tu equipo, Un recuerdo y Radio del tema. A los pone en tu inicio.", Icono.APPS, 0xFF9BE15D),
             Pagina("Música viva", "Las 13 canciones de Díptico se rehicieron en partes que se mezclan distinto cada vez: cambian con la hora y en Ajustes se calman. Cada tanto hay un silencio corto y después de 20 minutos cambian de tono.", Icono.MUSICA, 0xFFFF9B54),
+        )),
+        Version("tienda-musica-2.0-75", "La tienda y la música, en su lugar", listOf(
+            Pagina("La tienda nueva, a la vista", "Ajustes › Estilo › Tienda de temas abre la tienda nueva: Nuevos, Remasterizados, Widgets y los demás. Los temas para descargar quedaron en «Temas de la comunidad».", Icono.PALETA, 0xFF6B4EFF),
+            Pagina("Ahora sí suena la música viva", "Los temas traían una canción corta que tapaba a la nueva. Ahora todos los temas suenan con la música viva; solo «Mi tema» puede llevar una canción tuya.", Icono.MUSICA, 0xFFFF9B54),
+        )),
+        Version(ID, "Colección viva", listOf(
+            Pagina("Un Díptico nuevo", "Arriba, el arte del juego a pantalla completa con su caja en 3D; abajo, tus consolas, un estante de cajas y tus apps. Todo en su lugar, sin nada encima.", Icono.PORTADA, 0xFF3B6BFF),
+            Pagina("Gira la caja", "Toca la caja o aprieta R3: viaja al centro y muestra el reverso. Abajo aparece el carrete con todas sus imágenes.", Icono.CHISPA, 0xFF6B4EFF),
+            Pagina("Tus consolas, con su historia", "En las carpetas, cada consola cuenta su historia y aparece en grande, con sus colores originales y la pantalla apagada, flotando sobre un fondo de su color: inclínala con el dedo o con el stick derecho. Al entrar suena su propio encendido.", Icono.MANDO, 0xFFFF9B54),
+            Pagina("Su juego emblema detrás", "Detrás de cada consola va su juego más jugado, apenas difuminado para que se note cuál es. En la configuración de la consola (X) › Fondo eliges otro juego, buscas una imagen en internet (ScreenScraper, TheGamesDB, IGDB, SteamGridDB) o dejas la consola sola.", Icono.PORTADA, 0xFFFF9B54),
+            Pagina("Carpetas grandes y ordenadas", "Las carpetas vienen grandes, de a tres. Select cambia entre Grandes, Ícono, Díptico, Repisa y Carpeta. En Ícono, pellizca con dos dedos para agrandar o achicar. Mantén Select para intercambiar las pantallas donde estés.", Icono.CARPETA, 0xFF35C6D8),
+            Pagina("Widgets que toman tu tema", "Continuar, Tu semana, DIPPO, ¿Qué juego hoy?, Equipo y más. Cambian de color, forma y letra con tu tema. «Editar widgets» los quita o los agrega.", Icono.APPS, 0xFF9BE15D),
+            Pagina("Temas nuevos", "Los temas se rehicieron para este diseño: Colección, Aurora, Cartucho, Papel, Negro puro, Acuario, Salón, Constelación, y los vivos Nieve, Lava, Bosque, Luna, Marea, Sakura, Portátil y Fogata. Las fechas especiales siguen en el Calendario.", Icono.PALETA, 0xFFFF5D8F),
+            Pagina("Tu espacio y la Galería de widgets", "L2 y R2 te llevan a Tu espacio: páginas de widgets que agrandas hasta tres pantallas. La Galería de widgets (Y) tiene su propia pantalla: eliges uno, su tamaño, y ves dónde va a quedar. Mantén presionado un widget para elegir qué muestra.", Icono.APPS, 0xFF6B4EFF),
+            Pagina("Widgets útiles", "Marcador en vivo, próximo partido y tabla (fútbol chileno, Libertadores, NBA y más), contador, marcador para jugar con otros, dados, cuenta regresiva, nota, clima, feriados de Chile y hora en el mundo.", Icono.TROFEO, 0xFFFF5D5D),
+            Pagina("Un comienzo nuevo", "Intro nueva, configuración en cinco pasos con DIPPO y un recorrido donde él te muestra cada parte y te hace probar los botones. Lo vuelves a ver desde Ajustes.", Icono.BISA, 0xFFFF7A59),
+            Pagina("¿Lo quieres como antes?", "Ajustes › Estilo › «Diseño Colección viva» lo apaga y vuelve el de antes.", Icono.AJUSTES, 0xFFB9BBD6),
         )),
     )
 
@@ -595,30 +612,14 @@ object Novedades {
     /** Recorrido por las opciones y funciones: se muestra la primera vez, al terminar de configurar Díptico. */
     /** El recorrido de la primera vez, contado por DIPPO: seis pasos cortos. Se puede ver de nuevo en Ajustes. */
     val RECORRIDO = listOf(
-        Pagina(
-            "¡Hola! Soy DIPPO", "Soy el pulpito que vive en tu Díptico. Te muestro lo importante en un ratito. A para seguir, B para saltar.",
-            Icono.BISA, 0xFFFF7A59, "A · B",
-        ),
-        Pagina(
-            "Una consola, dos pantallas", "Arriba se luce tu juego, con su arte grande. Abajo eliges la consola y el juego.",
-            Icono.PANTALLAS, 0xFF6B4EFF,
-        ),
-        Pagina(
-            "Elige y juega", "Muévete con la cruceta o el stick. L1 y R1 cambian de consola, A juega y X abre la ficha del juego.",
-            Icono.JUGAR, 0xFF2EC4A6, "L1 · R1 · A",
-        ),
-        Pagina(
-            "Yo te ayudo", "Tócame para preguntarme qué jugar o cómo pasar una parte. Mis mensajes salen sobre mi cabeza: deslízalos si molestan.",
-            Icono.BISA, 0xFFFF7A59, "Tócame",
-        ),
-        Pagina(
-            "Tu perfil", "Tu foto está en la esquina: ahí ves tus horas y logros. Con Start + A la abres con el mando.",
-            Icono.PERFIL, 0xFFE64FA0, "Start + A",
-        ),
-        Pagina(
-            "¡A jugar!", "Start abre Ajustes y cada opción explica qué hace. De vez en cuando te contaré trucos escondidos. ¡Nos vemos!",
-            Icono.AJUSTES, 0xFF3BA8FF, "Start",
-        ),
+        Pagina("Esta es tu colección", "Arriba ves la consola elegida y, detrás, su juego más jugado. A para seguir, B para saltar.", Icono.BISA, 0xFFFF7A59, "A · B"),
+        Pagina("Cambia de consola", "Con L1 y R1 pasas de una consola a otra. ¡Prueba!", Icono.MANDO, 0xFF6B4EFF, "L1 · R1"),
+        Pagina("Tus carpetas", "Abajo están tus carpetas. A entra a una; X la personaliza: su color, su ícono, su fondo y su emulador.", Icono.CARPETA, 0xFF2EC4A6, "A · X"),
+        Pagina("Tu espacio", "L2 y R2 te llevan a Tu espacio: tus widgets, en páginas que puedes agrandar. ¡Prueba!", Icono.APPS, 0xFF3BA8FF, "L2 · R2"),
+        Pagina("Tus apps", "Estas son tus apps fijadas. Mantén presionada una para quitarla, o toca «+» para agregar otra.", Icono.APPS, 0xFFFF9B54, ""),
+        Pagina("Cambia la vista", "Select cambia cómo se ven las carpetas. Si lo mantienes, las pantallas se intercambian. ¡Prueba!", Icono.VISTA, 0xFFE64FA0, "Select"),
+        Pagina("Y yo vivo aquí", "Tócame cuando quieras: te ayudo, te sugiero juegos y te cuento trucos.", Icono.BISA, 0xFFFF7A59, "Tócame"),
+        Pagina("¡A jugar!", "Start abre Ajustes y cada opción explica qué hace. Start + A abre tu perfil. ¡Nos vemos!", Icono.AJUSTES, 0xFF3BA8FF, "Start"),
     )
 }
 

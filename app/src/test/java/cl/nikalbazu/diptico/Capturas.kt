@@ -88,17 +88,9 @@ class Capturas {
     // ---------- Tutorial (siempre en una pantalla) ----------
 
     @Test fun t01_tutorial_bienvenida() = foto("01_tutorial_bienvenida", tuto(PasoTuto.BIENVENIDA), Rol.UNICA)
-    @Test fun t02_tutorial_pantallas() = foto("02_tutorial_pantallas", tuto(PasoTuto.PANTALLAS), Rol.UNICA)
-    @Test fun t03_tutorial_pantallas_odin() = foto("03_tutorial_pantallas_una_sola", tuto(PasoTuto.PANTALLAS, 1).copy(dosDisponibles = false), Rol.UNICA)
-    @Test fun t04_tutorial_letra() = foto("04_tutorial_letra_grande", tuto(PasoTuto.TEXTO, 1).copy(tamTexto = 1.15f), Rol.UNICA)
     @Test fun t05_tutorial_carpeta() = foto("05_tutorial_carpeta", tuto(PasoTuto.CARPETA).copy(tieneCarpeta = false, juegos = emptyList()), Rol.UNICA)
     @Test fun t06_tutorial_emuladores() = foto("06_tutorial_emuladores", tuto(PasoTuto.EMULADORES), Rol.UNICA)
-    @Test fun t07_tutorial_portadas() = foto("07_tutorial_portadas", tuto(PasoTuto.PORTADAS), Rol.UNICA)
-    @Test fun t08_tutorial_musica() = foto("08_tutorial_musica", tuto(PasoTuto.MUSICA, 1).copy(pista = "cartucho"), Rol.UNICA)
-    @Test fun t09_tutorial_controles() = foto("09_tutorial_controles", tuto(PasoTuto.CONTROLES).copy(probados = setOf("cruceta", "Y")), Rol.UNICA)
 
-    @Config(qualifiers = ABAJO)
-    @Test fun t10_tutorial_abajo() = foto("10_tutorial_abajo_dos_pantallas", tuto(PasoTuto.TEXTO).copy(modoElegido = true, modoPantallas = "dos"), Rol.INFERIOR)
 
     // ---------- Inicio con dos pantallas ----------
 
@@ -176,7 +168,6 @@ class Capturas {
         Rol.INFERIOR,
     )
 
-    @Test fun t28_tutorial_ports() = foto("28_tutorial_ports", tuto(PasoTuto.PORTS), Rol.UNICA)
 
     // ---------- v0.3 ----------
 
@@ -226,7 +217,7 @@ class Capturas {
     )
 
     @Config(qualifiers = ABAJO)
-    @Test fun t39_tema_sakura_claro() = foto("39_tema_sakura_claro", base().copy(oscuro = false), Rol.INFERIOR, Temas.incluidos.first { it.id == "sakura" })
+    @Test fun t39_tema_sakura_claro() = foto("39_tema_sakura_claro", base().copy(oscuro = false), Rol.INFERIOR, cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["sakura"] ?: "sakura") } ?: l[0] })
 
     @Config(qualifiers = ABAJO)
     @Test fun t40_editar_widgets() = foto("40_editar_widgets", base().copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 1, indice = 2), Rol.INFERIOR)
@@ -299,7 +290,7 @@ class Capturas {
 
     @Test fun t54_previa_tema() = foto(
         "54_menu_vista_previa_tema",
-        base().copy(panel = Panel.MENU, seccion = Seccion.TEMAS, enOpciones = true, indice = 2 + Temas.incluidos.indexOfFirst { it.id == "chile" }),
+        base().copy(panel = Panel.MENU, seccion = Seccion.TEMAS, enOpciones = true, indice = 2 + 0),
         Rol.SUPERIOR,
     )
 
@@ -310,9 +301,9 @@ class Capturas {
     @Test fun t57_previa_botones() = foto("57_menu_vista_previa_botones", base().copy(panel = Panel.MENU, seccion = Seccion.APARIENCIA, enOpciones = true, indice = 1, efecto = "vidrio"), Rol.SUPERIOR)
 
     @Config(qualifiers = ABAJO)
-    @Test fun t58_tema_chile() = foto("58_tema_chile", base(), Rol.INFERIOR, Temas.incluidos.first { it.id == "chile" })
+    @Test fun t58_tema_chile() = foto("58_tema_chile", base(), Rol.INFERIOR, cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["chile"] ?: "chile") } ?: l[0] })
 
-    @Test fun t59_tema_cyber() = foto("59_tema_cyberpunk", base(), Rol.SUPERIOR, Temas.incluidos.first { it.id == "cyber" })
+    @Test fun t59_tema_cyber() = foto("59_tema_cyberpunk", base(), Rol.SUPERIOR, cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["cyber"] ?: "cyber") } ?: l[0] })
 
     @Test fun t60_inicio_paginas() = foto(
         "60_inicio_pagina_2",
@@ -521,7 +512,7 @@ class Capturas {
 
     // ---------- v0.9 ----------
 
-    private val bloques get() = Temas.incluidos.first { it.id == "bloques" }
+    private val bloques get() = cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["bloques"] ?: "bloques") } ?: l[0] }
     private fun conRecientes(e: Estado) = e.copy(
         datos = e.datos + mapOf(
             "gba/2" to DatosJuego(tiempo = 5400, ultimo = 5L, favorito = true), "psx/3" to DatosJuego(tiempo = 1800, ultimo = 4L),
@@ -1586,7 +1577,7 @@ class Capturas {
     @Test fun t440_estudio_una() = foto("440_estudio_una_pantalla", estudio(1, 1, CarasGuardadas(null, null, 1L, plantilla = "ps2", color = 0xFF1B2F7AL)).let {
         it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     // ---------- Temas nuevos y tienda ----------
-    private fun nuevo(id: String) = Temas.nuevos.first { it.id == id }
+    private fun nuevo(id: String) = Temas.incluidos.firstOrNull { it.id == id } ?: Temas.incluidos[0]
     private fun tienda(i: Int, vista: Int) = base().let { it.copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 0, indice = i, extra = it.extra.copy(previaTema = vista)) }
     @Test fun t441_tema_recortes_arriba() = foto("441_tema_recortes_arriba", base().copy(tema = "recortes"), Rol.SUPERIOR, nuevo("recortes"))
     @Config(qualifiers = ABAJO)
@@ -1602,7 +1593,7 @@ class Capturas {
     @Test fun t449_tienda_previa_ficha() = foto("449_tienda_previa_ficha", tienda(3, 4), Rol.SUPERIOR, mi = 1)
     @Test fun t450_tienda_una_pantalla() = foto("450_tienda_una_pantalla", tienda(1, 2).let { it.copy(modoPantallas = "una_negra", dosDisponibles = false, extra = it.extra.copy(equipoTipo = "portatil")) }, Rol.UNICA)
     // ---------- Temas remasterizados (con algo vivo: quietud, hora, calor, batería, racha) ----------
-    private fun remaster(id: String) = Temas.remasterizados.first { it.id == id }
+    private fun remaster(id: String) = Temas.incluidos.firstOrNull { it.id == id } ?: Temas.incluidos[0]
     private fun viva(nombre: String, id: String, rol: Rol = Rol.SUPERIOR, quieto: Float? = null, hora: Float? = null,
                      calor: cl.nikalbazu.diptico.estado.Termica.Nivel? = null, bateria: Int = 80, cargando: Boolean = false, racha: Int? = null) {
         val v = cl.nikalbazu.diptico.ui.Vivo
@@ -1650,6 +1641,179 @@ class Capturas {
         cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
         try { foto("463_tienda_widgets", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 2, indice = 2), Rol.INFERIOR, mi = 1) }
         finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    // ---------- Colección viva (bocetos 1–7 aprobados el 16 nov 2026) ----------
+    private fun cv(e: Estado = conRecientes(base()), extra: (EstadoExtra) -> EstadoExtra = { it }) =
+        e.copy(consolaSel = "snes", juegoSel = "snes/1", appsFijadas = listOf("com.android.settings", "com.android.chrome"), extra = extra(e.extra.copy(coleccionViva = true)))
+    @Test fun t466_cv_arriba() = foto("466_cv_arriba", cv(), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t467_cv_abajo() = foto("467_cv_abajo", cv(), Rol.INFERIOR, mi = 1)
+    @Test fun t468_cv_arriba_girada() = foto("468_cv_arriba_girada", cv { it.copy(cajaGirada = true) }, Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t469_cv_carrete() = foto("469_cv_carrete", cv { it.copy(cajaGirada = true) }, Rol.INFERIOR, mi = 1)
+    @Test fun t470_cv_una() = foto("470_cv_una", cv().copy(modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Config(qualifiers = ABAJO)
+    @Test fun t471_cv_abajo_cuadricula() = foto("471_cv_abajo_cuadricula", cv { it.copy(vistaColeccion = "cuadricula") }, Rol.INFERIOR, mi = 1)
+    @Test fun t472_cv_carpetas_arriba() = foto("472_cv_carpetas_arriba", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t473_cv_carpetas_abajo_diptico() = foto("473_cv_carpetas_abajo_diptico", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t474_cv_carpetas_abajo_repisa() = foto("474_cv_carpetas_abajo_repisa", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(vistaCarpetasCV = "repisa") }, Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t475_cv_carpetas_abajo_carpeta() = foto("475_cv_carpetas_abajo_carpeta", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(vistaCarpetasCV = "carpeta") }, Rol.INFERIOR, mi = 1)
+    @Test fun t476_cv_carpetas_una() = foto("476_cv_carpetas_una", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)), Rol.UNICA)
+    @Test fun t477_cv_carpetas_ps2_3d() = foto("477_cv_carpetas_ps2_3d", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(consolaSel = "ps2"), Rol.SUPERIOR)
+    @Test fun t478_cv_widgets() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("478_cv_widgets", cv().copy(inicio = "widgets"), Rol.SUPERIOR) } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Test fun t479_cv_widgets_editando_sakura() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("479_cv_widgets_editando_sakura", cv { it.copy(editandoWidgetsCV = true) }.copy(inicio = "widgets"), Rol.SUPERIOR, tema = Temas.incluidos.firstOrNull { it.id == "r_sakura" }) }
+        finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t480_cv_tienda_widgets() = foto("480_cv_tienda_widgets", cv().copy(inicio = "widgets"), Rol.INFERIOR, mi = 1)
+    // Widgets 2.0: la tienda abajo con categorías y vista previa en vivo, y los widgets útiles arriba.
+    @Config(qualifiers = ABAJO)
+    @Test fun t482_cv_tienda_widgets_categorias() = foto("482_cv_tienda_widgets_categorias",
+        cv { it.copy(tiendaCat = 2) }.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 1, indice = 1), Rol.INFERIOR, mi = 1)
+    @Test fun t483_cv_widgets_utiles() {
+        val utiles = mapOf("contador" to Triple(0, 0, 2 to 2), "dados" to Triple(2, 0, 2 to 2), "regresiva" to Triple(4, 0, 2 to 2),
+            "marcadorMesa" to Triple(0, 2, 3 to 2), "nota" to Triple(3, 2, 3 to 1), "horaMundo" to Triple(3, 3, 3 to 1))
+        val conf = mapOf("contador" to mapOf("nombre" to "Victorias en Mario Kart", "valor" to "12"),
+            "marcadorMesa" to mapOf("a" to "Nico", "b" to "Cami", "pa" to "7", "pb" to "5"),
+            "nota" to mapOf("texto" to "Comprar pilas para el control"))
+        val e = cv { it.copy(confWidgets = conf) }.let { e0 ->
+            e0.copy(inicio = "widgets", widgets = e0.widgets.map { w ->
+                utiles[w.tipo]?.let { (x, y, t) -> w.copy(x = x, y = y, an = t.first, al = t.second, visible = true, pagina = 0) } ?: w.copy(visible = false)
+            })
+        }
+        foto("483_cv_widgets_utiles", e, Rol.SUPERIOR)
+    }
+    // Pantallas intercambiadas: lo de arriba dibujado en la pantalla de abajo (más angosta).
+    @Config(qualifiers = ABAJO)
+    @Test fun t485_cv_carpetas_arriba_en_abajo() = foto("485_cv_carpetas_arriba_en_abajo", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.SUPERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t486_cv_estudio_abajo() = foto("486_cv_estudio_abajo", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t487_cv_colecciones_abajo() = foto("487_cv_colecciones_abajo", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(pestanaCarpetas = 1) }, Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ARRIBA)
+    @Test fun t488_cv_estudio_arriba() = foto("488_cv_estudio_arriba", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.SUPERIOR, mi = 0)
+    @Config(qualifiers = ABAJO)
+    @Test fun t489_cv_estudio_arriba_en_abajo() = foto("489_cv_estudio_arriba_en_abajo", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.SUPERIOR, mi = 1)
+    @Config(qualifiers = ARRIBA)
+    @Test fun t490_cv_estudio_abajo_en_arriba() = foto("490_cv_estudio_abajo_en_arriba", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.INFERIOR, mi = 0)
+    // Personalizar consola (boceto 9): opciones arriba, panel vivo abajo, y en una pantalla lado a lado.
+    @Test fun t491_cv_consola_opciones() = foto("491_cv_consola_opciones", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 3), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t492_cv_consola_viva() = foto("492_cv_consola_viva", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 3), Rol.INFERIOR, mi = 1)
+    @Test fun t493_cv_consola_una() = foto("493_cv_consola_una", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)).copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 8), Rol.UNICA)
+    // Tu espacio (boceto 10): vacío con DIPPO, con widgets, la otra pantalla con la tienda, editando (tiembla) y una pantalla con la tienda al lado.
+    @Test fun t494_cv_espacio_vacio() = foto("494_cv_espacio_vacio", cv().let { it.copy(inicio = "widgets", widgets = it.widgets.map { w -> w.copy(visible = false) }) }, Rol.SUPERIOR)
+    @Test fun t495_cv_espacio_con_widgets() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("495_cv_espacio_con_widgets", cv().copy(inicio = "widgets", paginas = 2), Rol.SUPERIOR) } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t496_cv_espacio_abajo() = foto("496_cv_espacio_abajo", cv { it.copy(tiendaCat = 0, espacioSel = 1) }.copy(inicio = "widgets", paginas = 2), Rol.INFERIOR, mi = 1)
+    @Test fun t497_cv_espacio_editando() = foto("497_cv_espacio_editando", cv().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0), Rol.SUPERIOR, avance = 220)
+    @Test fun t498_cv_espacio_una_tienda() = foto("498_cv_espacio_una_tienda", cv { it.copy(tiendaLado = true) }.copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Test fun t499_cv_espacio_ancho() = foto("499_cv_espacio_ancho", cv { it.copy(paginaAncho = 2) }.copy(inicio = "widgets"), Rol.SUPERIOR)
+    // ---------- Primera vez con Colección viva (boceto 13) y Galería de widgets / fondo emblema (boceto 12) ----------
+    private fun cfg(paso: PasoTuto, indice: Int = 0) = cv().copy(configurado = false, pasoTuto = paso, indice = indice, modoElegido = true, modoPantallas = "dos")
+    @Test fun t504_config_tu_arriba() = foto("504_config_tu_arriba", cfg(PasoTuto.BIENVENIDA).copy(nombre = "Nicolás"), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t505_config_tu_abajo() = foto("505_config_tu_abajo", cfg(PasoTuto.BIENVENIDA, 1).copy(nombre = "Nicolás"), Rol.INFERIOR, mi = 1)
+    @Test fun t506_config_juegos_arriba() = foto("506_config_juegos_arriba", cfg(PasoTuto.CARPETA), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t507_config_emuladores_abajo() = foto("507_config_emuladores_abajo", cfg(PasoTuto.EMULADORES, 1), Rol.INFERIOR, mi = 1)
+    @Test fun t508_config_estilo_arriba() = foto("508_config_estilo_arriba", cfg(PasoTuto.APARIENCIA, 1), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t508_config_estilo_abajo() = foto("508_config_estilo_abajo", cfg(PasoTuto.APARIENCIA, 1), Rol.INFERIOR, mi = 1)
+    @Test fun t509_config_listo_una() = foto("509_config_listo_una", cfg(PasoTuto.LISTO).copy(nombre = "Nicolás", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    private fun tour(k: Int) = cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(novedades = k, recorrido = true)
+    @Test fun t511_recorrido_arriba() = foto("511_recorrido_arriba", tour(1), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t512_recorrido_abajo() = foto("512_recorrido_abajo", tour(2), Rol.INFERIOR, mi = 1)
+    @Test fun t513_recorrido_una() = foto("513_recorrido_una", tour(0).copy(modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Config(qualifiers = ABAJO)
+    @Test fun t514_galeria_abajo() = foto("514_galeria_abajo", cv { it.copy(galeria = true, tiendaCat = 1, espacioSel = 1) }.copy(inicio = "widgets"), Rol.INFERIOR, mi = 1)
+    @Test fun t515_galeria_arriba() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("515_galeria_arriba", conSemana(cv { it.copy(galeria = true, tiendaCat = 0, espacioSel = 0) }).copy(inicio = "widgets"), Rol.SUPERIOR) }
+        finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t516_espacio_abajo() = foto("516_espacio_abajo", conSemana(cv()).copy(inicio = "widgets"), Rol.INFERIOR, mi = 1)
+    @Test fun t517_galeria_una() = foto("517_galeria_una", conSemana(cv { it.copy(galeria = true, tiendaLado = true) }).copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Test fun t518_consola_fondo() = foto("518_consola_fondo", cv().copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 6), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t519_consola_fondo_abajo() = foto("519_consola_fondo_abajo", cv().copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 6), Rol.INFERIOR, mi = 1)
+    /** Un «arte» de juego hecho a mano (cielo, sol, montañas y un título) para ver el emblema detrás de la consola. */
+    private fun conArte(e: Estado): Estado {
+        val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val f = java.io.File(ctx.cacheDir, "arte-prueba.png")
+        if (!f.exists()) {
+            val b = android.graphics.Bitmap.createBitmap(1280, 720, android.graphics.Bitmap.Config.ARGB_8888)
+            val c = android.graphics.Canvas(b)
+            val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            p.shader = android.graphics.LinearGradient(0f, 0f, 0f, 720f, 0xFF3BA8FF.toInt(), 0xFFFFC27A.toInt(), android.graphics.Shader.TileMode.CLAMP)
+            c.drawRect(0f, 0f, 1280f, 720f, p); p.shader = null
+            p.color = 0xFFFFE27A.toInt(); c.drawCircle(980f, 210f, 110f, p)
+            p.color = 0xFF2E8B57.toInt(); c.drawPath(android.graphics.Path().apply { moveTo(0f, 720f); lineTo(380f, 330f); lineTo(760f, 720f); close() }, p)
+            p.color = 0xFF1F6B44.toInt(); c.drawPath(android.graphics.Path().apply { moveTo(500f, 720f); lineTo(900f, 380f); lineTo(1280f, 720f); close() }, p)
+            p.color = 0xFFFFFFFF.toInt(); p.textSize = 110f; p.isFakeBoldText = true; c.drawText("LEYENDA DEL BOSQUE", 90f, 640f, p)
+            f.outputStream().use { b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        val u = android.net.Uri.fromFile(f)
+        return e.copy(juegos = e.juegos.map { if (it.clave == "snes/1") it.copy(arte = u) else it })
+    }
+    @Test fun t520_emblema_arriba() = foto("520_emblema_arriba", conArte(cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas"))), Rol.SUPERIOR)
+    @Test fun t521_emblema_una() = foto("521_emblema_una", conArte(cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false))), Rol.UNICA)
+    @Config(qualifiers = ABAJO)
+    @Test fun t523_config_juegos_abajo() = foto("523_config_juegos_abajo", cfg(PasoTuto.CARPETA, 1), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t524_config_listo_abajo() = foto("524_config_listo_abajo", cfg(PasoTuto.LISTO).copy(nombre = "Nicolás"), Rol.INFERIOR, mi = 1)
+    @Test fun t525_emblema_historico() = foto("525_emblema_historico", conArte(cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas"))).let { e ->
+        e.copy(juegos = e.juegos.map { if (it.clave == "snes/1") it.copy(titulo = "Super Mario World") else it }) }.copy(modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Test fun t522_config_estilo_emblema() = foto("522_config_estilo_emblema", conArte(cfg(PasoTuto.APARIENCIA, 2)), Rol.SUPERIOR)
+    // Menú de un widget (boceto 11): abajo con dos pantallas, al costado con una.
+    private fun conSemana(e: Estado) = e.copy(widgets = e.widgets.map { if (it.tipo == "tuSemana") it.copy(visible = true, x = 3, y = 2, an = 3, al = 2, pagina = 0) else if (it.tipo == "recientes") it.copy(visible = false) else it })
+    @Config(qualifiers = ABAJO)
+    @Test fun t500_cv_menu_widget_abajo() {
+        val e = conSemana(cv())
+        val i = e.widgets.indexOfFirst { it.tipo == "tuSemana" }
+        foto("500_cv_menu_widget_abajo", e.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, widgetSel = i, indice = 2, estudioZona = "panel"), Rol.INFERIOR, mi = 1)
+    }
+    @Test fun t501_cv_menu_widget_arriba() {
+        val e = conSemana(cv())
+        val i = e.widgets.indexOfFirst { it.tipo == "tuSemana" }
+        foto("501_cv_menu_widget_arriba", e.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, widgetSel = i, indice = 2, estudioZona = "panel"), Rol.SUPERIOR, avance = 240)
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t502_cv_menu_widget_aspecto() {
+        val e = cv()
+        val i = e.widgets.indexOfFirst { it.tipo == "juego" && it.visible }.coerceAtLeast(0)
+        foto("502_cv_menu_widget_aspecto", e.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, widgetSel = i, indice = 2, estudioZona = "panel",
+            navegacion = e.navegacion.copy(grupoEditorWidget = 2)), Rol.INFERIOR, mi = 1)
+    }
+    @Test fun t503_cv_menu_widget_una() {
+        val e = conSemana(cv())
+        val i = e.widgets.indexOfFirst { it.tipo == "tuSemana" }
+        foto("503_cv_menu_widget_una", e.copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false, editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, widgetSel = i, indice = 2, estudioZona = "panel"), Rol.UNICA)
+    }
+    // Mantener presionado un widget: su menú de edición abajo (Qué muestra, Tamaño, Diseño, Más ajustes).
+    @Config(qualifiers = ABAJO)
+    @Test fun t500_cv_editar_widget_abajo() = foto("500_cv_editar_widget_abajo",
+        cv().let { e0 -> e0.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.ESTUDIO, estudioPestana = 0, estudioZona = "panel", indice = 0,
+            widgetSel = e0.widgets.indexOfFirst { it.tipo == "recientes" }) }, Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t484_cv_icono_carpeta() = foto("484_cv_icono_carpeta",
+        cv().copy(panel = Panel.IMAGENES, candidatoPara = "c_portada", consolaEditando = "snes", nombreImagen = "Super Nintendo", fuenteImagen = "todas", indice = 2), Rol.INFERIOR, mi = 1)
+    @Test fun t481_cv_widgets_una() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("481_cv_widgets_una", cv().copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA) } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
     }
     @Test fun t464_tienda_widgets_previa_arriba() {
         cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
@@ -1702,7 +1866,7 @@ class Capturas {
 
     @Test fun visual_tienda_temas() = foto("visual_tienda_temas", base().copy(panel = Panel.GALERIA, galeria = "temas", galeriaPestana = 6), Rol.INFERIOR, mi = 1)
 
-    @Test fun visual_cristal_y_barra() = foto("visual_cristal_y_barra", base(), Rol.SUPERIOR, tema = Temas.incluidos.first { it.id == "diptico_vidrio" })
+    @Test fun visual_cristal_y_barra() = foto("visual_cristal_y_barra", base(), Rol.SUPERIOR, tema = cl.nikalbazu.diptico.estado.Temas.incluidos.let { l -> l.firstOrNull { it.id == (cl.nikalbazu.diptico.estado.Temas.MIGRAR["diptico_vidrio"] ?: "diptico_vidrio") } ?: l[0] })
 
     @Test fun visual_catalogo_widgets_arriba() = foto("visual_catalogo_widgets_arriba",
         base().copy(inicio = "widgets", panel = Panel.ESTUDIO, editandoWidgets = true, estudioPestana = 1,

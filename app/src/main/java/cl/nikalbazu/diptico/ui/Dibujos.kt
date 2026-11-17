@@ -432,4 +432,3 @@ fun Logo(tam: Float = 20f, color: Color = LocalPaleta.current.tinta) {
     }
 }
 
-val SinEspacio = 0.dp

@@ -161,7 +161,6 @@ private fun Mosaico(j: cl.nikalbazu.diptico.data.Juego, elegido: Boolean, jugado
  */
 /** Alto de la barra de abajo abierta (barrita + accesos) y cerrada (solo la barrita), en dp de Díptico. */
 const val ALTO_FRANJA_ABIERTA = 56f
-const val ALTO_FRANJA_CERRADA = 22f
 
 /** Cuánto tapa la barra flotante de abajo: las rejillas lo suman a su relleno para poder correr el último elemento por encima. */
 val LocalAireAbajo = androidx.compose.runtime.compositionLocalOf { 0.dp }
@@ -248,7 +247,7 @@ private fun HoraBateria() {
         val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }
         Box(Modifier.size(esc.d(22), esc.d(11)).border(esc.d(1.5f), p.tinta.copy(alpha = 0.7f), RoundedCornerShape(esc.d(3))).padding(esc.d(2))) {
             Box(Modifier.fillMaxHeight().fillMaxWidth(((if (bateria < 0) 50 else bateria) / 100f).coerceIn(0.08f, 1f))
-                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono))
+                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono.copy(alpha = latidoCarga(cargando))))
         }
         androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(3)))
         Texto(if (bateria >= 0) "$bateria%" else "—", 13f, color = p.tinta, traducir = false, lineas = 1)

@@ -32,6 +32,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -120,12 +122,15 @@ fun PantallaInicio(e: Estado) {
         // Brillo del tema arriba a la derecha (solo en temas oscuros: en los claros el degradado se ve "punteado" a través de las tarjetas).
         if (!e.editandoWidgets && !Estilo.glass && p.fondo.luminance() < 0.4f) Box(Modifier.align(Alignment.TopEnd).size(esc.d(420)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.18f), Color.Transparent))))
         if (!e.editandoWidgets) TramaTema()
+        // Colección viva: la decoración del tema va aquí, detrás de los widgets.
+        if (Estilo.decorEnFondo && Estilo.decoraciones && Estilo.tema.decor != "nada") Decoracion(Estilo.tema, animada = !Estilo.decorQuieta)
         }
         CompositionLocalProvider(LocalFondoVentanaCristal provides fondo) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
             if (e.editandoWidgets) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Box(Modifier.weight(1f)) { Texto("Organizar widgets", 20f, lineas = 1) }
+                    val enEdicion = e.widgets.getOrNull(e.widgetSel)?.takeIf { e.extra.coleccionViva && it.visible && e.panel == Panel.ESTUDIO && e.estudioPestana == 0 }
+                    Box(Modifier.weight(1f)) { Texto(if (enEdicion != null) "Editando: " + Widgets.nombre(enEdicion.tipo) else "Organizar widgets", 20f, lineas = 1) }
                     Box(
                         Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
                             .padding(horizontal = esc.d(14), vertical = esc.d(8)),
@@ -133,16 +138,32 @@ fun PantallaInicio(e: Estado) {
                 }
                 Spacer(Modifier.height(esc.d(2)))
                 Detalle(
-                    if (e.unaPantalla) "Arrastra para mover o quitar · estira desde la esquina"
+                    if (e.extra.coleccionViva && e.panel == Panel.ESTUDIO && e.estudioPestana == 0)
+                        (if (e.unaPantalla) "El menú está al costado · arrastra para mover · estira desde la esquina" else "El menú está en la otra pantalla · arrastra para mover · estira desde la esquina")
+                    else if (e.unaPantalla) "Arrastra para mover o quitar · estira desde la esquina"
                     else "Arrastra para mover o quitar · agrega desde la otra pantalla",
                     12f, lineas = 1,
                 )
                 Spacer(Modifier.height(esc.d(10)))
+            } else if (e.extra.coleccionViva) {
+                EncabezadoEspacioCV(e)
+                Spacer(Modifier.height(esc.d(8)))
             } else if (e.saludoInicio || e.sesion == null) {
                 EncabezadoWidgets(e)
                 Spacer(Modifier.height(esc.d(8)))
             }
-            PaginasWidgets(e, Modifier.fillMaxWidth().weight(1f))
+            // Tu espacio (Colección viva): vacío, DIPPO propone; con una pantalla la tienda entra por el costado.
+            val cv = e.extra.coleccionViva && !e.editandoWidgets
+            Row(Modifier.fillMaxWidth().weight(1f)) {
+                if (cv && e.extra.galeria && !e.unaPantalla) GaleriaArribaCV(e, Modifier.weight(1f).fillMaxHeight())
+                else if (cv && e.espacioVacio()) EspacioVacioCV(e, Modifier.weight(1f).fillMaxHeight())
+                else PaginasWidgets(e, Modifier.weight(1f).fillMaxHeight())
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = cv && e.unaPantalla && e.extra.galeria,
+                    enter = androidx.compose.animation.slideInHorizontally { it } + androidx.compose.animation.fadeIn(),
+                    exit = androidx.compose.animation.slideOutHorizontally { it } + androidx.compose.animation.fadeOut(),
+                ) { TiendaLadoCV(e, Modifier.width(esc.d(300)).fillMaxHeight()) }
+            }
         }
     }
     }
@@ -207,10 +228,15 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
 
     Column(modifier) {
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+            // Tu espacio: una página puede medir hasta 3 × 3 pantallas. Al editar se ve entera (achicada) para poder
+            // mover todo con el dedo; fuera del editor se ve a tamaño real y se desliza para ver el resto.
+            val pAn = e.extra.paginaAncho.coerceIn(1, 3)
+            val pAl = e.extra.paginaAlto.coerceIn(1, 3)
+            val extendida = (pAn > 1 || pAl > 1) && !e.editandoWidgets
             val medidas = with(densidad) {
                 MedidasEditorWidgets(
-                    maxWidth.toPx(), maxHeight.toPx(), esc.d(MARGEN_GRILLA).toPx(),
-                    esc.d(e.huecoInicio.toFloat()).toPx(), e.gridCols, e.gridFilas, esc.d(38).toPx(),
+                    maxWidth.toPx() * (if (extendida) pAn else 1), maxHeight.toPx() * (if (extendida) pAl else 1), esc.d(MARGEN_GRILLA).toPx(),
+                    esc.d(e.huecoInicio.toFloat()).toPx(), e.gridCols * pAn, e.gridFilas * pAl, esc.d(38).toPx(),
                 )
             }
             val gesto = if (e.editandoWidgets) Modifier.editarConDedo(medidas, e.burbuja != null) { arrastre = it }
@@ -219,7 +245,24 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
                 androidx.compose.foundation.pager.HorizontalPager(
                     state = pager, modifier = Modifier.fillMaxSize(), userScrollEnabled = !e.editandoWidgets,
                     pageSpacing = esc.d(20),
-                ) { pagina -> Grilla(e, pagina, medidas, arrastre, Modifier.fillMaxSize()) }
+                ) { pagina ->
+                    if (extendida) {
+                        val sh = androidx.compose.foundation.rememberScrollState()
+                        val sv = androidx.compose.foundation.rememberScrollState()
+                        // Con el control: la página se corre sola hasta el widget elegido.
+                        val foco = e.widgets.getOrNull(e.widgetFoco)?.takeIf { it.pagina == pagina }
+                        LaunchedEffect(foco?.x, foco?.y) {
+                            if (foco != null) {
+                                val r = medidas.rect(foco)
+                                sh.animateScrollTo((r.left - medidas.margen).toInt().coerceAtLeast(0))
+                                sv.animateScrollTo((r.top - medidas.margen).toInt().coerceAtLeast(0))
+                            }
+                        }
+                        Box(Modifier.fillMaxSize().horizontalScroll(sh).verticalScroll(sv)) {
+                            with(densidad) { Grilla(e, pagina, medidas, arrastre, Modifier.size(medidas.ancho.toDp(), medidas.alto.toDp())) }
+                        }
+                    } else Grilla(e, pagina, medidas, arrastre, Modifier.fillMaxSize())
+                }
                 arrastre?.takeUnless { it.estirando }?.let {
                     if (!it.sobreQuitar) FantasmaWidget(it, medidas)
                     ZonaQuitarWidget(medidas, activa = it.sobreQuitar)
@@ -232,6 +275,14 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
                 Texto("Página ${e.paginaInicio + 1} de ${e.paginas}", 12f, lineas = 1)
                 BotonPagina("›", "Página siguiente", e.paginaInicio < e.paginas - 1) { Diptico.cambiarPagina(1) }
                 BotonPagina("+", "Agregar página", e.paginas < 12) { Diptico.agregarPaginaWidgets() }
+                BotonPagina("−", "Quitar esta página", e.paginas > 1) { Diptico.quitarPaginaEspacio() }
+                // Tu espacio: la página puede medir hasta 3 pantallas de ancho y de alto.
+                Spacer(Modifier.width(esc.d(10)))
+                Texto(nombreTamPagina(e.extra.paginaAncho, e.extra.paginaAlto), 12f, color = p.tenue, lineas = 1)
+                BotonPagina("⇠", "Menos ancho", e.extra.paginaAncho > 1) { Diptico.cambiarTamPagina(-1, 0) }
+                BotonPagina("⇢", "Más ancho", e.extra.paginaAncho < 3) { Diptico.cambiarTamPagina(1, 0) }
+                BotonPagina("⇡", "Menos alto", e.extra.paginaAlto > 1) { Diptico.cambiarTamPagina(0, -1) }
+                BotonPagina("⇣", "Más alto", e.extra.paginaAlto < 3) { Diptico.cambiarTamPagina(0, 1) }
             }
         } else if (e.paginas > 1 && !paginaEnCabecera(e, esc)) {
             Row(Modifier.align(Alignment.CenterHorizontally).padding(top = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
@@ -266,7 +317,14 @@ private fun Grilla(e: Estado, pagina: Int, m: MedidasEditorWidgets, arrastre: Ar
     val densidad = LocalDensity.current
     Box(
         modifier.padding(esc.d(MARGEN_GRILLA)).pointerInput(e.editandoWidgets, m) {
-            if (!e.editandoWidgets) detectTapGestures(onLongPress = { Diptico.editarWidgets() })
+            // Mantener presionado: sobre un widget, lo edita; en un lugar vacío, abre «Agregar aquí» en esa celda.
+            if (!e.editandoWidgets) detectTapGestures(onLongPress = { o ->
+                val x = (o.x / m.pasoX).toInt(); val y = (o.y / m.pasoY).toInt()
+                val ahora = Diptico.estado.value
+                val tocado = ahora.widgets.firstOrNull { it.visible && it.pagina == pagina && x >= it.x && x < it.x + it.an && y >= it.y && y < it.y + it.al }
+                if (tocado != null) Diptico.editarEsteWidget(tocado.tipo)
+                else { Diptico.editarWidgets(); Diptico.abrirBurbuja(x, y) }
+            })
             else detectTapGestures(
                 onLongPress = { o -> Diptico.abrirBurbuja((o.x / m.pasoX).toInt(), (o.y / m.pasoY).toInt()) },
                 onTap = { Diptico.cerrarBurbuja() },
@@ -321,12 +379,24 @@ private fun CeldaWidget(e: Estado, i: Int, w: Widget, m: MedidasEditorWidgets, a
     val color = if (e.estudioMover || arrastre != null) Coral else Uva
     val crecer = minOf(0.045f, 8f / maxOf(ancho.value, alto.value))
     val escalaFoco by animateFloatAsState(if (enfocado) 1f + crecer else 1f, spring(dampingRatio = 0.75f), label = "foco widget")
+    // Modo edición: todos tiemblan un poquito (cada uno a su ritmo), así se nota que se pueden mover. El que llevas en la mano, quieto.
+    val tiembla = e.editandoWidgets && arrastre == null && !(elegido && e.estudioMover)
+    val temblor = if (tiembla) {
+        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "temblor")
+        t.animateFloat(
+            -1f, 1f,
+            androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(150 + (i % 3) * 22, easing = androidx.compose.animation.core.LinearEasing), androidx.compose.animation.core.RepeatMode.Reverse),
+            label = "giro",
+        )
+    } else null
     Box(
         Modifier.offset(x, y).size(ancho, alto).zIndex(if (elegido || enfocado) 2f else 1f)
             .graphicsLayer {
                 alpha = if (arrastre != null && !arrastre.estirando) 0.3f else 1f
                 scaleX = escalaFoco
                 scaleY = escalaFoco
+                // Grados chicos: en los widgets grandes se ve igual de suave que en los chicos.
+                temblor?.let { rotationZ = it.value * (1.6f - 0.8f * (minOf(ancho.value, alto.value) / 400f).coerceIn(0f, 1f)) }
             }
             .then(if (e.editandoWidgets) Modifier.clip(forma).semantics { contentDescription = Widgets.nombre(w.tipo) } else Modifier)
             .then(if (elegido) Modifier.border(esc.d(2), color, forma) else Modifier)
@@ -440,6 +510,12 @@ private fun BurbujaAgregar(e: Estado, celda: Pair<Int, Int>, celdaAn: Float, cel
 /** Mientras se recorren las carpetas, la vitrina cambia sin mover la selección real de la biblioteca. */
 @Composable
 private fun juegoDelWidget(e: Estado): Juego? {
+    // Qué juego muestra (se elige en su menú de edición › Qué muestra).
+    when (e.conf("juego", "cual", "elegido")) {
+        "ultimo" -> return e.datos.entries.filter { it.value.ultimo > 0 }.maxByOrNull { it.value.ultimo }?.let { e.juegosPorClave[it.key] } ?: e.seleccionado
+        "favorito" -> return e.juegos.filter { e.datos[it.clave]?.favorito == true }.let { f ->
+            f.getOrNull(((System.currentTimeMillis() / 3_600_000L) % f.size.coerceAtLeast(1)).toInt()) } ?: e.seleccionado
+    }
     if (!e.eligiendoConsola || e.vistaConsolas !in Diptico.VISTAS_CARPETAS ||
         e.editandoWidgets || e.panel != Panel.NINGUNO || e.sesion != null) return e.seleccionado
     val juegos = e.visibles
@@ -454,6 +530,13 @@ private fun juegoDelWidget(e: Estado): Juego? {
     return juegos[indice]
 }
 
+/** Mantener presionado un widget abre SU menú de edición (no el editor en general). */
+@Composable
+internal fun alMantenerWidget(): () -> Unit {
+    val w = LocalWidget.current
+    return { Diptico.editarEsteWidget(w?.tipo) }
+}
+
 /** El contenido de cada widget según su tipo y su tamaño (1×1, angosto, una fila o grande). */
 @Composable
 internal fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, an: Int, al: Int) {
@@ -462,6 +545,7 @@ internal fun ContenidoWidget(e: Estado, w: cl.nikalbazu.diptico.estado.Widget, a
         w.tipo.startsWith("coleccion-") -> WidgetColeccion(e, w.tipo.removePrefix("coleccion-"), an, al)
         w.tipo.startsWith("imagen") -> WidgetImagen(w)
         w.tipo.startsWith("video") -> WidgetVideo(w, e.sesion == null)
+        w.tipo in TIPOS_UTILES -> WidgetUtil(e, w.tipo, an, al)
         w.tipo in planWidgets -> WidgetPlanPartida(e, w.tipo, an, al)
         an == 1 && w.tipo !in herramientasWidgets -> WidgetMini(e, w.tipo, al)
         else -> WidgetVista(e, w.tipo, an, al)
@@ -491,12 +575,18 @@ internal fun Tarjeta(modifier: Modifier = Modifier, alPulsar: (() -> Unit)? = nu
         "solido" -> Modifier.background(Brush.linearGradient(listOf(acento.copy(alpha = 0.9f * op), acento.copy(alpha = 0.65f * op))))
         "contorno" -> Modifier.border(esc.d(2), acento.copy(alpha = 0.8f), forma)
         "sinfondo" -> Modifier
-        else -> Modifier.background(Brush.verticalGradient(listOf(base.copy(alpha = 0.9f * op), base.copy(alpha = 0.7f * op))))
+        // Colección viva: el vidrio del tema, con su borde fino (el mismo de todo el diseño nuevo).
+        else -> if (Estilo.decorEnFondo) {
+            val oscura = p.fondo.luminance() < 0.3f
+            val vidrio = propio ?: if (oscura) androidx.compose.ui.graphics.lerp(p.fondo, p.tinta, 0.07f) else Color.White
+            Modifier.background(vidrio.copy(alpha = (if (oscura) 0.66f else 0.78f) * op)).border(esc.d(1), p.tinta.copy(alpha = 0.12f), forma)
+        } else Modifier.background(Brush.verticalGradient(listOf(base.copy(alpha = 0.9f * op), base.copy(alpha = 0.7f * op))))
             .border(esc.d(1), Color.White.copy(alpha = 0.06f), forma)
     }
     Box(
-        modifier.fillMaxSize().then(fondo).clip(forma)
-            .combinedClickable(onClick = { if (alPulsar != null) alPulsar() else w?.let { Diptico.abrirWidgetTipo(it.tipo) } }, onLongClick = { Diptico.editarWidgets() })
+        // Primero se recorta a la forma redondeada y después se pinta: así el fondo no queda cuadrado bajo el borde redondo.
+        modifier.fillMaxSize().clip(forma).then(fondo)
+            .combinedClickable(onClick = { if (alPulsar != null) alPulsar() else w?.let { Diptico.abrirWidgetTipo(it.tipo) } }, onLongClick = alMantenerWidget())
             .padding(esc.d(12)),
     ) {
         CompositionLocalProvider(LocalPaleta provides (if (Estilo.glass) paletaLecturaCristal(p, LocalCristal.current.niveles.widgets) else p)) { contenido() }
@@ -539,16 +629,18 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
                 Box(
                     Modifier.fillMaxSize().clip(forma).background(p.superficie)
-                        .combinedClickable(onClick = { Diptico.jugarJuegoMostrado(j.clave) }, onLongClick = { Diptico.editarWidgets() }),
+                        .combinedClickable(onClick = { Diptico.jugarJuegoMostrado(j.clave) }, onLongClick = alMantenerWidget()),
                 ) {
                     ArteJuego(j, preferirArte = true, maxLado = 700, modifier = Modifier.fillMaxSize())
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
                     Column(Modifier.align(Alignment.BottomStart).padding(esc.d(14))) {
-                        Etiqueta(Consolas.porId(j.consolaId)?.nombre ?: "", Sol, 11f)
+                        if (e.ver("juego", "consola")) Etiqueta(Consolas.porId(j.consolaId)?.nombre ?: "", Sol, 11f)
                         Texto(j.titulo, if (tam >= 2) 22f else 17f, color = Color.White, lineas = 2, sombra = true)
-                        Spacer(Modifier.height(esc.d(6)))
-                        Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
-                            Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                        if (e.ver("juego", "boton")) {
+                            Spacer(Modifier.height(esc.d(6)))
+                            Box(Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
+                                Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                            }
                         }
                     }
                 }
@@ -566,11 +658,13 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                         }
                         Spacer(Modifier.width(esc.d(14)))
                         Column(Modifier.weight(1f)) {
-                            Etiqueta(c?.nombre ?: "", Coral, 11f)
+                            if (e.ver("juego", "consola")) Etiqueta(c?.nombre ?: "", Coral, 11f)
                             Texto(j.titulo, if (tam >= 2) 22f else 17f, lineas = 2, interlineado = if (tam >= 2) 25f else 20f)
-                            Spacer(Modifier.height(esc.d(8)))
-                            Box(Modifier.clip(RoundedCornerShape(50)).background(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
-                                Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                            if (e.ver("juego", "boton")) {
+                                Spacer(Modifier.height(esc.d(8)))
+                                Box(Modifier.clip(RoundedCornerShape(50)).background(Uva).padding(horizontal = esc.d(14), vertical = esc.d(6))) {
+                                    Texto("A · ¡Jugar!", 14f, color = SobreUva)
+                                }
                             }
                         }
                     }
@@ -619,7 +713,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             }
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Texto(rememberHora(), if (al >= 3) 72f else if (tam >= 2) 58f else 44f, interlineado = if (al >= 3) 74f else if (tam >= 2) 60f else 46f, lineas = 1)
-                Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 14f, lineas = 2)
+                if (e.conf("reloj", "fecha", "si") == "si") Detalle(cl.nikalbazu.diptico.estado.Idioma.fecha("EEEEdMMMM").replaceFirstChar { it.uppercase() }, 14f, lineas = 2)
             }
         }
         "bateria" -> Tarjeta {
@@ -667,7 +761,9 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
         }
         "musica" -> WidgetMusica(tam, compacto)
         "favoritos" -> Tarjeta {
-            val favs = e.juegos.filter { e.datos[it.clave]?.favorito == true }.take(if (variante == 1) al * 2 else if (tam >= 3) 6 else if (tam == 2) 4 else 2)
+            val deConsola = e.conf("favoritos", "consola")
+            val favs = e.juegos.filter { e.datos[it.clave]?.favorito == true && (deConsola.isEmpty() || it.consolaId == deConsola) }
+                .take(e.conf("favoritos", "cuantos").toIntOrNull() ?: if (variante == 1) al * 2 else if (tam >= 3) 6 else if (tam == 2) 4 else 2)
             Column {
                 Etiqueta("Favoritos", Coral, 11f)
                 Spacer(Modifier.height(esc.d(8)))
@@ -845,14 +941,17 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
             }
         }
         "recientes" -> Tarjeta {
-            val limite = if (variante == 1) al * 2 else if (tam >= 3) 5 else if (tam == 2) 3 else 2
-            val recientes = remember(e.datos, e.juegos, limite) {
+            val limite = e.conf("recientes", "cuantos").toIntOrNull() ?: if (variante == 1) al * 2 else if (tam >= 3) 5 else if (tam == 2) 3 else 2
+            val deConsola = e.conf("recientes", "consola")
+            val recientes = remember(e.datos, e.juegos, limite, deConsola) {
                 e.datos.entries.asSequence().filter { it.value.ultimo > 0 }.sortedByDescending { it.value.ultimo }
-                    .mapNotNull { (k, _) -> e.juegosPorClave[k] }.take(limite).toList()
+                    .mapNotNull { (k, _) -> e.juegosPorClave[k] }.filter { deConsola.isEmpty() || it.consolaId == deConsola }.take(limite).toList()
             }
             Column {
-                Etiqueta("Jugados hace poco", p.tenue, 11f)
-                Spacer(Modifier.height(esc.d(8)))
+                if (e.ver("recientes", "titulo")) {
+                    Etiqueta("Jugados hace poco", p.tenue, 11f)
+                    Spacer(Modifier.height(esc.d(8)))
+                }
                 if (recientes.isEmpty()) Detalle("Todavía no juegas nada con Díptico", 14f)
                 if (variante == 1) { ListaJuegosWidget(recientes); return@Column }
                 Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
@@ -888,7 +987,7 @@ private fun WidgetVista(e: Estado, tipo: String, an: Int, al: Int) {
                 Texto("${e.juegos.size} juegos", 26f)
                 Detalle("en ${e.consolasConJuegos.size} consolas", 13f)
                 Spacer(Modifier.height(esc.d(6)))
-                Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+                if (e.conf("consolas", "iconos", "si") == "si") Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
                     e.consolasConJuegos.take(if (tam >= 2) 8 else 4).forEach { IconoConsola(it, 24f, p.superficie) }
                 }
             }
@@ -1082,8 +1181,8 @@ private fun WidgetPlanPartida(e: Estado, tipo: String, an: Int, al: Int) {
                 val paso = e.datos[primero.clave]?.paso.orEmpty()
                 val mapa = e.mapas[primero.clave]
                 if (tipo == "proximaPartida") {
-                    Detalle(paso.ifBlank { "Anota dónde quedaste" }, 12f, lineas = 2)
-                    if (mapa != null) Detalle("Mapa guardado", 11f, lineas = 1)
+                    if (e.ver(tipo, "paso")) Detalle(paso.ifBlank { "Anota dónde quedaste" }, 12f, lineas = 2)
+                    if (mapa != null && e.ver(tipo, "mapa")) Detalle("Mapa guardado", 11f, lineas = 1)
                 } else Detalle(juegos.drop(1).take(2).joinToString(" · ") { it.titulo }
                     .ifBlank { if (tipo == "tengo20") "Según tus sesiones anteriores" else "Un juego en la cola" }, 12f, lineas = 2)
             }
@@ -1191,7 +1290,7 @@ internal fun WidgetImagen(w: cl.nikalbazu.diptico.estado.Widget) {
                     else -> Modifier
                 },
             )
-            .combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = { Diptico.editarWidgets() }),
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = alMantenerWidget()),
     ) {
         if (w.uri == null) {
             Column(Modifier.fillMaxSize().clip(forma).background(LocalPaleta.current.superficie.copy(alpha = 0.6f)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -1221,7 +1320,7 @@ internal fun WidgetVideo(w: cl.nikalbazu.diptico.estado.Widget, activo: Boolean)
         if (!listo) return@LaunchedEffect
         try { if (activo) reproductor.start() else reproductor.pause() } catch (_: Exception) {}
     }
-    Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = { Diptico.editarWidgets() })) {
+    Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { Diptico.abrirWidgetTipo(w.tipo) }, onLongClick = alMantenerWidget())) {
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { c ->
                 android.view.TextureView(c).apply {
@@ -1289,7 +1388,7 @@ private fun WidgetMini(e: Estado, tipo: String, al: Int) {
     }
     if (portada != null) {
         val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
-        Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { if (tipo == "juego") Diptico.jugarJuegoMostrado(portada.clave) else Diptico.abrirWidgetTipo(tipo) }, onLongClick = { Diptico.editarWidgets() })) {
+        Box(Modifier.fillMaxSize().clip(forma).combinedClickable(onClick = { if (tipo == "juego") Diptico.jugarJuegoMostrado(portada.clave) else Diptico.abrirWidgetTipo(tipo) }, onLongClick = alMantenerWidget())) {
             ArteJuego(portada, preferirArte = false, maxLado = 360, modifier = Modifier.fillMaxSize())
             if (tipo != "juego") Box(Modifier.align(Alignment.TopEnd).padding(esc.d(5)).size(esc.d(22)).clip(CircleShape).background(Color.Black.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
                 IconoDiptico(Widgets.icono(tipo), Color.White, 12f)
@@ -1377,7 +1476,7 @@ private fun WidgetBisa(e: Estado, compacto: Boolean, al: Int, an: Int = 4) {
         Modifier.fillMaxSize().clip(forma)
             .background(Brush.linearGradient(listOf(Color(0xFF34295A), Color(0xFF17132A))))
             .border(esc.d(1.5f), Uva.copy(alpha = 0.55f), forma)
-            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("asistente") }, onLongClick = { Diptico.editarWidgets() }),
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("asistente") }, onLongClick = alMantenerWidget()),
     ) {
         // Un brillo que respira detrás de DIPPO.
         Box(Modifier.align(Alignment.CenterStart).size(esc.d(140)).background(Brush.radialGradient(listOf(Uva.copy(alpha = 0.35f), Color.Transparent))))
@@ -1617,7 +1716,7 @@ private fun WidgetAtajo(e: Estado, clave: String, al: Int) {
     val forma = RoundedCornerShape(esc.d((LocalWidget.current?.radio ?: 22).toFloat()))
     Box(
         Modifier.fillMaxSize().clip(forma).background(LocalPaleta.current.superficie)
-            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("atajo-$clave") }, onLongClick = { Diptico.editarWidgets() }),
+            .combinedClickable(onClick = { Diptico.abrirWidgetTipo("atajo-$clave") }, onLongClick = alMantenerWidget()),
     ) {
         if (j == null) {
             Detalle("Juego no encontrado", 11f, modifier = Modifier.align(Alignment.Center).padding(esc.d(6)))

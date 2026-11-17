@@ -124,13 +124,6 @@ fun Diptico.quitarCajaPropia(clave: String? = null) {
     avisar("Listo, la caja volvió a la portada")
 }
 
-/** Vuelve a buscar la caja original: primero en la comunidad, después en ScreenScraper y TheGamesDB. */
-fun Diptico.buscarCajaOriginal() {
-    val clave = estado.value.fichaDe ?: return
-    // La caja de ahora se conserva hasta que aparezca otra: si no hay internet o no se encuentra, no se pierde nada.
-    avisar("Buscando la caja original…")
-    pedirCaras(clave, forzar = true)
-}
 
 /**
  * Busca la caja en ScreenScraper o TheGamesDB, baja sus caras al equipo y las guarda. true = encontró algo.

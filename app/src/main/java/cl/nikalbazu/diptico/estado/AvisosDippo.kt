@@ -18,7 +18,7 @@ fun Diptico.quitarAvisoDippo(clave: String) = Avisos.retirarDippo(clave)
 /** Aviso de calor según la lectura (la consola lo cuenta en la pantalla de abajo mientras juegas; esto queda en la campana). */
 fun Diptico.avisoCalor(t: Termica.Lectura) {
     val muy = t.nivel == Termica.Nivel.MUY_CALIENTE
-    val grados = if (t.bateria > 0f) " (${t.bateria.toInt()} °C)" else ""
+    val grados = if (t.grados > 0f) " (${Termica.texto(t.grados)})" else ""
     avisoDippo(
         "calor", if (muy) "La consola está muy caliente$grados" else "La consola se está calentando$grados",
         Termica.consejoUrgente(t)?.texto ?: "Déjala descansar un ratito, baja el brillo y sácale la funda para que respire.",

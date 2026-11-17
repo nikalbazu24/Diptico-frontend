@@ -51,7 +51,6 @@ import cl.nikalbazu.diptico.estado.*
  * tiene su franja y entre todas llenan la pantalla de borde a borde. Solo DIPPO flota, porque se mueve con el dedo.
  */
 
-private val FondoRiel = Color(0xFF0C0E1B)
 private val Linea = Color(0xFF1F2340)
 private val Chip = Color(0xFF171B34)
 

@@ -110,6 +110,12 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
         Box(Modifier.fillMaxSize().then(if (conLupa) Modifier else Modifier.difuminar(e))) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
+                coleccionVivaActiva(e) && !e.editandoWidgets -> when {
+                    // Tu espacio arriba: aquí van los accesos, las páginas y la tienda de widgets.
+                    e.inicio == "widgets" -> EspacioAbajoCV(e)
+                    e.enSistemas -> CarpetasAbajoCV(e)
+                    else -> ColeccionAbajo(e)
+                }
                 else -> Box(Modifier.fillMaxSize()) {
                 // La barra de abajo flota encima: el contenido corre por detrás y solo deja el aire que pide [LocalAireAbajo].
                 val conFranja = e.extra.franjaAbajo
@@ -200,8 +206,8 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
         when (panel) {
             // Con dos pantallas, el menú va arriba (la pantalla grande) y aquí la ayuda con su vista previa.
             // Con las pantallas cambiadas, el menú ocupa esta pantalla entera sobre su propio fondo (sin el inicio asomándose detrás).
-            Panel.MENU -> if (!conAyuda && !e.intercambiar) AyudaMenu(e)
-                else if (e.intercambiar && !conAyuda) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
+            Panel.MENU -> if (!conAyuda && !menuIntercambiado(e)) AyudaMenu(e)
+                else if (menuIntercambiado(e) && !conAyuda) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
                 else PanelMenu(e, conAyuda)
             Panel.RAPIDO -> VentanaJuego(e)
             Panel.BUSCAR -> PanelBuscar(e)
@@ -218,7 +224,14 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.WIDGET -> if (!conAyuda && !e.intercambiar) Box(Modifier.fillMaxSize()) else PanelWidget(e)
             Panel.GALERIA -> PanelGaleria(e, conPrevia = conAyuda)
             Panel.ESTUDIO -> PanelEstudio(e)
-            Panel.EDITAR_CONSOLA -> PanelEditarConsola(e)
+            Panel.EDITAR_CONSOLA -> when {
+                !coleccionVivaActiva(e) -> PanelEditarConsola(e)
+                e.unaPantalla -> Row(Modifier.fillMaxSize()) {
+                    Box(Modifier.weight(1.05f).fillMaxHeight()) { ConsolaOpcionesCV(e, angosto = true) }
+                    Box(Modifier.weight(0.95f).fillMaxHeight()) { ConsolaVivaCV(e) }
+                }
+                else -> ConsolaVivaCV(e)
+            }
             Panel.APPS -> PanelApps(e)
             Panel.ASISTENTE -> if (e.sesion == null) PanelAsistente(e) else Box(Modifier.fillMaxSize())
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())
@@ -492,7 +505,7 @@ private fun EnJuego(e: Estado) {
                         else -> Color(0xFFFF4D4D)
                     }
                     Box(Modifier.clip(RoundedCornerShape(50)).background(tono.copy(alpha = 0.18f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
-                        Texto("${"%.0f".format(t.grados)} °C", 13f, color = tono, traducir = false)
+                        Texto(cl.nikalbazu.diptico.estado.Termica.texto(t.grados), 13f, color = tono, traducir = false)
                     }
                     Spacer(Modifier.width(esc.d(6)))
                 }

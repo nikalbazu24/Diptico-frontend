@@ -130,6 +130,12 @@ object Teclas {
         if (abajo) presionadas += code else if (arriba) presionadas -= code
         if (abajo) cl.nikalbazu.diptico.ui.Vivo.toque()
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
+        // Mantener Select (en cualquier parte): intercambia las pantallas de arriba y abajo.
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla) {
+            consumidas += code
+            Diptico.intercambiar()
+            return true
+        }
         // Abriendo un juego con la pantalla de carga: B la cancela; lo demás espera.
         // Iniciando sesión con Discord: B cierra el panel; A pide otro código si hubo un error.
         e.extra.discordLogin?.let { l ->
@@ -152,6 +158,41 @@ object Teclas {
                 esB(code) -> Diptico.volverAlJuegoUnica()
             }
             return true
+        }
+        // Colección viva: R3 gira la caja (y abajo el carrete), Select cambia la vista; en las carpetas X opciones, Y seguir o ícono.
+        if (cl.nikalbazu.diptico.ui.coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && !e.conTeclado && e.dialogo == null &&
+            e.extra.perfilEn < 0 && e.extra.anioEn < 0 && e.extra.amigosEn < 0 && e.novedades < 0 && e.inicio != "widgets") {
+            val j = e.seleccionado
+            if (e.extra.cajaGirada && !e.enSistemas) {
+                val total = (if (j?.portada != null) 1 else 0) + (if (j?.arte != null) 1 else 0) + 6
+                if (abajo) when (code) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> Diptico.moverCarrete(-1, total)
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> Diptico.moverCarrete(1, total)
+                }
+                if (arriba) when {
+                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_THUMBR -> Diptico.girarCaja(false)
+                    esY(code) -> j?.let { Diptico.abrirCajaJuego(it.clave) }
+                    code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.abrirFicha()
+                    esA(code) -> Diptico.jugar()
+                }
+                if (code != KeyEvent.KEYCODE_BUTTON_START && code != KeyEvent.KEYCODE_BUTTON_MODE && code != KeyEvent.KEYCODE_HOME) return true
+            } else if (!e.enSistemas) {
+                when (code) {
+                    KeyEvent.KEYCODE_BUTTON_THUMBR, KeyEvent.KEYCODE_BUTTON_X -> { if (arriba && j != null) Diptico.girarCaja(true); return true }
+                    KeyEvent.KEYCODE_BUTTON_SELECT -> {
+                        if (arriba && ev.repeatCount == 0) Diptico.elegirVistaColeccion(when (e.extra.vistaColeccion) { "estante" -> "cuadricula"; "cuadricula" -> "lista"; else -> "estante" })
+                        return true
+                    }
+                }
+            } else {
+                val id = e.consolaSel
+                when {
+                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> { if (arriba) Diptico.siguienteVistaCarpetas(); return true }
+                    code == KeyEvent.KEYCODE_BUTTON_X -> { if (arriba) Diptico.abrirEditarConsola(id); return true }
+                    esY(code) -> { if (arriba) ultimoDeConsola(e, id)?.let { Diptico.seguirCon(it) } ?: Diptico.cambiarIconoCarpeta(id); return true }
+                    esA(code) -> { if (arriba && id != "todo") Diptico.entrarConsolaCV(id); return id != "todo" }
+                }
+            }
         }
         // Lugar en la vitrina: cruceta mueve la pieza, L1/R1 cambian de pieza, L2/R2 tamaño, X caja, Y difuminado, A/B/Start listo.
         if (e.extra.edicionVitrina != null) {
@@ -304,11 +345,22 @@ object Teclas {
         if (e.novedades >= 0) {
             // En el recorrido de DIPPO, los demás botones le hacen reaccionar (y algunos cumplen el «pruébalo»).
             if (e.recorrido && abajo && ev.repeatCount == 0) when (code) {
-                KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> RecorridoVivo.avisar("gatillo")
+                KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> {
+                    Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1)
+                    RecorridoVivo.avisar("gatillo")
+                }
+                KeyEvent.KEYCODE_BUTTON_SELECT -> RecorridoVivo.avisar("select")
                 KeyEvent.KEYCODE_BUTTON_X -> RecorridoVivo.avisar("x")
                 KeyEvent.KEYCODE_BUTTON_Y -> RecorridoVivo.avisar("y")
                 KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> RecorridoVivo.avisar("gatillo2")
                 KeyEvent.KEYCODE_BUTTON_THUMBL, KeyEvent.KEYCODE_BUTTON_THUMBR -> RecorridoVivo.avisar("stick")
+            }
+            // El recorrido de la primera vez es obligatorio: no se salta y cada paso con reto pide hacerlo de verdad.
+            if (e.recorrido) {
+                if (arriba && esA(code)) {
+                    if (RecorridoVivo.puedeSeguir(e.novedades)) Diptico.moverNovedades(1) else RecorridoVivo.avisar("falta")
+                }
+                return true
             }
             if (abajo && ev.repeatCount == 0) when (code) {
                 KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverNovedades(-1)
@@ -433,13 +485,13 @@ object Teclas {
             return false
         }
 
-        // Tutorial guiado (sin paneles abiertos).
+        // Configuración de la primera vez: ↑↓ entre filas (la última es «Siguiente»), ◀▶ cambian la fila, A usa,
+        // Start pasa al paso siguiente desde donde estés y B vuelve.
         if (!e.configurado && e.panel == Panel.NINGUNO) {
             if (abajo) {
                 val d = dir(code)
                 if (d != null) {
-                    Diptico.moverIndice(if (d.first + d.second < 0) -1 else 1)
-                    Diptico.marcarProbado("cruceta")
+                    if (d.second != 0) Diptico.moverConfig(d.second) else Diptico.ladoConfig(d.first)
                     return true
                 }
                 return esA(code) || esB(code) || code in botonesControl
@@ -448,9 +500,8 @@ object Teclas {
                 when {
                     esA(code) -> Diptico.aceptar()
                     esB(code) -> Diptico.atras()
-                    code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.marcarProbado("gatillos")
-                    code == KeyEvent.KEYCODE_BUTTON_Y -> Diptico.marcarProbado("Y")
-                    code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.marcarProbado("Start")
+                    code == KeyEvent.KEYCODE_BUTTON_START || code == KeyEvent.KEYCODE_BUTTON_R1 -> Diptico.siguientePaso()
+                    code == KeyEvent.KEYCODE_BUTTON_L1 -> Diptico.pasoAnterior()
                     code in botonesControl -> Unit
                     else -> return false
                 }
@@ -517,6 +568,36 @@ object Teclas {
         }
 
         val hayPanel = e.panel != Panel.NINGUNO
+
+        // Colección viva · Tu espacio (boceto 10): L2 y R2 pasan del inicio a tus páginas de widgets y de vuelta.
+        val cvLibre = !hayPanel && e.sesion == null && !e.editandoWidgets && cl.nikalbazu.diptico.ui.coleccionVivaActiva(e) && !e.ordenando
+        if (cvLibre && (code == KeyEvent.KEYCODE_BUTTON_L2 || code == KeyEvent.KEYCODE_BUTTON_R2)) {
+            if (abajo && ev.repeatCount == 0) Diptico.pasoEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
+            return true
+        }
+        // En Tu espacio: la Galería de widgets (su propia pantalla) se maneja con el control; sin ella, Y la abre,
+        // X entra a editar y B vuelve al inicio.
+        if (cvLibre && e.inicio == "widgets" && e.widgetFoco < 0) {
+            val d = dir(code)
+            val una = ev.repeatCount == 0
+            if (e.extra.galeria) {
+                when {
+                    d != null -> { if (abajo) Diptico.moverTiendaEspacio(d.first, d.second, if (e.unaPantalla) 1 else 2); return true }
+                    code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1 -> {
+                        if (abajo && una) Diptico.categoriaEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
+                    }
+                    code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.cambiarTamGaleria(1); return true }
+                    esA(code) -> { if (abajo && una) Diptico.agregarDesdeGaleria(); return true }
+                    esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.cerrarGaleriaWidgets(); return true }
+                }
+            } else when {
+                d != null -> { if (abajo) Diptico.entrarWidgets(); return true }
+                code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.abrirGaleriaWidgets(); return true }
+                code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.editarWidgets(); return true }
+                esA(code) && e.espacioVacio() -> { if (abajo && una) Diptico.agregarSugeridos(); return true }
+                esB(code) -> { if (abajo && una) Diptico.pasoEspacio(-(e.paginaInicio + 1)); return true }
+            }
+        }
 
         // Moviendo un juego de lugar: la cruceta lo corre; A, B o Start terminan.
         if (e.ordenando && !hayPanel) {
@@ -791,6 +872,7 @@ object Teclas {
                         Panel.GALERIA -> Diptico.cambiarPestanaGaleria(d)
                         Panel.APPS -> Diptico.cambiarPestanaApps(d)
                         Panel.CENTRO -> Diptico.cambiarCortina(if (d < 0) "avisos" else "ajustes")
+                        Panel.EDITAR_CONSOLA -> Diptico.seccionEditarConsola(d)
                         else -> Unit
                     }
                 }
@@ -864,6 +946,8 @@ object Teclas {
      * Zona "panel": la cruceta recorre las opciones; B vuelve a la grilla. Start o B en la grilla: listo.
      */
     private fun estudio(ev: KeyEvent, e: Estado): Boolean {
+        val tiendaCV = e.estudioPestana == 1 && e.extra.coleccionViva && !e.unaPantalla && !e.estudioMover
+        val menuCV = e.estudioPestana == 0 && e.extra.coleccionViva && !e.estudioMover
         val code = ev.keyCode
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
@@ -911,8 +995,15 @@ object Teclas {
                 return true
             }
             when {
+                // Tienda de widgets de Colección viva: la cruceta recorre la grilla de 2 y L1/R1 cambian de categoría.
+                tiendaCV && d != null && e.indice > 0 -> Diptico.moverIndice(if (d.second != 0) d.second * 2 else d.first)
                 d != null && d.second != 0 -> Diptico.moverIndice(d.second)
                 d != null -> Diptico.cambiarControl(d.first)
+                // Menú de un widget (Colección viva): L1/R1 pasan de pestaña (Qué muestra, Tamaño y lugar, Aspecto, Más).
+                menuCV && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) && ev.repeatCount == 0 ->
+                    Diptico.pasoPestanaWidget(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1)
+                tiendaCV && code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount == 0 -> Diptico.elegirCategoriaWidgets((e.extra.tiendaCat - 1).mod(CATEGORIAS_WIDGETS.size))
+                tiendaCV && code == KeyEvent.KEYCODE_BUTTON_R1 && ev.repeatCount == 0 -> Diptico.elegirCategoriaWidgets((e.extra.tiendaCat + 1).mod(CATEGORIAS_WIDGETS.size))
                 code == KeyEvent.KEYCODE_BUTTON_L1 && ev.repeatCount == 0 -> Diptico.cambiarPestanaEstudio(-1)
                 code == KeyEvent.KEYCODE_BUTTON_R1 && ev.repeatCount == 0 -> Diptico.cambiarPestanaEstudio(1)
                 code == KeyEvent.KEYCODE_BUTTON_L2 && ev.repeatCount == 0 -> Diptico.cambiarPagina(-1)
@@ -936,7 +1027,8 @@ object Teclas {
             }
             when {
                 esA(code) -> Diptico.aceptarControl()
-                esB(code) -> Diptico.zonaEstudio("grilla")
+                // Con el menú de un widget, B es «Listo»: guarda y cierra el menú.
+                esB(code) -> if (menuCV) Diptico.terminarEdicion() else Diptico.zonaEstudio("grilla")
                 code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.terminarEdicion()
                 code == KeyEvent.KEYCODE_BUTTON_Y -> { if (e.estudioPestana != 0) Diptico.elegirPestanaEstudio(0); Diptico.alternarMoverWidget() }
                 code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.cambiarEstiloWidget()
@@ -1047,6 +1139,12 @@ object Teclas {
             return
         }
         val enInicio = libre && e.inicio == "widgets" && e.panel == Panel.NINGUNO && !e.editandoWidgets && !e.ordenando
+        // Colección viva: en Tu espacio los dos sticks se quedan en los widgets (o en la Galería), nunca en las consolas de atrás.
+        if (enInicio && e.extra.coleccionViva) {
+            if (e.extra.galeria) pulsar(d, 0)
+            else if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
+            return
+        }
         if (enInicio && deWidgets) {
             if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
             return
@@ -1073,8 +1171,9 @@ object Teclas {
     fun movimiento(ev: MotionEvent): Boolean {
         if (ev.source and InputDevice.SOURCE_JOYSTICK != InputDevice.SOURCE_JOYSTICK || ev.action != MotionEvent.ACTION_MOVE) return false
         stickIzq.cambiar(direccion(ev.getAxisValue(MotionEvent.AXIS_X), ev.getAxisValue(MotionEvent.AXIS_Y)))
-        // En la vitrina de cajas el stick derecho gira la caja del centro (de forma continua, como tenerla en la mano).
-        if (cl.nikalbazu.diptico.ui.vitrinaActiva(Diptico.estado.value)) {
+        // En la vitrina de cajas y en el inicio de Colección viva el stick derecho SOLO mueve la caja o la consola
+        // (de forma continua, como tenerla en la mano); no cambia de consola ni desplaza.
+        if (cl.nikalbazu.diptico.ui.stickDerechoGira(Diptico.estado.value)) {
             val gx = ev.getAxisValue(MotionEvent.AXIS_Z)
             val gy = ev.getAxisValue(MotionEvent.AXIS_RZ)
             cl.nikalbazu.diptico.ui.GiroCaja.x = if (kotlin.math.abs(gx) > 0.15f) gx else 0f

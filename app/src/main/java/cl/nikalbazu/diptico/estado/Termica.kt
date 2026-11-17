@@ -35,9 +35,15 @@ object Termica {
         val nivelBateria: Int,
         val nivel: Nivel,
     ) {
-        /** El número que se muestra: la temperatura más alta que se pudo leer. */
-        val grados: Float get() = maxOf(bateria, procesador)
+        /**
+         * El número que se muestra en TODAS partes: la temperatura de la batería (la que el sistema de la consola también
+         * muestra). Si no se pudo leer, el procesador. El nivel de calor (consejos y avisos) sí mira todos los sensores.
+         */
+        val grados: Float get() = if (bateria > 0f) bateria else procesador
     }
+
+    /** Los grados escritos siempre igual (un decimal), para que ninguna pantalla muestre otro número. */
+    fun texto(grados: Float): String = "%.1f °C".format(grados)
 
     /** Un consejo listo para mostrar: el texto (sin números, así se traduce) y cómo se siente DIPPO al decirlo. */
     data class Consejo(val texto: String, val animo: Animo)

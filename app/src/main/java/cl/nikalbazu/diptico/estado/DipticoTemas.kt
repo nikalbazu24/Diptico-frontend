@@ -131,7 +131,7 @@ internal fun Diptico.guardarDecoracion(id: String, decor: String?, nivel: Int?) 
 fun Diptico.aplicarTema() {
     val e = estado.value
     val fiesta = if (e.temaFestivo) Temas.deHoy() else null
-    val elegido = todosLosTemas(e).firstOrNull { it.id == e.tema }
+    val elegido = todosLosTemas(e).firstOrNull { it.id == (Temas.MIGRAR[e.tema] ?: e.tema) }
         ?: Temas.fiestas.firstOrNull { it.tema.id == e.tema }?.tema
         ?: Temas.incluidos[0]
     val prueba = e.extra.temaPrueba?.let { temaPorId(e, it) }
@@ -222,7 +222,7 @@ internal fun Diptico.instalarTemaComunidad(entrada: TemaComunidad) {
             guardarTemasPropios(listOf(tema) + estado.value.temasPropios.filterNot { it.id == tema.id })
             elegirTema(tema.id)
             val actual = estado.value
-            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 6)
+            if (actual.panel == Panel.GALERIA && actual.galeria == "importar_temas") abrirGaleria("temas", pestana = 4)
             avisar(if (actual.fiesta != null) "${tema.nombre} instalado" else "${tema.nombre} instalado y aplicado")
         }.onFailure { avisar(it.message ?: "No pude instalar este tema.") }
     }
@@ -247,21 +247,17 @@ internal fun Diptico.opcionesTemas(e: Estado): List<Opcion> {
         lista += Opcion("Hoy: ${f.nombre}", f.donde, Icono.ESTRELLA, f.tema.mensaje) { avisar(f.tema.mensaje.ifBlank { f.nombre }) }
     }
     lista.add(
-        0,
-        Opcion(
-            "Elegir tema", cl.nikalbazu.diptico.ui.Estilo.tema.nombre, Icono.PALETA,
-            "Cinco temas incluidos y los que hayas instalado. Cada tema trae una explicación y vista previa.",
-        ) { abrirGaleria("temas") },
-    )
-    lista.add(
-        1,
+        1.coerceAtMost(lista.size),
         Opcion(
             "Mis colores", "Toda la interfaz", Icono.PALETA,
             "Elige tú el color principal, el secundario, los detalles, el fondo y las letras de todo Díptico.",
         ) { abrirGaleria("colores") },
     )
-    lista.add(0, Opcion("Tienda de temas", "${TiendaTemas.TOTAL_OFICIAL} temas", Icono.PALETA,
-        "Explora e instala temas dentro de Díptico.") { abrirTiendaTemas() })
+    // La tienda nueva: Nuevos, Remasterizados, Widgets, Incluidos, Calendario, Exclusivos, Mis temas y Clásicos.
+    lista.add(0, Opcion("Tienda de temas", cl.nikalbazu.diptico.ui.Estilo.tema.nombre, Icono.PALETA,
+        "Temas nuevos, remasterizados, widgets y los tuyos, con vista previa en cinco pantallas y prueba de 30 segundos.") { abrirGaleria("temas") })
+    lista += Opcion("Temas de la comunidad", "${TiendaTemas.TOTAL_OFICIAL} temas", Icono.WEB,
+        "Temas para descargar e instalar, e importar o aportar uno desde un archivo o un enlace.") { abrirTiendaTemas() }
     lista.add(2, Opcion("Mezclar mi tema", "Temas instalados", Icono.PALETA,
         "Elige de qué tema viene cada elemento. Cada cambio se guarda en Mi tema.") { abrirGaleria("mezclar_tema") })
     val mio = e.temasPropios.firstOrNull { it.id == "mio" }

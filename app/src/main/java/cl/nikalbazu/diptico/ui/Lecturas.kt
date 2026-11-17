@@ -215,7 +215,7 @@ private fun LecturaBateria(e: Estado) {
             Etiqueta("Batería", Coral, 12f)
             Texto(info.estado, 22f, lineas = 2)
             Spacer(Modifier.height(esc.d(10)))
-            if (info.temperatura > 0f) DatoLectura("Temperatura", "${"%.1f".format(info.temperatura)} °C")
+            if (info.temperatura > 0f) DatoLectura("Temperatura", Termica.texto(info.temperatura))
             if (info.voltaje > 0) DatoLectura("Voltaje", "${"%.2f".format(info.voltaje / 1000f)} V")
             DatoLectura("Salud", info.salud)
             if (baja) { Spacer(Modifier.height(esc.d(8))); Detalle("Queda poca: conéctala pronto.", 13f, color = Coral) }

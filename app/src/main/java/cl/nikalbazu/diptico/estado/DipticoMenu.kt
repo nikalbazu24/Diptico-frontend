@@ -303,7 +303,7 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
             ) { ciclarZoom(true) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomArriba) < 0.0005f }.coerceAtLeast(0)) { fijarZoom(true, ZOOMS[it]) }
             if (e.dosDisponibles) lista += Opcion(
                 "Tamaño en la pantalla de abajo", nombreZoom(e.zoomAbajo), Icono.ABAJO,
-                "La pantalla de abajo de la Thor es casi cuadrada: en automático todo se acomoda a esa forma.",
+                "En las consolas de dos pantallas la de abajo suele ser casi cuadrada: en automático todo se acomoda a esa forma.",
             ) { ciclarZoom(false) }.conLista(ZOOMS.map(::nombreZoom), ZOOMS.indexOfFirst { kotlin.math.abs(it - e.zoomAbajo) < 0.01f }) { fijarZoom(false, ZOOMS[it]) }
             lista += opcionLista(
                 if (e.dosDisponibles && !e.unaPantalla) "Barras de la pantalla de arriba" else "Barras de la pantalla", Icono.ARRIBA,
@@ -359,6 +359,10 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                     actualizar { it.copy(pantallaJuegos = v) }
                 }
             }
+            lista += Opcion(
+                "Diseño Colección viva", if (e.extra.coleccionViva) "Sí" else "No", Icono.TEMA,
+                "El diseño nuevo: arte del juego en grande, cajas en 3D, carpetas con la historia de cada consola y widgets que toman tu tema. Apágalo para volver al de antes.",
+            ) { alternarColeccionViva(!estado.value.extra.coleccionViva) }
             lista += Opcion(
                 "Tamaño de letra", nombreTam(e.tamTexto), Icono.TEXTO,
                 "Agranda todas las letras de Díptico. Se nota al instante.",
@@ -716,10 +720,6 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
                 abrirFicha(); buscarCandidatos("portada")
             }
             lista += Opcion(
-                "Reconocer nombres de juegos", icono = Icono.TITULO,
-                ayuda = "Busca el nombre oficial de cada juego en libretro (gratis). Se hace solo al buscar juegos nuevos.",
-            ) { identificarNombres(avisarAlFinal = true) }
-            lista += Opcion(
                 "Reconocer nombres con IA", if (llaveNube(e) == null) "Necesita IA en la nube" else "Para los que faltan", Icono.CHISPA,
                 "La IA reconoce los juegos que libretro no conoce (Switch, PS3, archivos con nombres raros) y les pone su nombre real.",
             ) { identificarConIA() }
@@ -810,7 +810,7 @@ internal fun Diptico.armarOpciones(s: Seccion): List<Opcion> {
             lista += Opcion("Repetir el tutorial", icono = Icono.TUTORIAL, ayuda = "Vuelve a configurar todo paso a paso.") { reiniciarTutorial() }
             lista += Opcion(
                 "Acerca de Díptico", "Versión $VERSION.${Actualizador.numeroActual(app)}", Icono.INFO,
-                "Hecho para la AYN Thor y consolas de una pantalla. Abre los emuladores con las reglas de ES-DE.",
+                "Hecho para consolas de dos pantallas y de una. Abre los emuladores con las reglas de ES-DE.",
             ) { avisar("Díptico $VERSION · hecho con cariño para jugar") }
             lista += Opcion("Cerrar el menú", icono = Icono.CERRAR, ayuda = "También con B o Start.") { cerrarPanel() }
         }

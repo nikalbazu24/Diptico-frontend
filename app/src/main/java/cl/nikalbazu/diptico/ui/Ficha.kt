@@ -409,6 +409,8 @@ fun PanelImagenes(e: Estado) {
     val esc = LocalEscala.current
     val j = e.juegos.firstOrNull { it.clave == e.fichaDe }
     val lista = remember(e.candidatos, e.fuenteImagen, e.candidatoPara, e.datos, e.claveSgdb) { Diptico.candidatosVisibles(e) }
+    // Colección viva: el ícono de la carpeta tiene su propia pantalla (boceto 6d).
+    if (e.candidatoPara == "c_portada" && e.extra.coleccionViva) { IconoCarpetaCV(e, lista); return }
     Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(12), bottom = esc.d(10))) {
             Row(verticalAlignment = Alignment.CenterVertically) {

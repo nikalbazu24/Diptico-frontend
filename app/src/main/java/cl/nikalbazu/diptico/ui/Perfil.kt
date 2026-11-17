@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -88,6 +89,7 @@ fun BotonPerfil(tam: Float = 26f) {
                     centro[0] = (p.x + c.size.width / 2f) / w
                     centro[1] = (p.y + c.size.height / 2f) / h
                 }
+                .requiredSize(esc.d(tam))
                 .clip(CircleShape)
                 .clickable { Diptico.abrirPerfil(pantalla, centro[0], centro[1]) }
                 .testTag("boton-perfil"),
@@ -111,20 +113,9 @@ fun BotonPerfil(tam: Float = 26f) {
 @Composable
 fun PerfilArriba(tam: Float = 54f, conReloj: Boolean = false) {
     val esc = LocalEscala.current
-    val pantalla = pantallaActual()
-    val nombre by remember { Diptico.estado.map { it.nombre }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.nombre)
-    val pf by remember { Diptico.estado.map { it.extra.perfil }.distinctUntilChanged() }.collectAsState(Diptico.estado.value.extra.perfil)
-    val titulo = tituloDe(pf.titulo)
+    // Sin textos al lado (Nicolás pidió quitar «Tu perfil · Toca para ver tu perfil»): la hora pegada a la foto.
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag("perfil-arriba")) {
-        if (conReloj) { RelojBateria(); Spacer(Modifier.width(esc.d(6))) }
-        Column(
-            Modifier.clip(RoundedCornerShape(50)).clickable { Diptico.abrirPerfil(pantalla, 0.9f, 0.08f) }
-                .padding(horizontal = esc.d(10), vertical = esc.d(4)),
-            horizontalAlignment = Alignment.End,
-        ) {
-            Texto(nombre.ifBlank { "Tu perfil" }, 18f, peso = FontWeight.ExtraBold, sombra = true, lineas = 1, traducir = nombre.isBlank())
-            Texto(titulo.ifEmpty { "Toca para ver tu perfil" }, 11.5f, sombra = true, lineas = 1, color = LocalPaleta.current.tinta.copy(alpha = 0.75f))
-        }
+        if (conReloj) { RelojBateria(); Spacer(Modifier.width(esc.d(8))) }
         BotonPerfil(tam)
     }
 }
@@ -140,6 +131,7 @@ fun RelojBateria(modifier: Modifier = Modifier) {
     val bateria = rememberBateria()
     val cargando = rememberCargando()
     val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> Color.White }
+    val latido = latidoCarga(cargando)
     val forma = RoundedCornerShape(50)
     Row(
         modifier.testTag("reloj-bateria").clip(forma).background(Color.Black.copy(alpha = 0.34f))
@@ -154,11 +146,11 @@ fun RelojBateria(modifier: Modifier = Modifier) {
             Box(Modifier.size(esc.d(18), esc.d(9)).border(esc.d(1.4f), Color.White.copy(alpha = 0.75f), RoundedCornerShape(esc.d(2.5f))).padding(esc.d(1.6f))) {
                 Box(
                     Modifier.fillMaxHeight().fillMaxWidth((bateria / 100f).coerceIn(0.08f, 1f))
-                        .clip(RoundedCornerShape(esc.d(1.2f))).background(tono),
+                        .clip(RoundedCornerShape(esc.d(1.2f))).background(tono.copy(alpha = latido)),
                 )
             }
             Spacer(Modifier.width(esc.d(6)))
-            Texto("$bateria%", 12.5f, color = if (tono == Color.White) Color.White.copy(alpha = 0.9f) else tono, traducir = false, lineas = 1)
+            Texto(if (cargando) "⚡$bateria%" else "$bateria%", 12.5f, color = if (tono == Color.White) Color.White.copy(alpha = 0.9f) else tono, traducir = false, lineas = 1)
         }
     }
 }
