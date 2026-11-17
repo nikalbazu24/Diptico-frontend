@@ -47,7 +47,7 @@ fun MenuWidgetCV(e: Estado, controles: List<Control>, lateral: Boolean) {
     val pestanas = controles.getOrNull(1)?.takeIf { it.tipo == "chips" && it.grupo.isEmpty() }
     val items = if (pestanas != null) controles.drop(2) else controles.drop(1)
     val base = if (pestanas != null) 2 else 1
-    LienzoBoceto(if (lateral) 760f else 1240f, 1080f, Modifier.testTag("menu-widget"), zoom = if (lateral) 1f else ZOOM_ABAJO) {
+    LienzoBoceto(if (lateral) 760f else 1240f, 1080f, Modifier.testTag("menu-widget").background(LocalColeccion.current.fondo), zoom = if (lateral) 1f else ZOOM_ABAJO) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         Column(
