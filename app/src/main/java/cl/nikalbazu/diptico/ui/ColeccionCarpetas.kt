@@ -343,7 +343,7 @@ fun CarpetasArribaCV(e: Estado) {
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
                 AccionesConsolaCV(e, c, alto = 80f)
                 Spacer(Modifier.weight(1f))
-                PistasFinas("L1 R1" to "Consola", "Select" to "Vista", "Mantén Select" to "Pantallas")
+                PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas")
             }
         }
     }
@@ -399,8 +399,6 @@ fun PersonalizarConsolaCV(e: Estado, c: Consola) {
         "Vista" to nombreVistaCarpetas(e.extra.vistaCarpetasCV),
         "Emulador" to Diptico.nombreEmulador(c),
         "Ícono" to if (cp?.portadaCarpeta != null) "Propio" else "Original",
-        "Color" to if ((cp?.color ?: 0L) != 0L) "Propio" else "Original",
-        "Música" to if (cp?.musica != null) "Propia" else "Del tema",
     )
     Row(
         Modifier.fillMaxWidth().height(esc.d(132)).vidrio(30f, fuerte = true).clickable { Diptico.abrirEditarConsola(c.id) }
@@ -460,7 +458,6 @@ private fun AccionesConsolaCV(e: Estado, c: Consola, alto: Float = 84f) {
     val esc = LocalEscala.current
     Row(horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
         BotonTecla("A", "Entrar", { Diptico.entrarConsolaCV(c.id) }, alto = alto, principal = true, letra = 28f)
-        BotonTecla("X", "Personalizar", { Diptico.abrirEditarConsola(c.id) }, alto = alto, letra = 24f)
         ultimoDeConsola(e, c.id)?.let { j -> BotonTecla("Y", "Seguir con ${j.titulo}", { Diptico.seguirCon(j) }, alto = alto, letra = 24f) }
             ?: BotonTecla("Y", "Cambiar ícono", { Diptico.cambiarIconoCarpeta(c.id) }, alto = alto, letra = 24f)
     }
