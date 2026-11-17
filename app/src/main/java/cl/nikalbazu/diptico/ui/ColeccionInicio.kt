@@ -209,7 +209,7 @@ fun ColeccionArriba(e: Estado) {
                     BotonTecla("X", "Ficha", { Diptico.girarCaja(true) }, alto = 84f, letra = 28f)
                     BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) }, alto = 84f, letra = 28f)
                     Spacer(Modifier.weight(1f))
-                    if (e.extra.dippoInicio && anchoLienzo() >= 1500f) DippoFrase(fraseDippo(e, j), cara = 56f, letra = 22f, maxAncho = 520f)
+                    if (e.extra.dippoInicio && anchoLienzo() >= 1350f) DippoFrase(fraseDippo(e, j), cara = 56f, letra = 22f, maxAncho = 520f)
                 }
             }
         }

@@ -182,11 +182,15 @@ fun BotonTecla(
         horizontalArrangement = Arrangement.spacedBy(esc.d(alto * 0.18f)),
     ) {
         val d = alto * 0.62f
+        // Teclas de una o dos letras van en un círculo; las largas (Select, Start) en una píldora que no las corta.
+        val larga = tecla.length > 2
+        val formaTecla = if (larga) RoundedCornerShape(50) else CircleShape
         Box(
-            Modifier.size(esc.d(d)).clip(CircleShape)
-                .then(if (principal) Modifier.background(c.enElegido) else Modifier.border(2.dp, c.texto, CircleShape)),
+            (if (larga) Modifier.height(esc.d(d)) else Modifier.size(esc.d(d))).clip(formaTecla)
+                .then(if (principal) Modifier.background(c.enElegido) else Modifier.border(2.dp, c.texto, formaTecla))
+                .then(if (larga) Modifier.padding(horizontal = esc.d(d * 0.32f)) else Modifier),
             contentAlignment = Alignment.Center,
-        ) { TB(tecla, d * 0.45f, color = if (principal) c.elegido else c.texto, peso = FontWeight.ExtraBold, traducir = false) }
+        ) { TB(tecla, if (larga) d * 0.36f else d * 0.45f, color = if (principal) c.elegido else c.texto, peso = FontWeight.ExtraBold, traducir = false, lineas = 1) }
         TB(texto, letra, color = if (principal) c.enElegido else c.texto, peso = FontWeight.ExtraBold)
     }
 }
