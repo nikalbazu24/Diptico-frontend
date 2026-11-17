@@ -131,6 +131,7 @@ fun RelojBateria(modifier: Modifier = Modifier) {
     val bateria = rememberBateria()
     val cargando = rememberCargando()
     val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> Color.White }
+    val latido = latidoCarga(cargando)
     val forma = RoundedCornerShape(50)
     Row(
         modifier.testTag("reloj-bateria").clip(forma).background(Color.Black.copy(alpha = 0.34f))
@@ -145,11 +146,11 @@ fun RelojBateria(modifier: Modifier = Modifier) {
             Box(Modifier.size(esc.d(18), esc.d(9)).border(esc.d(1.4f), Color.White.copy(alpha = 0.75f), RoundedCornerShape(esc.d(2.5f))).padding(esc.d(1.6f))) {
                 Box(
                     Modifier.fillMaxHeight().fillMaxWidth((bateria / 100f).coerceIn(0.08f, 1f))
-                        .clip(RoundedCornerShape(esc.d(1.2f))).background(tono),
+                        .clip(RoundedCornerShape(esc.d(1.2f))).background(tono.copy(alpha = latido)),
                 )
             }
             Spacer(Modifier.width(esc.d(6)))
-            Texto("$bateria%", 12.5f, color = if (tono == Color.White) Color.White.copy(alpha = 0.9f) else tono, traducir = false, lineas = 1)
+            Texto(if (cargando) "⚡$bateria%" else "$bateria%", 12.5f, color = if (tono == Color.White) Color.White.copy(alpha = 0.9f) else tono, traducir = false, lineas = 1)
         }
     }
 }

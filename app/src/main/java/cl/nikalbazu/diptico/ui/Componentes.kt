@@ -88,37 +88,61 @@ fun rememberHora(): String {
     return hora
 }
 
-private fun bateria(ctx: Context): Int =
-    ctx.getSystemService(BatteryManager::class.java)?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1
+/**
+ * La batería, UNA sola vez para toda la app: se escucha el aviso del sistema (ACTION_BATTERY_CHANGED) y todas las
+ * pantallas leen el mismo valor al mismo tiempo. Antes cada barra la consultaba por su cuenta cada minuto y arriba y
+ * abajo podían mostrar porcentajes distintos.
+ */
+object Energia {
+    private val _nivel = kotlinx.coroutines.flow.MutableStateFlow(-1)
+    private val _cargando = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val nivel: kotlinx.coroutines.flow.StateFlow<Int> get() = _nivel
+    val cargando: kotlinx.coroutines.flow.StateFlow<Boolean> get() = _cargando
+    private var activo = false
+
+    fun leer(i: android.content.Intent?) {
+        i ?: return
+        val l = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val esc = i.getIntExtra(BatteryManager.EXTRA_SCALE, 100).coerceAtLeast(1)
+        _nivel.value = if (l >= 0) (l * 100 + esc / 2) / esc else -1
+        val estado = i.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val enchufada = i.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
+        _cargando.value = estado == BatteryManager.BATTERY_STATUS_CHARGING || (enchufada && estado != BatteryManager.BATTERY_STATUS_FULL && estado != BatteryManager.BATTERY_STATUS_DISCHARGING && estado != BatteryManager.BATTERY_STATUS_NOT_CHARGING)
+    }
+
+    fun iniciar(ctx: Context) {
+        if (activo) return
+        activo = true
+        val app = ctx.applicationContext
+        leer(app.registerReceiver(object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: Context?, i: android.content.Intent?) = leer(i)
+        }, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)))
+    }
+}
 
 /** ¿Está cargando? */
-fun cargando(ctx: Context): Boolean =
-    ctx.getSystemService(BatteryManager::class.java)?.isCharging ?: false
+fun cargando(ctx: Context): Boolean { Energia.iniciar(ctx); return Energia.cargando.value }
 
 @Composable
 fun rememberCargando(): Boolean {
     val ctx = LocalContext.current
-    var c by remember { mutableStateOf(cargando(ctx)) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            c = cargando(ctx)
-            delay(30_000)
-        }
-    }
-    return c
+    remember { Energia.iniciar(ctx) }
+    return Energia.cargando.collectAsState().value
 }
 
 @Composable
 fun rememberBateria(): Int {
     val ctx = LocalContext.current
-    var nivel by remember { mutableIntStateOf(bateria(ctx)) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            nivel = bateria(ctx)
-            delay(60_000)
-        }
-    }
-    return nivel
+    remember { Energia.iniciar(ctx) }
+    return Energia.nivel.collectAsState().value
+}
+
+/** Suave latido de 0,55 a 1 mientras carga (1 fijo si no carga o el movimiento está apagado). */
+@Composable
+fun latidoCarga(cargando: Boolean): Float {
+    if (!cargando || !LocalMovimiento.current) return 1f
+    val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "carga")
+    return t.animateFloat(0.55f, 1f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(900), androidx.compose.animation.core.RepeatMode.Reverse), label = "latido").value
 }
 
 /** Letra chica en mayúsculas, para etiquetas. */

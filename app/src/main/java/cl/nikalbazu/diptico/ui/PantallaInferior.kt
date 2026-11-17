@@ -505,7 +505,7 @@ private fun EnJuego(e: Estado) {
                         else -> Color(0xFFFF4D4D)
                     }
                     Box(Modifier.clip(RoundedCornerShape(50)).background(tono.copy(alpha = 0.18f)).padding(horizontal = esc.d(10), vertical = esc.d(4))) {
-                        Texto("${"%.0f".format(t.grados)} °C", 13f, color = tono, traducir = false)
+                        Texto(cl.nikalbazu.diptico.estado.Termica.texto(t.grados), 13f, color = tono, traducir = false)
                     }
                     Spacer(Modifier.width(esc.d(6)))
                 }

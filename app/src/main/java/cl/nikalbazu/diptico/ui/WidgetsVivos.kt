@@ -189,7 +189,7 @@ private fun TuEquipo(al: Int) {
                 Termica.Nivel.MUY_CALIENTE -> "Muy caliente" to Color(0xFFFF4D4D)
             }
             FilaEquipo("Batería", if (l.nivelBateria >= 0) "${l.nivelBateria} %" + if (l.cargando) " ⚡" else "" else "—", if (l.nivelBateria in 0..15) Color(0xFFFF4D4D) else p.tinta)
-            FilaEquipo("Temperatura", if (l.grados > 0f) "${l.grados.toInt()} °C · $calor" else calor, color)
+            FilaEquipo("Temperatura", if (l.grados > 0f) "${Termica.texto(l.grados)} · $calor" else calor, color)
             if (al >= 2 && libres >= 0) FilaEquipo("Espacio libre", "${libres / 1_000_000_000L} GB", p.tinta)
         }
     }
