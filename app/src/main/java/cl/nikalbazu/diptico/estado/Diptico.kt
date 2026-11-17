@@ -437,6 +437,12 @@ data class EstadoExtra(
     val confWidgets: Map<String, Map<String, String>> = emptyMap(),
     /** Categoría elegida en la tienda de widgets (Colección viva). */
     val tiendaCat: Int = 0,
+    /** Tu espacio: el widget elegido en la tienda (sin entrar al editor) y si la tienda está abierta al lado (una pantalla). */
+    val espacioSel: Int = 0,
+    val tiendaLado: Boolean = false,
+    /** Tu espacio: cuántas pantallas de ancho y de alto mide cada página de widgets (1 a 3; se desliza para ver el resto). */
+    val paginaAncho: Int = 1,
+    val paginaAlto: Int = 1,
     /** Las apps se abrieron desde el «+» del dock: elegir una la fija y vuelve. */
     val fijandoDock: Boolean = false,
     /** Consolas que muestran su logo en vez del nombre. */
@@ -1098,6 +1104,8 @@ object Diptico {
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoDatos = almacen.bool("dippoDatos", true),
                 coleccionViva = almacen.bool("coleccionViva", true),
+                paginaAncho = (almacen.texto("paginaAncho", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
+                paginaAlto = (almacen.texto("paginaAlto", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
                 widgetsCVOcultos = almacen.texto("widgetsCVOcultos", "").split("|").filter { it.isNotBlank() }.toSet(),
                 vistaColeccion = almacen.texto("vistaColeccion", "estante"),
                 vistaCarpetasCV = almacen.texto("vistaCarpetasCV", "diptico"),
@@ -1196,8 +1204,9 @@ object Diptico {
         Inicio.inicioAbajo(app, !(almacen.modoElegido && almacen.modoPantallas == "una_libre"))
         bienvenidaPendiente = true
         revisarPedidoInicio()
-        Widgets.COLUMNAS = estado.value.gridCols
-        Widgets.FILAS = estado.value.gridFilas
+        Widgets.COLUMNAS = estado.value.gridCols * estado.value.extra.paginaAncho
+        Widgets.FILAS = estado.value.gridFilas * estado.value.extra.paginaAlto
+        vaciarEspacioUnaVez()
         Sonidos.iniciar(app)
         Sonidos.activo = estado.value.sonidos
         Sonidos.paquete = almacen.texto("paqueteSonidos", "tema")
@@ -4148,7 +4157,7 @@ object Diptico {
             add(
                 Opcion(
                     "Aprender el botón ${b.nombre}", if (e.aprendiendoBoton == i) "Aprieta el botón…" else if (b.tecla == 0) "Sin aprender" else android.view.KeyEvent.keyCodeToString(b.tecla).removePrefix("KEYCODE_").lowercase(),
-                    Icono.LAPIZ, "Elige esto y aprieta el botón en tu control: así funciona con la Odin 2, la Retroid, la Thor o el control que sea.",
+                    Icono.LAPIZ, "Elige esto y aprieta el botón en tu control: así funciona con cualquier control.",
                 ) { aprenderBoton(i) },
             )
         }
@@ -5405,8 +5414,8 @@ object Diptico {
         almacen.guardarTexto("gridCols", cols.toString())
         almacen.guardarTexto("gridFilas", filas.toString())
         almacen.guardarTexto("paginas", paginas.toString())
-        Widgets.COLUMNAS = cols
-        Widgets.FILAS = filas
+        Widgets.COLUMNAS = cols * estado.value.extra.paginaAncho
+        Widgets.FILAS = filas * estado.value.extra.paginaAlto
         // Los widgets que quedaron fuera se acomodan dentro, sin montarse unos sobre otros.
         val l = reacomodar(estado.value.widgets.map { encajar(it.copy(pagina = it.pagina.coerceIn(0, paginas - 1))) }, paginas)
         almacen.guardarTexto("widgets", escribirWidgets(l))
@@ -5835,25 +5844,27 @@ object Diptico {
         val c = Consolas.porId(id) ?: return portada
         val f = e.formas[id] ?: FormaCfg()
         fun archivo(que: String, tipo: String = "image/*") = pedirArchivoPara("consola_$que:$id", tipo)
-        return portada + listOf(
-            Opcion("Nombre", p.nombre ?: "Original", Icono.TITULO, "Cómo se llama esta consola en todo Díptico.") { abrirTexto("consola_nombre", p.nombre ?: "") },
+        return portada.map { it.copy(grupo = "Carpeta") } + listOf(
+            Opcion("Nombre", p.nombre ?: "Original", Icono.TITULO, "Cómo se llama esta consola en todo Díptico.") { abrirTexto("consola_nombre", p.nombre ?: "") }.copy(grupo = "Carpeta"),
+            Opcion("Nombre o logo", if (id in e.extra.logoConsolas) "Logo" else "Nombre", Icono.ESTRELLA,
+                "Muestra el logo de la consola o su nombre escrito con la fuente del tema.") { alternarLogoConsola(id) }.copy(grupo = "Carpeta"),
+            Opcion(
+                "Color", if (p.color == 0L) "Original" else "Propio", Icono.PALETA, "El color de sus tarjetas, del carrusel y del fondo de su vista.",
+                menos = { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) - 1).mod(COLORES_CONSOLA.size)]) } },
+            ) { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) + 1).mod(COLORES_CONSOLA.size)]) } }.copy(grupo = "Carpeta"),
+            Opcion("Ícono", if (e.iconosPropios.containsKey(id)) "Propio ✓" else "Buscar", Icono.EMULADOR, "Elige entre los paquetes de RetroArch, SteamGridDB o tus archivos.") { buscarCandidatos("c_icono") }.copy(grupo = "Carpeta"),
             Opcion(
                 "Lugar en la lista", "${e.consolasConJuegos.indexOfFirst { it.id == id } + 1} de ${e.consolasConJuegos.size}", Icono.VISTA,
                 "Corre esta consola antes o después (← →). Así quedan en el orden que tú quieras.",
                 menos = { moverConsola(id, -1) },
-            ) { moverConsola(id, 1) },
-            Opcion(
-                "Color", if (p.color == 0L) "Original" else "Propio", Icono.PALETA, "El color de sus tarjetas, del carrusel y del fondo de su vista.",
-                menos = { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) - 1).mod(COLORES_CONSOLA.size)]) } },
-            ) { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) + 1).mod(COLORES_CONSOLA.size)]) } },
-            Opcion("Ícono", if (e.iconosPropios.containsKey(id)) "Propio ✓" else "Buscar", Icono.EMULADOR, "Elige entre los paquetes de RetroArch, SteamGridDB o tus archivos.") { buscarCandidatos("c_icono") },
-            Opcion("Imagen grande (hero)", if (p.hero != null) "Propia ✓" else "Buscar", Icono.PORTADA, "El fondo de esta consola: de SteamGridDB, fotos de Wikipedia o tus archivos.") { buscarCandidatos("c_hero") },
-            Opcion("Logo", if (p.logo != null) "Propio ✓" else "Buscar", Icono.ESTRELLA, "Un logo que reemplaza al nombre en la vista grande: de SteamGridDB, Wikipedia o tus archivos.") { buscarCandidatos("c_logo") },
-            Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") },
-            Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) },
-            Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(id) },
-            Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) },
-            if (c.sinEmulador) Opcion("Emulador", "No necesita", Icono.MANDO, ayuda = "Esta consola no necesita emulador.") {} else opcionEmuladorConsola(c).copy(titulo = "Emulador", icono = Icono.MANDO),
+            ) { moverConsola(id, 1) }.copy(grupo = "Carpeta"),
+            Opcion("Imagen grande (hero)", if (p.hero != null) "Propia ✓" else "Buscar", Icono.PORTADA, "El fondo de esta consola: de SteamGridDB, fotos de Wikipedia o tus archivos.") { buscarCandidatos("c_hero") }.copy(grupo = "Imágenes"),
+            Opcion("Logo", if (p.logo != null) "Propio ✓" else "Buscar", Icono.ESTRELLA, "Un logo que reemplaza al nombre en la vista grande: de SteamGridDB, Wikipedia o tus archivos.") { buscarCandidatos("c_logo") }.copy(grupo = "Imágenes"),
+            Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) }.copy(grupo = "Cajas"),
+            Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(id) }.copy(grupo = "Cajas"),
+            Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) }.copy(grupo = "Cajas"),
+            (if (c.sinEmulador) Opcion("Emulador", "No necesita", Icono.MANDO, ayuda = "Esta consola no necesita emulador.") {} else opcionEmuladorConsola(c).copy(titulo = "Emulador", icono = Icono.MANDO)).copy(grupo = "Juego y sonido"),
+            Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") }.copy(grupo = "Juego y sonido"),
             Opcion("Quitar imágenes y música propias", icono = Icono.BORRAR, ayuda = "Quita las imágenes y la música que elegiste para esta consola.") {
                 cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null, portadaCarpeta = null) }
                 if (estado.value.iconosPropios.containsKey(id)) {
@@ -5861,11 +5872,11 @@ object Diptico {
                     almacen.guardarTexto("iconosPropios", escribirMapa(m))
                     actualizar { it.copy(iconosPropios = m) }
                 }
-            },
+            }.copy(grupo = "Restaurar"),
             Opcion("Volver a como venía", icono = Icono.BORRAR, ayuda = "Nombre, color, imágenes y música originales.") {
                 cambiarConsolaPropia(id) { ConsolaPropia() }
                 avisar("${Consolas.porId(id)?.nombre ?: ""} como al principio")
-            },
+            }.copy(grupo = "Restaurar"),
         )
     }
 

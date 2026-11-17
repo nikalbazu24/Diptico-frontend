@@ -92,7 +92,8 @@ fun PantallaSuperior(e: Estado) {
         return
     }
     if (e.panel == Panel.EDITAR_CONSOLA) {
-        PreviaConsolaEditada(e)
+        // Colección viva: todas las opciones arriba; abajo, el panel vivo de la consola.
+        if (coleccionVivaActiva(e)) ConsolaOpcionesCV(e) else PreviaConsolaEditada(e)
         return
     }
     if (e.panel == Panel.GALERIA) {

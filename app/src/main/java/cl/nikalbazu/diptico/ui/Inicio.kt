@@ -32,6 +32,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -140,35 +142,26 @@ fun PantallaInicio(e: Estado) {
                     12f, lineas = 1,
                 )
                 Spacer(Modifier.height(esc.d(10)))
-            } else if (Estilo.decorEnFondo) {
-                EncabezadoWidgetsCV(e)
+            } else if (e.extra.coleccionViva) {
+                EncabezadoEspacioCV(e)
                 Spacer(Modifier.height(esc.d(8)))
             } else if (e.saludoInicio || e.sesion == null) {
                 EncabezadoWidgets(e)
                 Spacer(Modifier.height(esc.d(8)))
             }
-            PaginasWidgets(e, Modifier.fillMaxWidth().weight(1f))
+            // Tu espacio (Colección viva): vacío, DIPPO propone; con una pantalla la tienda entra por el costado.
+            val cv = e.extra.coleccionViva && !e.editandoWidgets
+            Row(Modifier.fillMaxWidth().weight(1f)) {
+                if (cv && e.espacioVacio()) EspacioVacioCV(e, Modifier.weight(1f).fillMaxHeight())
+                else PaginasWidgets(e, Modifier.weight(1f).fillMaxHeight())
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = cv && e.unaPantalla && e.extra.tiendaLado,
+                    enter = androidx.compose.animation.slideInHorizontally { it } + androidx.compose.animation.fadeIn(),
+                    exit = androidx.compose.animation.slideOutHorizontally { it } + androidx.compose.animation.fadeOut(),
+                ) { TiendaLadoCV(e, Modifier.width(esc.d(300)).fillMaxHeight()) }
+            }
         }
     }
-    }
-}
-
-/** Colección viva: Portada | Widgets · Editar widgets · hora y batería · tu perfil (como el boceto 7a). */
-@Composable
-private fun EncabezadoWidgetsCV(e: Estado) {
-    val esc = LocalEscala.current
-    val p = LocalPaleta.current
-    @Composable
-    fun Pildora(t: String, on: Boolean, accion: () -> Unit) {
-        Box(Modifier.clip(RoundedCornerShape(50)).background(if (on) Uva else p.tinta.copy(alpha = 0.08f)).border(esc.d(1), p.tinta.copy(alpha = if (on) 0f else 0.12f), RoundedCornerShape(50))
-            .clickable(onClick = accion).padding(horizontal = esc.d(12), vertical = esc.d(6))) { Texto(t, 13f, color = if (on) SobreUva else p.tinta, lineas = 1) }
-    }
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-        Pildora("Portada", false) { Diptico.fijarInicio("heroe") }
-        Pildora("Widgets", true) {}
-        Pildora("Editar widgets", false) { Diptico.editarWidgets() }
-        Spacer(Modifier.weight(1f))
-        PerfilArriba(54f, conReloj = true)
     }
 }
 
@@ -231,10 +224,15 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
 
     Column(modifier) {
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+            // Tu espacio: una página puede medir hasta 3 × 3 pantallas. Al editar se ve entera (achicada) para poder
+            // mover todo con el dedo; fuera del editor se ve a tamaño real y se desliza para ver el resto.
+            val pAn = e.extra.paginaAncho.coerceIn(1, 3)
+            val pAl = e.extra.paginaAlto.coerceIn(1, 3)
+            val extendida = (pAn > 1 || pAl > 1) && !e.editandoWidgets
             val medidas = with(densidad) {
                 MedidasEditorWidgets(
-                    maxWidth.toPx(), maxHeight.toPx(), esc.d(MARGEN_GRILLA).toPx(),
-                    esc.d(e.huecoInicio.toFloat()).toPx(), e.gridCols, e.gridFilas, esc.d(38).toPx(),
+                    maxWidth.toPx() * (if (extendida) pAn else 1), maxHeight.toPx() * (if (extendida) pAl else 1), esc.d(MARGEN_GRILLA).toPx(),
+                    esc.d(e.huecoInicio.toFloat()).toPx(), e.gridCols * pAn, e.gridFilas * pAl, esc.d(38).toPx(),
                 )
             }
             val gesto = if (e.editandoWidgets) Modifier.editarConDedo(medidas, e.burbuja != null) { arrastre = it }
@@ -243,7 +241,24 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
                 androidx.compose.foundation.pager.HorizontalPager(
                     state = pager, modifier = Modifier.fillMaxSize(), userScrollEnabled = !e.editandoWidgets,
                     pageSpacing = esc.d(20),
-                ) { pagina -> Grilla(e, pagina, medidas, arrastre, Modifier.fillMaxSize()) }
+                ) { pagina ->
+                    if (extendida) {
+                        val sh = androidx.compose.foundation.rememberScrollState()
+                        val sv = androidx.compose.foundation.rememberScrollState()
+                        // Con el control: la página se corre sola hasta el widget elegido.
+                        val foco = e.widgets.getOrNull(e.widgetFoco)?.takeIf { it.pagina == pagina }
+                        LaunchedEffect(foco?.x, foco?.y) {
+                            if (foco != null) {
+                                val r = medidas.rect(foco)
+                                sh.animateScrollTo((r.left - medidas.margen).toInt().coerceAtLeast(0))
+                                sv.animateScrollTo((r.top - medidas.margen).toInt().coerceAtLeast(0))
+                            }
+                        }
+                        Box(Modifier.fillMaxSize().horizontalScroll(sh).verticalScroll(sv)) {
+                            with(densidad) { Grilla(e, pagina, medidas, arrastre, Modifier.size(medidas.ancho.toDp(), medidas.alto.toDp())) }
+                        }
+                    } else Grilla(e, pagina, medidas, arrastre, Modifier.fillMaxSize())
+                }
                 arrastre?.takeUnless { it.estirando }?.let {
                     if (!it.sobreQuitar) FantasmaWidget(it, medidas)
                     ZonaQuitarWidget(medidas, activa = it.sobreQuitar)
@@ -256,6 +271,14 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
                 Texto("Página ${e.paginaInicio + 1} de ${e.paginas}", 12f, lineas = 1)
                 BotonPagina("›", "Página siguiente", e.paginaInicio < e.paginas - 1) { Diptico.cambiarPagina(1) }
                 BotonPagina("+", "Agregar página", e.paginas < 12) { Diptico.agregarPaginaWidgets() }
+                BotonPagina("−", "Quitar esta página", e.paginas > 1) { Diptico.quitarPaginaEspacio() }
+                // Tu espacio: la página puede medir hasta 3 pantallas de ancho y de alto.
+                Spacer(Modifier.width(esc.d(10)))
+                Texto(nombreTamPagina(e.extra.paginaAncho, e.extra.paginaAlto), 12f, color = p.tenue, lineas = 1)
+                BotonPagina("⇠", "Menos ancho", e.extra.paginaAncho > 1) { Diptico.cambiarTamPagina(-1, 0) }
+                BotonPagina("⇢", "Más ancho", e.extra.paginaAncho < 3) { Diptico.cambiarTamPagina(1, 0) }
+                BotonPagina("⇡", "Menos alto", e.extra.paginaAlto > 1) { Diptico.cambiarTamPagina(0, -1) }
+                BotonPagina("⇣", "Más alto", e.extra.paginaAlto < 3) { Diptico.cambiarTamPagina(0, 1) }
             }
         } else if (e.paginas > 1 && !paginaEnCabecera(e, esc)) {
             Row(Modifier.align(Alignment.CenterHorizontally).padding(top = esc.d(6)), horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
@@ -352,12 +375,24 @@ private fun CeldaWidget(e: Estado, i: Int, w: Widget, m: MedidasEditorWidgets, a
     val color = if (e.estudioMover || arrastre != null) Coral else Uva
     val crecer = minOf(0.045f, 8f / maxOf(ancho.value, alto.value))
     val escalaFoco by animateFloatAsState(if (enfocado) 1f + crecer else 1f, spring(dampingRatio = 0.75f), label = "foco widget")
+    // Modo edición: todos tiemblan un poquito (cada uno a su ritmo), así se nota que se pueden mover. El que llevas en la mano, quieto.
+    val tiembla = e.editandoWidgets && arrastre == null && !(elegido && e.estudioMover)
+    val temblor = if (tiembla) {
+        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "temblor")
+        t.animateFloat(
+            -1f, 1f,
+            androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(150 + (i % 3) * 22, easing = androidx.compose.animation.core.LinearEasing), androidx.compose.animation.core.RepeatMode.Reverse),
+            label = "giro",
+        )
+    } else null
     Box(
         Modifier.offset(x, y).size(ancho, alto).zIndex(if (elegido || enfocado) 2f else 1f)
             .graphicsLayer {
                 alpha = if (arrastre != null && !arrastre.estirando) 0.3f else 1f
                 scaleX = escalaFoco
                 scaleY = escalaFoco
+                // Grados chicos: en los widgets grandes se ve igual de suave que en los chicos.
+                temblor?.let { rotationZ = it.value * (1.6f - 0.8f * (minOf(ancho.value, alto.value) / 400f).coerceIn(0f, 1f)) }
             }
             .then(if (e.editandoWidgets) Modifier.clip(forma).semantics { contentDescription = Widgets.nombre(w.tipo) } else Modifier)
             .then(if (elegido) Modifier.border(esc.d(2), color, forma) else Modifier)

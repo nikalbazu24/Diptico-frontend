@@ -111,6 +111,8 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
                 coleccionVivaActiva(e) && !e.editandoWidgets -> when {
+                    // Tu espacio arriba: aquí van los accesos, las páginas y la tienda de widgets.
+                    e.inicio == "widgets" -> EspacioAbajoCV(e)
                     e.enSistemas -> CarpetasAbajoCV(e)
                     else -> ColeccionAbajo(e)
                 }
@@ -222,7 +224,14 @@ fun BoxScope.Paneles(e: Estado, conAyuda: Boolean) {
             Panel.WIDGET -> if (!conAyuda && !e.intercambiar) Box(Modifier.fillMaxSize()) else PanelWidget(e)
             Panel.GALERIA -> PanelGaleria(e, conPrevia = conAyuda)
             Panel.ESTUDIO -> PanelEstudio(e)
-            Panel.EDITAR_CONSOLA -> PanelEditarConsola(e)
+            Panel.EDITAR_CONSOLA -> when {
+                !coleccionVivaActiva(e) -> PanelEditarConsola(e)
+                e.unaPantalla -> Row(Modifier.fillMaxSize()) {
+                    Box(Modifier.weight(1.05f).fillMaxHeight()) { ConsolaOpcionesCV(e, angosto = true) }
+                    Box(Modifier.weight(0.95f).fillMaxHeight()) { ConsolaVivaCV(e) }
+                }
+                else -> ConsolaVivaCV(e)
+            }
             Panel.APPS -> PanelApps(e)
             Panel.ASISTENTE -> if (e.sesion == null) PanelAsistente(e) else Box(Modifier.fillMaxSize())
             Panel.TRABAJOS, Panel.NINGUNO -> Box(Modifier.fillMaxSize())

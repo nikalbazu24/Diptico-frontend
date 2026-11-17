@@ -559,6 +559,36 @@ object Teclas {
 
         val hayPanel = e.panel != Panel.NINGUNO
 
+        // Colección viva · Tu espacio (boceto 10): L2 y R2 pasan del inicio a tus páginas de widgets y de vuelta.
+        val cvLibre = !hayPanel && e.sesion == null && !e.editandoWidgets && cl.nikalbazu.diptico.ui.coleccionVivaActiva(e) && !e.ordenando
+        if (cvLibre && (code == KeyEvent.KEYCODE_BUTTON_L2 || code == KeyEvent.KEYCODE_BUTTON_R2)) {
+            if (abajo && ev.repeatCount == 0) Diptico.pasoEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
+            return true
+        }
+        // En Tu espacio, la tienda (abajo, o al costado con una pantalla) se maneja con el control.
+        if (cvLibre && e.inicio == "widgets" && e.widgetFoco < 0) {
+            val conTienda = !e.unaPantalla || e.extra.tiendaLado
+            val d = dir(code)
+            when {
+                conTienda && d != null -> { if (abajo) Diptico.moverTiendaEspacio(d.first, d.second); return true }
+                conTienda && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1) -> {
+                    if (abajo && ev.repeatCount == 0) Diptico.categoriaEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
+                }
+                conTienda && esA(code) -> { if (abajo && ev.repeatCount == 0) Diptico.usarTiendaEspacio(); return true }
+                code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && ev.repeatCount == 0) Diptico.entrarWidgets(); return true }
+                code == KeyEvent.KEYCODE_BUTTON_X -> {
+                    if (abajo && ev.repeatCount == 0) { if (e.unaPantalla) Diptico.alternarTiendaLado() else Diptico.editarWidgets() }
+                    return true
+                }
+                esB(code) -> {
+                    if (abajo && ev.repeatCount == 0) {
+                        if (e.extra.tiendaLado) Diptico.alternarTiendaLado() else Diptico.pasoEspacio(-(e.paginaInicio + 1))
+                    }
+                    return true
+                }
+            }
+        }
+
         // Moviendo un juego de lugar: la cruceta lo corre; A, B o Start terminan.
         if (e.ordenando && !hayPanel) {
             if (abajo) {
@@ -832,6 +862,7 @@ object Teclas {
                         Panel.GALERIA -> Diptico.cambiarPestanaGaleria(d)
                         Panel.APPS -> Diptico.cambiarPestanaApps(d)
                         Panel.CENTRO -> Diptico.cambiarCortina(if (d < 0) "avisos" else "ajustes")
+                        Panel.EDITAR_CONSOLA -> Diptico.seccionEditarConsola(d)
                         else -> Unit
                     }
                 }

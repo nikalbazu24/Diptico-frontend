@@ -779,3 +779,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `requiredSize`, no se aplasta). 6b: dock izq., hora+foto der., abajo `BotonPestanaCV` Consolas (MANDO) / Colecciones (BIBLIOTECA) y DIPPO
   al medio, sin pistas. Estudio CV con zoom 1.08 y DIPPO chico. `enElegido` legible en temas de color medio (`legibleSobre`).
   BotonTecla: teclas largas (Select) en píldora. Capturas t485–t487.
+- Beta.609 de prueba (17 nov, 05:40): la consola no cambiaba al moverse entre carpetas porque `produceState` guarda su valor sin
+  llave (quedaba la imagen anterior); ahora `ImagenConsola` con `remember(id)` + `LaunchedEffect(id)` dentro de un `AnimatedContent`
+  por consola (igual `FondoConsolaCV`). Stick derecho: `stickDerechoGira(e)` (vitrina o inicio de Colección viva sin ventanas, también
+  el Estudio) → `GiroCaja.x/y`; ahí SOLO mueve: inclina la consola (±30°) y gira la caja (`CajaFlotanteCV`, `InspeccionCajaCV`).
+  Estudio con CV y dos pantallas: cada mitad en su `LienzoBoceto` (`InspeccionCajaCV` 1920 con `angosto`, `PanelEstudioCV` 1240
+  con ZOOM_ABAJO y las caras repartiendo el alto). Consolas: concepto «pantalla apagada y colores originales», sin arte de juegos
+  (GBA índigo, pantallas de GB/GBC/PSP/Switch/Wii U apagadas, etiquetas lisas en N64/SNES, Android sin texto). Herramientas en
+  `herramientas/consolas/` (ver LEEME). Capturas t488–t490.
