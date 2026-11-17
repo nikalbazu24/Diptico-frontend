@@ -200,20 +200,6 @@ internal fun Diptico.borrarJuego(j: Juego, lista: List<PorBorrar>) {
 }
 
 
-/** Emulador solo para este juego. */
-internal fun Diptico.ciclarEmuladorJuego(clave: String, c: Consola) {
-    val juego = estado.value.juegos.firstOrNull { it.clave == clave }
-    val ops = Lanzador.opciones(app, c, juego?.tipo).distinctBy { it.id }
-    if (ops.isEmpty()) {
-        avisar("No hay emuladores de ${c.nombre} instalados. Te sugiero ${c.sugerido}.")
-        return
-    }
-    val actual = estado.value.datos[clave]?.emulador
-    val i = ops.indexOfFirst { it.id == actual }
-    val siguiente = if (i == ops.size - 1) null else ops[i + 1].id
-    cambiarDatos(clave) { it.copy(emulador = siguiente) }
-}
-
 
 internal fun Diptico.ciclarPantallaJuego(clave: String) {
     val datos = estado.value.datos.toMutableMap()

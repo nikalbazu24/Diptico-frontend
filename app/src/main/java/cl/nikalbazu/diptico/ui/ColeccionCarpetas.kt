@@ -220,14 +220,14 @@ private fun FondoJuegoEmblema(fondo: FondoConsola, modifier: Modifier) {
         Box(Modifier.fillMaxSize()) {
             val img = rememberImagen(f.imagen, 1280)
             if (img != null) androidx.compose.foundation.Image(img, contentDescription = f.juego,
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop, alpha = .78f,
-                modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = 1.06f; scaleY = 1.06f }
-                    .then(if (android.os.Build.VERSION.SDK_INT >= 31) Modifier.blur(esc.d(5)) else Modifier))
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop, alpha = .92f,
+                modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = 1.04f; scaleY = 1.04f }
+                    .then(if (android.os.Build.VERSION.SDK_INT >= 31) Modifier.blur(esc.d(3)) else Modifier))
             // Oscurece donde va el texto (izquierda y abajo) para que se lea, y deja el arte más limpio a la derecha.
-            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(col.fondo.copy(alpha = .9f), col.fondo.copy(alpha = .45f), col.fondo.copy(alpha = .2f)))))
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent, col.fondo.copy(alpha = .75f)))))
+            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to col.fondo.copy(alpha = .82f), .45f to col.fondo.copy(alpha = .38f), 1f to Color.Transparent)))
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.6f to Color.Transparent, 1f to col.fondo.copy(alpha = .6f))))
             if (img != null && f.juego != null) Row(
-                Modifier.align(Alignment.BottomEnd).padding(end = esc.d(64), bottom = esc.d(26)).clip(RoundedCornerShape(50))
+                Modifier.align(Alignment.TopEnd).padding(end = esc.d(64), top = esc.d(120)).clip(RoundedCornerShape(50))
                     .background(Color.Black.copy(alpha = .38f)).padding(horizontal = esc.d(18), vertical = esc.d(8)),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
             ) {
@@ -380,34 +380,6 @@ fun PersonalizarConsolaCV(e: Estado, c: Consola) {
     }
 }
 
-@Composable
-fun OpcionesConsolaCV(e: Estado, c: Consola, columnas: Int, alto: Float = 78f) {
-    val esc = LocalEscala.current
-    val col = LocalColeccion.current
-    val opciones = listOf(
-        Triple("Ícono de la carpeta", if (e.consolasPropias[c.id]?.portadaCarpeta != null) "Propio ›" else "Elegir ›", { Diptico.cambiarIconoCarpeta(c.id) }),
-        Triple("Vista", nombreVistaCarpetas(e.extra.vistaCarpetasCV), { Diptico.siguienteVistaCarpetas() }),
-        Triple("Color", if ((e.consolasPropias[c.id]?.color ?: 0L) != 0L) "Propio" else "De la consola", { Diptico.abrirEditarConsola(c.id) }),
-        Triple("Emulador", Diptico.nombreEmulador(c), { Diptico.abrirEditarConsola(c.id) }),
-        Triple("Fondo y música", if (e.consolasPropias[c.id]?.musica != null) "Propios" else "Del tema", { Diptico.abrirEditarConsola(c.id) }),
-        Triple("Nombre o logo", if (c.id in e.extra.logoConsolas) "Logo" else "Nombre", { Diptico.alternarLogoConsola(c.id) }),
-    )
-    Column(verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
-        TB("OPCIONES DE ESTA CONSOLA · X", 19f, color = Color(0xFF9A9CB8), peso = FontWeight.ExtraBold, espaciado = 2.3f)
-        opciones.chunked(columnas).forEach { fila ->
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                fila.forEach { (n, v, accion) ->
-                    Column(Modifier.weight(1f).height(esc.d(alto)).vidrio(20f, fuerte = true).clickable { accion() }.padding(horizontal = esc.d(16)),
-                        verticalArrangement = Arrangement.Center) {
-                        TB(n, 18f, color = col.sub)
-                        TB(v, 22f, peso = FontWeight.ExtraBold, traducir = false)
-                    }
-                }
-                repeat(columnas - fila.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
-    }
-}
 
 @Composable
 private fun AccionesConsolaCV(e: Estado, c: Consola, alto: Float = 84f) {
@@ -494,21 +466,6 @@ private fun ColeccionesCV(e: Estado, modifier: Modifier) {
 }
 
 
-@Composable
-fun SelectorVistasCarpetas(e: Estado, alto: Float = 56f, letra: Float = 22f, modifier: Modifier = Modifier) {
-    val esc = LocalEscala.current
-    val col = LocalColeccion.current
-    Row(modifier.clip(RoundedCornerShape(50)).background(col.vidrio).border(1.dp, col.borde, RoundedCornerShape(50)).padding(esc.d(6)),
-        horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-        VISTAS_CARPETAS_CV.forEach { v ->
-            val on = e.extra.vistaCarpetasCV == v
-            Box((if (modifier != Modifier) Modifier.weight(1f) else Modifier).height(esc.d(alto)).clip(RoundedCornerShape(50)).background(if (on) col.elegido else Color.Transparent)
-                .clickable { Diptico.elegirVistaCarpetas(v) }.padding(horizontal = esc.d(alto * 0.4f)), contentAlignment = Alignment.Center) {
-                TB(nombreVistaCarpetas(v), letra, color = if (on) col.enElegido else col.texto, peso = FontWeight.ExtraBold)
-            }
-        }
-    }
-}
 
 /** Las carpetas de las consolas en la vista elegida: Ícono, Díptico, Repisa o Carpeta. */
 @Composable
@@ -619,7 +576,7 @@ private fun CarpetaGrande(e: Estado, c: Consola, elegida: Boolean, una: Boolean,
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = .55f))))
         Column(Modifier.align(Alignment.BottomStart).padding(esc.d(20))) {
             TB(c.bonito, 24f, color = Color.White, peso = FontWeight.ExtraBold, lineas = 1)
-            TB("$n juegos", 17f, color = Color.White.copy(alpha = .78f), peso = FontWeight.Bold, traducir = false, lineas = 1)
+            TB(cuantosJuegos(n), 17f, color = Color.White.copy(alpha = .78f), peso = FontWeight.Bold, traducir = false, lineas = 1)
         }
     }
 }
@@ -651,7 +608,7 @@ private fun CarpetaDiptico(e: Estado, c: Consola, elegida: Boolean, una: Boolean
             MiniJuegos(e, c, 46f, 64f)
             Column {
                 TB(c.bonito, 24f, titulo = true, peso = FontWeight.SemiBold)
-                TB("${e.juegosPorConsola[c.id].orEmpty().size} juegos", 19f, color = col.sub)
+                TB(cuantosJuegos(e.juegosPorConsola[c.id].orEmpty().size), 19f, color = col.sub)
             }
         }
     }
@@ -671,7 +628,7 @@ private fun CarpetaRepisa(e: Estado, c: Consola, elegida: Boolean, una: Boolean,
         Column(Modifier.width(esc.d(200)), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
             IconoCarpetaCV(e, c, Modifier.size(esc.d(56)).clip(RoundedCornerShape(esc.d(16))), 24f)
             TB(c.bonito, 24f, titulo = true, peso = FontWeight.SemiBold, lineas = 2, interlineado = 26f)
-            TB("${juegos.size} juegos", 19f, color = col.sub)
+            TB(cuantosJuegos(juegos.size), 19f, color = col.sub)
         }
         // Los lomos de pie sobre la repisa (los primeros juegos de la consola, con su portada recortada).
         Box(Modifier.weight(1f).height(esc.d(if (una) 120f else 160f))) {
@@ -713,7 +670,7 @@ private fun CarpetaClasica(e: Estado, c: Consola, elegida: Boolean, una: Boolean
             IconoCarpetaCV(e, c, Modifier.size(esc.d(if (una) 52f else 60f)).clip(RoundedCornerShape(esc.d(16))), 22f)
             Column {
                 TB(c.bonito, if (una) 23f else 26f, titulo = true, peso = FontWeight.SemiBold)
-                TB("${e.juegosPorConsola[c.id].orEmpty().size} juegos", 19f, color = col.sub)
+                TB(cuantosJuegos(e.juegosPorConsola[c.id].orEmpty().size), 19f, color = col.sub)
             }
         }
     }
@@ -783,3 +740,6 @@ private fun ChipElegir(texto: String, on: Boolean, onClick: () -> Unit) {
         TB(texto, 18f, color = if (on) col.enElegido else col.texto, peso = FontWeight.ExtraBold)
     }
 }
+
+/** «1 juego», «3 juegos». */
+internal fun cuantosJuegos(n: Int) = if (n == 1) "1 juego" else "$n juegos"

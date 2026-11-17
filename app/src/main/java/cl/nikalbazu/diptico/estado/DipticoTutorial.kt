@@ -292,15 +292,6 @@ fun Diptico.opcionesTuto(): List<Opcion> {
 }
 
 
-/** En algunos pasos el cambio se ve (y se oye) en vivo mientras eliges. */
-internal fun Diptico.elegirAparienciaInicial(i: Int) {
-    fijarTema(i != 1)
-    elegirTema(if (i == 2) "diptico_vidrio" else "diptico")
-    val inicio = if (i == 2) "widgets" else "heroe"
-    almacen.guardarTexto("inicio", inicio)
-    actualizar { it.copy(inicio = inicio) }
-}
-
 
 internal fun Diptico.vistaPrevia(paso: PasoTuto, i: Int) {
     when (paso) {

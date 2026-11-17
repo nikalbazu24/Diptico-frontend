@@ -150,25 +150,7 @@ fun Diptico.buscarCajaPantalla(clave: String, explicito: Boolean = false) {
 
 // ---------- Vitrina PS5: tamaño de la caja, lugar y logo (ajustables, se guardan) ----------
 
-fun Diptico.cambiarCajaTam(d: Float) {
-    val v = (estado.value.extra.cajaTam + d).coerceIn(0.7f, 1.4f)
-    almacen.guardarTexto("cajaTam", v.toString())
-    actualizar { it.copy(extra = it.extra.copy(cajaTam = v)) }
-}
 
-fun Diptico.cambiarCajaCorrida(d: Float) {
-    val v = (estado.value.extra.cajaCorrida + d).coerceIn(0f, 0.3f)
-    almacen.guardarTexto("cajaCorrida", v.toString())
-    actualizar { it.copy(extra = it.extra.copy(cajaCorrida = v)) }
-}
 
-fun Diptico.cambiarLogoTam(d: Float) {
-    val v = (estado.value.extra.logoTam + d).coerceIn(0.7f, 1.6f)
-    almacen.guardarTexto("logoTam", v.toString())
-    actualizar { it.copy(extra = it.extra.copy(logoTam = v)) }
-}
 
-fun Diptico.reiniciarCajaVitrina() {
-    listOf("cajaTam", "cajaCorrida", "logoTam").forEach { almacen.guardarTexto(it, if (it == "cajaCorrida") "0" else "1") }
-    actualizar { it.copy(extra = it.extra.copy(cajaTam = 1f, cajaCorrida = 0f, logoTam = 1f)) }
-}
+

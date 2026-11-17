@@ -161,7 +161,6 @@ private fun Mosaico(j: cl.nikalbazu.diptico.data.Juego, elegido: Boolean, jugado
  */
 /** Alto de la barra de abajo abierta (barrita + accesos) y cerrada (solo la barrita), en dp de Díptico. */
 const val ALTO_FRANJA_ABIERTA = 56f
-const val ALTO_FRANJA_CERRADA = 22f
 
 /** Cuánto tapa la barra flotante de abajo: las rejillas lo suman a su relleno para poder correr el último elemento por encima. */
 val LocalAireAbajo = androidx.compose.runtime.compositionLocalOf { 0.dp }
