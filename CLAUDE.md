@@ -801,3 +801,27 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   fuera del editor se desliza (`horizontalScroll/verticalScroll`), en el editor se ve entera achicada. Widgets tiemblan al editar (CeldaWidget).
 - Textos sin «Thor» (se habla de consolas de dos pantallas / tu consola). Ajustes: lista arriba, demostración abajo (`menuIntercambiado = intercambiar`).
   `HoraBateria` del diseño nuevo abre el reloj grande. Capturas t491–t499.
+
+## Menú de cada widget, batería y el comienzo nuevo (17 nov, rama `fix/coleccion-viva`, Opus) — SIN PUBLICAR
+- Menú de cada widget (`ui/MenuWidgetCV.kt`): mantener presionado un widget → `editarEsteWidget(tipo)`; pestañas «Qué muestra / Tamaño y lugar /
+  Aspecto / Más» (L1/R1 = `pasoPestanaWidget`), B o «Listo» = `terminarEdicion()`. `Estado.ver(tipo, clave)` esconde partes. Capturas t500–t503.
+- Batería: `Energia` (ui/Componentes.kt) escucha ACTION_BATTERY_CHANGED una sola vez; `rememberBateria/rememberCargando` leen de ahí (antes cada
+  barra consultaba por su cuenta y arriba/abajo no calzaban). `latidoCarga(cargando)` + ⚡ en las pilas. Grados: `Termica.grados` = batería
+  (si no hay, procesador) y `Termica.texto(g)` con un decimal en todas partes; el nivel de calor sigue mirando todos los sensores.
+- Tirón inicio↔widgets: `InicioDeslizable` ya no se salta la animación si había otra en curso (`objetivoProg`); la página de widgets queda
+  compuesta tras la primera visita (`beyondViewportPageCount`). `pasoEspacio` hace un solo `actualizar`.
+- Boceto aprobado (lienzo VTCZof8gamwjrsQTPU1HKj, filas 12 y 13). Galería de widgets aparte: `extra.galeria/galeriaTam`, `abrirGaleriaWidgets`,
+  `agregarDesdeGaleria`, `tamanosGaleria`; UI en `ui/EspacioCV.kt` (`EspacioAbajoCV` con `TiraPaginas`, `TamanoPagina`; `GaleriaAbajoCV`,
+  `GaleriaArribaCV` con el widget real y `MapaPagina`; `TiendaLadoCV` = galería al costado con una pantalla). Teclas: Y abre, X tamaño, A agrega, B cierra.
+- Juego emblema: `estado/DipticoFondoConsola.kt` (`ConsolaPropia.fondo`: null/emblema/juego:<clave>/imagen/consola; `extra.fondoConsolas`
+  en Ajustes › Estilo «Detrás de cada consola»; `fondoDeConsola`, `juegoEmblema`, `buscarFondoConsola` = arte del juego en tus raspadores +
+  SteamGridDB/Wikipedia de la consola, guarda en `hero`). Apartado «Fondo» en Personalizar consola. `FondoConsolaCV(e, c)` + `FondoJuegoEmblema`
+  (blur 3 dp, velo a la izquierda, píldora «TU MÁS JUGADO»). Captura con arte generado: `conArte()` en Capturas (t520–t522).
+- Intro nueva (`ui/Intro.kt`, 4,3 s: bisagra de luz, consolas por los lados, cajas que caen, logo en dos mitades, DIPPO saluda).
+  Configuración nueva (`ui/ConfigInicial.kt`, `ConfigPantalla(e, rol)` desde Raiz): pasos Tú · Tus juegos · Para jugar · Tu estilo · Listo
+  (`pasosTuto`, `opcionesTuto`); con dos pantallas se elige «dos» sola. `terminarConfiguracion(recorrido)`.
+  Recorrido nuevo (`ui/RecorridoDippo.kt`, `RECORRIDO` de 8 páginas): foco con hueco (Path par-impar, NO BlendMode.Clear: en Robolectric sale
+  negro) sobre las partes reales; `focoDe(k, una)` en fracciones del lienzo; retos L1/R1 (cambia de consola de verdad), L2/R2, Select, tocar a DIPPO.
+- Limpieza: `ui/Tutorial.kt` borrado (Rol y Girador viven en `ui/Comun.kt`), 27 funciones sin uso fuera. Un intento anterior a medias había
+  dejado `DipticoEmblema.kt` y campos duplicados: borrados; se conservó la vista de carpetas «grande» (por defecto, migración `carpetasGrandes1`).
+- Capturas t504–t522. Novedades `coleccion-viva-2.0-76` actualizadas (sigue sin publicar: se publica con todo esto).
