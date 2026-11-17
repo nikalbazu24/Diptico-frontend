@@ -1750,6 +1750,28 @@ class Capturas {
     @Test fun t518_consola_fondo() = foto("518_consola_fondo", cv().copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 6), Rol.SUPERIOR)
     @Config(qualifiers = ABAJO)
     @Test fun t519_consola_fondo_abajo() = foto("519_consola_fondo_abajo", cv().copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 6), Rol.INFERIOR, mi = 1)
+    /** Un «arte» de juego hecho a mano (cielo, sol, montañas y un título) para ver el emblema detrás de la consola. */
+    private fun conArte(e: Estado): Estado {
+        val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val f = java.io.File(ctx.cacheDir, "arte-prueba.png")
+        if (!f.exists()) {
+            val b = android.graphics.Bitmap.createBitmap(1280, 720, android.graphics.Bitmap.Config.ARGB_8888)
+            val c = android.graphics.Canvas(b)
+            val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            p.shader = android.graphics.LinearGradient(0f, 0f, 0f, 720f, 0xFF3BA8FF.toInt(), 0xFFFFC27A.toInt(), android.graphics.Shader.TileMode.CLAMP)
+            c.drawRect(0f, 0f, 1280f, 720f, p); p.shader = null
+            p.color = 0xFFFFE27A.toInt(); c.drawCircle(980f, 210f, 110f, p)
+            p.color = 0xFF2E8B57.toInt(); c.drawPath(android.graphics.Path().apply { moveTo(0f, 720f); lineTo(380f, 330f); lineTo(760f, 720f); close() }, p)
+            p.color = 0xFF1F6B44.toInt(); c.drawPath(android.graphics.Path().apply { moveTo(500f, 720f); lineTo(900f, 380f); lineTo(1280f, 720f); close() }, p)
+            p.color = 0xFFFFFFFF.toInt(); p.textSize = 110f; p.isFakeBoldText = true; c.drawText("LEYENDA DEL BOSQUE", 90f, 640f, p)
+            f.outputStream().use { b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        val u = android.net.Uri.fromFile(f)
+        return e.copy(juegos = e.juegos.map { if (it.clave == "snes/1") it.copy(arte = u) else it })
+    }
+    @Test fun t520_emblema_arriba() = foto("520_emblema_arriba", conArte(cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas"))), Rol.SUPERIOR)
+    @Test fun t521_emblema_una() = foto("521_emblema_una", conArte(cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false))), Rol.UNICA)
+    @Test fun t522_config_estilo_emblema() = foto("522_config_estilo_emblema", conArte(cfg(PasoTuto.APARIENCIA, 2)), Rol.SUPERIOR)
     // Menú de un widget (boceto 11): abajo con dos pantallas, al costado con una.
     private fun conSemana(e: Estado) = e.copy(widgets = e.widgets.map { if (it.tipo == "tuSemana") it.copy(visible = true, x = 3, y = 2, an = 3, al = 2, pagina = 0) else if (it.tipo == "recientes") it.copy(visible = false) else it })
     @Config(qualifiers = ABAJO)

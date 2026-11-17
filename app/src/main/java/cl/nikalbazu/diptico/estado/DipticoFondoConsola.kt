@@ -16,7 +16,7 @@ data class FondoConsola(val imagen: Uri?, val juego: String?, val modo: String)
 
 val MODOS_FONDO = listOf("emblema", "juego", "imagen", "consola")
 fun nombreModoFondo(m: String) = when (m) {
-    "emblema" -> "Su juego más jugado"; "juego" -> "Un juego que elijas"; "imagen" -> "Imagen de internet"; else -> "La consola"
+    "emblema" -> "Más jugado"; "juego" -> "Un juego"; "imagen" -> "De internet"; else -> "La consola"
 }
 
 /** El modo que manda para esta consola: el suyo o el de Ajustes. */
@@ -97,7 +97,7 @@ internal fun Diptico.opcionesFondoConsola(e: Estado, c: Consola): List<Opcion> {
     val fondo = fondoDeConsola(e, c)
     val lista = mutableListOf(
         Opcion(
-            "Detrás de la consola", nombreModoFondo(modo), Icono.PORTADA,
+            "Fondo", nombreModoFondo(modo), Icono.PORTADA,
             "Lo que se ve de fondo en el inicio. Su juego más jugado, uno que elijas, una imagen de internet o la consola sola.",
             menos = { poner(MODOS_FONDO[(i - 1).mod(MODOS_FONDO.size)]) },
         ) { poner(MODOS_FONDO[(i + 1).mod(MODOS_FONDO.size)]) },
@@ -107,17 +107,17 @@ internal fun Diptico.opcionesFondoConsola(e: Estado, c: Consola): List<Opcion> {
         val actual = juegos.indexOfFirst { it.titulo == fondo.juego }.coerceAtLeast(0)
         fun ir(d: Int) { juegos.getOrNull((actual + d).mod(juegos.size.coerceAtLeast(1)))?.let { fijarFondoConsola(id, "juego:" + it.clave) } }
         lista += Opcion(
-            "Juego del fondo", fondo.juego ?: "Ninguno con imagen", Icono.MANDO,
-            if (juegos.isEmpty()) "Ningún juego de esta consola tiene imagen todavía. Busca una con «Buscar imagen en internet»."
+            "Juego", fondo.juego ?: "Sin imagen", Icono.MANDO,
+            if (juegos.isEmpty()) "Ningún juego de esta consola tiene imagen todavía. Busca una con «Internet»."
             else "◀ ▶ cambia entre tus juegos de esta consola (${juegos.size} con imagen), del más jugado al menos.",
             menos = { ir(-1) },
         ) { ir(1) }
     }
     lista += Opcion(
-        "Buscar imagen en internet", if (e.consolasPropias[id]?.hero != null) "Propia ✓" else "Buscar", Icono.DESCARGA,
+        "Internet", if (e.consolasPropias[id]?.hero != null) "Propia ✓" else "Buscar", Icono.DESCARGA,
         "Busca imágenes grandes del juego del fondo en tus fuentes (ScreenScraper, TheGamesDB, IGDB, SteamGridDB) y de la consola. La que elijas queda de fondo.",
     ) { fijarFondoConsola(id, "imagen"); buscarFondoConsola(id) }
-    if (e.consolasPropias[id]?.fondo != null) lista += Opcion("Usar lo de Ajustes", icono = Icono.BORRAR,
+    if (e.consolasPropias[id]?.fondo != null) lista += Opcion("Como en Ajustes", icono = Icono.BORRAR,
         ayuda = "Vuelve a lo que eliges para todas las consolas en Ajustes › Estilo.") { fijarFondoConsola(id, null) }
     return lista.map { it.copy(grupo = "Fondo") }
 }

@@ -156,16 +156,23 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
         val fh by animateFloatAsState(if (conFocoAqui) foco!!.h * h else 0f, resorte, label = "fh")
         val pulso = rememberInfiniteTransition(label = "halo").animateFloat(.55f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "p")
         Canvas(
-            Modifier.fillMaxSize().graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+            Modifier.fillMaxSize()
                 .clickable(interactionSource = null, indication = null) { if (reto == null || retoHecho) Diptico.moverNovedades(1) },
         ) {
             val u = size.width / w
-            drawRect(Color(0xFF030308).copy(alpha = .74f))
+            val velo = Color(0xFF030308).copy(alpha = .74f)
+            if (fw <= 1f) drawRect(velo)
             if (fw > 1f) {
                 val o = androidx.compose.ui.geometry.Offset(fx * u, fy * u)
                 val sz = androidx.compose.ui.geometry.Size(fw * u, fh * u)
                 val r = androidx.compose.ui.geometry.CornerRadius(30f * u)
-                drawRoundRect(Color.Black, o, sz, r, blendMode = androidx.compose.ui.graphics.BlendMode.Clear)
+                // El velo con un hueco (par-impar): lo de adentro queda a la vista, sin capas aparte.
+                val camino = Path().apply {
+                    fillType = androidx.compose.ui.graphics.PathFillType.EvenOdd
+                    addRect(androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset.Zero, size))
+                    addRoundRect(androidx.compose.ui.geometry.RoundRect(androidx.compose.ui.geometry.Rect(o, sz), r))
+                }
+                drawPath(camino, velo)
                 drawRoundRect(Color(0xFF8FEAFF).copy(alpha = .45f * pulso.value), o, sz, r, style = androidx.compose.ui.graphics.drawscope.Stroke(14f * u))
                 drawRoundRect(Color(0xFFF4F3FA), o, sz, r, style = androidx.compose.ui.graphics.drawscope.Stroke(4f * u))
             }
@@ -182,9 +189,16 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
         // DIPPO y su globo, al lado de lo que explica (abajo del foco si hay lugar; si no, arriba).
         val pg = paginas[k]
         val anchoGlobo = minOf(680f, w * .6f)
-        val debajo = !conFocoAqui || (fy + fh + 360f < h)
-        val gx = (if (conFocoAqui) fx + 30f else w / 2 - anchoGlobo / 2).coerceIn(30f, w - anchoGlobo - 220f)
-        val gy = if (!conFocoAqui) h / 2 - 160f else if (debajo) fy + fh + 30f else (fy - 330f).coerceAtLeast(20f)
+        // Dónde cabe el globo: debajo del foco, arriba, a la derecha, a la izquierda o (si nada) dentro, abajo.
+        val altoGlobo = 300f
+        val (gx, gy) = when {
+            !conFocoAqui -> (w / 2 - anchoGlobo / 2) to (h / 2 - 160f)
+            fy + fh + altoGlobo + 40f < h -> (fx + 30f).coerceIn(30f, w - anchoGlobo - 220f) to (fy + fh + 30f)
+            fy - altoGlobo - 30f > 0f -> (fx + 30f).coerceIn(30f, w - anchoGlobo - 220f) to (fy - altoGlobo - 20f)
+            w - (fx + fw) > anchoGlobo + 230f -> (fx + fw + 30f) to (fy + 20f).coerceAtMost(h - altoGlobo - 20f)
+            fx > anchoGlobo + 230f -> (fx - anchoGlobo - 230f) to (fy + 20f).coerceAtMost(h - altoGlobo - 20f)
+            else -> (fx + 30f).coerceIn(30f, w - anchoGlobo - 220f) to (fy + fh - altoGlobo - 20f).coerceAtLeast(20f)
+        }
         val cara = caraReaccion ?: when { k == 0 -> CaraDippo.FELIZ; k == paginas.size - 1 -> CaraDippo.CELEBRANDO; reto != null && !retoHecho -> CaraDippo.PENSANDO; else -> CaraDippo.NORMAL }
         val px = with(androidx.compose.ui.platform.LocalDensity.current) { esc.d(1f).toPx() }
         val flota = rememberInfiniteTransition(label = "flota").animateFloat(-6f, 6f, infiniteRepeatable(tween(1700), RepeatMode.Reverse), label = "y")
