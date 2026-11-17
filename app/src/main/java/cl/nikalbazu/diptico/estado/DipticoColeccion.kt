@@ -77,9 +77,11 @@ object Modelos3D {
         "wiiu" to Modelo("wiiu", "Wii U GamePad controller & stand", "synthetic worlds", "CC BY 4.0"),
         "ps2" to Modelo("ps2", "classic ps2", "jei3323", "CC BY 4.0"),
         "ps4" to Modelo("ps4", "classic ps4", "jei3323", "CC BY 4.0"),
+        // La DS no tenía modelo: es una foto de Evan-Amos (Wikimedia Commons), de dominio público.
+        "nds" to Modelo("nds", "Nintendo DS Lite", "Evan-Amos", "dominio público"),
     )
     private val alias = mapOf("sfc" to "snes", "snesna" to "snes", "android" to "androidgames", "androidapps" to "androidgames",
-        "nds" to "n3ds", "3ds" to "n3ds", "rpgmaker" to "ports", "gahvoria" to "ports", "gamecube" to "gc", "ngc" to "gc")
+        "3ds" to "n3ds", "dsi" to "nds", "rpgmaker" to "ports", "gahvoria" to "ports", "gamecube" to "gc", "ngc" to "gc")
     fun idDe(id: String): String = alias[id] ?: id
     /**
      * Cuánto girar cada modelo para que parta mostrando su frente (cada autor lo armó mirando a un lado distinto;
@@ -88,7 +90,9 @@ object Modelos3D {
     private val frentes = mapOf("gba" to -90f, "n64" to 90f, "ps3" to 90f, "switch" to 180f, "wii" to -90f)
     fun frente(id: String): Float = frentes[idDe(id)] ?: 0f
     fun de(id: String): Modelo? = modelos[idDe(id)]
-    fun credito(id: String): String? = de(id)?.let { "Imagen del modelo «${it.nombre}» de ${it.autor} · ${it.licencia}" }
+    fun credito(id: String): String? = de(id)?.let {
+        if (it.licencia == "dominio público") "Foto de ${it.autor} · ${it.licencia}" else "Imagen del modelo «${it.nombre}» de ${it.autor} · ${it.licencia}"
+    }
     fun todos(): List<Pair<String, Modelo>> = modelos.toList()
 }
 
