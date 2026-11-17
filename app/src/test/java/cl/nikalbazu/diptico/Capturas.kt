@@ -1700,6 +1700,13 @@ class Capturas {
         }
         foto("483_cv_widgets_utiles", e, Rol.SUPERIOR)
     }
+    // Pantallas intercambiadas: lo de arriba dibujado en la pantalla de abajo (más angosta).
+    @Config(qualifiers = ABAJO)
+    @Test fun t485_cv_carpetas_arriba_en_abajo() = foto("485_cv_carpetas_arriba_en_abajo", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.SUPERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t486_cv_estudio_abajo() = foto("486_cv_estudio_abajo", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t487_cv_colecciones_abajo() = foto("487_cv_colecciones_abajo", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(pestanaCarpetas = 1) }, Rol.INFERIOR, mi = 1)
     @Config(qualifiers = ABAJO)
     @Test fun t484_cv_icono_carpeta() = foto("484_cv_icono_carpeta",
         cv().copy(panel = Panel.IMAGENES, candidatoPara = "c_portada", consolaEditando = "snes", nombreImagen = "Super Nintendo", fuenteImagen = "todas", indice = 2), Rol.INFERIOR, mi = 1)
