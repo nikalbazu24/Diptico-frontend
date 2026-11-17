@@ -763,3 +763,9 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `dockInicial1`), «+» en `FilaDock` → `abrirAppsParaFijar` (`extra.fijandoDock`), mantener una app del dock la quita.
   6a/6c: `PersonalizarConsolaCV` (una tarjeta con resumen, X) reemplaza la grilla de 6 opciones; `PistasFinas` ahora en píldora grande.
   Si sigue cayéndose: pedir a Nicolás que abra Díptico después de la caída y mande el informe (debería traer el rastro nativo).
+- Beta.596 de prueba (16 nov, 23:00): informes de Nicolás en Drive (carpeta de reportes, parentId 1Pborvc3Jktf6FfEF51IS946xgBYMKuAw).
+  Caída Java: `CarpetaClasica` (vista Carpeta) indexaba una lista de 5 giros con más juegos → `% 5`. Caída nativa al pasar por DS: el
+  AndroidView del 3D se desmontaba/montaba con consolas sin modelo; ahora el visor queda SIEMPRE montado y `mostrar(null)` solo vacía.
+  `Modelos3D.alias`: nds/3ds → n3ds, rpgmaker/gahvoria → ports (el pendrive). `Modelos3D.frente(id)` = giro para que cada modelo parta de
+  frente (+25° de pose); `herramientas/frentes3d.py` arma la hoja para revisarlo. `Fallas`: el rastro nativo prioriza líneas de filament/abort/SIG.
+  `RecorridoTest` ahora con más juegos, consolas sin modelo y la vista Carpeta (561/544 botones sin caídas).
