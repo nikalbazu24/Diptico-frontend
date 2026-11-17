@@ -29,7 +29,7 @@ object HistoriaConsolas {
         "gb" to FichaConsola("NINTENDO", 1989, "CUARTA GENERACIÓN", "La portátil de 1989 con pantalla verde y pilas que duraban horas. Tetris la hizo inolvidable."),
         "gbc" to FichaConsola("NINTENDO", 1998, "QUINTA GENERACIÓN", "De 1998, el Game Boy a color, compatible con los cartuchos del Game Boy original."),
         "gba" to FichaConsola("NINTENDO", 2001, "SEXTA GENERACIÓN", "La portátil de 32 bits de 2001 que también leía los cartuchos del Game Boy. En 2003 llegó el modelo SP, plegable y con luz."),
-        "nds" to FichaConsola("NINTENDO", 2004, "SÉPTIMA GENERACIÓN", "De 2004, con dos pantallas y la de abajo táctil: la misma idea que hoy tiene tu Thor."),
+        "nds" to FichaConsola("NINTENDO", 2004, "SÉPTIMA GENERACIÓN", "De 2004, con dos pantallas y la de abajo táctil: la misma idea de las portátiles de dos pantallas de hoy."),
         "n3ds" to FichaConsola("NINTENDO", 2011, "OCTAVA GENERACIÓN", "De 2011, con 3D sin lentes en la pantalla de arriba."),
         "virtualboy" to FichaConsola("NINTENDO", 1995, "QUINTA GENERACIÓN", "El visor de 1995 en rojo y negro: uno de los experimentos más raros de Nintendo."),
         "megadrive" to FichaConsola("SEGA", 1988, "CUARTA GENERACIÓN", "La Mega Drive de 1988, rival de la Super Nintendo, rápida como su mascota."),

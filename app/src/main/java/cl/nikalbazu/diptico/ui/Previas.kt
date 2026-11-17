@@ -321,7 +321,7 @@ private fun PreviaAcerca() {
     ) {
         Logo(24f)
         Texto("Versión ${Diptico.VERSION}", 16f, lineas = 1)
-        Detalle("Hecho con cariño para la AYN Thor", 12.5f, lineas = 1)
+        Detalle("Hecho con cariño para tu consola portátil", 12.5f, lineas = 1)
         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
             listOf(Uva, Coral, Sol, Cielo).forEach { Box(Modifier.size(esc.d(10)).clip(CircleShape).background(it)) }
         }

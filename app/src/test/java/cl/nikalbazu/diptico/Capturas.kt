@@ -1713,6 +1713,22 @@ class Capturas {
     @Test fun t489_cv_estudio_arriba_en_abajo() = foto("489_cv_estudio_arriba_en_abajo", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.SUPERIOR, mi = 1)
     @Config(qualifiers = ARRIBA)
     @Test fun t490_cv_estudio_abajo_en_arriba() = foto("490_cv_estudio_abajo_en_arriba", estudio(0, 0).let { it.copy(extra = it.extra.copy(coleccionViva = true)) }, Rol.INFERIOR, mi = 0)
+    // Personalizar consola (boceto 9): opciones arriba, panel vivo abajo, y en una pantalla lado a lado.
+    @Test fun t491_cv_consola_opciones() = foto("491_cv_consola_opciones", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 3), Rol.SUPERIOR)
+    @Config(qualifiers = ABAJO)
+    @Test fun t492_cv_consola_viva() = foto("492_cv_consola_viva", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 3), Rol.INFERIOR, mi = 1)
+    @Test fun t493_cv_consola_una() = foto("493_cv_consola_una", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)).copy(panel = Panel.EDITAR_CONSOLA, consolaEditando = "snes", indice = 8), Rol.UNICA)
+    // Tu espacio (boceto 10): vacío con DIPPO, con widgets, la otra pantalla con la tienda, editando (tiembla) y una pantalla con la tienda al lado.
+    @Test fun t494_cv_espacio_vacio() = foto("494_cv_espacio_vacio", cv().let { it.copy(inicio = "widgets", widgets = it.widgets.map { w -> w.copy(visible = false) }) }, Rol.SUPERIOR)
+    @Test fun t495_cv_espacio_con_widgets() {
+        cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
+        try { foto("495_cv_espacio_con_widgets", cv().copy(inicio = "widgets", paginas = 2), Rol.SUPERIOR) } finally { cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = null }
+    }
+    @Config(qualifiers = ABAJO)
+    @Test fun t496_cv_espacio_abajo() = foto("496_cv_espacio_abajo", cv { it.copy(tiendaCat = 0, espacioSel = 1) }.copy(inicio = "widgets", paginas = 2), Rol.INFERIOR, mi = 1)
+    @Test fun t497_cv_espacio_editando() = foto("497_cv_espacio_editando", cv().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0), Rol.SUPERIOR, avance = 220)
+    @Test fun t498_cv_espacio_una_tienda() = foto("498_cv_espacio_una_tienda", cv { it.copy(tiendaLado = true) }.copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Test fun t499_cv_espacio_ancho() = foto("499_cv_espacio_ancho", cv { it.copy(paginaAncho = 2) }.copy(inicio = "widgets"), Rol.SUPERIOR)
     @Config(qualifiers = ABAJO)
     @Test fun t484_cv_icono_carpeta() = foto("484_cv_icono_carpeta",
         cv().copy(panel = Panel.IMAGENES, candidatoPara = "c_portada", consolaEditando = "snes", nombreImagen = "Super Nintendo", fuenteImagen = "todas", indice = 2), Rol.INFERIOR, mi = 1)

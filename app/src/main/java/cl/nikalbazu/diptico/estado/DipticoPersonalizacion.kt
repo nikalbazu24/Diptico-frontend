@@ -87,8 +87,8 @@ internal fun Diptico.aplicarPerfil(v: Experiencia) {
         almacen.guardarTexto("gridCols", cols.toString())
         almacen.guardarTexto("gridFilas", filas.toString())
         almacen.guardarTexto("paginas", r.paginas.toString())
-        Widgets.COLUMNAS = cols
-        Widgets.FILAS = filas
+        Widgets.COLUMNAS = cols * estado.value.extra.paginaAncho
+        Widgets.FILAS = filas * estado.value.extra.paginaAlto
         guardarWidgets(r.widgets)
         actualizar { it.copy(gridCols = cols, gridFilas = filas, paginas = r.paginas, paginaInicio = 0) }
     }
