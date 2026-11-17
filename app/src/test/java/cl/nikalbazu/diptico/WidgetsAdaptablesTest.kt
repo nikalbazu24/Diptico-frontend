@@ -32,7 +32,7 @@ class WidgetsAdaptablesTest {
     }
     @Test fun losTresApartadosConservanTodaLaPersonalizacion() {
         val e = preparar()
-        val titulos = (0..2).flatMap { grupo -> Diptico.controlesEstudio(e.copy(navegacion = e.navegacion.copy(grupoEditorWidget = grupo))) }.map { it.titulo }.toSet()
+        val titulos = (0..3).flatMap { grupo -> Diptico.controlesEstudio(e.copy(navegacion = e.navegacion.copy(grupoEditorWidget = grupo))) }.map { it.titulo }.toSet()
         listOf("Mover", "Forma", "Ancho", "Alto", "Página", "Estilo", "Color", "Fondo", "Esquinas", "Tamaño del contenido", "Copiar el estilo a todos", "Quitar este widget").forEach { assertTrue(it, it in titulos) }
         assertFalse(Diptico.controlesEstudio(e).any { it.titulo == "Copiar el estilo a todos" })
     }
