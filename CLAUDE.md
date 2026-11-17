@@ -748,3 +748,11 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `Estado.conf`, `Diptico.confWidget`, `controlesUtil`, texto «wconf:<tipo>:<clave>» en `guardarTextoPanel`, `Red` con caché, `Deportes`
   (ESPN público: scoreboard, teams, schedule, standings), `Clima` (Open-Meteo), `Feriados` (apis.digital.gob.cl con respaldo fijo)) y
   `ui/WidgetsUtiles.kt` (`WidgetUtil`, se dibuja según an×al; `ContenidoWidget` lo llama antes del caso 1 columna). Capturas t482–t484.
+- Estabilidad (16 nov, noche): Nicolás reportó 3D que desaparece, tamaños distintos, cierres seguidos hasta no abrir, lentitud, GC con piso.
+  Modelos: `ps2work/quitar.mjs` borra mallas por nombre (gc «Ground», psp «ground», n64 cables y controles); `revisar.py` arma `chk/todo.png`.
+  Visor: `Motor3D.visorPara` anota «dibujando» ANTES de crear el motor (y pausa si falla); `VisorConsola` sin `ModelViewer.onTouch`
+  (giro propio yaw/pitch ±35°, inercia, vuelve solo; gira solo a los 2,5 s), dibuja solo cuando cambia (`cuadrosPendientes`), sin sombras.
+  `DipticoApp`: modo seguro (prefs `arranque.tempranos`: 2 cierres antes de 30 s → `Motor3D.pausarPorSeguridad` + inicio "heroe").
+  `BotonWidgetsCV` (píldora «Widgets») junto a la hora en `ColeccionArriba` y `CarpetasArribaCV`.
+  `RecorridoTest` (en el CI de todas las ramas): una y dos pantallas, caminos pensados + 400 botones al azar; imprime «RECORRIDO …».
+  Las caídas nativas de Filament NO se ven en Robolectric (allí el 3D es un reemplazo): eso solo se prueba en la Thor.

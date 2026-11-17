@@ -55,7 +55,7 @@ jobs:
           ls -la app/discord
 
       - name: Probar perfiles, navegación y estabilidad
-        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --tests "cl.nikalbazu.diptico.CajasLocalesTest" --no-daemon
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --tests "cl.nikalbazu.diptico.CajasLocalesTest" --tests "cl.nikalbazu.diptico.RecorridoTest" --no-daemon
 
       - name: Compilar y verificar firma de distribución
         if: env.FIRMAR == 'true'
