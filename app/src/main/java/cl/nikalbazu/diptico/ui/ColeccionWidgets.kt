@@ -32,7 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -96,9 +96,20 @@ private fun MarcoWidget(e: Estado, w: WidgetCV, fondo: Brush? = null, onClick: (
     val editando = e.extra.editandoWidgetsCV
     Box(Modifier.fillMaxSize().clip(forma).background(col.vidrioFuerte).then(if (fondo != null) Modifier.background(fondo) else Modifier)
         .border(1.dp, col.borde, forma)
-        .then(if (editando) Modifier.drawBehind {
-            drawRoundRect(col.acento, style = Stroke(3.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f))),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(28f * col.radio * esc.factor * density))
+        .then(if (editando) Modifier.drawWithContent {
+            drawContent()
+            // El punteado se dibuja dentro del recorte y con el mismo radio de la tarjeta.
+            // Así no aparecen esquinas cuadradas ni líneas cortadas por el borde superior.
+            val trazo = 3.dp.toPx()
+            val margen = trazo / 2f
+            val radio = (28f * col.radio * esc.factor * density - margen).coerceAtLeast(0f)
+            drawRoundRect(
+                col.acento,
+                topLeft = Offset(margen, margen),
+                size = Size((size.width - trazo).coerceAtLeast(0f), (size.height - trazo).coerceAtLeast(0f)),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(radio),
+                style = Stroke(trazo, pathEffect = PathEffect.dashPathEffect(floatArrayOf(14.dp.toPx(), 10.dp.toPx()))),
+            )
         } else Modifier)
         .then(if (onClick != null && !editando) Modifier.clickable(onClick = onClick) else Modifier)) {
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(22), vertical = esc.d(20)), verticalArrangement = Arrangement.spacedBy(esc.d(8)), content = contenido)
