@@ -580,7 +580,7 @@ object Teclas {
         }
         // En Tu espacio: la Galería de widgets (su propia pantalla) se maneja con el control; sin ella, Y la abre,
         // X entra a editar y B vuelve al inicio.
-        if (cvLibre && e.inicio == "widgets" && e.widgetFoco < 0) {
+        if (cvLibre && e.inicio == "widgets" && (e.widgetFoco < 0 || e.extra.galeria)) {
             val d = dir(code)
             val una = ev.repeatCount == 0
             if (e.extra.galeria) {
@@ -600,6 +600,17 @@ object Teclas {
                 esA(code) && e.espacioVacio() -> { if (abajo && una) Diptico.agregarSugeridos(); return true }
                 esB(code) -> { if (abajo && una) Diptico.pasoEspacio(-(e.paginaInicio + 1)); return true }
             }
+        }
+
+        // Con un widget enfocado, X abre sus opciones y Y lleva a la Galería;
+        // la navegación del estante nunca debe recibir esos botones por debajo.
+        if (cvLibre && e.inicio == "widgets" && e.widgetFoco >= 0 &&
+            (code == KeyEvent.KEYCODE_BUTTON_X || code == KeyEvent.KEYCODE_BUTTON_Y)) {
+            if (abajo && ev.repeatCount == 0) {
+                if (code == KeyEvent.KEYCODE_BUTTON_X) Diptico.editarEsteWidget(e.widgets.getOrNull(e.widgetFoco)?.tipo)
+                else Diptico.abrirGaleriaWidgets()
+            }
+            return true
         }
 
         // Moviendo un juego de lugar: la cruceta lo corre; A, B o Start terminan.
@@ -1154,7 +1165,34 @@ object Teclas {
         val deWidgets = when (modo) { "invertido" -> izquierdo; "clasico" -> false; else -> !izquierdo }
         val deJuegos = when (modo) { "invertido" -> !izquierdo; "clasico" -> false; else -> izquierdo }
         val libre = e.sesion == null && !e.conTeclado && e.configurado && !e.intro && e.bienvenida == 0L
-        // Editor de widgets: el stick de widgets cambia de página o elige en vertical.
+        // Prioridad absoluta de Tu espacio: ambos sticks se quedan en widgets, Galería
+        // o pestañas de edición. No dejan pasar movimientos al estante de atrás.
+        val enEspacioCV = e.extra.coleccionViva && e.inicio == "widgets" && e.sesion == null &&
+            e.panel == Panel.NINGUNO && !e.conTeclado && !e.ordenando
+        if (enEspacioCV && e.editandoWidgets && e.extra.espacioEdita >= 0) {
+            if (libre) pulsar(d, 0) // Mover · Tamaño · Páginas · Fondo
+            return
+        }
+        if (enEspacioCV && !e.editandoWidgets) {
+            if (libre) {
+                when {
+                    e.extra.galeria -> pulsar(d, 0)
+                    e.widgetFoco < 0 -> Diptico.entrarWidgets()
+                    else -> {
+                        Diptico.moverFocoWidget(dx, dy)
+                        cl.nikalbazu.diptico.audio.Sonidos.mover()
+                    }
+                }
+            }
+            return
+        }
+        // En el menú de un widget, ambos sticks recorren sus opciones, no la grilla.
+        if (libre && e.editandoWidgets && e.panel == Panel.ESTUDIO &&
+            e.estudioZona == "panel" && e.burbuja == null) {
+            pulsar(d, 0)
+            return
+        }
+        // Editor tradicional: conserva las preferencias de sticks de cada usuario.
         if (libre && e.editandoWidgets && (e.panel == Panel.NINGUNO || e.panel == Panel.ESTUDIO) && e.burbuja == null) {
             val desliza = if (modo == "clasico") !izquierdo else deWidgets
             if (desliza) {
@@ -1168,12 +1206,6 @@ object Teclas {
             return
         }
         val enInicio = libre && e.inicio == "widgets" && e.panel == Panel.NINGUNO && !e.editandoWidgets && !e.ordenando
-        // Colección viva: en Tu espacio los dos sticks se quedan en los widgets (o en la Galería), nunca en las consolas de atrás.
-        if (enInicio && e.extra.coleccionViva) {
-            if (e.extra.galeria) pulsar(d, 0)
-            else if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
-            return
-        }
         if (enInicio && deWidgets) {
             if (e.widgetFoco < 0) Diptico.entrarWidgets() else { Diptico.moverFocoWidget(dx, dy); cl.nikalbazu.diptico.audio.Sonidos.mover() }
             return
