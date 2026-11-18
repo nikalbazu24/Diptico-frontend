@@ -327,13 +327,16 @@ private fun MapaEspacio(e: Estado, mover: Boolean, modifier: Modifier) {
             val an = w.an.coerceAtMost(cols - w.x).coerceAtLeast(1); val al = w.al.coerceAtMost(filas - w.y).coerceAtLeast(1)
             val elegido = mover && i == e.widgetSel
             var arrastre by androidx.compose.runtime.remember(i, w.x, w.y) { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+            // Un único contorno redondeado: mismo radio para el recorte, el fondo
+            // y la selección. Antes había dos radios y un borde sin recorte exterior.
+            val formaWidget = RoundedCornerShape(esc.d(20))
             Box(
                 Modifier.offset(esc.d(w.x * (cw + g)), esc.d(w.y * (ch + g)))
                     .size(esc.d(an * cw + (an - 1) * g), esc.d(al * ch + (al - 1) * g))
                     .graphicsLayer { translationX = arrastre.x; translationY = arrastre.y }
                     .zIndex(if (elegido) 2f else 1f)
-                    .then(if (elegido) Modifier.border(esc.d(4), Color.White, RoundedCornerShape(esc.d(19))).padding(esc.d(7)) else Modifier)
-                    .clip(RoundedCornerShape(esc.d(16))).background(Color(COLORES_MAPA[orden % COLORES_MAPA.size]))
+                    .clip(formaWidget).background(Color(COLORES_MAPA[orden % COLORES_MAPA.size]))
+                    .then(if (elegido) Modifier.border(esc.d(4), Color.White, formaWidget) else Modifier)
                     .clickable(onClickLabel = Widgets.nombre(w.tipo)) {
                         if (e.extra.espacioEdita < 0) Diptico.editarEspacio(0)
                         if (Diptico.estado.value.extra.espacioEdita != 0) Diptico.elegirPestanaEspacio(0)
