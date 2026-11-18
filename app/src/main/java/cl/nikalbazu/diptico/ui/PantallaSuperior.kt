@@ -265,13 +265,12 @@ private fun ContenidoBarra(e: Estado, juego: Juego?, modifier: Modifier, arriba:
     val esc = LocalEscala.current
     val compacta = arriba || esc.angosta
     val widgets = e.inicio == "widgets"
-    // El estilo de la barra de la pantalla de arriba: sólida (como antes), difusa o transparente.
-    val base = if (arriba) modifier else when (e.extra.estiloBarraArriba) {
-        "solida" -> modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.60f), p.fondo)))
-        else -> modifier.fillMaxWidth().fondoBarra(e.extra.estiloBarraArriba)
-    }
+    // Fondo inferior 100 % transparente: los botones conservan su sitio y sus zonas de toque.
+    // La barra superior mantiene su comportamiento y estilo anteriores.
+    val base = if (arriba) modifier else modifier.fillMaxWidth()
     Column(base) {
-        if (!arriba) Spacer(Modifier.fillMaxWidth().height(esc.d(1)).background(p.linea.copy(alpha = 0.62f)))
+        // Conserva el pixel de altura original sin dibujar la antigua línea divisoria.
+        if (!arriba) Spacer(Modifier.fillMaxWidth().height(esc.d(1)))
         Row(
             Modifier.then(if (arriba) Modifier else Modifier.fillMaxWidth())
                 .horizontalScroll(rememberScrollState()).padding(
