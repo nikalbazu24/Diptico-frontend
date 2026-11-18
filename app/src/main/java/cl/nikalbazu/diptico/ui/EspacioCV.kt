@@ -32,6 +32,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.drawBehind
 import cl.nikalbazu.diptico.estado.*
 
 /*
@@ -110,138 +120,421 @@ internal fun EspacioVacioCV(e: Estado, modifier: Modifier = Modifier) {
 }
 
 /**
- * La otra pantalla mientras estás en Tu espacio (boceto 12c): la tira de páginas, el acceso grande a la Galería de
- * widgets y los accesos de siempre. La Galería ya no va mezclada aquí: tiene su propia pantalla ([GaleriaAbajoCV]).
+ * La pantalla de abajo mientras estás en Tu espacio (boceto S221ptEpUYaNtWFkc4kbQ9, a tamaño real de 1240 × 1080):
+ *  - arriba, «Tu espacio» y la tira de páginas (L2/R2);
+ *  - la Galería de widgets como un solo botón grande y dorado;
+ *  - al medio, el mapa de la página que miras y el botón grande «Editar espacio» (X);
+ *  - con Editar, el medio se transforma en pestañas Mover · Tamaño · Páginas · Fondo (nada se abre encima; B termina);
+ *  - abajo, el dock de apps a la izquierda y DIPPO con su globito a la derecha. Sin pistas de botones.
  */
 @Composable
 fun EspacioAbajoCV(e: Estado) {
-    if (e.extra.galeria) { GaleriaAbajoCV(e); return }
-    LienzoBoceto(1240f, 1080f, Modifier.testTag("espacio-abajo"), fondo = LocalColeccion.current.fondo, zoom = ZOOM_ABAJO) {
+    if (e.extra.galeria && e.extra.espacioEdita < 0) { GaleriaAbajoCV(e); return }
+    val editando = e.extra.espacioEdita >= 0
+    LienzoBoceto(1240f, 1080f, Modifier.testTag("espacio-abajo"), fondo = LocalColeccion.current.fondo) {
         val esc = LocalEscala.current
-        val col = LocalColeccion.current
-        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(28)), verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
-                TB("Tu espacio", 44f, titulo = true)
-                TB(nombreTamPagina(e.extra.paginaAncho, e.extra.paginaAlto), 19f, color = col.sub, modifier = Modifier.padding(bottom = esc.d(6)))
-            }
-            TiraPaginas(e, Modifier.fillMaxWidth().height(esc.d(140)))
-            // El acceso grande a la Galería.
-            Row(
-                Modifier.fillMaxWidth().weight(1.2f).clip(RoundedCornerShape(esc.d(44)))
-                    .background(Brush.linearGradient(listOf(col.acento, col.acento.copy(alpha = .55f), col.fondo)))
-                    .border(1.dp, col.borde, RoundedCornerShape(esc.d(44)))
-                    .clickable(onClickLabel = "Abrir la Galería de widgets") { Diptico.abrirGaleriaWidgets() }
-                    .testTag("abrir-galeria").padding(horizontal = esc.d(36)),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(28)),
-            ) {
-                MosaicoGaleria(Modifier.size(esc.d(170), esc.d(120)))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                    TB("Galería de widgets", 40f, titulo = true)
-                    TB("${totalGaleria()} widgets para tu espacio. Lo que eliges va a la página que estás mirando.", 20f, color = col.texto.copy(alpha = .85f), lineas = 2)
+        Box(Modifier.fillMaxSize().drawBehind {
+            drawRect(Brush.radialGradient(listOf(Color(0xFF1B1F4A).copy(alpha = .55f), Color.Transparent),
+                center = androidx.compose.ui.geometry.Offset(size.width * .8f, 0f), radius = size.width * .9f))
+        })
+        Column(Modifier.fillMaxSize().padding(start = esc.d(44), end = esc.d(44), top = esc.d(40)), verticalArrangement = Arrangement.spacedBy(esc.d(26))) {
+            CabeceraEspacio(e)
+            if (editando) EdicionEspacio(e, Modifier.fillMaxWidth().weight(1f))
+            else {
+                BotonGaleria(Modifier.fillMaxWidth().height(esc.d(230)))
+                Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(26))) {
+                    TarjetaMapa(e, false, Modifier.weight(1f).fillMaxHeight())
+                    BotonEditarEspacio(Modifier.width(esc.d(330)).fillMaxHeight())
                 }
-                PistaTecla("Y", "Abrir")
             }
-            Row(Modifier.fillMaxWidth().weight(.8f), horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                AccesoEspacio("Editar", "Mover, estirar y cambiar cada widget", "X", Modifier.weight(1f)) { Diptico.editarWidgets() }
-                TamanoPagina(e, Modifier.weight(1f))
-                AccesoEspacio("Fondo", "Una imagen tuya detrás", null, Modifier.weight(1f)) { Diptico.pedirArchivoPara("fondoInicio", "image/*") }
-            }
-            Row(
-                Modifier.fillMaxWidth().height(esc.d(100)).vidrio(32f).padding(horizontal = esc.d(22)),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(18)),
-            ) {
-                cl.nikalbazu.diptico.bisa.AvatarBisa(64f * esc.factor)
-                TB(ideaEspacio(e), 20f, peso = FontWeight.ExtraBold, lineas = 2, modifier = Modifier.weight(1f))
-            }
-            PistasFinas("L2 R2" to "Página", "Y" to "Galería", "X" to "Editar", "B" to "Volver al inicio")
+            PieEspacio(e)
         }
     }
 }
 
-/** Lo que DIPPO dice abajo según la página que estás mirando. */
-private fun ideaEspacio(e: Estado): String = when {
-    e.espacioVacio() -> "Tu espacio está vacío: A agrega los tres que te propongo, o abre la Galería con Y."
-    e.widgets.none { it.visible && it.pagina == e.paginaInicio } -> "Esta página está vacía. Abre la Galería y elige uno."
-    else -> "Mantén presionado un widget para cambiar lo que muestra."
+/** «Tu espacio» con la tira de páginas al lado: L2 ‹ Inicio · Pág 1 · Pág 2 · + › R2. */
+@Composable
+private fun CabeceraEspacio(e: Estado) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val editando = e.extra.espacioEdita >= 0
+    Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(20))) {
+        TB("Tu espacio", 54f, titulo = true)
+        Gatillo("L2") { if (editando) Diptico.irAPagina(e.paginaInicio - 1) else Diptico.pasoEspacio(-1) }
+        val paginas = (if (editando) emptyList() else listOf("Inicio" to "tu colección")) + (0 until e.paginas).map { p ->
+            val n = e.widgets.count { it.visible && it.pagina == p }
+            "Pág ${p + 1}" to (if (n == 0) "vacía" else if (n == 1) "1 widget" else "$n widgets")
+        }
+        val desfase = if (editando) 0 else 1
+        val conMas = e.paginas < 12
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.weight(1f)) {
+            val hueco = 12f
+            val total = paginas.size + if (conMas) .6f else 0f
+            val ancho = ((maxWidth.value / esc.factor - hueco * (paginas.size)) / total).coerceIn(130f, 230f)
+            val scroll = rememberScrollState()
+            Row(Modifier.fillMaxWidth().horizontalScroll(scroll), horizontalArrangement = Arrangement.spacedBy(esc.d(hueco))) {
+                paginas.forEachIndexed { k, (t, nota) ->
+                    val pagina = k - desfase
+                    val on = pagina == e.paginaInicio
+                    Column(
+                        Modifier.width(esc.d(ancho)).height(esc.d(76)).clip(RoundedCornerShape(esc.d(22)))
+                            .background(if (on) col.elegido else col.texto.copy(alpha = .07f))
+                            .border(esc.d(2), if (on) col.elegido else col.texto.copy(alpha = .11f), RoundedCornerShape(esc.d(22)))
+                            .clickable(onClickLabel = t) { if (pagina < 0) Diptico.fijarInicio("heroe") else Diptico.irAPagina(pagina) }
+                            .testTag("pagina-$k"),
+                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                    ) {
+                        TB(t, 26f, peso = FontWeight.ExtraBold, color = if (on) col.enElegido else col.texto)
+                        TB(nota, 17f, color = if (on) col.enElegido.copy(alpha = .65f) else col.sub)
+                    }
+                }
+                if (conMas) Column(
+                    Modifier.width(esc.d(ancho * .6f)).height(esc.d(76)).clip(RoundedCornerShape(esc.d(22)))
+                        .border(esc.d(2), col.texto.copy(alpha = .22f), RoundedCornerShape(esc.d(22)))
+                        .clickable(onClickLabel = "Agregar página") { Diptico.agregarPaginaEspacio() },
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                ) { TB("+", 26f, peso = FontWeight.ExtraBold, traducir = false); TB("Página", 17f, color = col.sub) }
+            }
+            val elegida = e.paginaInicio + desfase
+            val dens = androidx.compose.ui.platform.LocalDensity.current.density
+            LaunchedEffect(elegida, ancho) { scroll.animateScrollTo(((ancho + hueco) * (elegida - 1).coerceAtLeast(0) * esc.factor * dens).toInt()) }
+        }
+        Gatillo("R2") { if (editando) Diptico.irAPagina(e.paginaInicio + 1) else Diptico.pasoEspacio(1) }
+    }
 }
 
-/** El dibujito del acceso: unos widgets de colores acomodados. */
+/** El círculo de un gatillo (L2/R2), que también se toca. */
+@Composable
+private fun Gatillo(t: String, accion: () -> Unit) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    Box(Modifier.size(esc.d(56)).clip(CircleShape).border(esc.d(3), col.texto.copy(alpha = .55f), CircleShape).clickable(onClick = accion),
+        contentAlignment = Alignment.Center) { TB(t, 18f, peso = FontWeight.ExtraBold, color = col.texto.copy(alpha = .8f), traducir = false) }
+}
+
+/** El botón grande y dorado de la Galería de widgets. */
+@Composable
+private fun BotonGaleria(modifier: Modifier) {
+    val esc = LocalEscala.current
+    val forma = RoundedCornerShape(esc.d(34))
+    Row(
+        modifier.clip(forma)
+            .background(Brush.horizontalGradient(0f to Color(0xFFF1C757), .38f to Color(0xFFC9952F), .78f to Color(0xFF3A2F2C), 1f to Color(0xFF1A1C30)))
+            .border(esc.d(4), Color.White, forma)
+            .clickable(onClickLabel = "Abrir la Galería de widgets") { Diptico.abrirGaleriaWidgets() }
+            .testTag("abrir-galeria").padding(horizontal = esc.d(46)),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(40)),
+    ) {
+        MosaicoGaleria(Modifier.size(esc.d(200), esc.d(134)))
+        Column(Modifier.weight(1f)) {
+            TB("Galería de widgets", 50f, titulo = true, color = Color(0xFF1A1306))
+            TB("${totalGaleria()} widgets. Lo que elijas va a la página que estás mirando.", 24f, color = Color(0xFF3A2A08),
+                peso = FontWeight.Bold, lineas = 2, modifier = Modifier.padding(top = esc.d(4)))
+        }
+    }
+}
+
+/** El dibujito del botón: cuatro widgets de colores acomodados. */
 @Composable
 private fun MosaicoGaleria(modifier: Modifier) {
-    val col = LocalColeccion.current
     androidx.compose.foundation.Canvas(modifier) {
         val g = size.width * .05f
-        val cw = (size.width - 2 * g) / 3f; val ch = (size.height - g) / 2f
-        val r = androidx.compose.ui.geometry.CornerRadius(cw * .22f)
-        fun caja(x: Int, y: Int, an: Int, c: Color) = drawRoundRect(c, androidx.compose.ui.geometry.Offset(x * (cw + g), y * (ch + g)),
-            androidx.compose.ui.geometry.Size(an * cw + (an - 1) * g, ch), r)
-        caja(0, 0, 2, col.texto.copy(alpha = .9f)); caja(2, 0, 1, Coral); caja(0, 1, 1, Color(0xFF2EC4A6)); caja(1, 1, 2, col.texto.copy(alpha = .35f))
+        val c1 = (size.width - g) * 1.3f / 2.3f; val c2 = size.width - g - c1
+        val ch = (size.height - g) / 2f
+        val r = androidx.compose.ui.geometry.CornerRadius(ch * .26f)
+        fun caja(x: Float, y: Float, w: Float, c: Long) = drawRoundRect(Color(c), androidx.compose.ui.geometry.Offset(x, y), androidx.compose.ui.geometry.Size(w, ch), r)
+        caja(0f, 0f, c1, 0xFFFFFBE9); caja(c1 + g, 0f, c2, 0xFF6B6BFF); caja(0f, ch + g, c1, 0xFF1FB59A); caja(c1 + g, ch + g, c2, 0xFFF6DCAE)
     }
 }
 
-/** Las páginas en fila: el inicio, cada página de widgets y «+ Página» (L2/R2 pasan de una a otra). */
+/** El botón grande «Editar espacio» (X). */
 @Composable
-private fun TiraPaginas(e: Estado, modifier: Modifier) {
+private fun BotonEditarEspacio(modifier: Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    Row(modifier.vidrio(36f).padding(horizontal = esc.d(18), vertical = esc.d(16)), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-        PistaTecla("L2", "")
-        Row(Modifier.weight(1f).fillMaxHeight().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-            val paginas = listOf("Inicio" to "tu colección") + (0 until e.paginas).map { p ->
-                val n = e.widgets.count { it.visible && it.pagina == p }
-                "Pág ${p + 1}" to (if (n == 0) "vacía" else "$n widgets")
+    val forma = RoundedCornerShape(esc.d(30))
+    Column(
+        modifier.clip(forma).background(col.texto.copy(alpha = .08f)).border(esc.d(3), col.texto.copy(alpha = .25f), forma)
+            .clickable(onClickLabel = "Editar espacio") { Diptico.editarEspacio() }.testTag("editar-espacio").padding(esc.d(30)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(16), Alignment.CenterVertically),
+    ) {
+        Box(Modifier.size(esc.d(66)).clip(CircleShape).border(esc.d(4), col.texto, CircleShape), contentAlignment = Alignment.Center) {
+            TB("X", 28f, peso = FontWeight.ExtraBold, traducir = false)
+        }
+        TB("Editar espacio", 38f, titulo = true, lineas = 2)
+        TB("Mover widgets, tamaño, páginas y fondo, todo aquí.", 21f, color = col.sub, lineas = 3)
+    }
+}
+
+/** Colores de los widgets en el mapa (los del boceto), con letra oscura encima. */
+private val COLORES_MAPA = listOf(0xFFFFFBE9, 0xFF6B6BFF, 0xFF1FB59A, 0xFFF6DCAE, 0xFFFF8A6B)
+
+/** Fondo del mapa: el fondo elegido o el vidrio de siempre. */
+private fun fondoMapa(e: Estado): Brush? = FONDOS_ESPACIO.getOrNull(e.extra.fondoEspacio)?.let { c ->
+    Brush.linearGradient(c.map { Color(it) })
+}
+
+/** La tarjeta con el mapa de la página que estás mirando. */
+@Composable
+private fun TarjetaMapa(e: Estado, mover: Boolean, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val forma = RoundedCornerShape(esc.d(30))
+    Column(
+        modifier.clip(forma).background(col.texto.copy(alpha = .04f)).border(esc.d(2), col.texto.copy(alpha = .10f), forma)
+            .padding(horizontal = esc.d(28), vertical = esc.d(24)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(16)),
+    ) {
+        Row(Modifier.fillMaxWidth()) {
+            val an = e.extra.paginaAncho; val al = e.extra.paginaAlto
+            TB(if (mover || e.extra.espacioEdita >= 0) "Pág ${e.paginaInicio + 1} · $an × $al" else "Pág ${e.paginaInicio + 1}", 24f, peso = FontWeight.ExtraBold,
+                color = col.sub, modifier = Modifier.weight(1f), traducir = false)
+            TB(if (e.extra.espacioEdita >= 0) "B · Listo" else "$an × $al pantalla${if (an * al > 1) "s" else ""}", 24f, peso = FontWeight.ExtraBold, color = col.sub)
+        }
+        MapaEspacio(e, mover, Modifier.fillMaxWidth().weight(1f))
+    }
+}
+
+/**
+ * La cuadrícula de la página con sus widgets. En «Mover», el elegido lleva un anillo blanco y se arrastra con el dedo;
+ * al soltar, cae en la celda más cercana (los vecinos se corren). Fuera del modo edición, tocar un widget entra a moverlo.
+ */
+@Composable
+private fun MapaEspacio(e: Estado, mover: Boolean, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val cols = Widgets.COLUMNAS.coerceAtLeast(1); val filas = Widgets.FILAS.coerceAtLeast(1)
+    val enPagina = e.widgets.withIndex().filter { (_, w) -> w.visible && w.pagina == e.paginaInicio }
+    val fondo = fondoMapa(e)
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier.clip(RoundedCornerShape(esc.d(20))).then(if (fondo != null) Modifier.background(fondo) else Modifier)
+        .testTag("mapa-espacio")) {
+        val g = 12f
+        val anchoU = maxWidth.value / esc.factor; val altoU = maxHeight.value / esc.factor
+        val cw = (anchoU - g * (cols - 1)) / cols; val ch = (altoU - g * (filas - 1)) / filas
+        // Las celdas punteadas.
+        androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+            val f = size.width / anchoU
+            val r = androidx.compose.ui.geometry.CornerRadius(14f * f)
+            for (y in 0 until filas) for (x in 0 until cols) drawRoundRect(col.texto.copy(alpha = .09f),
+                androidx.compose.ui.geometry.Offset(x * (cw + g) * f, y * (ch + g) * f), androidx.compose.ui.geometry.Size(cw * f, ch * f), r,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(2f * f, pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f * f, 8f * f))))
+        }
+        if (enPagina.isEmpty()) Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            TB("Página vacía", 24f, color = col.sub)
+            TB("Abre la Galería y elige uno", 18f, color = col.sub)
+        }
+        enPagina.forEachIndexed { orden, (i, w) ->
+            val an = w.an.coerceAtMost(cols - w.x).coerceAtLeast(1); val al = w.al.coerceAtMost(filas - w.y).coerceAtLeast(1)
+            val elegido = mover && i == e.widgetSel
+            var arrastre by androidx.compose.runtime.remember(i, w.x, w.y) { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+            Box(
+                Modifier.offset(esc.d(w.x * (cw + g)), esc.d(w.y * (ch + g)))
+                    .size(esc.d(an * cw + (an - 1) * g), esc.d(al * ch + (al - 1) * g))
+                    .graphicsLayer { translationX = arrastre.x; translationY = arrastre.y }
+                    .zIndex(if (elegido) 2f else 1f)
+                    .then(if (elegido) Modifier.border(esc.d(4), Color.White, RoundedCornerShape(esc.d(19))).padding(esc.d(7)) else Modifier)
+                    .clip(RoundedCornerShape(esc.d(16))).background(Color(COLORES_MAPA[orden % COLORES_MAPA.size]))
+                    .clickable(onClickLabel = Widgets.nombre(w.tipo)) {
+                        if (e.extra.espacioEdita < 0) Diptico.editarEspacio(0)
+                        if (Diptico.estado.value.extra.espacioEdita != 0) Diptico.elegirPestanaEspacio(0)
+                        Diptico.elegirWidget(i)
+                    }
+                    .then(if (mover) Modifier.pointerInput(i, w.x, w.y, cw, ch) {
+                        val celdaX = (cw + g) * esc.factor * density
+                        val celdaY = (ch + g) * esc.factor * density
+                        detectDragGestures(
+                            onDragStart = { Diptico.elegirWidget(i) },
+                            onDragCancel = { arrastre = androidx.compose.ui.geometry.Offset.Zero },
+                            onDragEnd = {
+                                val dx = kotlin.math.round(arrastre.x / celdaX).toInt(); val dy = kotlin.math.round(arrastre.y / celdaY).toInt()
+                                arrastre = androidx.compose.ui.geometry.Offset.Zero
+                                if (dx != 0 || dy != 0) Diptico.ponerWidget(i, w.x + dx, w.y + dy, w.pagina)
+                            },
+                        ) { cambio, d -> cambio.consume(); arrastre += d }
+                    } else Modifier)
+                    .padding(esc.d(12)),
+                contentAlignment = Alignment.BottomStart,
+            ) { TB(Widgets.nombre(w.tipo), 20f, peso = FontWeight.ExtraBold, color = Color(0xFF0B0C16), lineas = 2) }
+        }
+    }
+}
+
+/** Modo edición: las cuatro pestañas y, debajo, el mapa al lado de los controles de la pestaña. */
+@Composable
+private fun EdicionEspacio(e: Estado, modifier: Modifier) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val tab = e.extra.espacioEdita
+    Column(modifier.testTag("espacio-edicion"), verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+            PESTANAS_ESPACIO.forEachIndexed { i, t ->
+                val on = i == tab
+                Box(
+                    Modifier.weight(1f).height(esc.d(74)).clip(RoundedCornerShape(esc.d(22)))
+                        .background(if (on) col.elegido else col.texto.copy(alpha = .06f))
+                        .border(esc.d(2), if (on) col.elegido else col.texto.copy(alpha = .16f), RoundedCornerShape(esc.d(22)))
+                        .clickable(onClickLabel = t) { Diptico.elegirPestanaEspacio(i) }.testTag("pestana-espacio-$i"),
+                    contentAlignment = Alignment.Center,
+                ) { TB(t, 26f, peso = FontWeight.ExtraBold, color = if (on) col.enElegido else col.texto) }
             }
-            paginas.forEachIndexed { k, (t, nota) ->
-                val on = k == e.paginaInicio + 1
-                Column(
-                    Modifier.width(esc.d(170)).fillMaxHeight().clip(RoundedCornerShape(esc.d(26)))
-                        .background(if (on) col.elegido else col.texto.copy(alpha = .05f))
-                        .border(1.dp, if (on) Color.Transparent else col.borde, RoundedCornerShape(esc.d(26)))
-                        .clickable { if (k == 0) Diptico.fijarInicio("heroe") else Diptico.irAPagina(k - 1) },
-                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-                ) {
-                    TB(t, 23f, titulo = true, color = if (on) col.enElegido else col.texto)
-                    TB(nota, 15f, color = if (on) col.enElegido.copy(alpha = .7f) else col.sub, peso = FontWeight.ExtraBold)
+        }
+        Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(26))) {
+            TarjetaMapa(e, tab == 0, Modifier.weight(1.3f).fillMaxHeight())
+            val forma = RoundedCornerShape(esc.d(30))
+            Column(
+                Modifier.weight(1f).fillMaxHeight().clip(forma).background(col.texto.copy(alpha = .05f)).border(esc.d(2), col.texto.copy(alpha = .10f), forma)
+                    .verticalScroll(rememberScrollState()).padding(esc.d(28)),
+                verticalArrangement = Arrangement.spacedBy(esc.d(20)),
+            ) {
+                when (tab) {
+                    0 -> ControlesMover(e)
+                    1 -> ControlesTamano(e)
+                    2 -> ControlesPaginas(e)
+                    else -> ControlesFondo(e)
                 }
             }
-            if (e.paginas < 12) Column(
-                Modifier.width(esc.d(120)).fillMaxHeight().clip(RoundedCornerShape(esc.d(26)))
-                    .border(2.dp, col.texto.copy(alpha = .35f), RoundedCornerShape(esc.d(26)))
-                    .clickable(onClickLabel = "Agregar página") { Diptico.agregarPaginaEspacio() },
-                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-            ) { TB("+", 34f, titulo = true); TB("Página", 15f, peso = FontWeight.ExtraBold) }
         }
-        PistaTecla("R2", "")
     }
 }
 
-/** El tamaño de la página que estás mirando: ancho y alto en pantallas (1 a 3), y quitarla. */
+/** Un botón redondo del panel de controles (claro = el principal). */
 @Composable
-private fun TamanoPagina(e: Estado, modifier: Modifier) {
+private fun BotonEsp(t: String, modifier: Modifier = Modifier, claro: Boolean = false, activo: Boolean = true, traducir: Boolean = true, accion: () -> Unit) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    @Composable
-    fun Mini(t: String, desc: String, activo: Boolean, accion: () -> Unit) {
-        Box(Modifier.size(esc.d(46)).clip(CircleShape).background(col.texto.copy(alpha = if (activo) .12f else .04f))
-            .clickable(enabled = activo, onClickLabel = desc, onClick = accion), contentAlignment = Alignment.Center) {
-            TB(t, 22f, color = if (activo) col.texto else col.tenue, peso = FontWeight.ExtraBold, traducir = false)
+    val forma = RoundedCornerShape(50)
+    Box(
+        modifier.height(esc.d(64)).widthIn(min = esc.d(64)).clip(forma)
+            .background(if (claro) col.elegido else col.texto.copy(alpha = .09f))
+            .border(esc.d(2), if (claro) col.elegido else col.texto.copy(alpha = .22f), forma)
+            .clickable(enabled = activo, onClickLabel = t, onClick = accion).padding(horizontal = esc.d(22)),
+        contentAlignment = Alignment.Center,
+    ) { TB(t, 24f, peso = FontWeight.ExtraBold, color = (if (claro) col.enElegido else col.texto).copy(alpha = if (activo) 1f else .35f), traducir = traducir) }
+}
+
+/** Una fila «texto … − +». */
+@Composable
+private fun FilaMasMenos(t: String, menos: Boolean, mas: Boolean, alMenos: () -> Unit, alMas: () -> Unit) {
+    val esc = LocalEscala.current
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+        TB(t, 24f, modifier = Modifier.weight(1f), lineas = 2)
+        BotonEsp("−", activo = menos, traducir = false, accion = alMenos)
+        BotonEsp("+", activo = mas, traducir = false, accion = alMas)
+    }
+}
+
+@Composable
+private fun ControlesMover(e: Estado) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val w = e.widgets.getOrNull(e.widgetSel)?.takeIf { it.visible && it.pagina == e.paginaInicio }
+    if (w == null) {
+        TB("No hay widgets aquí", 24f)
+        TB("Vuelve y abre la Galería para poner el primero.", 21f, color = col.sub, lineas = 3)
+        return
+    }
+    Row { TB("Moviendo: ", 24f); TB(Widgets.nombre(w.tipo), 24f, peso = FontWeight.ExtraBold) }
+    TB("Cruceta o arrastra con el dedo. L1 / R1 eligen otro widget.", 21f, color = col.sub, lineas = 3)
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
+        @Composable fun Celda(t: String, claro: Boolean = false, a: () -> Unit) = BotonEsp(t, Modifier.width(esc.d(72)), claro = claro, traducir = false, accion = a)
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) { Spacer(Modifier.width(esc.d(72))); Celda("▲") { Diptico.moverWidgetSel(0, -1) } }
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+            Celda("◀") { Diptico.moverWidgetSel(-1, 0) }; Celda("⇄", claro = true) { Diptico.otroWidgetEspacio(1) }; Celda("▶") { Diptico.moverWidgetSel(1, 0) }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) { Spacer(Modifier.width(esc.d(72))); Celda("▼") { Diptico.moverWidgetSel(0, 1) } }
+    }
+    FilaMasMenos("Tamaño del widget · ${w.an} × ${w.al}", w.an > 1 || w.al > 1, w.x + w.an < Widgets.COLUMNAS || w.y + w.al < Widgets.FILAS,
+        { Diptico.crecerWidgetEspacio(-1) }, { Diptico.crecerWidgetEspacio(1) })
+}
+
+@Composable
+private fun ControlesTamano(e: Estado) {
+    val col = LocalColeccion.current
+    val an = e.extra.paginaAncho; val al = e.extra.paginaAlto
+    TB("Tamaño de la página", 24f)
+    TB("Para una gran corrida de espacio: agrándala y desliza para recorrerla.", 21f, color = col.sub, lineas = 3)
+    FilaMasMenos("Ancho: $an pantalla${if (an > 1) "s" else ""}", an > 1, an < 3, { Diptico.cambiarTamPagina(-1, 0) }, { Diptico.cambiarTamPagina(1, 0) })
+    FilaMasMenos("Alto: $al pantalla${if (al > 1) "s" else ""}", al > 1, al < 3, { Diptico.cambiarTamPagina(0, -1) }, { Diptico.cambiarTamPagina(0, 1) })
+}
+
+@Composable
+private fun ControlesPaginas(e: Estado) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val vacia = e.widgets.none { it.visible && it.pagina == e.paginaInicio }
+    TB(if (e.paginas == 1) "1 página" else "${e.paginas} páginas", 24f)
+    TB("La de Inicio siempre va primero.", 21f, color = col.sub, lineas = 2)
+    BotonEsp("+ Página nueva", Modifier.fillMaxWidth(), claro = true, activo = e.paginas < 12) { Diptico.agregarPaginaEspacio() }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+        BotonEsp("◀ Antes", Modifier.weight(1f), activo = e.paginaInicio > 0) { Diptico.moverPaginaEspacio(-1) }
+        BotonEsp("Después ▶", Modifier.weight(1f), activo = e.paginaInicio < e.paginas - 1) { Diptico.moverPaginaEspacio(1) }
+    }
+    BotonEsp("Quitar esta página", Modifier.fillMaxWidth(), activo = e.paginas > 1 && vacia) { Diptico.quitarPaginaEspacio() }
+    if (e.paginas > 1 && !vacia) TB("Para quitarla, primero saca sus widgets.", 18f, color = col.sub, lineas = 2)
+}
+
+@Composable
+private fun ControlesFondo(e: Estado) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    TB("Fondo de Tu espacio", 24f)
+    // «Como viene» + los fondos listos, en filas de tres.
+    val opciones = listOf(-1) + FONDOS_ESPACIO.indices.toList()
+    opciones.chunked(3).forEach { fila ->
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+            fila.forEach { i ->
+                val on = i == e.extra.fondoEspacio && (i >= 0 || e.fondoInicio == null)
+                val forma = RoundedCornerShape(esc.d(18))
+                Box(
+                    Modifier.weight(1f).height(esc.d(96)).clip(forma)
+                        .then(FONDOS_ESPACIO.getOrNull(i)?.let { c -> Modifier.background(Brush.linearGradient(c.map { Color(it) })) }
+                            ?: Modifier.background(col.texto.copy(alpha = .08f)))
+                        .border(esc.d(3), if (on) Color.White else Color.Transparent, forma)
+                        .clickable(onClickLabel = if (i < 0) "Como viene" else "Fondo ${i + 1}") { Diptico.elegirFondoEspacio(i) },
+                    contentAlignment = Alignment.Center,
+                ) { if (i < 0) TB("Como viene", 18f, peso = FontWeight.ExtraBold) }
+            }
         }
     }
-    Column(modifier.fillMaxHeight().vidrio(34f).padding(horizontal = esc.d(18), vertical = esc.d(14)), verticalArrangement = Arrangement.spacedBy(esc.d(8), Alignment.CenterVertically)) {
-        TB("Tamaño", 26f, titulo = true)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-            TB("Ancho ${e.extra.paginaAncho}", 17f, color = col.sub, peso = FontWeight.ExtraBold, modifier = Modifier.weight(1f), traducir = false)
-            Mini("−", "Menos ancho", e.extra.paginaAncho > 1) { Diptico.cambiarTamPagina(-1, 0) }
-            Mini("+", "Más ancho", e.extra.paginaAncho < 3) { Diptico.cambiarTamPagina(1, 0) }
+    BotonEsp(if (e.fondoInicio != null) "🖼 Cambiar tu imagen" else "🖼 Una imagen tuya", Modifier.fillMaxWidth()) { Diptico.pedirArchivoPara("fondoInicio", "image/*") }
+    if (e.fondoInicio != null) BotonEsp("Quitar tu imagen", Modifier.fillMaxWidth()) { Diptico.quitarImagenEspacio() }
+}
+
+/** Lo que DIPPO dice abajo según lo que estás haciendo. */
+private fun ideaEspacio(e: Estado): String {
+    val vacia = e.widgets.none { it.visible && it.pagina == e.paginaInicio }
+    return when (e.extra.espacioEdita) {
+        0 -> if (vacia) "Esta página no tiene widgets. Pon uno desde la Galería." else "Mueve, agranda o cambia el fondo. B cuando termines."
+        1 -> "Agrándala y después la recorres deslizando."
+        2 -> "Puedes tener hasta 12 páginas."
+        3 -> "Un fondo oscuro hace que tus widgets brillen."
+        else -> when {
+            e.espacioVacio() -> "¿Armamos tu espacio? Abre la Galería y elige un widget."
+            vacia -> "Esta página está vacía. ¿Le ponemos un widget?"
+            else -> "Toca «Editar espacio» para moverlos o cambiar su tamaño."
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-            TB("Alto ${e.extra.paginaAlto}", 17f, color = col.sub, peso = FontWeight.ExtraBold, modifier = Modifier.weight(1f), traducir = false)
-            Mini("−", "Menos alto", e.extra.paginaAlto > 1) { Diptico.cambiarTamPagina(0, -1) }
-            Mini("+", "Más alto", e.extra.paginaAlto < 3) { Diptico.cambiarTamPagina(0, 1) }
-        }
-        if (e.paginas > 1) TB("Quitar esta página", 15f, color = Color(0xFFFF8A8A), peso = FontWeight.ExtraBold,
-            modifier = Modifier.clickable { Diptico.quitarPaginaEspacio() })
+    }
+}
+
+/** El pie: tus apps a la izquierda y DIPPO con su globito a la derecha. */
+@Composable
+private fun PieEspacio(e: Estado) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    Row(
+        Modifier.fillMaxWidth().height(esc.d(168)).padding(bottom = esc.d(18)),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(26)),
+    ) {
+        if (e.extra.dock) Box(
+            Modifier.clip(RoundedCornerShape(esc.d(34))).background(col.texto.copy(alpha = .06f))
+                .border(esc.d(2), col.texto.copy(alpha = .11f), RoundedCornerShape(esc.d(34))).padding(horizontal = esc.d(18), vertical = esc.d(12)),
+        ) { FilaDock(e, 92f) }
+        Spacer(Modifier.weight(1f))
+        Box(
+            Modifier.widthIn(max = esc.d(380)).clip(RoundedCornerShape(esc.d(26), esc.d(26), esc.d(6), esc.d(26))).background(col.elegido)
+                .padding(horizontal = esc.d(22), vertical = esc.d(16)),
+        ) { TB(ideaEspacio(e), 23f, peso = FontWeight.ExtraBold, color = col.enElegido, lineas = 3) }
+        cl.nikalbazu.diptico.bisa.AvatarBisa(116f * esc.factor)
     }
 }
 
@@ -384,20 +677,6 @@ private fun MapaPagina(e: Estado, tipo: String, an: Int, al: Int, modifier: Modi
             drawRoundRect(col.texto, p, s, r, style = androidx.compose.ui.graphics.drawscope.Stroke(4f,
                 pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(14f, 10f))))
         }
-    }
-}
-
-@Composable
-private fun AccesoEspacio(t: String, nota: String, tecla: String?, modifier: Modifier, accion: () -> Unit) {
-    val esc = LocalEscala.current
-    val col = LocalColeccion.current
-    Column(modifier.fillMaxHeight().vidrio(34f).clickable(onClick = accion).padding(horizontal = esc.d(22)),
-        verticalArrangement = Arrangement.spacedBy(esc.d(8), Alignment.CenterVertically)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-            if (tecla != null) PistaTecla(tecla, "")
-            TB(t, 28f, titulo = true)
-        }
-        TB(nota, 17f, color = col.sub, lineas = 2)
     }
 }
 

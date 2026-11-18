@@ -110,7 +110,7 @@ fun PantallaInferior(e: Estado, miDisplay: Int) {
         Box(Modifier.fillMaxSize().then(if (conLupa) Modifier else Modifier.difuminar(e))) {
             when {
                 s != null && s.displayId != miDisplay && !s.dosPantallas -> EnJuego(e)
-                coleccionVivaActiva(e) && !e.editandoWidgets -> when {
+                coleccionVivaActiva(e) && (!e.editandoWidgets || (e.extra.espacioEdita >= 0 && e.panel == Panel.NINGUNO)) -> when {
                     // Tu espacio arriba: aquí van los accesos, las páginas y la tienda de widgets.
                     e.inicio == "widgets" -> EspacioAbajoCV(e)
                     e.enSistemas -> CarpetasAbajoCV(e)
