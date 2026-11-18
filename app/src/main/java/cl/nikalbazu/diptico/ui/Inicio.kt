@@ -108,8 +108,11 @@ fun PantallaInicio(e: Estado) {
         Box(Modifier.fillMaxSize().then(if (Estilo.glass && LocalCristal.current.efectos && !e.editandoWidgets)
             Modifier.fondoDeVentana(fondo, e.nivelesGlass.widgets, mostrarDifuminado = false) else Modifier)) {
         // Fondo: el arte del juego elegido, difuminado, con un brillo del color del tema.
-        if (e.editandoWidgets) {
+        if (e.editandoWidgets && e.extra.espacioEdita < 0) {
             Box(Modifier.fillMaxSize().background(p.fondo))
+        } else if (e.fondoInicio == null && e.extra.fondoEspacio >= 0) {
+            // Un fondo listo de Tu espacio (Editar › Fondo).
+            Box(Modifier.fillMaxSize().background(Brush.linearGradient(FONDOS_ESPACIO[e.extra.fondoEspacio.coerceAtMost(FONDOS_ESPACIO.size - 1)].map { Color(it) })))
         } else if (e.fondoInicio != null) {
             ImagenAnimada(android.net.Uri.parse(e.fondoInicio), Modifier.fillMaxSize())
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.15f), p.fondo.copy(alpha = 0.7f)))))
@@ -129,7 +132,7 @@ fun PantallaInicio(e: Estado) {
         Column(Modifier.fillMaxSize().padding(start = esc.d(14), end = esc.d(14), top = esc.d(if (e.editandoWidgets) 18 else 10), bottom = esc.d(8))) {
             if (e.editandoWidgets) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    val enEdicion = e.widgets.getOrNull(e.widgetSel)?.takeIf { e.extra.coleccionViva && it.visible && e.panel == Panel.ESTUDIO && e.estudioPestana == 0 }
+                    val enEdicion = e.widgets.getOrNull(e.widgetSel)?.takeIf { e.extra.coleccionViva && it.visible && ((e.panel == Panel.ESTUDIO && e.estudioPestana == 0) || e.extra.espacioEdita == 0) }
                     Box(Modifier.weight(1f)) { Texto(if (enEdicion != null) "Editando: " + Widgets.nombre(enEdicion.tipo) else "Organizar widgets", 20f, lineas = 1) }
                     Box(
                         Modifier.clip(RoundedCornerShape(50)).fondoBoton(Uva).clickable { Diptico.terminarEdicion() }
@@ -138,7 +141,8 @@ fun PantallaInicio(e: Estado) {
                 }
                 Spacer(Modifier.height(esc.d(2)))
                 Detalle(
-                    if (e.extra.coleccionViva && e.panel == Panel.ESTUDIO && e.estudioPestana == 0)
+                    if (e.extra.espacioEdita >= 0) "Editando en la pantalla de abajo · arrastra para mover · estira desde la esquina"
+                    else if (e.extra.coleccionViva && e.panel == Panel.ESTUDIO && e.estudioPestana == 0)
                         (if (e.unaPantalla) "El menú está al costado · arrastra para mover · estira desde la esquina" else "El menú está en la otra pantalla · arrastra para mover · estira desde la esquina")
                     else if (e.unaPantalla) "Arrastra para mover o quitar · estira desde la esquina"
                     else "Arrastra para mover o quitar · agrega desde la otra pantalla",

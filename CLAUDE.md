@@ -842,3 +842,12 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 ## Beta.643 (17 nov, noche, Sonnet; sin publicar)
 - Vuelve el paso `PasoTuto.PANTALLAS` («Tus pantallas») como PRIMERO de la configuración, solo si `e.dosDisponibles` (en equipos de una pantalla no aparece).
   Dos / Una (abajo en negro) / Una con abajo libre; `PreviaPantallas`; DIPPO avisa que se cambia después en Ajustes › Pantallas › Modo de pantallas. Capturas t527.
+
+## PRÓXIMO (17 nov, 23:10): rediseño de «Tu espacio» abajo — boceto APROBADO
+- Boceto (1240×1080 real): https://claude.ai/artifact/S221ptEpUYaNtWFkc4kbQ9 (versión 3). Nicolás: «por ahí sí».
+- Pantalla de abajo (`EspacioAbajoCV` en ui/EspacioCV.kt): cabecera «Tu espacio» + tira de páginas con L2/R2; Galería de widgets como un
+  solo botón grande dorado (sin «Y · Abrir»); al medio mapa de la página actual + botón grande «Editar espacio» (X); pie: dock de apps
+  izq. y DIPPO con globito der. (SIN pistas de botones). Editar = reemplaza el medio (nada encima): pestañas Mover (cruceta/dedo, L1/R1
+  otro widget, ± tamaño), Tamaño (página 1–3 pantallas ancho/alto), Páginas (nueva, quitar, reordenar; Inicio siempre primera), Fondo; B = listo.
+- Después (con cuota nueva, Opus): quitar opciones sin uso de Ajustes, limpiar código, optimizar fluidez y publicar como **Díptico 2.0.0**
+  (el workflow hoy publica `v1.1-beta.<run>`: cambiar el nombre de versión). Beta.646 (paso «Tus pantallas») sigue sin publicar.

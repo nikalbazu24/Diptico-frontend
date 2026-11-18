@@ -1717,6 +1717,18 @@ class Capturas {
     }
     @Config(qualifiers = ABAJO)
     @Test fun t496_cv_espacio_abajo() = foto("496_cv_espacio_abajo", cv { it.copy(tiendaCat = 0, espacioSel = 1) }.copy(inicio = "widgets", paginas = 2), Rol.INFERIOR, mi = 1)
+    // Tu espacio abajo, rediseño (boceto S221pt…): normal, y editando en cada pestaña (Mover, Tamaño, Páginas, Fondo).
+    @Config(qualifiers = ABAJO)
+    @Test fun t530_espacio_abajo() = foto("530_espacio_abajo", cv().copy(inicio = "widgets", paginas = 2), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t531_espacio_mover() = foto("531_espacio_mover", cv { it.copy(espacioEdita = 0) }.copy(inicio = "widgets", paginas = 2, editandoWidgets = true, widgetSel = 0), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t532_espacio_tamano() = foto("532_espacio_tamano", cv { it.copy(espacioEdita = 1, paginaAncho = 2) }.copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t533_espacio_paginas() = foto("533_espacio_paginas", cv { it.copy(espacioEdita = 2) }.copy(inicio = "widgets", paginas = 3, paginaInicio = 1, editandoWidgets = true), Rol.INFERIOR, mi = 1)
+    @Config(qualifiers = ABAJO)
+    @Test fun t534_espacio_fondo() = foto("534_espacio_fondo", cv { it.copy(espacioEdita = 3, fondoEspacio = 1) }.copy(inicio = "widgets", editandoWidgets = true), Rol.INFERIOR, mi = 1)
+    @Test fun t535_espacio_mover_arriba() = foto("535_espacio_mover_arriba", cv { it.copy(espacioEdita = 0, fondoEspacio = 1) }.copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0), Rol.SUPERIOR, avance = 220)
     @Test fun t497_cv_espacio_editando() = foto("497_cv_espacio_editando", cv().copy(inicio = "widgets", editandoWidgets = true, widgetSel = 0), Rol.SUPERIOR, avance = 220)
     @Test fun t498_cv_espacio_una_tienda() = foto("498_cv_espacio_una_tienda", cv { it.copy(tiendaLado = true) }.copy(inicio = "widgets", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
     @Test fun t499_cv_espacio_ancho() = foto("499_cv_espacio_ancho", cv { it.copy(paginaAncho = 2) }.copy(inicio = "widgets"), Rol.SUPERIOR)

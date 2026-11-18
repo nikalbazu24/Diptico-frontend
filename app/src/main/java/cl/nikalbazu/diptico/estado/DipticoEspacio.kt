@@ -248,3 +248,113 @@ fun Diptico.agregarDesdeGaleria() {
     }
     ponerEnEspacio(tipo)
 }
+
+
+// ── Tu espacio abajo · modo edición (boceto S221ptEpUYaNtWFkc4kbQ9): cambia la parte del medio, no abre nada encima. ──
+
+/** Las pestañas del modo edición. */
+val PESTANAS_ESPACIO = listOf("Mover", "Tamaño", "Páginas", "Fondo")
+
+/** Fondos listos para Tu espacio (degradados oscuros del boceto; el último es negro). */
+val FONDOS_ESPACIO: List<List<Long>> = listOf(
+    listOf(0xFF1B1F4A, 0xFF0B0C16), listOf(0xFF3B1D5A, 0xFF0B0C16), listOf(0xFF0F3B3A, 0xFF0B0C16),
+    listOf(0xFF5A3A14, 0xFF0B0C16), listOf(0xFF40101C, 0xFF0B0C16), listOf(0xFF000000, 0xFF000000),
+)
+
+/** Entra al modo edición de Tu espacio. Si estabas mirando el inicio, va a la primera página de widgets. */
+fun Diptico.editarEspacio(pestana: Int = 0) {
+    almacen.guardarTexto("inicio", "widgets")
+    actualizar { it.copy(inicio = "widgets", editandoWidgets = true, panel = Panel.NINGUNO, estudioMover = false, widgetFoco = -1,
+        burbuja = null, celdaCatalogo = null, extra = it.extra.copy(espacioEdita = pestana.coerceIn(0, PESTANAS_ESPACIO.size - 1), galeria = false)) }
+    actualizar { it.copy(widgetSel = widgetsDePagina(it).firstOrNull() ?: -1) }
+    Sonidos.aceptar()
+}
+
+/** B: guarda y vuelve a Tu espacio. */
+fun Diptico.terminarEspacio() {
+    almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
+    actualizar { it.copy(editandoWidgets = false, estudioMover = false, burbuja = null, celdaCatalogo = null, extra = it.extra.copy(espacioEdita = -1)) }
+    Sonidos.atras()
+}
+
+fun Diptico.elegirPestanaEspacio(i: Int) {
+    actualizar { it.copy(extra = it.extra.copy(espacioEdita = i.mod(PESTANAS_ESPACIO.size))) }
+    Sonidos.mover()
+}
+
+fun Diptico.pestanaEspacio(d: Int) = elegirPestanaEspacio(estado.value.extra.espacioEdita + d)
+
+/** L1/R1 en «Mover»: otro widget de la misma página. */
+fun Diptico.otroWidgetEspacio(d: Int) {
+    val l = widgetsDePagina()
+    if (l.isEmpty()) return
+    val pos = l.indexOf(estado.value.widgetSel)
+    actualizar { it.copy(widgetSel = l[(pos + d).mod(l.size)]) }
+    Sonidos.mover()
+}
+
+/** Agranda (d > 0) o achica el widget elegido: primero a lo ancho, después a lo alto, para que crezca parejo. */
+fun Diptico.crecerWidgetEspacio(d: Int) {
+    val e = estado.value
+    val w = e.widgets.getOrNull(e.widgetSel)?.takeIf { it.visible } ?: return
+    val (an, al) = if (d > 0) { if (w.an <= w.al) w.an + 1 to w.al else w.an to w.al + 1 }
+        else { if (w.an > w.al) w.an - 1 to w.al else w.an to (w.al - 1) }
+    if (an < 1 || al < 1) return
+    redimensionarWidget(e.widgetSel, an, al)
+    Sonidos.mover()
+}
+
+/** Corre la página que estás mirando un lugar antes (d < 0) o después, con sus widgets. El inicio siempre va primero. */
+fun Diptico.moverPaginaEspacio(d: Int) {
+    val e = estado.value
+    val p = e.paginaInicio
+    val q = p + d
+    if (q < 0 || q >= e.paginas) return
+    val l = e.widgets.map { when (it.pagina) { p -> it.copy(pagina = q); q -> it.copy(pagina = p); else -> it } }
+    almacen.guardarTexto("widgets", escribirWidgets(l))
+    actualizar { it.copy(widgets = l, paginaInicio = q) }
+    Sonidos.mover()
+}
+
+/** Elige el fondo de Tu espacio: −1 = como viene; si eliges uno listo, se quita tu imagen. */
+fun Diptico.elegirFondoEspacio(i: Int) {
+    val v = i.coerceIn(-1, FONDOS_ESPACIO.size - 1)
+    almacen.guardarTexto("fondoEspacio", v.toString())
+    if (v >= 0 && estado.value.fondoInicio != null) {
+        almacen.guardarTexto("fondoInicio", "")
+        actualizar { it.copy(fondoInicio = null) }
+    }
+    actualizar { it.copy(extra = it.extra.copy(fondoEspacio = v)) }
+    Sonidos.mover()
+}
+
+fun Diptico.quitarImagenEspacio() {
+    almacen.guardarTexto("fondoInicio", "")
+    actualizar { it.copy(fondoInicio = null) }
+}
+
+/** Cruceta en el modo edición, según la pestaña. */
+fun Diptico.crucetaEspacio(dx: Int, dy: Int) {
+    val e = estado.value
+    when (e.extra.espacioEdita) {
+        0 -> moverWidgetSel(dx, dy)
+        1 -> cambiarTamPagina(dx, dy)
+        2 -> if (dx != 0) moverPaginaEspacio(dx)
+        3 -> if (dx != 0 || dy != 0) elegirFondoEspacio((e.extra.fondoEspacio + dx + dy * 3).coerceIn(-1, FONDOS_ESPACIO.size - 1))
+    }
+}
+
+/** A en el modo edición: agranda el widget, agrega una página o pide tu imagen de fondo. */
+fun Diptico.aEspacio() = when (estado.value.extra.espacioEdita) {
+    0 -> crecerWidgetEspacio(1)
+    2 -> agregarPaginaEspacio()
+    3 -> pedirArchivoPara("fondoInicio", "image/*")
+    else -> Unit
+}
+
+/** X en el modo edición: achica el widget o quita la página (si está vacía). */
+fun Diptico.xEspacio() = when (estado.value.extra.espacioEdita) {
+    0 -> crecerWidgetEspacio(-1)
+    2 -> quitarPaginaEspacio()
+    else -> Unit
+}

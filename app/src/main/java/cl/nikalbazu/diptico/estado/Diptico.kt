@@ -450,6 +450,10 @@ data class EstadoExtra(
     /** Tu espacio: cuántas pantallas de ancho y de alto mide cada página de widgets (1 a 3; se desliza para ver el resto). */
     val paginaAncho: Int = 1,
     val paginaAlto: Int = 1,
+    /** Tu espacio abajo: la pestaña del modo edición (0 Mover, 1 Tamaño, 2 Páginas, 3 Fondo); −1 = sin editar. */
+    val espacioEdita: Int = -1,
+    /** Fondo de Tu espacio: −1 = como viene (arte del juego o tu imagen); 0.. = uno de [FONDOS_ESPACIO]. */
+    val fondoEspacio: Int = -1,
     /** Las apps se abrieron desde el «+» del dock: elegir una la fija y vuelve. */
     val fijandoDock: Boolean = false,
     /** Consolas que muestran su logo en vez del nombre. */
@@ -1120,6 +1124,7 @@ object Diptico {
                 coleccionViva = almacen.bool("coleccionViva", true),
                 paginaAncho = (almacen.texto("paginaAncho", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
                 paginaAlto = (almacen.texto("paginaAlto", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
+                fondoEspacio = (almacen.texto("fondoEspacio", "-1").toIntOrNull() ?: -1).coerceIn(-1, FONDOS_ESPACIO.size - 1),
                 widgetsCVOcultos = almacen.texto("widgetsCVOcultos", "").split("|").filter { it.isNotBlank() }.toSet(),
                 vistaColeccion = almacen.texto("vistaColeccion", "estante"),
                 vistaCarpetasCV = almacen.texto("vistaCarpetasCV", "grande"),

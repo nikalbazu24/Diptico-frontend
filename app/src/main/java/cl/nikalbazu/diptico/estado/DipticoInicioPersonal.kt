@@ -167,7 +167,7 @@ fun Diptico.editarWidgets() {
 fun Diptico.terminarEdicion() {
     almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
     actualizar { it.copy(editandoWidgets = false, estudioMover = false, burbuja = null, celdaCatalogo = null,
-        panel = if (it.panel == Panel.ESTUDIO) Panel.NINGUNO else it.panel) }
+        panel = if (it.panel == Panel.ESTUDIO) Panel.NINGUNO else it.panel, extra = it.extra.copy(espacioEdita = -1)) }
     avisar("Inicio guardado")
 }
 

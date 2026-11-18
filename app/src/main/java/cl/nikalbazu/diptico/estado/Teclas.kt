@@ -556,6 +556,9 @@ object Teclas {
             return true
         }
 
+        // Tu espacio · modo edición de abajo (boceto S221pt…): pestañas Mover · Tamaño · Páginas · Fondo, nada encima.
+        if (e.extra.espacioEdita >= 0 && e.editandoWidgets && e.panel == Panel.NINGUNO) return espacioEdicion(ev, e)
+
         // Estudio de widgets (o el inicio en modo edición sin el panel abierto).
         if (e.panel == Panel.ESTUDIO || (e.editandoWidgets && e.panel == Panel.NINGUNO)) return estudio(ev, e)
 
@@ -593,7 +596,7 @@ object Teclas {
             } else when {
                 d != null -> { if (abajo) Diptico.entrarWidgets(); return true }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.abrirGaleriaWidgets(); return true }
-                code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.editarWidgets(); return true }
+                code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.editarEspacio(); return true }
                 esA(code) && e.espacioVacio() -> { if (abajo && una) Diptico.agregarSugeridos(); return true }
                 esB(code) -> { if (abajo && una) Diptico.pasoEspacio(-(e.paginaInicio + 1)); return true }
             }
@@ -945,6 +948,32 @@ object Teclas {
      * mantener A (o Y) abre la burbuja para agregar, X cambia el estilo y R1 pasa a las opciones del panel.
      * Zona "panel": la cruceta recorre las opciones; B vuelve a la grilla. Start o B en la grilla: listo.
      */
+    /**
+     * Modo edición de Tu espacio. Cruceta = lo de la pestaña (mover el widget, tamaño de la página, ordenar páginas, elegir fondo),
+     * L1/R1 = otro widget, L2/R2 = otra página, Y = siguiente pestaña, A = agrandar / página nueva / tu imagen,
+     * X = achicar / quitar página, B o Start = listo.
+     */
+    private fun espacioEdicion(ev: KeyEvent, e: Estado): Boolean {
+        val code = ev.keyCode
+        if (ev.action != KeyEvent.ACTION_DOWN) return true
+        val una = ev.repeatCount == 0
+        dir(code)?.let { (dx, dy) -> Diptico.crucetaEspacio(dx, dy); return true }
+        when {
+            code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1 -> if (una) {
+                val d = if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1
+                if (e.extra.espacioEdita == 0) Diptico.otroWidgetEspacio(d) else Diptico.pestanaEspacio(d)
+            }
+            code == KeyEvent.KEYCODE_BUTTON_L2 || code == KeyEvent.KEYCODE_BUTTON_R2 -> if (una) {
+                Diptico.irAPagina(e.paginaInicio + if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1); cl.nikalbazu.diptico.audio.Sonidos.mover()
+            }
+            code == KeyEvent.KEYCODE_BUTTON_Y -> if (una) Diptico.pestanaEspacio(1)
+            esA(code) -> if (una) Diptico.aEspacio()
+            code == KeyEvent.KEYCODE_BUTTON_X -> if (una) Diptico.xEspacio()
+            esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> if (una) Diptico.terminarEspacio()
+        }
+        return true
+    }
+
     private fun estudio(ev: KeyEvent, e: Estado): Boolean {
         val tiendaCV = e.estudioPestana == 1 && e.extra.coleccionViva && !e.unaPantalla && !e.estudioMover
         val menuCV = e.estudioPestana == 0 && e.extra.coleccionViva && !e.estudioMover
