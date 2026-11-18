@@ -54,7 +54,7 @@ import kotlinx.coroutines.withContext
 
 
 /** La configuración de la primera vez: solo lo que hace falta para jugar. Lo demás tiene buenos valores y se cambia en Ajustes. */
-fun Diptico.pasosTuto(e: Estado = estado.value): List<PasoTuto> = listOf(
+fun Diptico.pasosTuto(e: Estado = estado.value): List<PasoTuto> = (
     // Tus pantallas (solo si el equipo tiene dos) · Tú · Tus juegos · Para jugar · Tus cuentas · Tu estilo · Listo.
     // Quien elige dos pantallas puede pasar después a una sola en Ajustes › Pantallas › Modo de pantallas.
     listOfNotNull(if (e.dosDisponibles) PasoTuto.PANTALLAS else null) +
