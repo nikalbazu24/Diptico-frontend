@@ -494,6 +494,8 @@ private fun ControlesFondo(e: Estado) {
                     contentAlignment = Alignment.Center,
                 ) { if (i < 0) TB("Como viene", 18f, peso = FontWeight.ExtraBold) }
             }
+            // La última fila no se estira: deja los huecos que faltan.
+            repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
         }
     }
     BotonEsp(if (e.fondoInicio != null) "🖼 Cambiar tu imagen" else "🖼 Una imagen tuya", Modifier.fillMaxWidth()) { Diptico.pedirArchivoPara("fondoInicio", "image/*") }
