@@ -60,7 +60,8 @@ internal fun Diptico.widgetsDePagina(e: Estado = estado.value) = e.widgets.indic
 /** Entra a los widgets con la cruceta (desde el estante, con ↑): el foco va al de más abajo a la izquierda. */
 fun Diptico.entrarWidgets(): Boolean {
     val e = estado.value
-    if (e.inicio != "widgets" || e.editandoWidgets || e.eligiendoConsola) return false
+    // Colección viva desactiva el foco antiguo del estante al entrar en Tu espacio.
+    if (e.inicio != "widgets" || e.editandoWidgets || (e.eligiendoConsola && !e.extra.coleccionViva)) return false
     val l = widgetsDePagina(e)
     if (l.isEmpty()) return false
     val i = l.maxWithOrNull(compareBy<Int>({ e.widgets[it].y + e.widgets[it].al }, { -e.widgets[it].x })) ?: return false

@@ -209,7 +209,9 @@ fun Diptico.pasoPestanaWidget(d: Int) {
 // ———————————————— Galería de widgets (su propia pantalla, boceto 12a–12c) ————————————————
 
 fun Diptico.abrirGaleriaWidgets() {
-    actualizar { it.copy(extra = it.extra.copy(galeria = true, tiendaLado = it.unaPantalla, espacioSel = 0, galeriaTam = 0)) }
+    // La Galería tiene prioridad sobre el widget que estaba enfocado.
+    actualizar { it.copy(widgetFoco = -1,
+        extra = it.extra.copy(galeria = true, tiendaLado = it.unaPantalla, espacioSel = 0, galeriaTam = 0)) }
     Sonidos.aceptar()
 }
 
