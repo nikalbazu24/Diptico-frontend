@@ -294,3 +294,58 @@ jobs:
             Puente de actualización para instalaciones del canal 1.1 beta.
             Contiene los mismos APK firmados de Díptico 2.0.0.
             No es una versión diferente de la aplicación.
+
+  publicar_candidata:
+    # Las candidatas se publican en Releases, sin mover main ni marcar 2.0.0 estable.
+    # Solo cuando aprobaron las pruebas y la compilación firmada de la rama release.
+    needs: [apk, gestos_widgets]
+    if: github.ref == 'refs/heads/release/2.0.0' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Diptico-APK
+          path: distribucion
+
+      - name: Confirmar los dos APK firmados de la candidata
+        env:
+          VERSION: ${{ needs.apk.outputs.numero }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" == 2.0.0-rc.* ]]
+          consola=$(find distribucion -type f -name "Diptico-v$VERSION.apk" | head -1)
+          movil=$(find distribucion -type f -name "Diptico-v$VERSION-movil.apk" | head -1)
+          test -s "$consola"
+          test -s "$movil"
+          echo "APK de consola: $consola"
+          echo "APK móvil: $movil"
+
+      - name: Publicar candidata Díptico 2.0.0 en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.apk.outputs.numero }}
+          target_commitish: ${{ github.sha }}
+          name: Díptico v${{ needs.apk.outputs.numero }} — candidata
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: |
+            distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}.apk
+            distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}-movil.apk
+          body: |
+            **Versión candidata de Díptico 2.0.0, no publicación estable.**
+            
+            Integra Colección viva y Revisión de capturas, más las correcciones
+            para que los dos joysticks naveguen exclusivamente por «Tu espacio»,
+            su Galería y sus opciones, y para que el contorno de widgets tenga
+            esquinas redondeadas consistentes.
+            
+            **Descarga:** APK normal para consolas Android ARM64 de una o dos pantallas;
+            APK con sufijo «-movil» para teléfonos.
+            
+            **Antes de instalar:** respalda ajustes y partidas. Esta candidata se
+            compiló con la firma de distribución, pero falta comprobar en una consola
+            real el mando, las dos pantallas y la actualización sobre instalaciones
+            anteriores. No desinstales tu versión actual sin un respaldo verificable.
