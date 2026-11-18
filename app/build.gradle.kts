@@ -7,6 +7,10 @@ plugins {
 val numero = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
 val rutaFirma = System.getenv("DIPTICO_KEYSTORE")
 val versionBase = if (rutaFirma.isNullOrBlank()) "1.0" else "1.1"
+val nombrePublicacion = System.getenv("DIPTICO_VERSION_NAME")?.trim().orEmpty()
+require(nombrePublicacion.isEmpty() || Regex("""[0-9]+[.][0-9]+([.][0-9]+)?(-[a-z]+[.][0-9]+)?""").matches(nombrePublicacion)) {
+    "DIPTICO_VERSION_NAME no tiene un formato válido."
+}
 // Receptor de reportes de Nicolás (Apps Script, solo escribe en su carpeta privada de Drive).
 // Una variable DIPTICO_REPORTES_URL en GitHub, si existe, lo reemplaza.
 val reportesUrl = providers.environmentVariable("DIPTICO_REPORTES_URL").orNull.orEmpty().trim()
@@ -35,7 +39,7 @@ android {
         minSdk = 29
         targetSdk = 34
         versionCode = numero
-        versionName = "$versionBase-beta.$numero"
+        versionName = nombrePublicacion.ifEmpty { "$versionBase-beta.$numero" }
         buildConfigField("String", "REPORTES_URL", "\"$reportesUrl\"")
         buildConfigField("String", "DISCORD_APP", "\"$discordApp\"")
         buildConfigField("boolean", "DISCORD_KIT", "$conKitDiscord")
