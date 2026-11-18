@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "coleccion-viva-2.0-76"
-    const val NOMBRE = "Colección viva"
+    const val ID = "diptico-2.0.0"
+    const val NOMBRE = "Díptico 2.0.0"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -571,7 +571,7 @@ object Novedades {
             Pagina("La tienda nueva, a la vista", "Ajustes › Estilo › Tienda de temas abre la tienda nueva: Nuevos, Remasterizados, Widgets y los demás. Los temas para descargar quedaron en «Temas de la comunidad».", Icono.PALETA, 0xFF6B4EFF),
             Pagina("Ahora sí suena la música viva", "Los temas traían una canción corta que tapaba a la nueva. Ahora todos los temas suenan con la música viva; solo «Mi tema» puede llevar una canción tuya.", Icono.MUSICA, 0xFFFF9B54),
         )),
-        Version(ID, "Colección viva", listOf(
+        Version(ID, "Díptico 2.0.0 · Colección viva", listOf(
             Pagina("Un Díptico nuevo", "Arriba, el arte del juego a pantalla completa con su caja en 3D; abajo, tus consolas, un estante de cajas y tus apps. Todo en su lugar, sin nada encima.", Icono.PORTADA, 0xFF3B6BFF),
             Pagina("Gira la caja", "Toca la caja o aprieta R3: viaja al centro y muestra el reverso. Abajo aparece el carrete con todas sus imágenes.", Icono.CHISPA, 0xFF6B4EFF),
             Pagina("Tus consolas, con su historia", "En las carpetas, cada consola cuenta su historia y aparece en grande, con sus colores originales y la pantalla apagada, flotando sobre un fondo de su color: inclínala con el dedo o con el stick derecho. Al entrar suena su propio encendido.", Icono.MANDO, 0xFFFF9B54),
