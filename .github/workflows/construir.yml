@@ -2,7 +2,7 @@ name: Construir APK
 
 on:
   push:
-    branches: [main, 'fix/**']
+    branches: [main, 'fix/**', 'release/**']
     # Cambios solo de textos, imágenes del README o plantillas de GitHub no crean una versión nueva.
     paths-ignore:
       - "**.md"
@@ -53,6 +53,29 @@ jobs:
           mkdir -p app/discord
           gh api -H "Accept: application/octet-stream" "repos/$GITHUB_REPOSITORY/releases/assets/$id" > app/discord/discord_partner_sdk.aar
           ls -la app/discord
+
+      - name: Determinar nombre de versión
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v2.0.0" >/dev/null 2>&1; then
+              nombre="2.0.1-beta.$GITHUB_RUN_NUMBER"
+            else
+              nombre="2.0.0"
+            fi
+          elif [[ "$GITHUB_REF" == "refs/heads/release/2.0.0" ]]; then
+            nombre="2.0.0-rc.$GITHUB_RUN_NUMBER"
+          elif [[ "$FIRMAR" == "true" ]]; then
+            nombre="1.1-beta.$GITHUB_RUN_NUMBER"
+          else
+            nombre="1.0-beta.$GITHUB_RUN_NUMBER"
+          fi
+          printf 'DIPTICO_VERSION_NAME=%s\n' "$nombre" >> "$GITHUB_ENV"
+          printf 'nombre=%s\n' "$nombre" >> "$GITHUB_OUTPUT"
+          echo "Versión de esta compilación: $nombre"
 
       - name: Probar perfiles, navegación y estabilidad
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --tests "cl.nikalbazu.diptico.CajasLocalesTest" --tests "cl.nikalbazu.diptico.RecorridoTest" --no-daemon
@@ -130,9 +153,7 @@ jobs:
       - name: Nombrar los APK
         id: paquete
         run: |
-          base="1.0"
-          if [ "$FIRMAR" = true ]; then base="1.1"; fi
-          numero="$base-beta.$GITHUB_RUN_NUMBER"
+          numero="$DIPTICO_VERSION_NAME"
           cp app/build/outputs/apk/completa/release/app-completa-release.apk "Diptico-v$numero.apk"
           cp app/build/outputs/apk/movil/release/app-movil-release.apk "Diptico-v$numero-movil.apk"
           printf 'numero=%s\n' "$numero" >> "$GITHUB_OUTPUT"
@@ -224,7 +245,7 @@ jobs:
           test -n "$actual"
           if [[ "$GITHUB_EVENT_NAME" == push ]]; then
             anterior=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" |
-              jq -r --arg tag "$TAG_BETA" 'map(select(.draft == false and (.tag_name | startswith("v1.1-beta.")) and .tag_name != $tag))[0].tag_name // empty')
+              jq -r --arg tag "$TAG_BETA" 'map(select(.draft == false and ((.tag_name | startswith("v1.1-beta.")) or (.tag_name | startswith("v2."))) and .tag_name != $tag))[0].tag_name // empty')
             if [[ -n "$anterior" && "$actual" == "$(leer_archivo "$ruta" "$anterior" | id_tour)" ]]; then
               echo "::error::Actualiza el ID y las páginas de Novedades antes de publicar otra beta."
               exit 1
@@ -247,7 +268,7 @@ jobs:
           tag_name: v${{ needs.apk.outputs.numero }}
           target_commitish: ${{ github.sha }}
           name: Díptico v${{ needs.apk.outputs.numero }}
-          prerelease: true
+          prerelease: ${{ needs.apk.outputs.numero != '2.0.0' }}
           draft: ${{ github.event_name != 'push' }}
           fail_on_unmatched_files: true
           files: |
