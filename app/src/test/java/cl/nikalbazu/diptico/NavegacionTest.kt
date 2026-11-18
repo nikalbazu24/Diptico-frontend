@@ -1,6 +1,8 @@
 package cl.nikalbazu.diptico
 
+import android.view.InputDevice
 import android.view.KeyEvent
+import android.view.MotionEvent
 import androidx.test.core.app.ApplicationProvider
 import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.estado.*
@@ -14,6 +16,69 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class NavegacionTest {
+    /** Simula los ejes analógicos de un mando Android, tanto el stick izquierdo como el derecho. */
+    private fun stick(izquierdo: Boolean, x: Float) {
+        val propiedades = arrayOf(MotionEvent.PointerProperties().apply {
+            id = 0
+            toolType = MotionEvent.TOOL_TYPE_UNKNOWN
+        })
+        val puntos = arrayOf(MotionEvent.PointerCoords().apply {
+            this.x = if (izquierdo) x else 0f
+            this.y = 0f
+            setAxisValue(MotionEvent.AXIS_Z, if (izquierdo) 0f else x)
+            setAxisValue(MotionEvent.AXIS_RZ, 0f)
+        })
+        val ev = MotionEvent.obtain(0L, 10L, MotionEvent.ACTION_MOVE, 1, propiedades, puntos,
+            0, 0, 1f, 1f, 0, 0, InputDevice.SOURCE_JOYSTICK, 0)
+        try { assertTrue(Teclas.movimiento(ev)) } finally { ev.recycle() }
+    }
+
+    private fun espacioCVPrueba() = Estado(
+        configurado = true, listo = true, intro = false,
+        modoPantallas = "dos", dosDisponibles = true, inicio = "widgets",
+        vistaConsolas = "carpetas", enSistemas = true, consolaSel = "gba",
+        extra = EstadoExtra(coleccionViva = true),
+        widgets = listOf(Widget("reloj", 0, 0, 1, 1), Widget("bateria", 2, 0, 1, 1)),
+    )
+
+    @Test fun ambosJoysticksControlanWidgetsYNoMuevenCarpetasEnSegundoPlano() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(espacioCVPrueba())
+        stick(true, 0f)
+        stick(true, 1f)
+        assertEquals("gba", Diptico.estado.value.consolaSel)
+        assertTrue("El stick izquierdo debe elegir un widget", Diptico.estado.value.widgetFoco >= 0)
+        stick(true, 0f)
+        stick(false, 1f)
+        assertEquals("gba", Diptico.estado.value.consolaSel)
+        assertTrue("El stick derecho debe quedarse en Tu espacio", Diptico.estado.value.widgetFoco >= 0)
+        stick(false, 0f)
+    }
+
+    @Test fun galeriaTomaElFocoYLaCrucetaRecorreSusOpciones() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(espacioCVPrueba())
+        assertTrue(Diptico.entrarWidgets())
+        Diptico.abrirGaleriaWidgets()
+        assertEquals(-1, Diptico.estado.value.widgetFoco)
+        assertTrue(Diptico.estado.value.extra.galeria)
+        Teclas.manejar(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT))
+        assertEquals("gba", Diptico.estado.value.consolaSel)
+        assertEquals(1, Diptico.estado.value.extra.espacioSel)
+    }
+
+    @Test fun joystickEnEdicionDeEspacioMueveWidgetSinAlterarLasCarpetas() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(espacioCVPrueba())
+        Diptico.editarEspacio()
+        assertEquals(0, Diptico.estado.value.extra.espacioEdita)
+        stick(true, 0f)
+        stick(true, 1f)
+        assertEquals("gba", Diptico.estado.value.consolaSel)
+        assertEquals(1, Diptico.estado.value.widgets.first().x)
+        stick(true, 0f)
+    }
+
     @Test fun pellizcarNoPierdeWidgetsNiLosSuperpone() {
         val originales = (0 until 60).map { i -> Widget("w$i", i % 6, i % 4, 2, 2, visible = i != 10) }
         for (cols in 4..8) for (filas in 3..8) {
