@@ -67,6 +67,19 @@ class NavegacionTest {
         assertEquals(1, Diptico.estado.value.extra.espacioSel)
     }
 
+    @Test fun galeriaBloqueaElFocoViejoYAmbosSticksDejanQuietasLasCarpetas() {
+        Diptico.iniciar(ApplicationProvider.getApplicationContext())
+        Diptico.fijarParaPrueba(espacioCVPrueba().copy(
+            widgetFoco = 0,
+            extra = EstadoExtra(coleccionViva = true, galeria = true),
+        ))
+        stick(false, 0f)
+        stick(false, 1f)
+        assertEquals("gba", Diptico.estado.value.consolaSel)
+        assertEquals(1, Diptico.estado.value.extra.espacioSel)
+        stick(false, 0f)
+    }
+
     @Test fun joystickEnEdicionDeEspacioMueveWidgetSinAlterarLasCarpetas() {
         Diptico.iniciar(ApplicationProvider.getApplicationContext())
         Diptico.fijarParaPrueba(espacioCVPrueba())
