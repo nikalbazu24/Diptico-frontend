@@ -1,3 +1,16 @@
+# Díptico 2.0.0 — Colección viva
+
+La actualización reúne el trabajo de `fix/revision-capturas` y `fix/coleccion-viva` sobre una única base.
+
+- **Vitrina y biblioteca renovadas:** arte del juego protagonista, cajas 3D y navegación adaptada a una o dos pantallas.
+- **Colección viva:** representación de consolas, carátulas persistentes, personalización y nuevas vistas.
+- **Tu espacio:** páginas de widgets editables con controles de mando o táctiles, tamaños y fondos.
+- **DIPPO, ajustes y temas:** acceso al asistente, selección de temas, widgets y música viva.
+- **Compatibilidad:** APK para consolas Android y variante móvil. Se conserva el identificador de aplicación y se utiliza la misma firma de distribución configurada en GitHub.
+- **Antes de instalar:** conserva una copia de seguridad de tus ajustes y datos. La fluidez, el comportamiento de emuladores y el modo de dos pantallas deben verificarse en una consola real.
+
+## Detalle de cambios incluidos
+
 - **Cuatro temas nuevos que cambian todo (pestaña Nuevos de la tienda):** Recortes (cartón, cinta adhesiva, lo elegido con línea de tijera, letra hecha a mano y sonidos de papel), Acuario de DIPPO (rayos de luz de mar, burbujas, DIPPO nadando al fondo, tarjetas redondas como gotas y sonidos de burbuja), Salón Recreativo (luces de marquesina que corren, líneas de pantalla, bordes de neón, letra de 8 bits en los títulos y sonidos de ficha) y Constelación (cielo con estrellas unidas por líneas de luz, estrella fugaz, letra fina y campanitas de cristal). Cada uno trae su fondo, forma de tarjetas, manera de marcar lo elegido, letra, decoración y sonidos.
 - **Tienda con vista previa en cinco pantallas:** al elegir un tema, la otra pantalla lo muestra en Inicio, Biblioteca, Widgets, Menús y Ficha. Se cambia con L2/R2 o tocando las pestañas.
 - **Probar 30 s:** con Y el tema se pone de verdad en las dos pantallas por 30 segundos y después vuelve el tuyo solo. A lo deja puesto; Y otra vez quita la prueba.
