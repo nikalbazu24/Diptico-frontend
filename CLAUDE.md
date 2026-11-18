@@ -851,3 +851,16 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   otro widget, ± tamaño), Tamaño (página 1–3 pantallas ancho/alto), Páginas (nueva, quitar, reordenar; Inicio siempre primera), Fondo; B = listo.
 - Después (con cuota nueva, Opus): quitar opciones sin uso de Ajustes, limpiar código, optimizar fluidez y publicar como **Díptico 2.0.0**
   (el workflow hoy publica `v1.1-beta.<run>`: cambiar el nombre de versión). Beta.646 (paso «Tus pantallas») sigue sin publicar.
+
+## Tu espacio abajo rediseñado (18 nov, rama `fix/coleccion-viva`, Opus; beta.651 de prueba, SIN PUBLICAR)
+- Boceto S221ptEpUYaNtWFkc4kbQ9 hecho a tamaño real (`EspacioAbajoCV` con `LienzoBoceto(1240, 1080)` SIN zoom): `CabeceraEspacio` (tira con
+  Inicio/páginas/+ y círculos L2/R2), `BotonGaleria` dorado, `TarjetaMapa`/`MapaEspacio` (widgets con colores del boceto; en Mover se
+  arrastran con el dedo y caen en la celda más cercana con `ponerWidget`), `BotonEditarEspacio`, `PieEspacio` (dock + globo + DIPPO). Sin pistas.
+- Modo edición propio: `extra.espacioEdita` (−1 = no; 0 Mover, 1 Tamaño, 2 Páginas, 3 Fondo) con `editandoWidgets = true` y panel NINGUNO.
+  `estado/DipticoEspacio.kt`: `editarEspacio`, `terminarEspacio`, `pestanaEspacio`, `otroWidgetEspacio`, `crecerWidgetEspacio`,
+  `moverPaginaEspacio`, `elegirFondoEspacio`, `crucetaEspacio`, `aEspacio`, `xEspacio`; `FONDOS_ESPACIO` (6 degradados, `extra.fondoEspacio`,
+  almacén `fondoEspacio`; se dibuja en `PantallaInicio` si no hay imagen propia). Teclas `espacioEdicion`: cruceta según pestaña, L1/R1 otro
+  widget (en otras pestañas cambia pestaña), Y pestaña, L2/R2 página, A agranda/página nueva/tu imagen, X achica/quita página, B o Start listo.
+  `terminarEdicion` también apaga `espacioEdita`; arriba no se dibuja la barra vieja de páginas mientras se edita abajo.
+- Arreglado de paso: `pasosTuto` no compilaba en esta rama (paréntesis). Traducciones `extras37.tsv` (siguiente: extras38). Capturas t530–t535.
+- Siguiente (Opus): quitar opciones sin uso de Ajustes, limpiar código, fluidez y publicar como Díptico 2.0.0 (cambiar el nombre de versión del workflow).
