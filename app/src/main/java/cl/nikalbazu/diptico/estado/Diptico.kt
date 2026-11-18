@@ -996,7 +996,7 @@ object Diptico {
     }
     internal var medios: Map<String, MediosJuego> = emptyMap()
 
-    val VERSION: String = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.substringBefore("-beta.") + " beta"
+    val VERSION: String = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.replace("-beta.", " beta ").replace("-rc.", " RC ")
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
