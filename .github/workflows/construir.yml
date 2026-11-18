@@ -275,3 +275,22 @@ jobs:
             distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}.apk
             distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}-movil.apk
           body_path: notas-beta.md
+
+      # Las versiones 1.1 ya instaladas solo reconocen etiquetas v1.1-beta.N.
+      # Este puente expone los MISMOS APK firmados de la 2.0.0 sin cambiar su versión interna.
+      - name: Publicar puente de actualización para betas 1.1
+        if: needs.apk.outputs.numero == '2.0.0'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.1-beta.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Actualización compatible a Díptico 2.0.0
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: |
+            distribucion/**/Diptico-v2.0.0.apk
+            distribucion/**/Diptico-v2.0.0-movil.apk
+          body: |
+            Puente de actualización para instalaciones del canal 1.1 beta.
+            Contiene los mismos APK firmados de Díptico 2.0.0.
+            No es una versión diferente de la aplicación.
