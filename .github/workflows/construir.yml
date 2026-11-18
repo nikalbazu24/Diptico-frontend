@@ -27,7 +27,7 @@ jobs:
       contents: write
     env:
       DIPTICO_REPORTES_URL: ${{ vars.DIPTICO_REPORTES_URL }}
-      FIRMAR: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/153-liquid-glass') && (github.event_name == 'push' || inputs.preparar_firma) }}
+      FIRMAR: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release/2.0.0' || github.ref == 'refs/heads/fix/153-liquid-glass') && (github.event_name == 'push' || inputs.preparar_firma) }}
     outputs:
       numero: ${{ steps.paquete.outputs.numero }}
     steps:
