@@ -273,7 +273,8 @@ private fun PaginasWidgets(e: Estado, modifier: Modifier) {
                 }
             }
         }
-        if (e.editandoWidgets) {
+        // Con el modo edición de abajo (Tu espacio), páginas y tamaño se manejan allá: aquí no se repiten.
+        if (e.editandoWidgets && e.extra.espacioEdita < 0) {
             Row(Modifier.align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                 BotonPagina("‹", "Página anterior", e.paginaInicio > 0) { Diptico.cambiarPagina(-1) }
                 Texto("Página ${e.paginaInicio + 1} de ${e.paginas}", 12f, lineas = 1)
