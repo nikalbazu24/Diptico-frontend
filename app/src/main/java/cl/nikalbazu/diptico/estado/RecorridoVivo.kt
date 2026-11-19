@@ -13,12 +13,38 @@ object RecorridoVivo {
 
     fun avisar(que: String) { reaccion.value = Reaccion(que) }
 
-    /** Lo que hay que hacer sí o sí en cada paso del recorrido (null = basta con A). */
-    fun retoDe(k: Int): String? = when (k) { 1 -> "gatillo"; 2 -> "x"; 3 -> "gatillo2"; 5 -> "select"; 6 -> "toque"; else -> null }
+    /** Cada desafío está ligado a una transición comprobada de la interfaz, nunca a una tecla vacía. */
+    fun retoDe(k: Int): String? = when (k) {
+        1 -> "gatillo"
+        2 -> "x"
+        3, 11 -> "gatillo2"
+        5 -> "select"
+        6 -> "toque"
+        7 -> "abrirCarpeta"
+        8 -> "vistaJuego"
+        9 -> "opcionesJuego"
+        10 -> "volverCarpetas"
+        12 -> "paginaWidget"
+        13 -> "galeriaWidget"
+        14 -> "editarWidget"
+        16 -> "apps"
+        17 -> "buscar"
+        18 -> "ajustes"
+        19 -> "perfil"
+        else -> null
+    }
 
-    /** El último paso cuyo reto ya se cumplió (para dejar seguir con A). */
     @Volatile var hecho: Int = -1
 
-    /** ¿Se puede pasar del paso [k]? Solo si no tiene reto o ya se cumplió. */
-    fun puedeSeguir(k: Int) = retoDe(k) == null || hecho == k
+    /** Los desafíos dependientes de una biblioteca vacía o de páginas inexistentes son opcionales. */
+    fun puedeSeguir(k: Int): Boolean {
+        if (retoDe(k) == null || hecho == k) return true
+        val e = Diptico.estado.value
+        return when (k) {
+            7, 8, 9 -> e.juegos.isEmpty()
+            10 -> e.enSistemas
+            12 -> e.paginas < 2
+            else -> false
+        }
+    }
 }

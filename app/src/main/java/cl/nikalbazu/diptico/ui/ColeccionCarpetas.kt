@@ -256,7 +256,7 @@ fun CarpetasArribaCV(e: Estado) {
             Row(Modifier.fillMaxWidth().height(esc.d(92)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
                 TB("TUS CONSOLAS", 20f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 3f)
                 Spacer(Modifier.weight(1f))
-                Box(Modifier.anclaRecorrido("widgets")) { BotonWidgetsCV() }; HoraBateria(60f, 24f); BotonPerfil(82f)
+                Box(Modifier.anclaRecorrido("widgets")) { BotonWidgetsCV() }; HoraBateria(60f, 24f); Box(Modifier.anclaRecorrido("perfil")) { BotonPerfil(82f) }
             }
             if (c == null) { TB("Aún no hay consolas", 64f, titulo = true); return@Column }
             // En la pantalla angosta (con las pantallas intercambiadas) la consola va arriba y su información abajo,
@@ -298,7 +298,7 @@ fun CarpetasArribaCV(e: Estado) {
             }
             // Acciones a la izquierda; a la derecha cómo cambiar de consola y de vista (solo si cabe).
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                AccionesConsolaCV(e, c, alto = 80f)
+                Box(Modifier.anclaRecorrido("abrir-carpeta")) { AccionesConsolaCV(e, c, alto = 80f) }
                 Spacer(Modifier.weight(1f))
                 if (!angosto) PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas", modifier = Modifier.anclaRecorrido("controles"))
             }
@@ -397,28 +397,47 @@ private fun AccionesConsolaCV(e: Estado, c: Consola, alto: Float = 84f) {
 fun CarpetasAbajoCV(e: Estado) {
     LienzoBoceto(1240f, 1080f, fondo = LocalColeccion.current.fondo2, zoom = ZOOM_ABAJO) {
         val esc = LocalEscala.current
-        val col = LocalColeccion.current
         FondoTemaCV()
-        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(24), vertical = esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
-            // Arriba: el dock de apps a la izquierda; la hora, la batería y tu foto a la derecha.
-            Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                DockCV(e, 52f, Modifier.anclaRecorrido("apps"))
-                Spacer(Modifier.weight(1f))
-                HoraBateria(56f, 22f)
-                BotonPerfil(70f)
-            }
-            Box(Modifier.fillMaxWidth().weight(1f)) {
-                if (e.extra.pestanaCarpetas == 1) ColeccionesCV(e, Modifier.fillMaxSize())
-                else RejillaCarpetasCV(e, Modifier.fillMaxSize(), unaPantalla = false)
-            }
-            // Abajo, sin instrucciones: Consolas en la esquina izquierda, DIPPO al medio y Colecciones a la derecha.
-            Box(Modifier.fillMaxWidth().height(esc.d(92))) {
-                BotonPestanaCV(Icono.MANDO, "Consolas", e.extra.pestanaCarpetas == 0, Modifier.align(Alignment.CenterStart)) { Diptico.elegirPestanaCarpetas(0) }
-                if (e.extra.dippoInicio) Box(Modifier.align(Alignment.Center).size(esc.d(88)).anclaRecorrido("dippo").clip(CircleShape).clickable { Diptico.abrirAsistente() },
-                    contentAlignment = Alignment.Center) {
-                    cl.nikalbazu.diptico.bisa.AvatarBisa(78f * esc.factor)
+        // La navegación inferior flota SOBRE las carpetas: no reserva una banda opaca
+        // ni interrumpe la cuadrícula. Solo los tres botones reciben toques.
+        Box(Modifier.fillMaxSize()) {
+            Column(
+                Modifier.fillMaxSize().padding(horizontal = esc.d(24), vertical = esc.d(18)),
+                verticalArrangement = Arrangement.spacedBy(esc.d(12)),
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().height(esc.d(84)),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
+                ) {
+                    DockCV(e, 52f, Modifier.anclaRecorrido("apps"))
+                    Spacer(Modifier.weight(1f))
+                    HoraBateria(56f, 22f)
+                    BotonPerfil(70f)
                 }
-                BotonPestanaCV(Icono.BIBLIOTECA, "Colecciones", e.extra.pestanaCarpetas == 1, Modifier.align(Alignment.CenterEnd)) { Diptico.elegirPestanaCarpetas(1) }
+                Box(Modifier.fillMaxWidth().weight(1f)) {
+                    if (e.extra.pestanaCarpetas == 1) ColeccionesCV(e, Modifier.fillMaxSize())
+                    else RejillaCarpetasCV(e, Modifier.fillMaxSize(), unaPantalla = false)
+                }
+            }
+            // La zona entre los botones es TRANSPARENTE: deja ver las carpetas de atrás.
+            Box(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    .padding(start = esc.d(24), end = esc.d(24), bottom = esc.d(18))
+                    .height(esc.d(92))
+                    .testTag("navegacion-inferior-flotante"),
+            ) {
+                BotonPestanaCV(Icono.MANDO, "Consolas", e.extra.pestanaCarpetas == 0, Modifier.align(Alignment.CenterStart)) {
+                    Diptico.elegirPestanaCarpetas(0)
+                }
+                if (e.extra.dippoInicio) Box(
+                    Modifier.align(Alignment.Center).size(esc.d(88)).anclaRecorrido("dippo")
+                        .clip(CircleShape).clickable { Diptico.abrirAsistente() },
+                    contentAlignment = Alignment.Center,
+                ) { cl.nikalbazu.diptico.bisa.AvatarBisa(78f * esc.factor) }
+                BotonPestanaCV(Icono.BIBLIOTECA, "Colecciones", e.extra.pestanaCarpetas == 1, Modifier.align(Alignment.CenterEnd)) {
+                    Diptico.elegirPestanaCarpetas(1)
+                }
             }
         }
     }
@@ -506,7 +525,9 @@ fun RejillaCarpetasCV(e: Estado, modifier: Modifier, unaPantalla: Boolean) {
     LazyVerticalGrid(GridCells.Fixed(columnas), modifier.then(pellizco), estado,
         horizontalArrangement = Arrangement.spacedBy(esc.d(if (vista == "icono") 10f else 24f)),
         verticalArrangement = Arrangement.spacedBy(esc.d(if (vista == "repisa") 12f else 22f)),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = esc.d(10))) {
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            top = esc.d(10), bottom = esc.d(if (unaPantalla) 10f else 110f),
+        )) {
         itemsIndexed(ids, key = { _, id -> id }) { i, id ->
             val c = Consolas.porId(id) ?: return@itemsIndexed
             val elegida = i == sel

@@ -158,7 +158,7 @@ private fun CabeceraEspacio(e: Estado) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     val editando = e.extra.espacioEdita >= 0
-    Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(20))) {
+    Row(Modifier.fillMaxWidth().height(esc.d(84)).anclaRecorrido("paginas"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(20))) {
         TB("Tu espacio", 54f, titulo = true)
         Gatillo("L2") { if (editando) Diptico.irAPagina(e.paginaInicio - 1) else Diptico.pasoEspacio(-1) }
         val paginas = (if (editando) emptyList() else listOf("Inicio" to "tu colección")) + (0 until e.paginas).map { p ->
@@ -218,7 +218,7 @@ private fun BotonGaleria(modifier: Modifier) {
     val esc = LocalEscala.current
     val forma = RoundedCornerShape(esc.d(34))
     Row(
-        modifier.clip(forma)
+        modifier.anclaRecorrido("galeria").clip(forma)
             .background(Brush.horizontalGradient(0f to Color(0xFFF1C757), .38f to Color(0xFFC9952F), .78f to Color(0xFF3A2F2C), 1f to Color(0xFF1A1C30)))
             .border(esc.d(4), Color.White, forma)
             .clickable(onClickLabel = "Abrir la Galería de widgets") { Diptico.abrirGaleriaWidgets() }
@@ -254,7 +254,7 @@ private fun BotonEditarEspacio(modifier: Modifier) {
     val col = LocalColeccion.current
     val forma = RoundedCornerShape(esc.d(30))
     Column(
-        modifier.clip(forma).background(col.texto.copy(alpha = .08f)).border(esc.d(3), col.texto.copy(alpha = .25f), forma)
+        modifier.anclaRecorrido("editor").clip(forma).background(col.texto.copy(alpha = .08f)).border(esc.d(3), col.texto.copy(alpha = .25f), forma)
             .clickable(onClickLabel = "Editar espacio") { Diptico.editarEspacio() }.testTag("editar-espacio").padding(esc.d(30)),
         verticalArrangement = Arrangement.spacedBy(esc.d(16), Alignment.CenterVertically),
     ) {
@@ -306,7 +306,7 @@ private fun MapaEspacio(e: Estado, mover: Boolean, modifier: Modifier) {
     val cols = Widgets.COLUMNAS.coerceAtLeast(1); val filas = Widgets.FILAS.coerceAtLeast(1)
     val enPagina = e.widgets.withIndex().filter { (_, w) -> w.visible && w.pagina == e.paginaInicio }
     val fondo = fondoMapa(e)
-    androidx.compose.foundation.layout.BoxWithConstraints(modifier.clip(RoundedCornerShape(esc.d(20))).then(if (fondo != null) Modifier.background(fondo) else Modifier)
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier.anclaRecorrido("mapa-widgets").clip(RoundedCornerShape(esc.d(20))).then(if (fondo != null) Modifier.background(fondo) else Modifier)
         .testTag("mapa-espacio")) {
         val g = 12f
         val anchoU = maxWidth.value / esc.factor; val altoU = maxHeight.value / esc.factor
@@ -368,7 +368,7 @@ private fun EdicionEspacio(e: Estado, modifier: Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     val tab = e.extra.espacioEdita
-    Column(modifier.testTag("espacio-edicion"), verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
+    Column(modifier.anclaRecorrido("editor").testTag("espacio-edicion"), verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
             PESTANAS_ESPACIO.forEachIndexed { i, t ->
                 val on = i == tab
@@ -546,7 +546,7 @@ private fun PieEspacio(e: Estado) {
 /** Galería de widgets abajo (boceto 12b): su propia pantalla, con categorías y los widgets en grande. */
 @Composable
 fun GaleriaAbajoCV(e: Estado) {
-    LienzoBoceto(1240f, 1080f, Modifier.testTag("galeria-abajo"), fondo = LocalColeccion.current.fondo, zoom = ZOOM_ABAJO) {
+    LienzoBoceto(1240f, 1080f, Modifier.testTag("galeria-abajo").anclaRecorrido("galeria"), fondo = LocalColeccion.current.fondo, zoom = ZOOM_ABAJO) {
         val esc = LocalEscala.current
         val col = LocalColeccion.current
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(28)), verticalArrangement = Arrangement.spacedBy(esc.d(16))) {

@@ -29,7 +29,7 @@ private fun Diptico.eleccionesEmulador(c: Consola, tipo: String?, conConsola: Bo
 /** Las apps con cara de emulador van primero en la lista de «Otra app». */
 private fun pareceEmulador(nombre: String, paquete: String): Boolean {
     val t = (nombre + " " + paquete).lowercase()
-    return listOf("emu", "sx2", "ps2", "psx", "retro", "dolphin", "citra", "azahar", "yuzu", "eden", "ppsspp", "drastic", "melon", "duck", "mupen", "snes", "nes", "vita", "flycast", "redream", "aethersx", "nether", "arms", "lime", "sudachi", "citron", "winlator", "gamehub")
+    return listOf("emu", "sx2", "ps2", "psx", "retro", "dolphin", "citra", "azahar", "yuzu", "eden", "lemon", "ppsspp", "drastic", "melon", "duck", "mupen", "snes", "nes", "vita", "flycast", "redream", "aethersx", "nether", "arms", "lime", "sudachi", "citron", "winlator", "gamehub")
         .any { it in t }
 }
 
@@ -65,7 +65,7 @@ internal fun Diptico.opcionEmuladorJuego(
         (Lanzador.elegida(app, c, propio, juego.tipo)?.takeIf { it.id == propio }?.nombre ?: lista.getOrNull(i)?.nombre ?: "El de la consola")
     return Opcion(
         titulo, nombre, Icono.EMULADOR,
-        "Con qué se abre solo ${juego.titulo}. «El de la consola» usa el que elegiste para ${c.nombre}. Si tu emulador no aparece, elige «Otra app».",
+        "Con qué se abre solo ${juego.titulo}. «El de la consola» usa el que elegiste para ${c.nombre}. Si tu emulador no aparece, elige «Otra app». Project Lemon está disponible en Nintendo Switch cuando está instalado.",
     ) {}.conLista(lista.map { it.nombre }, i) { k ->
         val id = lista.getOrNull(k)?.id
         cambiarDatos(juego.clave) { it.copy(emulador = id) }

@@ -104,7 +104,18 @@ object Lanzador {
     /** Emuladores instalados para la consola. Si se indica [tipo], primero los que sirven para ese archivo. */
     fun opciones(ctx: Context, consola: Consola, tipo: String? = null): List<Opcion> {
         val cache = HashMap<String, Pair<String, String>?>()
-        val todas = consola.comandos.mapNotNull { c ->
+        // Project Lemon (Switch 1): contrato oficial de AndroidManifest.xml,
+        // dev.lemon.lemon_emulator + EmulationActivity exportada (ACTION_VIEW, content://, octet-stream).
+        // Solo lo ofrecemos cuando está instalado y únicamente para Nintendo Switch original.
+        val lemon = if (consola.id == "switch" && instalado(ctx, "dev.lemon.lemon_emulator")) listOf(
+            Opcion(
+                Comando("Project Lemon", "%EMULATOR_LEMON% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF% %MIMETYPE%=application/octet-stream"),
+                "dev.lemon.lemon_emulator",
+                "dev.lemon.lemon_emu.activities.EmulationActivity",
+                "Project Lemon",
+            ),
+        ) else emptyList()
+        val todas = lemon + consola.comandos.mapNotNull { c ->
             when {
                 c.abreApp -> Opcion(c, null, null)
                 c.emulador != null -> cache.getOrPut(c.emulador) { resolver(ctx, c.emulador) }?.let { (p, a) -> Opcion(c, p, a) }
