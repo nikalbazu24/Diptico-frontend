@@ -54,12 +54,7 @@ import kotlin.math.cos
 import kotlin.math.sign
 import kotlin.math.sin
 
-/**
- * Discos: cada consola es un vinilo en su funda, de pie en una caja como en una disquería.
- * La funda muestra cuatro de sus portadas; la elegida se para al frente y su disco sale girando por arriba,
- * con el ícono de la consola en la etiqueta. Las vecinas quedan inclinadas, como cuando hojeas una caja de discos.
- * Cruceta o deslizar para hojear, A (o tocar la del frente) para entrar a sus juegos.
- */
+/** Discos: funda giratoria y vinilo animado para la vista Colección viva. */
 @Composable
 fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
@@ -82,7 +77,6 @@ fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
                 Detalle(if (e.escaneando) "Buscando tus juegos…" else "Aquí aparecerán tus consolas", 15f, modifier = Modifier.align(Alignment.Center))
                 return@BoxWithConstraints
             }
-            // La funda cabe con su disco asomado por arriba (el disco sube hasta la mitad de la funda).
             val funda = minOf(maxHeight.value / 1.62f, maxWidth.value * 0.34f, 200f * esc.factor)
             val desde = (kotlin.math.floor(pos).toInt() - 4).coerceAtLeast(0)
             val hasta = (kotlin.math.ceil(pos).toInt() + 4).coerceAtMost(ids.size - 1)
@@ -96,7 +90,6 @@ fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
                         Modifier.padding(bottom = (funda * 0.06f).dp).size((funda * 1.55f).dp, (funda * 1.55f).dp)
                             .zIndex(10f - abs(off))
                             .graphicsLayer {
-                                // Al centro la del frente; las otras se juntan a los lados, como fundas en una caja.
                                 val x = if (abs(off) <= 1f) off * funda * 0.74f else sign(off) * (funda * 0.74f + (abs(off) - 1f) * funda * 0.3f)
                                 translationX = x * density
                                 rotationY = -cerca * 34f
@@ -120,35 +113,30 @@ fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
     }
 }
 
-/** Una funda con sus portadas y el disco que sale por arriba ([fuera] = 0 guardado, 1 afuera girando). */
+/** Una funda con sus portadas y el disco que sale por arriba. */
 @Composable
 private fun DiscoConsola(e: Estado, id: String, funda: Float, fuera: Float) {
     val c = Consolas.porId(id)
     val color = c?.color ?: Uva
     val juegos = remember(e.juegos, id) { (if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id }).take(4) }
     val sale by animateFloatAsState(fuera, spring(dampingRatio = 0.7f, stiffness = 220f), label = "sale")
-    // El disco gira solo cuando está afuera y los efectos están completos (en ahorro queda quieto).
-    val giro = if (fuera > 0.95f && Estilo.efectosCompletos) {
+    val movimiento = LocalMovimiento.current && Estilo.efectosCompletos
+    val giro = if (fuera > 0.95f && movimiento) {
         val t = rememberInfiniteTransition(label = "giro")
         t.animateFloat(0f, 360f, infiniteRepeatable(tween(7000, easing = LinearEasing), RepeatMode.Restart), label = "giro").value
     } else 0f
     val lado = funda.dp
     Box(Modifier.size(lado, (funda * 1.55f).dp), contentAlignment = Alignment.BottomCenter) {
-        // El disco, detrás de la funda: sube al salir.
         Box(
             Modifier.size(lado * 0.94f)
                 .graphicsLayer { translationY = -(funda * (0.06f + 0.5f * sale)) * density; rotationZ = giro },
         ) {
             Canvas(Modifier.fillMaxSize()) {
                 val r = size.minDimension / 2f
-                // Vinilo con un borde que capta la luz: así se lee aunque el fondo sea oscuro.
                 drawCircle(Brush.radialGradient(listOf(Color(0xFF2B2A33), Color(0xFF15151A)), radius = r), r)
                 drawCircle(lerp(color, Color.White, 0.35f).copy(alpha = 0.55f), r - 1.5f, style = Stroke(3f))
-                // Los surcos.
                 for (i in 1..8) drawCircle(Color.White.copy(alpha = 0.07f), r * (0.40f + i * 0.068f), style = Stroke(1.4f))
-                // Dos brillos que cruzan el disco (giran con él).
-                for (inicio in listOf(-70f, 110f)) drawArc(Color.White.copy(alpha = 0.13f), inicio, 36f, false, topLeft = Offset(r * 0.14f, r * 0.14f),
-                    size = androidx.compose.ui.geometry.Size(r * 1.72f, r * 1.72f), style = Stroke(r * 0.22f))
+                for (inicio in listOf(-70f, 110f)) drawArc(Color.White.copy(alpha = 0.13f), inicio, 36f, false, topLeft = Offset(r * 0.14f, r * 0.14f), size = androidx.compose.ui.geometry.Size(r * 1.72f, r * 1.72f), style = Stroke(r * 0.22f))
                 drawCircle(Brush.radialGradient(listOf(lerp(color, Color.White, 0.15f), color)), r * 0.36f)
                 drawCircle(Color(0xFF111114), r * 0.04f)
             }
@@ -156,7 +144,6 @@ private fun DiscoConsola(e: Estado, id: String, funda: Float, fuera: Float) {
                 IconoConsola(c, funda * 0.13f / LocalEscala.current.factor, Color.Transparent)
             }
         }
-        // La funda: cuatro portadas (o el color de la consola si tiene menos) y su nombre abajo.
         val forma = RoundedCornerShape((funda * 0.04f).dp)
         Box(
             Modifier.size(lado).clip(forma)
@@ -170,7 +157,6 @@ private fun DiscoConsola(e: Estado, id: String, funda: Float, fuera: Float) {
             } else if (juegos.isNotEmpty()) {
                 ArteJuego(juegos[0], preferirArte = false, maxLado = 320, modifier = Modifier.fillMaxSize())
             } else Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { IconoConsola(c, funda * 0.36f / LocalEscala.current.factor, Color.Transparent) }
-            // Faja con el color de la consola, como el sello de un disco.
             Column(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                     .background(Brush.verticalGradient(listOf(Color.Transparent, color.copy(alpha = 0.85f), lerp(color, Color.Black, 0.45f))))

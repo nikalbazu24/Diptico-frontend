@@ -26,17 +26,16 @@ import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Estado
 import kotlinx.coroutines.delay
 
-/**
- * Protector de pantalla: tus juegos pasan uno tras otro, con un zoom lento.
- * Las dos pantallas muestran juegos distintos y quedan atenuadas. Cualquier botón o toque lo cierra.
- */
+/** Protector de pantalla: deja de animar cuando la opción de movimiento está apagada. */
 @Composable
 fun Protector(e: Estado, rol: Rol) {
     val esc = LocalEscala.current
     val juegos = remember(e.juegos.size) { e.juegos.filter { it.arte != null || it.portada != null }.ifEmpty { e.juegos }.shuffled() }
     if (juegos.isEmpty()) return
     var i by remember { mutableIntStateOf(if (rol == Rol.INFERIOR) juegos.size / 2 else 0) }
-    LaunchedEffect(Unit) {
+    val movimiento = LocalMovimiento.current && Estilo.efectosCompletos
+    LaunchedEffect(movimiento) {
+        if (!movimiento) return@LaunchedEffect
         while (true) {
             delay(9000)
             i = (i + 1) % juegos.size
@@ -44,10 +43,11 @@ fun Protector(e: Estado, rol: Rol) {
     }
     val inf = rememberInfiniteTransition(label = "protector")
     val zoom by inf.animateFloat(1f, 1.12f, infiniteRepeatable(tween(9000, easing = LinearEasing)), label = "zoom")
+    val zoomSeguro = if (movimiento) zoom else 1f
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        Crossfade(targetState = juegos[i], animationSpec = tween(1500), label = "juego") { j ->
+        Crossfade(targetState = juegos[i], animationSpec = tween(if (movimiento) 1500 else 0), label = "juego") { j ->
             Box(Modifier.fillMaxSize()) {
-                ArteJuego(j, preferirArte = true, maxLado = 1400, modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = zoom; scaleY = zoom; alpha = 0.75f })
+                ArteJuego(j, preferirArte = true, maxLado = if (movimiento) 1400 else 900, modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = zoomSeguro; scaleY = zoomSeguro; alpha = 0.75f })
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)))))
                 Column(Modifier.align(Alignment.BottomStart).padding(start = esc.d(28), bottom = esc.d(26))) {
                     Etiqueta(Consolas.porId(j.consolaId)?.bonito ?: "", Color.White.copy(alpha = 0.7f), 12f)

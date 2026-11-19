@@ -45,7 +45,9 @@ import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.ui.Coral
 import cl.nikalbazu.diptico.ui.Detalle
 import cl.nikalbazu.diptico.ui.LocalEscala
+import cl.nikalbazu.diptico.ui.LocalMovimiento
 import cl.nikalbazu.diptico.ui.LocalPaleta
+import cl.nikalbazu.diptico.ui.Estilo
 import cl.nikalbazu.diptico.ui.Lienzo
 import cl.nikalbazu.diptico.ui.SobreUva
 import cl.nikalbazu.diptico.ui.Texto
@@ -54,9 +56,11 @@ import cl.nikalbazu.diptico.ui.dibujarDippo
 import androidx.compose.runtime.remember
 import cl.nikalbazu.diptico.ui.fondoBoton
 
-/** DIPPO animada: parpadea y flota suave. Es su cara en todo Díptico. */
+/** DIPPO animada: parpadea y flota suave, pero se queda quieta en ahorro o sin movimiento. */
 @Composable
 fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = false, cara: cl.nikalbazu.diptico.ui.CaraDippo? = null) {
+    val extra = Diptico.estado.collectAsState().value.extra
+    val movimiento = LocalMovimiento.current && Estilo.efectosCompletos && Diptico.fluidezEfectiva(Diptico.estado.value) != "ahorro"
     val t = rememberInfiniteTransition(label = "bisa")
     val parpadeo by t.animateFloat(
         1f, 1f,
@@ -65,33 +69,36 @@ fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = fa
     )
     val flotar by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "flotar")
     val pulso by t.animateFloat(1f, 1.35f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulso")
-    // Las lucecitas de los tentáculos «respiran»; cada tanto saluda con un tentáculo.
     val luces by t.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1400), RepeatMode.Reverse), label = "luces")
     val saludo by t.animateFloat(
         0f, 0f,
         infiniteRepeatable(keyframes { durationMillis = 9000; 0f at 6000; 1f at 6400; 0.6f at 6700; 1f at 7000; 0f at 7500 }),
         label = "saludo",
     )
-    val extra = Diptico.estado.collectAsState().value.extra
+    val parpadeoSeguro = if (movimiento) parpadeo else 1f
+    val flotarSeguro = if (movimiento) flotar else 0f
+    val pulsoSeguro = if (movimiento) pulso else 1f
+    val lucesSeguras = if (movimiento) luces else 0.8f
+    val saludoSeguro = if (movimiento) saludo else 0f
+
     val pref = extra.dippoColor
     val colores = remember(pref) { cl.nikalbazu.diptico.ui.coloresDippoAhora(pref) }
-    // Recién ganó un logro: celebra unos segundos (salvo que alguien le pida otra cara).
     val celebrando = System.currentTimeMillis() - extra.dippoCelebra < 8000
     val gesto = cara ?: if (celebrando) cl.nikalbazu.diptico.ui.CaraDippo.CELEBRANDO else cl.nikalbazu.diptico.ui.CaraDippo.NORMAL
     Box(modifier.size(tamDp.dp), contentAlignment = Alignment.Center) {
         Box(
-            Modifier.fillMaxSize().graphicsLayer { translationY = flotar * tamDp * 0.04f * density }
+            Modifier.fillMaxSize().graphicsLayer { translationY = flotarSeguro * tamDp * 0.04f * density }
                 .shadow(6.dp, CircleShape).clip(CircleShape)
                 .background(Brush.linearGradient(listOf(Color(0xFF2A2146), Color(0xFF14111F)))),
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.size((tamDp * 0.86f).dp)) {
-                dibujarDippo(size.width / 24f, colores, gesto, parpadeo = parpadeo, mirar = flotar * 0.4f, luces = if (celebrando) 1f else luces, saludo = if (celebrando) (pulso - 1f) / 0.35f else saludo)
+                dibujarDippo(size.width / 24f, colores, gesto, parpadeo = parpadeoSeguro, mirar = flotarSeguro * 0.4f, luces = if (celebrando) 1f else lucesSeguras, saludo = if (celebrando) (pulsoSeguro - 1f) / 0.35f else saludoSeguro)
             }
         }
         if (alerta) {
             Box(
-                Modifier.align(Alignment.TopEnd).size((tamDp * 0.26f).dp).graphicsLayer { scaleX = pulso; scaleY = pulso }
+                Modifier.align(Alignment.TopEnd).size((tamDp * 0.26f).dp).graphicsLayer { scaleX = pulsoSeguro; scaleY = pulsoSeguro }
                     .clip(CircleShape).background(Coral).border(2.dp, Color.White, CircleShape),
             )
         }
@@ -161,4 +168,3 @@ fun VentanaBisa(mover: (Float, Float) -> Unit, cerrar: () -> Unit) {
         }
     }
 }
-
