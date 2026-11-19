@@ -4725,8 +4725,14 @@ object Diptico {
         if (sig >= paginasTour().size) { cerrarNovedades(); return }
         // El tour mostró Tu espacio de verdad en el paso 4; al pasar a las vistas de
         // carpetas vuelve al inicio visible antes de pedir Select.
-        if (estado.value.recorrido && n == 4 && sig == 5 && estado.value.inicio == "widgets")
-            fijarInicio("heroe")
+        if (estado.value.recorrido) {
+            if (n in setOf(4, 15) && sig in setOf(5, 16) && estado.value.inicio == "widgets") {
+                fijarInicio("heroe")
+                if (sig == 16) volverASistemas()
+            }
+            if (n == 6 && sig == 7 && !estado.value.enSistemas) volverASistemas()
+            if (n == 10 && sig == 11 && !estado.value.enSistemas) volverASistemas()
+        }
         actualizar { it.copy(novedades = sig.coerceAtLeast(0)) }
         Sonidos.pagina()
     }
