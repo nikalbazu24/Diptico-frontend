@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
@@ -166,6 +167,30 @@ class RecorridoTest {
             if (it % 40 == 39) volverAlInicio()
         }
     }
+
+    /** No basta con cambiar el estado: la pantalla debe dibujar la nueva vista. */
+    private fun verificarVistas(dos: Boolean) {
+        abrir(dos)
+        regla.runOnIdle { Diptico.entrarConsolaCV("snes") }
+        regla.mainClock.advanceTimeBy(600)
+        regla.waitForIdle()
+        regla.onNodeWithTag("cv-vista-estante", useUnmergedTree = true).assertExists()
+        for ((tag, vista) in listOf(
+            "cv-vista-cuadricula" to "cuadricula",
+            "cv-vista-lista" to "lista",
+            "cv-vista-estante" to "estante",
+        )) {
+            tecla(SEL)
+            regla.onNodeWithTag(tag, useUnmergedTree = true).assertExists()
+            org.junit.Assert.assertEquals(vista, Diptico.estado.value.extra.vistaColeccion)
+            org.junit.Assert.assertEquals("heroe", Diptico.estado.value.inicio)
+        }
+    }
+
+    @Test fun selectCambiaVistaVisualDosPantallas() = verificarVistas(dos = true)
+
+    @Config(qualifiers = "w731dp-h411dp-land-xhdpi")
+    @Test fun selectCambiaVistaVisualUnaPantalla() = verificarVistas(dos = false)
 
     @Test fun dosPantallas() { abrir(dos = true); caminos(); azar(7, 400); resumen("dos pantallas") }
 

@@ -92,11 +92,7 @@ object RecorridoVivo {
             }
             8 -> {
                 val antes = e.extra.vistaColeccion
-                Diptico.elegirVistaColeccion(when (antes) {
-                    "estante" -> "cuadricula"
-                    "cuadricula" -> "lista"
-                    else -> "estante"
-                })
+                Diptico.siguienteVistaColeccion()
                 if (Diptico.estado.value.extra.vistaColeccion != antes) avisar("vistaJuego")
             }
             9 -> if (e.seleccionado != null) {

@@ -45,7 +45,8 @@ object Teclas {
     private fun atajosDisponibles(e: Estado): Boolean =
         e.configurado && e.sesion == null && !e.conTeclado && !e.intro && e.panel == Panel.NINGUNO &&
             e.dialogo == null && e.novedades < 0 && !e.relojGrande && !e.editandoWidgets &&
-            !e.ordenando && e.bienvenida == 0L && e.donde == null && !e.quedaste && e.marcandoMapa == null
+            !e.ordenando && !e.extra.galeria && e.bienvenida == 0L &&
+            e.donde == null && !e.quedaste && e.marcandoMapa == null
 
     private fun atajo(ev: KeyEvent, e: Estado): Boolean {
         if (!atajosDisponibles(e)) return false
@@ -128,7 +129,14 @@ object Teclas {
             e.extra.edicionPerfil != null || e.extra.anioEn >= 0 ||
             e.extra.amigosEn >= 0 || e.extra.edicionVitrina != null ||
             e.extra.cajaJuego.isNotEmpty() || e.extra.discordLogin != null ||
-            e.carpetaEnVentana || e.relojGrande || e.extra.carga != null ||
+            // La Galería de Widgets ocupa su propia pantalla. Debe retener Select,
+            // sticks y botones, no permitir a la ruta genérica alternarInicio().
+            (e.inicio == "widgets" && e.extra.galeria) ||
+            // Una carpeta de Colección viva es navegación principal, no un diálogo modal.
+            // «carpetaEnVentana» también es true BAJO Widgets si el usuario abrió una
+            // carpeta previamente. Bloquearla aquí filtraba Select y L1/R1 al Home.
+            (e.carpetaEnVentana && !e.extra.coleccionViva && e.inicio != "widgets") ||
+            e.relojGrande || e.extra.carga != null ||
             e.extra.emusDescarga != null
 
     fun manejar(ev: KeyEvent): Boolean {
@@ -141,6 +149,10 @@ object Teclas {
         if (abajo) presionadas += code else if (arriba) presionadas -= code
         if (abajo) cl.nikalbazu.diptico.ui.Vivo.toque()
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
+        // La colección captura Select antes del controlador genérico. Reiniciar aquí
+        // el estado de pulsación larga permite mantener Select varias veces seguidas,
+        // o pulsarlo corto después, sin arrastrar el estado anterior.
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 0) selectLargo = false
         // Durante la descarga/instalación de un emulador el instalador de Android es el único dueño
         // de los controles: no se abren carpetas ni cambia la selección en la pantalla de fondo.
         if (e.extra.emusDescarga != null) return true
@@ -155,7 +167,11 @@ object Teclas {
             return true
         }
         // Mantener Select (en cualquier parte): intercambia las pantallas de arriba y abajo.
-        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla && !modalVisible(e)) {
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 &&
+            !selectLargo && !e.unaPantalla && !modalVisible(e)) {
+            // La ruta genérica ya puede haber detectado una pulsación larga (>550 ms).
+            // No intercambiar dos veces por el mismo Select mantenido.
+            selectLargo = true
             consumidas += code
             Diptico.intercambiar()
             return true
@@ -210,6 +226,12 @@ object Teclas {
                 }
                 if (arriba) when {
                     esB(code) || code == KeyEvent.KEYCODE_BUTTON_THUMBR -> Diptico.girarCaja(false)
+                    // Select también cambia la vista si se dejó girada la caja: salimos
+                    // del reverso primero para que la nueva vista sea visible de inmediato.
+                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> {
+                        Diptico.girarCaja(false)
+                        Diptico.siguienteVistaColeccion()
+                    }
                     esY(code) -> j?.let { Diptico.abrirCajaJuego(it.clave) }
                     code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.abrirFicha()
                     esA(code) -> Diptico.jugar()
@@ -219,7 +241,7 @@ object Teclas {
                 when (code) {
                     KeyEvent.KEYCODE_BUTTON_THUMBR, KeyEvent.KEYCODE_BUTTON_X -> { if (arriba && j != null) Diptico.girarCaja(true); return true }
                     KeyEvent.KEYCODE_BUTTON_SELECT -> {
-                        if (arriba && ev.repeatCount == 0) Diptico.elegirVistaColeccion(when (e.extra.vistaColeccion) { "estante" -> "cuadricula"; "cuadricula" -> "lista"; else -> "estante" })
+                        if (arriba && ev.repeatCount == 0) Diptico.siguienteVistaColeccion()
                         return true
                     }
                 }
@@ -701,6 +723,8 @@ object Teclas {
                         if (abajo && una) Diptico.categoriaEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
                     }
                     code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.cambiarTamGaleria(1); return true }
+                    // Select no abandona la Galería ni cambia carpetas/juegos a sus espaldas.
+                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> return true
                     esA(code) -> { if (abajo && una) Diptico.agregarDesdeGaleria(); return true }
                     esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.cerrarGaleriaWidgets(); return true }
                 }
@@ -708,9 +732,21 @@ object Teclas {
                 d != null -> { if (abajo) Diptico.entrarWidgets(); return true }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.abrirGaleriaWidgets(); return true }
                 code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.editarEspacio(); return true }
-                esA(code) && e.espacioVacio() -> { if (abajo && una) Diptico.agregarSugeridos(); return true }
+                // A sobre Tu espacio NO ejecuta el juego escondido: primero enfoca el widget.
+                esA(code) -> {
+                    if (arriba && !e.espacioVacio()) Diptico.entrarWidgets()
+                    else if (abajo && una && e.espacioVacio()) Diptico.agregarSugeridos()
+                    return true
+                }
                 esB(code) -> { if (abajo && una) Diptico.pasoEspacio(-(e.paginaInicio + 1)); return true }
             }
+        }
+
+        // R3 es el selector de vistas de JUEGOS, no de widgets: al estar en Tu espacio
+        // la única galería válida es la de widgets. No dejarlo pasar al Home.
+        if (cvLibre && e.inicio == "widgets" && code == KeyEvent.KEYCODE_BUTTON_THUMBR) {
+            if (abajo && ev.repeatCount == 0 && !e.extra.galeria) Diptico.abrirGaleriaWidgets()
+            return true
         }
 
         // Con un widget enfocado, X abre sus opciones y Y lleva a la Galería;
@@ -896,7 +932,13 @@ object Teclas {
                     return true
                 }
                 KeyEvent.KEYCODE_BUTTON_SELECT -> {
-                    if (!selectLargo && !hayPanel) Diptico.alternarInicio()
+                    if (!selectLargo && !hayPanel) {
+                        // Defensa: Select no cambia a Widgets cuando se muestran los juegos
+                        // o carpetas CV, incluso si antes no se consumió el evento.
+                        if (cl.nikalbazu.diptico.ui.coleccionVivaActiva(e) && e.inicio != "widgets") {
+                            if (e.enSistemas) Diptico.siguienteVistaCarpetas() else Diptico.siguienteVistaColeccion()
+                        } else Diptico.alternarInicio()
+                    }
                     selectLargo = false
                     return true
                 }
