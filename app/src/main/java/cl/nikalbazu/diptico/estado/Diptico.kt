@@ -3650,13 +3650,16 @@ object Diptico {
                 }
                 e.ficha?.enlace?.let { url -> add(Opcion("Artículo completo en Wikipedia", icono = Icono.WEB, ayuda = "Abre el artículo de Wikipedia de este juego en el navegador.") { abrirWeb(url) }) }
             }
-            3 -> listOf(
+            3 -> listOfNotNull(
                 // Lo primero: cómo se llama y cómo se ve. Después, la vitrina. Las cajas viven en el Estudio de Cajas.
                 Opcion("Nombre", d.titulo ?: j.titulo, Icono.TITULO, ayuda = "El nombre que se muestra en el estante y arriba. El archivo no se cambia.") { abrirTexto("titulo", d.titulo ?: j.titulo) }.copy(grupo = "Lo primero"),
                 Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "Elige otra portada en la tienda de imágenes (comunidad, ScreenScraper, SteamGridDB…) o desde tus archivos.") { buscarCandidatos("portada") }.copy(grupo = "Lo primero"),
                 Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "La imagen grande que se ve de fondo en la pantalla de arriba.") { buscarCandidatos("arte") }.copy(grupo = "Lo primero"),
                 Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA, ayuda = "El logo que aparece sobre la imagen grande en vez del título escrito.") { buscarCandidatos("logo") }.copy(grupo = "Lo primero"),
                 Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA, ayuda = "Una canción que suena en el estante cuando este juego está elegido.") { pedirArchivoPara("musica", "audio/*") }.copy(grupo = "Lo primero"),
+                consola?.takeIf { !it.sinEmulador }?.let {
+                    opcionEmuladorJuego(j, it, "Emulador de este juego").copy(grupo = "Juego y emulador")
+                },
                 Opcion("Lugar en la vitrina", if (e.extra.disposiciones.containsKey(j.clave)) "A tu gusto ✓" else "Mover logo, imagen y caja", Icono.PALETA,
                     "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego, eliges su tamaño y si el fondo va difuminado. Arriba ves cómo queda.", grupo = "La vitrina") { abrirEditorVitrina(j.clave) },
                 opcionLista(
