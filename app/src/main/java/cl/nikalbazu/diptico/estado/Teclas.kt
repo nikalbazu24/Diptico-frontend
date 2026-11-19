@@ -716,9 +716,21 @@ object Teclas {
                 d != null -> { if (abajo) Diptico.entrarWidgets(); return true }
                 code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.abrirGaleriaWidgets(); return true }
                 code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.editarEspacio(); return true }
-                esA(code) && e.espacioVacio() -> { if (abajo && una) Diptico.agregarSugeridos(); return true }
+                // A sobre Tu espacio NO ejecuta el juego escondido: primero enfoca el widget.
+                esA(code) -> {
+                    if (arriba && !e.espacioVacio()) Diptico.entrarWidgets()
+                    else if (abajo && una && e.espacioVacio()) Diptico.agregarSugeridos()
+                    return true
+                }
                 esB(code) -> { if (abajo && una) Diptico.pasoEspacio(-(e.paginaInicio + 1)); return true }
             }
+        }
+
+        // R3 es el selector de vistas de JUEGOS, no de widgets: al estar en Tu espacio
+        // la única galería válida es la de widgets. No dejarlo pasar al Home.
+        if (cvLibre && e.inicio == "widgets" && code == KeyEvent.KEYCODE_BUTTON_THUMBR) {
+            if (abajo && ev.repeatCount == 0 && !e.extra.galeria) Diptico.abrirGaleriaWidgets()
+            return true
         }
 
         // Con un widget enfocado, X abre sus opciones y Y lleva a la Galería;

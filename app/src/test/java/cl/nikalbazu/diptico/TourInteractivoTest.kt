@@ -211,6 +211,32 @@ class TourInteractivoTest {
             Diptico.estado.value.intercambiar)
     }
 
+    @Test fun aEnWidgetsSinFocoNoEjecutaElJuegoOculto() {
+        prepararCarpetaCV()
+        val e = Diptico.estado.value
+        Diptico.fijarParaPrueba(e.copy(inicio = "widgets", widgetFoco = -1,
+            widgets = listOf(Widget("reloj", 0, 0, 2, 2))))
+        val consola = Diptico.estado.value.consolaSel
+        val juego = Diptico.estado.value.juegoSel
+        pulsar(KeyEvent.KEYCODE_BUTTON_A)
+        assertEquals("El Home no debe navegar al pulsar A en Widgets", consola, Diptico.estado.value.consolaSel)
+        assertEquals(juego, Diptico.estado.value.juegoSel)
+        assertEquals("widgets", Diptico.estado.value.inicio)
+        assertEquals("Un A debe enfocar el widget", 0, Diptico.estado.value.widgetFoco)
+        assertEquals(null, Diptico.estado.value.sesion)
+    }
+
+    @Test fun r3EnWidgetsAbreSuGaleriaSinCambiarVistaDeJuegos() {
+        prepararCarpetaCV()
+        val e = Diptico.estado.value
+        Diptico.fijarParaPrueba(e.copy(inicio = "widgets", widgetFoco = -1))
+        val vista = Diptico.estado.value.extra.vistaColeccion
+        pulsar(KeyEvent.KEYCODE_BUTTON_THUMBR)
+        assertEquals("R3 de Widgets abre su galería", true, Diptico.estado.value.extra.galeria)
+        assertEquals("La vista de juegos queda intacta", vista, Diptico.estado.value.extra.vistaColeccion)
+        assertEquals("widgets", Diptico.estado.value.inicio)
+    }
+
     @Test fun unMenuAbiertoNuncaDejaCambiarLaConsolaDelFondo() {
         prepararCarpetaCV()
         Diptico.fijarParaPrueba(Diptico.estado.value.copy(
