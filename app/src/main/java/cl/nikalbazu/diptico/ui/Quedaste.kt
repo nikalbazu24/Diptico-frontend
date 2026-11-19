@@ -123,7 +123,7 @@ private fun FormaQuedaste(icono: Icono, titulo: String, sub: String, elegida: Bo
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val mov = ajusteMovimiento()
-    val k by animateFloatAsState(if (elegida) 1f else 0f, if (mov.activo) spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow / mov.duracion.coerceAtLeast(0.3f)) else androidx.compose.animation.core.snap(), label = "forma")
+    val k by animateFloatAsState(if (elegida) 1f else 0f, if (mov.activo) spring(dampingRatio = 0.8f, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow / mov.duracion.coerceAtLeast(0.3f)) else androidx.compose.animation.core.snap(), label = "forma")
     val pulso = rememberInfiniteTransition(label = "pulso")
     val r by pulso.animateFloat(0.96f, 1.04f, infiniteRepeatable(tween(mov.ms(900).coerceAtLeast(1)), RepeatMode.Reverse), label = "r")
     var ahora by remember { mutableStateOf(System.currentTimeMillis()) }
@@ -151,7 +151,6 @@ private fun FormaQuedaste(icono: Icono, titulo: String, sub: String, elegida: Bo
 
 private fun formatoSeg(s: Long) = "${s / 60}:${(s % 60).toString().padStart(2, '0')}"
 
-/** Marcar en el mapa: tu imagen del mapa del juego, con un pin que se mueve con la cruceta (o tocando). */
 @Composable
 fun MarcarMapa(e: Estado) {
     val p = LocalPaleta.current
@@ -177,7 +176,6 @@ fun MarcarMapa(e: Estado) {
     }
 }
 
-/** La imagen del mapa entera (sin recortar) y el pin donde quedaste. */
 @Composable
 fun MapaConPin(m: MapaJuego, modifier: Modifier, editable: Boolean = false, maxLado: Int = 600, animar: Boolean = true) {
     val esc = LocalEscala.current
@@ -218,7 +216,6 @@ fun MapaConPin(m: MapaJuego, modifier: Modifier, editable: Boolean = false, maxL
     }
 }
 
-/** Recuerdos de juego: nota de voz y mapa con el pin. */
 @Composable
 fun RecuerdosJuego(e: Estado, clave: String, mapaAlto: Float = 90f) {
     val p = LocalPaleta.current
