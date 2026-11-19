@@ -317,7 +317,8 @@ fun menuIntercambiado(e: Estado): Boolean = e.intercambiar
 @Composable
 fun DockCV(e: Estado, tam: Float = 60f, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
-    Row(modifier.height(esc.d(tam + 20f)).vidrio((tam + 20f) / 2f, fuerte = true).padding(horizontal = esc.d(10)),
+    // Dock completamente transparente: los iconos flotan sin una cápsula de vidrio detrás.
+    Row(modifier.height(esc.d(tam + 20f)).padding(horizontal = esc.d(10)),
         verticalAlignment = Alignment.CenterVertically) {
         FilaDock(e, tam, conCajon = true)
     }
