@@ -54,13 +54,18 @@ import kotlin.math.cos
 import kotlin.math.sign
 import kotlin.math.sin
 
-/** Discos: funda giratoria y vinilo animado para la vista Colección viva. */
+/** Discos: selección y movimiento de la funda siguen el ajuste global de animaciones. */
 @Composable
 fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
+    val mov = ajusteMovimiento()
     val ids = e.pestanas
     val sel = ids.indexOf(e.consolaSel).coerceAtLeast(0)
-    val pos by animateFloatAsState(sel.toFloat(), tween(360, easing = FastOutSlowInEasing), label = "discos")
+    val pos by animateFloatAsState(
+        sel.toFloat(),
+        if (mov.activo) tween(mov.ms(360), easing = FastOutSlowInEasing) else androidx.compose.animation.core.snap(),
+        label = "discos",
+    )
     Column(modifier) {
         BoxWithConstraints(
             Modifier.fillMaxWidth().weight(1f).pointerInput(ids.size) {
@@ -78,8 +83,8 @@ fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
                 return@BoxWithConstraints
             }
             val funda = minOf(maxHeight.value / 1.62f, maxWidth.value * 0.34f, 200f * esc.factor)
-            val desde = (kotlin.math.floor(pos).toInt() - 4).coerceAtLeast(0)
-            val hasta = (kotlin.math.ceil(pos).toInt() + 4).coerceAtMost(ids.size - 1)
+            val desde = (kotlin.math.floor(pos).toInt() - 3).coerceAtLeast(0)
+            val hasta = (kotlin.math.ceil(pos).toInt() + 3).coerceAtMost(ids.size - 1)
             for (k in desde..hasta) {
                 val id = ids[k]
                 key(id) {
@@ -97,7 +102,7 @@ fun DiscosConsolas(e: Estado, modifier: Modifier = Modifier) {
                                 val s = 1f - abs(cerca) * 0.2f
                                 scaleX = s; scaleY = s
                                 transformOrigin = TransformOrigin(0.5f, 1f)
-                                alpha = ((4.2f - abs(off)) / 1.2f).coerceIn(0f, 1f)
+                                alpha = ((3.2f - abs(off)) / 1.2f).coerceIn(0f, 1f)
                             }
                             .clickable { if (frente) Diptico.entrarSistema() else Diptico.elegirConsola(id) },
                         contentAlignment = Alignment.BottomCenter,
@@ -119,11 +124,15 @@ private fun DiscoConsola(e: Estado, id: String, funda: Float, fuera: Float) {
     val c = Consolas.porId(id)
     val color = c?.color ?: Uva
     val juegos = remember(e.juegos, id) { (if (id == "todo") e.juegos else e.juegos.filter { it.consolaId == id }).take(4) }
-    val sale by animateFloatAsState(fuera, spring(dampingRatio = 0.7f, stiffness = 220f), label = "sale")
-    val movimiento = LocalMovimiento.current && Estilo.efectosCompletos
-    val giro = if (fuera > 0.95f && movimiento) {
+    val mov = ajusteMovimiento()
+    val sale by animateFloatAsState(
+        fuera,
+        if (mov.activo) spring(dampingRatio = 0.7f, stiffness = 220f / mov.duracion.coerceAtLeast(0.3f)) else androidx.compose.animation.core.snap(),
+        label = "sale",
+    )
+    val giro = if (fuera > 0.95f && mov.activo && Estilo.efectosCompletos) {
         val t = rememberInfiniteTransition(label = "giro")
-        t.animateFloat(0f, 360f, infiniteRepeatable(tween(7000, easing = LinearEasing), RepeatMode.Restart), label = "giro").value
+        t.animateFloat(0f, 360f, infiniteRepeatable(tween(mov.ms(7000), easing = LinearEasing), RepeatMode.Restart), label = "giro").value
     } else 0f
     val lado = funda.dp
     Box(Modifier.size(lado, (funda * 1.55f).dp), contentAlignment = Alignment.BottomCenter) {

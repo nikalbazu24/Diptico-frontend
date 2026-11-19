@@ -14,24 +14,26 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-/**
- * Transición al intercambiar las pantallas: lo de arriba baja y cruza la bisagra,
- * y lo de abajo sube a ocupar su lugar. Cada pantalla anima su mitad del viaje.
- * [esArriba]: esta es la pantalla de arriba (las cosas salen y entran por su borde inferior).
- */
+/** Transición regulada por los ajustes globales al intercambiar las pantallas. */
 @Composable
 fun Intercambio(intercambiado: Boolean, esArriba: Boolean, contenido: @Composable (Boolean) -> Unit) {
     val lado = if (esArriba) 1 else -1
+    val mov = ajusteMovimiento()
     AnimatedContent(
         targetState = intercambiado,
         transitionSpec = {
-            val entra = slideInVertically(tween(560, delayMillis = 120, easing = FastOutSlowInEasing)) { lado * it } +
-                fadeIn(tween(380, delayMillis = 120)) +
-                scaleIn(tween(560, delayMillis = 120, easing = FastOutSlowInEasing), initialScale = 0.94f)
-            val sale = slideOutVertically(tween(480, easing = FastOutSlowInEasing)) { lado * it } +
-                fadeOut(tween(420)) +
-                scaleOut(tween(480), targetScale = 0.88f)
-            (entra togetherWith sale).apply { targetContentZIndex = 1f }
+            if (!mov.activo) {
+                androidx.compose.animation.EnterTransition.None togetherWith androidx.compose.animation.ExitTransition.None
+            } else {
+                val distancia = mov.distancia(0.07f)
+                val entra = slideInVertically(tween(mov.ms(300), delayMillis = mov.ms(80), easing = FastOutSlowInEasing)) { (lado * it * distancia).toInt() } +
+                    fadeIn(tween(mov.ms(240), delayMillis = mov.ms(80))) +
+                    scaleIn(tween(mov.ms(300), delayMillis = mov.ms(80), easing = FastOutSlowInEasing), initialScale = 1f - 0.035f * mov.intensidad)
+                val sale = slideOutVertically(tween(mov.ms(250), easing = FastOutSlowInEasing)) { (lado * it * distancia).toInt() } +
+                    fadeOut(tween(mov.ms(220))) +
+                    scaleOut(tween(mov.ms(250)), targetScale = 1f - 0.05f * mov.intensidad)
+                (entra togetherWith sale).apply { targetContentZIndex = 1f }
+            }
         },
         label = "intercambio",
         modifier = Modifier.fillMaxSize(),
