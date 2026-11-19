@@ -375,9 +375,15 @@ object Teclas {
                         }
                     }
                     KeyEvent.KEYCODE_BUTTON_X -> {
-                        if (e.novedades == 2 && e.consolaSel != "todo") {
-                            Diptico.abrirEditarConsola(e.consolaSel)
-                            if (Diptico.estado.value.panel == Panel.EDITAR_CONSOLA) RecorridoVivo.avisar("x")
+                        if (e.novedades == 2) {
+                            // «Todas» no tiene personalización: elegimos una consola real para no bloquear el tour.
+                            val id = e.consolaSel.takeIf { it != "todo" }
+                                ?: e.pestanas.firstOrNull { it != "todo" }
+                            if (id != null) {
+                                if (e.consolaSel != id) Diptico.elegirConsola(id)
+                                Diptico.abrirEditarConsola(id)
+                                if (Diptico.estado.value.panel == Panel.EDITAR_CONSOLA) RecorridoVivo.avisar("x")
+                            }
                         }
                     }
                     KeyEvent.KEYCODE_BUTTON_Y -> RecorridoVivo.avisar("y")
