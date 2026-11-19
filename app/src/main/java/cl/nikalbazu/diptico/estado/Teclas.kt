@@ -184,11 +184,17 @@ object Teclas {
             return true
         }
         // Tu espacio tiene prioridad absoluta: L1/R1 recorren sus páginas (no las carpetas ocultas).
-        if (e.configurado && e.inicio == "widgets" && e.sesion == null && !modalVisible(e) &&
-            !e.editandoWidgets && !e.extra.galeria && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) {
+        // En Tu espacio L1/R1 nunca deben llegar a cambiarConsola() del Home.
+        // Capturar también con foco en widgets y en la galería; el recorrido tiene su propio controlador.
+        if (e.inicio == "widgets" && e.sesion == null && !e.recorrido && !modalVisible(e) &&
+            !e.editandoWidgets && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) {
             if (abajo && ev.repeatCount == 0) {
                 val delta = if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1
-                if (e.widgetFoco >= 0) Diptico.paginaFocoWidget(delta) else Diptico.cambiarPagina(delta)
+                when {
+                    e.extra.galeria -> Diptico.categoriaEspacio(delta)
+                    e.widgetFoco >= 0 -> Diptico.paginaFocoWidget(delta)
+                    else -> Diptico.cambiarPagina(delta)
+                }
             }
             return true
         }
