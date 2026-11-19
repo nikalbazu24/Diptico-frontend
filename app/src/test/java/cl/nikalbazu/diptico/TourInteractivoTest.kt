@@ -223,6 +223,30 @@ class TourInteractivoTest {
         assertEquals("heroe", Diptico.estado.value.inicio)
     }
 
+    @Test fun selectLargoSeguidoDeSelectCortoIntercambiaYCambiaVista() {
+        prepararCarpetaCV()
+        val antes = Diptico.estado.value.intercambiar
+        Teclas.manejar(KeyEvent(0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
+        Teclas.manejar(KeyEvent(0L, 650L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 12))
+        Teclas.manejar(KeyEvent(0L, 700L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
+        assertNotEquals(antes, Diptico.estado.value.intercambiar)
+        assertEquals("estante", Diptico.estado.value.extra.vistaColeccion)
+        pulsar(KeyEvent.KEYCODE_BUTTON_SELECT)
+        assertEquals("cuadricula", Diptico.estado.value.extra.vistaColeccion)
+    }
+
+    @Test fun dosSelectLargosIntercambianPantallasDosVeces() {
+        prepararCarpetaCV()
+        val antes = Diptico.estado.value.intercambiar
+        for (k in 0..1) {
+            Teclas.manejar(KeyEvent(0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
+            Teclas.manejar(KeyEvent(0L, 650L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 12))
+            Teclas.manejar(KeyEvent(0L, 700L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
+        }
+        assertEquals(antes, Diptico.estado.value.intercambiar)
+        assertEquals("estante", Diptico.estado.value.extra.vistaColeccion)
+    }
+
     @Test fun mantenerSelectEnModoAnteriorNoIntercambiaDosVeces() {
         prepararCarpetaCV()
         val e = Diptico.estado.value
