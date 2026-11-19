@@ -331,9 +331,9 @@ fun ColeccionAbajo(e: Estado) {
             Box(Modifier.fillMaxWidth().weight(1f)) {
                 Box(Modifier.fillMaxSize().anclaRecorrido("juegos")) {
                     when (e.extra.vistaColeccion) {
-                        "cuadricula" -> RejillaCV(e, columnas = 4, Modifier.fillMaxSize(), insetInferior = 98f)
-                        "lista" -> ListaCV(e, Modifier.fillMaxSize(), insetInferior = 98f)
-                        else -> Column(Modifier.fillMaxSize().padding(bottom = esc.d(84))) {
+                        "cuadricula" -> RejillaCV(e, columnas = 4, Modifier.fillMaxSize().testTag("cv-vista-cuadricula"), insetInferior = 98f)
+                        "lista" -> ListaCV(e, Modifier.fillMaxSize().testTag("cv-vista-lista"), insetInferior = 98f)
+                        else -> Column(Modifier.fillMaxSize().testTag("cv-vista-estante").padding(bottom = esc.d(84))) {
                             EstanteCV(e, Modifier.fillMaxWidth().weight(1f))
                             val j = e.seleccionado
                             Column(Modifier.fillMaxWidth().padding(top = esc.d(6)), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -504,9 +504,9 @@ fun ColeccionUnica(e: Estado) {
                 }
                 Box(Modifier.fillMaxWidth().weight(1f)) {
                     when (e.extra.vistaColeccion) {
-                        "cuadricula" -> RejillaCV(e, columnas = 7, Modifier.fillMaxSize().padding(top = esc.d(8)))
-                        "lista" -> ListaCV(e, Modifier.fillMaxSize().padding(top = esc.d(8)))
-                        else -> EstanteCV(e, Modifier.fillMaxSize(), vecinas = 4)
+                        "cuadricula" -> RejillaCV(e, columnas = 7, Modifier.fillMaxSize().testTag("cv-vista-cuadricula").padding(top = esc.d(8)))
+                        "lista" -> ListaCV(e, Modifier.fillMaxSize().testTag("cv-vista-lista").padding(top = esc.d(8)))
+                        else -> EstanteCV(e, Modifier.fillMaxSize().testTag("cv-vista-estante"), vecinas = 4)
                     }
                 }
             }
