@@ -4,6 +4,9 @@ import android.view.KeyEvent
 import android.net.Uri
 import cl.nikalbazu.diptico.data.Juego
 import org.junit.Assert.assertTrue
+import android.net.Uri
+import cl.nikalbazu.diptico.data.Juego
+import org.junit.Assert.assertTrue
 import androidx.test.core.app.ApplicationProvider
 import cl.nikalbazu.diptico.estado.*
 import org.junit.Assert.assertEquals
@@ -81,6 +84,93 @@ class TourInteractivoTest {
         val antes = Diptico.estado.value.extra.vistaColeccion
         RecorridoVivo.probar(8)
         assertNotEquals(antes, Diptico.estado.value.extra.vistaColeccion)
+    }
+
+
+    private fun prepararCarpetaCV(unaPantalla: Boolean = false) {
+        val juegos = listOf(
+            Juego("snes/celda", "snes", "Celda", "celda.sfc",
+                Uri.parse("content://prueba/snes/celda"), "primary:Juegos/snes/celda"),
+            Juego("ps2/ruta", "ps2", "Ruta", "ruta.iso",
+                Uri.parse("content://prueba/ps2/ruta"), "primary:Juegos/ps2/ruta"),
+        )
+        Diptico.fijarParaPrueba(Diptico.estado.value.copy(
+            juegos = juegos, consolaSel = "snes", juegoSel = "snes/celda",
+            enSistemas = false, vistaConsolas = "carpetas", modoCarpeta = "ventana",
+            modoPantallas = if (unaPantalla) "una_negra" else "dos",
+            dosDisponibles = !unaPantalla, inicio = "heroe",
+            paginas = 3, paginaInicio = 1, novedades = -1, recorrido = false,
+            extra = Diptico.estado.value.extra.copy(coleccionViva = true, vistaColeccion = "estante"),
+        ))
+        assertTrue("La carpeta debe ser una ventana para reproducir el error", Diptico.estado.value.carpetaEnVentana)
+        assertTrue("Se necesitan varias consolas para detectar cambios ocultos",
+            Diptico.estado.value.pestanas.size >= 2)
+    }
+
+    @Test fun selectDentroDeCarpetaAbiertaCambiaVistaSinIrAWidgets() {
+        prepararCarpetaCV()
+        val anteriorConsola = Diptico.estado.value.consolaSel
+        val anteriorJuego = Diptico.estado.value.juegoSel
+        for (vista in listOf("cuadricula", "lista", "estante")) {
+            pulsar(KeyEvent.KEYCODE_BUTTON_SELECT)
+            assertEquals("Select debe pasar a $vista", vista, Diptico.estado.value.extra.vistaColeccion)
+            assertEquals("Select no debe abrir widgets", "heroe", Diptico.estado.value.inicio)
+            assertEquals(anteriorConsola, Diptico.estado.value.consolaSel)
+            assertEquals(anteriorJuego, Diptico.estado.value.juegoSel)
+        }
+    }
+
+    @Test fun selectDentroDeCarpetaEnUnaPantallaCambiaVista() {
+        prepararCarpetaCV(unaPantalla = true)
+        pulsar(KeyEvent.KEYCODE_BUTTON_SELECT)
+        assertEquals("cuadricula", Diptico.estado.value.extra.vistaColeccion)
+        assertEquals("heroe", Diptico.estado.value.inicio)
+    }
+
+    @Test fun l1r1SobreWidgetsNoCambianLaConsolaOcultaEnCarpeta() {
+        prepararCarpetaCV()
+        Diptico.fijarParaPrueba(Diptico.estado.value.copy(inicio = "widgets"))
+        assertTrue("La carpeta continúa abierta detrás de los widgets", Diptico.estado.value.carpetaEnVentana)
+        val consola = Diptico.estado.value.consolaSel
+        val juego = Diptico.estado.value.juegoSel
+        pulsar(KeyEvent.KEYCODE_BUTTON_R1)
+        assertEquals(2, Diptico.estado.value.paginaInicio)
+        pulsar(KeyEvent.KEYCODE_BUTTON_L1)
+        assertEquals(1, Diptico.estado.value.paginaInicio)
+        assertEquals("La consola del fondo no puede moverse", consola, Diptico.estado.value.consolaSel)
+        assertEquals("El juego del fondo no puede cambiar", juego, Diptico.estado.value.juegoSel)
+        assertEquals("widgets", Diptico.estado.value.inicio)
+    }
+
+    @Test fun l1r1EnGaleriaDeWidgetsCambianCategoriaYNoLaConsola() {
+        prepararCarpetaCV()
+        val antes = Diptico.estado.value
+        Diptico.fijarParaPrueba(antes.copy(inicio = "widgets", extra = antes.extra.copy(galeria = true)))
+        val consola = Diptico.estado.value.consolaSel
+        val categoria = Diptico.estado.value.extra.tiendaCat
+        pulsar(KeyEvent.KEYCODE_BUTTON_R1)
+        assertNotEquals("La categoría debe avanzar", categoria, Diptico.estado.value.extra.tiendaCat)
+        assertEquals("La consola debe mantenerse", consola, Diptico.estado.value.consolaSel)
+        assertEquals("widgets", Diptico.estado.value.inicio)
+    }
+
+    @Test fun conFocoWidgetL1R1TampocoMuevenLaConsola() {
+        prepararCarpetaCV()
+        Diptico.fijarParaPrueba(Diptico.estado.value.copy(inicio = "widgets", widgetFoco = 0))
+        val consola = Diptico.estado.value.consolaSel
+        pulsar(KeyEvent.KEYCODE_BUTTON_R1)
+        assertEquals(consola, Diptico.estado.value.consolaSel)
+    }
+
+    @Test fun unMenuAbiertoNuncaDejaCambiarLaConsolaDelFondo() {
+        prepararCarpetaCV()
+        Diptico.fijarParaPrueba(Diptico.estado.value.copy(
+            inicio = "widgets", panel = Panel.MENU,
+        ))
+        val consola = Diptico.estado.value.consolaSel
+        pulsar(KeyEvent.KEYCODE_BUTTON_R1)
+        pulsar(KeyEvent.KEYCODE_BUTTON_L1)
+        assertEquals(consola, Diptico.estado.value.consolaSel)
     }
 
     @Test fun l1r1EnWidgetsCambianPaginaPeroNoConsola() {
