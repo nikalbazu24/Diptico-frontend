@@ -178,7 +178,7 @@ class TourInteractivoTest {
     @Test fun mantenerSelectEnModoAnteriorNoIntercambiaDosVeces() {
         prepararCarpetaCV()
         val e = Diptico.estado.value
-        Diptico.fijarParaPrueba(e.copy(extra = e.extra.copy(coleccionViva = false)))
+        Diptico.fijarParaPrueba(e.copy(modoCarpeta = "completa", extra = e.extra.copy(coleccionViva = false)))
         val anterior = Diptico.estado.value.intercambiar
         Teclas.manejar(KeyEvent(0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
         Teclas.manejar(KeyEvent(0L, 620L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 11))
