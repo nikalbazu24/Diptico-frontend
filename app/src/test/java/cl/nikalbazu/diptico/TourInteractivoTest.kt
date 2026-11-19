@@ -117,6 +117,17 @@ class TourInteractivoTest {
         }
     }
 
+    @Test fun selectConCajaGiradaRegresaALosJuegosYCambiaVista() {
+        prepararCarpetaCV()
+        Diptico.fijarParaPrueba(Diptico.estado.value.copy(
+            extra = Diptico.estado.value.extra.copy(cajaGirada = true)
+        ))
+        pulsar(KeyEvent.KEYCODE_BUTTON_SELECT)
+        assertEquals("cuadricula", Diptico.estado.value.extra.vistaColeccion)
+        assertEquals(false, Diptico.estado.value.extra.cajaGirada)
+        assertEquals("heroe", Diptico.estado.value.inicio)
+    }
+
     @Test fun selectDentroDeCarpetaEnUnaPantallaCambiaVista() {
         prepararCarpetaCV(unaPantalla = true)
         pulsar(KeyEvent.KEYCODE_BUTTON_SELECT)
