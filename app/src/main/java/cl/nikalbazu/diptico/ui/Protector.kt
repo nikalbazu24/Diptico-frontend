@@ -26,7 +26,7 @@ import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.Estado
 import kotlinx.coroutines.delay
 
-/** Protector de pantalla: deja de animar cuando la opción de movimiento está apagada. */
+/** Protector de pantalla: el zoom se actualiza en la capa gráfica, no recompone la escena cada cuadro. */
 @Composable
 fun Protector(e: Estado, rol: Rol) {
     val esc = LocalEscala.current
@@ -42,12 +42,15 @@ fun Protector(e: Estado, rol: Rol) {
         }
     }
     val inf = rememberInfiniteTransition(label = "protector")
-    val zoom by inf.animateFloat(1f, 1.12f, infiniteRepeatable(tween(9000, easing = LinearEasing)), label = "zoom")
-    val zoomSeguro = if (movimiento) zoom else 1f
+    val zoom = inf.animateFloat(1f, 1.12f, infiniteRepeatable(tween(9000, easing = LinearEasing)), label = "zoom")
+    val zoomSeguro = if (movimiento) zoom else remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         Crossfade(targetState = juegos[i], animationSpec = tween(if (movimiento) 1500 else 0), label = "juego") { j ->
             Box(Modifier.fillMaxSize()) {
-                ArteJuego(j, preferirArte = true, maxLado = if (movimiento) 1400 else 900, modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = zoomSeguro; scaleY = zoomSeguro; alpha = 0.75f })
+                ArteJuego(j, preferirArte = true, maxLado = if (movimiento) 1400 else 900, modifier = Modifier.fillMaxSize().graphicsLayer {
+                    val escala = if (movimiento) zoomSeguro.value else 1f
+                    scaleX = escala; scaleY = escala; alpha = 0.75f
+                })
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)))))
                 Column(Modifier.align(Alignment.BottomStart).padding(start = esc.d(28), bottom = esc.d(26))) {
                     Etiqueta(Consolas.porId(j.consolaId)?.bonito ?: "", Color.White.copy(alpha = 0.7f), 12f)

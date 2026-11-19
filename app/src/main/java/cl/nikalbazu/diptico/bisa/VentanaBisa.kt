@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import cl.nikalbazu.diptico.ui.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -56,49 +57,59 @@ import cl.nikalbazu.diptico.ui.dibujarDippo
 import androidx.compose.runtime.remember
 import cl.nikalbazu.diptico.ui.fondoBoton
 
-/** DIPPO animada: parpadea y flota suave, pero se queda quieta en ahorro o sin movimiento. */
+/** DIPPO conserva sus animaciones en modo completo y las aplica en la capa de dibujo. */
 @Composable
 fun AvatarBisa(tamDp: Float, modifier: Modifier = Modifier, alerta: Boolean = false, cara: cl.nikalbazu.diptico.ui.CaraDippo? = null) {
     val extra = Diptico.estado.collectAsState().value.extra
     val movimiento = LocalMovimiento.current && Estilo.efectosCompletos && Diptico.fluidezEfectiva(Diptico.estado.value) != "ahorro"
-    val t = rememberInfiniteTransition(label = "bisa")
-    val parpadeo by t.animateFloat(
+    val animaciones = rememberInfiniteTransition(label = "bisa")
+    val parpadeo = animaciones.animateFloat(
         1f, 1f,
         infiniteRepeatable(keyframes { durationMillis = 3800; 1f at 3500; 0.1f at 3620; 1f at 3760 }),
         label = "parpadeo",
     )
-    val flotar by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "flotar")
-    val pulso by t.animateFloat(1f, 1.35f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulso")
-    val luces by t.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1400), RepeatMode.Reverse), label = "luces")
-    val saludo by t.animateFloat(
+    val flotar = animaciones.animateFloat(-1f, 1f, infiniteRepeatable(tween(1600), RepeatMode.Reverse), label = "flotar")
+    val pulso = animaciones.animateFloat(1f, 1.35f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulso")
+    val luces = animaciones.animateFloat(0.55f, 1f, infiniteRepeatable(tween(1400), RepeatMode.Reverse), label = "luces")
+    val saludo = animaciones.animateFloat(
         0f, 0f,
         infiniteRepeatable(keyframes { durationMillis = 9000; 0f at 6000; 1f at 6400; 0.6f at 6700; 1f at 7000; 0f at 7500 }),
         label = "saludo",
     )
-    val parpadeoSeguro = if (movimiento) parpadeo else 1f
-    val flotarSeguro = if (movimiento) flotar else 0f
-    val pulsoSeguro = if (movimiento) pulso else 1f
-    val lucesSeguras = if (movimiento) luces else 0.8f
-    val saludoSeguro = if (movimiento) saludo else 0f
-
     val pref = extra.dippoColor
     val colores = remember(pref) { cl.nikalbazu.diptico.ui.coloresDippoAhora(pref) }
     val celebrando = System.currentTimeMillis() - extra.dippoCelebra < 8000
     val gesto = cara ?: if (celebrando) cl.nikalbazu.diptico.ui.CaraDippo.CELEBRANDO else cl.nikalbazu.diptico.ui.CaraDippo.NORMAL
     Box(modifier.size(tamDp.dp), contentAlignment = Alignment.Center) {
         Box(
-            Modifier.fillMaxSize().graphicsLayer { translationY = flotarSeguro * tamDp * 0.04f * density }
+            Modifier.fillMaxSize().graphicsLayer {
+                // Leer el State en la capa evita recomponer todo el composable en cada cuadro.
+                translationY = (if (movimiento) flotar.value else 0f) * tamDp * 0.04f * density
+            }
                 .shadow(6.dp, CircleShape).clip(CircleShape)
                 .background(Brush.linearGradient(listOf(Color(0xFF2A2146), Color(0xFF14111F)))),
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.size((tamDp * 0.86f).dp)) {
-                dibujarDippo(size.width / 24f, colores, gesto, parpadeo = parpadeoSeguro, mirar = flotarSeguro * 0.4f, luces = if (celebrando) 1f else lucesSeguras, saludo = if (celebrando) (pulsoSeguro - 1f) / 0.35f else saludoSeguro)
+                val floatActual = if (movimiento) flotar.value else 0f
+                val pulsoActual = if (movimiento) pulso.value else 1f
+                dibujarDippo(
+                    size.width / 24f,
+                    colores,
+                    gesto,
+                    parpadeo = if (movimiento) parpadeo.value else 1f,
+                    mirar = floatActual * 0.4f,
+                    luces = if (celebrando) 1f else if (movimiento) luces.value else 0.8f,
+                    saludo = if (celebrando) (pulsoActual - 1f) / 0.35f else if (movimiento) saludo.value else 0f,
+                )
             }
         }
         if (alerta) {
             Box(
-                Modifier.align(Alignment.TopEnd).size((tamDp * 0.26f).dp).graphicsLayer { scaleX = pulsoSeguro; scaleY = pulsoSeguro }
+                Modifier.align(Alignment.TopEnd).size((tamDp * 0.26f).dp).graphicsLayer {
+                    val escala = if (movimiento) pulso.value else 1f
+                    scaleX = escala; scaleY = escala
+                }
                     .clip(CircleShape).background(Coral).border(2.dp, Color.White, CircleShape),
             )
         }
