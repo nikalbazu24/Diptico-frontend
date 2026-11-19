@@ -45,7 +45,8 @@ object Teclas {
     private fun atajosDisponibles(e: Estado): Boolean =
         e.configurado && e.sesion == null && !e.conTeclado && !e.intro && e.panel == Panel.NINGUNO &&
             e.dialogo == null && e.novedades < 0 && !e.relojGrande && !e.editandoWidgets &&
-            !e.ordenando && e.bienvenida == 0L && e.donde == null && !e.quedaste && e.marcandoMapa == null
+            !e.ordenando && !e.extra.galeria && e.bienvenida == 0L &&
+            e.donde == null && !e.quedaste && e.marcandoMapa == null
 
     private fun atajo(ev: KeyEvent, e: Estado): Boolean {
         if (!atajosDisponibles(e)) return false
