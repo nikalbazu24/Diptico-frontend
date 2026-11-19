@@ -84,7 +84,7 @@ private fun destinosDe(k: Int, una: Boolean, enWidgets: Boolean): List<String> =
     2 -> listOf("carpetas")
     3 -> if (enWidgets) listOf("espacio") else listOf("widgets")
     4 -> listOf("apps")
-    5 -> if (una) listOf("carpetas") else listOf("controles")
+    5 -> listOf("carpetas") // Select cambia la rejilla visible de abajo (también en Thor)
     6 -> listOf("dippo")
     else -> emptyList()
 }
