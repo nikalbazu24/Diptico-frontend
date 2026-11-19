@@ -22,7 +22,7 @@ fun Diptico.gruposJuego(): List<Pair<Opcion, List<Opcion>>> {
         addAll(de("Personalizar").map { it.copy(titulo = "Título, logo y música") })
         addAll(de("Imágenes"))
         // Acceso directo desde los ajustes del juego, además del grupo «Emulador y versión».
-        consola?.takeIf { !it.sinEmulador }?.let { add(opcionEmuladorJuego(juego, it, "Emulador de este juego")) }
+        consola?.let { add(opcionEmuladorJuego(juego, it, "Emulador de este juego")) }
         add(Opcion("Lugar en la vitrina", if (e.extra.disposiciones.containsKey(juego.clave)) "A tu gusto ✓" else "Mover logo, imagen y caja", Icono.PALETA,
             "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego. Arriba ves cómo queda.") { abrirEditorVitrina(juego.clave) })
         add(Opcion("Estudio de Cajas", if (e.extra.caras[juego.clave]?.tiene == true) "Tiene caja" else "Con la portada", Icono.PORTADA,

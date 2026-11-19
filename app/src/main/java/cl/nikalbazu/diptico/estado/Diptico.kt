@@ -3037,7 +3037,7 @@ object Diptico {
         lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA, ayuda = "Cambia el título, la portada, la imagen grande, el logo y la música de este juego.") { abrirFicha(); elegirPestanaFicha(3) }
         lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA, ayuda = "Abre la tienda de imágenes para elegir otra portada de internet.") { abrirFicha(); buscarCandidatos("portada") }
         lista += Opcion("Mover de lugar", if (e.orden == "propio") "A tu gusto" else "Ordénalos a tu gusto", Icono.VISTA, "Corre este juego con la cruceta y deja tus juegos en el orden que quieras.") { empezarOrdenar() }
-        if (consola != null && !consola.sinEmulador) {
+        if (consola != null) {
             lista += opcionEmuladorJuego(juego, consola)
         }
         if (estado.value.extra.carpetasPartidas.isNotEmpty() || consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
