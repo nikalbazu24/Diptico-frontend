@@ -131,7 +131,7 @@ object Teclas {
         if (abajo) cl.nikalbazu.diptico.ui.Vivo.toque()
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
         // Mantener Select (en cualquier parte): intercambia las pantallas de arriba y abajo.
-        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla) {
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla && !e.recorrido) {
             consumidas += code
             Diptico.intercambiar()
             return true
@@ -161,7 +161,7 @@ object Teclas {
         }
         // Tu espacio tiene prioridad absoluta: L1/R1 recorren sus páginas (no las carpetas ocultas).
         if (e.configurado && e.inicio == "widgets" && e.sesion == null && e.panel == Panel.NINGUNO &&
-            !e.editandoWidgets && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) {
+            !e.editandoWidgets && !e.extra.galeria && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) {
             if (abajo && ev.repeatCount == 0) {
                 val delta = if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1
                 if (e.widgetFoco >= 0) Diptico.paginaFocoWidget(delta) else Diptico.cambiarPagina(delta)
