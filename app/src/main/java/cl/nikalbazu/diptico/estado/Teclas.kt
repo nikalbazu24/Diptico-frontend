@@ -128,7 +128,11 @@ object Teclas {
             e.extra.edicionPerfil != null || e.extra.anioEn >= 0 ||
             e.extra.amigosEn >= 0 || e.extra.edicionVitrina != null ||
             e.extra.cajaJuego.isNotEmpty() || e.extra.discordLogin != null ||
-            e.carpetaEnVentana || e.relojGrande || e.extra.carga != null ||
+            // Una carpeta de Colección viva es navegación principal, no un diálogo modal.
+            // «carpetaEnVentana» también es true BAJO Widgets si el usuario abrió una
+            // carpeta previamente. Bloquearla aquí filtraba Select y L1/R1 al Home.
+            (e.carpetaEnVentana && !e.extra.coleccionViva && e.inicio != "widgets") ||
+            e.relojGrande || e.extra.carga != null ||
             e.extra.emusDescarga != null
 
     fun manejar(ev: KeyEvent): Boolean {
@@ -219,7 +223,7 @@ object Teclas {
                 when (code) {
                     KeyEvent.KEYCODE_BUTTON_THUMBR, KeyEvent.KEYCODE_BUTTON_X -> { if (arriba && j != null) Diptico.girarCaja(true); return true }
                     KeyEvent.KEYCODE_BUTTON_SELECT -> {
-                        if (arriba && ev.repeatCount == 0) Diptico.elegirVistaColeccion(when (e.extra.vistaColeccion) { "estante" -> "cuadricula"; "cuadricula" -> "lista"; else -> "estante" })
+                        if (arriba && ev.repeatCount == 0) Diptico.siguienteVistaColeccion()
                         return true
                     }
                 }
@@ -896,7 +900,13 @@ object Teclas {
                     return true
                 }
                 KeyEvent.KEYCODE_BUTTON_SELECT -> {
-                    if (!selectLargo && !hayPanel) Diptico.alternarInicio()
+                    if (!selectLargo && !hayPanel) {
+                        // Defensa: Select no cambia a Widgets cuando se muestran los juegos
+                        // o carpetas CV, incluso si antes no se consumió el evento.
+                        if (cl.nikalbazu.diptico.ui.coleccionVivaActiva(e) && e.inicio != "widgets") {
+                            if (e.enSistemas) Diptico.siguienteVistaCarpetas() else Diptico.siguienteVistaColeccion()
+                        } else Diptico.alternarInicio()
+                    }
                     selectLargo = false
                     return true
                 }

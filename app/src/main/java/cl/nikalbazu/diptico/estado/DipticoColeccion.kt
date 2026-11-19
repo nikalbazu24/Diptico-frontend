@@ -114,6 +114,17 @@ fun Diptico.moverCarrete(d: Int, total: Int) {
 
 fun Diptico.elegirCarrete(i: Int) = actualizar { it.copy(extra = it.extra.copy(carreteSel = i)) }
 
+/** Select dentro de los juegos: Estante → Cuadrícula → Lista → Estante.
+ * Conserva consola y juego seleccionados, y sincroniza la vista que usa la rejilla. */
+fun Diptico.siguienteVistaColeccion() {
+    val siguiente = when (estado.value.extra.vistaColeccion) {
+        "estante" -> "cuadricula"
+        "cuadricula" -> "lista"
+        else -> "estante"
+    }
+    elegirVistaColeccion(siguiente)
+}
+
 fun Diptico.elegirVistaColeccion(v: String) {
     almacen.guardarTexto("vistaColeccion", v)
     // La cuadrícula y la lista usan la navegación en rejilla de siempre; el estante va de lado.
