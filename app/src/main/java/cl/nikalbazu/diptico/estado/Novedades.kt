@@ -626,13 +626,13 @@ object Novedades {
         Pagina("Páginas de widgets", "Pulsa L1 o R1 y cambia la página visible. Si solo tienes una, podrás agregar más desde Editar.", Icono.APPS, 0xFF6B4EFF, "L1 · R1"),
         Pagina("Galería de widgets", "Pulsa Y para abrir la Galería real: widgets de reloj, música, juegos, estadísticas y más.", Icono.APPS, 0xFFFF9B54, "Y"),
         Pagina("Editor de widgets", "Pulsa X para abrir el editor real: Mover, Tamaño, Páginas y Fondo. Puedes volver con B.", Icono.EDITAR, 0xFF2EC4A6, "X"),
-        Pagina("Tamaño y distribución", "En el editor organizas widgets con el mando o el dedo, cambias dimensiones, fondos y páginas sin mover el Home oculto.", Icono.FORMA, 0xFF8EAFFF, "A"),
+        Pagina("Tamaño y distribución", "Pulsa derecha en el editor para cambiar de Mover a Tamaño. La pestaña cambia de verdad sin mover el Home oculto.", Icono.FORMA, 0xFF8EAFFF, "→"),
         Pagina("Cajón de aplicaciones", "Pulsa A para abrir todas tus apps, fijarlas y organizarlas en el dock.", Icono.APPS, 0xFFFF9B54, "A"),
         Pagina("Busca tus juegos", "La búsqueda permite encontrar juegos y filtrar la biblioteca. Pulsa Y para ver la pantalla de búsqueda.", Icono.BUSCAR, 0xFF3BA8FF, "Y"),
         Pagina("Ajustes del launcher", "Pulsa Start para entrar a los ajustes reales: controles, pantallas, temas, biblioteca, widgets y sonido.", Icono.AJUSTES, 0xFF6B4EFF, "Start"),
         Pagina("Tu perfil", "Pulsa Start y A juntos para abrir tu perfil. Allí también están tus estadísticas y tu año de juego.", Icono.MANDO, 0xFF2EC4A6, "Start + A"),
-        Pagina("Personaliza cada juego", "Desde la ficha de un juego puedes cambiar portada, arte, música, caja y ahora elegir su propio emulador, sin afectar los demás.", Icono.PALETA, 0xFFFF9B54, "A"),
-        Pagina("Emuladores y actualizaciones", "En Ajustes > Juegos y emuladores eliges el emulador de cada consola o juego. Emuladores al día revisa versiones; Project Lemon sirve para juegos de Switch compatibles.", Icono.EMULADOR, 0xFF3BA8FF, "A"),
+        Pagina("Personaliza cada juego", "Pulsa X para abrir las opciones reales del juego y entra en «Emulador y versión». Puedes elegir cualquier emulador instalado por juego.", Icono.PALETA, 0xFFFF9B54, "X"),
+        Pagina("Emuladores y actualizaciones", "Pulsa Start para abrir Ajustes > Emuladores. El selector existe para cualquier juego; Project Lemon se lista en todos los sistemas si está instalado, pero solo ejecuta ROM compatibles.", Icono.EMULADOR, 0xFF3BA8FF, "Start"),
         Pagina("¡Díptico es tuyo!", "Puedes volver a este recorrido desde Ajustes. Usa el Home, Widgets, DIPPO, búsqueda y perfiles cuando quieras. ¡A jugar!", Icono.BISA, 0xFFFF7A59, "A"),
     )
 

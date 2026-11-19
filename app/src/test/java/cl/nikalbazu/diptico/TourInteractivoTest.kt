@@ -1,6 +1,9 @@
 package cl.nikalbazu.diptico
 
 import android.view.KeyEvent
+import android.net.Uri
+import cl.nikalbazu.diptico.data.Juego
+import org.junit.Assert.assertTrue
 import androidx.test.core.app.ApplicationProvider
 import cl.nikalbazu.diptico.estado.*
 import org.junit.Assert.assertEquals
@@ -47,6 +50,37 @@ class TourInteractivoTest {
         Diptico.fijarParaPrueba(Diptico.estado.value.copy(novedades = 2, recorrido = true))
         pulsar(KeyEvent.KEYCODE_BUTTON_X)
         assertEquals(Panel.EDITAR_CONSOLA, Diptico.estado.value.panel)
+    }
+
+    @Test fun cadaJuegoPuedeAbrirSuSelectorDeEmuladores() {
+        val juego = Juego("ps2/prueba", "ps2", "Aventura de prueba", "prueba.iso",
+            Uri.parse("content://prueba/ps2/prueba"), "primary:Juegos/ps2/prueba")
+        Diptico.fijarParaPrueba(Diptico.estado.value.copy(
+            juegos = listOf(juego), juegoSel = juego.clave, consolaSel = "ps2", enSistemas = false,
+        ))
+        Diptico.abrirRapido()
+        val grupo = Diptico.gruposJuego().indexOfFirst { it.first.titulo == "Emulador y versión" }
+        assertTrue("Debe existir Emulador y versión en cualquier consola", grupo >= 0)
+        Diptico.abrirGrupoRapido(grupo)
+        val indice = Diptico.opcionesGrupoRapido(grupo).indexOfFirst { it.titulo == "Emulador" }
+        assertTrue("El juego debe tener un selector individual", indice >= 0)
+        Diptico.elegirSubRapido(indice)
+        assertTrue("Al pulsar A debe abrirse el listado, no ejecutar una acción vacía",
+            Diptico.estado.value.desplegable >= 0)
+    }
+
+    @Test fun tourIncluyeRetoDelEditorYEmuladorPorJuego() {
+        assertEquals(23, Diptico.paginasTour(Diptico.estado.value.copy(recorrido = true)).size)
+        assertEquals("pestanaEditor", RecorridoVivo.retoDe(15))
+        assertEquals("emuladorJuego", RecorridoVivo.retoDe(20))
+        assertEquals("ajustesEmuladores", RecorridoVivo.retoDe(21))
+    }
+
+    @Test fun probarTourCambiaVistaRealDeJuegos() {
+        Diptico.fijarParaPrueba(Diptico.estado.value.copy(novedades = 8, recorrido = true))
+        val antes = Diptico.estado.value.extra.vistaColeccion
+        RecorridoVivo.probar(8)
+        assertNotEquals(antes, Diptico.estado.value.extra.vistaColeccion)
     }
 
     @Test fun l1r1EnWidgetsCambianPaginaPeroNoConsola() {

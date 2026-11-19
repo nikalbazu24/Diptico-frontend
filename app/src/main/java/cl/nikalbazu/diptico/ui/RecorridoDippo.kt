@@ -86,6 +86,20 @@ private fun destinosDe(k: Int, una: Boolean, enWidgets: Boolean): List<String> =
     4 -> listOf("apps")
     5 -> listOf("carpetas") // Select cambia la rejilla visible de abajo (también en Thor)
     6 -> listOf("dippo")
+    7 -> listOf("abrir-carpeta", "carpetas")
+    8 -> listOf("juegos")
+    9 -> listOf("panel-juego", "barra-juegos", "juegos")
+    10 -> listOf("carpetas", "juegos")
+    11 -> listOf("espacio", "widgets")
+    12 -> listOf("paginas", "espacio")
+    13 -> listOf("galeria")
+    14, 15 -> listOf("editor", "mapa-widgets")
+    16 -> listOf("apps")
+    17 -> listOf("buscar")
+    18 -> listOf("ajustes")
+    19 -> listOf("perfil")
+    20 -> listOf("panel-juego", "barra-juegos")
+    21 -> listOf("ajustes")
     else -> emptyList()
 }
 
@@ -125,10 +139,39 @@ private fun retoDe(k: Int): Pair<String, String>? = RecorridoVivo.retoDe(k)?.let
     "x" -> "¡Así se abre! Ahí cambias su color, ícono y fondo."
     "gatillo2" -> "¡Bien! Ahí viven tus widgets."
     "select" -> "¡Así se cambia la vista!"
-    else -> "¡Hola, hola! Cuando quieras, pregúntame."
+    "abrirCarpeta" -> "¡Entramos! Ahora puedes recorrer los juegos."
+    "vistaJuego" -> "¡Cambiaste la presentación de tus juegos!"
+    "opcionesJuego" -> "Aquí está la configuración individual del juego."
+    "volverCarpetas" -> "¡Volvimos a las consolas!"
+    "paginaWidget" -> "¡Cambiaste de página sin tocar el Home!"
+    "galeriaWidget" -> "¡Se abrió la galería de widgets!"
+    "editarWidget" -> "¡Ahora estás editando tu espacio!"
+    "pestanaEditor" -> "¡Esa es otra herramienta real del editor!"
+    "apps" -> "¡Ahí están todas tus aplicaciones!"
+    "buscar" -> "¡Ya puedes buscar tus juegos!"
+    "ajustes" -> "¡Llegaste a los ajustes!"
+    "perfil" -> "¡Este es tu perfil!"
+    "emuladorJuego" -> "Cada juego puede usar su propio emulador."
+    "ajustesEmuladores" -> "Desde aquí también puedes configurarlos."
+    else -> "¡Eso! Sigamos explorando."
 } }
 
-private fun pistaReto(k: Int) = when (k) { 1 -> "Aprieta L1 o R1"; 2 -> "Aprieta X"; 3 -> "Aprieta L2 o R2"; 5 -> "Aprieta Select"; 6 -> "Tócame"; else -> "" }
+private fun pistaReto(k: Int) = when (k) {
+    1 -> "Pulsa L1 o R1"
+    2 -> "Pulsa X"
+    3, 11 -> "Pulsa L2 o R2"
+    5, 8 -> "Pulsa Select"
+    6 -> "Toca a DIPPO"
+    7, 16 -> "Pulsa A"
+    9, 13, 17 -> "Pulsa Y"
+    10 -> "Pulsa B"
+    12 -> "Pulsa L1 o R1"
+    14, 20 -> "Pulsa X"
+    15 -> "Pulsa derecha"
+    18, 21 -> "Pulsa Start"
+    19 -> "Pulsa Start + A"
+    else -> "Pruébalo"
+}
 
 private fun fraseDe(que: String): String = when (que) {
     "toque" -> "¡Jiji, cosquillas!"
@@ -298,7 +341,31 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
                     }
                 }
                 Spacer(Modifier.weight(1f))
-                TB(if (reto != null && !retoHecho) "Hazlo para seguir" else if (k == paginas.size - 1) "A ¡A jugar!" else "A siguiente", 17f, color = Color(0xFF4A4B63), peso = FontWeight.ExtraBold)
+                TB(if (reto != null && !RecorridoVivo.puedeSeguir(k)) "Pruébalo para seguir" else if (k == paginas.size - 1) "¡A jugar!" else "Listo para seguir", 17f, color = Color(0xFF4A4B63), peso = FontWeight.ExtraBold)
+            }
+            // La acción de ejemplo es real: cambia el estado de la pantalla de fondo.
+            // Mantener este botón disponible permite completar el tour también sin mando físico.
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10)), verticalAlignment = Alignment.CenterVertically) {
+                val falta = reto != null && !RecorridoVivo.puedeSeguir(k)
+                Box(Modifier.clip(RoundedCornerShape(esc.d(16)))
+                    .background(Color(0xFF6B4EFF))
+                    .clickable {
+                        if (falta) RecorridoVivo.probar(k)
+                        else Diptico.moverNovedades(1)
+                    }
+                    .testTag("tour-probar-o-seguir")
+                    .padding(horizontal = esc.d(18), vertical = esc.d(12)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TB(if (falta) "Probar ahora" else if (k == paginas.lastIndex) "Finalizar" else "Siguiente", 18f, color = Color.White, peso = FontWeight.ExtraBold)
+                }
+                Box(Modifier.clip(RoundedCornerShape(esc.d(16)))
+                    .border(esc.d(1.5f), Color(0xFF666A80), RoundedCornerShape(esc.d(16)))
+                    .clickable { Diptico.cerrarNovedades() }
+                    .testTag("tour-saltar")
+                    .padding(horizontal = esc.d(15), vertical = esc.d(11)),
+                    contentAlignment = Alignment.Center
+                ) { TB("Saltar recorrido", 17f, color = Color(0xFF4A4B63), peso = FontWeight.ExtraBold) }
             }
         }
     }

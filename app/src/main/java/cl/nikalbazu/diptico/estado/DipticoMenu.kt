@@ -910,7 +910,10 @@ fun explicacion(o: Opcion): String = o.ayuda.ifBlank {
 /** La opción cuyo menú desplegable está abierto: la del submenú si hay uno abierto, si no la de la sección. */
 fun Diptico.opcionDesplegada(e: Estado): Opcion? =
     if (e.extra.desplegable < 0) null
-    else subOpciones(e)?.getOrNull(e.extra.desplegable) ?: opcionesSeccion(e.seccion).getOrNull(e.extra.desplegable)
+    else if (e.panel == Panel.RAPIDO) {
+        if (e.extra.rapidoGrupo >= 0) opcionesGrupoRapido(e.extra.rapidoGrupo).getOrNull(e.extra.desplegable)
+        else opcionesRapido().getOrNull(e.extra.desplegable)
+    } else subOpciones(e)?.getOrNull(e.extra.desplegable) ?: opcionesSeccion(e.seccion).getOrNull(e.extra.desplegable)
 
 
 /** Manda el informe de fluidez por el mismo camino que el reporte de fallas (con su confirmación). */

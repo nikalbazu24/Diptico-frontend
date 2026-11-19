@@ -324,7 +324,7 @@ fun VentanaJuego(e: Estado) {
     Velo {
         val color = colorDe(j.clave)
         Column(
-            Modifier.widthIn(max = esc.d(560)).fillMaxHeight(0.94f)
+            Modifier.widthIn(max = esc.d(560)).fillMaxHeight(0.94f).anclaRecorrido("panel-juego")
                 .superficieApp(lerpColor(p.superficie, color, .12f), RoundedCornerShape(esc.d(26)), CapaCristal.PANEL)
                 .sinCerrar().padding(esc.d(14)),
         ) {
@@ -408,6 +408,9 @@ fun VentanaJuego(e: Estado) {
             }
         }
     }
+    // El selector del emulador del juego usa la misma lista que Ajustes generales.
+    // Se dibuja encima de la ventana rápida y recibe mando y toque sin filtrar al Home.
+    if (e.desplegable >= 0) VentanaDesplegable(e)
 }
 
 private fun lerpColor(a: Color, b: Color, t: Float) = androidx.compose.ui.graphics.lerp(a, b, t)

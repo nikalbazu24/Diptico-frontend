@@ -2895,6 +2895,12 @@ object Diptico {
 
     /** Abre la lista de alternativas de la opción [i] del menú, con la puesta ahora marcada. */
     fun abrirDesplegable(i: Int, elegida: Int) {
+        // Las opciones rápidas tienen su propia lista; no reemplazar el índice del grupo.
+        if (estado.value.panel == Panel.RAPIDO) {
+            actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0))) }
+            Sonidos.abrir()
+            return
+        }
         // Dentro de un submenú, [i] es la opción de la ventana (no la de la lista de la sección).
         if (estado.value.extra.subOpcion >= 0) actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0), subSel = i)) }
         else actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0)), indice = i) }
@@ -2957,9 +2963,16 @@ object Diptico {
                     else -> o?.accion?.let { desdeMenu(it) }
                 }
             }
-            Panel.RAPIDO ->
-                if (e.extra.rapidoGrupo >= 0) opcionesGrupoRapido(e.extra.rapidoGrupo).getOrNull(e.extra.rapidoSel)?.accion?.invoke()
-                else opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
+            Panel.RAPIDO -> {
+                if (e.desplegable >= 0) elegirDesplegable(e.desplegableSel)
+                else {
+                    val i = if (e.extra.rapidoGrupo >= 0) e.extra.rapidoSel else e.indice
+                    val o = if (e.extra.rapidoGrupo >= 0) opcionesGrupoRapido(e.extra.rapidoGrupo).getOrNull(i)
+                            else opcionesRapido().getOrNull(i)
+                    if (o?.alternativas != null && o.elegir != null) abrirDesplegable(i, o.elegida)
+                    else o?.accion?.invoke()
+                }
+            }
             Panel.WIDGET -> opcionesWidget(e).getOrNull(e.indice)?.takeIf { !it.apagada }?.accion?.invoke()
             Panel.PORTS -> e.apps.getOrNull(e.indice)?.let { alternarPort(it.paquete) }
             Panel.FICHA -> if (e.pestanaFicha >= 2) opcionesFicha().getOrNull(e.indice)?.accion?.invoke()
@@ -3024,7 +3037,7 @@ object Diptico {
         lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA, ayuda = "Cambia el título, la portada, la imagen grande, el logo y la música de este juego.") { abrirFicha(); elegirPestanaFicha(3) }
         lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA, ayuda = "Abre la tienda de imágenes para elegir otra portada de internet.") { abrirFicha(); buscarCandidatos("portada") }
         lista += Opcion("Mover de lugar", if (e.orden == "propio") "A tu gusto" else "Ordénalos a tu gusto", Icono.VISTA, "Corre este juego con la cruceta y deja tus juegos en el orden que quieras.") { empezarOrdenar() }
-        if (consola != null && !consola.sinEmulador) {
+        if (consola != null) {
             lista += opcionEmuladorJuego(juego, consola)
         }
         if (estado.value.extra.carpetasPartidas.isNotEmpty() || consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
@@ -4723,9 +4736,13 @@ object Diptico {
         if (n < 0) return
         val sig = n + d
         if (sig >= paginasTour().size) { cerrarNovedades(); return }
-        // El tour mostró Tu espacio de verdad en el paso 4; al pasar a las vistas de
-        // carpetas vuelve al inicio visible antes de pedir Select.
+        // Cerrar demostraciones anteriores antes del siguiente componente.
         if (estado.value.recorrido) {
+            if (n in setOf(2, 9, 16, 17, 18, 20, 21) && estado.value.panel != Panel.NINGUNO) cerrarPanel()
+            if (n == 13 && estado.value.extra.galeria) cerrarGaleriaWidgets()
+            if (n == 15 && estado.value.editandoWidgets) terminarEspacio()
+            if (n == 19 && estado.value.extra.perfilEn >= 0) cerrarPerfil()
+            // Tu espacio vuelve a la biblioteca antes de pedir Select.
             if (n in setOf(4, 15) && sig in setOf(5, 16) && estado.value.inicio == "widgets") {
                 fijarInicio("heroe")
                 if (sig == 16) volverASistemas()
@@ -4742,6 +4759,13 @@ object Diptico {
         if (e.recorrido || e.novedadesDesde.isBlank()) Novedades.paginasDe(e.recorrido) else Novedades.paginasDe(false, e.novedadesDesde)
 
     fun cerrarNovedades() {
+        // Saltar el tour restaura la navegación de Home/widgets.
+        if (estado.value.recorrido) {
+            if (estado.value.extra.galeria) cerrarGaleriaWidgets()
+            if (estado.value.editandoWidgets) terminarEspacio()
+            if (estado.value.panel != Panel.NINGUNO) cerrarPanel()
+            if (estado.value.extra.perfilEn >= 0) cerrarPerfil()
+        }
         almacen.guardarTexto("novedadesVistas", Novedades.ID)
         val primeraVez = estado.value.recorrido && !almacen.texto("recorridoVisto").isNotEmpty()
         if (estado.value.recorrido) almacen.guardarTexto("recorridoVisto", "si")

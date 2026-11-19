@@ -106,8 +106,9 @@ object Lanzador {
         val cache = HashMap<String, Pair<String, String>?>()
         // Project Lemon (Switch 1): contrato oficial de AndroidManifest.xml,
         // dev.lemon.lemon_emulator + EmulationActivity exportada (ACTION_VIEW, content://, octet-stream).
-        // Solo lo ofrecemos cuando está instalado y únicamente para Nintendo Switch original.
-        val lemon = if (consola.id == "switch" && instalado(ctx, "dev.lemon.lemon_emulator")) listOf(
+        // El catálogo es general: cualquier juego puede elegir Project Lemon.
+        // La compatibilidad real se valida al lanzar (Lemon emula Switch).
+        val lemon = if (instalado(ctx, "dev.lemon.lemon_emulator")) listOf(
             Opcion(
                 Comando("Project Lemon", "%EMULATOR_LEMON% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF% %MIMETYPE%=application/octet-stream"),
                 "dev.lemon.lemon_emulator",
@@ -132,7 +133,11 @@ object Lanzador {
      */
     fun elegida(ctx: Context, consola: Consola, preferido: String?, tipo: String? = null): Opcion? {
         val ops = opciones(ctx, consola, tipo)
-        val compatibles = ops.filter { sirve(it.comando, tipo) }
+        // Project Lemon es seleccionable en cualquier juego, pero no debe pasar a ser
+        // el emulador predeterminado de PS2, GBA, etc. por estar instalado.
+        val compatibles = ops.filter {
+            sirve(it.comando, tipo) && (consola.id == "switch" || it.paquete != "dev.lemon.lemon_emulator")
+        }
         if (preferido != null && preferido.startsWith("app:")) appComoEmulador(ctx, preferido.removePrefix("app:"))?.let { return it }
         if (ops.isEmpty()) return null
         if (preferido != null) {
@@ -141,7 +146,7 @@ object Lanzador {
                 ?: ops.firstOrNull { it.paquete == preferido && it.comando.nucleo == null }
             if (p != null && (tipo == null || sirve(p.comando, tipo))) return p
         }
-        return compatibles.firstOrNull() ?: ops.first()
+        return compatibles.firstOrNull() ?: ops.firstOrNull { it.paquete != "dev.lemon.lemon_emulator" }
     }
 
     /** Convierte un documento de la memoria interna o SD en ruta real: primary:ROMs/x -> /storage/emulated/0/ROMs/x. */
@@ -307,6 +312,9 @@ object Lanzador {
         // (La versión sin "tree" no se puede compartir y por eso Eden decía que no había juego.)
         val rom = juego.uri
         val op = elegida(ctx, consola, preferido, juego.tipo)
+        if (op?.paquete == "dev.lemon.lemon_emulator" && consola.id != "switch") {
+            return "Project Lemon está seleccionado para ${juego.titulo}, pero únicamente ejecuta juegos compatibles de Nintendo Switch. Puedes elegir otro emulador en Ajustes del juego."
+        }
 
         val base: Intent = try {
             when {

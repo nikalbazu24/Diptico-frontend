@@ -21,6 +21,8 @@ fun Diptico.gruposJuego(): List<Pair<Opcion, List<Opcion>>> {
     val personalizar = buildList {
         addAll(de("Personalizar").map { it.copy(titulo = "Título, logo y música") })
         addAll(de("Imágenes"))
+        // Acceso directo desde los ajustes del juego, además del grupo «Emulador y versión».
+        consola?.let { add(opcionEmuladorJuego(juego, it, "Emulador de este juego")) }
         add(Opcion("Lugar en la vitrina", if (e.extra.disposiciones.containsKey(juego.clave)) "A tu gusto ✓" else "Mover logo, imagen y caja", Icono.PALETA,
             "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego. Arriba ves cómo queda.") { abrirEditorVitrina(juego.clave) })
         add(Opcion("Estudio de Cajas", if (e.extra.caras[juego.clave]?.tiene == true) "Tiene caja" else "Con la portada", Icono.PORTADA,
@@ -32,7 +34,7 @@ fun Diptico.gruposJuego(): List<Pair<Opcion, List<Opcion>>> {
     val mis = de("Favorito", "DIPPO", "Capturas del juego", "Acceso directo", "Colecciones", "Ocultar este juego", "Mostrar este juego", "Desinstalar")
 
     val avance = todas.firstOrNull { it.titulo.startsWith("Estado en mi cola") }?.valor.orEmpty()
-    val emu = todas.firstOrNull { it.titulo == "Emulador" }?.valor
+    val emu = todas.firstOrNull { it.titulo.startsWith("Emulador") }?.valor
     return listOf(
         Opcion("Personalizar", "Nombre, imágenes y caja ›", Icono.PALETA, "Nombre · Imágenes · Lugar en la vitrina · Estudio de Cajas") {} to personalizar,
         Opcion("Partida", if (avance.isNotBlank()) "$avance ›" else "Copias y cola ›", Icono.COPIAR, "Copias de partida · Estado en mi cola") {} to partida,

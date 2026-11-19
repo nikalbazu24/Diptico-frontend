@@ -439,6 +439,9 @@ object Teclas {
                         Diptico.editarEspacio()
                         if (Diptico.estado.value.editandoWidgets) RecorridoVivo.avisar("editarWidget")
                     }
+                    k == 15 && code == KeyEvent.KEYCODE_DPAD_RIGHT -> RecorridoVivo.probar(15)
+                    k == 20 && code == KeyEvent.KEYCODE_BUTTON_X -> RecorridoVivo.probar(20)
+                    k == 21 && code == KeyEvent.KEYCODE_BUTTON_START -> RecorridoVivo.probar(21)
                     k == 16 && esA(code) -> {
                         Diptico.abrirApps()
                         if (Diptico.estado.value.panel == Panel.APPS) RecorridoVivo.avisar("apps")
@@ -952,6 +955,18 @@ object Teclas {
         val code = ev.keyCode
         val abajo = ev.action == KeyEvent.ACTION_DOWN
         val arriba = ev.action == KeyEvent.ACTION_UP
+        // Modal de emulador por juego: captura TODA la entrada antes que el panel y el Home.
+        if (e.panel == Panel.RAPIDO && e.desplegable >= 0) {
+            if (abajo) when (code) {
+                KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverIndice(-1)
+                KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverIndice(1)
+            }
+            if (arriba) when {
+                esA(code) -> Diptico.elegirDesplegable(e.desplegableSel)
+                esB(code) || code == KeyEvent.KEYCODE_BUTTON_START -> Diptico.cerrarDesplegable()
+            }
+            return true
+        }
         val cols = when (e.panel) {
             Panel.RAPIDO -> Diptico.columnasVentana
             Panel.BUSCAR -> columnasBuscar
