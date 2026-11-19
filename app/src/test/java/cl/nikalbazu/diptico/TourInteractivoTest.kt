@@ -163,6 +163,31 @@ class TourInteractivoTest {
         assertEquals(consola, Diptico.estado.value.consolaSel)
     }
 
+    @Test fun mantenerSelectEnColeccionVivaIntercambiaSoloUnaVez() {
+        prepararCarpetaCV()
+        val anterior = Diptico.estado.value.intercambiar
+        val vista = Diptico.estado.value.extra.vistaColeccion
+        Teclas.manejar(KeyEvent(0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
+        Teclas.manejar(KeyEvent(0L, 620L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 12))
+        Teclas.manejar(KeyEvent(0L, 700L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
+        assertNotEquals("Select largo intercambia pantallas una vez", anterior, Diptico.estado.value.intercambiar)
+        assertEquals("Select largo no debe cambiar la vista de juegos", vista, Diptico.estado.value.extra.vistaColeccion)
+        assertEquals("heroe", Diptico.estado.value.inicio)
+    }
+
+    @Test fun mantenerSelectEnModoAnteriorNoIntercambiaDosVeces() {
+        prepararCarpetaCV()
+        val e = Diptico.estado.value
+        Diptico.fijarParaPrueba(e.copy(extra = e.extra.copy(coleccionViva = false)))
+        val anterior = Diptico.estado.value.intercambiar
+        Teclas.manejar(KeyEvent(0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
+        Teclas.manejar(KeyEvent(0L, 620L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 11))
+        Teclas.manejar(KeyEvent(0L, 670L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT, 12))
+        Teclas.manejar(KeyEvent(0L, 700L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_SELECT, 0))
+        assertNotEquals("Select largo no puede deshacer el intercambio con otro repeat", anterior,
+            Diptico.estado.value.intercambiar)
+    }
+
     @Test fun unMenuAbiertoNuncaDejaCambiarLaConsolaDelFondo() {
         prepararCarpetaCV()
         Diptico.fijarParaPrueba(Diptico.estado.value.copy(
