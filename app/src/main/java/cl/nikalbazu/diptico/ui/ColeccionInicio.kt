@@ -326,22 +326,25 @@ fun ColeccionAbajo(e: Estado) {
             }
             // Consolas: L1 · píldoras · R1.
             FilaConsolasCV(e, Modifier.fillMaxWidth().height(esc.d(80)), alto = 72f)
-            // Los juegos de la consola, en la vista elegida.
-            Box(Modifier.fillMaxWidth().weight(1f).anclaRecorrido("juegos")) {
-                when (e.extra.vistaColeccion) {
-                    "cuadricula" -> RejillaCV(e, columnas = 4, Modifier.fillMaxSize())
-                    "lista" -> ListaCV(e, Modifier.fillMaxSize())
-                    else -> Column(Modifier.fillMaxSize()) {
-                        EstanteCV(e, Modifier.fillMaxWidth().weight(1f))
-                        val j = e.seleccionado
-                        Column(Modifier.fillMaxWidth().padding(top = esc.d(6)), horizontalAlignment = Alignment.CenterHorizontally) {
-                            TB(j?.titulo ?: "", 40f, titulo = true, traducir = false)
-                            TB("${e.indiceSel + 1} de ${e.visibles.size} · Select cambia la vista", 20f, color = col.sub)
+            // Los juegos ocupan también el fondo de la barra inferior: solo flotan
+            // los controles encima. La cápsula del dock conserva su vidrio original.
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                Box(Modifier.fillMaxSize().anclaRecorrido("juegos")) {
+                    when (e.extra.vistaColeccion) {
+                        "cuadricula" -> RejillaCV(e, columnas = 4, Modifier.fillMaxSize(), insetInferior = 98f)
+                        "lista" -> ListaCV(e, Modifier.fillMaxSize(), insetInferior = 98f)
+                        else -> Column(Modifier.fillMaxSize().padding(bottom = esc.d(84))) {
+                            EstanteCV(e, Modifier.fillMaxWidth().weight(1f))
+                            val j = e.seleccionado
+                            Column(Modifier.fillMaxWidth().padding(top = esc.d(6)), horizontalAlignment = Alignment.CenterHorizontally) {
+                                TB(j?.titulo ?: "", 40f, titulo = true, traducir = false)
+                                TB("${e.indiceSel + 1} de ${e.visibles.size} · Select cambia la vista", 20f, color = col.sub)
+                            }
                         }
                     }
                 }
+                BarraAbajoCV(e, Modifier.align(Alignment.BottomCenter).fillMaxWidth().anclaRecorrido("barra-juegos"))
             }
-            BarraAbajoCV(e, Modifier.fillMaxWidth().anclaRecorrido("barra-juegos"))
         }
     }
 }
@@ -552,14 +555,14 @@ internal fun TeclaHombro(t: String, onClick: () -> Unit) {
 
 /** El estante 3D: la elegida al centro con anillo blanco; las vecinas más chicas, giradas ±48° mostrando el lomo. */
 @Composable
-fun RejillaCV(e: Estado, columnas: Int, modifier: Modifier) {
+fun RejillaCV(e: Estado, columnas: Int, modifier: Modifier, insetInferior: Float = 0f) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     val estado = rememberLazyGridState()
     LaunchedEffect(e.indiceSel) { estado.animateScrollToItem((e.indiceSel - columnas).coerceAtLeast(0)) }
     androidx.compose.runtime.SideEffect { Teclas.columnasCuadricula = columnas }
     LazyVerticalGrid(GridCells.Fixed(columnas), modifier, estado, horizontalArrangement = Arrangement.spacedBy(esc.d(18)),
-        verticalArrangement = Arrangement.spacedBy(esc.d(18))) {
+        verticalArrangement = Arrangement.spacedBy(esc.d(18)), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = esc.d(insetInferior))) {
         itemsIndexed(e.visibles, key = { _, j -> j.clave }) { i, j ->
             val elegido = i == e.indiceSel
             Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(redondo(14f))
@@ -573,13 +576,14 @@ fun RejillaCV(e: Estado, columnas: Int, modifier: Modifier) {
 
 /** Lista con nombres claros (vista «Lista»). */
 @Composable
-fun ListaCV(e: Estado, modifier: Modifier) {
+fun ListaCV(e: Estado, modifier: Modifier, insetInferior: Float = 0f) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     val estado = rememberLazyListState()
     LaunchedEffect(e.indiceSel) { estado.animateScrollToItem((e.indiceSel - 2).coerceAtLeast(0)) }
     androidx.compose.runtime.SideEffect { Teclas.columnasCuadricula = 1 }
-    LazyColumn(modifier, estado, verticalArrangement = Arrangement.spacedBy(esc.d(10))) {
+    LazyColumn(modifier, estado, verticalArrangement = Arrangement.spacedBy(esc.d(10)),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = esc.d(insetInferior))) {
         itemsIndexed(e.visibles, key = { _, j -> j.clave }) { i, j ->
             val elegido = i == e.indiceSel
             Row(Modifier.fillMaxWidth().height(esc.d(96)).clip(redondo(24f))
