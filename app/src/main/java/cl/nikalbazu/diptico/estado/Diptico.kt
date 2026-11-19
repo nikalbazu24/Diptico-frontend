@@ -4736,9 +4736,13 @@ object Diptico {
         if (n < 0) return
         val sig = n + d
         if (sig >= paginasTour().size) { cerrarNovedades(); return }
-        // El tour mostró Tu espacio de verdad en el paso 4; al pasar a las vistas de
-        // carpetas vuelve al inicio visible antes de pedir Select.
+        // Cerrar demostraciones anteriores antes del siguiente componente.
         if (estado.value.recorrido) {
+            if (n in setOf(2, 9, 16, 17, 18, 20, 21) && estado.value.panel != Panel.NINGUNO) cerrarPanel()
+            if (n == 13 && estado.value.extra.galeria) cerrarGaleriaWidgets()
+            if (n == 15 && estado.value.editandoWidgets) terminarEspacio()
+            if (n == 19 && estado.value.extra.perfilEn >= 0) cerrarPerfil()
+            // Tu espacio vuelve a la biblioteca antes de pedir Select.
             if (n in setOf(4, 15) && sig in setOf(5, 16) && estado.value.inicio == "widgets") {
                 fijarInicio("heroe")
                 if (sig == 16) volverASistemas()
@@ -4755,6 +4759,13 @@ object Diptico {
         if (e.recorrido || e.novedadesDesde.isBlank()) Novedades.paginasDe(e.recorrido) else Novedades.paginasDe(false, e.novedadesDesde)
 
     fun cerrarNovedades() {
+        // Saltar el tour restaura la navegación de Home/widgets.
+        if (estado.value.recorrido) {
+            if (estado.value.extra.galeria) cerrarGaleriaWidgets()
+            if (estado.value.editandoWidgets) terminarEspacio()
+            if (estado.value.panel != Panel.NINGUNO) cerrarPanel()
+            if (estado.value.extra.perfilEn >= 0) cerrarPerfil()
+        }
         almacen.guardarTexto("novedadesVistas", Novedades.ID)
         val primeraVez = estado.value.recorrido && !almacen.texto("recorridoVisto").isNotEmpty()
         if (estado.value.recorrido) almacen.guardarTexto("recorridoVisto", "si")
