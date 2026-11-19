@@ -925,8 +925,11 @@ data class Estado(
     val unaPantalla: Boolean
         get() = !configurado || modoPantallas != "dos" || !dosDisponibles || (sobremesa && sobremesaUna)
 
+    /** Cuando Widgets tiene el foco, nunca estamos «eligiendo consola»,
+     * ni siquiera en Thor con dos pantallas. La biblioteca puede seguir montada
+     * detrás, pero no recibe cruceta, L1/R1 ni el stick. */
     val eligiendoConsola: Boolean
-        get() = enSistemas && vistaConsolas in Diptico.MODOS_ELEGIR && (!unaPantalla || inicio != "widgets")
+        get() = enSistemas && vistaConsolas in Diptico.MODOS_ELEGIR && inicio != "widgets"
 
     /** En Colección viva la carpeta de la biblioteca no está visible bajo Widgets.
      * El modo clásico conserva su ventana y animación mientras se muestra el inicio. */
