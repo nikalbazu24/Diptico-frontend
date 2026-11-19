@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import cl.nikalbazu.diptico.bisa.AvatarBisa
 import cl.nikalbazu.diptico.estado.Diptico
@@ -77,11 +78,11 @@ private data class Foco(val abajo: Boolean, val x: Float, val y: Float, val w: F
 private data class MarcoTour(val x: Float, val y: Float, val ancho: Float, val alto: Float)
 
 /** Destinos del tour: la ubicación se obtiene del componente real, no de coordenadas fijas. */
-private fun destinosDe(k: Int, una: Boolean): List<String> = when (k) {
+private fun destinosDe(k: Int, una: Boolean, enWidgets: Boolean): List<String> = when (k) {
     0 -> listOf("consola")
     1 -> listOf("controles", "consola")
     2 -> listOf("carpetas")
-    3 -> listOf("widgets")
+    3 -> if (enWidgets) listOf("espacio") else listOf("widgets")
     4 -> listOf("apps")
     5 -> if (una) listOf("carpetas") else listOf("controles")
     6 -> listOf("dippo")
@@ -167,9 +168,14 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
             frase = if (cumple) reto!!.second else fraseDe(que)
             caraReaccion = if (cumple) CaraDippo.CELEBRANDO else if (que == "toque") CaraDippo.SORPRENDIDO else CaraDippo.FELIZ
             if (anima) launch { salto.animateTo(-36f, tween(140)); salto.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = 360f)) }
-            delay(if (cumple) 1500 else 2000)
+            // La acción real permanece visible antes de seguir con la explicación.
+            delay(if (cumple) 2200 else 2000)
             caraReaccion = null; frase = null
-            if (cumple && Diptico.estado.value.novedades == k) Diptico.moverNovedades(1)
+            if (cumple && Diptico.estado.value.novedades == k) {
+                // El paso de personalización abre su panel real, y lo cierra al continuar.
+                if (k == 2 && Diptico.estado.value.panel == Panel.EDITAR_CONSOLA) Diptico.cerrarPanel()
+                Diptico.moverNovedades(1)
+            }
         }
     }
     val reaccion by RecorridoVivo.reaccion.collectAsState()
@@ -179,7 +185,7 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
         val esc = LocalEscala.current
         val w = anchoLienzo(); val h = altoLienzo()
         val pantalla = pantallaActual()
-        val ancla = if (conAnclas && aqui) destinosDe(k, una).firstNotNullOfOrNull {
+        val ancla = if (conAnclas && aqui) destinosDe(k, una, e.inicio == "widgets").firstNotNullOfOrNull {
             AnclasRecorrido.buscar(pantalla, it)
         } else null
         var ventanaCanvas by remember { mutableStateOf<Rect?>(null) }
@@ -234,19 +240,25 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
         }
         // DIPPO y su globo, al lado de lo que explica (abajo del foco si hay lugar; si no, arriba).
         val pg = paginas[k]
-        val anchoGlobo = minOf(680f, w * .6f)
-        // Dónde cabe el globo: debajo del foco, arriba, a la derecha, a la izquierda o (si nada) dentro, abajo.
-        val altoGlobo = 300f
-        val maxX = (w - anchoGlobo - 190f).coerceAtLeast(20f)
-        val maxY = (h - altoGlobo - 20f).coerceAtLeast(20f)
-        val xCerca = (fx + 20f).coerceIn(20f, maxX)
+        val anchoGlobo = minOf(680f, w * .56f)
+        // La altura se mide según el texto real: una altura fija de 300 cortaba el espacio disponible
+        // y hacía que el globo se superpusiera a la zona iluminada.
+        var globoAltoMedido by remember(k) { mutableStateOf(210f) }
+        val altoGlobo = maxOf(globoAltoMedido, 190f)
+        val maxX = (w - anchoGlobo - 200f).coerceAtLeast(16f)
+        val maxY = (h - altoGlobo - 16f).coerceAtLeast(16f)
+        val xCerca = (fx + 20f).coerceIn(16f, maxX)
+        val altoRequerido = maxOf(altoGlobo, 180f)
         val (gx, gy) = when {
-            !conFocoAqui -> (w / 2 - anchoGlobo / 2).coerceIn(20f, maxX) to (h / 2 - 160f).coerceIn(20f, maxY)
-            fy + fh + altoGlobo + 30f < h -> xCerca to (fy + fh + 20f).coerceIn(20f, maxY)
-            fy - altoGlobo - 30f > 0f -> xCerca to (fy - altoGlobo - 20f).coerceIn(20f, maxY)
-            w - (fx + fw) > anchoGlobo + 210f -> (fx + fw + 20f).coerceIn(20f, maxX) to (fy + 20f).coerceIn(20f, maxY)
-            fx > anchoGlobo + 210f -> (fx - anchoGlobo - 210f).coerceIn(20f, maxX) to (fy + 20f).coerceIn(20f, maxY)
-            else -> xCerca to (fy + fh / 2f - altoGlobo / 2f).coerceIn(20f, maxY)
+            !conFocoAqui -> (w / 2f - anchoGlobo / 2f).coerceIn(16f, maxX) to (h / 2f - altoGlobo / 2f).coerceIn(16f, maxY)
+            // En el caso de una tarjeta grande, preferimos debajo (fuera del marco).
+            fy + fh + altoRequerido + 20f <= h - 16f -> xCerca to (fy + fh + 16f).coerceIn(16f, maxY)
+            fy >= altoRequerido + 32f -> xCerca to (fy - altoRequerido - 16f).coerceIn(16f, maxY)
+            w - (fx + fw) >= anchoGlobo + 212f -> (fx + fw + 16f).coerceIn(16f, maxX) to (fy + fh / 2f - altoRequerido / 2f).coerceIn(16f, maxY)
+            fx >= anchoGlobo + 212f -> (fx - anchoGlobo - 212f).coerceIn(16f, maxX) to (fy + fh / 2f - altoRequerido / 2f).coerceIn(16f, maxY)
+            // Si el componente ocupa casi toda la pantalla, la tarjeta se ubica en la zona libre mayor.
+            h - fy - fh >= fy -> xCerca to maxY
+            else -> xCerca to 16f
         }
         val cara = caraReaccion ?: when { k == 0 -> CaraDippo.FELIZ; k == paginas.size - 1 -> CaraDippo.CELEBRANDO; reto != null && !retoHecho -> CaraDippo.PENSANDO; else -> CaraDippo.NORMAL }
         val px = with(androidx.compose.ui.platform.LocalDensity.current) { esc.d(1f).toPx() }
@@ -267,6 +279,10 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
         }
         Column(
             Modifier.offset(x = esc.d(gx), y = esc.d(gy)).width(esc.d(anchoGlobo))
+                .onSizeChanged { tam ->
+                    val medido = tam.height / unidad
+                    if (kotlin.math.abs(medido - globoAltoMedido) > 1f) globoAltoMedido = medido
+                }
                 .clip(RoundedCornerShape(esc.d(32))).background(Color(0xFFF4F3FA)).padding(horizontal = esc.d(30), vertical = esc.d(24)),
             verticalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
