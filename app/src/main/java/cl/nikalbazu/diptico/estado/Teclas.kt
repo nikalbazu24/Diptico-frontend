@@ -120,6 +120,17 @@ object Teclas {
         else -> null
     }
 
+    /** Una capa/modal retiene el mando: nada debe filtrarse al Home que sigue dibujado detrás. */
+    private fun modalVisible(e: Estado): Boolean =
+        e.panel != Panel.NINGUNO || e.dialogo != null || e.novedades >= 0 ||
+            e.conTeclado || e.donde != null || e.quedaste || e.marcandoMapa != null ||
+            e.extra.nativosEn >= 0 || e.extra.perfilEn >= 0 ||
+            e.extra.edicionPerfil != null || e.extra.anioEn >= 0 ||
+            e.extra.amigosEn >= 0 || e.extra.edicionVitrina != null ||
+            e.extra.cajaJuego.isNotEmpty() || e.extra.discordLogin != null ||
+            e.carpetaEnVentana || e.relojGrande || e.extra.carga != null ||
+            e.extra.emusDescarga != null
+
     fun manejar(ev: KeyEvent): Boolean {
         val code = ev.keyCode
         // El volumen siempre lo maneja Android (así baja también la música de Díptico).
@@ -130,8 +141,21 @@ object Teclas {
         if (abajo) presionadas += code else if (arriba) presionadas -= code
         if (abajo) cl.nikalbazu.diptico.ui.Vivo.toque()
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
+        // Durante la descarga/instalación de un emulador el instalador de Android es el único dueño
+        // de los controles: no se abren carpetas ni cambia la selección en la pantalla de fondo.
+        if (e.extra.emusDescarga != null) return true
+        // El diálogo tiene prioridad incluso si la ventana de Emuladores al día sigue abierta.
+        e.dialogo?.let { d ->
+            if (esA(code)) {
+                if (d.mantener) {
+                    if (abajo && ev.repeatCount == 0) Diptico.empezarMantener()
+                    else if (arriba) Diptico.soltarMantener()
+                } else if (arriba) Diptico.responderDialogo(true)
+            } else if (arriba && esB(code)) Diptico.responderDialogo(false)
+            return true
+        }
         // Mantener Select (en cualquier parte): intercambia las pantallas de arriba y abajo.
-        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla && !e.recorrido) {
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla && !modalVisible(e)) {
             consumidas += code
             Diptico.intercambiar()
             return true
@@ -160,7 +184,7 @@ object Teclas {
             return true
         }
         // Tu espacio tiene prioridad absoluta: L1/R1 recorren sus páginas (no las carpetas ocultas).
-        if (e.configurado && e.inicio == "widgets" && e.sesion == null && e.panel == Panel.NINGUNO &&
+        if (e.configurado && e.inicio == "widgets" && e.sesion == null && !modalVisible(e) &&
             !e.editandoWidgets && !e.extra.galeria && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) {
             if (abajo && ev.repeatCount == 0) {
                 val delta = if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1
@@ -169,7 +193,7 @@ object Teclas {
             return true
         }
         // Colección viva: R3 gira la caja (y abajo el carrete), Select cambia la vista; en las carpetas X opciones, Y seguir o ícono.
-        if (cl.nikalbazu.diptico.ui.coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && !e.conTeclado && e.dialogo == null &&
+        if (cl.nikalbazu.diptico.ui.coleccionVivaActiva(e) && !modalVisible(e) &&
             e.extra.perfilEn < 0 && e.extra.anioEn < 0 && e.extra.amigosEn < 0 && e.novedades < 0 && e.inicio != "widgets") {
             val j = e.seleccionado
             if (e.extra.cajaGirada && !e.enSistemas) {
@@ -243,7 +267,7 @@ object Teclas {
             return true
         }
         // Centro de Switch 2 y ports: cruceta elige, L1/R1 (o ← →) cambian de pestaña, A usa, B cierra.
-        if (e.extra.nativosEn >= 0) {
+        if (e.extra.nativosEn >= 0 && !e.conTeclado) {
             if (abajo) when (code) {
                 KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverNativos(-1)
                 KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverNativos(1)
@@ -265,7 +289,7 @@ object Teclas {
         // Editando el perfil (abajo): la cruceta elige, A usa lo elegido, Start guarda, B cancela.
         // Si se abrió el cuadro de texto (nombre, apodo, fecha), las teclas son del teclado.
         val ed = e.extra.edicionPerfil
-        if (ed != null && e.panel == Panel.NINGUNO) {
+        if (ed != null && e.panel == Panel.NINGUNO && !e.conTeclado) {
             if (abajo) when (code) {
                 KeyEvent.KEYCODE_DPAD_UP -> Diptico.moverEdicionPerfil(-1, 0)
                 KeyEvent.KEYCODE_DPAD_DOWN -> Diptico.moverEdicionPerfil(1, 0)
@@ -279,14 +303,14 @@ object Teclas {
             }
             return true
         }
-        if (e.extra.perfilEn >= 0 && ed == null) {
+        if (e.extra.perfilEn >= 0 && ed == null && !e.conTeclado) {
             if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BACK)) Diptico.cerrarPerfil()
             else if (arriba && esA(code)) Diptico.editarPerfil()
             else if (arriba && esY(code)) Diptico.abrirTuAno(e.extra.perfilEn)
             return true
         }
         // Ventana de amigos de Discord: B la cierra; A conecta si todavía no hay cuenta.
-        if (e.extra.amigosEn >= 0) {
+        if (e.extra.amigosEn >= 0 && !e.conTeclado) {
             if (arriba && (esB(code) || code == KeyEvent.KEYCODE_BACK)) Diptico.cerrarAmigos()
             else if (arriba && esA(code) && e.extra.discordUsuario.isBlank()) { Diptico.cerrarAmigos(); Diptico.iniciarDiscord() }
             else if (arriba && esY(code) && e.extra.discordUsuario.isBlank() && SocialDiscord.disponible) Diptico.conectarDiscordAqui()
@@ -315,7 +339,7 @@ object Teclas {
         }
 
         // Start + A en el inicio: abre (o cierra) tu perfil.
-        if (abajo && ev.repeatCount == 0 && esA(code) && start in presionadas && e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro) {
+        if (abajo && ev.repeatCount == 0 && esA(code) && start in presionadas && e.configurado && !modalVisible(e) && !e.intro) {
             cancelarToque(start)
             consumidas += start
             consumidas += code
@@ -324,7 +348,7 @@ object Teclas {
         }
 
         // Botones extra (L4, R4…): su acción, fuera de los juegos y del teclado.
-        if (!e.conTeclado && e.panel != Panel.CLAVE && e.panel != Panel.PASO && e.botonesExtra.any { !it.conStart && it.tecla == code && it.tecla != 0 && it.accion != "nada" }) {
+        if (!modalVisible(e) && e.botonesExtra.any { !it.conStart && it.tecla == code && it.tecla != 0 && it.accion != "nada" }) {
             if (arriba) Diptico.botonExtra(code)
             return true
         }
@@ -341,14 +365,7 @@ object Teclas {
             return true
         }
 
-        // Ventana de pregunta: A acepta (o se mantiene, si lo pide), B cancela. Nada más responde mientras está abierta.
-        e.dialogo?.let { d ->
-            if (esA(code)) {
-                if (d.mantener) { if (abajo && ev.repeatCount == 0) Diptico.empezarMantener() else if (arriba) Diptico.soltarMantener() }
-                else if (arriba) Diptico.responderDialogo(true)
-            } else if (arriba && esB(code)) Diptico.responderDialogo(false)
-            return true
-        }
+        // Los diálogos se despachan al comienzo, antes de cualquier control del Home o ventanas.
 
         // El tour debe ejecutar la misma acción que enseña, no solo detectar la tecla.
         if (e.novedades >= 0) {
@@ -548,7 +565,7 @@ object Teclas {
 
         // Select: en el inicio cambia entre carátulas y widgets; en menús y ventanas intercambia las pantallas.
         // Mantenerlo siempre intercambia las pantallas.
-        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && e.sesion == null) {
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && e.sesion == null && !modalVisible(e)) {
             if (abajo) {
                 if (ev.repeatCount == 0) selectLargo = false
                 else if (!selectLargo && ev.eventTime - ev.downTime > 550) {
@@ -1201,6 +1218,12 @@ object Teclas {
         val deWidgets = when (modo) { "invertido" -> izquierdo; "clasico" -> false; else -> !izquierdo }
         val deJuegos = when (modo) { "invertido" -> !izquierdo; "clasico" -> false; else -> izquierdo }
         val libre = e.sesion == null && !e.conTeclado && e.configurado && !e.intro && e.bienvenida == 0L
+        if (e.extra.emusDescarga != null) return
+        // Si existe un panel, el stick actúa exclusivamente como cruceta DEL PANEL.
+        if (modalVisible(e) && !e.editandoWidgets) {
+            if (libre) pulsar(d, if (repetido) 1 else 0)
+            return
+        }
         // Prioridad absoluta de Tu espacio: ambos sticks se quedan en widgets, Galería
         // o pestañas de edición. No dejan pasar movimientos al estante de atrás.
         val enEspacioCV = e.extra.coleccionViva && e.inicio == "widgets" && e.sesion == null &&
@@ -1247,10 +1270,9 @@ object Teclas {
             return
         }
         if (enInicio && deJuegos) {
-            if (e.widgetFoco >= 0) Diptico.salirWidgets()
-            val enGrilla = e.vista == "cuadricula" || e.vista == "iconos" || e.vista == "lista"
-            if (cl.nikalbazu.diptico.ui.esMosaico(e.vista)) Diptico.moverJuego(pasoMosaico(e, dx, dy)) else Diptico.moverJuego(if (dy != 0) (if (enGrilla) dy * columnasEstante(e) else dy) else dx)
-            cl.nikalbazu.diptico.audio.Sonidos.mover()
+            // Ni el stick izquierdo ni el derecho deben navegar el estante oculto bajo Widgets.
+            if (e.widgetFoco < 0) Diptico.entrarWidgets()
+            else Diptico.moverFocoWidget(dx, dy)
             return
         }
         // En todo lo demás: el izquierdo (o el de juegos) es la cruceta; el otro cambia de consola (← →) o desplaza (↑ ↓).
