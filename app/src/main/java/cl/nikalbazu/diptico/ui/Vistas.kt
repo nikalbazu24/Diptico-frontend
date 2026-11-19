@@ -324,7 +324,7 @@ fun VentanaJuego(e: Estado) {
     Velo {
         val color = colorDe(j.clave)
         Column(
-            Modifier.widthIn(max = esc.d(560)).fillMaxHeight(0.94f)
+            Modifier.widthIn(max = esc.d(560)).fillMaxHeight(0.94f).anclaRecorrido("panel-juego")
                 .superficieApp(lerpColor(p.superficie, color, .12f), RoundedCornerShape(esc.d(26)), CapaCristal.PANEL)
                 .sinCerrar().padding(esc.d(14)),
         ) {

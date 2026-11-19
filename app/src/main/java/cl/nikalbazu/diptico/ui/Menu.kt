@@ -108,7 +108,7 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
     LaunchedEffect(Unit) {
         if (mov.activo) entrada.animateTo(1f, tween(mov.ms(340), easing = CurvaPosarse)) else entrada.snapTo(1f)
     }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().anclaRecorrido("ajustes").background(p.fondo2).sinCerrar()) {
         Row(Modifier.fillMaxSize().graphicsLayer {
             alpha = entrada.value
             translationY = esc.d(28).toPx() * mov.intensidad * (1f - entrada.value)
