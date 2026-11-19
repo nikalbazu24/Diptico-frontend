@@ -256,7 +256,7 @@ fun CarpetasArribaCV(e: Estado) {
             Row(Modifier.fillMaxWidth().height(esc.d(92)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
                 TB("TUS CONSOLAS", 20f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 3f)
                 Spacer(Modifier.weight(1f))
-                Box(Modifier.anclaRecorrido("widgets")) { BotonWidgetsCV() }; HoraBateria(60f, 24f); BotonPerfil(82f)
+                Box(Modifier.anclaRecorrido("widgets")) { BotonWidgetsCV() }; HoraBateria(60f, 24f); Box(Modifier.anclaRecorrido("perfil")) { BotonPerfil(82f) }
             }
             if (c == null) { TB("Aún no hay consolas", 64f, titulo = true); return@Column }
             // En la pantalla angosta (con las pantallas intercambiadas) la consola va arriba y su información abajo,
@@ -298,7 +298,7 @@ fun CarpetasArribaCV(e: Estado) {
             }
             // Acciones a la izquierda; a la derecha cómo cambiar de consola y de vista (solo si cabe).
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
-                AccionesConsolaCV(e, c, alto = 80f)
+                Box(Modifier.anclaRecorrido("abrir-carpeta")) { AccionesConsolaCV(e, c, alto = 80f) }
                 Spacer(Modifier.weight(1f))
                 if (!angosto) PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas", modifier = Modifier.anclaRecorrido("controles"))
             }
