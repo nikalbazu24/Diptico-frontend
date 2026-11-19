@@ -159,7 +159,11 @@ object Teclas {
             return true
         }
         // Mantener Select (en cualquier parte): intercambia las pantallas de arriba y abajo.
-        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla && !modalVisible(e)) {
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 &&
+            !selectLargo && !e.unaPantalla && !modalVisible(e)) {
+            // La ruta genérica ya puede haber detectado una pulsación larga (>550 ms).
+            // No intercambiar dos veces por el mismo Select mantenido.
+            selectLargo = true
             consumidas += code
             Diptico.intercambiar()
             return true
