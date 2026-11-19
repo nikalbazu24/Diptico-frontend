@@ -264,7 +264,7 @@ class TourInteractivoTest {
         prepararCarpetaCV()
         val e = Diptico.estado.value
         Diptico.fijarParaPrueba(e.copy(inicio = "widgets", widgetFoco = -1,
-            widgets = listOf(Widget("reloj", 0, 0, 2, 2))))
+            widgets = listOf(Widget("reloj", 0, 0, 2, 2, pagina = 1))))
         val consola = Diptico.estado.value.consolaSel
         val juego = Diptico.estado.value.juegoSel
         pulsar(KeyEvent.KEYCODE_BUTTON_A)
