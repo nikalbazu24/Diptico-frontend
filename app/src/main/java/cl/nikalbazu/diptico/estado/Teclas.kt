@@ -145,6 +145,10 @@ object Teclas {
         if (abajo) presionadas += code else if (arriba) presionadas -= code
         if (abajo) cl.nikalbazu.diptico.ui.Vivo.toque()
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
+        // La colección captura Select antes del controlador genérico. Reiniciar aquí
+        // el estado de pulsación larga permite mantener Select varias veces seguidas,
+        // o pulsarlo corto después, sin arrastrar el estado anterior.
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 0) selectLargo = false
         // Durante la descarga/instalación de un emulador el instalador de Android es el único dueño
         // de los controles: no se abren carpetas ni cambia la selección en la pantalla de fondo.
         if (e.extra.emusDescarga != null) return true
