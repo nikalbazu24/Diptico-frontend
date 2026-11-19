@@ -33,6 +33,8 @@
 
     <!-- Emuladores que Díptico sabe abrir (Android 11+ necesita declararlos para verlos) -->
     <queries>
+        <!-- Lemon-Project: versión estándar; la variante spoof usa otro paquete. -->
+        <package android:name="dev.lemon.lemon_emulator" />
         <package android:name="com.retroarch" />
         <package android:name="com.retroarch.aarch64" />
         <package android:name="com.retroarch.ra32" />
