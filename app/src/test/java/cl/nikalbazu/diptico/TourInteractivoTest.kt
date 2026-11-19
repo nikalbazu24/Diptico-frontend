@@ -130,7 +130,8 @@ class TourInteractivoTest {
     @Test fun l1r1SobreWidgetsNoCambianLaConsolaOcultaEnCarpeta() {
         prepararCarpetaCV()
         Diptico.fijarParaPrueba(Diptico.estado.value.copy(inicio = "widgets"))
-        assertTrue("La carpeta continúa abierta detrás de los widgets", Diptico.estado.value.carpetaEnVentana)
+        assertEquals("La carpeta guardada no debe registrarse como ventana VISIBLE bajo widgets", false, Diptico.estado.value.carpetaEnVentana)
+        assertEquals("La biblioteca queda en juegos pero no puede recibir el mando", false, Diptico.estado.value.enSistemas)
         val consola = Diptico.estado.value.consolaSel
         val juego = Diptico.estado.value.juegoSel
         pulsar(KeyEvent.KEYCODE_BUTTON_R1)
