@@ -128,6 +128,9 @@ object Teclas {
             e.extra.edicionPerfil != null || e.extra.anioEn >= 0 ||
             e.extra.amigosEn >= 0 || e.extra.edicionVitrina != null ||
             e.extra.cajaJuego.isNotEmpty() || e.extra.discordLogin != null ||
+            // La Galería de Widgets ocupa su propia pantalla. Debe retener Select,
+            // sticks y botones, no permitir a la ruta genérica alternarInicio().
+            (e.inicio == "widgets" && e.extra.galeria) ||
             // Una carpeta de Colección viva es navegación principal, no un diálogo modal.
             // «carpetaEnVentana» también es true BAJO Widgets si el usuario abrió una
             // carpeta previamente. Bloquearla aquí filtraba Select y L1/R1 al Home.
