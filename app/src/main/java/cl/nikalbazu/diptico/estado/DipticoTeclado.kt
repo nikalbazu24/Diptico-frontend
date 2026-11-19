@@ -401,7 +401,7 @@ fun Diptico.moverIndice(delta: Int) {
 
 internal fun Diptico.moverIndiceSolo(delta: Int) {
     val e = estado.value
-    if (e.panel == Panel.MENU && e.desplegable >= 0) {
+    if (e.panel in setOf(Panel.MENU, Panel.RAPIDO) && e.desplegable >= 0) {
         val total = opcionDesplegada(e)?.alternativas?.size ?: 0
         if (total > 0) actualizar { it.copy(extra = it.extra.copy(desplegableSel = (it.desplegableSel + delta).coerceIn(0, total - 1))) }
         return

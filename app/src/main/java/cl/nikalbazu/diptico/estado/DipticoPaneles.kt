@@ -55,7 +55,9 @@ import kotlinx.coroutines.withContext
 
 fun Diptico.abrirRapido() {
     if (estado.value.seleccionado == null) return
-    actualizar { it.copy(panel = Panel.RAPIDO, indice = 0, extra = it.extra.copy(rapidoGrupo = -1, rapidoSel = 0)) }
+    // Un emulador puede haberse instalado desde que se abrió Díptico.
+    Lanzador.olvidar()
+    actualizar { it.copy(panel = Panel.RAPIDO, indice = 0, extra = it.extra.copy(rapidoGrupo = -1, rapidoSel = 0, desplegable = -1)) }
 }
 
 

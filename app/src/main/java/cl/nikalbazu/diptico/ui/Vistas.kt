@@ -408,6 +408,9 @@ fun VentanaJuego(e: Estado) {
             }
         }
     }
+    // El selector del emulador del juego usa la misma lista que Ajustes generales.
+    // Se dibuja encima de la ventana rápida y recibe mando y toque sin filtrar al Home.
+    if (e.desplegable >= 0) VentanaDesplegable(e)
 }
 
 private fun lerpColor(a: Color, b: Color, t: Float) = androidx.compose.ui.graphics.lerp(a, b, t)

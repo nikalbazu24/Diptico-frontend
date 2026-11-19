@@ -192,7 +192,7 @@ private fun VentanaSubOpciones(e: Estado) {
 
 /** La lista de alternativas de una opción: se mueve con la cruceta, A elige y B vuelve sin cambiar nada. */
 @Composable
-private fun VentanaDesplegable(e: Estado) {
+internal fun VentanaDesplegable(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val o = Diptico.opcionDesplegada(e) ?: return
