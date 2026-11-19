@@ -4,9 +4,6 @@ import android.view.KeyEvent
 import android.net.Uri
 import cl.nikalbazu.diptico.data.Juego
 import org.junit.Assert.assertTrue
-import android.net.Uri
-import cl.nikalbazu.diptico.data.Juego
-import org.junit.Assert.assertTrue
 import androidx.test.core.app.ApplicationProvider
 import cl.nikalbazu.diptico.estado.*
 import org.junit.Assert.assertEquals
