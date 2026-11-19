@@ -407,7 +407,7 @@ fun CarpetasAbajoCV(e: Estado) {
                 HoraBateria(56f, 22f)
                 BotonPerfil(70f)
             }
-            Box(Modifier.fillMaxWidth().weight(1f).anclaRecorrido("carpetas")) {
+            Box(Modifier.fillMaxWidth().weight(1f)) {
                 if (e.extra.pestanaCarpetas == 1) ColeccionesCV(e, Modifier.fillMaxSize())
                 else RejillaCarpetasCV(e, Modifier.fillMaxSize(), unaPantalla = false)
             }
@@ -511,12 +511,15 @@ fun RejillaCarpetasCV(e: Estado, modifier: Modifier, unaPantalla: Boolean) {
             val c = Consolas.porId(id) ?: return@itemsIndexed
             val elegida = i == sel
             val entrar = { if (elegida) Diptico.entrarConsolaCV(id) else Diptico.elegirConsola(id) }
-            when (vista) {
-                "grande" -> CarpetaGrande(e, c, elegida, unaPantalla, entrar)
-                "icono" -> CarpetaIcono(e, c, elegida, unaPantalla, entrar)
-                "repisa" -> CarpetaRepisa(e, c, elegida, unaPantalla, entrar)
-                "carpeta" -> CarpetaClasica(e, c, elegida, unaPantalla, entrar)
-                else -> CarpetaDiptico(e, c, elegida, unaPantalla, entrar)
+            // En el recorrido iluminamos la carpeta elegida, no toda la rejilla.
+            Box(Modifier.fillMaxWidth().then(if (elegida) Modifier.anclaRecorrido("carpetas") else Modifier)) {
+                when (vista) {
+                    "grande" -> CarpetaGrande(e, c, elegida, unaPantalla, entrar)
+                    "icono" -> CarpetaIcono(e, c, elegida, unaPantalla, entrar)
+                    "repisa" -> CarpetaRepisa(e, c, elegida, unaPantalla, entrar)
+                    "carpeta" -> CarpetaClasica(e, c, elegida, unaPantalla, entrar)
+                    else -> CarpetaDiptico(e, c, elegida, unaPantalla, entrar)
+                }
             }
         }
     }
@@ -728,7 +731,7 @@ fun CarpetasUnicaCV(e: Estado) {
                         Spacer(Modifier.weight(1f))
                         (1..5).forEach { q -> ChipElegir("$q", e.extra.cuantosCarpeta == q) { Diptico.elegirCuantosCarpeta(q) } }
                     }
-                    RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1.2f).anclaRecorrido("carpetas"), unaPantalla = true)
+                    RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1.2f), unaPantalla = true)
                 }
             }
             // Abajo: DIPPO y el dock de apps.

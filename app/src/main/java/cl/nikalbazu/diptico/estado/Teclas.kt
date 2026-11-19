@@ -131,7 +131,7 @@ object Teclas {
         if (abajo) cl.nikalbazu.diptico.ui.Vivo.toque()
         if (code in consumidas) { if (arriba) consumidas -= code; return true }
         // Mantener Select (en cualquier parte): intercambia las pantallas de arriba y abajo.
-        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla) {
+        if (code == KeyEvent.KEYCODE_BUTTON_SELECT && abajo && ev.repeatCount == 12 && !e.unaPantalla && !e.recorrido) {
             consumidas += code
             Diptico.intercambiar()
             return true
@@ -156,6 +156,15 @@ object Teclas {
                 esA(code) -> Diptico.usarPartidaUnica()
                 code == KeyEvent.KEYCODE_BUTTON_SELECT -> Diptico.terminarPartidaUnica()
                 esB(code) -> Diptico.volverAlJuegoUnica()
+            }
+            return true
+        }
+        // Tu espacio tiene prioridad absoluta: L1/R1 recorren sus páginas (no las carpetas ocultas).
+        if (e.configurado && e.inicio == "widgets" && e.sesion == null && e.panel == Panel.NINGUNO &&
+            !e.editandoWidgets && !e.extra.galeria && (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1)) {
+            if (abajo && ev.repeatCount == 0) {
+                val delta = if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1
+                if (e.widgetFoco >= 0) Diptico.paginaFocoWidget(delta) else Diptico.cambiarPagina(delta)
             }
             return true
         }
@@ -341,24 +350,51 @@ object Teclas {
             return true
         }
 
-        // Tour de novedades: A o → sigue, ← vuelve, B o Start lo cierran.
+        // El tour debe ejecutar la misma acción que enseña, no solo detectar la tecla.
         if (e.novedades >= 0) {
-            // En el recorrido de DIPPO, los demás botones le hacen reaccionar (y algunos cumplen el «pruébalo»).
-            if (e.recorrido && abajo && ev.repeatCount == 0) when (code) {
-                KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> {
-                    Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1)
-                    RecorridoVivo.avisar("gatillo")
-                }
-                KeyEvent.KEYCODE_BUTTON_SELECT -> RecorridoVivo.avisar("select")
-                KeyEvent.KEYCODE_BUTTON_X -> RecorridoVivo.avisar("x")
-                KeyEvent.KEYCODE_BUTTON_Y -> RecorridoVivo.avisar("y")
-                KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> RecorridoVivo.avisar("gatillo2")
-                KeyEvent.KEYCODE_BUTTON_THUMBL, KeyEvent.KEYCODE_BUTTON_THUMBR -> RecorridoVivo.avisar("stick")
-            }
-            // El recorrido de la primera vez es obligatorio: no se salta y cada paso con reto pide hacerlo de verdad.
             if (e.recorrido) {
-                if (arriba && esA(code)) {
-                    if (RecorridoVivo.puedeSeguir(e.novedades)) Diptico.moverNovedades(1) else RecorridoVivo.avisar("falta")
+                if (abajo && ev.repeatCount == 0) when (code) {
+                    KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1 -> {
+                        // Fuera del paso de consolas no tocamos el estante oculto tras Widgets.
+                        if (e.novedades == 1 && e.inicio != "widgets") {
+                            Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1)
+                            RecorridoVivo.avisar("gatillo")
+                        }
+                    }
+                    KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2 -> {
+                        if (e.novedades == 3) {
+                            Diptico.pasoEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
+                            if (Diptico.estado.value.inicio == "widgets") RecorridoVivo.avisar("gatillo2")
+                        }
+                    }
+                    KeyEvent.KEYCODE_BUTTON_SELECT -> {
+                        if (e.novedades == 5 && e.inicio != "widgets") {
+                            val antes = e.extra.vistaCarpetasCV
+                            Diptico.siguienteVistaCarpetas()
+                            if (Diptico.estado.value.extra.vistaCarpetasCV != antes) RecorridoVivo.avisar("select")
+                        }
+                    }
+                    KeyEvent.KEYCODE_BUTTON_X -> {
+                        if (e.novedades == 2) {
+                            // «Todas» no tiene personalización: elegimos una consola real para no bloquear el tour.
+                            val id = e.consolaSel.takeIf { it != "todo" }
+                                ?: e.pestanas.firstOrNull { it != "todo" }
+                            if (id != null) {
+                                if (e.consolaSel != id) Diptico.elegirConsola(id)
+                                Diptico.abrirEditarConsola(id)
+                                if (Diptico.estado.value.panel == Panel.EDITAR_CONSOLA) RecorridoVivo.avisar("x")
+                            }
+                        }
+                    }
+                    KeyEvent.KEYCODE_BUTTON_Y -> RecorridoVivo.avisar("y")
+                    KeyEvent.KEYCODE_BUTTON_THUMBL, KeyEvent.KEYCODE_BUTTON_THUMBR -> RecorridoVivo.avisar("stick")
+                }
+                if (arriba) when {
+                    esA(code) -> {
+                        if (RecorridoVivo.puedeSeguir(e.novedades)) Diptico.moverNovedades(1)
+                        else RecorridoVivo.avisar("falta")
+                    }
+                    esB(code) -> Diptico.cerrarNovedades()
                 }
                 return true
             }

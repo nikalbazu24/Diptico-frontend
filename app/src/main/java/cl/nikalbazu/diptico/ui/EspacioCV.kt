@@ -65,7 +65,7 @@ internal fun EncabezadoEspacioCV(e: Estado) {
             Texto(t, 13.5f, color = if (on) p.fondo else p.tinta, lineas = 1)
         }
     }
-    Row(Modifier.fillMaxWidth().testTag("encabezado-espacio"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
+    Row(Modifier.fillMaxWidth().anclaRecorrido("espacio").testTag("encabezado-espacio"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
         // Las dos páginas de la tira, con la pista de los gatillos.
         Row(Modifier.clip(RoundedCornerShape(50)).background(p.tinta.copy(alpha = 0.06f)).padding(esc.d(3)), horizontalArrangement = Arrangement.spacedBy(esc.d(2))) {
             Pildora("Inicio", false, "Volver al inicio") { Diptico.fijarInicio("heroe") }
@@ -531,7 +531,7 @@ private fun PieEspacio(e: Estado) {
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(26)),
     ) {
         if (e.extra.dock) Box(
-            Modifier.clip(RoundedCornerShape(esc.d(34))).background(col.texto.copy(alpha = .06f))
+            Modifier.anclaRecorrido("apps").clip(RoundedCornerShape(esc.d(34))).background(col.texto.copy(alpha = .06f))
                 .border(esc.d(2), col.texto.copy(alpha = .11f), RoundedCornerShape(esc.d(34))).padding(horizontal = esc.d(18), vertical = esc.d(12)),
         ) { FilaDock(e, 92f) }
         Spacer(Modifier.weight(1f))

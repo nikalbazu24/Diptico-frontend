@@ -4720,6 +4720,10 @@ object Diptico {
         if (n < 0) return
         val sig = n + d
         if (sig >= paginasTour().size) { cerrarNovedades(); return }
+        // El tour mostró Tu espacio de verdad en el paso 4; al pasar a las vistas de
+        // carpetas vuelve al inicio visible antes de pedir Select.
+        if (estado.value.recorrido && n == 4 && sig == 5 && estado.value.inicio == "widgets")
+            fijarInicio("heroe")
         actualizar { it.copy(novedades = sig.coerceAtLeast(0)) }
         Sonidos.pagina()
     }
