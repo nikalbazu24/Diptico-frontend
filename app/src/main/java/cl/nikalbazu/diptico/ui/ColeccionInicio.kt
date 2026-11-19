@@ -311,7 +311,7 @@ fun ColeccionAbajo(e: Estado) {
             Row(Modifier.fillMaxWidth().height(esc.d(76)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
                 Box(Modifier.size(esc.d(76)).clip(CircleShape).background(col.texto.copy(alpha = .07f)).border(1.dp, col.borde, CircleShape)
                     .clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) { cl.nikalbazu.diptico.bisa.AvatarBisa(54f * esc.factor) }
-                Row(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .07f)).border(1.dp, col.borde, RoundedCornerShape(50))
+                Row(Modifier.weight(1f).fillMaxHeight().anclaRecorrido("buscar").clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .07f)).border(1.dp, col.borde, RoundedCornerShape(50))
                     .clickable { Diptico.abrirBuscar() }.padding(horizontal = esc.d(24)), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
                     IconoDiptico(Icono.BUSCAR, col.sub, 28f)
@@ -327,7 +327,7 @@ fun ColeccionAbajo(e: Estado) {
             // Consolas: L1 · píldoras · R1.
             FilaConsolasCV(e, Modifier.fillMaxWidth().height(esc.d(80)), alto = 72f)
             // Los juegos de la consola, en la vista elegida.
-            Box(Modifier.fillMaxWidth().weight(1f)) {
+            Box(Modifier.fillMaxWidth().weight(1f).anclaRecorrido("juegos")) {
                 when (e.extra.vistaColeccion) {
                     "cuadricula" -> RejillaCV(e, columnas = 4, Modifier.fillMaxSize())
                     "lista" -> ListaCV(e, Modifier.fillMaxSize())
@@ -341,7 +341,7 @@ fun ColeccionAbajo(e: Estado) {
                     }
                 }
             }
-            BarraAbajoCV(e, Modifier.fillMaxWidth())
+            BarraAbajoCV(e, Modifier.fillMaxWidth().anclaRecorrido("barra-juegos"))
         }
     }
 }
