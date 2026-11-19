@@ -151,6 +151,20 @@ class TourInteractivoTest {
         assertEquals("widgets", Diptico.estado.value.inicio)
     }
 
+    @Test fun selectEnGaleriaWidgetsNoAbandonaNiModificaLaBiblioteca() {
+        prepararCarpetaCV()
+        val e = Diptico.estado.value
+        Diptico.fijarParaPrueba(e.copy(inicio = "widgets",
+            extra = e.extra.copy(galeria = true)))
+        val consola = Diptico.estado.value.consolaSel
+        val vista = Diptico.estado.value.extra.vistaColeccion
+        pulsar(KeyEvent.KEYCODE_BUTTON_SELECT)
+        assertEquals(true, Diptico.estado.value.extra.galeria)
+        assertEquals("widgets", Diptico.estado.value.inicio)
+        assertEquals(vista, Diptico.estado.value.extra.vistaColeccion)
+        assertEquals(consola, Diptico.estado.value.consolaSel)
+    }
+
     @Test fun l1r1EnGaleriaDeWidgetsCambianCategoriaYNoLaConsola() {
         prepararCarpetaCV()
         val antes = Diptico.estado.value
