@@ -928,8 +928,12 @@ data class Estado(
     val eligiendoConsola: Boolean
         get() = enSistemas && vistaConsolas in Diptico.MODOS_ELEGIR && (!unaPantalla || inicio != "widgets")
 
+    /** La carpeta en ventana solo existe cuando la biblioteca está a la vista.
+     * En Tu espacio puede conservarse enSistemas=false, pero esa carpeta queda oculta;
+     * no debe robar foco ni bloquear navegación de widgets. */
     val carpetaEnVentana: Boolean
-        get() = vistaConsolas == "carpetas" && !enSistemas && modoCarpeta != "completa" && sesion == null
+        get() = inicio != "widgets" && vistaConsolas == "carpetas" &&
+            !enSistemas && modoCarpeta != "completa" && sesion == null
 
     /** Se está escribiendo con el teclado de Díptico (en la pantalla contraria a la del texto). */
     val conTeclado: Boolean
