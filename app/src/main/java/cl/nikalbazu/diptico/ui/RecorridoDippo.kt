@@ -57,6 +57,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import cl.nikalbazu.diptico.bisa.AvatarBisa
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
@@ -70,6 +74,30 @@ import cl.nikalbazu.diptico.estado.Idioma
 
 /** Lo que se ilumina: en qué pantalla y un rectángulo en fracciones del lienzo (x, y, ancho, alto). */
 private data class Foco(val abajo: Boolean, val x: Float, val y: Float, val w: Float, val h: Float)
+private data class MarcoTour(val x: Float, val y: Float, val ancho: Float, val alto: Float)
+
+/** Destinos del tour: la ubicación se obtiene del componente real, no de coordenadas fijas. */
+private fun destinosDe(k: Int, una: Boolean): List<String> = when (k) {
+    0 -> listOf("consola")
+    1 -> listOf("controles", "consola")
+    2 -> listOf("carpetas")
+    3 -> listOf("widgets")
+    4 -> listOf("apps")
+    5 -> if (una) listOf("carpetas") else listOf("controles")
+    6 -> listOf("dippo")
+    else -> emptyList()
+}
+
+/** Conversión ventana -> lienzo, con recorte para no pintar fuera de los bordes físicos. */
+private fun marcoDeAncla(ancla: Rect, ventana: Rect, unidad: Float, ancho: Float, alto: Float): MarcoTour? {
+    if (unidad <= 0f || ancla.width <= 0f || ancla.height <= 0f) return null
+    val margen = 10f
+    val x1 = ((ancla.left - ventana.left) / unidad - margen).coerceIn(0f, ancho)
+    val y1 = ((ancla.top - ventana.top) / unidad - margen).coerceIn(0f, alto)
+    val x2 = ((ancla.right - ventana.left) / unidad + margen).coerceIn(0f, ancho)
+    val y2 = ((ancla.bottom - ventana.top) / unidad + margen).coerceIn(0f, alto)
+    return if (x2 - x1 > 1f && y2 - y1 > 1f) MarcoTour(x1, y1, x2 - x1, y2 - y1) else null
+}
 
 /** Dónde está cada parte con dos pantallas (arriba 6a, abajo 6b) y con una (6c). null = sin foco (el cierre). */
 private fun focoDe(k: Int, una: Boolean): Foco? = if (una) when (k) {
@@ -120,7 +148,9 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
     val una = rol == Rol.UNICA || e.unaPantalla
     val abajo = rol == Rol.INFERIOR
     val foco = focoDe(k, una)
-    // ¿Va DIPPO en esta pantalla? Donde está el foco; en el cierre (sin foco), en la de arriba.
+    // Colección viva puede redistribuir sus componentes: usamos sus medidas reales.
+    val conAnclas = coleccionVivaActiva(e)
+    // Cada paso pertenece a una pantalla; en el cierre DIPPO queda arriba.
     val aqui = una || (foco?.abajo ?: false) == abajo
     val alcance = rememberCoroutineScope()
     val anima = LocalMovimiento.current
@@ -148,16 +178,31 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
     LienzoBoceto(if (abajo) 1240f else 1920f, 1080f, Modifier.testTag("recorrido-dippo"), zoom = if (una) ZOOM_UNA else if (abajo) ZOOM_ABAJO else ZOOM_ARRIBA) {
         val esc = LocalEscala.current
         val w = anchoLienzo(); val h = altoLienzo()
-        val conFocoAqui = foco != null && (una || foco.abajo == abajo)
-        // El foco se desliza de una parte a otra.
+        val pantalla = pantallaActual()
+        val ancla = if (conAnclas && aqui) destinosDe(k, una).firstNotNullOfOrNull {
+            AnclasRecorrido.buscar(pantalla, it)
+        } else null
+        var ventanaCanvas by remember { mutableStateOf<Rect?>(null) }
+        val unidad = with(LocalDensity.current) { esc.d(1f).toPx() }
+        val marco = if (conAnclas) {
+            if (ancla != null && ventanaCanvas != null) marcoDeAncla(ancla, ventanaCanvas!!, unidad, w, h) else null
+        } else if (foco != null && aqui) {
+            MarcoTour(foco.x * w, foco.y * h, foco.w * w, foco.h * h)
+        } else null
+        val conFocoAqui = marco != null
+        // Las dimensiones siguen el componente incluso al cambiar de pantalla, tema o escala.
         val resorte = spring<Float>(dampingRatio = 0.8f, stiffness = 160f)
-        val fx by animateFloatAsState(if (conFocoAqui) foco!!.x * w else w / 2, resorte, label = "fx")
-        val fy by animateFloatAsState(if (conFocoAqui) foco!!.y * h else h / 2, resorte, label = "fy")
-        val fw by animateFloatAsState(if (conFocoAqui) foco!!.w * w else 0f, resorte, label = "fw")
-        val fh by animateFloatAsState(if (conFocoAqui) foco!!.h * h else 0f, resorte, label = "fh")
+        val fx by animateFloatAsState(marco?.x ?: w / 2f, resorte, label = "fx")
+        val fy by animateFloatAsState(marco?.y ?: h / 2f, resorte, label = "fy")
+        val fw by animateFloatAsState(marco?.ancho ?: 0f, resorte, label = "fw")
+        val fh by animateFloatAsState(marco?.alto ?: 0f, resorte, label = "fh")
         val pulso = rememberInfiniteTransition(label = "halo").animateFloat(.55f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "p")
         Canvas(
             Modifier.fillMaxSize()
+                .onGloballyPositioned { coordenadas ->
+                    val actual = coordenadas.boundsInWindow()
+                    if (ventanaCanvas != actual) ventanaCanvas = actual
+                }
                 .clickable(interactionSource = null, indication = null) { if (reto == null || retoHecho) Diptico.moverNovedades(1) else reaccionar("falta") },
         ) {
             val u = size.width / w
@@ -192,13 +237,16 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
         val anchoGlobo = minOf(680f, w * .6f)
         // Dónde cabe el globo: debajo del foco, arriba, a la derecha, a la izquierda o (si nada) dentro, abajo.
         val altoGlobo = 300f
+        val maxX = (w - anchoGlobo - 190f).coerceAtLeast(20f)
+        val maxY = (h - altoGlobo - 20f).coerceAtLeast(20f)
+        val xCerca = (fx + 20f).coerceIn(20f, maxX)
         val (gx, gy) = when {
-            !conFocoAqui -> (w / 2 - anchoGlobo / 2) to (h / 2 - 160f)
-            fy + fh + altoGlobo + 40f < h -> (fx + 30f).coerceIn(30f, w - anchoGlobo - 220f) to (fy + fh + 30f)
-            fy - altoGlobo - 30f > 0f -> (fx + 30f).coerceIn(30f, w - anchoGlobo - 220f) to (fy - altoGlobo - 20f)
-            w - (fx + fw) > anchoGlobo + 230f -> (fx + fw + 30f) to (fy + 20f).coerceAtMost(h - altoGlobo - 20f)
-            fx > anchoGlobo + 230f -> (fx - anchoGlobo - 230f) to (fy + 20f).coerceAtMost(h - altoGlobo - 20f)
-            else -> (fx + 30f).coerceIn(30f, w - anchoGlobo - 220f) to (fy + fh - altoGlobo - 20f).coerceAtLeast(20f)
+            !conFocoAqui -> (w / 2 - anchoGlobo / 2).coerceIn(20f, maxX) to (h / 2 - 160f).coerceIn(20f, maxY)
+            fy + fh + altoGlobo + 30f < h -> xCerca to (fy + fh + 20f).coerceIn(20f, maxY)
+            fy - altoGlobo - 30f > 0f -> xCerca to (fy - altoGlobo - 20f).coerceIn(20f, maxY)
+            w - (fx + fw) > anchoGlobo + 210f -> (fx + fw + 20f).coerceIn(20f, maxX) to (fy + 20f).coerceIn(20f, maxY)
+            fx > anchoGlobo + 210f -> (fx - anchoGlobo - 210f).coerceIn(20f, maxX) to (fy + 20f).coerceIn(20f, maxY)
+            else -> xCerca to (fy + fh / 2f - altoGlobo / 2f).coerceIn(20f, maxY)
         }
         val cara = caraReaccion ?: when { k == 0 -> CaraDippo.FELIZ; k == paginas.size - 1 -> CaraDippo.CELEBRANDO; reto != null && !retoHecho -> CaraDippo.PENSANDO; else -> CaraDippo.NORMAL }
         val px = with(androidx.compose.ui.platform.LocalDensity.current) { esc.d(1f).toPx() }

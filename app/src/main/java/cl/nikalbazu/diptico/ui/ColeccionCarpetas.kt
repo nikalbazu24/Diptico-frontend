@@ -256,7 +256,7 @@ fun CarpetasArribaCV(e: Estado) {
             Row(Modifier.fillMaxWidth().height(esc.d(92)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
                 TB("TUS CONSOLAS", 20f, color = col.sub, peso = FontWeight.ExtraBold, espaciado = 3f)
                 Spacer(Modifier.weight(1f))
-                BotonWidgetsCV(); HoraBateria(60f, 24f); BotonPerfil(82f)
+                Box(Modifier.anclaRecorrido("widgets")) { BotonWidgetsCV() }; HoraBateria(60f, 24f); BotonPerfil(82f)
             }
             if (c == null) { TB("Aún no hay consolas", 64f, titulo = true); return@Column }
             // En la pantalla angosta (con las pantallas intercambiadas) la consola va arriba y su información abajo,
@@ -300,7 +300,7 @@ fun CarpetasArribaCV(e: Estado) {
             Row(Modifier.fillMaxWidth().height(esc.d(90)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(14))) {
                 AccionesConsolaCV(e, c, alto = 80f)
                 Spacer(Modifier.weight(1f))
-                if (!angosto) PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas")
+                if (!angosto) PistasFinas("L1 R1" to "Otra consola", "Select" to "Vista", "Mantén Select" to "Cambiar pantallas", modifier = Modifier.anclaRecorrido("controles"))
             }
         }
     }
@@ -313,7 +313,7 @@ fun InfoConsolaCV(e: Estado, c: Consola, tamNombre: Float, lineasHistoria: Int =
     val f = HistoriaConsolas.de(c.id)
     val juegos = e.juegosPorConsola[c.id].orEmpty()
     val horas = juegos.sumOf { e.datos[it.clave]?.tiempo ?: 0L }
-    Column(verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
+    Column(Modifier.anclaRecorrido("consola"), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
         if (f != null) TB("${f.marca} · ${f.anio} · ${f.generacion}", 22f, color = androidx.compose.ui.graphics.lerp(c.color, Color.White, .55f), peso = FontWeight.ExtraBold, espaciado = 3f)
         val conLogo = c.id in e.extra.logoConsolas
         val logoUri = e.consolasPropias[c.id]?.logo?.let { android.net.Uri.parse(it) }
@@ -402,17 +402,19 @@ fun CarpetasAbajoCV(e: Estado) {
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(24), vertical = esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
             // Arriba: el dock de apps a la izquierda; la hora, la batería y tu foto a la derecha.
             Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
-                DockCV(e, 52f)
+                DockCV(e, 52f, Modifier.anclaRecorrido("apps"))
                 Spacer(Modifier.weight(1f))
                 HoraBateria(56f, 22f)
                 BotonPerfil(70f)
             }
-            if (e.extra.pestanaCarpetas == 1) ColeccionesCV(e, Modifier.fillMaxWidth().weight(1f))
-            else RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1f), unaPantalla = false)
+            Box(Modifier.fillMaxWidth().weight(1f).anclaRecorrido("carpetas")) {
+                if (e.extra.pestanaCarpetas == 1) ColeccionesCV(e, Modifier.fillMaxSize())
+                else RejillaCarpetasCV(e, Modifier.fillMaxSize(), unaPantalla = false)
+            }
             // Abajo, sin instrucciones: Consolas en la esquina izquierda, DIPPO al medio y Colecciones a la derecha.
             Box(Modifier.fillMaxWidth().height(esc.d(92))) {
                 BotonPestanaCV(Icono.MANDO, "Consolas", e.extra.pestanaCarpetas == 0, Modifier.align(Alignment.CenterStart)) { Diptico.elegirPestanaCarpetas(0) }
-                if (e.extra.dippoInicio) Box(Modifier.align(Alignment.Center).size(esc.d(88)).clip(CircleShape).clickable { Diptico.abrirAsistente() },
+                if (e.extra.dippoInicio) Box(Modifier.align(Alignment.Center).size(esc.d(88)).anclaRecorrido("dippo").clip(CircleShape).clickable { Diptico.abrirAsistente() },
                     contentAlignment = Alignment.Center) {
                     cl.nikalbazu.diptico.bisa.AvatarBisa(78f * esc.factor)
                 }
@@ -702,7 +704,7 @@ fun CarpetasUnicaCV(e: Estado) {
         Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
             // Franja 1: vistas · hora, batería y perfil.
             Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                DockCV(e, 52f)
+                DockCV(e, 52f, Modifier.anclaRecorrido("apps"))
                 Spacer(Modifier.weight(1f))
                 HoraBateria(56f, 22f); BotonPerfil(74f)
             }
@@ -712,7 +714,7 @@ fun CarpetasUnicaCV(e: Estado) {
                 Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
                     InfoConsolaCV(e, c, tamNombre = 60f, lineasHistoria = 2)
                     PersonalizarConsolaCV(e, c)
-                    AccionesConsolaCV(e, c, alto = 64f)
+                    Box(Modifier.anclaRecorrido("controles")) { AccionesConsolaCV(e, c, alto = 64f) }
                 }
                 // Derecha: la consola en 3D, qué juegos van junto al ícono y las carpetas.
                 Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
@@ -726,12 +728,12 @@ fun CarpetasUnicaCV(e: Estado) {
                         Spacer(Modifier.weight(1f))
                         (1..5).forEach { q -> ChipElegir("$q", e.extra.cuantosCarpeta == q) { Diptico.elegirCuantosCarpeta(q) } }
                     }
-                    RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1.2f), unaPantalla = true)
+                    RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1.2f).anclaRecorrido("carpetas"), unaPantalla = true)
                 }
             }
             // Abajo: DIPPO y el dock de apps.
             Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
-                if (e.extra.dippoInicio) DippoFrase("Elige una consola y aprieta A. Select cambia cómo se ven las carpetas; si lo mantienes, cambias de pantalla.", Modifier.weight(1f), cara = 58f, letra = 20f, maxAncho = 900f)
+                if (e.extra.dippoInicio) DippoFrase("Elige una consola y aprieta A. Select cambia cómo se ven las carpetas; si lo mantienes, cambias de pantalla.", Modifier.weight(1f).anclaRecorrido("dippo"), cara = 58f, letra = 20f, maxAncho = 900f)
                 else Spacer(Modifier.weight(1f))
                 BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, descripcion = "Buscar")
                 BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
