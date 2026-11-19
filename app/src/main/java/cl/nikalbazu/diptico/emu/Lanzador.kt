@@ -133,7 +133,11 @@ object Lanzador {
      */
     fun elegida(ctx: Context, consola: Consola, preferido: String?, tipo: String? = null): Opcion? {
         val ops = opciones(ctx, consola, tipo)
-        val compatibles = ops.filter { sirve(it.comando, tipo) }
+        // Project Lemon es seleccionable en cualquier juego, pero no debe pasar a ser
+        // el emulador predeterminado de PS2, GBA, etc. por estar instalado.
+        val compatibles = ops.filter {
+            sirve(it.comando, tipo) && (consola.id == "switch" || it.paquete != "dev.lemon.lemon_emulator")
+        }
         if (preferido != null && preferido.startsWith("app:")) appComoEmulador(ctx, preferido.removePrefix("app:"))?.let { return it }
         if (ops.isEmpty()) return null
         if (preferido != null) {
@@ -142,7 +146,7 @@ object Lanzador {
                 ?: ops.firstOrNull { it.paquete == preferido && it.comando.nucleo == null }
             if (p != null && (tipo == null || sirve(p.comando, tipo))) return p
         }
-        return compatibles.firstOrNull() ?: ops.first()
+        return compatibles.firstOrNull() ?: ops.firstOrNull { it.paquete != "dev.lemon.lemon_emulator" }
     }
 
     /** Convierte un documento de la memoria interna o SD en ruta real: primary:ROMs/x -> /storage/emulated/0/ROMs/x. */
