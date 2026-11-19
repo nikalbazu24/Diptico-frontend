@@ -715,6 +715,8 @@ object Teclas {
                         if (abajo && una) Diptico.categoriaEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1); return true
                     }
                     code == KeyEvent.KEYCODE_BUTTON_X -> { if (abajo && una) Diptico.cambiarTamGaleria(1); return true }
+                    // Select no abandona la Galería ni cambia carpetas/juegos a sus espaldas.
+                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> return true
                     esA(code) -> { if (abajo && una) Diptico.agregarDesdeGaleria(); return true }
                     esB(code) || code == KeyEvent.KEYCODE_BUTTON_Y -> { if (abajo && una) Diptico.cerrarGaleriaWidgets(); return true }
                 }
