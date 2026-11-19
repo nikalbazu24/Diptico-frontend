@@ -152,6 +152,32 @@ class TourInteractivoTest {
         assertEquals("widgets", Diptico.estado.value.inicio)
     }
 
+    @Test fun crucetaEnWidgetsDeThorNoMueveConsolasDelFondo() {
+        prepararCarpetaCV()
+        val e = Diptico.estado.value
+        Diptico.fijarParaPrueba(e.copy(
+            enSistemas = true, inicio = "widgets", widgetFoco = 0,
+        ))
+        assertEquals("En dos pantallas Widgets debe tener la prioridad del foco",
+            false, Diptico.estado.value.eligiendoConsola)
+        val consola = Diptico.estado.value.consolaSel
+        pulsar(KeyEvent.KEYCODE_DPAD_RIGHT)
+        pulsar(KeyEvent.KEYCODE_DPAD_DOWN)
+        assertEquals("La cruceta no debe mover consolas tras el widget enfocado",
+            consola, Diptico.estado.value.consolaSel)
+        assertEquals("widgets", Diptico.estado.value.inicio)
+    }
+
+    @Test fun l1r1EnWidgetsThorConCarpetasDeFondoNoCambianConsola() {
+        prepararCarpetaCV()
+        val e = Diptico.estado.value
+        Diptico.fijarParaPrueba(e.copy(enSistemas = true, inicio = "widgets"))
+        val consola = Diptico.estado.value.consolaSel
+        pulsar(KeyEvent.KEYCODE_BUTTON_R1)
+        assertEquals(2, Diptico.estado.value.paginaInicio)
+        assertEquals(consola, Diptico.estado.value.consolaSel)
+    }
+
     @Test fun conFocoWidgetL1R1TampocoMuevenLaConsola() {
         prepararCarpetaCV()
         Diptico.fijarParaPrueba(Diptico.estado.value.copy(inicio = "widgets", widgetFoco = 0))
