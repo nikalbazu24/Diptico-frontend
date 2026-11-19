@@ -218,6 +218,12 @@ object Teclas {
                 }
                 if (arriba) when {
                     esB(code) || code == KeyEvent.KEYCODE_BUTTON_THUMBR -> Diptico.girarCaja(false)
+                    // Select también cambia la vista si se dejó girada la caja: salimos
+                    // del reverso primero para que la nueva vista sea visible de inmediato.
+                    code == KeyEvent.KEYCODE_BUTTON_SELECT -> {
+                        Diptico.girarCaja(false)
+                        Diptico.siguienteVistaColeccion()
+                    }
                     esY(code) -> j?.let { Diptico.abrirCajaJuego(it.clave) }
                     code == KeyEvent.KEYCODE_BUTTON_X -> Diptico.abrirFicha()
                     esA(code) -> Diptico.jugar()
