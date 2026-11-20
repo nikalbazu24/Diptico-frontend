@@ -596,7 +596,11 @@ object Novedades {
      */
     fun pendientes(vista: String): List<Version> {
         val k = HISTORIAL.indexOfFirst { it.id == vista }
-        return HISTORIAL.drop(if (k >= 0) k + 1 else 0).reversed().ifEmpty { listOf(HISTORIAL.last()) }
+        // Conservar el ID de la candidata para reconocer quién ya la vio, pero no volver a mostrar
+        // sus páginas antiguas al pasar a la edición oficial. El tour oficial las sustituye.
+        return HISTORIAL.drop(if (k >= 0) k + 1 else 0)
+            .filterNot { it.id == "diptico-2.0.0" }
+            .reversed().ifEmpty { listOf(HISTORIAL.last()) }
     }
 
     /** Páginas del tour: el recorrido de bienvenida, o las novedades juntas de todas las versiones que te saltaste. */
