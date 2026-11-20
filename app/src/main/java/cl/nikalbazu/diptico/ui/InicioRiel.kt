@@ -149,6 +149,8 @@ private fun FranjaDippo(e: Estado) {
         Spacer(Modifier.width(esc.d(10)))
         AmigosJugando()
         Spacer(Modifier.width(esc.d(8)))
+        BotonRecargarJuegos(e, 30f)
+        Spacer(Modifier.width(esc.d(8)))
         RelojBateria()
     }
 }
@@ -248,6 +250,8 @@ fun InicioSala(e: Estado) {
             Spacer(Modifier.weight(1f))
             DippoInicio(e, 40f, lugar = "sala")
             Spacer(Modifier.width(esc.d(14)))
+            BotonRecargarJuegos(e, 34f)
+            Spacer(Modifier.width(esc.d(10)))
             RelojBateria()
         }
         val j = e.seleccionado
