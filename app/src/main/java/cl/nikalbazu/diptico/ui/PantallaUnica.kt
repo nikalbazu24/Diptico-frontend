@@ -95,7 +95,7 @@ private fun PantallaUnicaContenido(e: Estado) {
     // Inicio nuevo de una pantalla (riel de consolas) o modo sala en la tele. La biblioteca de carpetas sigue aparte.
     if (inicioNuevoUnico(e)) {
         Box(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxSize().difuminar(e)) { if (e.enLaTele) InicioSala(e) else InicioRiel(e) }
+            Box(Modifier.fillMaxSize().difuminar(e)) { if (e.enLaTele) InicioSala(e) else HomeUnaPantallaRedisenado(e) }
             Paneles(e, conAyuda = true)
         }
         return
