@@ -1722,19 +1722,34 @@ class Capturas {
         regla.onNodeWithTag("acciones-consola-cv").assertExists()
         regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
         regla.onNodeWithTag("dock-lateral-alternar").assertExists()
-        regla.onNodeWithTag("abrir-biblioteca-cv").assertExists()
+        regla.onNodeWithTag("abrir-biblioteca-cv").assertDoesNotExist()
+        regla.onNodeWithTag("personalizar-consola-cv").assertExists()
         regla.onNodeWithTag("recargar-juegos").assertExists()
     }
     /** Abrir y plegar el dock sin tocar el perfil ni las carpetas. */
     @Test fun t476c_cv_dock_lateral_plegable() {
         val e = cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)
         foto("476c_cv_dock_lateral", e.copy(extra = e.extra.copy(dock = true, dippoInicio = true)), Rol.UNICA, avance = 1700)
+        // Plegado por defecto para ahorrar espacio; se abre y vuelve a plegar sin afectar el Home.
+        regla.onNodeWithTag("dock-lateral-desplegado").assertDoesNotExist()
+        regla.onNodeWithTag("dock-lateral-alternar").performClick()
+        regla.mainClock.advanceTimeBy(450)
         regla.onNodeWithTag("dock-lateral-desplegado").assertExists()
         regla.onNodeWithTag("dock-lateral-alternar").performClick()
         regla.mainClock.advanceTimeBy(450)
         regla.onNodeWithTag("dock-lateral-desplegado").assertDoesNotExist()
         regla.onNodeWithTag("boton-perfil").assertExists()
         regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
+    }
+    /** Los datos vacíos no crean una barra gigante de "Tus partidas". */
+    @Test fun t476d_cv_sin_partidas_no_muestra_barra() {
+        val e = cv().copy(enSistemas = true, vistaConsolas = "carpetas",
+            modoPantallas = "una_negra", dosDisponibles = false, datos = emptyMap())
+        foto("476d_cv_sin_partidas", e, Rol.UNICA, avance = 1500)
+        regla.onNodeWithTag("tu-mas-jugado-cv").assertDoesNotExist()
+        regla.onNodeWithTag("personalizar-consola-cv").assertExists()
+        regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
+        regla.onNodeWithTag("abrir-biblioteca-cv").assertDoesNotExist()
     }
     @Test fun t477_cv_carpetas_ps2_3d() = foto("477_cv_carpetas_ps2_3d", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(consolaSel = "ps2"), Rol.SUPERIOR)
     @Test fun t478_cv_widgets() {
