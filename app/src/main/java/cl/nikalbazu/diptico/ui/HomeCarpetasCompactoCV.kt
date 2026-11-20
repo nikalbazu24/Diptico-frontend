@@ -121,22 +121,6 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
                     ) {
                         InfoConsolaCV(e, seleccionada, tamNombre = 74f, lineasHistoria = 2)
                         TarjetaPersonalizacionCompactaCV(e, seleccionada)
-                        Row(
-                            Modifier.anclaRecorrido("controles"),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
-                        ) {
-                            BotonTecla(
-                                "A", "Entrar", { Diptico.entrarConsolaCV(seleccionada.id) },
-                                alto = 80f, principal = true, letra = 28f,
-                            )
-                            ultimoDeConsola(e, seleccionada.id)?.let { juego ->
-                                BotonTecla(
-                                    "Y", "Seguir con ${juego.titulo}", { Diptico.seguirCon(juego) },
-                                    modifier = Modifier.weight(1f), alto = 80f, letra = 22f,
-                                )
-                            }
-                        }
                     }
                     Column(
                         Modifier.weight(.53f).fillMaxHeight().testTag("consola-destacada-cv"),
@@ -149,6 +133,29 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
                         }
                         Modelos3D.credito(seleccionada.id)?.let {
                             TB(it, 15f, color = col.tenue, lineas = 1, traducir = false)
+                        }
+                        // A/Y tienen su franja propia bajo el modelo; nunca quedan tapados por las carpetas.
+                        Row(
+                            Modifier.fillMaxWidth().anclaRecorrido("controles").testTag("acciones-consola-cv"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
+                        ) {
+                            BotonTecla(
+                                "A", "Entrar", { Diptico.entrarConsolaCV(seleccionada.id) },
+                                alto = 74f, principal = true, letra = 25f,
+                            )
+                            val ultimo = ultimoDeConsola(e, seleccionada.id)
+                            if (ultimo != null) {
+                                BotonTecla(
+                                    "Y", "Seguir con ${ultimo.titulo}", { Diptico.seguirCon(ultimo) },
+                                    modifier = Modifier.weight(1f), alto = 74f, letra = 20f,
+                                )
+                            } else {
+                                BotonTecla(
+                                    "Y", "Cambiar ícono", { Diptico.cambiarIconoCarpeta(seleccionada.id) },
+                                    modifier = Modifier.weight(1f), alto = 74f, letra = 20f,
+                                )
+                            }
                         }
                     }
                 }
