@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
+import cl.nikalbazu.diptico.estado.Idioma
 
 /**
  * Acceso pequeño de recarga manual para los distintos inicios.
@@ -24,13 +25,13 @@ import cl.nikalbazu.diptico.estado.Estado
 fun BotonRecargarJuegos(e: Estado, tam: Float = 34f) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
-    val descripcion = if (e.escaneando) "Actualizando juegos" else "Actualizar juegos"
+    val descripcion = Idioma.t(if (e.escaneando) "Actualizando juegos" else "Actualizar juegos")
     Box(
         Modifier.size(esc.d(tam))
             .clip(CircleShape)
             .background(p.superficie.copy(alpha = .55f))
             .semantics { contentDescription = descripcion }
-            .clickable(enabled = !e.escaneando, onClickLabel = "Actualizar juegos") {
+            .clickable(enabled = !e.escaneando, onClickLabel = Idioma.t("Actualizar juegos")) {
                 Diptico.recargarJuegosDesdeInicio()
             }
             .testTag("recargar-juegos"),
