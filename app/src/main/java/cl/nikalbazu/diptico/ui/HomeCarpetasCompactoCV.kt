@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -50,7 +51,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import cl.nikalbazu.diptico.bisa.AvatarBisa
 import cl.nikalbazu.diptico.data.Consola
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.estado.*
@@ -211,6 +211,7 @@ private fun ChipPersonalizacionCV(texto: String) {
 private fun DippoConsejosEsquinaCV(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
+    val coloresDippo = remember(e.extra.dippoColor) { coloresDippoAhora(e.extra.dippoColor) }
     var visible by remember { mutableStateOf(false) }
     var indice by remember { mutableStateOf(0) }
     val consejos = listOf(
@@ -245,7 +246,17 @@ private fun DippoConsejosEsquinaCV(e: Estado, modifier: Modifier = Modifier) {
                 .clickable(onClickLabel = "Hablar con Dippo") { Diptico.abrirAsistente() }
                 .testTag("dippo-pulpo-cv"),
             contentAlignment = Alignment.Center,
-        ) { AvatarBisa(76f * esc.factor) }
+        ) {
+            // Sin placa ni burbuja alrededor: el pulpo flota libre, tal como el diseño.
+            Canvas(Modifier.fillMaxSize()) {
+                dibujarDippo(
+                    size.width / 24f,
+                    coloresDippo,
+                    if (visible) CaraDippo.FELIZ else CaraDippo.NORMAL,
+                    saludo = if (visible) 0.8f else 0f,
+                )
+            }
+        }
         AnimatedVisibility(
             visible,
             enter = fadeIn(tween(230)) + expandHorizontally(tween(230)),
