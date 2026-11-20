@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import cl.nikalbazu.diptico.data.DatosJuego
@@ -1722,6 +1723,17 @@ class Capturas {
         regla.onNodeWithTag("dock-lateral-alternar").assertExists()
         regla.onNodeWithTag("abrir-biblioteca-cv").assertExists()
         regla.onNodeWithTag("recargar-juegos").assertExists()
+    }
+    /** Abrir y plegar el dock sin tocar el perfil ni las carpetas. */
+    @Test fun t476c_cv_dock_lateral_plegable() {
+        val e = cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)
+        foto("476c_cv_dock_lateral", e.copy(extra = e.extra.copy(dock = true, dippoInicio = true)), Rol.UNICA, avance = 1700)
+        regla.onNodeWithTag("dock-lateral-desplegado").assertExists()
+        regla.onNodeWithTag("dock-lateral-alternar").performClick()
+        regla.mainClock.advanceTimeBy(450)
+        regla.onNodeWithTag("dock-lateral-desplegado").assertDoesNotExist()
+        regla.onNodeWithTag("boton-perfil").assertExists()
+        regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
     }
     @Test fun t477_cv_carpetas_ps2_3d() = foto("477_cv_carpetas_ps2_3d", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(consolaSel = "ps2"), Rol.SUPERIOR)
     @Test fun t478_cv_widgets() {
