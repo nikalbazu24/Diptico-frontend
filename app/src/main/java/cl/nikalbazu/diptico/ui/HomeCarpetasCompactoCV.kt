@@ -120,7 +120,7 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
                         verticalArrangement = Arrangement.spacedBy(esc.d(16), Alignment.CenterVertically),
                     ) {
                         InfoConsolaCV(e, seleccionada, tamNombre = 74f, lineasHistoria = 2)
-                        PersonalizarConsolaCV(e, seleccionada)
+                        TarjetaPersonalizacionCompactaCV(e, seleccionada)
                         Row(
                             Modifier.anclaRecorrido("controles"),
                             verticalAlignment = Alignment.CenterVertically,
@@ -163,6 +163,47 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
             Modifier.align(Alignment.CenterEnd).padding(end = esc.d(18)).anclaRecorrido("apps"),
         )
     }
+}
+
+/** Tarjeta breve: las opciones reales siguen abriéndose, pero no se confunde el carrusel con otra vista. */
+@Composable
+private fun TarjetaPersonalizacionCompactaCV(e: Estado, c: Consola) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val propia = e.consolasPropias[c.id]
+    Row(
+        Modifier.fillMaxWidth().height(esc.d(116))
+            .vidrio(28f, fuerte = true)
+            .clickable(onClickLabel = "Personalizar ${c.bonito}") { Diptico.abrirEditarConsola(c.id) }
+            .padding(horizontal = esc.d(16)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
+    ) {
+        Box(
+            Modifier.size(esc.d(78)).clip(RoundedCornerShape(esc.d(22)))
+                .background(c.color.copy(alpha = .28f)),
+            contentAlignment = Alignment.Center,
+        ) { IconoDiptico(Icono.AJUSTES, col.texto, 39f, acento = col.acento) }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(7))) {
+            TB("Personalizar ${c.bonito}", 28f, titulo = true, lineas = 1, traducir = false)
+            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
+                ChipPersonalizacionCV("Carrusel")
+                ChipPersonalizacionCV("Emulador: ${Diptico.nombreEmulador(c)}")
+                ChipPersonalizacionCV(if (propia?.portadaCarpeta == null) "Ícono original" else "Ícono propio")
+            }
+        }
+        TB("›", 45f, color = col.texto, traducir = false)
+    }
+}
+
+@Composable
+private fun ChipPersonalizacionCV(texto: String) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    Box(
+        Modifier.clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .09f))
+            .padding(horizontal = esc.d(10), vertical = esc.d(5)),
+    ) { TB(texto, 15f, peso = FontWeight.Bold, lineas = 1, traducir = false) }
 }
 
 /** DIPPO es el pulpo; solo él puede originar sus consejos efímeros. */
@@ -253,7 +294,7 @@ private fun MasJugadoArribaCV(e: Estado, c: Consola) {
 
 /** Solo imágenes locales de las consolas, cargadas fuera del hilo principal. */
 @Composable
-private fun IconoCarpetaCompactoCV(c: Consola) {
+private fun IconoCarpetaCompactoCV(e: Estado, c: Consola) {
     val ctx = LocalContext.current
     val id = remember(c.id) { Modelos3D.idDe(c.id) }
     var imagen by remember(id) { mutableStateOf(ImagenesConsola.enMemoria(id)) }
@@ -262,8 +303,10 @@ private fun IconoCarpetaCompactoCV(c: Consola) {
             imagen = withContext(Dispatchers.IO) { ImagenesConsola.cargar(ctx, id) }
         }
     }
-    val esc = LocalEscala.current
-    if (imagen != null) {
+    val portadaPropia = e.consolasPropias[c.id]?.portadaCarpeta
+    if (portadaPropia != null) {
+        PortadaCarpetaRuta(portadaPropia, c.id, Modifier.fillMaxSize(.9f), maxLado = 360)
+    } else if (imagen != null) {
         Image(imagen!!, contentDescription = c.bonito, modifier = Modifier.fillMaxSize(.91f), contentScale = ContentScale.Fit)
     } else {
         IconoConsola(c, 64f, c.color.copy(alpha = .2f))
@@ -328,7 +371,7 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
                         verticalArrangement = Arrangement.spacedBy(esc.d(4)),
                     ) {
                         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                            IconoCarpetaCompactoCV(c)
+                            IconoCarpetaCompactoCV(e, c)
                         }
                         TB(e.consolasPropias[id]?.nombre ?: c.bonito, 19f, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
                     }
