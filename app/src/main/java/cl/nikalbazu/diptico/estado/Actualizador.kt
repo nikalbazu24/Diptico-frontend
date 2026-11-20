@@ -38,8 +38,9 @@ object Actualizador {
     private const val CANAL = "actualizaciones"
     private const val AVISO = 4471
     private const val REVISION = 4472
-    private val canalVersion = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.substringBefore("-beta.")
-    private val patronBeta = Regex(Regex.escape(canalVersion) + """-beta[.](\d+)""")
+    // Aceptar las betas firmadas 1.1 y las siguientes del canal 2.0.
+    // La v2.0.0 se publica además como puente v1.1-beta.N para llegar a instalaciones antiguas.
+    private val patronBeta = Regex("""(?:1[.]1|2[.]0[.]\d+)-beta[.](\d+)""")
 
     /** Android reúne estas comprobaciones con otros trabajos cuando Díptico está cerrado. */
     fun programar(ctx: Context, activo: Boolean) {

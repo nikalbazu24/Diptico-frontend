@@ -101,7 +101,6 @@ fun Diptico.tamPiezaVitrina(d: Float) { cambiarEdicion { ed: EdicionVitrina ->
 fun Diptico.alternarCajaVitrina() { cambiarEdicion { ed: EdicionVitrina -> ed.copy(disp = ed.disp.copy(conCaja = !ed.disp.conCaja)) } }
 fun Diptico.alternarDifuminadoVitrina() { cambiarEdicion { ed: EdicionVitrina -> ed.copy(disp = ed.disp.copy(difuminado = !ed.disp.difuminado)) } }
 fun Diptico.volverDisposicionOriginal() { cambiarEdicion { ed: EdicionVitrina -> ed.copy(disp = ed.original) } }
-fun Diptico.disposicionDeFabrica() { cambiarEdicion { ed: EdicionVitrina -> ed.copy(disp = Disposicion()) } }
 
 /** «Listo»: guarda lo de este juego y cierra el editor. */
 fun Diptico.guardarEditorVitrina() {

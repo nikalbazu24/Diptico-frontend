@@ -45,7 +45,9 @@ fun pantallaActual(): Int {
 @Composable
 fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
     androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("Raiz ${rol}") }
-    val barra = e.configurado && rol != Rol.INFERIOR && !nuevoDisenoDosPantallas(e) && !(rol == Rol.UNICA && disenoUnicoNuevo(e))
+    val cv = coleccionVivaActiva(e)
+    androidx.compose.runtime.SideEffect { if (Estilo.decorEnFondo != cv) Estilo.decorEnFondo = cv }
+    val barra = e.configurado && rol != Rol.INFERIOR && !coleccionVivaActiva(e) && !nuevoDisenoDosPantallas(e) && !(rol == Rol.UNICA && disenoUnicoNuevo(e))
     val esc = LocalEscala.current
     CompositionLocalProvider(
         LocalPantallaId provides miPantalla,
@@ -69,7 +71,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
         val centroAqui = e.panel == Panel.CENTRO && arribaFisica
         val tienda = e.panel == Panel.GALERIA && e.galeria == "tienda_temas"
         // Desenfoque detrás de lo que se abre encima: el centro de control, la bienvenida, el reloj grande o la continuación.
-        val encima = centroAqui || e.extra.perfilEn == miPantalla || editorAqui(e, rol, miPantalla) || e.extra.anioEn == miPantalla || nativosAqui(e, rol) || e.extra.amigosEn == miPantalla || e.extra.discordLogin != null || e.dialogo != null || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
+        val encima = centroAqui || e.extra.perfilEn == miPantalla || editorAqui(e, rol, miPantalla) || e.extra.anioEn == miPantalla || nativosAqui(e, rol) || e.extra.amigosEn == miPantalla || e.extra.discordLogin != null || e.dialogo != null || e.donde != null || e.quedaste || e.marcandoMapa != null || (e.novedades >= 0 && !e.intro && !e.recorrido) || (e.bienvenida > 0L && !e.intro) || e.relojGrande || (e.continuacion > 0L && e.sesion?.let { miPantalla != it.displayId } == true)
         val desenfoque by animateDpAsState(if (encima && Estilo.efectosCompletos) 18.dp else 0.dp, tween(300), label = "desenfoque")
         // Deslizar hacia abajo desde el borde de arriba: por la izquierda, notificaciones; por la derecha, ajustes rápidos.
         val libre by androidx.compose.runtime.rememberUpdatedState(e.configurado && e.panel == Panel.NINGUNO && e.dialogo == null && !e.intro)
@@ -87,10 +89,17 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                     val moverAtras = LocalMovimiento.current && !encima
                     CompositionLocalProvider(LocalMovimiento provides moverAtras) {
                     when {
-                        !e.configurado -> if (rol == Rol.INFERIOR) TutorialAbajo(e) else Tutorial(e)
+                        !e.configurado -> ConfigPantalla(e, rol)
                         tienda && (arribaFisica || rol == Rol.UNICA) -> PanelGaleria(e, conPrevia = rol == Rol.UNICA)
                         tienda -> ControlesTiendaTemas(e)
+                        // Colección viva: la portada y los widgets son dos páginas que se deslizan con el dedo.
+                        rol == Rol.UNICA && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && !e.editandoWidgets -> InicioDeslizable(
+                            e, portada = { if (e.enSistemas) CarpetasUnicaCV(e) else ColeccionUnica(e) }, widgets = { PantallaInicio(e) },
+                        )
                         rol == Rol.UNICA -> PantallaUnica(e)
+                        rol == Rol.SUPERIOR && coleccionVivaActiva(e) && e.panel == Panel.NINGUNO && e.fichaFijada == null && !e.editandoWidgets -> InicioDeslizable(
+                            e, portada = { if (e.enSistemas) CarpetasArribaCV(e) else ColeccionArriba(e) }, widgets = { PantallaInicio(e) },
+                        )
                         rol == Rol.SUPERIOR -> if (e.fichaFijada != null && e.panel == Panel.NINGUNO && e.sesion == null) {
                             PantallaSuperior(e.copy(juegoSel = e.fichaFijada, consolaSel = "todo"))
                         } else PantallaSuperior(e)
@@ -137,7 +146,7 @@ fun Raiz(e: Estado, rol: Rol, miPantalla: Int, rolIntro: Rol = rol) {
                 AnimatedVisibility(
                     visible = e.novedades >= 0 && !e.intro,
                     enter = fadeIn(tween(300)) + scaleIn(tween(360), initialScale = 0.95f), exit = fadeOut(tween(260)),
-                ) { if (rol == Rol.INFERIOR) NovedadesCompania(e) else TourNovedades(e) }
+                ) { if (e.recorrido) RecorridoDippo(e, rol) else if (rol == Rol.INFERIOR) NovedadesCompania(e) else TourNovedades(e) }
                 val sc = e.sesion
                 AnimatedVisibility(
                     visible = e.continuacion > 0L && sc != null && !sc.dosPantallas && miPantalla != sc.displayId && e.datos[sc.clave]?.lupa != true,

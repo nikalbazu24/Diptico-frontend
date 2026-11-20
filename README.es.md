@@ -6,7 +6,7 @@
 
 En una consola de dos pantallas, el arte del juego se luce arriba y la biblioteca se recorre abajo. En una pantalla, la biblioteca, el inicio y los ajustes comparten la misma interfaz.
 
-[Descargar la beta](https://github.com/nikalbazu24/Diptico-frontend/releases) · [Participar en la beta](https://github.com/nikalbazu24/Diptico-frontend/issues/new?template=2-tester.yml) · [Reportar un problema](https://github.com/nikalbazu24/Diptico-frontend/issues/new?template=1-bug.yml) · [English](README.md)
+[Descargar Díptico](https://github.com/nikalbazu24/Diptico-frontend/releases) · [Participar en la beta](https://github.com/nikalbazu24/Diptico-frontend/issues/new?template=2-tester.yml) · [Reportar un problema](https://github.com/nikalbazu24/Diptico-frontend/issues/new?template=1-bug.yml) · [English](README.md)
 
 <img src="docs/img/hero.png" alt="Díptico muestra el arte del juego arriba y el estante de carátulas abajo" width="720">
 
@@ -24,7 +24,7 @@ En una consola de dos pantallas, el arte del juego se luce arriba y la bibliotec
 ## Instalar y actualizar
 
 1. Abre [Releases](https://github.com/nikalbazu24/Diptico-frontend/releases) en tu dispositivo con **Android 10 o superior y arquitectura ARM64**.
-2. En la beta pública `v1.1-beta.N`, descarga `Diptico-v1.1-beta.N.apk` para consolas o `Diptico-v1.1-beta.N-movil.apk` para teléfonos. La variante móvil omite el acceso a notificaciones y los widgets que dependen de ese permiso.
+2. En la versión `v2.0.0`, descarga `Diptico-v2.0.0.apk` para consolas o `Diptico-v2.0.0-movil.apk` para teléfonos. La variante móvil omite el acceso a notificaciones y los widgets que dependen de ese permiso.
 3. Abre el APK y sigue el tutorial para elegir el modo de pantallas, agregar tus carpetas y conectar los emuladores. Puedes establecer Díptico como pantalla de inicio de Android.
 4. Las betas con la misma firma se instalan encima. Díptico busca su variante y permite actualizarla desde **Menú › Acerca de**. Al volver a abrirlo, el tour reúne las novedades que te saltaste. Si vienes de una beta con otra firma, consulta la [guía de migración](docs/distribucion.md).
 
@@ -110,7 +110,7 @@ Díptico lee imágenes locales con el nombre del juego, junto a sus archivos o e
 
 ## Desarrollo y créditos
 
-Díptico usa **Kotlin y Jetpack Compose**. GitHub Actions ejecuta pruebas, compila las variantes completa y móvil y genera capturas de interfaz. Los cambios de app en `main` publican la beta firmada. Consulta la [guía de distribución](docs/distribucion.md), las [notas de la beta](docs/novedades-beta.md) y el [historial de publicaciones](https://github.com/nikalbazu24/Diptico-frontend/releases).
+Díptico usa **Kotlin y Jetpack Compose**. GitHub Actions ejecuta pruebas, compila las variantes completa y móvil y genera capturas de interfaz. La primera integración de 2.0.0 en `main` publica la versión estable firmada; los cambios posteriores publican betas firmadas. Consulta la [guía de distribución](docs/distribucion.md), las [notas de la beta](docs/novedades-beta.md) y el [historial de publicaciones](https://github.com/nikalbazu24/Diptico-frontend/releases).
 
 - Reglas de lanzamiento y catálogo base de sistemas de [ES-DE](https://es-de.org) (MIT).
 - Portadas de [libretro-thumbnails](https://github.com/libretro-thumbnails) e íconos de [retroarch-assets](https://github.com/libretro/retroarch-assets).

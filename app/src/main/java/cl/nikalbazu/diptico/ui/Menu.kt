@@ -108,7 +108,7 @@ fun PanelMenu(e: Estado, conAyuda: Boolean) {
     LaunchedEffect(Unit) {
         if (mov.activo) entrada.animateTo(1f, tween(mov.ms(340), easing = CurvaPosarse)) else entrada.snapTo(1f)
     }
-    Box(Modifier.fillMaxSize().background(p.fondo2).sinCerrar()) {
+    Box(Modifier.fillMaxSize().anclaRecorrido("ajustes").background(p.fondo2).sinCerrar()) {
         Row(Modifier.fillMaxSize().graphicsLayer {
             alpha = entrada.value
             translationY = esc.d(28).toPx() * mov.intensidad * (1f - entrada.value)
@@ -192,7 +192,7 @@ private fun VentanaSubOpciones(e: Estado) {
 
 /** La lista de alternativas de una opción: se mueve con la cruceta, A elige y B vuelve sin cambiar nada. */
 @Composable
-private fun VentanaDesplegable(e: Estado) {
+internal fun VentanaDesplegable(e: Estado) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
     val o = Diptico.opcionDesplegada(e) ?: return
@@ -659,7 +659,7 @@ fun EstadoChico(conFoto: Boolean = true) {
         val tono = when { cargando -> Color(0xFF38BDF8); bateria in 0..15 -> Color(0xFFF87171); else -> p.tinta }
         Box(Modifier.size(esc.d(20), esc.d(10)).border(esc.d(1.5f), p.tinta.copy(alpha = 0.7f), RoundedCornerShape(esc.d(3))).padding(esc.d(2))) {
             Box(Modifier.fillMaxHeight().fillMaxWidth(((if (bateria < 0) 50 else bateria) / 100f).coerceIn(0.08f, 1f))
-                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono))
+                .clip(RoundedCornerShape(esc.d(1.5f))).background(tono.copy(alpha = latidoCarga(cargando))))
         }
         Texto(if (bateria >= 0) "$bateria%" else "—", 12f, color = p.tinta, traducir = false, lineas = 1)
     }

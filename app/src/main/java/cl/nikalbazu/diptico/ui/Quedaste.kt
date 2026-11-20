@@ -53,10 +53,7 @@ import cl.nikalbazu.diptico.estado.Icono
 import cl.nikalbazu.diptico.estado.MapaJuego
 import cl.nikalbazu.diptico.estado.Notas
 
-/**
- * "¿Dónde quedaste?": al terminar de jugar (o desde la ventana del juego), cuatro formas rápidas:
- * escribirlo, decirlo en una nota de voz, marcarlo en el mapa del juego, o pasar de largo.
- */
+/** «¿Dónde quedaste?»: el panel de nota usa el mismo movimiento sutil de toda la app. */
 @Composable
 fun TarjetaQuedaste(e: Estado) {
     val p = LocalPaleta.current
@@ -65,14 +62,18 @@ fun TarjetaQuedaste(e: Estado) {
     val d = e.datos[j.clave]
     val tieneVoz = j.clave in e.notasVoz
     val mapa = e.mapas[j.clave]
-    val entra = remember { androidx.compose.animation.core.Animatable(0.9f) }
-    LaunchedEffect(Unit) { entra.animateTo(1f, spring(dampingRatio = 0.6f, stiffness = 400f)) }
+    val mov = ajusteMovimiento()
+    val entra = remember { androidx.compose.animation.core.Animatable(if (mov.activo) 0.94f else 1f) }
+    LaunchedEffect(mov.activo) {
+        if (!mov.activo) entra.snapTo(1f)
+        else entra.animateTo(1f, tween(mov.ms(220), easing = CurvaPosarse))
+    }
     Box(
         Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).clickable(interactionSource = null, indication = null) { Diptico.cerrarQuedaste() },
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            Modifier.graphicsLayer { scaleX = entra.value; scaleY = entra.value; alpha = ((entra.value - 0.9f) / 0.1f).coerceIn(0f, 1f) }
+            Modifier.graphicsLayer { scaleX = entra.value; scaleY = entra.value; alpha = if (mov.activo) ((entra.value - 0.94f) / 0.06f).coerceIn(0f, 1f) else 1f }
                 .widthIn(max = esc.d(560)).fillMaxWidth(0.94f).clip(RoundedCornerShape(esc.d(28))).background(p.fondo2)
                 .border(esc.d(1.5f), Coral.copy(alpha = 0.4f), RoundedCornerShape(esc.d(28))).sinCerrar().padding(esc.d(18)),
         ) {
@@ -121,20 +122,21 @@ fun TarjetaQuedaste(e: Estado) {
 private fun FormaQuedaste(icono: Icono, titulo: String, sub: String, elegida: Boolean, color: Color, modifier: Modifier, grabando: Long = 0L, alPulsar: () -> Unit) {
     val p = LocalPaleta.current
     val esc = LocalEscala.current
-    val k by animateFloatAsState(if (elegida) 1f else 0f, spring(dampingRatio = 0.6f), label = "forma")
+    val mov = ajusteMovimiento()
+    val k by animateFloatAsState(if (elegida) 1f else 0f, if (mov.activo) spring(dampingRatio = 0.8f, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow / mov.duracion.coerceAtLeast(0.3f)) else androidx.compose.animation.core.snap(), label = "forma")
     val pulso = rememberInfiniteTransition(label = "pulso")
-    val r by pulso.animateFloat(0.85f, 1.15f, infiniteRepeatable(tween(600), RepeatMode.Reverse), label = "r")
+    val r by pulso.animateFloat(0.96f, 1.04f, infiniteRepeatable(tween(mov.ms(900).coerceAtLeast(1)), RepeatMode.Reverse), label = "r")
     var ahora by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(grabando) { while (grabando > 0L) { ahora = System.currentTimeMillis(); kotlinx.coroutines.delay(250) } }
     Column(
-        modifier.graphicsLayer { scaleX = 1f + 0.04f * k; scaleY = 1f + 0.04f * k }.clip(RoundedCornerShape(esc.d(18)))
+        modifier.graphicsLayer { scaleX = 1f + 0.035f * k; scaleY = 1f + 0.035f * k }.clip(RoundedCornerShape(esc.d(18)))
             .background(if (elegida) color.copy(alpha = 0.2f) else p.superficie.copy(alpha = 0.7f))
             .border(esc.d(if (elegida) 2f else 1f), if (elegida) color else p.linea, RoundedCornerShape(esc.d(18)))
             .clickable { alPulsar() }.padding(vertical = esc.d(12), horizontal = esc.d(6)),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
-            Modifier.size(esc.d(40)).graphicsLayer { if (grabando > 0L) { scaleX = r; scaleY = r } }.clip(CircleShape)
+            Modifier.size(esc.d(40)).graphicsLayer { if (grabando > 0L && mov.activo) { scaleX = r; scaleY = r } }.clip(CircleShape)
                 .background(if (grabando > 0L) Color(0xFFE53935) else color.copy(alpha = if (elegida) 1f else 0.25f)),
             contentAlignment = Alignment.Center,
         ) { IconoDiptico(icono, Color.White, 20f) }
@@ -149,10 +151,6 @@ private fun FormaQuedaste(icono: Icono, titulo: String, sub: String, elegida: Bo
 
 private fun formatoSeg(s: Long) = "${s / 60}:${(s % 60).toString().padStart(2, '0')}"
 
-/**
- * Marcar en el mapa: tu imagen del mapa del juego, con un pin que se mueve con la cruceta (o tocando).
- * A guarda, Y cambia la imagen, X quita el mapa, B cancela.
- */
 @Composable
 fun MarcarMapa(e: Estado) {
     val p = LocalPaleta.current
@@ -178,21 +176,20 @@ fun MarcarMapa(e: Estado) {
     }
 }
 
-/** La imagen del mapa entera (sin recortar) y el pin donde quedaste. [editable]: tocar mueve el pin. */
 @Composable
 fun MapaConPin(m: MapaJuego, modifier: Modifier, editable: Boolean = false, maxLado: Int = 600, animar: Boolean = true) {
     val esc = LocalEscala.current
     val img = rememberImagen(android.net.Uri.parse(m.uri), maxLado)
-    val anillo = if (animar) {
+    val movimiento = LocalMovimiento.current && Estilo.efectosCompletos && animar
+    val anillo = if (movimiento) {
         val pulso = rememberInfiniteTransition(label = "pin")
-        pulso.animateFloat(0f, 1f, infiniteRepeatable(tween(1400)), label = "anillo").value
-    } else .3f
+        pulso.animateFloat(0f, 1f, infiniteRepeatable(tween(1400), RepeatMode.Reverse), label = "anillo").value
+    } else 0.3f
     BoxWithConstraints(modifier.clip(RoundedCornerShape(esc.d(14))).background(Color.Black.copy(alpha = 0.35f)), contentAlignment = Alignment.Center) {
         if (img == null) {
-            if (animar) Girador(22f) else Detalle("Mapa sin acceso", 13f, lineas = 1)
+            if (movimiento) Girador(22f) else Detalle("Mapa sin acceso", 13f, lineas = 1)
             return@BoxWithConstraints
         }
-        // Dónde queda la imagen ajustada dentro del espacio (para poner el pin en el lugar justo).
         val ancho = maxWidth.value
         val alto = maxHeight.value
         val r = img.width.toFloat() / img.height.coerceAtLeast(1)
@@ -219,10 +216,6 @@ fun MapaConPin(m: MapaJuego, modifier: Modifier, editable: Boolean = false, maxL
     }
 }
 
-/**
- * Lo que dejaste anotado de un juego, además del texto: la nota de voz (para escucharla) y el mapa con el pin.
- * Va en la bienvenida, en la continuación y en "Tu próximo paso".
- */
 @Composable
 fun RecuerdosJuego(e: Estado, clave: String, mapaAlto: Float = 90f) {
     val p = LocalPaleta.current
@@ -249,4 +242,3 @@ fun RecuerdosJuego(e: Estado, clave: String, mapaAlto: Float = 90f) {
         }
     }
 }
-

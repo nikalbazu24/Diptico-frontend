@@ -62,6 +62,9 @@ object EmuladoresAlDia {
     var pendiente: Pair<String, File>? = null
 
     val FUENTES = listOf(
+        FuenteEmulador("Project Lemon", listOf("dev.lemon.lemon_emulator"),
+            web = "https://git.lemon-emu.org/lemon/Lemon-Project/releases",
+            nota = "Elige la edición correspondiente a tu equipo en la página oficial"),
         FuenteEmulador("Eden", listOf("dev.eden.eden_emulator", "dev.legacy.eden_emulator"), "eden-emu/eden", "git.eden-emu.dev", "https://eden-emu.dev"),
         FuenteEmulador("NovaS", listOf("io.github.nova5emu.novas"), "nova5emu/novas", web = "https://github.com/nova5emu/novas/releases"),
         FuenteEmulador("Azahar", listOf("org.azahar_emu.azahar", "io.github.lime3ds.android"), "azahar-emu/azahar", web = "https://azahar-emu.org"),

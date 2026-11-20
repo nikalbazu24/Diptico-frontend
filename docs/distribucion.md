@@ -1,4 +1,6 @@
-# Distribución y migración de Díptico
+# Distribución
+> **Díptico 2.0.0:** la rama `release/2.0.0` valida APK `2.0.0-rc.N` sin publicar. Al fusionar el PR con `main`, el primer lanzamiento firmado se identifica como `v2.0.0`. El mismo APK se ofrece también mediante un puente `v1.1-beta.N` para que las instalaciones 1.1 anteriores puedan descubrir la actualización. Luego se continúa en `2.0.1-beta.N`. Comprueba que se conserve el certificado de firma y que el nuevo `versionCode` sea superior al instalado.
+ y migración de Díptico
 
 Cada cambio de la app que llega a `main` ejecuta las pruebas y genera los dos APK con la firma de distribución. GitHub verifica ambos certificados, sube los APK y publica una beta `1.1` que puede detectar el actualizador. Los cambios de documentación y las ramas `fix/**` no publican versiones.
 

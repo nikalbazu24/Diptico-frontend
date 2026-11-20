@@ -137,7 +137,7 @@ fun Diptico.abrirWidgetTipo(tipo: String) {
 fun Diptico.fijarInicio(v: String) {
     if (estado.value.inicio == v || v !in setOf("heroe", "widgets")) return
     almacen.guardarTexto("inicio", v)
-    actualizar { it.copy(inicio = v, widgetFoco = -1) }
+    actualizar { it.copy(inicio = v, widgetFoco = -1, extra = if (v == "heroe") it.extra.copy(galeria = false, tiendaLado = false) else it.extra) }
 }
 
 
@@ -167,7 +167,7 @@ fun Diptico.editarWidgets() {
 fun Diptico.terminarEdicion() {
     almacen.guardarTexto("widgets", escribirWidgets(estado.value.widgets))
     actualizar { it.copy(editandoWidgets = false, estudioMover = false, burbuja = null, celdaCatalogo = null,
-        panel = if (it.panel == Panel.ESTUDIO) Panel.NINGUNO else it.panel) }
+        panel = if (it.panel == Panel.ESTUDIO) Panel.NINGUNO else it.panel, extra = it.extra.copy(espacioEdita = -1)) }
     avisar("Inicio guardado")
 }
 

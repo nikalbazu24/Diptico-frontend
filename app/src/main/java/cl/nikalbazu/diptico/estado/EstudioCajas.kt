@@ -258,9 +258,6 @@ fun Diptico.usarVariante(clave: String, k: String) {
     Sonidos.aceptar()
 }
 
-/** El nombre corto de la consola de la caja abierta en el Estudio (para la cabecera). */
-fun nombreConsolaEstudio(e: Estado): String =
-    e.juegosPorClave[e.extra.cajaJuego]?.consolaId?.let { Consolas.porId(it)?.bonito }.orEmpty()
 
 /** Quita una variante guardada (la caja en uso no cambia). Sus imágenes se borran solo si nadie más las usa. */
 fun Diptico.quitarVariante(k: String) {

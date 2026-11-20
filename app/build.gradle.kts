@@ -7,6 +7,10 @@ plugins {
 val numero = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
 val rutaFirma = System.getenv("DIPTICO_KEYSTORE")
 val versionBase = if (rutaFirma.isNullOrBlank()) "1.0" else "1.1"
+val nombrePublicacion = System.getenv("DIPTICO_VERSION_NAME")?.trim().orEmpty()
+require(nombrePublicacion.isEmpty() || Regex("""[0-9]+[.][0-9]+([.][0-9]+)?(-[a-z]+[.][0-9]+)?""").matches(nombrePublicacion)) {
+    "DIPTICO_VERSION_NAME no tiene un formato válido."
+}
 // Receptor de reportes de Nicolás (Apps Script, solo escribe en su carpeta privada de Drive).
 // Una variable DIPTICO_REPORTES_URL en GitHub, si existe, lo reemplaza.
 val reportesUrl = providers.environmentVariable("DIPTICO_REPORTES_URL").orNull.orEmpty().trim()
@@ -35,7 +39,7 @@ android {
         minSdk = 29
         targetSdk = 34
         versionCode = numero
-        versionName = "$versionBase-beta.$numero"
+        versionName = nombrePublicacion.ifEmpty { "$versionBase-beta.$numero" }
         buildConfigField("String", "REPORTES_URL", "\"$reportesUrl\"")
         buildConfigField("String", "DISCORD_APP", "\"$discordApp\"")
         buildConfigField("boolean", "DISCORD_KIT", "$conKitDiscord")
@@ -101,6 +105,9 @@ android {
                 it.systemProperty("roborazzi.test.record", "true")
                 it.maxHeapSize = "3g"
                 it.testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                // Que se vea qué pruebas pasaron y el resumen del recorrido automático.
+                it.testLogging.events("passed", "failed", "skipped")
+                it.testLogging.showStandardStreams = true
             }
         }
     }
@@ -116,6 +123,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.core:core-ktx:1.13.1")
+    // Colección viva: las consolas en 3D de verdad (Filament de Google, sin internet): se giran libres y fluidas.
     // Aplica los perfiles de arranque (de Compose y de Díptico) aunque el APK no venga de Play Store: arranque y listas más fluidos.
     implementation("androidx.profileinstaller:profileinstaller:1.3.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")

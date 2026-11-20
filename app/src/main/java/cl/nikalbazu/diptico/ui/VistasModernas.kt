@@ -169,14 +169,14 @@ internal fun PortadaCarpeta(
 
 /** La portada de una carpeta a partir de su ruta (sin Estado: se salta si nada cambió). */
 @Composable
-internal fun PortadaCarpetaRuta(ruta: String?, id: String, modifier: Modifier, maxLado: Int = 512, memoriaGrafica: Boolean = true, oscuro: Boolean = false, vidrio: Boolean = false) {
+internal fun PortadaCarpetaRuta(ruta: String?, id: String, modifier: Modifier, maxLado: Int = 512, memoriaGrafica: Boolean = true, oscuro: Boolean = false, vidrio: Boolean = false, escala: ContentScale = ContentScale.Crop) {
     if (ruta == null) {
         ArteCarpeta(Consolas.porId(id), modifier, oscuro, vidrio)
         return
     }
     val portada = key(ruta) { rememberImagen(android.net.Uri.parse(ruta), maxLado, memoriaGrafica) }
     if (portada == null) ArteCarpeta(Consolas.porId(id), modifier, oscuro, vidrio)
-    else Image(portada, contentDescription = null, modifier = modifier, contentScale = ContentScale.Crop)
+    else Image(portada, contentDescription = null, modifier = modifier, contentScale = escala)
 }
 
 @Composable

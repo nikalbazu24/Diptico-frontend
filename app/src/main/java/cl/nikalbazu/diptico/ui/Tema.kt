@@ -74,6 +74,8 @@ object Estilo {
     var decoraciones by mutableStateOf(true)
     /** Mientras juegas los adornos se quedan quietos: se ven, pero no le quitan cuadros al juego. */
     var decorQuieta by mutableStateOf(false)
+    /** Colección viva: la decoración del tema se dibuja de fondo, detrás de lo demás. */
+    var decorEnFondo by mutableStateOf(false)
     /** Fondo de los botones: "liso", "degradado", "brillo" o "vidrio". */
     var efecto by mutableStateOf("degradado")
     /** Animaciones y difuminados completos (se apagan en modo ahorro). */
@@ -90,7 +92,6 @@ fun conContraste(p: Paleta): Paleta = p.copy(
 )
 
 val Uva: Color get() = Color(Estilo.tema.acento)
-val UvaSombra: Color get() = lerp(Uva, Color.Black, 0.22f)
 val Coral: Color get() = Color(Estilo.tema.acento2)
 val Sol: Color get() = Color(Estilo.tema.acento3)
 val Tinta = Color(0xFF1C1A33)
@@ -271,7 +272,8 @@ fun Lienzo(oscuro: Boolean, modifier: Modifier = Modifier, tamTexto: Float = 1f,
                 }
             }) {
                 contenido()
-                if (Estilo.decoraciones && Estilo.tema.decor != "nada") Decoracion(Estilo.tema, animada = !Estilo.decorQuieta)
+                // Con Colección viva la decoración va detrás del contenido (la dibuja `FondoColeccionTema`): encima tapaba los botones.
+                if (Estilo.decoraciones && Estilo.tema.decor != "nada" && !Estilo.decorEnFondo) Decoracion(Estilo.tema, animada = !Estilo.decorQuieta)
             }
         }
     }

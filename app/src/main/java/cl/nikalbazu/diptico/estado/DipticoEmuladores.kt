@@ -29,7 +29,7 @@ private fun Diptico.eleccionesEmulador(c: Consola, tipo: String?, conConsola: Bo
 /** Las apps con cara de emulador van primero en la lista de «Otra app». */
 private fun pareceEmulador(nombre: String, paquete: String): Boolean {
     val t = (nombre + " " + paquete).lowercase()
-    return listOf("emu", "sx2", "ps2", "psx", "retro", "dolphin", "citra", "azahar", "yuzu", "eden", "ppsspp", "drastic", "melon", "duck", "mupen", "snes", "nes", "vita", "flycast", "redream", "aethersx", "nether", "arms", "lime", "sudachi", "citron", "winlator", "gamehub")
+    return listOf("emu", "sx2", "ps2", "psx", "retro", "dolphin", "citra", "azahar", "yuzu", "eden", "lemon", "ppsspp", "drastic", "melon", "duck", "mupen", "snes", "nes", "vita", "flycast", "redream", "aethersx", "nether", "arms", "lime", "sudachi", "citron", "winlator", "gamehub")
         .any { it in t }
 }
 
@@ -65,10 +65,13 @@ internal fun Diptico.opcionEmuladorJuego(
         (Lanzador.elegida(app, c, propio, juego.tipo)?.takeIf { it.id == propio }?.nombre ?: lista.getOrNull(i)?.nombre ?: "El de la consola")
     return Opcion(
         titulo, nombre, Icono.EMULADOR,
-        "Con qué se abre solo ${juego.titulo}. «El de la consola» usa el que elegiste para ${c.nombre}. Si tu emulador no aparece, elige «Otra app».",
+        "Elige el emulador solo de ${juego.titulo}, sin afectar otros juegos, sea cual sea su consola. «El de la consola» hereda el ajuste general. Project Lemon aparece en cualquier consola si está instalado, pero solo ejecuta ROM compatibles de Switch; los demás emuladores pueden tener limitaciones parecidas.",
     ) {}.conLista(lista.map { it.nombre }, i) { k ->
         val id = lista.getOrNull(k)?.id
         cambiarDatos(juego.clave) { it.copy(emulador = id) }
+        if (id == "Project Lemon" && c.id != "switch") {
+            avisar("Project Lemon seleccionado. Solo puede ejecutar juegos compatibles de Nintendo Switch.")
+        }
     }
 }
 
@@ -82,12 +85,12 @@ const val TITULO_EMU_JUEGOS = "Emulador de cada juego"
  */
 internal fun Diptico.opcionesEditorEmuladores(e: Estado): List<Opcion> {
     val conJuegos = e.juegos.map { it.consolaId }.toSet()
-    val consolas = Consolas.todas.filter { !it.sinEmulador && (it.id in conJuegos || it.id in e.emuladores) }
+    val consolas = Consolas.todas.filter { it.id in conJuegos || it.id in e.emuladores }
         .ifEmpty { e.consolasEmu.ifEmpty { Consolas.todas.filter { !it.sinEmulador }.take(20) } }
     val porConsola = consolas.map { opcionEmuladorConsola(it).copy(grupo = "Tus consolas") }
     val cache = HashMap<String, List<EleccionEmu>>()
     val porJuego = e.juegos.asSequence()
-        .mapNotNull { j -> Consolas.porId(j.consolaId)?.takeIf { !it.sinEmulador }?.let { j to it } }
+        .mapNotNull { j -> Consolas.porId(j.consolaId)?.let { j to it } }
         .sortedWith(compareBy({ it.second.nombre }, { it.first.titulo.lowercase() }))
         .take(400)
         .map { (j, c) -> opcionEmuladorJuego(j, c, j.titulo, cache).copy(grupo = c.nombre) }

@@ -200,7 +200,7 @@ fun Diptico.entradasNativos(e: Estado): List<EntradaNativa> {
         lista += EntradaNativa(
             "equipo", "Tu consola", detalle2(eq) + if (eq.listo) " · lista para Switch 2" else " · puede costarle", "Tu equipo",
             lista = eq.listo,
-            ayuda = "Para Switch 2 hace falta Android 13 o más, 12 GB de RAM (mejor 16) y gráficos Adreno (Snapdragon). La AYN Thor cumple con todo.",
+            ayuda = "Para Switch 2 hace falta Android 13 o más, 12 GB de RAM (mejor 16) y gráficos Adreno (Snapdragon). Las portátiles recientes con Snapdragon suelen cumplir.",
             consejos = listOf(
                 (if (eq.androidOk) "✓" else "✗") + " Android ${androidNombre(eq.android)}",
                 (if (eq.ramOk) "✓" else "✗") + " Memoria: %.0f GB".format(eq.ramGb),

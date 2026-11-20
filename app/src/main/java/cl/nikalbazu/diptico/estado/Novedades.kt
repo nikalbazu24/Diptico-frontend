@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "tienda-musica-2.0-75"
-    const val NOMBRE = "La tienda y la música, en su lugar"
+    const val ID = "diptico-2.0.0"
+    const val NOMBRE = "Díptico 2.0.0"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -567,9 +567,22 @@ object Novedades {
             Pagina("Widgets nuevos", "En la tienda, pestaña Widgets: DIPPO te propone qué jugar, Te extraña, Tu semana, Tu equipo, Un recuerdo y Radio del tema. A los pone en tu inicio.", Icono.APPS, 0xFF9BE15D),
             Pagina("Música viva", "Las 13 canciones de Díptico se rehicieron en partes que se mezclan distinto cada vez: cambian con la hora y en Ajustes se calman. Cada tanto hay un silencio corto y después de 20 minutos cambian de tono.", Icono.MUSICA, 0xFFFF9B54),
         )),
-        Version(ID, "La tienda y la música, en su lugar", listOf(
+        Version("tienda-musica-2.0-75", "La tienda y la música, en su lugar", listOf(
             Pagina("La tienda nueva, a la vista", "Ajustes › Estilo › Tienda de temas abre la tienda nueva: Nuevos, Remasterizados, Widgets y los demás. Los temas para descargar quedaron en «Temas de la comunidad».", Icono.PALETA, 0xFF6B4EFF),
             Pagina("Ahora sí suena la música viva", "Los temas traían una canción corta que tapaba a la nueva. Ahora todos los temas suenan con la música viva; solo «Mi tema» puede llevar una canción tuya.", Icono.MUSICA, 0xFFFF9B54),
+        )),
+        Version(ID, "Díptico 2.0.0 · Colección viva", listOf(
+            Pagina("Un Díptico nuevo", "Arriba, el arte del juego a pantalla completa con su caja en 3D; abajo, tus consolas, un estante de cajas y tus apps. Todo en su lugar, sin nada encima.", Icono.PORTADA, 0xFF3B6BFF),
+            Pagina("Gira la caja", "Toca la caja o aprieta R3: viaja al centro y muestra el reverso. Abajo aparece el carrete con todas sus imágenes.", Icono.CHISPA, 0xFF6B4EFF),
+            Pagina("Tus consolas, con su historia", "En las carpetas, cada consola cuenta su historia y aparece en grande, con sus colores originales y la pantalla apagada, flotando sobre un fondo de su color: inclínala con el dedo o con el stick derecho. Al entrar suena su propio encendido.", Icono.MANDO, 0xFFFF9B54),
+            Pagina("Su juego emblema detrás", "Detrás de cada consola va su juego más jugado, apenas difuminado para que se note cuál es. En la configuración de la consola (X) › Fondo eliges otro juego, buscas una imagen en internet (ScreenScraper, TheGamesDB, IGDB, SteamGridDB) o dejas la consola sola.", Icono.PORTADA, 0xFFFF9B54),
+            Pagina("Carpetas grandes y ordenadas", "Las carpetas vienen grandes, de a tres. Select cambia entre Grandes, Ícono, Díptico, Repisa y Carpeta. En Ícono, pellizca con dos dedos para agrandar o achicar. Mantén Select para intercambiar las pantallas donde estés.", Icono.CARPETA, 0xFF35C6D8),
+            Pagina("Widgets que toman tu tema", "Continuar, Tu semana, DIPPO, ¿Qué juego hoy?, Equipo y más. Cambian de color, forma y letra con tu tema. «Editar widgets» los quita o los agrega.", Icono.APPS, 0xFF9BE15D),
+            Pagina("Temas nuevos", "Los temas se rehicieron para este diseño: Colección, Aurora, Cartucho, Papel, Negro puro, Acuario, Salón, Constelación, y los vivos Nieve, Lava, Bosque, Luna, Marea, Sakura, Portátil y Fogata. Las fechas especiales siguen en el Calendario.", Icono.PALETA, 0xFFFF5D8F),
+            Pagina("Tu espacio y la Galería de widgets", "L2 y R2 te llevan a Tu espacio. Abajo ves tus páginas, la Galería de widgets (el botón dorado) y el mapa de la página. «Editar espacio» (X) cambia el medio, sin abrir nada encima: Mover (cruceta o dedo; L1/R1 otro widget), Tamaño (la página mide de 1 a 3 pantallas), Páginas y Fondo. B termina. Mantén presionado un widget para elegir qué muestra.", Icono.APPS, 0xFF6B4EFF),
+            Pagina("Widgets útiles", "Marcador en vivo, próximo partido y tabla (fútbol chileno, Libertadores, NBA y más), contador, marcador para jugar con otros, dados, cuenta regresiva, nota, clima, feriados de Chile y hora en el mundo.", Icono.TROFEO, 0xFFFF5D5D),
+            Pagina("Un comienzo nuevo", "Intro nueva, configuración con DIPPO (si tu consola tiene dos pantallas, el primer paso es elegir dos o una sola; después se cambia en Ajustes › Pantallas › Modo de pantallas; otro paso conecta tus cuentas y claves: Discord, RetroAchievements, SteamGridDB, TheGamesDB, ScreenScraper, IGDB, RAWG y la IA de DIPPO) y un recorrido donde él te muestra cada parte y te hace probar los botones. Lo vuelves a ver desde Ajustes.", Icono.BISA, 0xFFFF7A59),
+            Pagina("¿Lo quieres como antes?", "Ajustes › Estilo › «Diseño Colección viva» lo apaga y vuelve el de antes.", Icono.AJUSTES, 0xFFB9BBD6),
         )),
     )
 
@@ -596,34 +609,33 @@ object Novedades {
         return listOf(intro) + vs.flatMap { v -> v.paginas.map { it.copy(version = v.nombre) } }
     }
 
-    /** Recorrido por las opciones y funciones: se muestra la primera vez, al terminar de configurar Díptico. */
-    /** El recorrido de la primera vez, contado por DIPPO: seis pasos cortos. Se puede ver de nuevo en Ajustes. */
+    /** Tour interactivo del Home y Tu espacio. Cada reto usa navegación REAL y conserva los datos. */
     val RECORRIDO = listOf(
-        Pagina(
-            "¡Hola! Soy DIPPO", "Soy el pulpito que vive en tu Díptico. Te muestro lo importante en un ratito. A para seguir, B para saltar.",
-            Icono.BISA, 0xFFFF7A59, "A · B",
-        ),
-        Pagina(
-            "Una consola, dos pantallas", "Arriba se luce tu juego, con su arte grande. Abajo eliges la consola y el juego.",
-            Icono.PANTALLAS, 0xFF6B4EFF,
-        ),
-        Pagina(
-            "Elige y juega", "Muévete con la cruceta o el stick. L1 y R1 cambian de consola, A juega y X abre la ficha del juego.",
-            Icono.JUGAR, 0xFF2EC4A6, "L1 · R1 · A",
-        ),
-        Pagina(
-            "Yo te ayudo", "Tócame para preguntarme qué jugar o cómo pasar una parte. Mis mensajes salen sobre mi cabeza: deslízalos si molestan.",
-            Icono.BISA, 0xFFFF7A59, "Tócame",
-        ),
-        Pagina(
-            "Tu perfil", "Tu foto está en la esquina: ahí ves tus horas y logros. Con Start + A la abres con el mando.",
-            Icono.PERFIL, 0xFFE64FA0, "Start + A",
-        ),
-        Pagina(
-            "¡A jugar!", "Start abre Ajustes y cada opción explica qué hace. De vez en cuando te contaré trucos escondidos. ¡Nos vemos!",
-            Icono.AJUSTES, 0xFF3BA8FF, "Start",
-        ),
+        Pagina("Esta es tu colección", "Aquí se presenta la consola seleccionada: nombre, información y arte. Mira el recuadro sin que el globo lo cubra.", Icono.BISA, 0xFFFF7A59, "A"),
+        Pagina("Cambia de consola", "Pulsa L1 o R1: cambiará la consola elegida de verdad. La selección se conserva cuando vuelvas.", Icono.MANDO, 0xFF6B4EFF, "L1 · R1"),
+        Pagina("Personalización de consola", "Pulsa X para entrar a las opciones reales: portada, nombre, color, música y emulador.", Icono.CARPETA, 0xFF2EC4A6, "X"),
+        Pagina("Entra a Tu espacio", "Pulsa L2 o R2 y verás tus widgets. En dos pantallas, ambos paneles cambian juntos.", Icono.APPS, 0xFF3BA8FF, "L2 · R2"),
+        Pagina("Tus apps fijadas", "El dock abre tus aplicaciones favoritas; puedes fijar o quitar otras desde el cajón. Las carpetas de fondo quedan quietas.", Icono.APPS, 0xFFFF9B54, "A"),
+        Pagina("Vistas de las carpetas", "Pulsa Select para cambiar la presentación real de tus consolas; vuelve al inicio antes de hacerlo.", Icono.VISTA, 0xFFE64FA0, "Select"),
+        Pagina("Conoce a DIPPO", "Tócame para responderte. También puedo acompañarte, explicar menús y ayudarte con tus juegos.", Icono.BISA, 0xFFFF7A59, "Tocar DIPPO"),
+        Pagina("Abre una consola", "Pulsa A para entrar en la carpeta elegida y explorar sus juegos sin lanzarlos todavía.", Icono.CARPETA, 0xFF2EC4A6, "A"),
+        Pagina("Tres maneras de ver juegos", "Ahora pulsa Select: el estante alterna entre sus vistas reales de juegos.", Icono.VISTA, 0xFFE64FA0, "Select"),
+        Pagina("Opciones de un juego", "Pulsa Y para abrir las opciones del juego elegido: ficha, portadas, favoritos, emulador por juego y colecciones.", Icono.MANDO, 0xFFFF9B54, "Y"),
+        Pagina("Regresa a tus consolas", "Pulsa B para volver de los juegos a las carpetas de consolas.", Icono.CARPETA, 0xFF2EC4A6, "B"),
+        Pagina("Vuelve a los widgets", "Pulsa R2 para entrar otra vez a Tu espacio sin cambiar de consola en segundo plano.", Icono.APPS, 0xFF3BA8FF, "R2"),
+        Pagina("Páginas de widgets", "Pulsa L1 o R1 y cambia la página visible. Si solo tienes una, podrás agregar más desde Editar.", Icono.APPS, 0xFF6B4EFF, "L1 · R1"),
+        Pagina("Galería de widgets", "Pulsa Y para abrir la Galería real: widgets de reloj, música, juegos, estadísticas y más.", Icono.APPS, 0xFFFF9B54, "Y"),
+        Pagina("Editor de widgets", "Pulsa X para abrir el editor real: Mover, Tamaño, Páginas y Fondo. Puedes volver con B.", Icono.EDITAR, 0xFF2EC4A6, "X"),
+        Pagina("Tamaño y distribución", "Pulsa derecha en el editor para cambiar de Mover a Tamaño. La pestaña cambia de verdad sin mover el Home oculto.", Icono.FORMA, 0xFF8EAFFF, "→"),
+        Pagina("Cajón de aplicaciones", "Pulsa A para abrir todas tus apps, fijarlas y organizarlas en el dock.", Icono.APPS, 0xFFFF9B54, "A"),
+        Pagina("Busca tus juegos", "La búsqueda permite encontrar juegos y filtrar la biblioteca. Pulsa Y para ver la pantalla de búsqueda.", Icono.BUSCAR, 0xFF3BA8FF, "Y"),
+        Pagina("Ajustes del launcher", "Pulsa Start para entrar a los ajustes reales: controles, pantallas, temas, biblioteca, widgets y sonido.", Icono.AJUSTES, 0xFF6B4EFF, "Start"),
+        Pagina("Tu perfil", "Pulsa Start y A juntos para abrir tu perfil. Allí también están tus estadísticas y tu año de juego.", Icono.MANDO, 0xFF2EC4A6, "Start + A"),
+        Pagina("Personaliza cada juego", "Pulsa X para abrir las opciones reales del juego y entra en «Emulador y versión». Puedes elegir cualquier emulador instalado por juego.", Icono.PALETA, 0xFFFF9B54, "X"),
+        Pagina("Emuladores y actualizaciones", "Pulsa Start para abrir Ajustes > Emuladores. El selector existe para cualquier juego; Project Lemon se lista en todos los sistemas si está instalado, pero solo ejecuta ROM compatibles.", Icono.EMULADOR, 0xFF3BA8FF, "Start"),
+        Pagina("¡Díptico es tuyo!", "Puedes volver a este recorrido desde Ajustes. Usa el Home, Widgets, DIPPO, búsqueda y perfiles cuando quieras. ¡A jugar!", Icono.BISA, 0xFFFF7A59, "A"),
     )
+
 }
 
 

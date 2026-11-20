@@ -679,3 +679,188 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   a/b/c/p × d/n → `res/raw/viva_<id>_<parte>_<animo>.ogg`, 104 archivos, 16 MB; las `diptico_*.ogg` se borraron). `Musica`: `crearParteViva`,
   `alTerminarParte` (descanso cada 6–9 min), `aplicarPiel` (tono cada 20 min con PlaybackParams), `saltarParte`, `lugar` ("ajustes" calma).
   Traducciones `extras35.tsv` (siguiente: extras36). Capturas t451–t464. Falta: editor de temas en 8 submenús.
+- v1.1-beta.554 (16 nov, Novedades `tienda-musica-2.0-75`): «Tienda de temas» ahora abre la galería "temas" (antes abría la de
+  descargas, por eso Nicolás no veía nada nuevo); la de descargas = «Temas de la comunidad»; «Elegir tema» quitado. `musicaDeTema`
+  ignora la canción propia de los temas instalados salvo «mio» (tapaba la música viva). Traducciones `extras36.tsv` (siguiente: extras37).
+
+## Rediseño «Colección viva» (16 nov, Opus) — BOCETOS ESPERANDO APROBACIÓN, NO PROGRAMAR ANTES
+- Encargo de Nicolás (adjunto): iiSU + Cocoon + BoxShelf sin copiar; Thor y Odin con distribuciones propias; NO tocar código del
+  rediseño hasta aprobación; luego implementar fiel con especificación visual y verificar con capturas; no publicar sin su permiso.
+- Lienzo: https://claude.ai/artifact/VTCZof8gamwjrsQTPU1HKj (Main = Thor arriba, ThorAbajo, Odin interactivo, EstudioArriba/Abajo/Odin,
+  AjustesArriba/Abajo/Odin). Fuentes Fredoka (títulos) + Nunito; fondo #07080f/#0b0c16, vidrio rgba(18,20,36,.55) con borde .12,
+  selección = relleno #F4F3FA o anillo blanco 3–4 px; caja 3D rotateY 24° sin pedestal, solo sombra en el piso.
+
+## Colección viva implementada (16 nov, rama `fix/coleccion-viva`, Opus; Novedades `coleccion-viva-2.0-76`) — SIN PUBLICAR
+- Bocetos aprobados por Nicolás («hazlo tal cual»): lienzo VTCZof8gamwjrsQTPU1HKj. Especificación: `docs/coleccion-viva.md`.
+- `ui/ColeccionBase.kt`: `LienzoBoceto(1920|1240, 1080)` da un `Escala` donde 1 unidad = 1 px del boceto (así `esc.d(96)` es el margen del boceto
+  y todo componente viejo sale a escala), `ColoresColeccion`/`coloresColeccion()` (oscuro = colores del boceto; otro tema = su paleta), `TB`,
+  `BotonTecla`, `PistaTecla`, `ChipDato`, `PildoraVidrio`, `BotonRedondo`, `HoraBateria`, `DippoFrase`, `veloColeccion`.
+- `ui/ColeccionInicio.kt`: `ColeccionArriba` (1), `ColeccionAbajo` (2: consolas L1/R1, `EstanteCV`, `RejillaCV`, `ListaCV`, `BarraAbajoCV`),
+  `CarreteCV` (2b), `ColeccionUnica` (3/3b), `CajaVitrinaCV` (tocar o R3 = `girarCaja`: viaja al centro ×1.34 y muestra el reverso).
+- `ui/ColeccionCarpetas.kt`: `CarpetasArribaCV` (6a), `CarpetasAbajoCV` (6b), `CarpetasUnicaCV` (6c), `RejillaCarpetasCV` con vistas
+  icono/diptico/repisa/carpeta, `Consola3D` (giro de 72 cuadros desde `assets/consolas3d/<id>.webp`, 8×9 de 480×345, una hoja en memoria).
+- `ui/ColeccionWidgets.kt`: `WidgetsCV` (7a/7c, cuadrícula 6×3 con `acomodar`), `TiendaWidgetsCV` (7b). Ocultos en `extra.widgetsCVOcultos`.
+- `estado/DipticoColeccion.kt`: `HistoriaConsolas`, `Modelos3D` (19 créditos de Sketchfab; N64 = CC BY-NC, PS3 = CC BY-NC-SA), acciones.
+  Giros: `/home/claude/ps2work/render.py` (model-viewer + playwright) y ajuste de encuadre; mapa glb→id en `ps2work/mapa.txt`.
+- Raiz/PantallaInferior: con `coleccionVivaActiva(e)` y sin panel se dibujan las pantallas nuevas. `EstadoExtra.coleccionViva` = false por
+  defecto (para las pruebas viejas) pero el almacén lo carga en true. Ajustes › Estilo › «Diseño Colección viva».
+- Teclas: R3 gira la caja; con la caja girada ◀▶ carrete, B/R3 vuelven; Select cambia vista; en carpetas X opciones, Y seguir/ícono, A entra con
+  `Sonidos.encendido()` (`res/raw/sfx_encendido.ogg`, acorde propio).
+- Capturas t466–t481. `fix/revision-capturas` ahora sube también los APK al borrador (APK de prueba sin publicar).
+- Falta: Estudio (4) y Ajustes (5) con el estilo nuevo (siguen con su diseño), 6d como pantalla propia (hoy usa la búsqueda de imágenes
+  «c_portada»), 6e (en una pantalla se usa `ColeccionUnica`), colecciones (pestaña vacía).
+- RONDA 2 pedida por Nicolás (16 nov 14:38) — NO entregar APK hasta terminar todo; mostrar capturas paso a paso:
+  1. Todo muy chico (sobre todo abajo): escalar proporcional y llenar la pantalla (zoom en `LienzoBoceto`, diseños relativos, no offsets fijos).
+  2. Widgets: mantener el look nuevo pero con la personalización del modelo anterior (mover, cambiar tamaño, estilos: editor viejo).
+  3. Consolas 3D arriba y vistas de abajo deben ser lo predeterminado y fácil de encontrar (entrar por las carpetas; B vuelve a ellas).
+  4. Dock de abajo más grande. 5. Botones de abajo se esconden con temas/colores (decoraciones encima o colores).
+  6. Al cambiar de juego la caja de arriba se queda pegada y quieta: cambio animado + flotar como antes.
+  7. X Ficha = la caja se da vuelta y muestra la info del juego (no texto abajo).
+  8. Temas: Claude eligió eliminar los actuales y crear temas nuevos para Colección viva, manteniendo fechas especiales y calendario.
+  9. Terminar lo que faltaba: Estudio (4) y Ajustes (5) con el estilo nuevo, 6d pantalla propia, 6e, pestaña Colecciones.
+- RONDA 2 hecha (16 nov, tarde): `LienzoBoceto(zoom)` con ZOOM_ARRIBA 1.45 / ZOOM_ABAJO 1.65 / ZOOM_UNA 1.35 y pantallas en franjas
+  (Column/Row con weight); `CajaFlotanteCV` (AnimatedContent al cambiar de juego, flota con `ola`, X/R3/tocar = girar al reverso; X con la caja
+  girada = ficha completa); `EstanteCV` con marco cuadrado; dock grande arriba en la de abajo; decoración del tema DETRÁS (`Estilo.decorEnFondo`,
+  `FondoTemaCV`); `coloresColeccion()` sale siempre de la paleta del tema. Temas: catálogo nuevo `Temas.incluidos` (17, ids viejos de
+  remasterizados/nuevos se conservan), `Temas.MIGRAR` para los ids de antes; nuevos/remasterizados/clasicos vacíos; galería "temas" con pestañas
+  Temas, Widgets, Calendario, Exclusivos, Mis temas. Widgets = el inicio de siempre (`PantallaInicio`, editor viejo) con `EncabezadoWidgetsCV` y
+  tarjetas de vidrio del tema (`Tarjeta` con `decorEnFondo`); `WidgetsCV`/`TiendaWidgetsCV` quedaron sin uso. Ajustes: `menuIntercambiado(e)`
+  pone las opciones abajo y la explicación arriba. Migración `cvPredeterminado1`: se entra por las carpetas (vistaConsolas "carpetas").
+- RONDA 3 (16 nov, 15:55): sin selector de vistas en pantalla (solo Select); en su lugar `DockCV` (vidrio, `FilaDock` 5 apps + cajón);
+  `PistasFinas` (una línea chica) reemplaza barras de botones repetidos; ZOOM_ARRIBA 1.3 / ABAJO 1.38 / UNA 1.25. Mantener Select
+  (repeatCount 12) intercambia pantallas en cualquier lado. `Sonidos.encendido(consolaId)` (tono por consola, sin botón).
+  Consolas 3D con **Filament** (`filament-android/gltfio/utils` rango `[1.51,1.60)`; 1.54.0 fijo no se encontró en Maven):
+  `VisorConsola` (TextureView transparente, `ModelViewer`, giro libre, gira solo tras 2 s); glb optimizados (gltf-transform, 512 px)
+  en `assets/consolas3d/<id>.glb` (las hojas webp se borraron). En Robolectric se dibuja un reemplazo. Íconos de carpetas con pellizco
+  (`ajustarColumnasIcono`, 2..6), `RejillaCV` cuadrada, caja de arriba se gira en X e Y con resorte al soltar.
+- Cierre al moverse (16 nov, tarde): cada `Consola3D` creaba un Engine de Filament y `AnimatedContent` tenía dos a la vez → caída nativa
+  sin informe. Ahora `Motor3D` (un Engine por proceso) + `VisorConsola` guardado por Context que cambia el modelo (`mostrar(id)`, archivo
+  leído en otro hilo); el visor va FUERA del AnimatedContent en 6a. Seguro: prefs `motor3d` marca «dibujando»; si la app se cae dibujando,
+  `pausa_<versión>` muestra el ícono en vez del 3D hasta la versión siguiente. Beta.581 de prueba entregada.
+- Estudio abajo con diseño CV (`PanelEstudioCV` en PantallaCaja.kt, solo con dos pantallas y sin la caja en la misma pantalla).
+- 6d: `IconoCarpetaCV` (ui/IconoCarpetaCV.kt) se dibuja desde `PanelImagenes` con `candidatoPara == "c_portada"` y Colección viva.
+- Widgets 2.0 (boceto 8a/8b aprobado, lienzo VTCZof8gamwjrsQTPU1HKj): en CV la portada y los widgets van en `InicioDeslizable` (Raiz, arriba y
+  una pantalla); mantener presionado un lugar vacío → `editarWidgets` + `abrirBurbuja(x, y)` (con dos pantallas abre la tienda abajo con
+  `celdaCatalogo`). Tienda CV = `TiendaWidgetsAbajo` (pestaña 1 de `PanelEstudio`): `controlesAgregar` en CV = fila «Categoría» (chips,
+  `extra.tiendaCat`, `CATEGORIAS_WIDGETS`) + widgets de esa categoría; L1/R1 cambian categoría (`tiendaCV` en `Teclas.estudio`), cruceta en
+  grilla de 2. Al agregar un widget útil se abren sus ajustes (grupo «Contenido» primero en `organizarControlesWidget`).
+  Widgets útiles: `estado/WidgetsUtiles.kt` (`WIDGETS_UTILES`, nombres/íconos/descripciones, `extra.confWidgets` en almacén `confWidgets`,
+  `Estado.conf`, `Diptico.confWidget`, `controlesUtil`, texto «wconf:<tipo>:<clave>» en `guardarTextoPanel`, `Red` con caché, `Deportes`
+  (ESPN público: scoreboard, teams, schedule, standings), `Clima` (Open-Meteo), `Feriados` (apis.digital.gob.cl con respaldo fijo)) y
+  `ui/WidgetsUtiles.kt` (`WidgetUtil`, se dibuja según an×al; `ContenidoWidget` lo llama antes del caso 1 columna). Capturas t482–t484.
+- Estabilidad (16 nov, noche): Nicolás reportó 3D que desaparece, tamaños distintos, cierres seguidos hasta no abrir, lentitud, GC con piso.
+  Modelos: `ps2work/quitar.mjs` borra mallas por nombre (gc «Ground», psp «ground», n64 cables y controles); `revisar.py` arma `chk/todo.png`.
+  Visor: `Motor3D.visorPara` anota «dibujando» ANTES de crear el motor (y pausa si falla); `VisorConsola` sin `ModelViewer.onTouch`
+  (giro propio yaw/pitch ±35°, inercia, vuelve solo; gira solo a los 2,5 s), dibuja solo cuando cambia (`cuadrosPendientes`), sin sombras.
+  `DipticoApp`: modo seguro (prefs `arranque.tempranos`: 2 cierres antes de 30 s → `Motor3D.pausarPorSeguridad` + inicio "heroe").
+  `BotonWidgetsCV` (píldora «Widgets») junto a la hora en `ColeccionArriba` y `CarpetasArribaCV`.
+  `RecorridoTest` (en el CI de todas las ramas): una y dos pantallas, caminos pensados + 400 botones al azar; imprime «RECORRIDO …».
+  Las caídas nativas de Filament NO se ven en Robolectric (allí el 3D es un reemplazo): eso solo se prueba en la Thor.
+- Beta.594 de prueba (16 nov, 22:30): el «desaparece» del video era que `aplicarGiro` giraba alrededor de la CÁMARA (la base trae la
+  traslación a (0,0,−4)); ahora gira sobre el centro del modelo. Cambio de modelo espera 280 ms (solo carga la última consola).
+  `Fallas.revisarSalidaAnterior`: con `ApplicationExitInfo` (API 30+) arma informe de caídas nativas/ANR/memoria con lo legible del rastro.
+  Widgets: `Tarjeta` recorta antes de pintar (fondo ya no queda cuadrado). Dock predeterminado (`estado/DipticoDock.kt`, una vez con
+  `dockInicial1`), «+» en `FilaDock` → `abrirAppsParaFijar` (`extra.fijandoDock`), mantener una app del dock la quita.
+  6a/6c: `PersonalizarConsolaCV` (una tarjeta con resumen, X) reemplaza la grilla de 6 opciones; `PistasFinas` ahora en píldora grande.
+  Si sigue cayéndose: pedir a Nicolás que abra Díptico después de la caída y mande el informe (debería traer el rastro nativo).
+- Beta.596 de prueba (16 nov, 23:00): informes de Nicolás en Drive (carpeta de reportes, parentId 1Pborvc3Jktf6FfEF51IS946xgBYMKuAw).
+  Caída Java: `CarpetaClasica` (vista Carpeta) indexaba una lista de 5 giros con más juegos → `% 5`. Caída nativa al pasar por DS: el
+  AndroidView del 3D se desmontaba/montaba con consolas sin modelo; ahora el visor queda SIEMPRE montado y `mostrar(null)` solo vacía.
+  `Modelos3D.alias`: nds/3ds → n3ds, rpgmaker/gahvoria → ports (el pendrive). `Modelos3D.frente(id)` = giro para que cada modelo parta de
+  frente (+25° de pose); `herramientas/frentes3d.py` arma la hoja para revisarlo. `Fallas`: el rastro nativo prioriza líneas de filament/abort/SIG.
+  `RecorridoTest` ahora con más juegos, consolas sin modelo y la vista Carpeta (561/544 botones sin caídas).
+- Beta.605 de prueba (17 nov, 00:20): informe 23:10 = SIGSEGV en `filament::gltfio::ResourceLoader::asyncCancelLoad` (VisorConsola) con
+  1,1 GB. **Filament fuera** (dependencias y `assets/consolas3d` borrados; APK 87 → 50 MB). `Consola3D` ahora dibuja `assets/consolas/<id>.webp`
+  (fotos de estudio hechas con `herramientas/consolas_png.py` desde los .glb, fondo transparente; DS = foto de Evan-Amos, dominio público,
+  que Nicolás adjuntó: la sesión no llega a Wikimedia), flota, se inclina con el dedo; `ImagenesConsola` (LruCache) y `FondoConsolaCV`
+  (la misma imagen a 1/16 estirada = difuminado). «Reconocer nombres» (libretro, `identificarNombres`) borrado. `LienzoBoceto`: la escala la
+  manda el alto (mín. 62 % del ancho del boceto) → con pantallas intercambiadas ya no queda en miniatura; 6a con `anchoLienzo() < 1350`
+  pone la consola arriba y la info abajo. `PerfilArriba` sin «Tu perfil», reloj pegado a la foto; fotos más grandes (BotonPerfil con
+  `requiredSize`, no se aplasta). 6b: dock izq., hora+foto der., abajo `BotonPestanaCV` Consolas (MANDO) / Colecciones (BIBLIOTECA) y DIPPO
+  al medio, sin pistas. Estudio CV con zoom 1.08 y DIPPO chico. `enElegido` legible en temas de color medio (`legibleSobre`).
+  BotonTecla: teclas largas (Select) en píldora. Capturas t485–t487.
+- Beta.609 de prueba (17 nov, 05:40): la consola no cambiaba al moverse entre carpetas porque `produceState` guarda su valor sin
+  llave (quedaba la imagen anterior); ahora `ImagenConsola` con `remember(id)` + `LaunchedEffect(id)` dentro de un `AnimatedContent`
+  por consola (igual `FondoConsolaCV`). Stick derecho: `stickDerechoGira(e)` (vitrina o inicio de Colección viva sin ventanas, también
+  el Estudio) → `GiroCaja.x/y`; ahí SOLO mueve: inclina la consola (±30°) y gira la caja (`CajaFlotanteCV`, `InspeccionCajaCV`).
+  Estudio con CV y dos pantallas: cada mitad en su `LienzoBoceto` (`InspeccionCajaCV` 1920 con `angosto`, `PanelEstudioCV` 1240
+  con ZOOM_ABAJO y las caras repartiendo el alto). Consolas: concepto «pantalla apagada y colores originales», sin arte de juegos
+  (GBA índigo, pantallas de GB/GBC/PSP/Switch/Wii U apagadas, etiquetas lisas en N64/SNES, Android sin texto). Herramientas en
+  `herramientas/consolas/` (ver LEEME). Capturas t488–t490.
+
+## Personalizar consola + Tu espacio (17 nov, rama `fix/coleccion-viva`, Opus) — SIN PUBLICAR
+- Bocetos aprobados («tal cual»): lienzo VTCZof8gamwjrsQTPU1HKj, filas 9 (consola) y 10 (Widgets 3.0).
+- Consola (`ui/ConsolaCV.kt`): `ConsolaOpcionesCV` arriba (secciones = `Opcion.grupo`: Carpeta, Imágenes, Cajas, Juego y sonido,
+  Restaurar; `opcionesEditarConsola` reordenada por sección + «Nombre o logo»; L1/R1 = `seccionEditarConsola`), `ConsolaVivaCV` abajo
+  (Consola3D, horas/juegos/terminados, emulador, «Así se verá» Carpeta/Caja/Fondo según sección, más jugado + Jugar, dato de DIPPO,
+  `verJuegosConsola`, `azarDeConsola`, intercambiar). Una pantalla: las dos lado a lado (zoom 1).
+- Tu espacio (`estado/DipticoEspacio.kt`, `ui/EspacioCV.kt`): `vaciarEspacioUnaVez` (clave `espacioVacio1`), `sugeridosEspacio` +
+  `agregarSugeridos`, L2/R2 = `pasoEspacio` (tira Inicio · pág 1 · pág 2…; en Teclas antes del bloque de widgets), abajo `EspacioAbajoCV`
+  (Editar/Buscar/Fondo, `PaginasEspacio`: ‹ › + − y tamaño `extra.paginaAncho/paginaAlto` 1–3 pantallas, tienda `tiposTiendaEspacio`
+  con `extra.tiendaCat/espacioSel`, A = `ponerEnEspacio`). Una pantalla: `extra.tiendaLado` (X) con `TiendaLadoCV`. Página extendida:
+  fuera del editor se desliza (`horizontalScroll/verticalScroll`), en el editor se ve entera achicada. Widgets tiemblan al editar (CeldaWidget).
+- Textos sin «Thor» (se habla de consolas de dos pantallas / tu consola). Ajustes: lista arriba, demostración abajo (`menuIntercambiado = intercambiar`).
+  `HoraBateria` del diseño nuevo abre el reloj grande. Capturas t491–t499.
+
+## Menú de cada widget, batería y el comienzo nuevo (17 nov, rama `fix/coleccion-viva`, Opus) — SIN PUBLICAR
+- Menú de cada widget (`ui/MenuWidgetCV.kt`): mantener presionado un widget → `editarEsteWidget(tipo)`; pestañas «Qué muestra / Tamaño y lugar /
+  Aspecto / Más» (L1/R1 = `pasoPestanaWidget`), B o «Listo» = `terminarEdicion()`. `Estado.ver(tipo, clave)` esconde partes. Capturas t500–t503.
+- Batería: `Energia` (ui/Componentes.kt) escucha ACTION_BATTERY_CHANGED una sola vez; `rememberBateria/rememberCargando` leen de ahí (antes cada
+  barra consultaba por su cuenta y arriba/abajo no calzaban). `latidoCarga(cargando)` + ⚡ en las pilas. Grados: `Termica.grados` = batería
+  (si no hay, procesador) y `Termica.texto(g)` con un decimal en todas partes; el nivel de calor sigue mirando todos los sensores.
+- Tirón inicio↔widgets: `InicioDeslizable` ya no se salta la animación si había otra en curso (`objetivoProg`); la página de widgets queda
+  compuesta tras la primera visita (`beyondViewportPageCount`). `pasoEspacio` hace un solo `actualizar`.
+- Boceto aprobado (lienzo VTCZof8gamwjrsQTPU1HKj, filas 12 y 13). Galería de widgets aparte: `extra.galeria/galeriaTam`, `abrirGaleriaWidgets`,
+  `agregarDesdeGaleria`, `tamanosGaleria`; UI en `ui/EspacioCV.kt` (`EspacioAbajoCV` con `TiraPaginas`, `TamanoPagina`; `GaleriaAbajoCV`,
+  `GaleriaArribaCV` con el widget real y `MapaPagina`; `TiendaLadoCV` = galería al costado con una pantalla). Teclas: Y abre, X tamaño, A agrega, B cierra.
+- Juego emblema: `estado/DipticoFondoConsola.kt` (`ConsolaPropia.fondo`: null/emblema/juego:<clave>/imagen/consola; `extra.fondoConsolas`
+  en Ajustes › Estilo «Detrás de cada consola»; `fondoDeConsola`, `juegoEmblema`, `buscarFondoConsola` = arte del juego en tus raspadores +
+  SteamGridDB/Wikipedia de la consola, guarda en `hero`). Apartado «Fondo» en Personalizar consola. `FondoConsolaCV(e, c)` + `FondoJuegoEmblema`
+  (blur 3 dp, velo a la izquierda, píldora «TU MÁS JUGADO»). Captura con arte generado: `conArte()` en Capturas (t520–t522).
+- Intro nueva (`ui/Intro.kt`, 4,3 s: bisagra de luz, consolas por los lados, cajas que caen, logo en dos mitades, DIPPO saluda).
+  Configuración nueva (`ui/ConfigInicial.kt`, `ConfigPantalla(e, rol)` desde Raiz): pasos Tú · Tus juegos · Para jugar · Tu estilo · Listo
+  (`pasosTuto`, `opcionesTuto`); con dos pantallas se elige «dos» sola. `terminarConfiguracion(recorrido)`.
+  Recorrido nuevo (`ui/RecorridoDippo.kt`, `RECORRIDO` de 8 páginas): foco con hueco (Path par-impar, NO BlendMode.Clear: en Robolectric sale
+  negro) sobre las partes reales; `focoDe(k, una)` en fracciones del lienzo; retos L1/R1 (cambia de consola de verdad), L2/R2, Select, tocar a DIPPO.
+- Limpieza: `ui/Tutorial.kt` borrado (Rol y Girador viven en `ui/Comun.kt`), 27 funciones sin uso fuera. Un intento anterior a medias había
+  dejado `DipticoEmblema.kt` y campos duplicados: borrados; se conservó la vista de carpetas «grande» (por defecto, migración `carpetasGrandes1`).
+- Capturas t504–t522. Novedades `coleccion-viva-2.0-76` actualizadas (sigue sin publicar: se publica con todo esto).
+- Beta.636 (17 nov, tarde): emblema HISTÓRICO por consola (`EMBLEMAS_CLASICOS` en DipticoFondoConsola.kt: God of War en PS2, Ocarina en N64…;
+  el primero que tengas en la biblioteca, si no tu más jugado), configuración rehecha (Siguiente fijo abajo, Start avanza, filas con tiras
+  propias de personaje/color/tema, foto de Discord, sin repetir pantallas), recorrido obligatorio (`RecorridoVivo.puedeSeguir`, B no lo cierra)
+  y nítido, intro con tus consolas y portadas. Tu espacio: sticks y cruceta se quedan en los widgets. Secciones de Personalizar consola con scroll.
+  Esperando que Nicolás pruebe y diga «publica» para fusionar a main (2.0-76).
+
+## Beta.638 (17 nov, tarde, Sonnet; sin publicar)
+- Intro: al actualizar ya no se salta (`intro = false` quitado del arranque); `terminarIntro` reinicia `introInicio` (si no, «volver a configurar» la terminaba al tiro).
+- Carpetas «Grandes»: tarjeta cuadrada (aspect 1) con nombre y juegos debajo; ícono propio con `ContentScale.Fit` sobre fondo neutro (sin degradado del color de la consola).
+  `IconoCarpetaCV` (resto de vistas) tampoco pinta el degradado si hay ícono propio. Pellizco de dos dedos también en «Grandes» (`extra.columnasGrandesCV`, 0 = automático; `Diptico.ajustarColumnasGrandes`).
+- Zoom de la pantalla de abajo al despertar: NO se encontró la causa leyendo código; solo se reinicia `GiroCaja` en `alEncender`. Pedir a Nicolás el informe de fluidez / un video si vuelve.
+- Beta.639 (17 nov, tarde, Sonnet): paso nuevo `PasoTuto.CUENTAS` («Tus cuentas», entre Para jugar y Tu estilo, todo opcional): filas de Discord, RA usuario/clave,
+  SteamGridDB, ScreenScraper/IGDB/TheGamesDB/RAWG (`opcionesRaspadores`) e IA de DIPPO; vista previa `PreviaCuentas` (N de 7 conectados). Usa los mismos paneles CLAVE/GALERIA que Ajustes (`Paneles` va en ConfigPantalla).
+
+## Beta.643 (17 nov, noche, Sonnet; sin publicar)
+- Vuelve el paso `PasoTuto.PANTALLAS` («Tus pantallas») como PRIMERO de la configuración, solo si `e.dosDisponibles` (en equipos de una pantalla no aparece).
+  Dos / Una (abajo en negro) / Una con abajo libre; `PreviaPantallas`; DIPPO avisa que se cambia después en Ajustes › Pantallas › Modo de pantallas. Capturas t527.
+
+## PRÓXIMO (17 nov, 23:10): rediseño de «Tu espacio» abajo — boceto APROBADO
+- Boceto (1240×1080 real): https://claude.ai/artifact/S221ptEpUYaNtWFkc4kbQ9 (versión 3). Nicolás: «por ahí sí».
+- Pantalla de abajo (`EspacioAbajoCV` en ui/EspacioCV.kt): cabecera «Tu espacio» + tira de páginas con L2/R2; Galería de widgets como un
+  solo botón grande dorado (sin «Y · Abrir»); al medio mapa de la página actual + botón grande «Editar espacio» (X); pie: dock de apps
+  izq. y DIPPO con globito der. (SIN pistas de botones). Editar = reemplaza el medio (nada encima): pestañas Mover (cruceta/dedo, L1/R1
+  otro widget, ± tamaño), Tamaño (página 1–3 pantallas ancho/alto), Páginas (nueva, quitar, reordenar; Inicio siempre primera), Fondo; B = listo.
+- Después (con cuota nueva, Opus): quitar opciones sin uso de Ajustes, limpiar código, optimizar fluidez y publicar como **Díptico 2.0.0**
+  (el workflow hoy publica `v1.1-beta.<run>`: cambiar el nombre de versión). Beta.646 (paso «Tus pantallas») sigue sin publicar.
+
+## Tu espacio abajo rediseñado (18 nov, rama `fix/coleccion-viva`, Opus; beta.651 de prueba, SIN PUBLICAR)
+- Boceto S221ptEpUYaNtWFkc4kbQ9 hecho a tamaño real (`EspacioAbajoCV` con `LienzoBoceto(1240, 1080)` SIN zoom): `CabeceraEspacio` (tira con
+  Inicio/páginas/+ y círculos L2/R2), `BotonGaleria` dorado, `TarjetaMapa`/`MapaEspacio` (widgets con colores del boceto; en Mover se
+  arrastran con el dedo y caen en la celda más cercana con `ponerWidget`), `BotonEditarEspacio`, `PieEspacio` (dock + globo + DIPPO). Sin pistas.
+- Modo edición propio: `extra.espacioEdita` (−1 = no; 0 Mover, 1 Tamaño, 2 Páginas, 3 Fondo) con `editandoWidgets = true` y panel NINGUNO.
+  `estado/DipticoEspacio.kt`: `editarEspacio`, `terminarEspacio`, `pestanaEspacio`, `otroWidgetEspacio`, `crecerWidgetEspacio`,
+  `moverPaginaEspacio`, `elegirFondoEspacio`, `crucetaEspacio`, `aEspacio`, `xEspacio`; `FONDOS_ESPACIO` (6 degradados, `extra.fondoEspacio`,
+  almacén `fondoEspacio`; se dibuja en `PantallaInicio` si no hay imagen propia). Teclas `espacioEdicion`: cruceta según pestaña, L1/R1 otro
+  widget (en otras pestañas cambia pestaña), Y pestaña, L2/R2 página, A agranda/página nueva/tu imagen, X achica/quita página, B o Start listo.
+  `terminarEdicion` también apaga `espacioEdita`; arriba no se dibuja la barra vieja de páginas mientras se edita abajo.
+- Arreglado de paso: `pasosTuto` no compilaba en esta rama (paréntesis). Traducciones `extras37.tsv` (siguiente: extras38). Capturas t530–t535.
+- Siguiente (Opus): quitar opciones sin uso de Ajustes, limpiar código, fluidez y publicar como Díptico 2.0.0 (cambiar el nombre de versión del workflow).

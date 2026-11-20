@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -36,6 +37,7 @@ const val MAX_DOCK = 5
  * juegas), y al final el cajón con todas. La app se abre en la misma pantalla donde la tocaste, así el juego sigue
  * en la otra. Sin apps fijadas muestra un botón para elegirlas.
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boolean = true, flotante: Boolean = false) {
     if (!e.extra.dock) return
@@ -45,21 +47,20 @@ fun FilaDock(e: Estado, tam: Float, modifier: Modifier = Modifier, conCajon: Boo
     val apps = e.appsFijadas.take(MAX_DOCK)
     Row(modifier.testTag("dock-apps"), horizontalArrangement = Arrangement.spacedBy(esc.d(4)), verticalAlignment = Alignment.CenterVertically) {
         apps.forEach { pkg ->
+            // Tocar abre la app; mantenerla presionada la saca del dock.
             Box(
-                Modifier.clip(RoundedCornerShape(esc.d(12))).clickable { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
+                Modifier.clip(RoundedCornerShape(esc.d(12)))
+                    .combinedClickable(onLongClick = { Diptico.alternarFijada(pkg) }) { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) }
                     .padding(esc.d(3)),
             ) { IconoApp(pkg, tam, desnudo = true) }
         }
-        if (apps.isEmpty()) Row(
-            Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.07f))
-                .clickable { Diptico.abrirApps(); Diptico.avisar("Fija hasta 5 apps con Y y quedan en tu dock") }
-                .padding(horizontal = esc.d(10), vertical = esc.d(6)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconoDiptico(Icono.APPS, p.tinta, 13f)
-            androidx.compose.foundation.layout.Spacer(Modifier.size(esc.d(6)))
-            Texto("Fija tus apps", 12f, color = p.tinta, lineas = 1)
-        } else if (conCajon) Box(
+        // «+»: sumar una app ahí mismo (abre tus apps; con A o Y se fija y vuelve al dock).
+        if (apps.size < MAX_DOCK) Box(
+            Modifier.size(esc.d(tam + 6f)).clip(CircleShape).border(esc.d(1.5f), p.tinta.copy(alpha = 0.35f), CircleShape)
+                .clickable { Diptico.abrirAppsParaFijar() },
+            contentAlignment = Alignment.Center,
+        ) { Texto("+", tam * 0.5f, color = p.tinta, lineas = 1, traducir = false) }
+        if (conCajon) Box(
             Modifier.size(esc.d(tam + 6f)).clip(CircleShape)
                 .then(if (flotante) Modifier else Modifier.background(p.tinta.copy(alpha = 0.10f)))
                 .clickable { Diptico.abrirApps() },

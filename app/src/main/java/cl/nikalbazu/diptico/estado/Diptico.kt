@@ -46,7 +46,7 @@ enum class Panel { WIDGET, ENCUADRE, APPS, EDITAR_CONSOLA, NINGUNO, RAPIDO, PASO
 enum class Carpeta { JUEGOS, MEDIA, MUSICA, PARTIDAS }
 
 /** Pasos del tutorial guiado del primer arranque. */
-enum class PasoTuto { BIENVENIDA, PANTALLAS, TEXTO, DISPOSICION, JUEGOS, CARPETA, EMULADORES, PORTS, PORTADAS, MUSICA, APARIENCIA, CONTROLES, LISTO }
+enum class PasoTuto { BIENVENIDA, PANTALLAS, TEXTO, DISPOSICION, JUEGOS, CARPETA, EMULADORES, CUENTAS, PORTS, PORTADAS, MUSICA, APARIENCIA, CONTROLES, LISTO }
 
 /** Íconos propios de Díptico (se dibujan en ui/Iconos.kt). */
 enum class Icono {
@@ -190,8 +190,10 @@ data class ConsolaPropia(
     val logo: String? = null,
     val musica: String? = null,
     val portadaCarpeta: String? = null,
+    /** Qué va detrás de la consola en el inicio: null = lo de Ajustes; "emblema", "juego:<clave>", "imagen" (el hero) o "consola". */
+    val fondo: String? = null,
 ) {
-    val vacia: Boolean get() = nombre.isNullOrBlank() && color == 0L && hero == null && logo == null && musica == null && portadaCarpeta == null
+    val vacia: Boolean get() = nombre.isNullOrBlank() && color == 0L && hero == null && logo == null && musica == null && portadaCarpeta == null && fondo == null
 }
 
 /** Forma de las cajas de una consola en el estante. */
@@ -256,7 +258,7 @@ object Widgets {
         Widget("progreso", 0, 0, 3, 2, false),
         Widget("dippoPropone", 0, 0, 3, 2, false), Widget("teExtrana", 0, 0, 3, 2, false), Widget("tuSemana", 0, 0, 3, 2, false),
         Widget("equipo", 0, 0, 2, 2, false), Widget("recuerdo", 0, 0, 3, 2, false), Widget("radio", 0, 0, 3, 1, false),
-    )
+    ) + WIDGETS_UTILES.map { (tipo, tam) -> Widget(tipo, 0, 0, tam.first, tam.second, false) }
 
     /** El inicio nuevo (9 nov 2026): seguir jugando, tu progreso, música y lo último que jugaste. */
     val inicioNuevo = listOf(
@@ -289,6 +291,7 @@ object Widgets {
         "equipo" -> "Batería, temperatura y espacio libre de tu consola"
         "recuerdo" -> "Lo que jugabas hace una semana, un mes o un año"
         "radio" -> "La música del tema: otra parte, pausa o silencio por una hora"
+        in UTILES_DESCRIPCION -> UTILES_DESCRIPCION.getValue(tipo)
         else -> "Tu imagen o GIF animado"
     }
 
@@ -306,6 +309,7 @@ object Widgets {
         "progreso" -> Icono.TROFEO
         "dippoPropone" -> Icono.BISA; "teExtrana" -> Icono.CORAZON; "tuSemana" -> Icono.RELOJ
         "equipo" -> Icono.BATERIA; "recuerdo" -> Icono.PORTADA; "radio" -> Icono.MUSICA
+        in UTILES_ICONO -> UTILES_ICONO.getValue(tipo)
         else -> Icono.PORTADA
     }
 
@@ -338,6 +342,7 @@ object Widgets {
         "progreso" -> "Tu progreso"
         "dippoPropone" -> "DIPPO te propone"; "teExtrana" -> "Te extraña"; "tuSemana" -> "Tu semana"
         "equipo" -> "Tu equipo"; "recuerdo" -> "Un recuerdo"; "radio" -> "Radio del tema"
+        in UTILES_NOMBRE -> UTILES_NOMBRE.getValue(tipo)
         else -> if (tipo.startsWith("imagen")) "Imagen o GIF" else tipo
     }
 }
@@ -416,6 +421,49 @@ data class EstadoExtra(
     val estudioCara: Int = 0,
     val estudioVista: Int = 0,
     val estudioAbierta: Boolean = false,
+    /** Colección viva (el rediseño aprobado el 16 nov 2026): inicio, carpetas y widgets nuevos. Apagado = el de antes. */
+    val coleccionViva: Boolean = false,
+    /** La caja de arriba girada mostrando el reverso (abajo pasa al carrete de imágenes) y la imagen elegida del carrete. */
+    val cajaGirada: Boolean = false,
+    val carreteSel: Int = 0,
+    /** Cómo se ven los juegos dentro de una consola: "estante" (3D), "cuadricula" o "lista". */
+    val vistaColeccion: String = "estante",
+    /** Cómo se ven las carpetas: "icono", "diptico", "repisa" o "carpeta". */
+    val vistaCarpetasCV: String = "grande",
+    /** Qué juegos van junto al ícono de cada carpeta: "ultimos", "favoritos" o "elegidos"; y cuántos (1–3). */
+    val juegosCarpeta: String = "ultimos",
+    val cuantosCarpeta: Int = 4,
+    /** Ícono de las carpetas: cuántas por fila (pellizcar con dos dedos). */
+    val columnasIconoCV: Int = 4,
+    /** Carpetas «Grandes»: cuántas por fila (0 = según el equipo); también se ajusta pellizcando. */
+    val columnasGrandesCV: Int = 0,
+    /** Ajustes propios de cada widget útil (tipo → clave → valor): liga y equipo, nombre del contador, ciudad… */
+    val confWidgets: Map<String, Map<String, String>> = emptyMap(),
+    /** Categoría elegida en la tienda de widgets (Colección viva). */
+    val tiendaCat: Int = 0,
+    /** Tu espacio: el widget elegido en la tienda (sin entrar al editor) y si la tienda está abierta al lado (una pantalla). */
+    val espacioSel: Int = 0,
+    val tiendaLado: Boolean = false,
+    /** La Galería de widgets abierta (su propia pantalla) y el tamaño elegido para el que vas a agregar. */
+    val galeria: Boolean = false,
+    val galeriaTam: Int = 0,
+    /** Tu espacio: cuántas pantallas de ancho y de alto mide cada página de widgets (1 a 3; se desliza para ver el resto). */
+    val paginaAncho: Int = 1,
+    val paginaAlto: Int = 1,
+    /** Tu espacio abajo: la pestaña del modo edición (0 Mover, 1 Tamaño, 2 Páginas, 3 Fondo); −1 = sin editar. */
+    val espacioEdita: Int = -1,
+    /** Fondo de Tu espacio: −1 = como viene (arte del juego o tu imagen); 0.. = uno de [FONDOS_ESPACIO]. */
+    val fondoEspacio: Int = -1,
+    /** Las apps se abrieron desde el «+» del dock: elegir una la fija y vuelve. */
+    val fijandoDock: Boolean = false,
+    /** Consolas que muestran su logo en vez del nombre. */
+    val logoConsolas: Set<String> = emptySet(),
+    /** Pestaña de arriba en la pantalla de carpetas: 0 Consolas, 1 Colecciones. */
+    val pestanaCarpetas: Int = 0,
+    /** Editando los widgets (bordes punteados y ✕). */
+    val editandoWidgetsCV: Boolean = false,
+    /** Widgets de Colección viva que la persona quitó (ver WIDGETS_CV). */
+    val widgetsCVOcultos: Set<String> = emptySet(),
     /** Tema que se está probando 30 s desde la tienda (null = ninguno) y la vista de la previa (0 Inicio … 4 Ficha). */
     val temaPrueba: String? = null,
     /** Hasta cuándo se calla la música de Díptico (widget «Radio del tema» › Silencio 1 h). 0 = no se calla. */
@@ -432,6 +480,8 @@ data class EstadoExtra(
     val dippoAvisos: Boolean = true,
     /** Tono de las carpetas: "vidrio" (transparentes y difuminadas), "auto" (según el tema), "oscuro" o "claro". */
     val carpetasTono: String = "vidrio",
+    /** Qué va detrás de cada consola en el inicio (si la consola no dice otra cosa): "emblema" (su juego más jugado) o "consola". */
+    val fondoConsolas: String = "emblema",
     /** Estilo de íconos solo para las carpetas de consolas ("igual" = el mismo que el resto). */
     val iconosCarpetas: String = "igual",
     /** Colores de DIPPO: "hora" (cálido de día, azulado de noche), "dia" o "noche". */
@@ -875,11 +925,18 @@ data class Estado(
     val unaPantalla: Boolean
         get() = !configurado || modoPantallas != "dos" || !dosDisponibles || (sobremesa && sobremesaUna)
 
+    /** Cuando Widgets tiene el foco, nunca estamos «eligiendo consola»,
+     * ni siquiera en Thor con dos pantallas. La biblioteca puede seguir montada
+     * detrás, pero no recibe cruceta, L1/R1 ni el stick. */
     val eligiendoConsola: Boolean
-        get() = enSistemas && vistaConsolas in Diptico.MODOS_ELEGIR && (!unaPantalla || inicio != "widgets")
+        get() = enSistemas && vistaConsolas in Diptico.MODOS_ELEGIR && inicio != "widgets"
 
+    /** En Colección viva la carpeta de la biblioteca no está visible bajo Widgets.
+     * El modo clásico conserva su ventana y animación mientras se muestra el inicio. */
     val carpetaEnVentana: Boolean
-        get() = vistaConsolas == "carpetas" && !enSistemas && modoCarpeta != "completa" && sesion == null
+        get() = vistaConsolas == "carpetas" && !enSistemas &&
+            modoCarpeta != "completa" && sesion == null &&
+            (!extra.coleccionViva || inicio != "widgets")
 
     /** Se está escribiendo con el teclado de Díptico (en la pantalla contraria a la del texto). */
     val conTeclado: Boolean
@@ -946,7 +1003,7 @@ object Diptico {
     }
     internal var medios: Map<String, MediosJuego> = emptyMap()
 
-    val VERSION: String = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.substringBefore("-beta.") + " beta"
+    val VERSION: String = cl.nikalbazu.diptico.BuildConfig.VERSION_NAME.replace("-beta.", " beta ").replace("-rc.", " RC ")
 
     /** La pantalla activa registra aquí cómo pedir una carpeta. */
     var pedirCarpeta: ((Carpeta) -> Unit)? = null
@@ -967,7 +1024,22 @@ object Diptico {
         val bisa = AtajoInicio.leer(almacen.texto("atajoBisa"), AtajoInicio.START_L3)
             .let { if (it == apps && it != AtajoInicio.NO) AtajoInicio.NO else it }
         val vistaGuardada = almacen.texto("vistaConsolas", "arriba")
-        val vistaConsolas = vistaConsolasCompatible(vistaGuardada)
+        // Dock predeterminado: si nunca se fijaron apps, se llena una vez con las que ya están en el equipo.
+        if (!almacen.bool("dockInicial1", false)) {
+            almacen.guardarBool("dockInicial1", true)
+            if (almacen.texto("appsFijadas").isBlank()) almacen.guardarTexto("appsFijadas", dockPredeterminado(ctx).joinToString(","))
+        }
+        // Colección viva: una vez a todos, se entra por las carpetas (consolas en 3D arriba) y los juegos van en el estante 3D.
+        if (almacen.bool("coleccionViva", true) && !almacen.bool("cvPredeterminado1", false)) {
+            almacen.guardarBool("cvPredeterminado1", true)
+            almacen.guardarTexto("vistaConsolas", "carpetas"); almacen.guardarTexto("vistaColeccion", "estante"); almacen.guardarTexto("vista", "carrusel")
+        }
+        // Carpetas grandes y ordenadas (las del recorrido): la vista por defecto, una vez a todos.
+        if (!almacen.bool("carpetasGrandes1", false)) {
+            almacen.guardarBool("carpetasGrandes1", true)
+            almacen.guardarTexto("vistaCarpetasCV", "grande")
+        }
+        val vistaConsolas = if (almacen.bool("coleccionViva", true)) "carpetas" else vistaConsolasCompatible(vistaGuardada)
         if (vistaConsolas != vistaGuardada) almacen.guardarTexto("vistaConsolas", vistaConsolas)
         _estado.value = Estado(
             navegacion = NavegacionEstado(atajoApps = apps.id, atajoBisa = bisa.id, ordenApps = almacen.texto("ordenApps", "").split(",").filter { it.isNotBlank() }, clipRetoma = almacen.bool("clipRetoma2", false), esperaRetoma = almacen.texto("esperaRetoma", "30").toIntOrNull()?.coerceIn(15, 300) ?: 30),
@@ -1027,7 +1099,7 @@ object Diptico {
             estiloIconos = almacen.texto("estiloIconos", "diptico"),
             iconosPropios = leerMapa(almacen.texto("iconosPropios", "{}")),
             // La visualización nueva (PS5 con caja arriba, íconos abajo) es la de siempre ahora: se pone una vez a todos.
-            vista = almacen.also { if (!it.bool("visualPs5", false)) { it.guardarTexto("vista", "iconos"); it.guardarTexto("portadaArriba", "ps5"); it.guardarBool("visualPs5", true) } }.texto("vista", "iconos").let { if (it in setOf("mosaicos", "xbox", "iconos", "cuadricula", "lista", "carrusel")) it else "iconos" },
+            vista = almacen.also { if (!it.bool("visualPs5", false)) { it.guardarTexto("vista", "iconos"); it.guardarTexto("portadaArriba", "ps5"); it.guardarBool("visualPs5", true) } }.texto("vista", "iconos").let { if (it in setOf("mosaicos", "xbox", "iconos", "cuadricula", "lista", "carrusel")) it else "iconos" }.let { v -> if (almacen.bool("coleccionViva", true)) when (almacen.texto("vistaColeccion", "estante")) { "cuadricula" -> "cuadricula"; "lista" -> "lista"; else -> "carrusel" } else v },
             vistaConsolas = vistaConsolas,
             consolasPropias = leerConsolasPropias(almacen.texto("consolasPropias", "{}")),
             appsFijadas = almacen.texto("appsFijadas").split(",").filter { it.isNotBlank() },
@@ -1056,6 +1128,19 @@ object Diptico {
                 dippoInicio = almacen.bool("dippoInicio", true),
                 dippoSaludo = almacen.bool("dippoSaludo", true),
                 dippoDatos = almacen.bool("dippoDatos", true),
+                coleccionViva = almacen.bool("coleccionViva", true),
+                paginaAncho = (almacen.texto("paginaAncho", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
+                paginaAlto = (almacen.texto("paginaAlto", "1").toIntOrNull() ?: 1).coerceIn(1, 3),
+                fondoEspacio = (almacen.texto("fondoEspacio", "-1").toIntOrNull() ?: -1).coerceIn(-1, FONDOS_ESPACIO.size - 1),
+                widgetsCVOcultos = almacen.texto("widgetsCVOcultos", "").split("|").filter { it.isNotBlank() }.toSet(),
+                vistaColeccion = almacen.texto("vistaColeccion", "estante"),
+                vistaCarpetasCV = almacen.texto("vistaCarpetasCV", "grande"),
+                juegosCarpeta = almacen.texto("juegosCarpeta", "ultimos"),
+                cuantosCarpeta = (almacen.texto("cuantosCarpeta", "4").toIntOrNull() ?: 4).coerceIn(1, 5),
+                columnasIconoCV = (almacen.texto("columnasIconoCV", "4").toIntOrNull() ?: 4).coerceIn(2, 6),
+                columnasGrandesCV = (almacen.texto("columnasGrandesCV", "0").toIntOrNull() ?: 0).coerceIn(0, 6),
+                confWidgets = ConfWidgets.leer(almacen.texto("confWidgets", "")),
+                logoConsolas = almacen.texto("logoConsolas", "").split("|").filter { it.isNotBlank() }.toSet(),
                 carpetaTodos = almacen.bool("carpetaTodos2", false),
                 emusAuto = almacen.bool("emusAuto", true),
                 emusRevisado = almacen.texto("emusRevisado").toLongOrNull() ?: 0L,
@@ -1067,6 +1152,7 @@ object Diptico {
                 estiloCarpetas = almacen.texto("estiloCarpetas", "tarjeta"),
                 termica = almacen.bool("termica", true),
                 dippoAvisos = almacen.bool("dippoAvisos", true),
+                fondoConsolas = almacen.texto("fondoConsolas", "emblema"),
                 carpetasTono = (if (almacen.texto("carpetasVidrio1", "") == "") { almacen.guardarTexto("carpetasVidrio1", "si"); almacen.guardarTexto("carpetasTono", "vidrio"); "vidrio" } else almacen.texto("carpetasTono", "vidrio")),
                 iconosCarpetas = almacen.texto("iconosCarpetas", "igual"),
                 dippoColor = almacen.texto("dippoColor", "hora"),
@@ -1146,8 +1232,9 @@ object Diptico {
         Inicio.inicioAbajo(app, !(almacen.modoElegido && almacen.modoPantallas == "una_libre"))
         bienvenidaPendiente = true
         revisarPedidoInicio()
-        Widgets.COLUMNAS = estado.value.gridCols
-        Widgets.FILAS = estado.value.gridFilas
+        Widgets.COLUMNAS = estado.value.gridCols * estado.value.extra.paginaAncho
+        Widgets.FILAS = estado.value.gridFilas * estado.value.extra.paginaAlto
+        vaciarEspacioUnaVez()
         Sonidos.iniciar(app)
         Sonidos.activo = estado.value.sonidos
         Sonidos.paquete = almacen.texto("paqueteSonidos", "tema")
@@ -1165,10 +1252,10 @@ object Diptico {
         revisarCajasGuardadas()
         // Tour de novedades: una vez por versión (en una instalación nueva lo reemplaza el tutorial).
         if (!estado.value.configurado) almacen.guardarTexto("novedadesVistas", Novedades.ID)
-        // Recién actualizado: el tour sale al tiro, sin esperar la animación de entrada.
+        // Recién actualizado: el tour (y el recorrido de DIPPO) sale cuando termina la animación de entrada, no antes.
         else if (almacen.texto("novedadesVistas") != Novedades.ID) {
             val desde = almacen.texto("novedadesVistas")
-            actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = desde, intro = false) }
+            actualizar { it.copy(novedades = 0, recorrido = false, novedadesDesde = desde) }
         }
         aplicarArranque()
         vigilarFila()
@@ -1309,6 +1396,7 @@ object Diptico {
     }
 
     fun terminarIntro() {
+        introInicio = 0L // la próxima vez (volver a configurar) arranca de cero
         if (estado.value.intro) actualizar { it.copy(intro = false) }
         // Al prender la consola de cero: después de la animación, la bienvenida.
         if (bienvenidaPendiente) {
@@ -1330,6 +1418,8 @@ object Diptico {
     /** La pantalla se encendió después de [ausencia] ms apagada. Se llama desde [Inicio]. */
     fun alEncender(ausencia: Long, estabaJugando: Boolean) {
         val e = estado.value
+        // Al despertar no puede quedar nada «a medias» del gesto anterior (stick o dedos que nunca se soltaron).
+        cl.nikalbazu.diptico.ui.GiroCaja.x = 0f; cl.nikalbazu.diptico.ui.GiroCaja.y = 0f
         if (!e.configurado || e.intro) return
         if (e.sesion != null) {
             if (estabaJugando && ausencia > 0L) actualizar { it.copy(sesion = it.sesion?.let { s -> s.copy(inicio = s.inicio + ausencia) }) }
@@ -1534,7 +1624,7 @@ object Diptico {
     // ---------- Carpeta y biblioteca ----------
 
     /** Vuelve a leer las carpetas de juegos. [informar]: al terminar explica qué encontró y qué dejó fuera (y por qué). */
-    fun escanear(informar: Boolean = false) {
+    fun escanear(informar: Boolean = false, notificar: Boolean = false) {
         if (estado.value.escaneando) return
         actualizar { it.copy(escaneando = true) }
         trabajo("escaneo", "Buscando tus juegos")
@@ -1575,9 +1665,14 @@ object Diptico {
                     if (fallas < carpetas.size) {
                         actualizar { it.copy(indice = if (it.configurado) it.indice else it.indice.coerceAtMost(1)) }
                         bajarIconosFaltantes()
-                        identificarNombres()
                     }
                     if (informe != null) mostrarInformeEscaneo(informe, anterior, lista, fallas, carpetas.size)
+                    if (notificar && fallas < carpetas.size) {
+                        val anteriores = anterior.mapTo(HashSet()) { it.clave }
+                        val nuevos = lista.count { it.clave !in anteriores }
+                        avisar(if (nuevos == 0) "Biblioteca actualizada · ${lista.size} juegos"
+                               else "Biblioteca actualizada · $nuevos juegos nuevos")
+                    }
                     break
                 }
             } finally {
@@ -1585,6 +1680,16 @@ object Diptico {
                 terminarTrabajo("escaneo")
             }
         }
+    }
+
+    /** Actualización manual desde el inicio: aviso breve, sin abrir una ventana de informe. */
+    fun recargarJuegosDesdeInicio() {
+        if (estado.value.escaneando) return
+        if (!estado.value.tieneCarpeta) {
+            avisar("Primero elige la carpeta de juegos en Ajustes › Biblioteca.")
+            return
+        }
+        escanear(notificar = true)
     }
 
     /** Los ports elegidos, como juegos de la consola "Ports". */
@@ -1709,14 +1814,15 @@ object Diptico {
         else -> "Dos pantallas"
     }
 
-    fun terminarConfiguracion() {
+    fun terminarConfiguracion(recorrido: Boolean = true) {
         if (!estado.value.modoElegido) elegirModo(if (estado.value.dosDisponibles) "dos" else "una_negra")
         // La distribución que mejor le queda a este equipo (consola de dos pantallas, portátil, teléfono, tablet o tele).
         optimizarParaEquipo(silencioso = true)
         almacen.configurado = true
         // Primera vez: recorrido por las opciones y funciones. Al cerrarlo se ofrece Díptico como inicio de Android.
         almacen.guardarTexto("novedadesVistas", Novedades.ID)
-        actualizar { it.copy(configurado = true, panel = Panel.NINGUNO, indice = 0, novedades = 0, recorrido = true) }
+        actualizar { it.copy(configurado = true, panel = Panel.NINGUNO, indice = 0, novedades = if (recorrido) 0 else -1, recorrido = recorrido) }
+        if (!recorrido) ofrecerInicio()
     }
 
     /** Para que Díptico sea siempre lo primero: se ofrece como app de inicio de Android. */
@@ -2443,7 +2549,7 @@ object Diptico {
         "marcos" -> listOf("Marcos")
         "titulos" -> listOf("Títulos")
         "artes" -> listOf("Artes", "Portadas")
-        "temas" -> listOf("Nuevos", "Remasterizados", "Widgets", "Incluidos", "Calendario", "Exclusivos", "Mis temas", "Clásicos")
+        "temas" -> listOf("Temas", "Widgets", "Calendario", "Exclusivos", "Mis temas")
         "importar_temas" -> listOf("Importar temas")
         "tienda_temas" -> categoriasTienda
         "decoraciones" -> listOf("Instalados", "Tienda de temas", "Calendario")
@@ -2601,21 +2707,19 @@ object Diptico {
         }
         return when (e.galeria) {
             "temas" -> when (e.galeriaPestana) {
-                0 -> Temas.nuevos.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
-                // Remasterizados: los clásicos rehechos, cada uno con algo que sigue al equipo o al día de verdad.
-                1 -> Temas.remasterizados.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
-                // Widgets nuevos: se ponen en tu inicio con A (los que ya están, se marcan).
-                2 -> itemsTiendaWidgets(e)
-                3 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
+                // Temas de Colección viva (el catálogo nuevo).
+                0 -> Temas.iniciales.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
+                // Widgets: se ponen en tu inicio con A (los que ya están, se marcan).
+                1 -> itemsTiendaWidgets(e)
                 // Calendario: cada fiesta es un tema completo; se ve sola en su fecha (con «Fechas especiales») o se usa cuando quieras.
-                4 -> Temas.calendario().map { (fi, dia) ->
+                2 -> Temas.calendario().map { (fi, dia) ->
                     val hoy = dia == java.time.LocalDate.now()
                     ItemGaleria(fi.tema.id, fi.nombre, (if (hoy) "Hoy · " else "${dia.dayOfMonth}/${dia.monthValue} · ") + fi.donde, actual.id == fi.tema.id, fi.tema) {
                         elegirTema(fi.tema.id)
                     }
                 }
                 // Exclusivos: se ganan con los logros difíciles de DIPPO; antes se ven con candado.
-                5 -> Temas.exclusivos.map { x ->
+                3 -> Temas.exclusivos.map { x ->
                     val libre = x.logro in hechosDippo()
                     val logro = LogrosDippo.LISTA.firstOrNull { it.id == x.logro }
                     ItemGaleria(x.tema.id, x.tema.nombre,
@@ -2624,8 +2728,6 @@ object Diptico {
                         if (libre) elegirTema(x.tema.id) else avisar("🔒 Gana el logro «${logro?.titulo}» para usar este tema")
                     }
                 }
-                // Clásicos: los temas de antes, tal como eran, para quien prefiera el original de un remasterizado.
-                7 -> Temas.clasicos.map { t -> ItemGaleria(t.id, t.nombre, t.descripcion, actual.id == t.id, t) { elegirTema(t.id) } }
                 else -> temasPersonales(e).map { t ->
                     ItemGaleria(t.id, t.nombre, t.descripcion.ifBlank { "Tema guardado en tu consola" }, actual.id == t.id, t) {
                         elegirTema(t.id)
@@ -2816,6 +2918,12 @@ object Diptico {
 
     /** Abre la lista de alternativas de la opción [i] del menú, con la puesta ahora marcada. */
     fun abrirDesplegable(i: Int, elegida: Int) {
+        // Las opciones rápidas tienen su propia lista; no reemplazar el índice del grupo.
+        if (estado.value.panel == Panel.RAPIDO) {
+            actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0))) }
+            Sonidos.abrir()
+            return
+        }
         // Dentro de un submenú, [i] es la opción de la ventana (no la de la lista de la sección).
         if (estado.value.extra.subOpcion >= 0) actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0), subSel = i)) }
         else actualizar { it.copy(extra = it.extra.copy(desplegable = i, desplegableSel = elegida.coerceAtLeast(0)), indice = i) }
@@ -2863,7 +2971,8 @@ object Diptico {
     fun aceptar() {
         val e = estado.value
         if (!e.configurado && e.panel == Panel.NINGUNO) {
-            val op = opcionesTuto().getOrNull(e.indice) ?: return
+            // El último lugar (después de las opciones) es el botón «Siguiente» fijo de abajo.
+            val op = opcionesTuto().getOrNull(e.indice) ?: run { siguientePaso(); return }
             op.accion()
             return
         }
@@ -2877,9 +2986,16 @@ object Diptico {
                     else -> o?.accion?.let { desdeMenu(it) }
                 }
             }
-            Panel.RAPIDO ->
-                if (e.extra.rapidoGrupo >= 0) opcionesGrupoRapido(e.extra.rapidoGrupo).getOrNull(e.extra.rapidoSel)?.accion?.invoke()
-                else opcionesRapido().getOrNull(e.indice)?.accion?.invoke()
+            Panel.RAPIDO -> {
+                if (e.desplegable >= 0) elegirDesplegable(e.desplegableSel)
+                else {
+                    val i = if (e.extra.rapidoGrupo >= 0) e.extra.rapidoSel else e.indice
+                    val o = if (e.extra.rapidoGrupo >= 0) opcionesGrupoRapido(e.extra.rapidoGrupo).getOrNull(i)
+                            else opcionesRapido().getOrNull(i)
+                    if (o?.alternativas != null && o.elegir != null) abrirDesplegable(i, o.elegida)
+                    else o?.accion?.invoke()
+                }
+            }
             Panel.WIDGET -> opcionesWidget(e).getOrNull(e.indice)?.takeIf { !it.apagada }?.accion?.invoke()
             Panel.PORTS -> e.apps.getOrNull(e.indice)?.let { alternarPort(it.paquete) }
             Panel.FICHA -> if (e.pestanaFicha >= 2) opcionesFicha().getOrNull(e.indice)?.accion?.invoke()
@@ -2892,7 +3008,7 @@ object Diptico {
             Panel.GALERIA -> itemsGaleria(e).getOrNull(e.indice)?.accion?.invoke()
             Panel.ESTUDIO -> aceptarControl()
             Panel.EDITAR_CONSOLA -> opcionesEditarConsola().getOrNull(e.indice)?.accion?.invoke()
-            Panel.APPS -> appsVisibles(e).getOrNull(e.indice)?.let { abrirPaquete(it.paquete) }
+            Panel.APPS -> appsVisibles(e).getOrNull(e.indice)?.let { if (!fijarDesdeDock(it.paquete)) abrirPaquete(it.paquete) }
             Panel.ASISTENTE -> elementosAsistente().getOrNull(e.indice)?.accion?.invoke()
             Panel.CENTRO -> {
                 if (e.cortina == "avisos") Avisos.lista.value.getOrNull(e.indice)?.let { abrirAviso(it) }
@@ -2944,7 +3060,7 @@ object Diptico {
         lista += Opcion("Personalizar", "Título, imágenes, música", Icono.PALETA, ayuda = "Cambia el título, la portada, la imagen grande, el logo y la música de este juego.") { abrirFicha(); elegirPestanaFicha(3) }
         lista += Opcion("Imágenes", "Tienda de imágenes", Icono.DESCARGA, ayuda = "Abre la tienda de imágenes para elegir otra portada de internet.") { abrirFicha(); buscarCandidatos("portada") }
         lista += Opcion("Mover de lugar", if (e.orden == "propio") "A tu gusto" else "Ordénalos a tu gusto", Icono.VISTA, "Corre este juego con la cruceta y deja tus juegos en el orden que quieras.") { empezarOrdenar() }
-        if (consola != null && !consola.sinEmulador) {
+        if (consola != null) {
             lista += opcionEmuladorJuego(juego, consola)
         }
         if (estado.value.extra.carpetasPartidas.isNotEmpty() || consola != null && consola.comandos.any { it.linea.contains("RETROARCH", ignoreCase = true) }) {
@@ -3570,13 +3686,16 @@ object Diptico {
                 }
                 e.ficha?.enlace?.let { url -> add(Opcion("Artículo completo en Wikipedia", icono = Icono.WEB, ayuda = "Abre el artículo de Wikipedia de este juego en el navegador.") { abrirWeb(url) }) }
             }
-            3 -> listOf(
+            3 -> listOfNotNull(
                 // Lo primero: cómo se llama y cómo se ve. Después, la vitrina. Las cajas viven en el Estudio de Cajas.
                 Opcion("Nombre", d.titulo ?: j.titulo, Icono.TITULO, ayuda = "El nombre que se muestra en el estante y arriba. El archivo no se cambia.") { abrirTexto("titulo", d.titulo ?: j.titulo) }.copy(grupo = "Lo primero"),
                 Opcion("Portada", if (d.portada != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "Elige otra portada en la tienda de imágenes (comunidad, ScreenScraper, SteamGridDB…) o desde tus archivos.") { buscarCandidatos("portada") }.copy(grupo = "Lo primero"),
                 Opcion("Imagen grande (hero)", if (d.arte != null) "Propia ✓" else "Elegir en la tienda", Icono.PORTADA, ayuda = "La imagen grande que se ve de fondo en la pantalla de arriba.") { buscarCandidatos("arte") }.copy(grupo = "Lo primero"),
                 Opcion("Logo", if (d.logo != null) "Propio ✓" else "Elegir en la tienda", Icono.ESTRELLA, ayuda = "El logo que aparece sobre la imagen grande en vez del título escrito.") { buscarCandidatos("logo") }.copy(grupo = "Lo primero"),
                 Opcion("Música del juego", if (d.musica != null) "Elegida ✓" else "Elegir canción", Icono.MUSICA, ayuda = "Una canción que suena en el estante cuando este juego está elegido.") { pedirArchivoPara("musica", "audio/*") }.copy(grupo = "Lo primero"),
+                consola?.takeIf { !it.sinEmulador }?.let {
+                    opcionEmuladorJuego(j, it, "Emulador de este juego").copy(grupo = "Juego y emulador")
+                },
                 Opcion("Lugar en la vitrina", if (e.extra.disposiciones.containsKey(j.clave)) "A tu gusto ✓" else "Mover logo, imagen y caja", Icono.PALETA,
                     "En una cuadrícula mueves a gusto el logo, la imagen grande de fondo y la caja 3D de este juego, eliges su tamaño y si el fondo va difuminado. Arriba ves cómo queda.", grupo = "La vitrina") { abrirEditorVitrina(j.clave) },
                 opcionLista(
@@ -4103,7 +4222,7 @@ object Diptico {
             add(
                 Opcion(
                     "Aprender el botón ${b.nombre}", if (e.aprendiendoBoton == i) "Aprieta el botón…" else if (b.tecla == 0) "Sin aprender" else android.view.KeyEvent.keyCodeToString(b.tecla).removePrefix("KEYCODE_").lowercase(),
-                    Icono.LAPIZ, "Elige esto y aprieta el botón en tu control: así funciona con la Odin 2, la Retroid, la Thor o el control que sea.",
+                    Icono.LAPIZ, "Elige esto y aprieta el botón en tu control: así funciona con cualquier control.",
                 ) { aprenderBoton(i) },
             )
         }
@@ -4640,6 +4759,20 @@ object Diptico {
         if (n < 0) return
         val sig = n + d
         if (sig >= paginasTour().size) { cerrarNovedades(); return }
+        // Cerrar demostraciones anteriores antes del siguiente componente.
+        if (estado.value.recorrido) {
+            if (n in setOf(2, 9, 16, 17, 18, 20, 21) && estado.value.panel != Panel.NINGUNO) cerrarPanel()
+            if (n == 13 && estado.value.extra.galeria) cerrarGaleriaWidgets()
+            if (n == 15 && estado.value.editandoWidgets) terminarEspacio()
+            if (n == 19 && estado.value.extra.perfilEn >= 0) cerrarPerfil()
+            // Tu espacio vuelve a la biblioteca antes de pedir Select.
+            if (n in setOf(4, 15) && sig in setOf(5, 16) && estado.value.inicio == "widgets") {
+                fijarInicio("heroe")
+                if (sig == 16) volverASistemas()
+            }
+            if (n == 6 && sig == 7 && !estado.value.enSistemas) volverASistemas()
+            if (n == 10 && sig == 11 && !estado.value.enSistemas) volverASistemas()
+        }
         actualizar { it.copy(novedades = sig.coerceAtLeast(0)) }
         Sonidos.pagina()
     }
@@ -4649,6 +4782,13 @@ object Diptico {
         if (e.recorrido || e.novedadesDesde.isBlank()) Novedades.paginasDe(e.recorrido) else Novedades.paginasDe(false, e.novedadesDesde)
 
     fun cerrarNovedades() {
+        // Saltar el tour restaura la navegación de Home/widgets.
+        if (estado.value.recorrido) {
+            if (estado.value.extra.galeria) cerrarGaleriaWidgets()
+            if (estado.value.editandoWidgets) terminarEspacio()
+            if (estado.value.panel != Panel.NINGUNO) cerrarPanel()
+            if (estado.value.extra.perfilEn >= 0) cerrarPerfil()
+        }
         almacen.guardarTexto("novedadesVistas", Novedades.ID)
         val primeraVez = estado.value.recorrido && !almacen.texto("recorridoVisto").isNotEmpty()
         if (estado.value.recorrido) almacen.guardarTexto("recorridoVisto", "si")
@@ -5070,6 +5210,9 @@ object Diptico {
             opcionLista("Tono de las carpetas", Icono.CARPETA,
                 "«Vidrio» deja las carpetas transparentes, con el color de la consola difuminado y el fondo asomando. Las otras son opacas: oscuras (cómodas de noche), claras como papel, o «Según el tema».",
                 listOf("vidrio", "auto", "oscuro", "claro"), listOf("Vidrio", "Según el tema", "Oscuras", "Claras"), e.extra.carpetasTono) { elegirTonoCarpetas(it) },
+            opcionLista("Detrás de cada consola", Icono.PORTADA,
+                "En el inicio, de fondo detrás de cada consola: su juego emblema (el que hizo historia en esa consola, como God of War en PS2, si lo tienes; si no, tu más jugado) o la consola sola. Cada consola lo puede cambiar en su configuración › Fondo.",
+                listOf("emblema", "consola"), listOf("Su juego emblema", "La consola"), e.extra.fondoConsolas) { elegirFondoConsolas(it) },
             Opcion("Ordenar carpetas", "A tu gusto", Icono.VISTA,
                 "Las carpetas tiemblan y las mueves arrastrando con el dedo, o con A y la cruceta. También se entra manteniendo una carpeta presionada. B o «Listo» termina.") {
                 cerrarPanel(); empezarOrdenCarpetas()
@@ -5148,42 +5291,6 @@ object Diptico {
         "com.spotify.music" to "Spotify",
         "com.google.android.apps.youtube.music" to "YT Music",
     )
-
-    // ---------- Reconocer los nombres de los juegos ----------
-
-    /** Busca el nombre oficial de los juegos en la lista de libretro (sin bajar imágenes). */
-    fun identificarNombres(avisarAlFinal: Boolean = false) {
-        if (!estado.value.titulosBonitos) return
-        // Solo las consolas que libretro conoce (los fan games y los ports ya traen su nombre): así no se reintenta en cada arranque.
-        val pendientes = crudos.filter { medios[it.clave]?.titulo == null && Consolas.porId(it.consolaId)?.libretro != null }
-        if (pendientes.isEmpty()) {
-            if (avisarAlFinal) avisar("Todos tus juegos ya tienen nombre")
-            return
-        }
-        trabajo("nombres", "Reconociendo nombres")
-        scope.launch {
-            val hay = withContext(Dispatchers.IO) { Descargas.hayInternet() }
-            if (!hay) {
-                terminarTrabajo("nombres")
-                if (avisarAlFinal) avisar("Necesito internet para reconocer los nombres")
-                return@launch
-            }
-            var n = 0
-            pendientes.forEachIndexed { i, j ->
-                val c = Consolas.porId(j.consolaId) ?: return@forEachIndexed
-                if (i % 10 == 0) trabajo("nombres", "Reconociendo nombres", i / pendientes.size.toFloat())
-                val t = withContext(Dispatchers.IO) { try { Descargas.identificar(app, j, c) } catch (ex: Exception) { null } }
-                if (t != null) {
-                    medios = medios + (j.clave to (medios[j.clave] ?: MediosJuego()).copy(titulo = t))
-                    n++
-                }
-            }
-            withContext(Dispatchers.IO) { almacen.guardarMedios(medios) }
-            publicarJuegos()
-            terminarTrabajo("nombres")
-            if (avisarAlFinal || n > 0) avisar("Reconocí el nombre de $n juegos")
-        }
-    }
 
     /** Pide a la IA el nombre de los juegos que no se reconocieron (Switch, PS3, archivos con nombres raros…). */
     fun identificarConIA() {
@@ -5396,8 +5503,8 @@ object Diptico {
         almacen.guardarTexto("gridCols", cols.toString())
         almacen.guardarTexto("gridFilas", filas.toString())
         almacen.guardarTexto("paginas", paginas.toString())
-        Widgets.COLUMNAS = cols
-        Widgets.FILAS = filas
+        Widgets.COLUMNAS = cols * estado.value.extra.paginaAncho
+        Widgets.FILAS = filas * estado.value.extra.paginaAlto
         // Los widgets que quedaron fuera se acomodan dentro, sin montarse unos sobre otros.
         val l = reacomodar(estado.value.widgets.map { encajar(it.copy(pagina = it.pagina.coerceIn(0, paginas - 1))) }, paginas)
         almacen.guardarTexto("widgets", escribirWidgets(l))
@@ -5559,6 +5666,7 @@ object Diptico {
         if (e.appsMoviendo != null) { moverAppA(i); cerrarOpcionesApp() }
         else {
             actualizar { it.copy(indice = i) }
+            if (e.extra.fijandoDock) { appsVisibles().getOrNull(i)?.let { fijarDesdeDock(it.paquete) }; return }
             if (e.unaPantalla || i == e.indice) appsVisibles().getOrNull(i)?.let { abrirPaquete(it.paquete) }
         }
     }
@@ -5611,8 +5719,23 @@ object Diptico {
 
     /** Abre el cajón con todas las apps de la consola (las carga la primera vez, sin trabar nada). */
     fun abrirApps() {
-        actualizar { it.copy(panel = Panel.APPS, indice = 0, appsPestana = if (it.appsFijadas.isNotEmpty()) 1 else 0) }
+        actualizar { it.copy(panel = Panel.APPS, indice = 0, appsPestana = if (it.appsFijadas.isNotEmpty()) 1 else 0, extra = it.extra.copy(fijandoDock = false)) }
         cargarApps()
+    }
+
+    /** Desde el «+» del dock: todas las apps, y la que elijas queda en el dock. */
+    fun abrirAppsParaFijar() {
+        actualizar { it.copy(panel = Panel.APPS, indice = 0, appsPestana = 0, extra = it.extra.copy(fijandoDock = true)) }
+        cargarApps()
+        avisar("Elige la app que quieres en tu dock")
+    }
+
+    private fun fijarDesdeDock(paquete: String): Boolean {
+        if (!estado.value.extra.fijandoDock) return false
+        if (paquete !in estado.value.appsFijadas) alternarFijada(paquete)
+        actualizar { it.copy(extra = it.extra.copy(fijandoDock = false)) }
+        cerrarPanel()
+        return true
     }
 
     fun cargarApps() {
@@ -5763,7 +5886,7 @@ object Diptico {
         o.keys().asSequence().associateWith { k ->
             val c = o.getJSONObject(k)
             fun txt(n: String) = c.optString(n, "").ifEmpty { null }
-            ConsolaPropia(txt("nombre"), c.optLong("color", 0L), txt("hero"), txt("logo"), txt("musica"), txt("portadaCarpeta"))
+            ConsolaPropia(txt("nombre"), c.optLong("color", 0L), txt("hero"), txt("logo"), txt("musica"), txt("portadaCarpeta"), txt("fondo"))
         }
     } catch (e: Exception) {
         emptyMap()
@@ -5771,7 +5894,7 @@ object Diptico {
 
     internal fun escribirConsolasPropias(m: Map<String, ConsolaPropia>): String = org.json.JSONObject().apply {
         m.forEach { (k, c) ->
-            put(k, org.json.JSONObject().put("nombre", c.nombre ?: "").put("color", c.color).put("hero", c.hero ?: "").put("logo", c.logo ?: "").put("musica", c.musica ?: "").put("portadaCarpeta", c.portadaCarpeta ?: ""))
+            put(k, org.json.JSONObject().put("nombre", c.nombre ?: "").put("color", c.color).put("hero", c.hero ?: "").put("logo", c.logo ?: "").put("musica", c.musica ?: "").put("portadaCarpeta", c.portadaCarpeta ?: "").put("fondo", c.fondo ?: ""))
         }
     }.toString()
 
@@ -5810,37 +5933,39 @@ object Diptico {
         val c = Consolas.porId(id) ?: return portada
         val f = e.formas[id] ?: FormaCfg()
         fun archivo(que: String, tipo: String = "image/*") = pedirArchivoPara("consola_$que:$id", tipo)
-        return portada + listOf(
-            Opcion("Nombre", p.nombre ?: "Original", Icono.TITULO, "Cómo se llama esta consola en todo Díptico.") { abrirTexto("consola_nombre", p.nombre ?: "") },
+        return portada.map { it.copy(grupo = "Carpeta") } + listOf(
+            Opcion("Nombre", p.nombre ?: "Original", Icono.TITULO, "Cómo se llama esta consola en todo Díptico.") { abrirTexto("consola_nombre", p.nombre ?: "") }.copy(grupo = "Carpeta"),
+            Opcion("Nombre o logo", if (id in e.extra.logoConsolas) "Logo" else "Nombre", Icono.ESTRELLA,
+                "Muestra el logo de la consola o su nombre escrito con la fuente del tema.") { alternarLogoConsola(id) }.copy(grupo = "Carpeta"),
+            Opcion(
+                "Color", if (p.color == 0L) "Original" else "Propio", Icono.PALETA, "El color de sus tarjetas, del carrusel y del fondo de su vista.",
+                menos = { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) - 1).mod(COLORES_CONSOLA.size)]) } },
+            ) { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) + 1).mod(COLORES_CONSOLA.size)]) } }.copy(grupo = "Carpeta"),
+            Opcion("Ícono", if (e.iconosPropios.containsKey(id)) "Propio ✓" else "Buscar", Icono.EMULADOR, "Elige entre los paquetes de RetroArch, SteamGridDB o tus archivos.") { buscarCandidatos("c_icono") }.copy(grupo = "Carpeta"),
             Opcion(
                 "Lugar en la lista", "${e.consolasConJuegos.indexOfFirst { it.id == id } + 1} de ${e.consolasConJuegos.size}", Icono.VISTA,
                 "Corre esta consola antes o después (← →). Así quedan en el orden que tú quieras.",
                 menos = { moverConsola(id, -1) },
-            ) { moverConsola(id, 1) },
-            Opcion(
-                "Color", if (p.color == 0L) "Original" else "Propio", Icono.PALETA, "El color de sus tarjetas, del carrusel y del fondo de su vista.",
-                menos = { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) - 1).mod(COLORES_CONSOLA.size)]) } },
-            ) { cambiarConsolaPropia(id) { it.copy(color = COLORES_CONSOLA[(COLORES_CONSOLA.indexOf(it.color).coerceAtLeast(0) + 1).mod(COLORES_CONSOLA.size)]) } },
-            Opcion("Ícono", if (e.iconosPropios.containsKey(id)) "Propio ✓" else "Buscar", Icono.EMULADOR, "Elige entre los paquetes de RetroArch, SteamGridDB o tus archivos.") { buscarCandidatos("c_icono") },
-            Opcion("Imagen grande (hero)", if (p.hero != null) "Propia ✓" else "Buscar", Icono.PORTADA, "El fondo de esta consola: de SteamGridDB, fotos de Wikipedia o tus archivos.") { buscarCandidatos("c_hero") },
-            Opcion("Logo", if (p.logo != null) "Propio ✓" else "Buscar", Icono.ESTRELLA, "Un logo que reemplaza al nombre en la vista grande: de SteamGridDB, Wikipedia o tus archivos.") { buscarCandidatos("c_logo") },
-            Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") },
-            Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) },
-            Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(id) },
-            Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) },
-            if (c.sinEmulador) Opcion("Emulador", "No necesita", Icono.MANDO, ayuda = "Esta consola no necesita emulador.") {} else opcionEmuladorConsola(c).copy(titulo = "Emulador", icono = Icono.MANDO),
+            ) { moverConsola(id, 1) }.copy(grupo = "Carpeta"),
+        ) + opcionesFondoConsola(e, c) + listOf(
+            Opcion("Logo", if (p.logo != null) "Propio ✓" else "Buscar", Icono.ESTRELLA, "Un logo que reemplaza al nombre en la vista grande: de SteamGridDB, Wikipedia o tus archivos.") { buscarCandidatos("c_logo") }.copy(grupo = "Imágenes"),
+            Opcion("Forma de las cajas", nombreForma(f.forma), Icono.FORMA, "Cuadrada, póster, horizontal, disco (CD), cartucho o tarjeta: la portada se acomoda al centro.") { abrirCajas(id) }.copy(grupo = "Cajas"),
+            Opcion("Tamaño de las cajas", nombreTamJuegos(f.tam), Icono.FORMA, ayuda = "Más chicas para ver más juegos de esta consola, o más grandes para verlos mejor.") { ciclarTamForma(id) }.copy(grupo = "Cajas"),
+            Opcion("Imagen de las cajas", nombreImagenCaja(f.imagen), Icono.PORTADA, "Portada, captura del juego o su logo.") { ciclarImagenCaja(id) }.copy(grupo = "Cajas"),
+            (if (c.sinEmulador) Opcion("Emulador", "No necesita", Icono.MANDO, ayuda = "Esta consola no necesita emulador.") {} else opcionEmuladorConsola(c).copy(titulo = "Emulador", icono = Icono.MANDO)).copy(grupo = "Juego y sonido"),
+            Opcion("Música", if (p.musica != null) "Propia ✓" else "Elegir canción", Icono.MUSICA, "Suena mientras recorres esta consola (si el juego no tiene su propia canción).") { archivo("musica", "audio/*") }.copy(grupo = "Juego y sonido"),
             Opcion("Quitar imágenes y música propias", icono = Icono.BORRAR, ayuda = "Quita las imágenes y la música que elegiste para esta consola.") {
-                cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null, portadaCarpeta = null) }
+                cambiarConsolaPropia(id) { it.copy(hero = null, logo = null, musica = null, portadaCarpeta = null, fondo = null) }
                 if (estado.value.iconosPropios.containsKey(id)) {
                     val m = estado.value.iconosPropios - id
                     almacen.guardarTexto("iconosPropios", escribirMapa(m))
                     actualizar { it.copy(iconosPropios = m) }
                 }
-            },
+            }.copy(grupo = "Restaurar"),
             Opcion("Volver a como venía", icono = Icono.BORRAR, ayuda = "Nombre, color, imágenes y música originales.") {
                 cambiarConsolaPropia(id) { ConsolaPropia() }
                 avisar("${Consolas.porId(id)?.nombre ?: ""} como al principio")
-            },
+            }.copy(grupo = "Restaurar"),
         )
     }
 

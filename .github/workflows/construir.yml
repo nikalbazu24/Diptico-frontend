@@ -2,7 +2,7 @@ name: Construir APK
 
 on:
   push:
-    branches: [main, 'fix/**']
+    branches: [main, 'fix/**', 'release/**']
     # Cambios solo de textos, imágenes del README o plantillas de GitHub no crean una versión nueva.
     paths-ignore:
       - "**.md"
@@ -27,7 +27,7 @@ jobs:
       contents: write
     env:
       DIPTICO_REPORTES_URL: ${{ vars.DIPTICO_REPORTES_URL }}
-      FIRMAR: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/153-liquid-glass') && (github.event_name == 'push' || inputs.preparar_firma) }}
+      FIRMAR: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release/2.0.0' || github.ref == 'refs/heads/fix/153-liquid-glass') && (github.event_name == 'push' || inputs.preparar_firma) }}
     outputs:
       numero: ${{ steps.paquete.outputs.numero }}
     steps:
@@ -54,8 +54,31 @@ jobs:
           gh api -H "Accept: application/octet-stream" "repos/$GITHUB_REPOSITORY/releases/assets/$id" > app/discord/discord_partner_sdk.aar
           ls -la app/discord
 
+      - name: Determinar nombre de versión
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v2.0.0" >/dev/null 2>&1; then
+              nombre="2.0.1-beta.$GITHUB_RUN_NUMBER"
+            else
+              nombre="2.0.0"
+            fi
+          elif [[ "$GITHUB_REF" == "refs/heads/release/2.0.0" ]]; then
+            nombre="2.0.0-rc.$GITHUB_RUN_NUMBER"
+          elif [[ "$FIRMAR" == "true" ]]; then
+            nombre="1.1-beta.$GITHUB_RUN_NUMBER"
+          else
+            nombre="1.0-beta.$GITHUB_RUN_NUMBER"
+          fi
+          printf 'DIPTICO_VERSION_NAME=%s\n' "$nombre" >> "$GITHUB_ENV"
+          printf 'nombre=%s\n' "$nombre" >> "$GITHUB_OUTPUT"
+          echo "Versión de esta compilación: $nombre"
+
       - name: Probar perfiles, navegación y estabilidad
-        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --tests "cl.nikalbazu.diptico.CajasLocalesTest" --no-daemon
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --tests "cl.nikalbazu.diptico.CajasLocalesTest" --tests "cl.nikalbazu.diptico.RecorridoTest" --tests "cl.nikalbazu.diptico.TourInteractivoTest" --no-daemon
 
       - name: Compilar y verificar firma de distribución
         if: env.FIRMAR == 'true'
@@ -130,9 +153,7 @@ jobs:
       - name: Nombrar los APK
         id: paquete
         run: |
-          base="1.0"
-          if [ "$FIRMAR" = true ]; then base="1.1"; fi
-          numero="$base-beta.$GITHUB_RUN_NUMBER"
+          numero="$DIPTICO_VERSION_NAME"
           cp app/build/outputs/apk/completa/release/app-completa-release.apk "Diptico-v$numero.apk"
           cp app/build/outputs/apk/movil/release/app-movil-release.apk "Diptico-v$numero-movil.apk"
           printf 'numero=%s\n' "$numero" >> "$GITHUB_OUTPUT"
@@ -172,6 +193,28 @@ jobs:
       - name: Probar los gestos del editor
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --no-daemon
 
+  capturas_revision:
+    # Solo en la rama de revisión: deja las fotos en un borrador para revisarlas sin descargar artefactos.
+    needs: [apk]
+    if: github.ref == 'refs/heads/fix/revision-capturas'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Diptico-APK
+          path: distribucion
+      - name: Subir las fotos a un borrador
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip=$(find distribucion -name 'Capturas-*.zip' | head -1)
+          test -n "$zip"
+          apks=$(find distribucion -name 'Diptico-*.apk' | tr '\n' ' ')
+          gh release delete revision-capturas --yes --cleanup-tag -R "$GITHUB_REPOSITORY" || true
+          gh release create revision-capturas "$zip" $apks --draft --title "Revisión de capturas" --notes "Borrador temporal para revisar las pantallas." --target "$GITHUB_SHA" -R "$GITHUB_REPOSITORY"
+
   distribuir_beta:
     needs: [apk, gestos_widgets]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.preparar_firma)
@@ -202,7 +245,7 @@ jobs:
           test -n "$actual"
           if [[ "$GITHUB_EVENT_NAME" == push ]]; then
             anterior=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" |
-              jq -r --arg tag "$TAG_BETA" 'map(select(.draft == false and (.tag_name | startswith("v1.1-beta.")) and .tag_name != $tag))[0].tag_name // empty')
+              jq -r --arg tag "$TAG_BETA" 'map(select(.draft == false and ((.tag_name | startswith("v1.1-beta.")) or (.tag_name | startswith("v2."))) and .tag_name != $tag))[0].tag_name // empty')
             if [[ -n "$anterior" && "$actual" == "$(leer_archivo "$ruta" "$anterior" | id_tour)" ]]; then
               echo "::error::Actualiza el ID y las páginas de Novedades antes de publicar otra beta."
               exit 1
@@ -225,10 +268,84 @@ jobs:
           tag_name: v${{ needs.apk.outputs.numero }}
           target_commitish: ${{ github.sha }}
           name: Díptico v${{ needs.apk.outputs.numero }}
-          prerelease: true
+          prerelease: ${{ needs.apk.outputs.numero != '2.0.0' }}
           draft: ${{ github.event_name != 'push' }}
           fail_on_unmatched_files: true
           files: |
             distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}.apk
             distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}-movil.apk
           body_path: notas-beta.md
+
+      # Las versiones 1.1 ya instaladas solo reconocen etiquetas v1.1-beta.N.
+      # Este puente expone los MISMOS APK firmados de la 2.0.0 sin cambiar su versión interna.
+      - name: Publicar puente de actualización para betas 1.1
+        if: needs.apk.outputs.numero == '2.0.0'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.1-beta.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Actualización compatible a Díptico 2.0.0
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: |
+            distribucion/**/Diptico-v2.0.0.apk
+            distribucion/**/Diptico-v2.0.0-movil.apk
+          body: |
+            Puente de actualización para instalaciones del canal 1.1 beta.
+            Contiene los mismos APK firmados de Díptico 2.0.0.
+            No es una versión diferente de la aplicación.
+
+  publicar_candidata:
+    # Las candidatas se publican en Releases, sin mover main ni marcar 2.0.0 estable.
+    # Solo cuando aprobaron las pruebas y la compilación firmada de la rama release.
+    needs: [apk, gestos_widgets]
+    if: github.ref == 'refs/heads/release/2.0.0' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Diptico-APK
+          path: distribucion
+
+      - name: Confirmar los dos APK firmados de la candidata
+        env:
+          VERSION: ${{ needs.apk.outputs.numero }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" == 2.0.0-rc.* ]]
+          consola=$(find distribucion -type f -name "Diptico-v$VERSION.apk" | head -1)
+          movil=$(find distribucion -type f -name "Diptico-v$VERSION-movil.apk" | head -1)
+          test -s "$consola"
+          test -s "$movil"
+          echo "APK de consola: $consola"
+          echo "APK móvil: $movil"
+
+      - name: Publicar candidata Díptico 2.0.0 en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.apk.outputs.numero }}
+          target_commitish: ${{ github.sha }}
+          name: Díptico v${{ needs.apk.outputs.numero }} — candidata
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: |
+            distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}.apk
+            distribucion/**/Diptico-v${{ needs.apk.outputs.numero }}-movil.apk
+          body: |
+            **Versión candidata de Díptico 2.0.0, no publicación estable.**
+            
+            Integra Colección viva y Revisión de capturas, más las correcciones
+            para que los dos joysticks naveguen exclusivamente por «Tu espacio»,
+            su Galería y sus opciones, y para que el contorno de widgets tenga
+            esquinas redondeadas consistentes.
+            
+            **Descarga:** APK normal para consolas Android ARM64 de una o dos pantallas;
+            APK con sufijo «-movil» para teléfonos.
+            
+            **Antes de instalar:** respalda ajustes y partidas. Esta candidata se
+            compiló con la firma de distribución, pero falta comprobar en una consola
+            real el mando, las dos pantallas y la actualización sobre instalaciones
+            anteriores. No desinstales tu versión actual sin un respaldo verificable.

@@ -77,7 +77,7 @@ fun PartidaEnCurso(e: Estado) {
             Texto(listOfNotNull(c?.nombre, if (min > 0) "$min min" else null).joinToString(" · "), 12.5f, color = Color(0xFFA9ADC4), lineas = 1, traducir = false)
             Spacer(Modifier.weight(1f))
             termica?.takeIf { it.grados > 0f }?.let { t ->
-                Texto("${"%.0f".format(t.grados)} °C", 13f, color = if (t.nivel >= Termica.Nivel.CALIENTE) Color(0xFFFF7A59) else Color(0xFFFFB454), traducir = false)
+                Texto(Termica.texto(t.grados), 13f, color = if (t.nivel >= Termica.Nivel.CALIENTE) Color(0xFFFF7A59) else Color(0xFFFFB454), traducir = false)
                 Spacer(Modifier.width(esc.d(12)))
             }
             RelojBateria()

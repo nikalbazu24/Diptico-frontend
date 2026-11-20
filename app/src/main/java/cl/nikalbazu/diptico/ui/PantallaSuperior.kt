@@ -69,7 +69,7 @@ fun PantallaSuperior(e: Estado) {
     androidx.compose.runtime.SideEffect { cl.nikalbazu.diptico.estado.Fluidez.contar("PantallaSuperior") }
     if (e.panel == Panel.MENU) {
         // El menú siempre en la pantalla de arriba; la ayuda queda abajo.
-        if (!e.intercambiar) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
+        if (!menuIntercambiado(e)) Box(Modifier.fillMaxSize().background(LocalPaleta.current.fondo2)) { PanelMenu(e, conAyuda = false) }
         else AyudaMenu(e)
         return
     }
@@ -92,7 +92,8 @@ fun PantallaSuperior(e: Estado) {
         return
     }
     if (e.panel == Panel.EDITAR_CONSOLA) {
-        PreviaConsolaEditada(e)
+        // Colección viva: todas las opciones arriba; abajo, el panel vivo de la consola.
+        if (coleccionVivaActiva(e)) ConsolaOpcionesCV(e) else PreviaConsolaEditada(e)
         return
     }
     if (e.panel == Panel.GALERIA) {
@@ -168,7 +169,7 @@ private fun Caratulas(e: Estado) {
 
         TramaTema()
         // Tu foto arriba, junto a la hora (como en la vitrina de cajas).
-        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos, perfil = e.sesion == null)
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos, perfil = e.sesion == null, extra = { if (e.sesion == null) BotonRecargarJuegos(e) })
 
         AnimatedContent(
             targetState = juego,
@@ -264,13 +265,12 @@ private fun ContenidoBarra(e: Estado, juego: Juego?, modifier: Modifier, arriba:
     val esc = LocalEscala.current
     val compacta = arriba || esc.angosta
     val widgets = e.inicio == "widgets"
-    // El estilo de la barra de la pantalla de arriba: sólida (como antes), difusa o transparente.
-    val base = if (arriba) modifier else when (e.extra.estiloBarraArriba) {
-        "solida" -> modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(p.fondo.copy(alpha = 0.60f), p.fondo)))
-        else -> modifier.fillMaxWidth().fondoBarra(e.extra.estiloBarraArriba)
-    }
+    // Fondo inferior 100 % transparente: los botones conservan su sitio y sus zonas de toque.
+    // La barra superior mantiene su comportamiento y estilo anteriores.
+    val base = if (arriba) modifier else modifier.fillMaxWidth()
     Column(base) {
-        if (!arriba) Spacer(Modifier.fillMaxWidth().height(esc.d(1)).background(p.linea.copy(alpha = 0.62f)))
+        // Conserva el pixel de altura original sin dibujar la antigua línea divisoria.
+        if (!arriba) Spacer(Modifier.fillMaxWidth().height(esc.d(1)))
         Row(
             Modifier.then(if (arriba) Modifier else Modifier.fillMaxWidth())
                 .horizontalScroll(rememberScrollState()).padding(
