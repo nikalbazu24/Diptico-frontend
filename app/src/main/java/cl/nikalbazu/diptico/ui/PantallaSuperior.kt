@@ -169,7 +169,7 @@ private fun Caratulas(e: Estado) {
 
         TramaTema()
         // Tu foto arriba, junto a la hora (como en la vitrina de cajas).
-        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos, perfil = e.sesion == null)
+        BarraSuperior(Modifier.align(Alignment.TopStart), inicio = margen, trabajos = e.trabajos, perfil = e.sesion == null, extra = { if (e.sesion == null) BotonRecargarJuegos(e) })
 
         AnimatedContent(
             targetState = juego,
