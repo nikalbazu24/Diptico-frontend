@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,6 +49,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.bisa.AvatarBisa
 import cl.nikalbazu.diptico.data.Consola
 import cl.nikalbazu.diptico.data.Consolas
@@ -305,7 +307,7 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(esc.d(9)),
         ) {
-            BotonRedondo(Icono.ATRAS, 50f, {
+            FlechaSelectorCV("‹", {
                 if (ids.isNotEmpty()) Diptico.elegirConsola(ids[(indice - 1 + ids.size) % ids.size])
             }, descripcion = "Consola anterior")
             LazyRow(
@@ -337,7 +339,7 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
                     }
                 }
             }
-            BotonRedondo(Icono.SIGUIENTE, 50f, {
+            FlechaSelectorCV("›", {
                 if (ids.isNotEmpty()) Diptico.elegirConsola(ids[(indice + 1) % ids.size])
             }, descripcion = "Consola siguiente")
             Row(
@@ -359,7 +361,21 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
     }
 }
 
+/** Flechas para cambiar de carpeta sin alterar el mando (L1/R1 y A siguen activos). */
+@Composable
+private fun FlechaSelectorCV(simbolo: String, accion: () -> Unit, descripcion: String) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    Box(
+        Modifier.size(esc.d(52)).clip(CircleShape)
+            .background(col.vidrioFuerte).border(1.dp, col.borde, CircleShape)
+            .clickable(onClickLabel = descripcion, onClick = accion),
+        contentAlignment = Alignment.Center,
+    ) { TB(simbolo, 46f, color = col.texto, traducir = false) }
+}
+
 /** Dock derecho desplegable: el usuario conserva sus apps, el botón + y el cajón. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DockLateralCompactoCV(e: Estado, modifier: Modifier = Modifier) {
     if (!e.extra.dock) return
@@ -403,7 +419,12 @@ private fun DockLateralCompactoCV(e: Estado, modifier: Modifier = Modifier) {
                     ) { IconoApp(pkg, 58f, desnudo = true) }
                 }
                 if (e.appsFijadas.size < MAX_DOCK) {
-                    BotonRedondo(Icono.AGREGAR, 58f, { Diptico.abrirAppsParaFijar() }, descripcion = "Agregar app al dock")
+                    Box(
+                        Modifier.size(esc.d(58)).clip(CircleShape)
+                            .border(1.dp, col.borde, CircleShape)
+                            .clickable(onClickLabel = "Agregar app al dock") { Diptico.abrirAppsParaFijar() },
+                        contentAlignment = Alignment.Center,
+                    ) { TB("+", 40f, traducir = false) }
                 }
                 BotonRedondo(Icono.APPS, 58f, { Diptico.abrirApps() }, descripcion = "Todas las apps")
             }
