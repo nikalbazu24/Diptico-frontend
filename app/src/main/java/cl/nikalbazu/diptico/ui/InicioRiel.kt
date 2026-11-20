@@ -469,6 +469,7 @@ internal fun PieRiel(e: Estado, tele: Boolean, biblioteca: Boolean = false, conD
             else -> {
                 BotonPie(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
                 Spacer(Modifier.width(esc.d(10)))
+                if (biblioteca) { BotonRecargarJuegos(e, 28f); Spacer(Modifier.width(esc.d(10))) }
                 if (conDippo) { DippoInicio(e, 28f, lugar = "pie"); Spacer(Modifier.width(esc.d(10))) }
                 if (biblioteca) Pistas("A" to "Abrir", "Mantener A" to "Ordenar", "Start" to "Menú")
                 else Pistas("A" to "Jugar", "L1/R1" to "Consola", "Y" to "Opciones", "Start" to "Menú")
