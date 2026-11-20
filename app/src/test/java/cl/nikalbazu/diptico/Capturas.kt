@@ -141,6 +141,7 @@ class Capturas {
         regla.onNodeWithTag("home-consolas").assertExists()
         regla.onNodeWithTag("home-juegos").assertExists()
         regla.onNodeWithTag("home-destacado").assertExists()
+        regla.onNodeWithTag("recargar-juegos").assertExists()
     }
 
     // Select lleva a los widgets existentes; el nuevo inicio no los sustituye.
