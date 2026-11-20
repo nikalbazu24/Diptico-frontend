@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,12 +31,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.data.Consolas
 import cl.nikalbazu.diptico.data.Juego
-import cl.nikalbazu.diptico.estado.Diptico
-import cl.nikalbazu.diptico.estado.Estado
-import cl.nikalbazu.diptico.estado.Icono
-import cl.nikalbazu.diptico.estado.Teclas
+import cl.nikalbazu.diptico.estado.*
 
 /**
  * Inicio exclusivo para una pantalla. Todas las selecciones dependen del mismo Estado
@@ -79,13 +78,15 @@ fun HomeUnaPantallaRedisenado(e: Estado) {
         }
         Box(Modifier.fillMaxWidth().height(esc.d(1)).background(p.linea.copy(alpha = 0.45f)))
 
-        Column(
-            Modifier.fillMaxWidth().weight(1f).padding(horizontal = esc.d(14), vertical = esc.d(8)),
-            verticalArrangement = Arrangement.spacedBy(esc.d(6)),
-        ) {
+        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+            val compacto = maxHeight < 420.dp
+            Column(
+                Modifier.fillMaxSize().padding(horizontal = esc.d(14), vertical = esc.d(8)),
+                verticalArrangement = Arrangement.spacedBy(esc.d(6)),
+            ) {
             Texto("Tus consolas", 13f, color = p.tenue, peso = FontWeight.Bold, lineas = 1)
             LazyRow(
-                Modifier.fillMaxWidth().height(esc.d(80)).testTag("home-consolas"),
+                Modifier.fillMaxWidth().height(esc.d(if (compacto) 62f else 80f)).testTag("home-consolas"),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(8)),
             ) {
                 items(e.pestanas, key = { it }) { id -> ConsolaHome(e, id) }
@@ -139,13 +140,13 @@ fun HomeUnaPantallaRedisenado(e: Estado) {
             }
             LazyRow(
                 state = estadoJuegos,
-                modifier = Modifier.fillMaxWidth().height(esc.d(92)).testTag("home-juegos"),
+                modifier = Modifier.fillMaxWidth().height(esc.d(if (compacto) 72f else 92f)).testTag("home-juegos"),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(8)),
             ) {
                 items(e.visibles, key = { it.clave }) { j -> UltimoJuegoCompacto(e, j) }
             }
 
-            if (recientes.isNotEmpty()) {
+            if (recientes.isNotEmpty() && !compacto) {
                 Texto("Últimos juegos", 13f, color = p.tenue, peso = FontWeight.Bold, lineas = 1)
                 LazyRow(
                     Modifier.fillMaxWidth().height(esc.d(74)).testTag("home-ultimos"),
@@ -153,6 +154,7 @@ fun HomeUnaPantallaRedisenado(e: Estado) {
                 ) {
                     items(recientes, key = { it.clave }) { j -> UltimoJuegoCompacto(e, j) }
                 }
+            }
             }
         }
 
