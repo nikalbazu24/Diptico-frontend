@@ -113,7 +113,7 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTask"
-            android:taskAffinity="cl.nikalbazu.diptico.inferior"
+            android:taskAffinity="cl.nikalbazu.diptico.pruebas.inferior"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- Inicio de la segunda pantalla: Android lo abre en la pantalla de abajo y trae a Díptico. -->
