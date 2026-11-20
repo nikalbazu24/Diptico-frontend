@@ -2,6 +2,8 @@
 
 La actualización reúne el trabajo de `fix/revision-capturas` y `fix/coleccion-viva` sobre una única base.
 
+- **Inicio renovado para una pantalla:** carpetas y consolas visibles, juego destacado, biblioteca accesible y navegación táctil o con mando.
+- **Actualizar juegos desde el inicio (↻):** botón pequeño en una y dos pantallas, Colección viva, widgets y modo TV para volver a leer las carpetas y descubrir juegos nuevos sin reiniciar Díptico. Durante el escaneo aparece un indicador y al terminar se informa el resultado.
 - **Vitrina y biblioteca renovadas:** arte del juego protagonista, cajas 3D y navegación adaptada a una o dos pantallas.
 - **Colección viva:** representación de consolas, carátulas persistentes, personalización y nuevas vistas.
 - **Tu espacio:** páginas de widgets editables con controles de mando o táctiles, tamaños y fondos.
