@@ -199,6 +199,10 @@ private fun EncabezadoWidgets(e: Estado) {
                         .padding(horizontal = esc.d(10), vertical = esc.d(7)),
                 ) { Texto("$pagina/${e.paginas}", 12f, color = p.tenue, lineas = 1, traducir = false) }
             }
+            if (e.sesion == null && !e.editandoWidgets) {
+                BotonRecargarJuegos(e, 30f)
+                Spacer(Modifier.width(esc.d(8)))
+            }
             if (e.sesion == null) BarraFlotante(e, null, Modifier.widthIn(max = anchoBarra), arriba = true)
             // Con el diseño nuevo arriba no hay barra de la hora: la hora y la batería van aquí, chiquitas.
             if (nuevoDisenoDosPantallas(e)) {

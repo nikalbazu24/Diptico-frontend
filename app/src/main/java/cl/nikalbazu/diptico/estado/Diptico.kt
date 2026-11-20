@@ -1624,7 +1624,7 @@ object Diptico {
     // ---------- Carpeta y biblioteca ----------
 
     /** Vuelve a leer las carpetas de juegos. [informar]: al terminar explica qué encontró y qué dejó fuera (y por qué). */
-    fun escanear(informar: Boolean = false) {
+    fun escanear(informar: Boolean = false, notificar: Boolean = false) {
         if (estado.value.escaneando) return
         actualizar { it.copy(escaneando = true) }
         trabajo("escaneo", "Buscando tus juegos")
@@ -1667,6 +1667,12 @@ object Diptico {
                         bajarIconosFaltantes()
                     }
                     if (informe != null) mostrarInformeEscaneo(informe, anterior, lista, fallas, carpetas.size)
+                    if (notificar && fallas < carpetas.size) {
+                        val anteriores = anterior.mapTo(HashSet()) { it.clave }
+                        val nuevos = lista.count { it.clave !in anteriores }
+                        avisar(if (nuevos == 0) "Biblioteca actualizada · ${lista.size} juegos"
+                               else "Biblioteca actualizada · $nuevos juegos nuevos")
+                    }
                     break
                 }
             } finally {
@@ -1674,6 +1680,16 @@ object Diptico {
                 terminarTrabajo("escaneo")
             }
         }
+    }
+
+    /** Actualización manual desde el inicio: aviso breve, sin abrir una ventana de informe. */
+    fun recargarJuegosDesdeInicio() {
+        if (estado.value.escaneando) return
+        if (!estado.value.tieneCarpeta) {
+            avisar("Primero elige la carpeta de juegos en Ajustes › Biblioteca.")
+            return
+        }
+        escanear(notificar = true)
     }
 
     /** Los ports elegidos, como juegos de la consola "Ports". */

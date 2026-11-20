@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import cl.nikalbazu.diptico.data.DatosJuego
@@ -125,8 +126,55 @@ class Capturas {
     // ---------- Una pantalla (Thor en modo una, Odin, tele) ----------
 
     @Test fun t20_una_pantalla() = foto("20_una_pantalla", base().copy(modoPantallas = "una_negra"), Rol.UNICA)
+    
+    // El rediseño real: comprueba que se muestran las carpetas y los juegos que recorre el mando.
+    @Test fun t20b_home_redisenado() {
+        foto(
+            "20b_home_redisenado",
+            base().copy(modoPantallas = "una_negra", consolaSel = "snes", datos = mapOf(
+                "snes/1" to DatosJuego(tiempo = 3 * 3600L, ultimo = 1000L),
+                "snes/7" to DatosJuego(tiempo = 600L, ultimo = 500L),
+            )),
+            Rol.UNICA,
+        )
+        regla.onNodeWithTag("home-una-redisenado").assertExists()
+        regla.onNodeWithTag("home-consolas").assertExists()
+        regla.onNodeWithTag("home-juegos").assertExists()
+        regla.onNodeWithTag("home-destacado").assertExists()
+        regla.onNodeWithTag("recargar-juegos").assertExists()
+    }
+
+    // Select lleva a los widgets existentes; el nuevo inicio no los sustituye.
+    @Test fun t20c_una_pantalla_widgets() = foto(
+        "20c_una_pantalla_widgets",
+        base().copy(modoPantallas = "una_negra", inicio = "widgets"), Rol.UNICA,
+    )
+
 
     @Test fun t21_una_pantalla_menu() = foto("21_una_pantalla_menu", base().copy(modoPantallas = "una_negra", panel = Panel.MENU, seccion = Seccion.EMULADORES, enOpciones = true), Rol.UNICA)
+
+    // El acceso debe existir en todos los Home, sin tapar los controles del juego.
+    @Test fun t20d_recarga_una_pantalla() {
+        foto("20d_recarga_una_pantalla", base().copy(modoPantallas = "una_negra"), Rol.UNICA)
+        regla.onNodeWithTag("recargar-juegos").assertExists()
+    }
+
+    @Test fun t20e_recarga_dos_pantallas() {
+        foto("20e_recarga_dos_pantallas", base(), Rol.SUPERIOR)
+        regla.onNodeWithTag("recargar-juegos").assertExists()
+    }
+
+    @Test fun t20f_recarga_widgets() {
+        foto("20f_recarga_widgets", base().copy(modoPantallas = "una_negra", inicio = "widgets"), Rol.UNICA)
+        regla.onNodeWithTag("recargar-juegos").assertExists()
+    }
+
+    @Test fun t20g_recarga_coleccion_viva() {
+        foto("20g_recarga_coleccion_viva", base().copy(modoPantallas = "una_negra",
+            extra = EstadoExtra(coleccionViva = true)), Rol.UNICA)
+        regla.onNodeWithTag("recargar-juegos").assertExists()
+    }
+
 
     // ---------- Otros ----------
 
