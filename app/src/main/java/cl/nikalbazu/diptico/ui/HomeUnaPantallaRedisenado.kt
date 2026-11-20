@@ -85,8 +85,14 @@ fun HomeUnaPantallaRedisenado(e: Estado) {
                 verticalArrangement = Arrangement.spacedBy(esc.d(6)),
             ) {
             Texto("Tus consolas", 13f, color = p.tenue, peso = FontWeight.Bold, lineas = 1)
+            val estadoConsolas = rememberLazyListState()
+            LaunchedEffect(e.consolaSel, e.pestanas) {
+                val indice = e.pestanas.indexOf(e.consolaSel)
+                if (indice >= 0) estadoConsolas.animateScrollToItem(indice)
+            }
             LazyRow(
-                Modifier.fillMaxWidth().height(esc.d(if (compacto) 62f else 80f)).testTag("home-consolas"),
+                state = estadoConsolas,
+                modifier = Modifier.fillMaxWidth().height(esc.d(if (compacto) 62f else 80f)).testTag("home-consolas"),
                 horizontalArrangement = Arrangement.spacedBy(esc.d(8)),
             ) {
                 items(e.pestanas, key = { it }) { id -> ConsolaHome(e, id) }
@@ -116,8 +122,8 @@ fun HomeUnaPantallaRedisenado(e: Estado) {
                         )
                         Spacer(Modifier.height(esc.d(6)))
                         Row(horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                            HomeAcceso(Icono.JUGAR, "Jugar") { Diptico.jugar() }
-                            HomeAcceso(Icono.INFO, "Ficha") { Diptico.abrirFicha() }
+                            HomeAcceso(Icono.JUGAR, "Jugar", mostrarTexto = true) { Diptico.jugar() }
+                            HomeAcceso(Icono.INFO, "Ficha", mostrarTexto = true) { Diptico.abrirFicha() }
                         }
                     }
                 } else {
@@ -225,7 +231,7 @@ private fun UltimoJuegoCompacto(e: Estado, j: Juego) {
 }
 
 @Composable
-private fun HomeAcceso(icono: Icono, texto: String, accion: () -> Unit) {
+private fun HomeAcceso(icono: Icono, texto: String, mostrarTexto: Boolean = false, accion: () -> Unit) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
     Row(
@@ -236,6 +242,6 @@ private fun HomeAcceso(icono: Icono, texto: String, accion: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(esc.d(5)),
     ) {
         IconoDiptico(icono, p.tinta, 15f)
-        if (!esc.angosta) Texto(texto, 11f, color = p.tinta, peso = FontWeight.Bold, lineas = 1)
+        if (mostrarTexto || !esc.angosta) Texto(texto, 11f, color = p.tinta, peso = FontWeight.Bold, lineas = 1)
     }
 }
