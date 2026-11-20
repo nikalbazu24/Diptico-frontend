@@ -73,6 +73,7 @@ fun HomeUnaPantallaRedisenado(e: Estado) {
             HomeAcceso(Icono.APPS, "Apps") { Diptico.abrirApps() }
             HomeAcceso(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
             Spacer(Modifier.weight(1f))
+            BotonRecargarJuegos(e, 30f)
             RelojBateria()
             BotonPerfil(28f)
         }
