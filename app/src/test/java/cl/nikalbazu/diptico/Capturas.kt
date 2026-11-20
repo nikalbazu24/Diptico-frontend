@@ -1710,6 +1710,19 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t475_cv_carpetas_abajo_carpeta() = foto("475_cv_carpetas_abajo_carpeta", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(vistaCarpetasCV = "carpeta") }, Rol.INFERIOR, mi = 1)
     @Test fun t476_cv_carpetas_una() = foto("476_cv_carpetas_una", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)), Rol.UNICA)
+    /** El boceto aprobado no confunde DIPPO con el perfil y reserva un lateral para las apps. */
+    @Test fun t476b_cv_carpetas_una_compacta() {
+        val e = cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)
+        foto("476b_cv_carpetas_una_compacta", e.copy(extra = e.extra.copy(dock = true, dippoInicio = true)), Rol.UNICA, avance = 1800)
+        regla.onNodeWithTag("dippo-pulpo-cv").assertExists()
+        regla.onNodeWithTag("boton-perfil").assertExists()
+        regla.onNodeWithTag("consola-destacada-cv").assertExists()
+        regla.onNodeWithTag("tu-mas-jugado-cv").assertExists()
+        regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
+        regla.onNodeWithTag("dock-lateral-alternar").assertExists()
+        regla.onNodeWithTag("abrir-biblioteca-cv").assertExists()
+        regla.onNodeWithTag("recargar-juegos").assertExists()
+    }
     @Test fun t477_cv_carpetas_ps2_3d() = foto("477_cv_carpetas_ps2_3d", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(consolaSel = "ps2"), Rol.SUPERIOR)
     @Test fun t478_cv_widgets() {
         cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
