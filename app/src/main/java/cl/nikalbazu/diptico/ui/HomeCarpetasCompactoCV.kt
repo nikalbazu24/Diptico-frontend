@@ -53,12 +53,7 @@ import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.bisa.AvatarBisa
 import cl.nikalbazu.diptico.data.Consola
 import cl.nikalbazu.diptico.data.Consolas
-import cl.nikalbazu.diptico.estado.Diptico
-import cl.nikalbazu.diptico.estado.Estado
-import cl.nikalbazu.diptico.estado.Icono
-import cl.nikalbazu.diptico.estado.Modelos3D
-import cl.nikalbazu.diptico.estado.Teclas
-import cl.nikalbazu.diptico.estado.ultimoDeConsola
+import cl.nikalbazu.diptico.estado.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
