@@ -1,6 +1,6 @@
-# Díptico 2.0.0 — Colección viva
+# Díptico 2.0.0 — lanzamiento oficial
 
-La actualización reúne el trabajo de `fix/revision-capturas` y `fix/coleccion-viva` sobre una única base.
+Díptico 2.0.0 oficial reúne Colección viva, el Home compacto de una pantalla y la recarga directa de las carpetas de juegos. Se distribuye con el paquete y la firma originales y puede actualizar la instalación oficial existente.
 
 - **Inicio renovado para una pantalla:** carpetas y consolas visibles, juego destacado, biblioteca accesible y navegación táctil o con mando.
 - **Actualizar juegos desde el inicio (↻):** botón pequeño en una y dos pantallas, Colección viva, widgets y modo TV para volver a leer las carpetas y descubrir juegos nuevos sin reiniciar Díptico. Durante el escaneo aparece un indicador y al terminar se informa el resultado.
