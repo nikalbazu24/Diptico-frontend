@@ -35,7 +35,8 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "cl.nikalbazu.diptico"
+        // Canal de pruebas: paquete separado para no reemplazar la instalación habitual ni sus datos.
+        applicationId = "cl.nikalbazu.diptico.pruebas"
         minSdk = 29
         targetSdk = 34
         versionCode = numero
