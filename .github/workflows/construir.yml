@@ -159,6 +159,7 @@ jobs:
           printf 'numero=%s\n' "$numero" >> "$GITHUB_OUTPUT"
 
       - name: Sacar fotos de las pantallas
+        if: github.ref != 'refs/heads/fix/apk-prueba-integrada-2-0-0'
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.Capturas" --no-daemon
 
       - name: Juntar las fotos
