@@ -38,9 +38,48 @@ object Actualizador {
     private const val CANAL = "actualizaciones"
     private const val AVISO = 4471
     private const val REVISION = 4472
-    // Aceptar las betas firmadas 1.1 y las siguientes del canal 2.0.
-    // La v2.0.0 se publica además como puente v1.1-beta.N para llegar a instalaciones antiguas.
+    // Canales separados por applicationId: una APK de Pruebas jamás se ofrece a Díptico oficial.
+    // No basta con el nombre de la APK: se exigen también etiquetas y nombres de assets del canal.
+    private const val PAQUETE_OFICIAL = "cl.nikalbazu.diptico"
+    private const val PAQUETE_PRUEBAS = "cl.nikalbazu.diptico.pruebas"
     private val patronBeta = Regex("""(?:1[.]1|2[.]0[.]\d+)-beta[.](\d+)""")
+    private val patronPruebas = Regex("""2[.]0[.]0-pruebas[.](\d+)""")
+
+    internal fun seleccionarPublicacion(lista: JSONArray, paquete: String, movil: Boolean, actual: Int): VersionNueva? {
+        val esPrueba = paquete == PAQUETE_PRUEBAS
+        if (!esPrueba && paquete != PAQUETE_OFICIAL) return null
+        val patron = if (esPrueba) patronPruebas else patronBeta
+        var mejor: VersionNueva? = null
+        for (k in 0 until lista.length()) {
+            val release = lista.getJSONObject(k)
+            if (release.optBoolean("draft")) continue
+            val tag = release.optString("tag_name").removePrefix("v")
+            val numero = patron.matchEntire(tag)?.groupValues?.get(1)?.toIntOrNull() ?: continue
+            if (numero <= actual || (mejor != null && numero <= mejor.numero)) continue
+            val assets = release.optJSONArray("assets") ?: continue
+            val nombrePruebas = "Diptico-Pruebas-${if (movil) "Movil" else "Completa"}-v${tag}.apk"
+            for (i in 0 until assets.length()) {
+                val asset = assets.getJSONObject(i)
+                val nombre = asset.optString("name")
+                val url = asset.optString("browser_download_url")
+                val valida = if (esPrueba) nombre == nombrePruebas
+                    else nombre.startsWith("Diptico-v") && nombre.endsWith(".apk") &&
+                        nombre.contains("-movil") == movil
+                if (asset.optString("state") != "uploaded" || !valida ||
+                    !url.startsWith("https://github.com/", ignoreCase = true)) continue
+                mejor = VersionNueva(
+                    numero, tag, url, asset.optLong("size"),
+                    release.optString("body").lineSequence().map { it.trim() }
+                        .filter { it.isNotBlank() }.take(4).joinToString("\n"),
+                )
+                break
+            }
+        }
+        return mejor
+    }
+
+    private fun nombreCanal(ctx: Context): String =
+        if (ctx.packageName == PAQUETE_PRUEBAS) "Díptico Pruebas" else "Díptico"
 
     /** Android reúne estas comprobaciones con otros trabajos cuando Díptico está cerrado. */
     fun programar(ctx: Context, activo: Boolean) {
@@ -65,39 +104,13 @@ object Actualizador {
 
     /** Busca en GitHub la versión más nueva. null si no hay una más nueva que esta (o no hay internet). */
     fun buscar(ctx: Context): VersionNueva? {
-        val c = URL("https://api.github.com/repos/$REPO/releases?per_page=6").openConnection() as HttpURLConnection
+        val c = URL("https://api.github.com/repos/$REPO/releases?per_page=50").openConnection() as HttpURLConnection
         c.connectTimeout = 10_000
         c.readTimeout = 15_000
         c.setRequestProperty("Accept", "application/vnd.github+json")
         c.setRequestProperty("User-Agent", "Diptico")
         val texto = try { c.inputStream.bufferedReader().use { it.readText() } } finally { c.disconnect() }
-        val lista = JSONArray(texto)
-        val actual = numeroActual(ctx)
-        val movil = esMovil(ctx)
-        var mejor: VersionNueva? = null
-        for (k in 0 until lista.length()) {
-            val r = lista.getJSONObject(k)
-            if (r.optBoolean("draft")) continue
-            val tag = r.optString("tag_name")
-            val n = patronBeta.matchEntire(tag.removePrefix("v"))?.groupValues?.get(1)?.toIntOrNull() ?: continue
-            if (n <= actual || (mejor != null && n <= mejor.numero)) continue
-            val assets = r.optJSONArray("assets") ?: continue
-            for (a in 0 until assets.length()) {
-                val o = assets.getJSONObject(a)
-                val archivoApk = o.optString("name")
-                // Cada versión baja su mismo tipo: la de consolas o la de teléfonos ("-movil").
-                val url = o.optString("browser_download_url")
-                if (o.optString("state") == "uploaded" && url.isNotBlank() &&
-                    archivoApk.endsWith(".apk") && archivoApk.contains("-movil") == movil) {
-                    mejor = VersionNueva(
-                        n, tag.removePrefix("v"), url, o.optLong("size"),
-                        r.optString("body").lineSequence().map { it.trim() }.filter { it.isNotBlank() }.take(4).joinToString("\n"),
-                    )
-                    break
-                }
-            }
-        }
-        return mejor
+        return seleccionarPublicacion(JSONArray(texto), ctx.packageName, esMovil(ctx), numeroActual(ctx))
     }
 
     /** ¿Es la versión para teléfonos? (la que no trae el acceso a notificaciones). */
@@ -210,7 +223,7 @@ object Actualizador {
         val pend = PendingIntent.getActivity(ctx, AVISO, abrir, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val n = android.app.Notification.Builder(ctx, CANAL)
             .setSmallIcon(cl.nikalbazu.diptico.R.mipmap.ic_launcher)
-            .setContentTitle("Díptico ${v.nombre} ya está disponible")
+            .setContentTitle("${nombreCanal(ctx)} ${v.nombre} ya está disponible")
             .setContentText("Tócala para descargarla e instalarla desde Díptico.")
             .setContentIntent(pend)
             .setAutoCancel(true)

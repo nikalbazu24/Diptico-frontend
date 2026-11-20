@@ -66,7 +66,9 @@ jobs:
             else
               nombre="2.0.0"
             fi
-          elif [[ "$GITHUB_REF" == "refs/heads/release/2.0.0" || "$GITHUB_REF" == "refs/heads/fix/apk-prueba-integrada-2-0-0" ]]; then
+          elif [[ "$GITHUB_REF" == "refs/heads/fix/apk-prueba-integrada-2-0-0" ]]; then
+            nombre="2.0.0-pruebas.$GITHUB_RUN_NUMBER"
+          elif [[ "$GITHUB_REF" == "refs/heads/release/2.0.0" ]]; then
             nombre="2.0.0-rc.$GITHUB_RUN_NUMBER"
           elif [[ "$FIRMAR" == "true" ]]; then
             nombre="1.1-beta.$GITHUB_RUN_NUMBER"
@@ -78,7 +80,7 @@ jobs:
           echo "Versión de esta compilación: $nombre"
 
       - name: Probar perfiles, navegación y estabilidad
-        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --tests "cl.nikalbazu.diptico.CajasLocalesTest" --tests "cl.nikalbazu.diptico.RecorridoTest" --tests "cl.nikalbazu.diptico.TourInteractivoTest" --no-daemon
+        run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --tests "cl.nikalbazu.diptico.CajasLocalesTest" --tests "cl.nikalbazu.diptico.RecorridoTest" --tests "cl.nikalbazu.diptico.TourInteractivoTest" --tests "cl.nikalbazu.diptico.ActualizadorCanalesTest" --no-daemon
 
       - name: Compilar y verificar firma de distribución
         if: env.FIRMAR == 'true'
@@ -193,6 +195,62 @@ jobs:
 
       - name: Probar los gestos del editor
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.EditorWidgetsTest" --no-daemon
+
+  publicar_pruebas:
+    # Únicamente el paquete independiente "Díptico Pruebas". Nunca publicar aquí la APK oficial.
+    needs: [apk, gestos_widgets]
+    if: github.ref == 'refs/heads/fix/apk-prueba-integrada-2-0-0' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Diptico-Pruebas-APK
+          path: distribucion
+
+      - name: Comprobar versiones, paquetes y ambos APK de Pruebas
+        env:
+          VERSION: ${{ needs.apk.outputs.numero }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" == "2.0.0-pruebas.$RUN_NUMBER" ]]
+          aapt="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n1)"
+          test -x "$aapt"
+          for variante in Completa Movil; do
+            apk="distribucion/Diptico-Pruebas-${variante}-v${VERSION}.apk"
+            test -s "$apk"
+            datos="$("$aapt" dump badging "$apk" | head -n1)"
+            [[ "$datos" == *"name='cl.nikalbazu.diptico.pruebas'"* ]]
+            [[ "$datos" == *"versionCode='${RUN_NUMBER}'"* ]]
+            [[ "$datos" == *"versionName='${VERSION}'"* ]]
+            echo "APK Pruebas verificada: $variante / $VERSION"
+          done
+
+      - name: Publicar actualización de Díptico Pruebas
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.apk.outputs.numero }}
+          target_commitish: ${{ github.sha }}
+          name: Díptico Pruebas v${{ needs.apk.outputs.numero }}
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: |
+            distribucion/Diptico-Pruebas-Completa-v${{ needs.apk.outputs.numero }}.apk
+            distribucion/Diptico-Pruebas-Movil-v${{ needs.apk.outputs.numero }}.apk
+          body: |
+            ## Díptico Pruebas — canal experimental separado
+            Compilación automática ${{ github.run_number }}: pruebas de navegación, estabilidad,
+            gestos del editor y firma de distribución aprobadas.
+            Estas APK usan el identificador Android cl.nikalbazu.diptico.pruebas
+            y NO reemplazan ni actualizan Díptico Oficial.
+            La app de pruebas detecta futuras versiones de este mismo canal
+            desde Menú › Acerca de › Actualizaciones, o mediante revisión automática.
+            - **Completa:** consolas Android.
+            - **Móvil:** teléfonos Android.
+            Se recomienda respaldar ajustes y partidas antes de actualizar.
 
   capturas_revision:
     # Solo en la rama de revisión: deja las fotos en un borrador para revisarlas sin descargar artefactos.
