@@ -149,6 +149,8 @@ private fun FranjaDippo(e: Estado) {
         Spacer(Modifier.width(esc.d(10)))
         AmigosJugando()
         Spacer(Modifier.width(esc.d(8)))
+        BotonRecargarJuegos(e, 30f)
+        Spacer(Modifier.width(esc.d(8)))
         RelojBateria()
     }
 }
@@ -248,6 +250,8 @@ fun InicioSala(e: Estado) {
             Spacer(Modifier.weight(1f))
             DippoInicio(e, 40f, lugar = "sala")
             Spacer(Modifier.width(esc.d(14)))
+            BotonRecargarJuegos(e, 34f)
+            Spacer(Modifier.width(esc.d(10)))
             RelojBateria()
         }
         val j = e.seleccionado
@@ -465,6 +469,7 @@ internal fun PieRiel(e: Estado, tele: Boolean, biblioteca: Boolean = false, conD
             else -> {
                 BotonPie(Icono.BUSCAR, "Buscar") { Diptico.abrirBuscar() }
                 Spacer(Modifier.width(esc.d(10)))
+                if (biblioteca) { BotonRecargarJuegos(e, 28f); Spacer(Modifier.width(esc.d(10))) }
                 if (conDippo) { DippoInicio(e, 28f, lugar = "pie"); Spacer(Modifier.width(esc.d(10))) }
                 if (biblioteca) Pistas("A" to "Abrir", "Mantener A" to "Ordenar", "Start" to "Menú")
                 else Pistas("A" to "Jugar", "L1/R1" to "Consola", "Y" to "Opciones", "Start" to "Menú")

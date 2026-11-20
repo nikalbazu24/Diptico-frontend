@@ -177,6 +177,7 @@ fun ColeccionArriba(e: Estado) {
                 }
                 Spacer(Modifier.weight(1f))
                 BotonWidgetsCV()
+                BotonRecargarJuegos(e, 52f)
                 HoraBateria(60f, 24f)
                 BotonPerfil(82f)
             }
@@ -460,6 +461,7 @@ fun ColeccionUnica(e: Estado) {
                 BotonRedondo(Icono.MENU, 64f, { Diptico.abrirApps() }, descripcion = "Apps")
                 BotonRedondo(Icono.APPS, 64f, { Diptico.fijarInicio("widgets") }, descripcion = "Widgets")
                 BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
+                BotonRecargarJuegos(e, 56f)
                 Spacer(Modifier.weight(1f))
                 if (e.extra.dippoInicio) Box(Modifier.size(esc.d(64)).clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) {
                     cl.nikalbazu.diptico.bisa.AvatarBisa(56f * esc.factor)
