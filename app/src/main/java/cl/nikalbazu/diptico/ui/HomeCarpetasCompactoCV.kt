@@ -15,6 +15,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -84,7 +87,7 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
 
         // 96 px reservados al dock: nunca invade las letras, la consola ni el carrusel.
         Column(
-            Modifier.fillMaxSize().padding(start = esc.d(50), end = esc.d(142), top = esc.d(18), bottom = esc.d(28)),
+            Modifier.fillMaxSize().padding(start = esc.d(50), end = esc.d(110), top = esc.d(18), bottom = esc.d(28)),
             verticalArrangement = Arrangement.spacedBy(esc.d(18)),
         ) {
             Row(
@@ -119,8 +122,7 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
                         Modifier.weight(.47f).fillMaxHeight(),
                         verticalArrangement = Arrangement.spacedBy(esc.d(16), Alignment.CenterVertically),
                     ) {
-                        InfoConsolaCV(e, seleccionada, tamNombre = 74f, lineasHistoria = 2)
-                        TarjetaPersonalizacionCompactaCV(e, seleccionada)
+                        FichaConsolaPortadaCV(e, seleccionada)
                     }
                     Column(
                         Modifier.weight(.53f).fillMaxHeight().testTag("consola-destacada-cv"),
@@ -150,18 +152,13 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
                                     "Y", "Seguir con ${ultimo.titulo}", { Diptico.seguirCon(ultimo) },
                                     modifier = Modifier.weight(1f), alto = 74f, letra = 20f,
                                 )
-                            } else {
-                                BotonTecla(
-                                    "Y", "Cambiar ícono", { Diptico.cambiarIconoCarpeta(seleccionada.id) },
-                                    modifier = Modifier.weight(1f), alto = 74f, letra = 20f,
-                                )
                             }
                         }
                     }
                 }
 
                 // Selector horizontal. No hay filtros Últimos/Favoritos/Elegidos ni botones 1...5.
-                SelectorCarpetasCompactoCV(e, seleccionada.id, Modifier.fillMaxWidth().height(esc.d(240)))
+                SelectorCarpetasCompactoCV(e, seleccionada.id, Modifier.fillMaxWidth().height(esc.d(188)))
             }
         }
         // Fuera del flujo principal y en el lateral derecho: abre o pliega con un toque.
@@ -172,45 +169,57 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
     }
 }
 
-/** Tarjeta breve: las opciones reales siguen abriéndose, pero no se confunde el carrusel con otra vista. */
+/** La ficha compacta deja todo el espacio libre bajo el título y mantiene la personalización en un engranaje. */
 @Composable
-private fun TarjetaPersonalizacionCompactaCV(e: Estado, c: Consola) {
+private fun FichaConsolaPortadaCV(e: Estado, c: Consola) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    val propia = e.consolasPropias[c.id]
-    Row(
-        Modifier.fillMaxWidth().height(esc.d(116))
-            .vidrio(28f, fuerte = true)
-            .clickable(onClickLabel = "Personalizar ${c.bonito}") { Diptico.abrirEditarConsola(c.id) }
-            .padding(horizontal = esc.d(16)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
-    ) {
-        Box(
-            Modifier.size(esc.d(78)).clip(RoundedCornerShape(esc.d(22)))
-                .background(c.color.copy(alpha = .28f)),
-            contentAlignment = Alignment.Center,
-        ) { IconoDiptico(Icono.AJUSTES, col.texto, 39f, acento = col.acento) }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(esc.d(7))) {
-            TB("Personalizar ${c.bonito}", 28f, titulo = true, lineas = 1, traducir = false)
-            Row(horizontalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                ChipPersonalizacionCV("Carrusel")
-                ChipPersonalizacionCV("Emulador: ${Diptico.nombreEmulador(c)}")
-                ChipPersonalizacionCV(if (propia?.portadaCarpeta == null) "Ícono original" else "Ícono propio")
-            }
-        }
-        TB("›", 45f, color = col.texto, traducir = false)
-    }
-}
+    val historia = HistoriaConsolas.de(c.id)
+    val juegos = e.juegosPorConsola[c.id].orEmpty()
+    val tiempo = juegos.sumOf { e.datos[it.clave]?.tiempo ?: 0L }
+    val nombre = e.consolasPropias[c.id]?.nombre ?: c.bonito
+    val conLogo = c.id in e.extra.logoConsolas
+    val uri = e.consolasPropias[c.id]?.logo?.let { android.net.Uri.parse(it) }
+    val logo = if (conLogo) rememberImagen(uri, 800) else null
 
-@Composable
-private fun ChipPersonalizacionCV(texto: String) {
-    val esc = LocalEscala.current
-    val col = LocalColeccion.current
-    Box(
-        Modifier.clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .09f))
-            .padding(horizontal = esc.d(10), vertical = esc.d(5)),
-    ) { TB(texto, 15f, peso = FontWeight.Bold, lineas = 1, traducir = false) }
+    Column(
+        Modifier.fillMaxWidth().anclaRecorrido("consola").testTag("ficha-consola-cv"),
+        verticalArrangement = Arrangement.spacedBy(esc.d(18)),
+    ) {
+        if (historia != null) {
+            TB("${historia.marca} · ${historia.anio} · ${historia.generacion}", 21f,
+                color = androidx.compose.ui.graphics.lerp(c.color, Color.White, .55f),
+                peso = FontWeight.ExtraBold, espaciado = 2.1f, lineas = 1)
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(esc.d(16)),
+        ) {
+            if (logo != null) {
+                Image(logo, contentDescription = nombre,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.weight(1f).height(esc.d(95)))
+            } else {
+                TB(nombre, 65f, modifier = Modifier.weight(1f), titulo = true,
+                    lineas = 2, interlineado = 64f, traducir = false)
+            }
+            BotonRedondo(
+                Icono.AJUSTES, 62f,
+                { Diptico.abrirEditarConsola(c.id) },
+                modifier = Modifier.testTag("personalizar-consola-cv"),
+                descripcion = "Personalizar ${c.bonito}",
+            )
+        }
+        if (historia != null) {
+            TB(historia.historia, 22f, color = col.sub,
+                peso = FontWeight.SemiBold, lineas = 3, interlineado = 31f)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+            ChipDato("${juegos.size} ${if (juegos.size == 1) "juego" else "juegos"}", 20f)
+            if (tiempo > 0) ChipDato("${formatoTiempo(tiempo)} jugadas", 20f)
+        }
+    }
 }
 
 /** DIPPO es el pulpo; solo él puede originar sus consejos efímeros. */
@@ -298,15 +307,16 @@ private fun MasJugadoArribaCV(e: Estado, c: Consola) {
             .maxByOrNull { e.datos[it.clave]?.tiempo ?: 0L }
             ?.takeIf { (e.datos[it.clave]?.tiempo ?: 0L) > 0L }
     }
+    if (mejor == null) return
     Row(
-        Modifier.height(esc.d(59)).fillMaxWidth(.94f)
+        Modifier.height(esc.d(48)).fillMaxWidth(.85f)
             .vidrio(30f, fuerte = true).testTag("tu-mas-jugado-cv")
             .padding(horizontal = esc.d(20)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(esc.d(15)),
     ) {
-        TB(if (mejor != null) "TU MÁS JUGADO" else "TUS PARTIDAS", 19f, color = col.acento, peso = FontWeight.ExtraBold)
-        TB(mejor?.titulo ?: "Aún no hay partidas en esta consola", 20f, modifier = Modifier.weight(1f), lineas = 1, traducir = false)
+        TB("TU MÁS JUGADO", 18f, color = col.acento, peso = FontWeight.ExtraBold)
+        TB(mejor.titulo, 19f, modifier = Modifier.weight(1f), lineas = 1, traducir = false)
     }
 }
 
@@ -340,15 +350,13 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
     val indice = ids.indexOf(seleccionadaId).coerceAtLeast(0)
     val lista = rememberLazyListState()
     SideEffect { Teclas.carrilesCarpetas = 1 }
-    LaunchedEffect(seleccionadaId, ids) {
-        if (ids.isNotEmpty()) lista.animateScrollToItem((indice - 1).coerceAtLeast(0))
-    }
+
     Column(
         modifier.testTag("selector-carpetas-compacto-cv"),
         verticalArrangement = Arrangement.spacedBy(esc.d(9)),
     ) {
         Row(
-            Modifier.fillMaxWidth().height(esc.d(38)),
+            Modifier.fillMaxWidth().height(esc.d(35)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
         ) {
@@ -366,53 +374,56 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
             FlechaSelectorCV("‹", {
                 if (ids.isNotEmpty()) Diptico.elegirConsola(ids[(indice - 1 + ids.size) % ids.size])
             }, descripcion = "Consola anterior")
-            LazyRow(
-                Modifier.weight(1f).fillMaxHeight().testTag("carrusel-carpetas-cv"),
-                state = lista,
-                horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
-            ) {
-                items(ids, key = { it }) { id ->
-                    val c = Consolas.porId(id) ?: return@items
-                    val elegida = id == seleccionadaId
-                    val forma = RoundedCornerShape(esc.d(24))
-                    Column(
-                        Modifier.width(esc.d(170)).fillMaxHeight()
-                            .clip(forma)
-                            .background(Brush.verticalGradient(listOf(c.color.copy(alpha = if (elegida) .78f else .52f), col.fondo.copy(alpha = .84f))))
-                            .then(if (elegida) Modifier.border(esc.d(4), col.elegido, forma) else Modifier.border(1.dp, col.borde, forma))
-                            .clickable(onClickLabel = if (elegida) "Entrar a ${c.bonito}" else "Elegir ${c.bonito}") {
-                                if (elegida) Diptico.entrarConsolaCV(id) else Diptico.elegirConsola(id)
-                            }
-                            .testTag("carpeta-cv-$id")
-                            .padding(esc.d(8)),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(esc.d(4)),
-                    ) {
-                        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                            IconoCarpetaCompactoCV(e, c)
+            BoxWithConstraints(Modifier.weight(1f).fillMaxHeight()) {
+                val anchoTarjeta = esc.d(148f)
+                val espacioLateral = ((maxWidth - anchoTarjeta) / 2).coerceAtLeast(0.dp)
+                val desplazamiento = with(LocalDensity.current) { espacioLateral.roundToPx() }
+                LaunchedEffect(seleccionadaId, ids, desplazamiento) {
+                    if (ids.isNotEmpty()) lista.animateScrollToItem(indice, -desplazamiento)
+                }
+                LazyRow(
+                    Modifier.fillMaxSize().testTag("carrusel-carpetas-cv"),
+                    state = lista,
+                    contentPadding = PaddingValues(horizontal = espacioLateral),
+                    horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
+                ) {
+                    items(ids, key = { it }) { id ->
+                        val c = Consolas.porId(id) ?: return@items
+                        val elegida = id == seleccionadaId
+                        val forma = RoundedCornerShape(esc.d(23))
+                        val nombreCorto = e.consolasPropias[id]?.nombre?.takeIf { it.isNotBlank() } ?: when (id.lowercase()) {
+                            "switch" -> "Switch"
+                            "ps2" -> "PS2"
+                            "gba" -> "GBA"
+                            "snes" -> "SNES"
+                            "android" -> "Android"
+                            else -> c.bonito
                         }
-                        TB(e.consolasPropias[id]?.nombre ?: c.bonito, 19f, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
+                        Column(
+                            Modifier.width(anchoTarjeta).fillMaxHeight()
+                                .clip(forma)
+                                .background(Brush.verticalGradient(listOf(c.color.copy(alpha = if (elegida) .8f else .5f), col.fondo.copy(alpha = .85f))))
+                                .then(if (elegida) Modifier.border(esc.d(3), col.elegido, forma) else Modifier.border(1.dp, col.borde, forma))
+                                .clickable(onClickLabel = if (elegida) "Entrar a ${c.bonito}" else "Elegir ${c.bonito}") {
+                                    if (elegida) Diptico.entrarConsolaCV(id) else Diptico.elegirConsola(id)
+                                }
+                                .testTag("carpeta-cv-$id")
+                                .padding(esc.d(8)),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+                        ) {
+                            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                                IconoCarpetaCompactoCV(e, c)
+                            }
+                            TB(nombreCorto, 17f, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
+                        }
                     }
                 }
             }
             FlechaSelectorCV("›", {
                 if (ids.isNotEmpty()) Diptico.elegirConsola(ids[(indice + 1) % ids.size])
             }, descripcion = "Consola siguiente")
-            Row(
-                Modifier.width(esc.d(310)).fillMaxHeight().vidrio(29f, fuerte = true)
-                    .clickable(onClickLabel = "Entrar a la biblioteca de ${seleccionadaId}") { Diptico.entrarConsolaCV(seleccionadaId) }
-                    .testTag("abrir-biblioteca-cv")
-                    .padding(horizontal = esc.d(20)),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
-            ) {
-                IconoDiptico(Icono.BIBLIOTECA, col.texto, 54f)
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                    TB("Biblioteca", 27f, titulo = true)
-                    TB("Explora tus juegos", 18f, color = col.sub)
-                }
-                TB("›", 38f, traducir = false)
-            }
+
         }
     }
 }
@@ -438,16 +449,16 @@ private fun DockLateralCompactoCV(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     val vista = LocalView.current
-    var abierto by rememberSaveable { mutableStateOf(true) }
+    var abierto by rememberSaveable { mutableStateOf(false) }
     Column(
-        modifier.width(esc.d(84)).vidrio(40f, fuerte = true)
-            .padding(horizontal = esc.d(8), vertical = esc.d(13))
+        modifier.width(esc.d(if (abierto) 84f else 60f)).vidrio(35f, fuerte = true)
+            .padding(horizontal = esc.d(if (abierto) 8f else 3f), vertical = esc.d(if (abierto) 13f else 5f))
             .testTag("dock-lateral-cv"),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(esc.d(10)),
     ) {
         Box(
-            Modifier.size(esc.d(61)).clip(CircleShape)
+            Modifier.size(esc.d(if (abierto) 61f else 52f)).clip(CircleShape)
                 .clickable(onClickLabel = if (abierto) "Plegar dock de apps" else "Desplegar dock de apps") {
                     abierto = !abierto
                 }
