@@ -1719,6 +1719,7 @@ class Capturas {
         regla.onNodeWithTag("boton-perfil").assertExists()
         regla.onNodeWithTag("consola-destacada-cv").assertExists()
         regla.onNodeWithTag("tu-mas-jugado-cv").assertExists()
+        regla.onNodeWithTag("acciones-consola-cv").assertExists()
         regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
         regla.onNodeWithTag("dock-lateral-alternar").assertExists()
         regla.onNodeWithTag("abrir-biblioteca-cv").assertExists()
