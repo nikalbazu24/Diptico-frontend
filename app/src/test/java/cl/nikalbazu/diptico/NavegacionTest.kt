@@ -341,6 +341,7 @@ class NavegacionTest {
     @Test fun novedadesNoRepitenIdentificadoresNiRevivenVersionesAntiguas() {
         val ids = Novedades.HISTORIAL.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
+        assertEquals(listOf(Novedades.ID), Novedades.pendientes("diptico-2.0.0").map { it.id })
         assertEquals(listOf(Novedades.ID), Novedades.pendientes("tienda-musica-2.0-75").map { it.id })
         assertEquals(listOf(Novedades.ID, "tienda-musica-2.0-75"), Novedades.pendientes("temas-tienda-2.0-74").map { it.id })
         assertEquals(listOf(Novedades.ID, "tienda-musica-2.0-75", "temas-tienda-2.0-74"), Novedades.pendientes("cuentas-emuladores-2.0-73").map { it.id })
