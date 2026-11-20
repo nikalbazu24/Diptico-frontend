@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "diptico-2.0.0"
-    const val NOMBRE = "Díptico 2.0.0"
+    const val ID = "diptico-2.0.0-oficial"
+    const val NOMBRE = "Díptico 2.0.0 oficial"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -571,7 +571,7 @@ object Novedades {
             Pagina("La tienda nueva, a la vista", "Ajustes › Estilo › Tienda de temas abre la tienda nueva: Nuevos, Remasterizados, Widgets y los demás. Los temas para descargar quedaron en «Temas de la comunidad».", Icono.PALETA, 0xFF6B4EFF),
             Pagina("Ahora sí suena la música viva", "Los temas traían una canción corta que tapaba a la nueva. Ahora todos los temas suenan con la música viva; solo «Mi tema» puede llevar una canción tuya.", Icono.MUSICA, 0xFFFF9B54),
         )),
-        Version(ID, "Díptico 2.0.0 · Colección viva", listOf(
+        Version("diptico-2.0.0", "Díptico 2.0.0 · Colección viva", listOf(
             Pagina("Un Díptico nuevo", "Arriba, el arte del juego a pantalla completa con su caja en 3D; abajo, tus consolas, un estante de cajas y tus apps. Todo en su lugar, sin nada encima.", Icono.PORTADA, 0xFF3B6BFF),
             Pagina("Gira la caja", "Toca la caja o aprieta R3: viaja al centro y muestra el reverso. Abajo aparece el carrete con todas sus imágenes.", Icono.CHISPA, 0xFF6B4EFF),
             Pagina("Tus consolas, con su historia", "En las carpetas, cada consola cuenta su historia y aparece en grande, con sus colores originales y la pantalla apagada, flotando sobre un fondo de su color: inclínala con el dedo o con el stick derecho. Al entrar suena su propio encendido.", Icono.MANDO, 0xFFFF9B54),
@@ -583,6 +583,10 @@ object Novedades {
             Pagina("Widgets útiles", "Marcador en vivo, próximo partido y tabla (fútbol chileno, Libertadores, NBA y más), contador, marcador para jugar con otros, dados, cuenta regresiva, nota, clima, feriados de Chile y hora en el mundo.", Icono.TROFEO, 0xFFFF5D5D),
             Pagina("Un comienzo nuevo", "Intro nueva, configuración con DIPPO (si tu consola tiene dos pantallas, el primer paso es elegir dos o una sola; después se cambia en Ajustes › Pantallas › Modo de pantallas; otro paso conecta tus cuentas y claves: Discord, RetroAchievements, SteamGridDB, TheGamesDB, ScreenScraper, IGDB, RAWG y la IA de DIPPO) y un recorrido donde él te muestra cada parte y te hace probar los botones. Lo vuelves a ver desde Ajustes.", Icono.BISA, 0xFFFF7A59),
             Pagina("¿Lo quieres como antes?", "Ajustes › Estilo › «Diseño Colección viva» lo apaga y vuelve el de antes.", Icono.AJUSTES, 0xFFB9BBD6),
+        )),
+        Version(ID, "Díptico 2.0.0 oficial", listOf(
+            Pagina("Tus juegos, al día", "Cuando agregues juegos a tus carpetas, toca el pequeño botón ↻ del inicio. Díptico buscará los nuevos sin reiniciar ni cambiar tus ajustes.", Icono.CARPETA, 0xFF2EC4A6, "↻ Actualizar juegos"),
+            Pagina("Un inicio más despejado", "En equipos de una pantalla, tus consolas, el juego destacado y la biblioteca tienen su lugar. En dos pantallas y en Colección viva también está el botón para actualizar juegos.", Icono.PORTADA, 0xFF3B6BFF),
         )),
     )
 
