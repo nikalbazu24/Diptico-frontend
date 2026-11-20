@@ -154,8 +154,8 @@ jobs:
         id: paquete
         run: |
           numero="$DIPTICO_VERSION_NAME"
-          cp app/build/outputs/apk/completa/release/app-completa-release.apk "Diptico-v$numero.apk"
-          cp app/build/outputs/apk/movil/release/app-movil-release.apk "Diptico-v$numero-movil.apk"
+          cp app/build/outputs/apk/completa/release/app-completa-release.apk "Diptico-Pruebas-Completa-v$numero.apk"
+          cp app/build/outputs/apk/movil/release/app-movil-release.apk "Diptico-Pruebas-Movil-v$numero.apk"
           printf 'numero=%s\n' "$numero" >> "$GITHUB_OUTPUT"
 
       - name: Sacar fotos de las pantallas
@@ -170,7 +170,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Diptico-APK
+          name: Diptico-Pruebas-APK
           path: |
             Diptico-*.apk
             Capturas-*.zip
