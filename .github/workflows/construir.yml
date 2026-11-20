@@ -27,7 +27,7 @@ jobs:
       contents: write
     env:
       DIPTICO_REPORTES_URL: ${{ vars.DIPTICO_REPORTES_URL }}
-      FIRMAR: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release/2.0.0' || github.ref == 'refs/heads/fix/153-liquid-glass') && (github.event_name == 'push' || inputs.preparar_firma) }}
+      FIRMAR: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release/2.0.0' || github.ref == 'refs/heads/fix/153-liquid-glass' || github.ref == 'refs/heads/fix/apk-prueba-integrada-2-0-0') && (github.event_name == 'push' || inputs.preparar_firma) }}
     outputs:
       numero: ${{ steps.paquete.outputs.numero }}
     steps:
@@ -66,7 +66,7 @@ jobs:
             else
               nombre="2.0.0"
             fi
-          elif [[ "$GITHUB_REF" == "refs/heads/release/2.0.0" ]]; then
+          elif [[ "$GITHUB_REF" == "refs/heads/release/2.0.0" || "$GITHUB_REF" == "refs/heads/fix/apk-prueba-integrada-2-0-0" ]]; then
             nombre="2.0.0-rc.$GITHUB_RUN_NUMBER"
           elif [[ "$FIRMAR" == "true" ]]; then
             nombre="1.1-beta.$GITHUB_RUN_NUMBER"
