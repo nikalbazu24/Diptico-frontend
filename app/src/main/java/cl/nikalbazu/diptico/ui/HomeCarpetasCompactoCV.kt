@@ -1,5 +1,6 @@
 package cl.nikalbazu.diptico.ui
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -7,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -38,16 +40,15 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -85,22 +86,27 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
         )
         FondoTemaCV()
 
-        // 96 px reservados al dock: nunca invade las letras, la consola ni el carrusel.
+        // Reserva lateral para el dock fijo: el carrusel y el arte no quedan debajo de las apps.
         Column(
-            Modifier.fillMaxSize().padding(start = esc.d(50), end = esc.d(110), top = esc.d(18), bottom = esc.d(28)),
-            verticalArrangement = Arrangement.spacedBy(esc.d(18)),
+            Modifier.fillMaxSize().padding(start = esc.d(50), end = esc.d(112), top = esc.d(18), bottom = esc.d(28)),
+            verticalArrangement = Arrangement.spacedBy(esc.d(14)),
         ) {
             Row(
-                Modifier.fillMaxWidth().height(esc.d(110)),
+                Modifier.fillMaxWidth().height(esc.d(106)).padding(end = esc.d(98)),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
             ) {
                 DippoConsejosEsquinaCV(e, Modifier.weight(1f).anclaRecorrido("dippo"))
-                BotonRecargarJuegos(e, 56f)
-                HoraBateria(58f, 23f)
-                BotonRedondo(Icono.AJUSTES, 60f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
-                // La foto del usuario NO es DIPPO. Permanece arriba, independiente.
-                Box(Modifier.anclaRecorrido("perfil")) { BotonPerfil(76f) }
+                Box(
+                    Modifier.size(esc.d(68)).testTag("recargar-alineado-cv"),
+                    contentAlignment = Alignment.Center,
+                ) { BotonRecargarJuegos(e, 56f) }
+                Box(Modifier.height(esc.d(68)), contentAlignment = Alignment.Center) {
+                    HoraBateria(58f, 23f)
+                }
+                Box(Modifier.size(esc.d(68)), contentAlignment = Alignment.Center) {
+                    BotonRedondo(Icono.AJUSTES, 60f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
+                }
             }
 
             if (seleccionada == null) {
@@ -136,36 +142,46 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
                         Modelos3D.credito(seleccionada.id)?.let {
                             TB(it, 15f, color = col.tenue, lineas = 1, traducir = false)
                         }
-                        // A/Y tienen su franja propia bajo el modelo; nunca quedan tapados por las carpetas.
-                        Row(
-                            Modifier.fillMaxWidth().anclaRecorrido("controles").testTag("acciones-consola-cv"),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
-                        ) {
-                            BotonTecla(
-                                "A", "Entrar", { Diptico.entrarConsolaCV(seleccionada.id) },
-                                alto = 74f, principal = true, letra = 25f,
-                            )
-                            val ultimo = ultimoDeConsola(e, seleccionada.id)
-                            if (ultimo != null) {
-                                BotonTecla(
-                                    "Y", "Seguir con ${ultimo.titulo}", { Diptico.seguirCon(ultimo) },
-                                    modifier = Modifier.weight(1f), alto = 74f, letra = 20f,
-                                )
-                            }
-                        }
+                        // Las acciones se trasladan a una fila común sobre "CONSOLAS".
+
                     }
                 }
 
-                // Selector horizontal. No hay filtros Últimos/Favoritos/Elegidos ni botones 1...5.
-                SelectorCarpetasCompactoCV(e, seleccionada.id, Modifier.fillMaxWidth().height(esc.d(188)))
+                // Acción principal inmediatamente encima del encabezado del selector.
+                Row(
+                    Modifier.fillMaxWidth().height(esc.d(72))
+                        .anclaRecorrido("controles").testTag("acciones-consola-cv"),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    BotonTecla(
+                        "A", "Entrar", { Diptico.entrarConsolaCV(seleccionada.id) },
+                        alto = 70f, principal = true, letra = 25f,
+                    )
+                    ultimoDeConsola(e, seleccionada.id)?.let { ultimo ->
+                        Spacer(Modifier.width(esc.d(14)))
+                        BotonTecla(
+                            "Y", "Seguir con ${ultimo.titulo}", { Diptico.seguirCon(ultimo) },
+                            alto = 70f, letra = 20f,
+                        )
+                    }
+                }
+                // Selector centrado con énfasis en la tarjeta activa.
+                SelectorCarpetasCompactoCV(e, seleccionada.id, Modifier.fillMaxWidth().height(esc.d(184)))
             }
         }
-        // Fuera del flujo principal y en el lateral derecho: abre o pliega con un toque.
+        // Dock permanente en el costado derecho, independiente de la navegación por consolas.
         DockLateralCompactoCV(
             e,
-            Modifier.align(Alignment.CenterEnd).padding(end = esc.d(18)).anclaRecorrido("apps"),
+            Modifier.align(Alignment.CenterEnd).padding(end = esc.d(14)).anclaRecorrido("apps"),
         )
+        // El perfil es una foto personal, no DIPPO; queda pegado al borde exterior.
+        Box(
+            Modifier.align(Alignment.TopEnd)
+                .padding(top = esc.d(11), end = esc.d(8))
+                .anclaRecorrido("perfil")
+                .testTag("perfil-esquina-cv"),
+        ) { BotonPerfil(76f) }
     }
 }
 
@@ -204,12 +220,19 @@ private fun FichaConsolaPortadaCV(e: Estado, c: Consola) {
                 TB(nombre, 65f, modifier = Modifier.weight(1f), titulo = true,
                     lineas = 2, interlineado = 64f, traducir = false)
             }
-            BotonRedondo(
-                Icono.AJUSTES, 62f,
-                { Diptico.abrirEditarConsola(c.id) },
-                modifier = Modifier.testTag("personalizar-consola-cv"),
-                descripcion = "Personalizar ${c.bonito}",
-            )
+            Box(
+                Modifier.size(esc.d(86)).clip(CircleShape)
+                    .background(c.color.copy(alpha = .27f))
+                    .border(esc.d(3), col.acento.copy(alpha = .95f), CircleShape)
+                    .testTag("personalizar-consola-cv"),
+                contentAlignment = Alignment.Center,
+            ) {
+                BotonRedondo(
+                    Icono.AJUSTES, 72f,
+                    { Diptico.abrirEditarConsola(c.id) },
+                    descripcion = "Personalizar ${c.bonito}",
+                )
+            }
         }
         if (historia != null) {
             TB(historia.historia, 22f, color = col.sub,
