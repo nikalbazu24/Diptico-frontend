@@ -88,21 +88,10 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
             verticalArrangement = Arrangement.spacedBy(esc.d(14)),
         ) {
             Row(
-                Modifier.fillMaxWidth().height(esc.d(106)).padding(end = esc.d(98)),
+                Modifier.fillMaxWidth().height(esc.d(106)),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
             ) {
-                DippoConsejosEsquinaCV(e, Modifier.weight(1f).anclaRecorrido("dippo"))
-                Box(
-                    Modifier.size(esc.d(68)).testTag("recargar-alineado-cv"),
-                    contentAlignment = Alignment.Center,
-                ) { BotonRecargarJuegos(e, 56f) }
-                Box(Modifier.height(esc.d(68)), contentAlignment = Alignment.Center) {
-                    HoraBateria(58f, 23f)
-                }
-                Box(Modifier.size(esc.d(68)), contentAlignment = Alignment.Center) {
-                    BotonRedondo(Icono.AJUSTES, 60f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
-                }
+                DippoConsejosEsquinaCV(e, Modifier.anclaRecorrido("dippo"))
             }
 
             if (seleccionada == null) {
@@ -147,13 +136,16 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
                 Row(
                     Modifier.fillMaxWidth().height(esc.d(72))
                         .anclaRecorrido("controles").testTag("acciones-consola-cv"),
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    BotonTecla(
-                        "A", "Entrar", { Diptico.entrarConsolaCV(seleccionada.id) },
-                        alto = 70f, principal = true, letra = 25f,
-                    )
+                    // A · Entrar queda al costado izquierdo, justo encima de «CONSOLAS».
+                    Box(Modifier.testTag("entrar-izquierda-cv"), contentAlignment = Alignment.CenterStart) {
+                        BotonTecla(
+                            "A", "Entrar", { Diptico.entrarConsolaCV(seleccionada.id) },
+                            alto = 70f, principal = true, letra = 25f,
+                        )
+                    }
                     ultimoDeConsola(e, seleccionada.id)?.let { ultimo ->
                         Spacer(Modifier.width(esc.d(14)))
                         BotonTecla(
@@ -171,13 +163,30 @@ fun CarpetasUnicaCompactaCV(e: Estado) {
             e,
             Modifier.align(Alignment.CenterEnd).padding(end = esc.d(14)).anclaRecorrido("apps"),
         )
-        // El perfil es una foto personal, no DIPPO; queda pegado al borde exterior.
-        Box(
+        // Una sola fila flotante: utilidades pegadas a la foto de perfil sin hueco intermedio.
+        Row(
             Modifier.align(Alignment.TopEnd)
-                .padding(top = esc.d(11), end = esc.d(8))
-                .anclaRecorrido("perfil")
-                .testTag("perfil-esquina-cv"),
-        ) { BotonPerfil(76f) }
+                .padding(top = esc.d(13), end = esc.d(8))
+                .height(esc.d(88))
+                .testTag("utilidades-perfil-cv"),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
+        ) {
+            Box(
+                Modifier.size(esc.d(64)).testTag("recargar-alineado-cv"),
+                contentAlignment = Alignment.Center,
+            ) { BotonRecargarJuegos(e, 56f) }
+            Box(Modifier.height(esc.d(68)), contentAlignment = Alignment.Center) {
+                HoraBateria(58f, 23f)
+            }
+            Box(Modifier.size(esc.d(68)), contentAlignment = Alignment.Center) {
+                BotonRedondo(Icono.AJUSTES, 60f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
+            }
+            Box(
+                Modifier.anclaRecorrido("perfil").testTag("perfil-esquina-cv"),
+                contentAlignment = Alignment.Center,
+            ) { BotonPerfil(76f) }
+        }
     }
 }
 
@@ -447,7 +456,7 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
                                 else -> c.bonito
                             }
                             val escala by animateFloatAsState(
-                                targetValue = if (elegida) 1.10f else .92f,
+                                targetValue = if (elegida) 1.23f else .86f,
                                 animationSpec = tween(220),
                                 label = "Destacar consola seleccionada",
                             )

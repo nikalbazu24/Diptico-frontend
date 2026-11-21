@@ -1730,6 +1730,15 @@ class Capturas {
         regla.onNodeWithTag("dock-lateral-alternar").assertDoesNotExist()
         regla.onNodeWithTag("perfil-esquina-cv").assertExists()
         regla.onNodeWithTag("recargar-alineado-cv").assertExists()
+        regla.onNodeWithTag("utilidades-perfil-cv").assertExists()
+        regla.onNodeWithTag("entrar-izquierda-cv").assertExists()
+        val centroEntrar = regla.onNodeWithTag("entrar-izquierda-cv").fetchSemanticsNode().boundsInRoot.center.x
+        assertTrue("Entrar debe ubicarse a la izquierda", centroEntrar < centroSelector - 100f)
+        val centroFlecha = regla.onNodeWithTag("recargar-icono").fetchSemanticsNode().boundsInRoot.center
+        val centroRecargar = regla.onNodeWithTag("recargar-juegos").fetchSemanticsNode().boundsInRoot.center
+        assertTrue("La flecha debe coincidir con el centro del círculo",
+            kotlin.math.abs(centroFlecha.x - centroRecargar.x) < 2f &&
+            kotlin.math.abs(centroFlecha.y - centroRecargar.y) < 2f)
         regla.onNodeWithTag("abrir-biblioteca-cv").assertDoesNotExist()
         regla.onNodeWithTag("personalizar-consola-cv").assertExists()
         regla.onNodeWithTag("recargar-juegos").assertExists()
