@@ -34,6 +34,7 @@ import cl.nikalbazu.diptico.ui.Raiz
 import cl.nikalbazu.diptico.ui.Rol
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -1721,6 +1722,10 @@ class Capturas {
         regla.onNodeWithTag("tu-mas-jugado-cv").assertExists()
         regla.onNodeWithTag("acciones-consola-cv").assertExists()
         regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
+        // No basta con que el ítem exista: su centro debe coincidir con el del selector.
+        val centroSelector = regla.onNodeWithTag("carrusel-carpetas-cv").fetchSemanticsNode().boundsInRoot.center.x
+        val centroElegida = regla.onNodeWithTag("carpeta-cv-snes").fetchSemanticsNode().boundsInRoot.center.x
+        assertTrue("La consola elegida debe permanecer al centro", kotlin.math.abs(centroElegida - centroSelector) < 36f)
         regla.onNodeWithTag("dock-lateral-cv").assertExists()
         regla.onNodeWithTag("dock-lateral-alternar").assertDoesNotExist()
         regla.onNodeWithTag("perfil-esquina-cv").assertExists()
