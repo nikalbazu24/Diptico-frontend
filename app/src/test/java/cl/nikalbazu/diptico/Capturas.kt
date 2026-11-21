@@ -1734,7 +1734,7 @@ class Capturas {
         regla.onNodeWithTag("entrar-izquierda-cv").assertExists()
         val centroEntrar = regla.onNodeWithTag("entrar-izquierda-cv").fetchSemanticsNode().boundsInRoot.center.x
         assertTrue("Entrar debe ubicarse a la izquierda", centroEntrar < centroSelector - 100f)
-        val centroFlecha = regla.onNodeWithTag("recargar-icono").fetchSemanticsNode().boundsInRoot.center
+        val centroFlecha = regla.onNodeWithTag("recargar-icono", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.center
         val centroRecargar = regla.onNodeWithTag("recargar-juegos").fetchSemanticsNode().boundsInRoot.center
         assertTrue("La flecha debe coincidir con el centro del círculo",
             kotlin.math.abs(centroFlecha.x - centroRecargar.x) < 2f &&
