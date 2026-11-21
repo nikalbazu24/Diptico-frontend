@@ -8,7 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -17,8 +17,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,14 +27,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -371,7 +367,6 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
     val col = LocalColeccion.current
     val ids = remember(e.pestanas) { e.pestanas.filter { it != "todo" && Consolas.porId(it) != null } }
     val indice = ids.indexOf(seleccionadaId).coerceAtLeast(0)
-    val lista = rememberLazyListState()
     SideEffect { Teclas.carrilesCarpetas = 1 }
 
     Column(
@@ -397,81 +392,101 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
             FlechaSelectorCV("‹", {
                 if (ids.isNotEmpty()) Diptico.elegirConsola(ids[(indice - 1 + ids.size) % ids.size])
             }, descripcion = "Consola anterior")
-            BoxWithConstraints(Modifier.weight(1f).fillMaxHeight()) {
-                val anchoTarjeta = esc.d(148f)
-                // El padding permite centrar incluso la primera y la última consola.
-                val espacioLateral = ((maxWidth - anchoTarjeta) / 2).coerceAtLeast(0.dp)
-                LaunchedEffect(seleccionadaId, ids, maxWidth) {
-                    if (ids.isNotEmpty()) {
-                        // Alinear primero el elemento, luego corregir su centro real.
-                        // Evita el descentrado por aplicar dos veces el padding lateral.
-                        lista.scrollToItem(indice)
-                        val visible = lista.layoutInfo.visibleItemsInfo.firstOrNull { it.index == indice }
-                        if (visible != null) {
-                            val centroVista = lista.layoutInfo.viewportSize.width / 2f
-                            val centroTarjeta = visible.offset + visible.size / 2f
-                            lista.animateScrollBy(centroTarjeta - centroVista)
-                        }
-                    }
-                }
-                LazyRow(
-                    Modifier.fillMaxSize().testTag("carrusel-carpetas-cv"),
-                    state = lista,
-                    contentPadding = PaddingValues(horizontal = espacioLateral),
-                    horizontalArrangement = Arrangement.spacedBy(esc.d(14)),
-                ) {
-                    items(ids, key = { it }) { id ->
-                        val c = Consolas.porId(id) ?: return@items
-                        val elegida = id == seleccionadaId
-                        val forma = RoundedCornerShape(esc.d(23))
-                        val nombreCorto = e.consolasPropias[id]?.nombre?.takeIf { it.isNotBlank() } ?: when (id.lowercase()) {
-                            "switch" -> "Switch"
-                            "ps2" -> "PS2"
-                            "gba" -> "GBA"
-                            "snes" -> "SNES"
-                            "android" -> "Android"
-                            else -> c.bonito
-                        }
-                        val escala by animateFloatAsState(
-                            targetValue = if (elegida) 1.10f else .92f,
-                            animationSpec = tween(220),
-                            label = "Destacar consola seleccionada",
-                        )
-                        Box(
-                            Modifier.width(anchoTarjeta).fillMaxHeight(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Column(
-                                Modifier.fillMaxWidth().fillMaxHeight(.86f)
-                                    .graphicsLayer {
-                                        scaleX = escala
-                                        scaleY = escala
-                                    }
-                                    .clip(forma)
-                                    .background(
-                                        Brush.verticalGradient(
-                                            listOf(
-                                                c.color.copy(alpha = if (elegida) .85f else .50f),
-                                                col.fondo.copy(alpha = .85f),
-                                            ),
-                                        ),
-                                    )
-                                    .then(
-                                        if (elegida) Modifier.border(esc.d(3), col.elegido, forma)
-                                        else Modifier.border(1.dp, col.borde, forma),
-                                    )
-                                    .clickable(onClickLabel = if (elegida) "Entrar a ${c.bonito}" else "Elegir ${c.bonito}") {
-                                        if (elegida) Diptico.entrarConsolaCV(id) else Diptico.elegirConsola(id)
-                                    }
-                                    .testTag("carpeta-cv-$id")
-                                    .padding(esc.d(8)),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(esc.d(4)),
-                            ) {
-                                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                                    IconoCarpetaCompactoCV(e, c)
+            // Cinco posiciones estables (-2…+2); la elegida ocupa SIEMPRE el centro.
+            // A diferencia de desplazar una LazyRow al final, esto nunca deja la
+            // consola seleccionada pegada al borde cuando hay pocas/muchas carpetas.
+            Row(
+                Modifier.weight(1f).fillMaxHeight()
+                    .testTag("carrusel-carpetas-cv")
+                    .pointerInput(ids, seleccionadaId) {
+                        var arrastre = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { arrastre = 0f },
+                            onHorizontalDrag = { change, dx ->
+                                arrastre += dx
+                                change.consume()
+                            },
+                            onDragEnd = {
+                                if (ids.isNotEmpty() && kotlin.math.abs(arrastre) >= size.width * .055f) {
+                                    val movimiento = if (arrastre < 0f) 1 else -1
+                                    Diptico.elegirConsola(ids[(indice + movimiento + ids.size) % ids.size])
                                 }
-                                TB(nombreCorto, 17f, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
+                                arrastre = 0f
+                            },
+                        )
+                    },
+                horizontalArrangement = Arrangement.spacedBy(esc.d(14), Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val anchoTarjeta = esc.d(148f)
+                val visibles = when (ids.size) {
+                    0 -> emptySet<Int>()
+                    1 -> setOf(0)
+                    2 -> setOf(0, 1)
+                    3 -> setOf(-1, 0, 1)
+                    4 -> setOf(-2, -1, 0, 1)
+                    else -> setOf(-2, -1, 0, 1, 2)
+                }
+                for (posicion in -2..2) {
+                    if (posicion !in visibles || ids.isEmpty()) {
+                        Spacer(Modifier.width(anchoTarjeta))
+                    } else {
+                        val id = ids[(indice + posicion + ids.size) % ids.size]
+                        val c = Consolas.porId(id)
+                        if (c == null) {
+                            Spacer(Modifier.width(anchoTarjeta))
+                        } else {
+                            val elegida = posicion == 0
+                            val forma = RoundedCornerShape(esc.d(23))
+                            val nombreCorto = e.consolasPropias[id]?.nombre?.takeIf { it.isNotBlank() } ?: when (id.lowercase()) {
+                                "switch" -> "Switch"
+                                "ps2" -> "PS2"
+                                "gba" -> "GBA"
+                                "snes" -> "SNES"
+                                "android" -> "Android"
+                                else -> c.bonito
+                            }
+                            val escala by animateFloatAsState(
+                                targetValue = if (elegida) 1.10f else .92f,
+                                animationSpec = tween(220),
+                                label = "Destacar consola seleccionada",
+                            )
+                            Box(
+                                Modifier.width(anchoTarjeta).fillMaxHeight(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Column(
+                                    Modifier.fillMaxWidth().fillMaxHeight(.86f)
+                                        .graphicsLayer {
+                                            scaleX = escala
+                                            scaleY = escala
+                                        }
+                                        .clip(forma)
+                                        .background(
+                                            Brush.verticalGradient(
+                                                listOf(
+                                                    c.color.copy(alpha = if (elegida) .85f else .50f),
+                                                    col.fondo.copy(alpha = .85f),
+                                                ),
+                                            ),
+                                        )
+                                        .then(
+                                            if (elegida) Modifier.border(esc.d(3), col.elegido, forma)
+                                            else Modifier.border(1.dp, col.borde, forma),
+                                        )
+                                        .clickable(onClickLabel = if (elegida) "Entrar a ${c.bonito}" else "Elegir ${c.bonito}") {
+                                            if (elegida) Diptico.entrarConsolaCV(id) else Diptico.elegirConsola(id)
+                                        }
+                                        .testTag("carpeta-cv-$id")
+                                        .padding(esc.d(8)),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+                                ) {
+                                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                                        IconoCarpetaCompactoCV(e, c)
+                                    }
+                                    TB(nombreCorto, 17f, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
+                                }
                             }
                         }
                     }
