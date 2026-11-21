@@ -1721,25 +1721,25 @@ class Capturas {
         regla.onNodeWithTag("tu-mas-jugado-cv").assertExists()
         regla.onNodeWithTag("acciones-consola-cv").assertExists()
         regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
-        regla.onNodeWithTag("dock-lateral-alternar").assertExists()
+        regla.onNodeWithTag("dock-lateral-cv").assertExists()
+        regla.onNodeWithTag("dock-lateral-alternar").assertDoesNotExist()
+        regla.onNodeWithTag("perfil-esquina-cv").assertExists()
+        regla.onNodeWithTag("recargar-alineado-cv").assertExists()
         regla.onNodeWithTag("abrir-biblioteca-cv").assertDoesNotExist()
         regla.onNodeWithTag("personalizar-consola-cv").assertExists()
         regla.onNodeWithTag("recargar-juegos").assertExists()
     }
-    /** Abrir y plegar el dock sin tocar el perfil ni las carpetas. */
-    @Test fun t476c_cv_dock_lateral_plegable() {
+    /** El dock queda fijo y las acciones ocupan una fila propia sobre el selector. */
+    @Test fun t476c_cv_dock_lateral_fijo() {
         val e = cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)
         foto("476c_cv_dock_lateral", e.copy(extra = e.extra.copy(dock = true, dippoInicio = true)), Rol.UNICA, avance = 1700)
-        // Plegado por defecto para ahorrar espacio; se abre y vuelve a plegar sin afectar el Home.
-        regla.onNodeWithTag("dock-lateral-desplegado").assertDoesNotExist()
-        regla.onNodeWithTag("dock-lateral-alternar").performClick()
-        regla.mainClock.advanceTimeBy(450)
-        regla.onNodeWithTag("dock-lateral-desplegado").assertExists()
-        regla.onNodeWithTag("dock-lateral-alternar").performClick()
-        regla.mainClock.advanceTimeBy(450)
-        regla.onNodeWithTag("dock-lateral-desplegado").assertDoesNotExist()
-        regla.onNodeWithTag("boton-perfil").assertExists()
+        regla.onNodeWithTag("dock-lateral-cv").assertExists()
+        regla.onNodeWithTag("dock-lateral-alternar").assertDoesNotExist()
+        regla.onNodeWithTag("acciones-consola-cv").assertExists()
         regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
+        regla.onNodeWithTag("personalizar-consola-cv").assertExists()
+        regla.onNodeWithTag("perfil-esquina-cv").assertExists()
+        regla.onNodeWithTag("recargar-alineado-cv").assertExists()
     }
     /** Los datos vacíos no crean una barra gigante de "Tus partidas". */
     @Test fun t476d_cv_sin_partidas_no_muestra_barra() {
