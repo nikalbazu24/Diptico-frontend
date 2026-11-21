@@ -399,10 +399,20 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
             }, descripcion = "Consola anterior")
             BoxWithConstraints(Modifier.weight(1f).fillMaxHeight()) {
                 val anchoTarjeta = esc.d(148f)
+                // El padding permite centrar incluso la primera y la última consola.
                 val espacioLateral = ((maxWidth - anchoTarjeta) / 2).coerceAtLeast(0.dp)
-                val desplazamiento = with(LocalDensity.current) { espacioLateral.roundToPx() }
-                LaunchedEffect(seleccionadaId, ids, desplazamiento) {
-                    if (ids.isNotEmpty()) lista.animateScrollToItem(indice, -desplazamiento)
+                LaunchedEffect(seleccionadaId, ids, maxWidth) {
+                    if (ids.isNotEmpty()) {
+                        // Alinear primero el elemento, luego corregir su centro real.
+                        // Evita el descentrado por aplicar dos veces el padding lateral.
+                        lista.scrollToItem(indice)
+                        val visible = lista.layoutInfo.visibleItemsInfo.firstOrNull { it.index == indice }
+                        if (visible != null) {
+                            val centroVista = lista.layoutInfo.viewportSize.width / 2f
+                            val centroTarjeta = visible.offset + visible.size / 2f
+                            lista.animateScrollBy(centroTarjeta - centroVista)
+                        }
+                    }
                 }
                 LazyRow(
                     Modifier.fillMaxSize().testTag("carrusel-carpetas-cv"),
@@ -422,23 +432,47 @@ private fun SelectorCarpetasCompactoCV(e: Estado, seleccionadaId: String, modifi
                             "android" -> "Android"
                             else -> c.bonito
                         }
-                        Column(
-                            Modifier.width(anchoTarjeta).fillMaxHeight()
-                                .clip(forma)
-                                .background(Brush.verticalGradient(listOf(c.color.copy(alpha = if (elegida) .8f else .5f), col.fondo.copy(alpha = .85f))))
-                                .then(if (elegida) Modifier.border(esc.d(3), col.elegido, forma) else Modifier.border(1.dp, col.borde, forma))
-                                .clickable(onClickLabel = if (elegida) "Entrar a ${c.bonito}" else "Elegir ${c.bonito}") {
-                                    if (elegida) Diptico.entrarConsolaCV(id) else Diptico.elegirConsola(id)
-                                }
-                                .testTag("carpeta-cv-$id")
-                                .padding(esc.d(8)),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+                        val escala by animateFloatAsState(
+                            targetValue = if (elegida) 1.10f else .92f,
+                            animationSpec = tween(220),
+                            label = "Destacar consola seleccionada",
+                        )
+                        Box(
+                            Modifier.width(anchoTarjeta).fillMaxHeight(),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                                IconoCarpetaCompactoCV(e, c)
+                            Column(
+                                Modifier.fillMaxWidth().fillMaxHeight(.86f)
+                                    .graphicsLayer {
+                                        scaleX = escala
+                                        scaleY = escala
+                                    }
+                                    .clip(forma)
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(
+                                                c.color.copy(alpha = if (elegida) .85f else .50f),
+                                                col.fondo.copy(alpha = .85f),
+                                            ),
+                                        ),
+                                    )
+                                    .then(
+                                        if (elegida) Modifier.border(esc.d(3), col.elegido, forma)
+                                        else Modifier.border(1.dp, col.borde, forma),
+                                    )
+                                    .clickable(onClickLabel = if (elegida) "Entrar a ${c.bonito}" else "Elegir ${c.bonito}") {
+                                        if (elegida) Diptico.entrarConsolaCV(id) else Diptico.elegirConsola(id)
+                                    }
+                                    .testTag("carpeta-cv-$id")
+                                    .padding(esc.d(8)),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(esc.d(4)),
+                            ) {
+                                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                                    IconoCarpetaCompactoCV(e, c)
+                                }
+                                TB(nombreCorto, 17f, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
                             }
-                            TB(nombreCorto, 17f, peso = FontWeight.ExtraBold, lineas = 1, traducir = false)
                         }
                     }
                 }
@@ -464,7 +498,7 @@ private fun FlechaSelectorCV(simbolo: String, accion: () -> Unit, descripcion: S
     ) { TB(simbolo, 46f, color = col.texto, traducir = false) }
 }
 
-/** Dock derecho desplegable: el usuario conserva sus apps, el botón + y el cajón. */
+/** Dock fijo: mantiene las aplicaciones visibles en el lateral derecho sin pestaña que se cierre. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DockLateralCompactoCV(e: Estado, modifier: Modifier = Modifier) {
@@ -472,52 +506,32 @@ private fun DockLateralCompactoCV(e: Estado, modifier: Modifier = Modifier) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     val vista = LocalView.current
-    var abierto by rememberSaveable { mutableStateOf(false) }
     Column(
-        modifier.width(esc.d(if (abierto) 84f else 60f)).vidrio(35f, fuerte = true)
-            .padding(horizontal = esc.d(if (abierto) 8f else 3f), vertical = esc.d(if (abierto) 13f else 5f))
+        modifier.width(esc.d(84)).vidrio(35f, fuerte = true)
+            .padding(horizontal = esc.d(8), vertical = esc.d(13))
             .testTag("dock-lateral-cv"),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(esc.d(10)),
+        verticalArrangement = Arrangement.spacedBy(esc.d(12)),
     ) {
-        Box(
-            Modifier.size(esc.d(if (abierto) 61f else 52f)).clip(CircleShape)
-                .clickable(onClickLabel = if (abierto) "Plegar dock de apps" else "Desplegar dock de apps") {
-                    abierto = !abierto
-                }
-                .semantics { contentDescription = if (abierto) "Plegar dock de apps" else "Desplegar dock de apps" }
-                .testTag("dock-lateral-alternar"),
-            contentAlignment = Alignment.Center,
-        ) {
-            TB(if (abierto) "›" else "‹", 42f, color = col.texto, traducir = false)
+        e.appsFijadas.take(MAX_DOCK).forEach { pkg ->
+            Box(
+                Modifier.size(esc.d(60)).clip(RoundedCornerShape(esc.d(14)))
+                    .combinedClickable(
+                        onClickLabel = "Abrir app",
+                        onLongClickLabel = "Quitar del dock",
+                        onLongClick = { Diptico.alternarFijada(pkg) },
+                    ) { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) },
+                contentAlignment = Alignment.Center,
+            ) { IconoApp(pkg, 58f, desnudo = true) }
         }
-        AnimatedVisibility(abierto) {
-            Column(
-                Modifier.testTag("dock-lateral-desplegado"),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(esc.d(12)),
-            ) {
-                e.appsFijadas.take(MAX_DOCK).forEach { pkg ->
-                    Box(
-                        Modifier.size(esc.d(60)).clip(RoundedCornerShape(esc.d(14)))
-                            .combinedClickable(
-                                onClickLabel = "Abrir app",
-                                onLongClickLabel = "Quitar del dock",
-                                onLongClick = { Diptico.alternarFijada(pkg) },
-                            ) { Diptico.abrirPaqueteAqui(pkg, vista.display?.displayId) },
-                        contentAlignment = Alignment.Center,
-                    ) { IconoApp(pkg, 58f, desnudo = true) }
-                }
-                if (e.appsFijadas.size < MAX_DOCK) {
-                    Box(
-                        Modifier.size(esc.d(58)).clip(CircleShape)
-                            .border(1.dp, col.borde, CircleShape)
-                            .clickable(onClickLabel = "Agregar app al dock") { Diptico.abrirAppsParaFijar() },
-                        contentAlignment = Alignment.Center,
-                    ) { TB("+", 40f, traducir = false) }
-                }
-                BotonRedondo(Icono.APPS, 58f, { Diptico.abrirApps() }, descripcion = "Todas las apps")
-            }
+        if (e.appsFijadas.size < MAX_DOCK) {
+            Box(
+                Modifier.size(esc.d(58)).clip(CircleShape)
+                    .border(1.dp, col.borde, CircleShape)
+                    .clickable(onClickLabel = "Agregar app al dock") { Diptico.abrirAppsParaFijar() },
+                contentAlignment = Alignment.Center,
+            ) { TB("+", 40f, traducir = false) }
         }
+        BotonRedondo(Icono.APPS, 58f, { Diptico.abrirApps() }, descripcion = "Todas las apps")
     }
 }
