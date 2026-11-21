@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -45,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -450,8 +453,11 @@ fun ColeccionUnica(e: Estado) {
         Box(Modifier.fillMaxSize().veloColeccion(col.fondo))
         FondoTemaCV()
         Column(Modifier.fillMaxSize().padding(start = esc.d(44), end = esc.d(112), top = esc.d(20), bottom = esc.d(20)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
-            // Franja 1 · barra: consola · buscar, apps, widgets, ajustes · DIPPO, hora y batería, perfil.
-            Row(Modifier.fillMaxWidth().height(esc.d(72)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
+            // Franja 1 · solo navegación. Las utilidades del perfil viven en un overlay aparte,
+            // fijo en la esquina superior derecha y fuera del flujo del contenido.
+            Row(Modifier.fillMaxWidth().height(esc.d(72)).testTag("navegacion-juegos-cv"),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
                 PildoraVidrio(62f, onClick = { Diptico.volverASistemas() }) {
                     Box(Modifier.size(esc.d(16)).clip(CircleShape).background(c?.color ?: col.acento))
                     TB(c?.bonito ?: "Tus juegos", 24f, titulo = true, peso = FontWeight.SemiBold)
@@ -462,12 +468,6 @@ fun ColeccionUnica(e: Estado) {
                 BotonRedondo(Icono.APPS, 64f, { Diptico.fijarInicio("widgets") }, descripcion = "Widgets")
                 BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
                 BotonRecargarJuegos(e, 64f, estiloColeccion = true)
-                Spacer(Modifier.weight(1f))
-                if (e.extra.dippoInicio) Box(Modifier.size(esc.d(64)).clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) {
-                    cl.nikalbazu.diptico.bisa.AvatarBisa(56f * esc.factor)
-                }
-                HoraBateria(58f, 22f)
-                BotonPerfil(76f)
             }
             if (j == null) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
@@ -484,8 +484,9 @@ fun ColeccionUnica(e: Estado) {
                 }
                 return@Column
             }
-            // Franja 2 · más altura para la caja protagonista y mandos compactos.
-            Row(Modifier.fillMaxWidth().weight(1.22f), horizontalArrangement = Arrangement.spacedBy(esc.d(24))) {
+            // Franja 2 · hero ocupa el espacio libre SIN invadir la cabecera.
+            Row(Modifier.fillMaxWidth().weight(1f).clipToBounds().testTag("hero-interior-cv"),
+                horizontalArrangement = Arrangement.spacedBy(esc.d(24))) {
                 Column(Modifier.weight(0.52f).fillMaxHeight().testTag("informacion-juego-compacta-cv"),
                     verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
                     InfoJuegoCV(e, j, c, tamTitulo = 52f, compacta = true)
@@ -495,34 +496,123 @@ fun ColeccionUnica(e: Estado) {
                         BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) }, alto = 58f, letra = 19f)
                     }
                 }
-                Box(Modifier.weight(0.48f).fillMaxHeight().testTag("caja-principal-cv")
-                    .graphicsLayer { scaleX = 1.18f; scaleY = 1.18f }) {
-                    CajaFlotanteCV(e, j, girada = false)
+                // El dibujo 3D puede pintar fuera de su medida: recortar el contenedor
+                // impide que alcance el perfil, la hora o la barra superior.
+                BoxWithConstraints(
+                    Modifier.weight(0.48f).fillMaxHeight()
+                        .clipToBounds().testTag("caja-principal-cv"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        Modifier.fillMaxWidth().height(minOf(maxHeight, esc.d(505f)))
+                            .padding(top = esc.d(22), bottom = esc.d(10))
+                            .clipToBounds(),
+                    ) { CajaFlotanteCV(e, j, girada = false) }
                 }
             }
-            // Franja 3 · estante limpio: el dock se muestra al costado como en el Home.
-            Column(Modifier.fillMaxWidth().weight(1.08f).clip(redondo(28f)).background(col.fondo.copy(alpha = .55f)).padding(horizontal = esc.d(18), vertical = esc.d(10))) {
+            // Franja 3 · una sola hilera compacta, sin segunda fila de portadas.
+            // Select sigue alternando entre los modos de colección.
+            Column(
+                Modifier.fillMaxWidth().height(esc.d(238f))
+                    .clip(redondo(28f)).background(col.fondo.copy(alpha = .55f))
+                    .padding(horizontal = esc.d(18), vertical = esc.d(9))
+                    .testTag("panel-juegos-compacto-cv"),
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                    TB("Tus juegos", 24f, titulo = true)
-                    TB("Select cambia la vista", 17f, color = col.sub)
+                    TB("Tus juegos", 22f, titulo = true)
+                    TB("Select cambia la vista", 16f, color = col.sub)
                 }
-                Box(Modifier.fillMaxWidth().weight(1f)) {
+                Box(Modifier.fillMaxWidth().weight(1f).padding(top = esc.d(5))) {
                     when (e.extra.vistaColeccion) {
-                        "cuadricula" -> RejillaCV(e, columnas = 7, Modifier.fillMaxSize().testTag("cv-vista-cuadricula").padding(top = esc.d(8)))
-                        "lista" -> ListaCV(e, Modifier.fillMaxSize().testTag("cv-vista-lista").padding(top = esc.d(8)))
+                        "cuadricula" -> CarruselJuegosCompactoCV(e, Modifier.fillMaxSize().testTag("cv-vista-cuadricula"))
+                        "lista" -> ListaCV(e, Modifier.fillMaxSize().testTag("cv-vista-lista"))
                         else -> EstanteCV(e, Modifier.fillMaxSize().testTag("cv-vista-estante"), vecinas = 4)
                     }
                 }
             }
         }
-        // Misma ubicación, estilo y comportamiento del dock del Home de una pantalla.
+        // El dock sigue fijo al costado derecho, como en el Home de una pantalla.
         DockLateralCompactoCV(
             e,
             Modifier.align(Alignment.CenterEnd).padding(end = esc.d(14)),
         )
+        // Dippo, hora/batería y perfil anclados a la esquina, fuera del Row flexible.
+        // Al dibujarse después del contenido conservan prioridad visual frente al arte 3D.
+        Row(
+            Modifier.align(Alignment.TopEnd).zIndex(10f)
+                .padding(top = esc.d(12), end = esc.d(8))
+                .height(esc.d(88)).testTag("utilidades-esquina-juegos-cv"),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
+        ) {
+            if (e.extra.dippoInicio) {
+                Box(
+                    Modifier.size(esc.d(68)).testTag("dippo-esquina-juegos-cv")
+                        .clickable { Diptico.abrirAsistente() },
+                    contentAlignment = Alignment.Center,
+                ) { cl.nikalbazu.diptico.bisa.AvatarBisa(56f * esc.factor) }
+            }
+            Box(Modifier.height(esc.d(68)), contentAlignment = Alignment.Center) {
+                HoraBateria(58f, 22f)
+            }
+            Box(Modifier.testTag("perfil-esquina-juegos-cv"), contentAlignment = Alignment.Center) {
+                BotonPerfil(76f)
+            }
+        }
     }
 }
 
+
+/** Carrusel horizontal de una sola fila para Colección viva en una pantalla.
+ * Conserva la selección del mando; tocar una portada elige y volver a tocar juega.
+ */
+@Composable
+private fun CarruselJuegosCompactoCV(e: Estado, modifier: Modifier = Modifier) {
+    val esc = LocalEscala.current
+    val col = LocalColeccion.current
+    val lista = rememberLazyListState()
+    LaunchedEffect(e.indiceSel, e.visibles.size) {
+        if (e.visibles.isNotEmpty()) lista.animateScrollToItem((e.indiceSel - 3).coerceAtLeast(0))
+    }
+    androidx.compose.runtime.SideEffect { Teclas.columnasCuadricula = 1 }
+    LazyRow(
+        modifier.testTag("carrusel-juegos-compacto-cv"),
+        state = lista,
+        horizontalArrangement = Arrangement.spacedBy(esc.d(12)),
+        verticalAlignment = Alignment.CenterVertically,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = esc.d(8)),
+    ) {
+        itemsIndexed(e.visibles, key = { _, juego -> juego.clave }) { i, juego ->
+            val elegido = i == e.indiceSel
+            Column(
+                Modifier.width(esc.d(206f)).fillMaxHeight()
+                    .clip(redondo(16f))
+                    .background(if (elegido) col.vidrioFuerte else col.vidrio.copy(alpha = .55f))
+                    .then(if (elegido) Modifier.border(esc.d(3), col.elegido, redondo(16f)) else Modifier)
+                    .clickable {
+                        if (elegido) Diptico.jugar() else Diptico.elegirJuego(juego.clave)
+                    }
+                    .padding(esc.d(7))
+                    .testTag("juego-compacto-cv-${i}"),
+                verticalArrangement = Arrangement.spacedBy(esc.d(5)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    Modifier.fillMaxWidth().weight(1f).clip(redondo(11f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    ArteJuego(juego, preferirArte = false, maxLado = 260, modifier = Modifier.fillMaxSize())
+                }
+                TB(
+                    juego.titulo, if (elegido) 18f else 16f,
+                    color = if (elegido) col.texto else col.sub,
+                    peso = if (elegido) FontWeight.ExtraBold else FontWeight.SemiBold,
+                    modifier = Modifier.fillMaxWidth(), lineas = 1, traducir = false,
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun FilaConsolasCV(e: Estado, modifier: Modifier, alto: Float = 76f) {

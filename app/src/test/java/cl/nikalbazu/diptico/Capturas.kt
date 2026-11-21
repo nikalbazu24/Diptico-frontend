@@ -1719,6 +1719,26 @@ class Capturas {
         assertTrue("La recarga debe medir igual que los botones redondos",
             kotlin.math.abs(buscar.width - recarga.width) < 2f && kotlin.math.abs(buscar.height - recarga.height) < 2f)
     }
+    /** Regresión: el arte 3D queda bajo la barra, el perfil vuelve al borde y la galería usa una fila. */
+    @Test fun t470c_cv_una_esquina_y_carrusel_compacto() {
+        val original = cv().copy(modoPantallas = "una_negra", dosDisponibles = false)
+        val e = original.copy(extra = original.extra.copy(dock = true, dippoInicio = true, vistaColeccion = "cuadricula"))
+        foto("470c_cv_una_esquina_y_carrusel_compacto", e, Rol.UNICA, avance = 1400)
+        regla.onNodeWithTag("utilidades-esquina-juegos-cv").assertExists()
+        regla.onNodeWithTag("dippo-esquina-juegos-cv").assertExists()
+        regla.onNodeWithTag("perfil-esquina-juegos-cv").assertExists()
+        regla.onNodeWithTag("caja-principal-cv").assertExists()
+        regla.onNodeWithTag("carrusel-juegos-compacto-cv").assertExists()
+        regla.onNodeWithTag("panel-juegos-compacto-cv").assertExists()
+        regla.onNodeWithTag("dock-lateral-cv").assertExists()
+        val raiz = regla.onRoot().fetchSemanticsNode().boundsInRoot
+        val barra = regla.onNodeWithTag("utilidades-esquina-juegos-cv").fetchSemanticsNode().boundsInRoot
+        val caja = regla.onNodeWithTag("caja-principal-cv").fetchSemanticsNode().boundsInRoot
+        val panel = regla.onNodeWithTag("panel-juegos-compacto-cv").fetchSemanticsNode().boundsInRoot
+        assertTrue("Los controles deben mantenerse junto al borde derecho", raiz.right - barra.right < raiz.width * .045f)
+        assertTrue("La caja no debe invadir la banda superior", caja.top >= barra.bottom - raiz.height * .02f)
+        assertTrue("La galería debe usar menos del 30 % de la altura", panel.height < raiz.height * .30f)
+    }
     @Config(qualifiers = ABAJO)
     @Test fun t471_cv_abajo_cuadricula() = foto("471_cv_abajo_cuadricula", cv { it.copy(vistaColeccion = "cuadricula") }, Rol.INFERIOR, mi = 1)
     @Test fun t472_cv_carpetas_arriba() = foto("472_cv_carpetas_arriba", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.SUPERIOR)
