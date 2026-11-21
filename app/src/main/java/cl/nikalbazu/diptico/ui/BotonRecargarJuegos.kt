@@ -2,6 +2,7 @@ package cl.nikalbazu.diptico.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
 import cl.nikalbazu.diptico.estado.Idioma
@@ -27,14 +29,21 @@ import cl.nikalbazu.diptico.estado.Idioma
  * El escaneo real ya se realiza en segundo plano y se comparte entre pantallas.
  */
 @Composable
-fun BotonRecargarJuegos(e: Estado, tam: Float = 34f) {
+fun BotonRecargarJuegos(e: Estado, tam: Float = 34f, estiloColeccion: Boolean = false) {
     val esc = LocalEscala.current
     val p = LocalPaleta.current
+    val col = LocalColeccion.current
+    val colorIcono = if (estiloColeccion) col.texto else p.tenue
     val descripcion = Idioma.t(if (e.escaneando) "Actualizando juegos" else "Actualizar juegos")
     Box(
         Modifier.size(esc.d(tam))
             .clip(CircleShape)
-            .background(p.superficie.copy(alpha = .55f))
+            .then(
+                if (estiloColeccion) Modifier
+                    .background(col.texto.copy(alpha = .07f))
+                    .border(1.dp, col.borde, CircleShape)
+                else Modifier.background(p.superficie.copy(alpha = .55f))
+            )
             .semantics { contentDescription = descripcion }
             .clickable(enabled = !e.escaneando, onClickLabel = Idioma.t("Actualizar juegos")) {
                 Diptico.recargarJuegosDesdeInicio()
@@ -43,7 +52,7 @@ fun BotonRecargarJuegos(e: Estado, tam: Float = 34f) {
         contentAlignment = Alignment.Center,
     ) {
         if (e.escaneando) {
-            Girador(tam * .49f, p.tenue)
+            Girador(tam * .49f, colorIcono)
         } else {
             // La línea base del glifo ↻ lo desplazaba visualmente hacia abajo.
             // Un dibujo vectorial mantiene la flecha centrada en cualquier fuente/escala.
@@ -54,7 +63,7 @@ fun BotonRecargarJuegos(e: Estado, tam: Float = 34f) {
                 val centro = Offset(ancho / 2f, alto / 2f)
                 val trazo = minOf(ancho, alto) * .105f
                 drawArc(
-                    color = p.tenue,
+                    color = colorIcono,
                     startAngle = 65f,
                     sweepAngle = 290f,
                     useCenter = false,
@@ -64,12 +73,12 @@ fun BotonRecargarJuegos(e: Estado, tam: Float = 34f) {
                 )
                 val punta = Offset(centro.x + radio * .996f, centro.y - radio * .087f)
                 drawLine(
-                    p.tenue,
+                    colorIcono,
                     Offset(punta.x - ancho * .17f, punta.y - alto * .01f),
                     punta, strokeWidth = trazo, cap = StrokeCap.Round,
                 )
                 drawLine(
-                    p.tenue,
+                    colorIcono,
                     Offset(punta.x + ancho * .005f, punta.y - alto * .17f),
                     punta, strokeWidth = trazo, cap = StrokeCap.Round,
                 )

@@ -1702,6 +1702,23 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t469_cv_carrete() = foto("469_cv_carrete", cv { it.copy(cajaGirada = true) }, Rol.INFERIOR, mi = 1)
     @Test fun t470_cv_una() = foto("470_cv_una", cv().copy(modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    /** Vista dentro de carpeta: dock a la derecha, recarga homogénea y caja protagonista. */
+    @Test fun t470b_cv_una_distribucion_carpeta() {
+        val original = cv().copy(modoPantallas = "una_negra", dosDisponibles = false)
+        foto("470b_cv_una_distribucion_carpeta", original.copy(extra = original.extra.copy(dock = true)), Rol.UNICA, avance = 1400)
+        regla.onNodeWithTag("dock-lateral-cv").assertExists()
+        regla.onNodeWithTag("dock-apps").assertDoesNotExist()
+        regla.onNodeWithTag("caja-principal-cv").assertExists()
+        regla.onNodeWithTag("informacion-juego-compacta-cv").assertExists()
+        regla.onNodeWithTag("acciones-juego-compactas-cv").assertExists()
+        val dock = regla.onNodeWithTag("dock-lateral-cv").fetchSemanticsNode().boundsInRoot
+        val caja = regla.onNodeWithTag("caja-principal-cv").fetchSemanticsNode().boundsInRoot
+        assertTrue("El dock debe estar a la derecha de la caja principal", dock.center.x > caja.center.x)
+        val buscar = regla.onNodeWithTag("buscar-juegos-cv").fetchSemanticsNode().boundsInRoot
+        val recarga = regla.onNodeWithTag("recargar-juegos").fetchSemanticsNode().boundsInRoot
+        assertTrue("La recarga debe medir igual que los botones redondos",
+            kotlin.math.abs(buscar.width - recarga.width) < 2f && kotlin.math.abs(buscar.height - recarga.height) < 2f)
+    }
     @Config(qualifiers = ABAJO)
     @Test fun t471_cv_abajo_cuadricula() = foto("471_cv_abajo_cuadricula", cv { it.copy(vistaColeccion = "cuadricula") }, Rol.INFERIOR, mi = 1)
     @Test fun t472_cv_carpetas_arriba() = foto("472_cv_carpetas_arriba", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.SUPERIOR)

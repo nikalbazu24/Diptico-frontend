@@ -226,7 +226,7 @@ fun ColeccionArriba(e: Estado) {
 private fun InfoJuegoCV(e: Estado, j: Juego, c: Consola?, tamTitulo: Float, compacta: Boolean = false) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
-    TB((c?.bonito ?: "").uppercase(), 22f, color = lerpClaro(c?.color ?: col.acento), peso = FontWeight.ExtraBold, espaciado = 3.2f, traducir = false)
+    TB((c?.bonito ?: "").uppercase(), if (compacta) 18f else 22f, color = lerpClaro(c?.color ?: col.acento), peso = FontWeight.ExtraBold, espaciado = 3.2f, traducir = false)
     val logo = rememberImagen(j.logo, 900)
     if (logo != null) Image(logo, j.titulo, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart,
         modifier = Modifier.heightIn(max = esc.d(tamTitulo * 2f)).fillMaxWidth())
@@ -234,13 +234,13 @@ private fun InfoJuegoCV(e: Estado, j: Juego, c: Consola?, tamTitulo: Float, comp
     val resumen = resumenJuego(j, c)
     if (resumen.isNotBlank() && !compacta) TB(resumen, 26f, color = Color(0xFFD3D5EA).siOscuro(col), peso = FontWeight.SemiBold, lineas = 3, interlineado = 36f, traducir = false)
     val chips = chipsJuego(e, j).ifEmpty { listOf("Aún sin jugar con Díptico") }
-    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(12))) { chips.take(3).forEach { ChipDato(it, 22f) } }
+    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(12))) { chips.take(3).forEach { ChipDato(it, if (compacta) 18f else 22f) } }
     val pct = avance(e, j)
     val paso = e.datos[j.clave]?.paso.orEmpty()
     if (pct != null) Box(Modifier.fillMaxWidth(0.85f).height(esc.d(10)).clip(RoundedCornerShape(50)).background(col.texto.copy(alpha = .14f))) {
         Box(Modifier.fillMaxWidth(pct / 100f).fillMaxHeight().background(Brush.horizontalGradient(listOf(col.acento, c?.color ?: col.acento))))
     }
-    if (paso.isNotBlank()) TB("Tu próximo paso: $paso", 24f, color = Color(0xFFC7C9E0).siOscuro(col), peso = FontWeight.SemiBold, lineas = 2, traducir = false,
+    if (paso.isNotBlank()) TB("Tu próximo paso: $paso", if (compacta) 18f else 24f, color = Color(0xFFC7C9E0).siOscuro(col), peso = FontWeight.SemiBold, lineas = 2, traducir = false,
         modifier = Modifier.clickable { Diptico.abrirPaso() })
 }
 
@@ -449,7 +449,7 @@ fun ColeccionUnica(e: Estado) {
         }
         Box(Modifier.fillMaxSize().veloColeccion(col.fondo))
         FondoTemaCV()
-        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(44), vertical = esc.d(20)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
+        Column(Modifier.fillMaxSize().padding(start = esc.d(44), end = esc.d(112), top = esc.d(20), bottom = esc.d(20)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
             // Franja 1 · barra: consola · buscar, apps, widgets, ajustes · DIPPO, hora y batería, perfil.
             Row(Modifier.fillMaxWidth().height(esc.d(72)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
                 PildoraVidrio(62f, onClick = { Diptico.volverASistemas() }) {
@@ -457,11 +457,11 @@ fun ColeccionUnica(e: Estado) {
                     TB(c?.bonito ?: "Tus juegos", 24f, titulo = true, peso = FontWeight.SemiBold)
                     if (e.visibles.isNotEmpty()) TB("${e.indiceSel + 1} de ${e.visibles.size}", 19f, color = col.sub, traducir = false)
                 }
-                BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, descripcion = "Buscar")
+                BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, modifier = Modifier.testTag("buscar-juegos-cv"), descripcion = "Buscar")
                 BotonRedondo(Icono.MENU, 64f, { Diptico.abrirApps() }, descripcion = "Apps")
                 BotonRedondo(Icono.APPS, 64f, { Diptico.fijarInicio("widgets") }, descripcion = "Widgets")
                 BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
-                BotonRecargarJuegos(e, 56f)
+                BotonRecargarJuegos(e, 64f, estiloColeccion = true)
                 Spacer(Modifier.weight(1f))
                 if (e.extra.dippoInicio) Box(Modifier.size(esc.d(64)).clickable { Diptico.abrirAsistente() }, contentAlignment = Alignment.Center) {
                     cl.nikalbazu.diptico.bisa.AvatarBisa(56f * esc.factor)
@@ -484,25 +484,27 @@ fun ColeccionUnica(e: Estado) {
                 }
                 return@Column
             }
-            // Franja 2 · el juego: información y botones a la izquierda, la caja a la derecha.
-            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(24))) {
-                Column(Modifier.weight(0.6f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
-                    InfoJuegoCV(e, j, c, tamTitulo = 72f, compacta = true)
-                    Row(horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                        BotonTecla("A", if ((e.datos[j.clave]?.tiempo ?: 0L) > 0) "Continuar" else "Jugar", { Diptico.jugar() }, alto = 72f, principal = true, letra = 26f)
-                        BotonTecla("X", "Ficha", { Diptico.girarCaja(true) }, alto = 72f, letra = 24f)
-                        BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) }, alto = 72f, letra = 24f)
+            // Franja 2 · más altura para la caja protagonista y mandos compactos.
+            Row(Modifier.fillMaxWidth().weight(1.22f), horizontalArrangement = Arrangement.spacedBy(esc.d(24))) {
+                Column(Modifier.weight(0.52f).fillMaxHeight().testTag("informacion-juego-compacta-cv"),
+                    verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
+                    InfoJuegoCV(e, j, c, tamTitulo = 52f, compacta = true)
+                    Row(Modifier.testTag("acciones-juego-compactas-cv"), horizontalArrangement = Arrangement.spacedBy(esc.d(10))) {
+                        BotonTecla("A", if ((e.datos[j.clave]?.tiempo ?: 0L) > 0) "Continuar" else "Jugar", { Diptico.jugar() }, alto = 58f, principal = true, letra = 20f)
+                        BotonTecla("X", "Ficha", { Diptico.girarCaja(true) }, alto = 58f, letra = 19f)
+                        BotonTecla("Y", "Editar caja", { Diptico.abrirCajaJuego(j.clave) }, alto = 58f, letra = 19f)
                     }
                 }
-                Box(Modifier.weight(0.4f).fillMaxHeight().padding(vertical = esc.d(4))) { CajaFlotanteCV(e, j, girada = false) }
+                Box(Modifier.weight(0.48f).fillMaxHeight().testTag("caja-principal-cv")
+                    .graphicsLayer { scaleX = 1.18f; scaleY = 1.18f }) {
+                    CajaFlotanteCV(e, j, girada = false)
+                }
             }
-            // Franja 3 · el estante: título, vistas y dock arriba; las cajas debajo (sin tapar nada).
-            Column(Modifier.fillMaxWidth().weight(1.25f).clip(redondo(28f)).background(col.fondo.copy(alpha = .55f)).padding(horizontal = esc.d(18), vertical = esc.d(10))) {
+            // Franja 3 · estante limpio: el dock se muestra al costado como en el Home.
+            Column(Modifier.fillMaxWidth().weight(1.08f).clip(redondo(28f)).background(col.fondo.copy(alpha = .55f)).padding(horizontal = esc.d(18), vertical = esc.d(10))) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                    TB("Tus juegos", 26f, titulo = true)
-                    TB("Select cambia la vista", 18f, color = col.sub)
-                    Spacer(Modifier.weight(1f))
-                    DockCV(e, 50f)
+                    TB("Tus juegos", 24f, titulo = true)
+                    TB("Select cambia la vista", 17f, color = col.sub)
                 }
                 Box(Modifier.fillMaxWidth().weight(1f)) {
                     when (e.extra.vistaColeccion) {
@@ -513,6 +515,11 @@ fun ColeccionUnica(e: Estado) {
                 }
             }
         }
+        // Misma ubicación, estilo y comportamiento del dock del Home de una pantalla.
+        DockLateralCompactoCV(
+            e,
+            Modifier.align(Alignment.CenterEnd).padding(end = esc.d(14)),
+        )
     }
 }
 

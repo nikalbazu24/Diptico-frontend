@@ -525,7 +525,7 @@ private fun FlechaSelectorCV(simbolo: String, accion: () -> Unit, descripcion: S
 /** Dock fijo: mantiene las aplicaciones visibles en el lateral derecho sin pestaña que se cierre. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DockLateralCompactoCV(e: Estado, modifier: Modifier = Modifier) {
+internal fun DockLateralCompactoCV(e: Estado, modifier: Modifier = Modifier) {
     if (!e.extra.dock) return
     val esc = LocalEscala.current
     val col = LocalColeccion.current
