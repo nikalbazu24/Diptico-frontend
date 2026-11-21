@@ -82,6 +82,15 @@ jobs:
       - name: Probar perfiles, navegación y estabilidad
         run: gradle :app:testCompletaDebugUnitTest --tests "cl.nikalbazu.diptico.ExperienciaTest" --tests "cl.nikalbazu.diptico.NavegacionTest" --tests "cl.nikalbazu.diptico.EstabilidadTest" --tests "cl.nikalbazu.diptico.DensidadGlassTest" --tests "cl.nikalbazu.diptico.Revision153Test" --tests "cl.nikalbazu.diptico.WidgetsAdaptablesTest" --tests "cl.nikalbazu.diptico.CajasLocalesTest" --tests "cl.nikalbazu.diptico.RecorridoTest" --tests "cl.nikalbazu.diptico.TourInteractivoTest" --tests "cl.nikalbazu.diptico.ActualizadorCanalesTest" --no-daemon
 
+      - name: Probar distribución del Home de una pantalla
+        if: github.ref == 'refs/heads/fix/apk-prueba-integrada-2-0-0'
+        run: |
+          gradle :app:testCompletaDebugUnitTest \
+            --tests "cl.nikalbazu.diptico.Capturas.t476b_cv_carpetas_una_compacta" \
+            --tests "cl.nikalbazu.diptico.Capturas.t476c_cv_dock_lateral_fijo" \
+            --tests "cl.nikalbazu.diptico.Capturas.t476d_cv_sin_partidas_no_muestra_barra" \
+            --no-daemon
+
       - name: Compilar y verificar firma de distribución
         if: env.FIRMAR == 'true'
         env:
