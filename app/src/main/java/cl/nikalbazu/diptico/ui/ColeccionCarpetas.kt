@@ -716,56 +716,8 @@ private fun CarpetaClasica(e: Estado, c: Consola, elegida: Boolean, una: Boolean
 
 @Composable
 fun CarpetasUnicaCV(e: Estado) {
-    val c = Consolas.porId(e.consolaSel) ?: e.consolasConJuegos.firstOrNull()
-    LienzoBoceto(1920f, 1080f, fondo = LocalColeccion.current.fondo, zoom = ZOOM_UNA) {
-        val esc = LocalEscala.current
-        val col = LocalColeccion.current
-        val color = c?.color ?: col.acento
-        FondoConsolaCV(e, c, Modifier.fillMaxSize())
-        val conArte = rememberFondo(e, c).imagen != null
-        Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(color.copy(alpha = if (conArte) .14f else .38f), Color.Transparent), radius = 1500f)))
-        FondoTemaCV()
-        Column(Modifier.fillMaxSize().padding(horizontal = esc.d(40), vertical = esc.d(18)), verticalArrangement = Arrangement.spacedBy(esc.d(12))) {
-            // Franja 1: vistas · hora, batería y perfil.
-            Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
-                DockCV(e, 52f, Modifier.anclaRecorrido("apps"))
-                Spacer(Modifier.weight(1f))
-                HoraBateria(56f, 22f); BotonPerfil(74f)
-            }
-            if (c == null) return@Column
-            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(esc.d(26))) {
-                // Izquierda: la consola, su historia, sus opciones y A/Y.
-                Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(12), Alignment.CenterVertically)) {
-                    InfoConsolaCV(e, c, tamNombre = 60f, lineasHistoria = 2)
-                    PersonalizarConsolaCV(e, c)
-                    Box(Modifier.anclaRecorrido("controles")) { AccionesConsolaCV(e, c, alto = 64f) }
-                }
-                // Derecha: la consola en 3D, qué juegos van junto al ícono y las carpetas.
-                Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(esc.d(8))) {
-                    Consola3D(c, Modifier.fillMaxWidth().weight(0.8f))
-                    Modelos3D.credito(c.id)?.let { TB(it, 15f, color = col.tenue, lineas = 1, traducir = false) }
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(6))) {
-                        TB("JUNTO AL ÍCONO", 15f, color = Color(0xFF9A9CB8), peso = FontWeight.ExtraBold, espaciado = 1.4f)
-                        listOf("ultimos" to "Últimos", "favoritos" to "Favoritos", "elegidos" to "Elegidos").forEach { (m, n) ->
-                            ChipElegir(n, e.extra.juegosCarpeta == m) { Diptico.elegirJuegosCarpeta(m) }
-                        }
-                        Spacer(Modifier.weight(1f))
-                        (1..5).forEach { q -> ChipElegir("$q", e.extra.cuantosCarpeta == q) { Diptico.elegirCuantosCarpeta(q) } }
-                    }
-                    RejillaCarpetasCV(e, Modifier.fillMaxWidth().weight(1.2f), unaPantalla = true)
-                }
-            }
-            // Abajo: DIPPO y el dock de apps.
-            Row(Modifier.fillMaxWidth().height(esc.d(84)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(16))) {
-                if (e.extra.dippoInicio) DippoFrase("Elige una consola y aprieta A. Select cambia cómo se ven las carpetas; si lo mantienes, cambias de pantalla.", Modifier.weight(1f).anclaRecorrido("dippo"), cara = 58f, letra = 20f, maxAncho = 900f)
-                else Spacer(Modifier.weight(1f))
-                BotonRedondo(Icono.BUSCAR, 64f, { Diptico.abrirBuscar() }, descripcion = "Buscar")
-                BotonRedondo(Icono.AJUSTES, 64f, { Diptico.abrirMenu() }, descripcion = "Ajustes")
-            }
-        }
-    }
+    CarpetasUnicaCompactaCV(e)
 }
-
 
 @Composable
 private fun ChipElegir(texto: String, on: Boolean, onClick: () -> Unit) {
