@@ -186,9 +186,9 @@ private fun ImagenConsola(c: Consola, ola: State<Float>, giroY: () -> Float, gir
 
 /** El fondo de la pantalla de la consola: su propia imagen, enorme y difuminada, teñida con su color. */
 @Composable
-fun FondoConsolaCV(e: Estado, c: Consola?, modifier: Modifier = Modifier) {
+fun FondoConsolaCV(e: Estado, c: Consola?, modifier: Modifier = Modifier, mostrarEtiqueta: Boolean = true) {
     val fondo = rememberFondo(e, c)
-    if (fondo.imagen != null) { FondoJuegoEmblema(fondo, modifier); return }
+    if (fondo.imagen != null) { FondoJuegoEmblema(fondo, modifier, mostrarEtiqueta); return }
     val ctx = LocalContext.current
     val id = c?.let { Modelos3D.idDe(it.id) } ?: ""
     var img by remember(id) { mutableStateOf(ImagenesConsola.fondoEnMemoria(id)) }
@@ -213,7 +213,7 @@ fun rememberFondo(e: Estado, c: Consola?): FondoConsola =
  * texto, con su nombre en una píldora chica abajo a la derecha. Cambia con un fundido al pasar de consola.
  */
 @Composable
-private fun FondoJuegoEmblema(fondo: FondoConsola, modifier: Modifier) {
+private fun FondoJuegoEmblema(fondo: FondoConsola, modifier: Modifier, mostrarEtiqueta: Boolean = true) {
     val esc = LocalEscala.current
     val col = LocalColeccion.current
     androidx.compose.animation.Crossfade(fondo, animationSpec = tween(duracionMovimiento(480)), label = "emblema", modifier = modifier) { f ->
@@ -226,7 +226,7 @@ private fun FondoJuegoEmblema(fondo: FondoConsola, modifier: Modifier) {
             // Oscurece donde va el texto (izquierda y abajo) para que se lea, y deja el arte más limpio a la derecha.
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to col.fondo.copy(alpha = .82f), .45f to col.fondo.copy(alpha = .38f), 1f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.6f to Color.Transparent, 1f to col.fondo.copy(alpha = .6f))))
-            if (img != null && f.juego != null) Row(
+            if (mostrarEtiqueta && img != null && f.juego != null) Row(
                 Modifier.align(Alignment.TopEnd).padding(end = esc.d(64), top = esc.d(120)).clip(RoundedCornerShape(50))
                     .background(Color.Black.copy(alpha = .38f)).padding(horizontal = esc.d(18), vertical = esc.d(8)),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(10)),
