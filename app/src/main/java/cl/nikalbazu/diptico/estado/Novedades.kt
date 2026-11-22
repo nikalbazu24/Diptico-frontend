@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "diptico-2.0.0-oficial"
-    const val NOMBRE = "Díptico 2.0.0 oficial"
+    const val ID = "diptico-2.0.1-coleccion-compacta"
+    const val NOMBRE = "Díptico 2.0.1 · Colección compacta"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -584,9 +584,16 @@ object Novedades {
             Pagina("Un comienzo nuevo", "Intro nueva, configuración con DIPPO (si tu consola tiene dos pantallas, el primer paso es elegir dos o una sola; después se cambia en Ajustes › Pantallas › Modo de pantallas; otro paso conecta tus cuentas y claves: Discord, RetroAchievements, SteamGridDB, TheGamesDB, ScreenScraper, IGDB, RAWG y la IA de DIPPO) y un recorrido donde él te muestra cada parte y te hace probar los botones. Lo vuelves a ver desde Ajustes.", Icono.BISA, 0xFFFF7A59),
             Pagina("¿Lo quieres como antes?", "Ajustes › Estilo › «Diseño Colección viva» lo apaga y vuelve el de antes.", Icono.AJUSTES, 0xFFB9BBD6),
         )),
-        Version(ID, "Díptico 2.0.0 oficial", listOf(
+        Version("diptico-2.0.0-oficial", "Díptico 2.0.0 oficial", listOf(
             Pagina("Tus juegos, al día", "Cuando agregues juegos a tus carpetas, toca el pequeño botón ↻ del inicio. Díptico buscará los nuevos sin reiniciar ni cambiar tus ajustes.", Icono.CARPETA, 0xFF2EC4A6, "↻ Actualizar juegos"),
             Pagina("Un inicio más despejado", "En equipos de una pantalla, tus consolas, el juego destacado y la biblioteca tienen su lugar. En dos pantallas y en Colección viva también está el botón para actualizar juegos.", Icono.PORTADA, 0xFF3B6BFF),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Tus consolas, centradas", "En una pantalla, las carpetas se mantienen centradas, con la elegida destacada y un acceso Entrar a la izquierda. DIPPO conserva su espacio.", Icono.CARPETA, 0xFF3B6BFF, "A · Entrar"),
+            Pagina("Tus apps siempre a mano", "El dock permanece en el lateral derecho en el inicio y también dentro de las carpetas de juegos. Perfil, hora y batería quedan en la esquina.", Icono.APPS, 0xFF2EC4A6, "Apps"),
+            Pagina("Caja protagonista, sin tapar nada", "La caja 3D destaca sin superponerse a la barra superior. Los títulos y botones ocupan menos espacio.", Icono.PORTADA, 0xFFFF9B54, "A · Jugar"),
+            Pagina("Juegos en una sola fila", "En una pantalla, la colección muestra un carrusel horizontal compacto. Recorre los juegos con el mando o toca una carátula; Select sigue cambiando las vistas.", Icono.VISTA, 0xFF6B4EFF, "Select"),
+            Pagina("Recarga a tu alcance", "El botón circular de actualizar juegos conserva el mismo estilo de los demás controles. La flecha permanece centrada y la búsqueda no interrumpe tu navegación.", Icono.BUSCAR, 0xFF35C6D8, "↻"),
         )),
     )
 
