@@ -1700,6 +1700,43 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t469_cv_carrete() = foto("469_cv_carrete", cv { it.copy(cajaGirada = true) }, Rol.INFERIOR, mi = 1)
     @Test fun t470_cv_una() = foto("470_cv_una", cv().copy(modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    /** Vista dentro de carpeta: dock a la derecha, recarga homogénea y caja protagonista. */
+    @Test fun t470b_cv_una_distribucion_carpeta() {
+        val original = cv().copy(modoPantallas = "una_negra", dosDisponibles = false)
+        foto("470b_cv_una_distribucion_carpeta", original.copy(extra = original.extra.copy(dock = true)), Rol.UNICA, avance = 1400)
+        regla.onNodeWithTag("dock-lateral-cv").assertExists()
+        regla.onNodeWithTag("dock-apps").assertDoesNotExist()
+        regla.onNodeWithTag("caja-principal-cv").assertExists()
+        regla.onNodeWithTag("informacion-juego-compacta-cv").assertExists()
+        regla.onNodeWithTag("acciones-juego-compactas-cv").assertExists()
+        val dock = regla.onNodeWithTag("dock-lateral-cv").fetchSemanticsNode().boundsInRoot
+        val caja = regla.onNodeWithTag("caja-principal-cv").fetchSemanticsNode().boundsInRoot
+        assertTrue("El dock debe estar a la derecha de la caja principal", dock.center.x > caja.center.x)
+        val buscar = regla.onNodeWithTag("buscar-juegos-cv").fetchSemanticsNode().boundsInRoot
+        val recarga = regla.onNodeWithTag("recargar-juegos").fetchSemanticsNode().boundsInRoot
+        assertTrue("La recarga debe medir igual que los botones redondos",
+            kotlin.math.abs(buscar.width - recarga.width) < 2f && kotlin.math.abs(buscar.height - recarga.height) < 2f)
+    }
+    /** Regresión: el arte 3D queda bajo la barra, el perfil vuelve al borde y la galería usa una fila. */
+    @Test fun t470c_cv_una_esquina_y_carrusel_compacto() {
+        val original = cv().copy(modoPantallas = "una_negra", dosDisponibles = false)
+        val e = original.copy(extra = original.extra.copy(dock = true, dippoInicio = true, vistaColeccion = "cuadricula"))
+        foto("470c_cv_una_esquina_y_carrusel_compacto", e, Rol.UNICA, avance = 1400)
+        regla.onNodeWithTag("utilidades-esquina-juegos-cv").assertExists()
+        regla.onNodeWithTag("dippo-esquina-juegos-cv").assertExists()
+        regla.onNodeWithTag("perfil-esquina-juegos-cv").assertExists()
+        regla.onNodeWithTag("caja-principal-cv").assertExists()
+        regla.onNodeWithTag("carrusel-juegos-compacto-cv").assertExists()
+        regla.onNodeWithTag("panel-juegos-compacto-cv").assertExists()
+        regla.onNodeWithTag("dock-lateral-cv").assertExists()
+        val raiz = regla.onRoot().fetchSemanticsNode().boundsInRoot
+        val barra = regla.onNodeWithTag("utilidades-esquina-juegos-cv").fetchSemanticsNode().boundsInRoot
+        val caja = regla.onNodeWithTag("caja-principal-cv").fetchSemanticsNode().boundsInRoot
+        val panel = regla.onNodeWithTag("panel-juegos-compacto-cv").fetchSemanticsNode().boundsInRoot
+        assertTrue("Los controles deben mantenerse junto al borde derecho", raiz.right - barra.right < raiz.width * .045f)
+        assertTrue("La caja no debe invadir la banda superior", caja.top >= barra.bottom - raiz.height * .02f)
+        assertTrue("La galería debe usar menos del 30 % de la altura", panel.height < raiz.height * .30f)
+    }
     @Config(qualifiers = ABAJO)
     @Test fun t471_cv_abajo_cuadricula() = foto("471_cv_abajo_cuadricula", cv { it.copy(vistaColeccion = "cuadricula") }, Rol.INFERIOR, mi = 1)
     @Test fun t472_cv_carpetas_arriba() = foto("472_cv_carpetas_arriba", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")), Rol.SUPERIOR)
@@ -1710,6 +1747,59 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t475_cv_carpetas_abajo_carpeta() = foto("475_cv_carpetas_abajo_carpeta", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")) { it.copy(vistaCarpetasCV = "carpeta") }, Rol.INFERIOR, mi = 1)
     @Test fun t476_cv_carpetas_una() = foto("476_cv_carpetas_una", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)), Rol.UNICA)
+    /** El boceto aprobado no confunde DIPPO con el perfil y reserva un lateral para las apps. */
+    @Test fun t476b_cv_carpetas_una_compacta() {
+        val e = cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)
+        foto("476b_cv_carpetas_una_compacta", e.copy(extra = e.extra.copy(dock = true, dippoInicio = true)), Rol.UNICA, avance = 1800)
+        regla.onNodeWithTag("dippo-pulpo-cv").assertExists()
+        regla.onNodeWithTag("boton-perfil").assertExists()
+        regla.onNodeWithTag("consola-destacada-cv").assertExists()
+        regla.onNodeWithTag("tu-mas-jugado-cv").assertExists()
+        regla.onNodeWithTag("acciones-consola-cv").assertExists()
+        regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
+        // No basta con que el ítem exista: su centro debe coincidir con el del selector.
+        val centroSelector = regla.onNodeWithTag("carrusel-carpetas-cv").fetchSemanticsNode().boundsInRoot.center.x
+        val centroElegida = regla.onNodeWithTag("carpeta-cv-snes").fetchSemanticsNode().boundsInRoot.center.x
+        assertTrue("La consola elegida debe permanecer al centro", kotlin.math.abs(centroElegida - centroSelector) < 36f)
+        regla.onNodeWithTag("dock-lateral-cv").assertExists()
+        regla.onNodeWithTag("dock-lateral-alternar").assertDoesNotExist()
+        regla.onNodeWithTag("perfil-esquina-cv").assertExists()
+        regla.onNodeWithTag("recargar-alineado-cv").assertExists()
+        regla.onNodeWithTag("utilidades-perfil-cv").assertExists()
+        regla.onNodeWithTag("entrar-izquierda-cv").assertExists()
+        val centroEntrar = regla.onNodeWithTag("entrar-izquierda-cv").fetchSemanticsNode().boundsInRoot.center.x
+        assertTrue("Entrar debe ubicarse a la izquierda", centroEntrar < centroSelector - 100f)
+        val centroFlecha = regla.onNodeWithTag("recargar-icono", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.center
+        val centroRecargar = regla.onNodeWithTag("recargar-juegos").fetchSemanticsNode().boundsInRoot.center
+        assertTrue("La flecha debe coincidir con el centro del círculo",
+            kotlin.math.abs(centroFlecha.x - centroRecargar.x) < 2f &&
+            kotlin.math.abs(centroFlecha.y - centroRecargar.y) < 2f)
+        regla.onNodeWithTag("abrir-biblioteca-cv").assertDoesNotExist()
+        regla.onNodeWithTag("personalizar-consola-cv").assertExists()
+        regla.onNodeWithTag("recargar-juegos").assertExists()
+    }
+    /** El dock queda fijo y las acciones ocupan una fila propia sobre el selector. */
+    @Test fun t476c_cv_dock_lateral_fijo() {
+        val e = cv().copy(enSistemas = true, vistaConsolas = "carpetas", modoPantallas = "una_negra", dosDisponibles = false)
+        foto("476c_cv_dock_lateral", e.copy(extra = e.extra.copy(dock = true, dippoInicio = true)), Rol.UNICA, avance = 1700)
+        regla.onNodeWithTag("dock-lateral-cv").assertExists()
+        regla.onNodeWithTag("dock-lateral-alternar").assertDoesNotExist()
+        regla.onNodeWithTag("acciones-consola-cv").assertExists()
+        regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
+        regla.onNodeWithTag("personalizar-consola-cv").assertExists()
+        regla.onNodeWithTag("perfil-esquina-cv").assertExists()
+        regla.onNodeWithTag("recargar-alineado-cv").assertExists()
+    }
+    /** Los datos vacíos no crean una barra gigante de "Tus partidas". */
+    @Test fun t476d_cv_sin_partidas_no_muestra_barra() {
+        val e = cv().copy(enSistemas = true, vistaConsolas = "carpetas",
+            modoPantallas = "una_negra", dosDisponibles = false, datos = emptyMap())
+        foto("476d_cv_sin_partidas", e, Rol.UNICA, avance = 1500)
+        regla.onNodeWithTag("tu-mas-jugado-cv").assertDoesNotExist()
+        regla.onNodeWithTag("personalizar-consola-cv").assertExists()
+        regla.onNodeWithTag("selector-carpetas-compacto-cv").assertExists()
+        regla.onNodeWithTag("abrir-biblioteca-cv").assertDoesNotExist()
+    }
     @Test fun t477_cv_carpetas_ps2_3d() = foto("477_cv_carpetas_ps2_3d", cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(consolaSel = "ps2"), Rol.SUPERIOR)
     @Test fun t478_cv_widgets() {
         cl.nikalbazu.diptico.estado.TuAno.pruebaFilas = conFilasSemana()
