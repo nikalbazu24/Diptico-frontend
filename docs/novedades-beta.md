@@ -1,3 +1,18 @@
+# Díptico 2.0.1 beta — mejoras oficiales del Home y las carpetas
+
+Esta actualización incorpora los ajustes probados en Díptico Pruebas a la **aplicación oficial**, manteniendo su identificador `cl.nikalbazu.diptico`, su firma y los datos de la instalación existente.
+
+- **Home compacto en una pantalla:** selector de consolas centrado, carpeta activa más destacada, botón Entrar accesible y Dippo independiente.
+- **Dock coherente:** apps fijadas en una barra vertical derecha, tanto en Home como dentro de una consola.
+- **Perfil en la esquina:** Dippo, hora, batería y fotografía del usuario quedan fijos arriba a la derecha.
+- **Caja 3D sin solapamientos:** contenedor limitado para que la caja no invada la barra superior; títulos y acciones Jugar, Ficha y Editar caja más compactos.
+- **Carrusel de juegos:** una sola fila horizontal de carátulas dentro de las carpetas en el modo de una pantalla, conservando navegación con mando, Select y las demás vistas.
+- **Recarga uniforme:** el botón de actualizar juegos tiene la misma apariencia que los demás botones.
+- **Compatibilidad:** se conservan las vistas de dos pantallas, la configuración de la APK oficial, el actualizador y la firma de publicación.
+- **Validación:** pruebas de diseño automatizadas; se recomienda además revisar en una consola Android real, especialmente tamaño de portadas y navegación.
+
+---
+
 # Díptico 2.0.0 — lanzamiento oficial
 
 Díptico 2.0.0 oficial reúne Colección viva, el Home compacto de una pantalla y la recarga directa de las carpetas de juegos. Se distribuye con el paquete y la firma originales y puede actualizar la instalación oficial existente.
