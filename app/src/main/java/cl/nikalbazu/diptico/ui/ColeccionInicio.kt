@@ -524,7 +524,10 @@ fun ColeccionUnica(e: Estado) {
                 }
                 Box(Modifier.fillMaxWidth().weight(1f).padding(top = esc.d(5))) {
                     when (e.extra.vistaColeccion) {
-                        "cuadricula" -> CarruselJuegosCompactoCV(e, Modifier.fillMaxSize().testTag("cv-vista-cuadricula"))
+                        // Dos etiquetas en el mismo nodo: Compose se queda con la primera, por eso el carrusel va dentro de su caja.
+                        "cuadricula" -> Box(Modifier.fillMaxSize().testTag("cv-vista-cuadricula")) {
+                            CarruselJuegosCompactoCV(e, Modifier.fillMaxSize())
+                        }
                         "lista" -> ListaCV(e, Modifier.fillMaxSize().testTag("cv-vista-lista"))
                         else -> EstanteCV(e, Modifier.fillMaxSize().testTag("cv-vista-estante"), vecinas = 4)
                     }
