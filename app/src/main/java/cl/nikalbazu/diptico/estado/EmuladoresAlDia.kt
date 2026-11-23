@@ -97,6 +97,9 @@ object EmuladoresAlDia {
         FuenteEmulador("MAME4droid", listOf("com.seleuco.mame4d2024", "com.seleuco.mame4droid"), web = "https://github.com/seleuco/MAME4droid-2024", nota = "Se actualiza desde Play Store"),
         FuenteEmulador("ScummVM", listOf("org.scummvm.scummvm"), web = "https://www.scummvm.org/downloads/", nota = "Se actualiza desde Play Store o su web"),
         FuenteEmulador("Banana Native", listOf("dev.bananative.android"), nota = "Aún no tiene página pública"),
+        FuenteEmulador("PokeDaisy", listOf("com.pokedaisy.app"), "lidor30/pokedaisy", web = "https://pokedaisy.com/es/", nota = "Pokémon de GB, GBC, GBA y DS con compañero en la otra pantalla"),
+        FuenteEmulador("Peanuts Native", listOf("dev.nxnative.android.peanuts"), "igawa6/peanuts-native", nota = "Juegos de Switch convertidos en apps nativas (.nup)"),
+        FuenteEmulador("Biomeria Launcher", listOf("com.prissma.launcher"), "Nikalbazu24/Prissma-Launcher", nota = "Minecraft Java, Bedrock y Rust"),
     ) + Nativos.PORTS.map { p ->
         // Los ports nativos también se actualizan: su repo sale del enlace de GitHub.
         FuenteEmulador(p.nombre, listOf(p.paquete), p.enlace.removePrefix("https://github.com/").trimEnd('/'), web = p.enlace)

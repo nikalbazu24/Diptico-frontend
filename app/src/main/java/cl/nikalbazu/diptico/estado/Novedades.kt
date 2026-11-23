@@ -594,6 +594,8 @@ object Novedades {
             Pagina("Caja protagonista, sin tapar nada", "La caja 3D destaca sin superponerse a la barra superior. Los títulos y botones ocupan menos espacio.", Icono.PORTADA, 0xFFFF9B54, "A · Jugar"),
             Pagina("Juegos en una sola fila", "En una pantalla, la colección muestra un carrusel horizontal compacto. Recorre los juegos con el mando o toca una carátula; Select sigue cambiando las vistas.", Icono.VISTA, 0xFF6B4EFF, "Select"),
             Pagina("Recarga a tu alcance", "El botón circular de actualizar juegos conserva el mismo estilo de los demás controles. La flecha permanece centrada y la búsqueda no interrumpe tu navegación.", Icono.BUSCAR, 0xFF35C6D8, "↻"),
+            Pagina("Minecraft con Biomeria", "Si tienes Biomeria Launcher, tus instancias de Minecraft (Java, Bedrock y Rust) aparecen en la carpeta Minecraft. Ábrelas desde Díptico y al salir vuelves aquí; las horas que jugaste en Biomeria también cuentan.", Icono.MUNDO, 0xFF5D9C3B, "A · Jugar"),
+            Pagina("PokeDaisy y Peanuts Native", "Tus juegos de Pokémon de Game Boy, Color, Advance y DS se abren con PokeDaisy si la tienes, y los .nup de Switch con Peanuts Native. Puedes cambiarlo en las opciones del juego, y las dos se revisan en Emuladores al día.", Icono.EMULADOR, 0xFFFFB74D, "X · Opciones"),
         )),
     )
 

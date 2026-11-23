@@ -1275,6 +1275,7 @@ object Diptico {
         aplicarTema()
         publicarJuegos()
         vigilarAppsInstaladas()
+        refrescarBiomeria()
         Medios.revisar(app)
         if (almacen.android == null) detectarAndroid(silencioso = true)
         if (carpetas.isNotEmpty()) escanear()
@@ -1710,7 +1711,7 @@ object Diptico {
         val ports = juegosApps((e.ports + Nativos.paquetesPorts.filter { Lanzador.instalado(app, it) }).filterNot { it in paquetes }, Consolas.PORTS)
         paquetes.addAll(ports.map { it.archivo })
         val android = juegosApps(e.android.filterNot { it in paquetes }, Consolas.ANDROID)
-        return (archivos + ports + android + juegosDePC()).distinctBy { it.clave }
+        return (archivos + ports + android + juegosDePC() + Integraciones.juegosBiomeria(app)).distinctBy { it.clave }
     }
 
     internal fun vigilarAppsInstaladas() {
@@ -1724,6 +1725,8 @@ object Diptico {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_PACKAGE_REMOVED && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
                 if (intent.action == Intent.ACTION_PACKAGE_REMOVED) instalarTrasDesinstalar(intent.data?.schemeSpecificPart)
+                Lanzador.olvidar()
+                if (intent.data?.schemeSpecificPart == Integraciones.BIOMERIA) refrescarBiomeria()
                 publicarJuegos()
                 if (estado.value.panel == Panel.APPS) cargarApps()
             }
@@ -2109,7 +2112,7 @@ object Diptico {
             // Si es el mismo juego que se dejó hace poco (volviste a Díptico con la partida en pausa), el emulador
             // puede tenerla guardada en memoria: se abre sin «limpiar la tarea» para no reiniciarla.
             val reciente = ultimaPartida?.let { (clave, cuando) -> clave == juego.clave && System.currentTimeMillis() - cuando < RETOMAR_MS } == true
-            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: Nativos.recomendado(app, juego) ?: e.emuladores[consola.id], displayId, raizDe(archivo), retomar = reciente)
+            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: (Nativos.recomendado(app, juego) ?: Integraciones.recomendado(app, juego)) ?: e.emuladores[consola.id], displayId, raizDe(archivo), retomar = reciente)
         }
         if (conCarga) terminarCarga(juego.clave, if (error != null) 0L else 1200L)
         if (error != null) {
@@ -2379,7 +2382,7 @@ object Diptico {
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, s.displayId)
         else {
             val archivo = archivoParaJugar(juego, e)
-            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: Nativos.recomendado(app, juego) ?: e.emuladores[consola.id], s.displayId, raizDe(archivo), retomar = true)
+            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: (Nativos.recomendado(app, juego) ?: Integraciones.recomendado(app, juego)) ?: e.emuladores[consola.id], s.displayId, raizDe(archivo), retomar = true)
         }
         if (error != null) { avisar(error); return }
         actualizar { it.copy(panel = Panel.NINGUNO, continuacion = 0L) }
@@ -2863,6 +2866,7 @@ object Diptico {
         )
         almacen.guardarDatos(datos)
         TuAno.registrar(s.clave, duracion)
+        if (s.clave.startsWith(Integraciones.CONSOLA_BIOMERIA + "/")) refrescarBiomeria()
         respaldarPartida(s.clave, s.inicio, duracion)
         SocialDiscord.sinJuego()
         // Si el emulador se cerró a los pocos segundos, el juego no llegó a abrir: Díptico explica por qué y ofrece otro emulador.

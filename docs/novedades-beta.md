@@ -8,6 +8,7 @@ Esta actualización incorpora los ajustes probados en Díptico Pruebas a la **ap
 - **Caja 3D sin solapamientos:** contenedor limitado para que la caja no invada la barra superior; títulos y acciones Jugar, Ficha y Editar caja más compactos.
 - **Carrusel de juegos:** una sola fila horizontal de carátulas dentro de las carpetas en el modo de una pantalla, conservando navegación con mando, Select y las demás vistas.
 - **Recarga uniforme:** el botón de actualizar juegos tiene la misma apariencia que los demás botones.
+- **Apps amigas:** Biomeria Launcher (tus instancias de Minecraft aparecen en la carpeta Minecraft, se abren desde Díptico, vuelves al salir y se suman sus horas), PokeDaisy (abre tus juegos de Pokémon de GB, GBC, GBA y DS) y Peanuts Native (abre los .nup de Switch). Las tres aparecen en Emuladores al día.
 - **Compatibilidad:** se conservan las vistas de dos pantallas, la configuración de la APK oficial, el actualizador y la firma de publicación.
 - **Validación:** pruebas de diseño automatizadas; se recomienda además revisar en una consola Android real, especialmente tamaño de portadas y navegación.
 

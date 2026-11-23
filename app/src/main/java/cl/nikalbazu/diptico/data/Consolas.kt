@@ -171,6 +171,8 @@ private val VISUALES: Map<String, Visual> = mapOf(
         bonito = "Fan games (Gahvoria)",
     ),
     "ports" to Visual("Ports", Medio.APP, 0xFF2EC4A6, CAJA_APP, bonito = "Ports"),
+    // Minecraft con Biomeria Launcher: cada instancia que Biomeria comparte es un juego (estado/Integraciones.kt).
+    "biomeria" to Visual("Minecraft", Medio.APP, 0xFF5D9C3B, CAJA_APP, alias = listOf("minecraft", "biomeria", "prissma"), bonito = "Minecraft (Biomeria)"),
     "androidgames" to Visual("Android", Medio.MOVIL, 0xFF3DDC84, CAJA_APP, bonito = "Juegos de Android"),
 )
 

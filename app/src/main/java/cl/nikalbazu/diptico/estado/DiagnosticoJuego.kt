@@ -99,7 +99,7 @@ internal fun Diptico.revisarCierreRapido(clave: String, duracionSeg: Long) {
     val veces = (cierresRapidos[clave] ?: 0) + 1
     cierresRapidos[clave] = veces
     val archivo = archivoParaJugar(juego, e)
-    val preferido = e.datos[clave]?.emulador ?: Nativos.recomendado(app, juego) ?: e.emuladores[consola.id]
+    val preferido = e.datos[clave]?.emulador ?: (Nativos.recomendado(app, juego) ?: Integraciones.recomendado(app, juego)) ?: e.emuladores[consola.id]
     scope.launch {
         val bytes = withContext(Dispatchers.IO) { tamanoArchivo(app, archivo) }
         val emulador = withContext(Dispatchers.IO) { runCatching { Lanzador.elegida(app, consola, preferido, archivo.tipo)?.nombre }.getOrNull() }
