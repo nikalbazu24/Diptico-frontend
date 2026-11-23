@@ -864,3 +864,19 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   `terminarEdicion` también apaga `espacioEdita`; arriba no se dibuja la barra vieja de páginas mientras se edita abajo.
 - Arreglado de paso: `pasosTuto` no compilaba en esta rama (paréntesis). Traducciones `extras37.tsv` (siguiente: extras38). Capturas t530–t535.
 - Siguiente (Opus): quitar opciones sin uso de Ajustes, limpiar código, fluidez y publicar como Díptico 2.0.0 (cambiar el nombre de versión del workflow).
+
+## 2.0.1 beta + apps amigas (22 nov 2026, Opus; publicada como v2.0.1-beta.827)
+- La rama de prueba `fix/apk-prueba-integrada-2-0-0` (Díptico Pruebas, paquete aparte) ya estaba integrada en main por c91345d
+  (Home compacto, carpetas, dock lateral, carrusel). Lo que queda solo en esa rama es la distribución «Pruebas» (paquete, actualizador
+  aislado, workflow): NO va a main. Main no compilaba (`assertTrue` sin import en Capturas; `NavegacionTest` no contaba
+  `diptico-2.0.0-oficial`; dos `testTag` en el mismo nodo del carrusel compacto). Arreglado.
+- `estado/Integraciones.kt`: PokeDaisy (`com.pokedaisy.app/.LaunchActivity`, VIEW + %ROMSAF%, en gb/gbc/gba/nds; recomendado en
+  juegos de Pokémon), Peanuts Native (`dev.nxnative.android.peanuts/dev.peanuts.launch.LaunchActivity`, extra `game` = ruta del .nup,
+  recomendado para .nup de switch), Biomeria (`com.prissma.launcher`): lee `content://com.prissma.launcher.provider/instances`,
+  sistema `biomeria` («Minecraft»), archivos `filesDir/biomeria/<id>.biomeria` con el enlace `prissma://launch?instance_id=…&source_frontend=…`
+  (orden `%DATA%=%INJECT%=%ROM%`), `refrescarBiomeria()` al iniciar, al instalar/actualizar Biomeria y al cerrar una sesión de Biomeria;
+  horas = máx(Díptico, Biomeria). Las tres en `EmuladoresAlDia.FUENTES`. Test `IntegracionesTest` en el CI.
+- Boceto de retoques visuales (una pantalla) esperando visto bueno: https://claude.ai/artifact/12bQJk6gdgo7Abs4B41tgm
+  (Inicio: engranaje duplicado → «✎ Personalizar» junto a Entrar, Entrar sin hueco, ↻ con el mismo estilo, crédito del modelo chico,
+  flechas junto a las consolas, puntos sin tapar la elegida. Dentro de una consola: barra sin «≡ Apps» y Widgets con nombre, ↻ igual,
+  lomo de caja sin cortar, decoración del tema más tenue, tarjetas de juego parejas, puntos fuera del panel).
