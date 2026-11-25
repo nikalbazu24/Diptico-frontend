@@ -19,7 +19,7 @@ data class FormaCaja(val ancho: Float, val alto: Float, val radio: Float, val ba
  */
 data class Comando(val etiqueta: String, val linea: String) {
     /** Nombre de la regla del emulador (RETROARCH, EDEN, DOLPHIN...), o null si abre una app de Android. */
-    val emulador: String? = Regex("%EMULATOR_([A-Z0-9_+\\-]+)%").find(linea)?.groupValues?.get(1)
+    val emulador: String? = Regex("%EMULATOR_([A-Z0-9_+!\\-]+)%").find(linea)?.groupValues?.get(1)
 
     /** El archivo del juego trae adentro el nombre de una app (ports y juegos de Android). */
     val abreApp: Boolean = linea.startsWith("%ANDROIDAPP%")

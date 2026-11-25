@@ -65,8 +65,14 @@ object Lanzador {
 
     private val instalados = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
 
+    /** Lo que se sabe de cada «paquete/actividad»: si existe y otra app la puede abrir. */
+    private val pantallas = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
     /** Olvida lo que se sabía de apps instaladas (al volver a Díptico, por si instalaste algo). */
-    fun olvidar() = instalados.clear()
+    fun olvidar() {
+        instalados.clear()
+        pantallas.clear()
+    }
 
     fun instalado(ctx: Context, paquete: String): Boolean = instalados.getOrPut(paquete) {
         try {
@@ -77,16 +83,44 @@ object Lanzador {
         }
     }
 
-    /** Primer "paquete/actividad" instalado de una regla de ES-DE. */
+    /** «paquete/actividad» de una regla → (paquete, actividad completa); la actividad relativa («.Main») se completa con el paquete. */
+    internal fun separar(entrada: String): Pair<String, String> {
+        val pkg = entrada.substringBefore('/')
+        val act = entrada.substringAfter('/', "")
+        return pkg to when {
+            act.isEmpty() -> ""
+            act.startsWith(".") -> pkg + act
+            else -> act
+        }
+    }
+
+    /**
+     * Primer "paquete/actividad" de una regla de ES-DE que está instalado Y tiene esa pantalla abierta a otras apps.
+     * Si el paquete está pero la pantalla no (otra versión, o una app que solo comparte el nombre del paquete), se
+     * prueba el siguiente candidato.
+     */
     private fun resolver(ctx: Context, emulador: String): Pair<String, String>? {
         for (e in Consolas.reglas[emulador] ?: return null) {
-            val pkg = e.substringBefore('/')
+            val (pkg, act) = separar(e)
             if (!instalado(ctx, pkg)) continue
-            val act = e.substringAfter('/', "")
-            return pkg to when {
-                act.isEmpty() -> ""
-                act.startsWith(".") -> pkg + act
-                else -> act
+            // Gahvoria sin su entrada para lanzadores se sigue ofreciendo: `lanzar` abre su biblioteca.
+            if (pkg != Consolas.PAQUETE_GAHVORIA && !actividadExiste(ctx, pkg, act)) continue
+            return pkg to act
+        }
+        return null
+    }
+
+    /**
+     * Un emulador de [consola] que está instalado pero sin la pantalla que Díptico usa para abrir juegos
+     * (casi siempre una versión vieja o distinta). Devuelve su nombre, o null si no hay ninguno así.
+     */
+    fun instaladoSinPantalla(ctx: Context, consola: Consola): String? {
+        for (c in consola.comandos) {
+            val regla = c.emulador ?: continue
+            for (e in Consolas.reglas[regla] ?: continue) {
+                val (pkg, act) = separar(e)
+                if (esCamuflado(pkg) || !instalado(ctx, pkg)) continue
+                if (!actividadExiste(ctx, pkg, act)) return nombreApp(ctx, pkg) ?: c.nombre
             }
         }
         return null
@@ -234,8 +268,17 @@ object Lanzador {
     private fun construir(ctx: Context, op: Opcion, juego: Juego, consola: Consola, rom: Uri, raiz: Uri?): Intent {
         val linea = op.comando.linea
         // Accesos creados por Díptico (juegos de PC de Steam, Epic, GOG…) viven en su carpeta interna.
-        val ruta = if (juego.uri.scheme == "file") juego.uri.path else rutaReal(juego.docId)
-        val raizRuta = raiz?.let { r -> try { rutaReal(DocumentsContract.getTreeDocumentId(r)) } catch (e: Exception) { null } }
+        // Solo se arma una ruta si el documento la tiene de verdad (memoria interna, SD, USB): en Descargas o la nube
+        // rutaReal inventaría algo como «/storage/msf/123». No se usa File.exists(): sin «acceso a todos los archivos»
+        // Díptico no ve esas rutas aunque el emulador sí.
+        val ruta = if (juego.uri.scheme == "file") juego.uri.path
+        else rutaReal(juego.docId)?.takeIf { rutaConfiable(juego.uri, juego.docId) }
+        val raizRuta = raiz?.let { r ->
+            try {
+                val id = DocumentsContract.getTreeDocumentId(r)
+                rutaReal(id)?.takeIf { r.authority == "com.android.externalstorage.documents" || id.startsWith("raw:/") }
+            } catch (e: Exception) { null }
+        }
         val base = if (juego.esCarpeta) juego.archivo else juego.archivo.substringBeforeLast('.')
 
         fun necesitaRuta(): String = ruta ?: throw Falla("No pude encontrar la ruta de ${juego.titulo}. Usa una carpeta de la memoria interna o la SD.")
@@ -248,7 +291,8 @@ object Lanzador {
             }
             if ("%GAMEDIRRAW%" in x) x = x.replace("%GAMEDIRRAW%", necesitaRuta().substringBeforeLast('/'))
             if ("%ROMRAW%" in x) x = x.replace("%ROMRAW%", necesitaRuta())
-            if ("%ROM%" in x) x = x.replace("%ROM%", necesitaRuta())
+            // Sin ruta real se manda el documento (content://): el emulador recibe el permiso de lectura y muchos lo abren igual.
+            if ("%ROM%" in x) x = x.replace("%ROM%", ruta ?: rom.toString())
             x = x.replace("%ROMSAF%", rom.toString()).replace("%ROMPROVIDER%", rom.toString())
                 .replace("%BASENAME%", base)
                 .replace("%ANDROIDPACKAGE%", op.paquete ?: "")
@@ -367,7 +411,9 @@ object Lanzador {
                 consola.id == Consolas.RPGMAKER ->
                     return "Para abrir ${juego.titulo} necesitas instalar Gahvoria. Descárgala desde github.com/Nikalbazu24/gahvoria"
                 consola.comandos.isEmpty() || juego.esCarpeta || juego.tipo in setOf("ps3", "ps4", "psvita") ->
-                    return "Para abrir ${juego.titulo} necesitas instalar ${consola.sugerido}."
+                    return instaladoSinPantalla(ctx, consola)?.let { app ->
+                        "Tienes $app, pero esa versión no tiene la pantalla que Díptico usa para abrir juegos. Actualiza $app."
+                    } ?: "Para abrir ${juego.titulo} necesitas instalar ${consola.sugerido}."
                 else -> {
                     val ver = Intent(Intent.ACTION_VIEW).setDataAndType(rom, "*/*")
                     ver.clipData = ClipData.newRawUri("rom", rom)
@@ -384,30 +430,39 @@ object Lanzador {
         if (retomar) base.flags = base.flags and (Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP).inv()
 
         // Los accesos internos de Díptico (file://) no se comparten: el emulador recibe solo el código del juego.
-        val conPermiso = if (juego.uri.scheme == "file") base else Intent(base).apply {
+        fun compartido(permisos: Int): Intent = if (juego.uri.scheme == "file") base else Intent(base).apply {
             clipData = ClipData.newRawUri("rom", rom).apply {
                 addItem(ClipData.Item(juego.uri))
                 raiz?.let { addItem(ClipData.Item(it)) }
             }
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            addFlags(permisos)
         }
 
         val bundle = opcionesPantalla(displayId)
-        return try {
-            ctx.startActivity(conPermiso, bundle)
-            null
-        } catch (se: SecurityException) {
+        // Primero lectura y escritura (partidas junto al juego); si la carpeta es de solo lectura Android lo rechaza,
+        // entonces solo lectura; y recién al final sin permisos.
+        val intentos = listOf(
+            compartido(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION),
+            compartido(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+            base,
+        )
+        for ((n, intento) in intentos.withIndex()) {
             try {
-                ctx.startActivity(base, bundle)
-                null
+                ctx.startActivity(intento, bundle)
+                return null
+            } catch (se: SecurityException) {
+                if (n == intentos.lastIndex) return "No pude abrir ${juego.titulo}: ${se.message ?: "Android no dio permiso"}"
+            } catch (nf: ActivityNotFoundException) {
+                val pkg = op?.paquete
+                return if (pkg != null && instalado(ctx, pkg)) {
+                    val app = nombreApp(ctx, pkg) ?: op?.nombre ?: pkg
+                    "$app está instalado, pero su versión no tiene la pantalla que Díptico usa para abrir juegos. Actualiza $app o elige otro emulador."
+                } else "No encontré con qué abrir ${consola.bonito}. Instala ${consola.sugerido}."
             } catch (e: Exception) {
-                "No pude abrir ${juego.titulo}: ${e.message ?: "error desconocido"}"
+                return "No pude abrir ${juego.titulo}: ${e.message ?: "error desconocido"}"
             }
-        } catch (nf: ActivityNotFoundException) {
-            "No encontré con qué abrir ${consola.bonito}. Instala ${consola.sugerido}."
-        } catch (e: Exception) {
-            "No pude abrir ${juego.titulo}: ${e.message ?: "error desconocido"}"
         }
+        return "No pude abrir ${juego.titulo}"
     }
 
     private fun opcionesPantalla(displayId: Int?): Bundle {
@@ -432,17 +487,35 @@ object Lanzador {
             .sortedBy { it.nombre.lowercase() }
     }
 
-    /** Paquetes de emuladores conocidos (para no confundirlos con juegos de Android). */
+    /**
+     * Prefijos de paquetes «camuflados»: algunos emuladores se publican con el nombre de un juego o benchmark famoso
+     * (Genshin, PUBG, AnTuTu…) para que el equipo les dé más rendimiento. En las reglas van siempre al final.
+     */
+    private val CAMUFLADOS = listOf("com.miHoYo.", "com.antutu.", "com.tencent.", "com.ludashi.")
+
+    internal fun esCamuflado(paquete: String): Boolean = CAMUFLADOS.any { paquete.startsWith(it) }
+
+    /** Paquetes de emuladores conocidos (para no confundirlos con juegos de Android), sin los camuflados. */
     private val emuladores: Set<String> by lazy {
-        Consolas.reglas.values.flatten().map { it.substringBefore('/') }.toSet()
+        Consolas.reglas.values.flatten().map { it.substringBefore('/') }.filterNot { esCamuflado(it) }.toSet()
     }
+
+    /** Pantallas de emulador de cada paquete camuflado («com.tencent.ig» → la de Winlator, la de GameHub…). */
+    private val pantallasCamufladas: Map<String, List<String>> by lazy {
+        Consolas.reglas.values.flatten().map { separar(it) }.filter { esCamuflado(it.first) }
+            .groupBy({ it.first }, { it.second })
+    }
+
+    /** ¿[paquete] es un emulador? Un camuflado solo lo es si de verdad trae la pantalla del emulador (si no, es el juego real). */
+    private fun esEmulador(ctx: Context, paquete: String): Boolean =
+        paquete in emuladores || pantallasCamufladas[paquete]?.any { actividadExiste(ctx, paquete, it) } == true
 
     @Suppress("DEPRECATION")
     private fun esJuego(ai: ApplicationInfo): Boolean =
         ai.category == ApplicationInfo.CATEGORY_GAME || (ai.flags and ApplicationInfo.FLAG_IS_GAME) != 0
 
     /** Juegos de Android instalados (los que el sistema marca como juego), sin contar emuladores. */
-    fun juegosAndroid(ctx: Context): List<App> = apps(ctx).filter { it.esJuego && it.paquete !in emuladores }
+    fun juegosAndroid(ctx: Context): List<App> = apps(ctx).filter { it.esJuego && !esEmulador(ctx, it.paquete) }
 
     fun nombreApp(ctx: Context, paquete: String): String? = try {
         val pm = ctx.packageManager
@@ -454,14 +527,21 @@ object Lanzador {
     /** ¿La app [paquete] tiene la pantalla [actividad] y se puede abrir desde otra app? */
     private fun actividadExiste(ctx: Context, paquete: String?, actividad: String?): Boolean {
         if (paquete == null || actividad.isNullOrEmpty()) return true
-        return try {
-            ctx.packageManager.getActivityInfo(android.content.ComponentName(paquete, actividad), 0).exported
-        } catch (_: Exception) { false }
+        return pantallas.getOrPut("$paquete/$actividad") {
+            try {
+                ctx.packageManager.getActivityInfo(ComponentName(paquete, actividad), 0).exported
+            } catch (_: Exception) { false }
+        }
     }
 
     /** Abre una app (un port o un juego de Android) en la pantalla elegida. */
     fun lanzarApp(ctx: Context, paquete: String, nombre: String, displayId: Int?): String? {
-        val i = ctx.packageManager.getLaunchIntentForPackage(paquete) ?: return "$nombre ya no está instalado."
+        val i = ctx.packageManager.getLaunchIntentForPackage(paquete) ?: return try {
+            ctx.packageManager.getPackageInfo(paquete, 0)
+            "$nombre está instalado, pero no tiene ícono para abrirlo desde un lanzador."
+        } catch (_: PackageManager.NameNotFoundException) {
+            "$nombre ya no está instalado."
+        }
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return try {
             ctx.startActivity(i, opcionesPantalla(displayId))

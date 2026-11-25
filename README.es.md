@@ -53,7 +53,7 @@ Necesitas tus propios archivos de juego y BIOS y los emuladores correspondientes
 | Carpeta | Sistema | Ejemplos de emuladores |
 |---|---|---|
 | `snes`, `gba`, `n64` | Super Nintendo, Game Boy Advance, Nintendo 64 | Snes9x EX+, Pizza Boy GBA, Mupen64Plus FZ, RetroArch |
-| `psx`, `ps2`, `psp` | PlayStation, PlayStation 2, PSP | DuckStation, NetherSX2, PPSSPP, RetroArch |
+| `psx`, `ps2`, `psp` | PlayStation, PlayStation 2, PSP | DuckStation, ARMSX2, PPSSPP, RetroArch |
 | `gc`, `wiiu` | GameCube, Wii U | Dolphin, Cemu |
 | `nds`, `n3ds` | Nintendo DS, Nintendo 3DS | melonDS, DraStic, Azahar, Citra |
 | `switch`, `psvita` | Nintendo Switch, PS Vita | Eden, Kenji-NX, Skyline, Vita3K |

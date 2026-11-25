@@ -109,6 +109,12 @@ abstract class BaseActivity : ComponentActivity() {
         super.onStop()
     }
 
+    override fun onPause() {
+        // Para la segunda revisión de alVolver: si un juego tapa esta pantalla, ya no está al frente.
+        Diptico.alSalir(miDisplay())
+        super.onPause()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Diptico.iniciar(this)

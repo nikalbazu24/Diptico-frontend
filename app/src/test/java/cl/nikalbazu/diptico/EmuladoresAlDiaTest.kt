@@ -1,5 +1,7 @@
 package cl.nikalbazu.diptico
 
+import cl.nikalbazu.diptico.data.Comando
+import cl.nikalbazu.diptico.emu.Lanzador
 import cl.nikalbazu.diptico.estado.EmuRevisado
 import cl.nikalbazu.diptico.estado.EmuladoresAlDia
 import org.junit.Assert.*
@@ -37,5 +39,44 @@ class EmuladoresAlDiaTest {
         val c = EmuladoresAlDia.comentario(l)
         assertTrue(c.contains("Eden tiene versión nueva"))
         assertTrue(c.contains("El que más usas es Eden"))
+    }
+
+    @Test fun fuenteExactaYPrefijoMasLargo() {
+        // com.winlator.cmod empieza con «com.winlator.» pero es Winlator Cmod, no Winlator.
+        assertEquals("Winlator Cmod", EmuladoresAlDia.fuenteDe("com.winlator.cmod")?.nombre)
+        assertEquals("Winlator Cmod", EmuladoresAlDia.fuenteDe("com.winlator.cmod.debug")?.nombre)
+        assertEquals("Winlator", EmuladoresAlDia.fuenteDe("com.winlator")?.nombre)
+        assertEquals("Winlator", EmuladoresAlDia.fuenteDe("com.winlator.beta")?.nombre)
+        // ARMSX2: el paquete correcto va primero.
+        assertEquals("com.nanodata.armsx2", EmuladoresAlDia.fuenteDe("com.nanodata.armsx2")?.paquetes?.first())
+    }
+
+    @Test fun reglaConSignoDeExclamacion() {
+        assertEquals("PLAY!", Comando("Play! (Standalone)", "%EMULATOR_PLAY!% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%").emulador)
+        assertEquals("MAME4DROID-CURRENT", Comando("x", "%EMULATOR_MAME4DROID-CURRENT% %DATA%=adam").emulador)
+    }
+
+    @Test fun actividadRelativaSeCompleta() {
+        assertEquals("com.x" to "com.x.Main", Lanzador.separar("com.x/.Main"))
+        assertEquals("com.x" to "org.y.Main", Lanzador.separar("com.x/org.y.Main"))
+        assertEquals("com.x" to "", Lanzador.separar("com.x"))
+    }
+
+    @Test fun camufladosVanAlFinalDeCadaRegla() {
+        // Paquetes con nombre de juego o benchmark (Genshin, PUBG, AnTuTu…): nunca antes que el paquete real del emulador.
+        val texto = java.io.File("src/main/assets/sistemas.json").readText()
+        val reglas = texto.substringAfter("\"reglas\":{").substringBefore("},\"sistemas\"")
+        val fila = Regex("\"([^\"]+)\":\\[([^\\]]*)\\]")
+        var revisadas = 0
+        for (m in fila.findAll(reglas)) {
+            val paquetes = Regex("\"([^\"/]+)(/[^\"]*)?\"").findAll(m.groupValues[2]).map { it.groupValues[1] }.toList()
+            val camuflado = paquetes.map { Lanzador.esCamuflado(it) }
+            if (camuflado.none { it }) continue
+            revisadas++
+            val primero = camuflado.indexOfFirst { it }
+            assertTrue("${m.groupValues[1]}: un camuflado antes de un paquete real", camuflado.drop(primero).all { it })
+            assertFalse("${m.groupValues[1]}: solo camuflados", camuflado.first())
+        }
+        assertTrue(revisadas >= 5)
     }
 }

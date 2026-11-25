@@ -1,3 +1,19 @@
+# Díptico 2.0.1 beta — emuladores más confiables
+
+Arreglos de una revisión del lanzador de juegos y apps.
+
+- **Tu elección manda:** el emulador elegido para una consola gana a las recomendaciones (Banana Native, PokeDaisy, Peanuts Native). El elegido para un juego sigue ganando a todo.
+- **Emulador correcto:** Díptico solo ofrece un emulador si tiene de verdad la pantalla que abre juegos (y está abierta a otras apps); si no, prueba el siguiente. Si está instalado pero en una versión que no sirve, dice «actualiza X» en vez de «instala X». Las apps sin ícono ya no aparecen como «no instalada».
+- **Cierre rápido:** si el emulador se cae en los primeros 4 segundos, Díptico lo vuelve a mirar a los 4,5 s y DIPPO explica qué pudo pasar (antes se ignoraba).
+- **Carpetas de solo lectura:** primero se pide lectura y escritura, luego solo lectura y al final sin permisos.
+- **Rutas:** en Descargas o la nube ya no se inventa una ruta falsa; para `%ROM%` se manda el documento.
+- **Reglas:** se reconoce Play! (`%EMULATOR_PLAY!%`); melonDS deja de duplicar a WatermelonDS; se borró una regla de MAME4droid sin uso; ARMSX2 `com.nanodata.armsx2` primero; los paquetes «camuflados» (Genshin, PUBG, AnTuTu…) ya no esconden esos juegos reales de «Juegos de Android».
+- **Emuladores al día:** Winlator Cmod ya no se confunde con Winlator; si el APK bajado es de otra app, no se instala ni se ofrece desinstalar nada.
+- **Biomeria:** el enlace nunca lleva `source_frontend` dos veces y, si Biomeria no da permiso, queda anotado el motivo.
+- **Qué probar en la consola:** elegir un emulador para PS2 y ver que se usa; un juego de una carpeta de solo lectura; cerrar un emulador a la fuerza recién abierto (debe salir el aviso de DIPPO); Emuladores al día con Winlator Cmod instalado.
+
+---
+
 # Díptico 2.0.1 beta — Peanuts Native a punto
 
 Compatibilidad completa con **Peanuts Native** (juegos de Switch 1 convertidos en apps nativas, archivos `.nup`).

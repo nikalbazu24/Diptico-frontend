@@ -891,3 +891,15 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - `Lanzador.avisoPorRuta` (para BANANA-NATIVE y PEANUTS-NATIVE): mayúsculas y documentos sin ruta (`rutaConfiable`); `rutaReal("home:x")` → Documents.
 - `Diagnostico.causas(..., peanutsInstalada)`; Centro › Ports nativos fila `peanuts` (`instalarDesdeGitHub`, `pestanaNativaDe`, `esConsolaNativa` incluye switch);
   `FuenteEmulador.conRepublicacion` + `etiquetaComparable` («v0.1.8-1» = «0.1.8»). Textos nuevos sin traducir (siguiente TSV: extras38).
+
+## Arreglos del lanzador (25 nov 2026, misma rama; Novedades `arreglos-apps-2.0-78`)
+- `Lanzador.resolver` exige que la actividad exista y esté exported (`actividadExiste`, con caché `pantallas` que limpia `olvidar`); si no, pasa al
+  siguiente candidato (Gahvoria se salva: abre su biblioteca). `instaladoSinPantalla` → «actualiza X». `separar(entrada)` arma paquete/actividad.
+- Camuflados (`esCamuflado`: com.miHoYo./com.antutu./com.tencent./com.ludashi.) van al final de cada regla (test) y no esconden el juego real en
+  «Juegos de Android» salvo que traigan la pantalla del emulador. Permisos al lanzar: R+W → solo R → sin permisos.
+- `ruta` solo si `rutaConfiable`; sin ruta `%ROM%` manda el content:// (NO usar File.exists: Díptico no tiene acceso a todos los archivos).
+- `Diptico.emuladorPara` (juego > consola > recomendación). `alVolver` < 4 s programa otra mirada a los 4,5 s (`alFrente`, `BaseActivity.onPause` → `alSalir`).
+- `volverALaPartida` sigue con la orden del juego (comentario: el intent de lanzador traería el menú en varios emuladores).
+- `fuenteDe` = exacta y luego prefijo más largo; APK de otro paquete se aborta. Regex de `Comando` admite `!` (PLAY!). `<queries>` con todo sistemas.json.
+- LIME3DS/AZAHAR quedan: con el chequeo de actividad solo resuelve la clase real. DOLPHIN-MMJR2 ya cubría `org.dolphinemu.mmjr`.
+- CI corre también DiagnosticoTest, EmuladoresAlDiaTest, MedidorTest (medir redondea), TermicaTest y TuAnoTest (se corrigió un valor mal sumado).

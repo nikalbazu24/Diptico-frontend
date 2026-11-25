@@ -2112,7 +2112,7 @@ object Diptico {
             // Si es el mismo juego que se dejó hace poco (volviste a Díptico con la partida en pausa), el emulador
             // puede tenerla guardada en memoria: se abre sin «limpiar la tarea» para no reiniciarla.
             val reciente = ultimaPartida?.let { (clave, cuando) -> clave == juego.clave && System.currentTimeMillis() - cuando < RETOMAR_MS } == true
-            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: (Nativos.recomendado(app, juego) ?: Integraciones.recomendado(app, juego)) ?: e.emuladores[consola.id], displayId, raizDe(archivo), retomar = reciente)
+            Lanzador.lanzar(app, archivo, consola, emuladorPara(juego, consola, e), displayId, raizDe(archivo), retomar = reciente)
         }
         if (conCarga) terminarCarga(juego.clave, if (error != null) 0L else 1200L)
         if (error != null) {
@@ -2372,17 +2372,33 @@ object Diptico {
         SocialDiscord.jugando(juego.titulo, consola.bonito, null, inicio)
     }
 
+    /**
+     * Con qué se abre [juego]: lo elegido para ese juego, después lo elegido para su consola y recién ahí lo que Díptico
+     * recomienda (Banana Native, PokeDaisy, Peanuts Native). Una elección hecha a mano siempre gana a la recomendación.
+     */
+    internal fun emuladorPara(juego: Juego, consola: Consola, e: Estado): String? =
+        e.datos[juego.clave]?.emulador ?: e.emuladores[consola.id]
+            ?: Nativos.recomendado(app, juego) ?: Integraciones.recomendado(app, juego)
+
     /** El último juego cuya sesión se cerró y cuándo: si se vuelve a abrir pronto, se intenta retomar la partida. */
     internal var ultimaPartida: Pair<String, Long>? = null
     internal const val RETOMAR_MS = 6 * 60 * 60 * 1000L
 
-    /** Trae al frente la partida que sigue abierta, en su misma pantalla y sin tocar la sesión. */
+    /**
+     * Trae al frente la partida que sigue abierta, en su misma pantalla y sin tocar la sesión.
+     *
+     * Se reenvía la misma orden del juego sin CLEAR_TASK/CLEAR_TOP (`retomar = true`). Se pensó usar en cambio el
+     * intent de lanzador del paquete (MAIN/LAUNCHER, sin datos), pero no es seguro que sea mejor: varios emuladores abren
+     * la partida en una tarea propia (otra afinidad, singleTask o documentos aparte, como RetroArch y Dolphin), y ahí ese
+     * intent trae el MENÚ del emulador en vez de la partida, o crea una tarea nueva. Con la orden del juego, los que
+     * reinician es porque tratan cada VIEW como juego nuevo; eso no se arregla desde fuera sin conocer cada emulador.
+     */
     internal fun volverALaPartida(juego: Juego, consola: Consola, s: Sesion) {
         val e = estado.value
         val error = if (juego.uri.scheme == "app") Lanzador.lanzarApp(app, juego.archivo, juego.titulo, s.displayId)
         else {
             val archivo = archivoParaJugar(juego, e)
-            Lanzador.lanzar(app, archivo, consola, e.datos[juego.clave]?.emulador ?: (Nativos.recomendado(app, juego) ?: Integraciones.recomendado(app, juego)) ?: e.emuladores[consola.id], s.displayId, raizDe(archivo), retomar = true)
+            Lanzador.lanzar(app, archivo, consola, emuladorPara(juego, consola, e), s.displayId, raizDe(archivo), retomar = true)
         }
         if (error != null) { avisar(error); return }
         actualizar { it.copy(panel = Panel.NINGUNO, continuacion = 0L) }
@@ -2832,12 +2848,35 @@ object Diptico {
         actualizar { it.copy(burbujaAbierta = abierta, burbujaAlerta = alerta) }
     }
 
+    /** Pantallas donde Díptico está al frente ahora (se anotan en onResume y se borran en onPause). */
+    private val alFrente = java.util.concurrent.ConcurrentHashMap.newKeySet<Int>()
+
+    /** Inicio de la sesión que ya tiene programada su segunda revisión (para no programarla dos veces). */
+    @Volatile private var revisionDe = 0L
+
+    /** Una pantalla de Díptico dejó de estar al frente (otra app, como el juego, la tapó). */
+    fun alSalir(displayId: Int) {
+        alFrente.remove(displayId)
+    }
+
     /** Una pantalla de Díptico volvió al frente: si ahí corría un juego, la sesión terminó. */
     fun alVolver(displayId: Int) {
+        alFrente.add(displayId)
         val s = estado.value.sesion ?: return
         if (s.displayId != displayId) return
-        // Recién lanzado: la pantalla todavía no se tapó. Lo ignoramos.
-        if (System.currentTimeMillis() - s.inicio < 4000) return
+        // Recién lanzado: la pantalla todavía no se tapó. Pero si el emulador se cayó en esos segundos, Díptico queda al
+        // frente y nadie más avisa: se vuelve a mirar a los 4,5 s y, si sigue al frente con la misma sesión, se cierra.
+        val pasado = System.currentTimeMillis() - s.inicio
+        if (pasado < 4000) {
+            if (revisionDe != s.inicio) {
+                revisionDe = s.inicio
+                scope.launch {
+                    delay((4500 - pasado).coerceAtLeast(0))
+                    if (estado.value.sesion?.inicio == s.inicio && displayId in alFrente) alVolver(displayId)
+                }
+            }
+            return
+        }
         // Con una sola pantalla no hay pantalla compañera: volver a Díptico no cierra la partida, muestra «Partida en curso»
         // (volver al juego o terminar). Si el juego duró muy poco, se cierra igual (probablemente no llegó a abrir).
         if (estado.value.sinCompanera && (System.currentTimeMillis() - s.inicio) / 1000 >= CIERRE_RAPIDO_SEG) {

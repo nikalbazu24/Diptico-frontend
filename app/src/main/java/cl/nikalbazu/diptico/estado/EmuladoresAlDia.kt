@@ -77,7 +77,7 @@ object EmuladoresAlDia {
         FuenteEmulador("Pandroid", listOf("com.panda3ds.pandroid"), "wheremyfoodat/Panda3DS"),
         FuenteEmulador("melonDS", listOf("me.magnum.melonds"), "rafaelvcaetano/melonDS-android"),
         FuenteEmulador("Vita3K", listOf("org.vita3k.emulator"), "Vita3K/Vita3K-Android"),
-        FuenteEmulador("ARMSX2", listOf("com.armsx2", "com.nanodata.armsx2", "come.nanodata.armsx2", "com.nanodata.armsx"), "ARMSX2/ARMSX2"),
+        FuenteEmulador("ARMSX2", listOf("com.nanodata.armsx2", "com.armsx2", "come.nanodata.armsx2", "com.nanodata.armsx"), "ARMSX2/ARMSX2"),
         FuenteEmulador("Flycast", listOf("com.flycast.emulator"), "flyinghead/flycast"),
         FuenteEmulador("Cemu", listOf("info.cemu.cemu", "info.cemu.Cemu"), "SSimco/Cemu"),
         FuenteEmulador("aPS3e", listOf("aenu.aps3e"), "aenu1/aps3e"),
@@ -111,9 +111,16 @@ object EmuladoresAlDia {
         FuenteEmulador(p.nombre, listOf(p.paquete), p.enlace.removePrefix("https://github.com/").trimEnd('/'), web = p.enlace)
     }
 
-    /** La fuente de [paquete] (por prefijo, para cubrir variantes .nightly, .debug…). */
-    fun fuenteDe(paquete: String): FuenteEmulador? =
-        FUENTES.firstOrNull { f -> f.paquetes.any { paquete == it || paquete.startsWith("$it.") } }
+    /**
+     * La fuente de [paquete]: primero la que lo nombra tal cual; si ninguna, la del prefijo MÁS LARGO (variantes
+     * .nightly, .debug…). Así `com.winlator.cmod` cae en Winlator Cmod y no en Winlator.
+     */
+    fun fuenteDe(paquete: String): FuenteEmulador? {
+        FUENTES.firstOrNull { f -> paquete in f.paquetes }?.let { return it }
+        return FUENTES.mapNotNull { f ->
+            f.paquetes.filter { paquete.startsWith("$it.") }.maxOfOrNull { it.length }?.let { f to it }
+        }.maxByOrNull { it.second }?.first
+    }
 
     /** La etiqueta de [f] lista para comparar: sin el «-N» de republicación si la fuente lo usa («v0.1.8-1» → «v0.1.8»). */
     fun etiquetaComparable(f: FuenteEmulador, etiqueta: String): String =
@@ -198,6 +205,11 @@ object EmuladoresAlDia {
     fun instalado(ctx: Context, paquete: String): Pair<String, Long>? = try {
         val pi = ctx.packageManager.getPackageInfo(paquete, 0)
         (pi.versionName ?: "?") to pi.lastUpdateTime
+    } catch (_: Exception) { null }
+
+    /** El paquete que trae el APK bajado (null si Android no lo puede leer). */
+    fun paqueteDelApk(ctx: Context, apk: File): String? = try {
+        ctx.packageManager.getPackageArchiveInfo(apk.path, 0)?.packageName
     } catch (_: Exception) { null }
 
     /** ¿El APK bajado es de [paquete] y viene firmado igual que el instalado? (si no, Android no lo deja instalar encima). */
@@ -341,6 +353,14 @@ fun Diptico.actualizarEmulador(paquete: String) {
         if (apk == null) {
             actualizar { it.copy(extra = it.extra.copy(emusDescarga = null)) }
             avisar("No pude bajar ${em.nombre}: revisa tu internet")
+            return@launch
+        }
+        // Si el APK es de OTRA app (la página publicó algo distinto), se aborta: nunca se ofrece desinstalar por eso.
+        val delApk = withContext(Dispatchers.IO) { EmuladoresAlDia.paqueteDelApk(app, apk) }
+        if (delApk != null && delApk != paquete) {
+            actualizar { it.copy(extra = it.extra.copy(emusDescarga = null)) }
+            apk.delete()
+            avisar("La descarga de ${em.nombre} es otra app ($delApk): no la instalé")
             return@launch
         }
         val firma = withContext(Dispatchers.IO) { EmuladoresAlDia.mismaFirma(app, apk, paquete) }

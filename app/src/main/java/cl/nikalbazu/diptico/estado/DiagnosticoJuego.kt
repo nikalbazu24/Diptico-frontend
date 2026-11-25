@@ -23,7 +23,7 @@ object Diagnostico {
     /** Consolas cuyo emulador casi siempre pide la BIOS (o el firmware) original. */
     private val BIOS = mapOf(
         "psx" to "PlayStation: los emuladores como DuckStation piden la BIOS (por ejemplo scph5501.bin) en su carpeta de BIOS.",
-        "ps2" to "PS2: NetherSX2 / AetherSX2 necesitan la BIOS de PS2; elígela dentro del emulador la primera vez.",
+        "ps2" to "PS2: ARMSX2 (y NetherSX2 / AetherSX2) necesitan la BIOS de PS2; elígela dentro del emulador la primera vez.",
         "segacd" to "Sega CD: pide las BIOS bios_CD_U.bin, bios_CD_E.bin o bios_CD_J.bin en la carpeta system de RetroArch.",
         "saturn" to "Saturn: Yaba Sanshiro y Beetle Saturn piden la BIOS de Saturn (sega_101.bin / mpr-17933.bin).",
         "pcenginecd" to "PC Engine CD: pide syscard3.pce en la carpeta system de RetroArch.",
@@ -108,7 +108,7 @@ internal fun Diptico.revisarCierreRapido(clave: String, duracionSeg: Long) {
     val veces = (cierresRapidos[clave] ?: 0) + 1
     cierresRapidos[clave] = veces
     val archivo = archivoParaJugar(juego, e)
-    val preferido = e.datos[clave]?.emulador ?: (Nativos.recomendado(app, juego) ?: Integraciones.recomendado(app, juego)) ?: e.emuladores[consola.id]
+    val preferido = emuladorPara(juego, consola, e)
     scope.launch {
         val bytes = withContext(Dispatchers.IO) { tamanoArchivo(app, archivo) }
         val emulador = withContext(Dispatchers.IO) { runCatching { Lanzador.elegida(app, consola, preferido, archivo.tipo)?.nombre }.getOrNull() }

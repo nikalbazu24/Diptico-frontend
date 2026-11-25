@@ -2,6 +2,7 @@ package cl.nikalbazu.diptico.estado
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import cl.nikalbazu.diptico.data.DatosJuego
 import cl.nikalbazu.diptico.data.Juego
 import cl.nikalbazu.diptico.emu.Lanzador
@@ -71,6 +72,13 @@ object Integraciones {
     @Volatile var instancias: List<Instancia> = emptyList()
         internal set
 
+    /**
+     * Por qué la última lectura del catálogo de Biomeria falló (null si salió bien). Sirve para el informe de fallas y
+     * para explicarle a la persona que Biomeria no le da permiso a Díptico.
+     */
+    @Volatile var motivoBiomeria: String? = null
+        internal set
+
     /** Las instancias de Biomeria, o null si no está instalada o no responde. */
     fun leerBiomeria(ctx: Context): List<Instancia>? {
         if (!Lanzador.instalado(ctx, BIOMERIA)) return null
@@ -79,7 +87,7 @@ object Integraciones {
                 fun col(n: String) = c.getColumnIndex(n)
                 val iId = col("instance_id"); val iTit = col("title"); val iMot = col("engine"); val iVer = col("mc_version")
                 val iLoa = col("loader"); val iSeg = col("playtime_seconds"); val iEnl = col("deep_link")
-                if (iId < 0) return@use emptyList()
+                if (iId < 0) return@use emptyList<Instancia>()
                 buildList {
                     while (c.moveToNext()) {
                         val id = c.getString(iId)?.takeIf { it.isNotBlank() } ?: continue
@@ -97,16 +105,33 @@ object Integraciones {
                         )
                     }
                 }
-            } ?: emptyList()
-        } catch (_: Exception) {
+            }.let { leidas ->
+                motivoBiomeria = if (leidas == null) "Biomeria no comparte su catálogo (versión antigua)" else null
+                leidas ?: emptyList()
+            }
+        } catch (se: SecurityException) {
+            // Biomeria no le dio permiso a Díptico para leer sus instancias: se anota para saberlo, y queda solo el acceso a la app.
+            Log.w("Diptico", "Biomeria rechazó el catálogo de instancias", se)
+            motivoBiomeria = "Biomeria no dio permiso para leer sus instancias: ${se.message ?: "sin detalle"}"
+            emptyList()
+        } catch (ex: Exception) {
             // Versiones de Biomeria sin catálogo o que se cerraron: se muestra solo el acceso a la app.
+            Log.w("Diptico", "No pude leer el catálogo de Biomeria", ex)
+            motivoBiomeria = "No pude leer el catálogo de Biomeria: ${ex.javaClass.simpleName}"
             emptyList()
         }
     }
 
     /** Enlace con el que Biomeria abre la instancia y sabe que vino desde Díptico (para volver al terminar). */
-    fun enlaceDesdeDiptico(ctx: Context, enlace: String): String =
-        Uri.parse(enlace).buildUpon().appendQueryParameter("source_frontend", ctx.packageName).build().toString()
+    fun enlaceDesdeDiptico(ctx: Context, enlace: String): String {
+        val u = Uri.parse(enlace)
+        // Si el enlace ya trae source_frontend (Biomeria lo puso, o venía de antes), se reemplaza: nunca va dos veces.
+        val nombres = try { u.queryParameterNames } catch (_: UnsupportedOperationException) { return enlace }
+        if (u.getQueryParameter("source_frontend") == ctx.packageName && u.getQueryParameters("source_frontend").size == 1) return enlace
+        val b = u.buildUpon().clearQuery()
+        for (n in nombres) if (n != "source_frontend") for (v in u.getQueryParameters(n)) b.appendQueryParameter(n, v)
+        return b.appendQueryParameter("source_frontend", ctx.packageName).build().toString()
+    }
 
     /**
      * Los juegos de la carpeta «Minecraft»: una instancia = un juego. Cada uno es un archivo chico en filesDir/biomeria con

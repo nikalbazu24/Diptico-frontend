@@ -30,7 +30,8 @@ data class Medicion(val fps: Int, val peorMs: Int)
 fun medir(duracionesMs: List<Float>): Medicion {
     if (duracionesMs.isEmpty()) return Medicion(0, 0)
     val total = duracionesMs.sum().coerceAtLeast(1f)
-    return Medicion((duracionesMs.size * 1000f / total).toInt(), duracionesMs.max().toInt())
+    // Redondeado: 60 cuadros de 16,67 ms suman 1000,2 ms y truncando darían 59.
+    return Medicion(kotlin.math.round(duracionesMs.size * 1000f / total).toInt(), duracionesMs.max().toInt())
 }
 
 /**

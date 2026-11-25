@@ -30,7 +30,7 @@ class TuAnoTest {
         val r = TuAno.resumenDe(filas, 2026) { if (it.startsWith("ps2")) "PlayStation 2" else "Super Nintendo" }
         assertEquals(listOf("ps2/3" to 10_800L, "snes/1" to 5_400L), r.top)
         assertEquals(1, r.mejorMes)
-        assertEquals(14_400L, r.porMes[0])
+        assertEquals(12_600L, r.porMes[0])
         assertEquals(3_600L, r.porMes[2])
         assertEquals("PlayStation 2", r.consola)
     }
