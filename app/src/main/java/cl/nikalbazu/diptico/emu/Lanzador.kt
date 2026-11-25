@@ -156,7 +156,43 @@ object Lanzador {
         if (dos <= 0) return null
         val volumen = docId.substring(0, dos)
         val resto = docId.substring(dos + 1)
-        return if (volumen.equals("primary", true)) "/storage/emulated/0/$resto" else "/storage/$volumen/$resto"
+        return when {
+            volumen.equals("primary", true) -> "/storage/emulated/0/$resto"
+            // La raíz «Documentos» del selector de Android (ExternalStorageProvider la llama "home").
+            volumen.equals("home", true) -> "/storage/emulated/0/Documents/$resto"
+            else -> "/storage/$volumen/$resto"
+        }
+    }
+
+    /**
+     * ¿El juego tiene una ruta real que otra app pueda abrir? Sí en la memoria interna, la tarjeta SD y las rutas directas;
+     * no en Descargas recientes, la nube u otras apps (esos documentos no tienen ruta, solo permiso de Díptico).
+     */
+    fun rutaConfiable(uri: Uri, docId: String): Boolean {
+        if (uri.scheme == "file" || docId.startsWith("raw:/")) return true
+        if (uri.authority != "com.android.externalstorage.documents") return false
+        val volumen = docId.substringBefore(':', "")
+        return volumen.equals("primary", true) || volumen.equals("home", true) ||
+            Regex("[0-9A-Fa-f]+(-[0-9A-Fa-f]+)+").matches(volumen) // tarjeta SD o USB: «1A2B-3C4D»
+    }
+
+    /**
+     * Apps hechas con el motor nxnative (Banana Native y Peanuts Native): reciben la RUTA del .nup y lo abren ellas mismas
+     * con «Acceso a todos los archivos», sin el permiso de carpeta que Díptico comparte con los emuladores.
+     */
+    private val REGLAS_POR_RUTA = setOf("BANANA-NATIVE", Integraciones.REGLA_PEANUTS)
+
+    /** Lo que impide que una app nxnative abra [juego] (o null si se puede intentar), dicho para la persona. */
+    fun avisoPorRuta(juego: Juego, app: String): String? {
+        val ext = juego.archivo.substringAfterLast('.', "")
+        if (!juego.esCarpeta && ext.equals("nup", true) && ext != "nup")
+            return "$app solo lee archivos que terminan en «.nup» con minúsculas. Cambia el nombre a «${juego.archivo.substringBeforeLast('.')}.nup», " +
+                "vuelve a buscar juegos en Díptico y ábrelo otra vez."
+        if (!rutaConfiable(juego.uri, juego.docId))
+            return "$app abre los juegos por su ruta, y ${juego.titulo} está en un lugar sin ruta (Descargas, la nube u otra app). " +
+                "Mueve el archivo a una carpeta de la memoria interna o de la tarjeta SD, elige esa carpeta en Díptico " +
+                "y dale a $app «Acceso a todos los archivos» (Ajustes de Android › Apps › $app › Permisos)."
+        return null
     }
 
     private fun leerTexto(ctx: Context, uri: Uri): String? = try {
@@ -312,6 +348,7 @@ object Lanzador {
         // (La versión sin "tree" no se puede compartir y por eso Eden decía que no había juego.)
         val rom = juego.uri
         val op = elegida(ctx, consola, preferido, juego.tipo)
+        if (op != null && op.comando.emulador?.let { it in REGLAS_POR_RUTA } == true) avisoPorRuta(juego, op.nombre.substringBefore(" ("))?.let { return it }
         if (op?.paquete == "dev.lemon.lemon_emulator" && consola.id != "switch") {
             return "Project Lemon está seleccionado para ${juego.titulo}, pero únicamente ejecuta juegos compatibles de Nintendo Switch. Puedes elegir otro emulador en Ajustes del juego."
         }

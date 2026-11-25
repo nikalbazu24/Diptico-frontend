@@ -880,3 +880,14 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
   (Inicio: engranaje duplicado → «✎ Personalizar» junto a Entrar, Entrar sin hueco, ↻ con el mismo estilo, crédito del modelo chico,
   flechas junto a las consolas, puntos sin tapar la elegida. Dentro de una consola: barra sin «≡ Apps» y Widgets con nombre, ↻ igual,
   lomo de caja sin cortar, decoración del tema más tenue, tarjetas de juego parejas, puntos fuera del panel).
+
+## Peanuts Native completo (25 nov 2026, rama `claude/amazing-carson-xajw51`; Novedades `peanuts-native-2.0-77`)
+- Verificado en igawa6/peanuts-native (docs `peanuts/docs/LAUNCHERS.md`, `android/FRONTENDS.md`, `FrontendLaunch.java`) y en el manifiesto del APK
+  `PeanutsNative-0.1.8.apk` (tag `v0.1.8-1`, solo arm64): paquete `dev.nxnative.android.peanuts` (versionName «0.1.8»), alias sin filtros
+  `dev.peanuts.launch.LaunchActivity` y `<paquete>.Launch`; acepta VIEW (file://, SAF de externalstorage) o extra `game` = ruta absoluta
+  (la más confiable) o `title_id` (solo juegos ya en su Home). Exige «Acceso a todos los archivos» y «.nup» en minúsculas; si falta algo abre su Home.
+- `Integraciones.paraPeanuts(juego)` (switch .nup; switch2 .nup solo con código `0100…` en el nombre, `codigoDe`), `REGLA_PEANUTS`, `WEB_PEANUTS`.
+  sistemas.json: Peanuts también al FINAL de switch2 (NovaS y Banana siguen 1.º y 2.º).
+- `Lanzador.avisoPorRuta` (para BANANA-NATIVE y PEANUTS-NATIVE): mayúsculas y documentos sin ruta (`rutaConfiable`); `rutaReal("home:x")` → Documents.
+- `Diagnostico.causas(..., peanutsInstalada)`; Centro › Ports nativos fila `peanuts` (`instalarDesdeGitHub`, `pestanaNativaDe`, `esConsolaNativa` incluye switch);
+  `FuenteEmulador.conRepublicacion` + `etiquetaComparable` («v0.1.8-1» = «0.1.8»). Textos nuevos sin traducir (siguiente TSV: extras38).

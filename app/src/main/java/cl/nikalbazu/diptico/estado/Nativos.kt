@@ -259,7 +259,7 @@ fun Diptico.entradasNativos(e: Estado): List<EntradaNativa> {
                 "3. Listo: aparece solo en tu carpeta Ports, con su ficha y tu tiempo jugado.",
                 "Si Android pide permiso para instalar apps, dáselo a Díptico (solo la primera vez).",
             ),
-        )) + Nativos.PORTS.map { p ->
+        ), entradaPeanuts(e)) + Nativos.PORTS.map { p ->
             val si = Lanzador.instalado(ctx, p.paquete)
             EntradaNativa(
                 "port:${p.paquete}", p.nombre, "${p.original} · " + (if (si) "instalado · A: jugar" else "A: instalar"),
@@ -270,6 +270,32 @@ fun Diptico.entradasNativos(e: Estado): List<EntradaNativa> {
             )
         }.sortedBy { !it.instalada } // Los instalados primero; el resto en el orden del catálogo (los más conocidos arriba).
     }
+}
+
+/** Tus .nup de Switch 1 (los que se abren con Peanuts Native). */
+internal fun juegosPeanuts(e: Estado): List<Juego> =
+    (e.juegosPorConsola["switch"].orEmpty() + e.juegosPorConsola["switch2"].orEmpty()).filter { Integraciones.paraPeanuts(it) }
+
+/** La fila de Peanuts Native en «Ports nativos»: convierte juegos de Switch 1 en apps nativas. */
+private fun Diptico.entradaPeanuts(e: Estado): EntradaNativa {
+    val si = Lanzador.instalado(app, Integraciones.PEANUTS)
+    val tuyos = juegosPeanuts(e).size
+    return EntradaNativa(
+        "peanuts", "Peanuts Native", when {
+            !si -> "Juegos de Switch 1 como app nativa · A: instalar"
+            tuyos > 0 -> "Instalado · $tuyos ${if (tuyos == 1) "juego .nup" else "juegos .nup"} de Switch 1 en tu biblioteca"
+            else -> "Instalado · pon tus .nup de Switch 1 en tu carpeta de Switch"
+        }, "Switch 1 nativo", Integraciones.PEANUTS, si,
+        accion = if (si) "Abrir Peanuts Native" else "Instalar", lista = si,
+        ayuda = "No emula: convierte juegos de Switch 1 (archivos .nup) en programas nativos de Android, como Banana Native con los de Switch 2. " +
+            "Díptico abre tus .nup de Switch con Peanuts si la tienes; si al juego le falta prepararse, Peanuts abre su propia pantalla para hacerlo.",
+        consejos = listOf(
+            "Dale «Acceso a todos los archivos»: Peanuts lo pide al abrirla la primera vez.",
+            "El archivo tiene que terminar en «.nup» con minúsculas y estar en la memoria interna o la SD (no en Descargas ni la nube).",
+            "Solo convierte los juegos de su lista; para los demás, usa NovaS u otro emulador.",
+            "Se baja de ${Integraciones.WEB_PEANUTS.removePrefix("https://")} (APK solo para ARM64).",
+        ),
+    )
 }
 
 private fun androidNombre(api: Int) = when {
@@ -305,6 +331,8 @@ fun Diptico.usarNativo(i: Int = estado.value.extra.nativosSel) {
             actualizar { it.copy(consolaSel = "switch2", juegoSel = juego.clave, enSistemas = false) }
             jugar()
         }
+        f.id == "peanuts" -> if (f.instalada) abrirPaqueteAqui(Integraciones.PEANUTS, e.extra.nativosEn)
+            else instalarDesdeGitHub("Peanuts Native", Integraciones.PEANUTS, Integraciones.WEB_PEANUTS)
         f.id.startsWith("port:") -> {
             val p = Nativos.PORTS.firstOrNull { it.paquete == f.paquete } ?: return
             if (f.instalada) abrirPaqueteAqui(p.paquete, e.extra.nativosEn) else instalarPort(p)
@@ -319,25 +347,31 @@ fun Diptico.elegirEmuladorConsola(consolaId: String, orden: String) {
     actualizar { it.copy(emuladores = m) }
 }
 
-/** ¿Tiene algo que mostrar el centro en esta consola? (para ofrecerlo desde la carpeta de Switch 2 o de Ports). */
-fun esConsolaNativa(consolaId: String) = consolaId == "switch2" || consolaId == Consolas.PORTS
+/** ¿Tiene algo que mostrar el centro en esta consola? (para ofrecerlo desde la carpeta de Switch, Switch 2 o Ports). */
+fun esConsolaNativa(consolaId: String) = consolaId == "switch2" || consolaId == "switch" || consolaId == Consolas.PORTS
+
+/** La pestaña del centro que corresponde a la consola: Switch 2 (0) o Ports nativos (1, donde está Peanuts Native). */
+fun pestanaNativaDe(consolaId: String) = if (consolaId == "switch2") 0 else 1
 
 
 /** Baja la última versión de un port desde su página de GitHub y la instala (si no publica APK, abre su página). */
-fun Diptico.instalarPort(p: PortNativo) {
-    val f = EmuladoresAlDia.fuenteDe(p.paquete)
-    if (f == null || f.repo.isBlank()) { abrirWeb(p.enlace); return }
-    avisar("Buscando la última versión de ${p.nombre}…")
+fun Diptico.instalarPort(p: PortNativo) = instalarDesdeGitHub(p.nombre, p.paquete, p.enlace)
+
+/** Baja la última versión de una app de «Emuladores al día» que aún no tienes y la instala (si no publica APK, abre [web]). */
+fun Diptico.instalarDesdeGitHub(nombre: String, paquete: String, web: String) {
+    val f = EmuladoresAlDia.fuenteDe(paquete)
+    if (f == null || f.repo.isBlank()) { abrirWeb(web); return }
+    avisar("Buscando la última versión de $nombre…")
     scope.launch {
-        val r = withContext(Dispatchers.IO) { runCatching { EmuladoresAlDia.buscarPublicacion(f, p.paquete) }.getOrNull() }
+        val r = withContext(Dispatchers.IO) { runCatching { EmuladoresAlDia.buscarPublicacion(f, paquete) }.getOrNull() }
         if (r == null) {
-            avisar("${p.nombre} no publica su APK en GitHub: te abro su página")
-            abrirWeb(p.enlace)
+            avisar("$nombre no publica su APK en GitHub: te abro su página")
+            abrirWeb(web)
             return@launch
         }
         val (pub, url, bytes) = r
-        val nuevo = EmuRevisado(p.nombre, p.paquete, "", 0L, ultima = pub.etiqueta, url = url, bytes = bytes, notas = pub.notas, nueva = true, pagina = p.enlace)
-        actualizar { it.copy(extra = it.extra.copy(emus = it.extra.emus.filterNot { e -> e.paquete == p.paquete } + nuevo)) }
-        actualizarEmulador(p.paquete)
+        val nuevo = EmuRevisado(nombre, paquete, "", 0L, ultima = pub.etiqueta, url = url, bytes = bytes, notas = pub.notas, nueva = true, pagina = web)
+        actualizar { it.copy(extra = it.extra.copy(emus = it.extra.emus.filterNot { e -> e.paquete == paquete } + nuevo)) }
+        actualizarEmulador(paquete)
     }
 }

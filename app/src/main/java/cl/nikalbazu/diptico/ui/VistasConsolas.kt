@@ -309,9 +309,9 @@ private fun AccesoNativos(e: Estado) {
     val pantalla = pantallaActual()
     Box(
         Modifier.padding(horizontal = esc.d(6)).clip(RoundedCornerShape(50)).background(Color(0xFF00C3E3).copy(alpha = 0.18f))
-            .clickable { Diptico.abrirNativos(pantalla, if (e.consolaSel == Consolas.PORTS) 1 else 0) }
+            .clickable { Diptico.abrirNativos(pantalla, pestanaNativaDe(e.consolaSel)) }
             .padding(horizontal = esc.d(10), vertical = esc.d(6)).testTag("acceso-nativos"),
-    ) { Texto(if (e.consolaSel == Consolas.PORTS) "Ports nativos" else "Centro Switch 2", 11.5f, lineas = 1) }
+    ) { Texto(when (e.consolaSel) { Consolas.PORTS -> "Ports nativos"; "switch" -> "Peanuts y ports"; else -> "Centro Switch 2" }, 11.5f, lineas = 1) }
 }
 
 /** En la otra pantalla, en modo Sistemas: la consola elegida en grande, con lo último que jugaste en ella. */

@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "diptico-2.0.1-coleccion-compacta"
-    const val NOMBRE = "Díptico 2.0.1 · Colección compacta"
+    const val ID = "peanuts-native-2.0-77"
+    const val NOMBRE = "2.0.1 · Peanuts Native"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -588,7 +588,7 @@ object Novedades {
             Pagina("Tus juegos, al día", "Cuando agregues juegos a tus carpetas, toca el pequeño botón ↻ del inicio. Díptico buscará los nuevos sin reiniciar ni cambiar tus ajustes.", Icono.CARPETA, 0xFF2EC4A6, "↻ Actualizar juegos"),
             Pagina("Un inicio más despejado", "En equipos de una pantalla, tus consolas, el juego destacado y la biblioteca tienen su lugar. En dos pantallas y en Colección viva también está el botón para actualizar juegos.", Icono.PORTADA, 0xFF3B6BFF),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("diptico-2.0.1-coleccion-compacta", "Díptico 2.0.1 · Colección compacta", listOf(
             Pagina("Tus consolas, centradas", "En una pantalla, las carpetas se mantienen centradas, con la elegida destacada y un acceso Entrar a la izquierda. DIPPO conserva su espacio.", Icono.CARPETA, 0xFF3B6BFF, "A · Entrar"),
             Pagina("Tus apps siempre a mano", "El dock permanece en el lateral derecho en el inicio y también dentro de las carpetas de juegos. Perfil, hora y batería quedan en la esquina.", Icono.APPS, 0xFF2EC4A6, "Apps"),
             Pagina("Caja protagonista, sin tapar nada", "La caja 3D destaca sin superponerse a la barra superior. Los títulos y botones ocupan menos espacio.", Icono.PORTADA, 0xFFFF9B54, "A · Jugar"),
@@ -596,6 +596,11 @@ object Novedades {
             Pagina("Recarga a tu alcance", "El botón circular de actualizar juegos conserva el mismo estilo de los demás controles. La flecha permanece centrada y la búsqueda no interrumpe tu navegación.", Icono.BUSCAR, 0xFF35C6D8, "↻"),
             Pagina("Minecraft con Biomeria", "Si tienes Biomeria Launcher, tus instancias de Minecraft (Java, Bedrock y Rust) aparecen en la carpeta Minecraft. Ábrelas desde Díptico y al salir vuelves aquí; las horas que jugaste en Biomeria también cuentan.", Icono.MUNDO, 0xFF5D9C3B, "A · Jugar"),
             Pagina("PokeDaisy y Peanuts Native", "Tus juegos de Pokémon de Game Boy, Color, Advance y DS se abren con PokeDaisy si la tienes, y los .nup de Switch con Peanuts Native. Puedes cambiarlo en las opciones del juego, y las dos se revisan en Emuladores al día.", Icono.EMULADOR, 0xFFFFB74D, "X · Opciones"),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Switch 1 nativo con Peanuts", "Si tienes Peanuts Native, tus .nup de Switch se abren con ella como app nativa. En la carpeta de Switch 2 también, si el nombre del archivo trae el código de un juego de Switch 1 (empieza con 0100). Los de Switch 2 siguen con NovaS o Banana Native.", Icono.EMULADOR, 0xFFFFB74D, "A · Jugar"),
+            Pagina("Peanuts en el centro de ports", "En Ports nativos está Peanuts Native: con A la instalas desde su página de GitHub o la abres si ya la tienes. Desde la carpeta de Switch llegas con «Peanuts y ports».", Icono.CARPETA, 0xFF2EC4A6, "A"),
+            Pagina("Avisos claros", "Peanuts abre los juegos por su ruta: si el archivo está en Descargas o en la nube, o termina en .NUP con mayúsculas, Díptico te dice qué hacer. Y si el juego se cierra enseguida, DIPPO te recuerda darle «Acceso a todos los archivos».", Icono.BISA, 0xFFFF7A59),
         )),
     )
 

@@ -53,7 +53,7 @@ object Diagnostico {
      * Las causas probables, de la más a la menos probable. [bytes] es el tamaño del archivo (−1 si no se sabe);
      * [emulador] es el nombre del emulador con que se abrió; [veces] cuántas veces seguidas se cerró enseguida.
      */
-    fun causas(juego: Juego, consola: Consola, emulador: String?, bytes: Long, veces: Int): List<String> {
+    fun causas(juego: Juego, consola: Consola, emulador: String?, bytes: Long, veces: Int, peanutsInstalada: Boolean = false): List<String> {
         val l = mutableListOf<String>()
         val tipo = juego.tipo
         if (bytes in 0L..1023L && !juego.esCarpeta) l += "El archivo pesa casi nada (${bytes} bytes): puede estar incompleto o dañado. Vuelve a copiarlo."
@@ -61,11 +61,20 @@ object Diagnostico {
         FORMATO_RARO[consola.id]?.takeIf { tipo in it }?.let { l += "${consola.nombre} casi nunca abre juegos .$tipo: descomprímelo y deja el archivo del juego tal cual." }
         when (consola.id) {
             "switch", "switch2" -> when {
-                tipo == "nup" && emulador?.contains("NovaS") != true && emulador?.contains("Banana") != true ->
-                    l += "Los .nup se abren con NovaS o Banana Native: elige uno de esos para este juego."
+                tipo == "nup" && emulador?.contains("Peanuts") == true -> {
+                    l += "Peanuts Native necesita «Acceso a todos los archivos»: Ajustes de Android › Apps › Peanuts Native › Permisos."
+                    l += "Si Peanuts abrió su propia pantalla, al juego le falta prepararse (armar el paquete o los sombreados): termínalo ahí y vuelve a abrirlo desde Díptico. Si no está en su lista de juegos, prueba con NovaS."
+                }
                 tipo == "nup" && emulador?.contains("Banana") == true ->
                     l += "Banana Native necesita «Acceso a todos los archivos» y que el juego sea uno de los que convierte."
-                tipo != "nup" -> l += "Switch: faltan las llaves (prod.keys) o el firmware dentro del emulador, o el juego necesita una actualización."
+                tipo == "nup" && emulador?.contains("NovaS") != true -> l += when {
+                    Integraciones.paraPeanuts(juego) && !peanutsInstalada ->
+                        "Este .nup es de Switch 1: instala Peanuts Native (github.com/igawa6/peanuts-native) para jugarlo como app nativa, o ábrelo con NovaS."
+                    consola.id == "switch" -> "Los .nup de Switch se abren con Peanuts Native o NovaS: elige uno de esos para este juego."
+                    else -> "Los .nup se abren con NovaS o Banana Native: elige uno de esos para este juego."
+                }
+                tipo == "nup" -> Unit
+                else -> l += "Switch: faltan las llaves (prod.keys) o el firmware dentro del emulador, o el juego necesita una actualización."
             }
         }
         BIOS[consola.id]?.let { l += it }
@@ -103,7 +112,7 @@ internal fun Diptico.revisarCierreRapido(clave: String, duracionSeg: Long) {
     scope.launch {
         val bytes = withContext(Dispatchers.IO) { tamanoArchivo(app, archivo) }
         val emulador = withContext(Dispatchers.IO) { runCatching { Lanzador.elegida(app, consola, preferido, archivo.tipo)?.nombre }.getOrNull() }
-        val causas = Diagnostico.causas(archivo, consola, emulador, bytes, veces)
+        val causas = Diagnostico.causas(archivo, consola, emulador, bytes, veces, Lanzador.instalado(app, Integraciones.PEANUTS))
         val otros = withContext(Dispatchers.IO) { runCatching { Lanzador.opciones(app, consola, archivo.tipo).distinctBy { it.id } }.getOrDefault(emptyList()) }
         val hayOtro = otros.size > 1
         cuandoHayaLugar("cierre-rapido") {

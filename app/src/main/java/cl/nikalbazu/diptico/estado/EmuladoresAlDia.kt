@@ -29,6 +29,11 @@ data class FuenteEmulador(
     val host: String = "",
     val web: String = "",
     val nota: String = "",
+    /**
+     * Sus etiquetas traen al final un «-N» de republicación que no está en la versión instalada (Peanuts Native publica
+     * «v0.1.8-1» y la app dice «0.1.8»): ese número no cuenta al comparar, o siempre parecería haber una versión nueva.
+     */
+    val conRepublicacion: Boolean = false,
 )
 
 /** Lo que DIPPO sabe de un emulador instalado después de revisarlo. */
@@ -98,7 +103,8 @@ object EmuladoresAlDia {
         FuenteEmulador("ScummVM", listOf("org.scummvm.scummvm"), web = "https://www.scummvm.org/downloads/", nota = "Se actualiza desde Play Store o su web"),
         FuenteEmulador("Banana Native", listOf("dev.bananative.android"), nota = "Aún no tiene página pública"),
         FuenteEmulador("PokeDaisy", listOf("com.pokedaisy.app"), "lidor30/pokedaisy", web = "https://pokedaisy.com/es/", nota = "Pokémon de GB, GBC, GBA y DS con compañero en la otra pantalla"),
-        FuenteEmulador("Peanuts Native", listOf("dev.nxnative.android.peanuts"), "igawa6/peanuts-native", nota = "Juegos de Switch convertidos en apps nativas (.nup)"),
+        FuenteEmulador("Peanuts Native", listOf("dev.nxnative.android.peanuts"), "igawa6/peanuts-native", web = Integraciones.WEB_PEANUTS,
+            nota = "Juegos de Switch 1 convertidos en apps nativas (.nup)", conRepublicacion = true),
         FuenteEmulador("Biomeria Launcher", listOf("com.prissma.launcher"), "Nikalbazu24/Prissma-Launcher", nota = "Minecraft Java, Bedrock y Rust"),
     ) + Nativos.PORTS.map { p ->
         // Los ports nativos también se actualizan: su repo sale del enlace de GitHub.
@@ -108,6 +114,10 @@ object EmuladoresAlDia {
     /** La fuente de [paquete] (por prefijo, para cubrir variantes .nightly, .debug…). */
     fun fuenteDe(paquete: String): FuenteEmulador? =
         FUENTES.firstOrNull { f -> f.paquetes.any { paquete == it || paquete.startsWith("$it.") } }
+
+    /** La etiqueta de [f] lista para comparar: sin el «-N» de republicación si la fuente lo usa («v0.1.8-1» → «v0.1.8»). */
+    fun etiquetaComparable(f: FuenteEmulador, etiqueta: String): String =
+        if (f.conRepublicacion) etiqueta.replace(Regex("-\\d+$"), "") else etiqueta
 
     /** Los números de una versión («v0.9.1-rc2» → [0, 9, 1, 2]); vacío si no tiene números. */
     fun numeros(v: String): List<Int> = Regex("""\d+""").findAll(v.substringAfterLast('/')).mapNotNull { it.value.toIntOrNull() }.take(5).toList()
@@ -273,7 +283,7 @@ fun Diptico.revisarEmuladores(silencioso: Boolean = false) {
                     ultima = pub.etiqueta, url = url, bytes = bytes, notas = pub.notas, publicada = pub.fecha,
                     origen = if (f.host.isBlank()) "GitHub · ${f.repo}" else "${f.host} · ${f.repo}",
                     archivo = url.substringAfterLast('/').substringBefore('?'),
-                    nueva = EmuladoresAlDia.esMasNueva(em.version, pub.etiqueta, em.instaladoEn, pub.fecha),
+                    nueva = EmuladoresAlDia.esMasNueva(em.version, EmuladoresAlDia.etiquetaComparable(f, pub.etiqueta), em.instaladoEn, pub.fecha),
                 )
             }
         }

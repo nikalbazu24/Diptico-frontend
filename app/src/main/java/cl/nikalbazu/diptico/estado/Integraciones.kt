@@ -16,7 +16,11 @@ import kotlinx.coroutines.withContext
  *   pantalla. Entrada para lanzadores: `com.pokedaisy.app/.LaunchActivity` con VIEW + la ROM. Va primero en los juegos de
  *   Pokémon si está instalada.
  * - Peanuts Native (dev.nxnative.android.peanuts, igawa6/peanuts-native): juegos de Switch 1 convertidos a apps nativas
- *   (archivos .nup). Entrada fija `dev.peanuts.launch.LaunchActivity` con el extra `game` = ruta del .nup.
+ *   (archivos .nup). Entrada fija `dev.peanuts.launch.LaunchActivity` (alias exportado sin filtros de `FrontendLaunch`;
+ *   también existe `<paquete>.Launch`) con el extra `game` = ruta absoluta del .nup, que su documentación llama la forma
+ *   más confiable (peanuts/docs/LAUNCHERS.md y android/FRONTENDS.md, versión 0.1.8). Peanuts lee los juegos por ruta: pide
+ *   «Acceso a todos los archivos» y el nombre tiene que terminar en «.nup» en minúsculas. Si al juego le falta algo (armar
+ *   el paquete, sombreados, llaves), Peanuts abre su propia pantalla con ese juego en vez de fallar callado.
  * - Biomeria Launcher (com.prissma.launcher, Nikalbazu24/Prissma-Launcher): Minecraft Java, Bedrock y Rust. Comparte sus
  *   instancias por `content://com.prissma.launcher.provider/instances` (nombre, motor, versión, loader, horas y enlace
  *   `prissma://launch?instance_id=…`). Díptico las muestra como juegos de la carpeta «Minecraft», las abre con ese enlace
@@ -30,6 +34,9 @@ object Integraciones {
     /** Nombres de las órdenes en sistemas.json (son también lo que se guarda como emulador elegido). */
     const val ORDEN_POKEDAISY = "PokeDaisy (Standalone)"
     const val ORDEN_PEANUTS = "Peanuts Native (Port nativo)"
+    /** Nombre de la regla de sistemas.json (la de Banana Native es BANANA-NATIVE: las dos son el mismo motor nxnative). */
+    const val REGLA_PEANUTS = "PEANUTS-NATIVE"
+    const val WEB_PEANUTS = "https://github.com/igawa6/peanuts-native/releases"
 
     const val CONSOLA_BIOMERIA = "biomeria"
     const val EXT_BIOMERIA = "biomeria"
@@ -135,9 +142,24 @@ object Integraciones {
      */
     fun recomendado(ctx: Context, juego: Juego): String? = when {
         juego.consolaId in CONSOLAS_POKEDAISY && esPokemon(juego.titulo) && Lanzador.instalado(ctx, POKEDAISY) -> ORDEN_POKEDAISY
-        juego.consolaId == "switch" && juego.tipo == "nup" && Lanzador.instalado(ctx, PEANUTS) -> ORDEN_PEANUTS
+        paraPeanuts(juego) && Lanzador.instalado(ctx, PEANUTS) -> ORDEN_PEANUTS
         else -> null
     }
+
+    /**
+     * ¿Este juego es para Peanuts Native? Los .nup de la carpeta de Switch, y los .nup de la carpeta de Switch 2 que en el
+     * nombre traen el código de un juego de Switch 1 (empieza con 01; los de Switch 2 empiezan con 04 y siguen con
+     * NovaS o Banana Native).
+     */
+    fun paraPeanuts(juego: Juego): Boolean = juego.tipo == "nup" && when (juego.consolaId) {
+        "switch" -> true
+        "switch2" -> codigoDe(juego.archivo)?.startsWith("01") == true
+        else -> false
+    }
+
+    /** El código del juego (16 cifras hexadecimales, «0100…» o «0400…») si el nombre del archivo lo trae, en mayúsculas. */
+    fun codigoDe(nombre: String): String? =
+        Regex("(?<![0-9A-Fa-f])(0[14]00[0-9A-Fa-f]{12})(?![0-9A-Fa-f])").find(nombre)?.groupValues?.get(1)?.uppercase()
 
     fun esPokemon(titulo: String): Boolean =
         Busqueda.normalizar(titulo).replace(Regex("[^a-z]"), "").contains("pokemon")

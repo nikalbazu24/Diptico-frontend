@@ -1,3 +1,17 @@
+# Díptico 2.0.1 beta — Peanuts Native a punto
+
+Compatibilidad completa con **Peanuts Native** (juegos de Switch 1 convertidos en apps nativas, archivos `.nup`).
+
+- **Se abre bien:** Díptico le pasa a Peanuts la ruta del `.nup` (la forma que su documentación recomienda) por su entrada para lanzadores `dev.peanuts.launch.LaunchActivity`.
+- **También desde la carpeta de Switch 2:** un `.nup` cuyo nombre trae el código de un juego de Switch 1 (empieza con `0100`) se abre con Peanuts. Los de Switch 2 (`0400…`) siguen con NovaS o Banana Native, igual que antes.
+- **Avisos claros antes de abrir:** si el archivo termina en `.NUP` con mayúsculas, o está en un lugar sin ruta (Descargas, la nube), Díptico explica qué hacer en vez de mandar una ruta que Peanuts no puede leer. La raíz «Documentos» del selector de Android ahora se traduce bien a su ruta (sirve para todos los emuladores).
+- **Si el juego se cierra enseguida:** DIPPO recuerda darle a Peanuts «Acceso a todos los archivos» y terminar de prepararlo en su pantalla; si no la tienes, te sugiere instalarla.
+- **En el centro de ports:** fila «Peanuts Native» en Ports nativos (instala desde GitHub o la abre). La carpeta de Switch tiene la pastilla «Peanuts y ports».
+- **Emuladores al día:** Peanuts publica «v0.1.8-1» y la app dice «0.1.8»: ya no aparece siempre como desactualizada.
+- **Qué probar en la consola:** un `.nup` de Switch 1 en la memoria interna y otro en la SD; Peanuts sin y con «Acceso a todos los archivos»; un `.nup` en la carpeta de Switch 2 con `[0100…]` en el nombre; Ports nativos › Peanuts Native › A.
+
+---
+
 # Díptico 2.0.1 beta — mejoras oficiales del Home y las carpetas
 
 Esta actualización incorpora los ajustes probados en Díptico Pruebas a la **aplicación oficial**, manteniendo su identificador `cl.nikalbazu.diptico`, su firma y los datos de la instalación existente.
