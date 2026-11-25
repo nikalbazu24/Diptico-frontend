@@ -12,12 +12,17 @@ On a dual-screen handheld, game art fills the top screen and you browse the libr
 
 </div>
 
-<details>
-<summary>See example screenshots</summary>
+<details open>
+<summary>See the current design</summary>
 
-<img src="docs/img/pick-screen.png" alt="Choosing a screen for a game" width="220">
-<img src="docs/img/widgets.png" alt="Widget home" width="220">
-<img src="docs/img/themes.png" alt="Halloween theme" width="220">
+<img src="docs/img/widgets.png" alt="Widget home with the selected game, clock, music and recent games" width="440">
+<img src="docs/img/pick-screen.png" alt="Choosing a screen for a game" width="440">
+<img src="docs/img/folders.png" alt="Console folders on the bottom screen" width="220">
+<img src="docs/img/carousel.png" alt="Game carousel on the bottom screen" width="220">
+<img src="docs/img/where-you-left-off.png" alt="Pick up where you left off" width="220">
+<img src="docs/img/control-center.png" alt="Control center with quick settings" width="440">
+<img src="docs/img/welcome-back.png" alt="Welcome back screen" width="440">
+<img src="docs/img/themes.png" alt="Halloween theme on both screens" width="360">
 
 </details>
 

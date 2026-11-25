@@ -12,12 +12,19 @@ En una consola de dos pantallas, el arte del juego se luce arriba y la bibliotec
 
 </div>
 
-<details>
-<summary>Ver capturas de ejemplo</summary>
+<details open>
+<summary>Ver el diseño actual</summary>
 
-<img src="docs/img/pick-screen.png" alt="Elegir pantalla para un juego" width="220">
-<img src="docs/img/widgets.png" alt="Inicio con widgets" width="220">
-<img src="docs/img/themes.png" alt="Tema de Halloween" width="220">
+<img src="docs/img/widgets.png" alt="Inicio con widgets: juego elegido, reloj, música y jugados recientes" width="440">
+<img src="docs/img/pick-screen.png" alt="Elegir pantalla para un juego" width="440">
+<img src="docs/img/folders.png" alt="Carpetas de consolas en la pantalla de abajo" width="220">
+<img src="docs/img/carousel.png" alt="Carrusel de juegos en la pantalla de abajo" width="220">
+<img src="docs/img/where-you-left-off.png" alt="Retomar donde quedaste" width="220">
+<img src="docs/img/control-center.png" alt="Centro de control con ajustes rápidos" width="440">
+<img src="docs/img/welcome-back.png" alt="Pantalla de bienvenida al volver" width="440">
+<img src="docs/img/themes.png" alt="Tema de Halloween en las dos pantallas" width="360">
+
+<sub>Las capturas están en inglés y salen de la versión actual de la app.</sub>
 
 </details>
 
