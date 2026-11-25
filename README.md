@@ -69,7 +69,7 @@ Díptico reads local images with the same name as the game, either alongside it 
 
 ## Home and personalization
 
-- **Widgets.** Pinch to resize the grid and move or resize widgets with touch or a controller. The studio lets you set size, background, shape, design, colors and content. Widgets include the selected game, clock, battery, music, notifications, favorites, recent games, statistics, achievements, holidays, timer, stopwatch, search, Bisa, play queue, suggestions for short sessions, collections, shortcuts, images, GIFs and short videos.
+- **Widgets.** Pinch to resize the grid and move or resize widgets with touch or a controller. The studio lets you set size, background, shape, design, colors and content. Widgets include the selected game, clock, battery, music, notifications, favorites, recent games, statistics, achievements, holidays, timer, stopwatch, search, DIPPO, play queue, suggestions for short sessions, collections, shortcuts, images, GIFs and short videos.
 - **Built-in theme store.** Find, preview and install **30 included themes** offline under **Menu › Themes › Theme Store**. On dual-screen devices, the store opens on top. Designs inspired by Mario, Pokémon, Zelda, Metroid, Kirby and Sonic have their own palettes, shapes, backgrounds, music, sounds and decorations.
 - **World and Chilean calendars.** Automatic themes mark occasions such as Lunar New Year, Halloween, Day of the Dead, Chilean Independence celebrations, Christmas, Navy Day and La Tirana. Under **Menu › Decorations**, expand a theme to choose its decoration and intensity where applicable. Examples include mistletoe or bells for Christmas and chupallas or kites for Chile.
 - **Your style.** Light, dark and OLED modes, custom colors, built-in or local music, sound packs and button shapes. **Mix My Theme** combines colors, backgrounds, typography, shapes, decorations, sound effects and music from installed themes. **Game Universe** uses colors from your local game art. Collections can have their own colors, backgrounds, logos, music and layout.
@@ -78,9 +78,9 @@ Díptico reads local images with the same name as the game, either alongside it 
 ## During and after play
 
 - **Play log and statistics.** Track sessions and playtime, leave a text note, voice note or map pin for your next session, and pick up where you left off. Set break reminders and build a queue for future sessions.
-- **In-game companion.** The free screen can show time, battery, session length, a game logo, controls and Bisa. Magnifier can enlarge a region of the other display. The optional resume clip captures up to six seconds without audio. Both need Android screen-capture permission, and Magnifier takes priority. [Resume guide in Spanish](docs/navegacion-retoma.md)
+- **In-game companion.** The free screen can show time, battery, session length, a game logo, controls and DIPPO. Magnifier can enlarge a region of the other display. The optional resume clip captures up to six seconds without audio. Both need Android screen-capture permission, and Magnifier takes priority. [Resume guide in Spanish](docs/navegacion-retoma.md)
 - **RetroAchievements and saves.** Connect your account and Web API Key to see per-game achievements and statistics. Keep up to three manual copies of a RetroArch `.srm` save and export them for recovery.
-- **Bisa.** Get library recommendations, tiered hints, shortcuts and optional web search. Type or speak, use the optional offline model, or connect your own Gemini or OpenAI key. The in-game bubble requires Android's overlay permission.
+- **DIPPO.** Get library recommendations, tiered hints, shortcuts and optional web search. Type or speak, use the optional offline model, or connect your own Gemini or OpenAI key. The in-game bubble requires Android's overlay permission.
 - **Performance and idle.** Smoothness settings, including a power-saving mode, Turbo, dimming during play and a screensaver featuring your library. Díptico can greet you on wake and offer a shortcut to your last game.
 
 ## Settings, backups and help
