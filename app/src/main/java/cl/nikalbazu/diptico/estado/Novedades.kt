@@ -10,8 +10,8 @@ object Novedades {
     /** Las novedades de una versión. */
     data class Version(val id: String, val nombre: String, val paginas: List<Pagina>)
 
-    const val ID = "arreglos-apps-2.0-78"
-    const val NOMBRE = "2.0.1 · Emuladores más confiables"
+    const val ID = "biomeria-al-dia-2.0-79"
+    const val NOMBRE = "2.0.1 · Biomeria al día"
 
     /**
      * Todas las versiones con novedades, de la más vieja a la más nueva.
@@ -602,11 +602,15 @@ object Novedades {
             Pagina("Peanuts en el centro de ports", "En Ports nativos está Peanuts Native: con A la instalas desde su página de GitHub o la abres si ya la tienes. Desde la carpeta de Switch llegas con «Peanuts y ports».", Icono.CARPETA, 0xFF2EC4A6, "A"),
             Pagina("Avisos claros", "Peanuts abre los juegos por su ruta: si el archivo está en Descargas o en la nube, o termina en .NUP con mayúsculas, Díptico te dice qué hacer. Y si el juego se cierra enseguida, DIPPO te recuerda darle «Acceso a todos los archivos».", Icono.BISA, 0xFFFF7A59),
         )),
-        Version(ID, NOMBRE, listOf(
+        Version("arreglos-apps-2.0-78", "2.0.1 · Emuladores más confiables", listOf(
             Pagina("Tu emulador manda", "Si elegiste un emulador para una consola, Díptico lo usa siempre, aunque tenga otra app recomendada para ese juego. Lo que elijas para un juego en particular sigue ganando a todo.", Icono.EMULADOR, 0xFF7C6CFF, "X · Opciones"),
             Pagina("Avisos más claros", "Si tu emulador está instalado pero es una versión que no sirve para abrir juegos, Díptico te dice que lo actualices en vez de pedirte instalarlo. Lo mismo con apps sin ícono para abrirlas.", Icono.BISA, 0xFFFF7A59),
             Pagina("Si el juego se cierra al tiro", "Cuando un emulador se cae en los primeros segundos, Díptico ahora lo nota y DIPPO te explica qué pudo pasar, con la opción de probar otro emulador.", Icono.BISA, 0xFFFFB74D),
             Pagina("Carpetas de solo lectura", "Si tus juegos están en una carpeta donde no se puede escribir, el emulador igual los abre: Díptico le pasa solo el permiso de lectura.", Icono.CARPETA, 0xFF2EC4A6),
+        )),
+        Version(ID, NOMBRE, listOf(
+            Pagina("Minecraft con Biomeria otra vez", "Biomeria Launcher cambió de nombre y Díptico se había quedado con el anterior. Ahora la reconoce: tus instancias de Minecraft vuelven a aparecer en la carpeta Minecraft, se abren desde Díptico y las horas que jugaste cuentan. Si todavía tienes la versión antigua, también funciona.", Icono.CARPETA, 0xFF5D9C3B, "Minecraft"),
+            Pagina("Biomeria en Emuladores al día", "Las actualizaciones de Biomeria Launcher se revisan en Emuladores al día desde su página nueva de GitHub.", Icono.EMULADOR, 0xFF7C6CFF),
         )),
     )
 

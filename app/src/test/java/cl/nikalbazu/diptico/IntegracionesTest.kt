@@ -38,11 +38,21 @@ class IntegracionesTest {
     }
 
     @Test
+    fun biomeriaSeReconoceConSuNombreNuevoYElAntiguo() {
+        Consolas.cargar(ctx)
+        assertTrue(Integraciones.esBiomeria("com.biomeria.launcher"))
+        assertTrue(Integraciones.esBiomeria("com.prissma.launcher"))
+        assertFalse(Integraciones.esBiomeria("com.otra.app"))
+        assertFalse(Integraciones.esBiomeria(null))
+        assertTrue(Consolas.reglas["BIOMERIA"]!!.any { it.startsWith("com.prissma.launcher/") })
+    }
+
+    @Test
     fun reconocePokemonYArmaElEnlace() {
         assertTrue(Integraciones.esPokemon("Pokémon - Edición Esmeralda (S)"))
         assertTrue(Integraciones.esPokemon("POKEMON_FIRE_RED"))
         assertFalse(Integraciones.esPokemon("Zelda Minish Cap"))
-        val enlace = Integraciones.enlaceDesdeDiptico(ctx, "prissma://launch?instance_id=abc-1")
+        val enlace = Integraciones.enlaceDesdeDiptico(ctx, "biomeria://launch?instance_id=abc-1")
         val u = Uri.parse(enlace)
         assertEquals("abc-1", u.getQueryParameter("instance_id"))
         assertEquals(ctx.packageName, u.getQueryParameter("source_frontend"))

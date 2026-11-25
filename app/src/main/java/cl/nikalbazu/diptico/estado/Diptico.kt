@@ -1726,7 +1726,7 @@ object Diptico {
                 if (intent.action == Intent.ACTION_PACKAGE_REMOVED && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
                 if (intent.action == Intent.ACTION_PACKAGE_REMOVED) instalarTrasDesinstalar(intent.data?.schemeSpecificPart)
                 Lanzador.olvidar()
-                if (intent.data?.schemeSpecificPart == Integraciones.BIOMERIA) refrescarBiomeria()
+                if (Integraciones.esBiomeria(intent.data?.schemeSpecificPart)) refrescarBiomeria()
                 publicarJuegos()
                 if (estado.value.panel == Panel.APPS) cargarApps()
             }

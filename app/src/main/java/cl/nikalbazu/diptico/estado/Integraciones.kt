@@ -22,15 +22,18 @@ import kotlinx.coroutines.withContext
  *   más confiable (peanuts/docs/LAUNCHERS.md y android/FRONTENDS.md, versión 0.1.8). Peanuts lee los juegos por ruta: pide
  *   «Acceso a todos los archivos» y el nombre tiene que terminar en «.nup» en minúsculas. Si al juego le falta algo (armar
  *   el paquete, sombreados, llaves), Peanuts abre su propia pantalla con ese juego en vez de fallar callado.
- * - Biomeria Launcher (com.prissma.launcher, Nikalbazu24/Prissma-Launcher): Minecraft Java, Bedrock y Rust. Comparte sus
- *   instancias por `content://com.prissma.launcher.provider/instances` (nombre, motor, versión, loader, horas y enlace
- *   `prissma://launch?instance_id=…`). Díptico las muestra como juegos de la carpeta «Minecraft», las abre con ese enlace
+ * - Biomeria Launcher (com.biomeria.launcher, Nikalbazu24/Biomeria-Launcher; antes Prissma, com.prissma.launcher, que se
+ *   sigue reconociendo): Minecraft Java, Bedrock y Rust. Comparte sus instancias por
+ *   `content://com.biomeria.launcher.provider/instances` (nombre, motor, versión, loader, horas y enlace
+ *   `biomeria://launch?instance_id=…`; la versión antigua usaba `prissma://`). Díptico las muestra como juegos de la carpeta «Minecraft», las abre con ese enlace
  *   (con `source_frontend` para que Biomeria sepa volver) y usa las horas de Biomeria si son más que las suyas.
  */
 object Integraciones {
     const val POKEDAISY = "com.pokedaisy.app"
     const val PEANUTS = "dev.nxnative.android.peanuts"
-    const val BIOMERIA = "com.prissma.launcher"
+    const val BIOMERIA = "com.biomeria.launcher"
+    /** Nombre anterior de Biomeria (Prissma): quien todavía la tenga instalada sigue funcionando. */
+    const val BIOMERIA_ANTIGUA = "com.prissma.launcher"
 
     /** Nombres de las órdenes en sistemas.json (son también lo que se guarda como emulador elegido). */
     const val ORDEN_POKEDAISY = "PokeDaisy (Standalone)"
@@ -41,7 +44,16 @@ object Integraciones {
 
     const val CONSOLA_BIOMERIA = "biomeria"
     const val EXT_BIOMERIA = "biomeria"
-    private val CATALOGO_BIOMERIA: Uri = Uri.parse("content://$BIOMERIA.provider/instances")
+    private fun catalogoBiomeria(paquete: String): Uri = Uri.parse("content://$paquete.provider/instances")
+
+    /** El paquete de Biomeria que hay instalado (la nueva primero, si no la antigua), o null. */
+    fun paqueteBiomeria(ctx: Context): String? = listOf(BIOMERIA, BIOMERIA_ANTIGUA).firstOrNull { Lanzador.instalado(ctx, it) }
+
+    fun esBiomeria(paquete: String?): Boolean = paquete == BIOMERIA || paquete == BIOMERIA_ANTIGUA
+
+    private fun esquemaBiomeria(paquete: String): String = if (paquete == BIOMERIA_ANTIGUA) "prissma" else "biomeria"
+
+    private val ESQUEMAS_BIOMERIA = listOf("biomeria://", "mchub://", "prissma://")
 
     /** Consolas que abre PokeDaisy. */
     private val CONSOLAS_POKEDAISY = setOf("gb", "gbc", "gba", "nds")
@@ -81,9 +93,9 @@ object Integraciones {
 
     /** Las instancias de Biomeria, o null si no está instalada o no responde. */
     fun leerBiomeria(ctx: Context): List<Instancia>? {
-        if (!Lanzador.instalado(ctx, BIOMERIA)) return null
+        val paquete = paqueteBiomeria(ctx) ?: return null
         return try {
-            ctx.contentResolver.query(CATALOGO_BIOMERIA, null, null, null, null)?.use { c ->
+            ctx.contentResolver.query(catalogoBiomeria(paquete), null, null, null, null)?.use { c ->
                 fun col(n: String) = c.getColumnIndex(n)
                 val iId = col("instance_id"); val iTit = col("title"); val iMot = col("engine"); val iVer = col("mc_version")
                 val iLoa = col("loader"); val iSeg = col("playtime_seconds"); val iEnl = col("deep_link")
@@ -99,8 +111,8 @@ object Integraciones {
                                 version = if (iVer >= 0) c.getString(iVer).orEmpty() else "",
                                 loader = if (iLoa >= 0) c.getString(iLoa).orEmpty() else "",
                                 segundos = if (iSeg >= 0) c.getLong(iSeg).coerceAtLeast(0) else 0L,
-                                enlace = (if (iEnl >= 0) c.getString(iEnl) else null)?.takeIf { it.startsWith("prissma://") }
-                                    ?: "prissma://launch?instance_id=${Uri.encode(id)}",
+                                enlace = (if (iEnl >= 0) c.getString(iEnl) else null)?.takeIf { l -> ESQUEMAS_BIOMERIA.any { l.startsWith(it) } }
+                                    ?: "${esquemaBiomeria(paquete)}://launch?instance_id=${Uri.encode(id)}",
                             ),
                         )
                     }
@@ -139,9 +151,9 @@ object Integraciones {
      * comparte instancias todavía, queda un solo juego que abre la app.
      */
     fun juegosBiomeria(ctx: Context): List<Juego> {
-        if (!Lanzador.instalado(ctx, BIOMERIA)) return emptyList()
+        val paquete = paqueteBiomeria(ctx) ?: return emptyList()
         val dir = java.io.File(ctx.filesDir, "biomeria").apply { mkdirs() }
-        val lista = instancias.ifEmpty { listOf(Instancia("app", "Biomeria Launcher", "", "", "", 0L, "prissma://launch")) }
+        val lista = instancias.ifEmpty { listOf(Instancia("app", "Biomeria Launcher", "", "", "", 0L, "${esquemaBiomeria(paquete)}://launch")) }
         val usados = HashSet<String>()
         val juegos = lista.mapNotNull { i ->
             try {
@@ -194,7 +206,7 @@ object Integraciones {
 fun Diptico.refrescarBiomeria() {
     scope.launch {
         val leidas = withContext(Dispatchers.IO) { Integraciones.leerBiomeria(app) } ?: emptyList()
-        if (leidas == Integraciones.instancias && estado.value.juegos.any { it.consolaId == Integraciones.CONSOLA_BIOMERIA } == Lanzador.instalado(app, Integraciones.BIOMERIA)) return@launch
+        if (leidas == Integraciones.instancias && estado.value.juegos.any { it.consolaId == Integraciones.CONSOLA_BIOMERIA } == (Integraciones.paqueteBiomeria(app) != null)) return@launch
         Integraciones.instancias = leidas
         // Horas compartidas: si Biomeria contó más tiempo (jugaste sin pasar por Díptico), Díptico usa ese.
         val datos = estado.value.datos.toMutableMap()

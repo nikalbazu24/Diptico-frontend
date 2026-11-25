@@ -120,6 +120,7 @@
         <package android:name="com.pixelrespawn.linkboy" />
         <package android:name="com.pokedaisy.app" />
         <package android:name="com.pokedaisy.app.dev" />
+        <package android:name="com.biomeria.launcher" />
         <package android:name="com.prissma.launcher" />
         <package android:name="com.rfandango.haku_x" />
         <package android:name="com.sbro.emucorec" />

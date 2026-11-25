@@ -105,7 +105,7 @@ object EmuladoresAlDia {
         FuenteEmulador("PokeDaisy", listOf("com.pokedaisy.app"), "lidor30/pokedaisy", web = "https://pokedaisy.com/es/", nota = "Pokémon de GB, GBC, GBA y DS con compañero en la otra pantalla"),
         FuenteEmulador("Peanuts Native", listOf("dev.nxnative.android.peanuts"), "igawa6/peanuts-native", web = Integraciones.WEB_PEANUTS,
             nota = "Juegos de Switch 1 convertidos en apps nativas (.nup)", conRepublicacion = true),
-        FuenteEmulador("Biomeria Launcher", listOf("com.prissma.launcher"), "Nikalbazu24/Prissma-Launcher", nota = "Minecraft Java, Bedrock y Rust"),
+        FuenteEmulador("Biomeria Launcher", listOf("com.biomeria.launcher", "com.prissma.launcher"), "Nikalbazu24/Biomeria-Launcher", nota = "Minecraft Java, Bedrock y Rust"),
     ) + Nativos.PORTS.map { p ->
         // Los ports nativos también se actualizan: su repo sale del enlace de GitHub.
         FuenteEmulador(p.nombre, listOf(p.paquete), p.enlace.removePrefix("https://github.com/").trimEnd('/'), web = p.enlace)
