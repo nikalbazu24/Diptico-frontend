@@ -87,8 +87,12 @@ import kotlin.math.abs
 internal object ImagenesConsola {
     private val cache = android.util.LruCache<String, ImageBitmap>(6)
     private val fondos = android.util.LruCache<String, ImageBitmap>(6)
-    fun hay(ctx: android.content.Context, id: String): Boolean =
-        runCatching { ctx.assets.list("consolas")?.contains("$id.webp") == true }.getOrDefault(false)
+    /** Qué consolas traen foto: se lee la carpeta de una vez (antes se leía en cada cambio de consola, en el hilo principal). */
+    @Volatile private var conFoto: Set<String>? = null
+    fun hay(ctx: android.content.Context, id: String): Boolean {
+        val l = conFoto ?: runCatching { ctx.assets.list("consolas")?.toSet() }.getOrNull().orEmpty().also { conFoto = it }
+        return "$id.webp" in l
+    }
     fun enMemoria(id: String): ImageBitmap? = cache.get(id)
     fun fondoEnMemoria(id: String): ImageBitmap? = fondos.get(id)
     /** La imagen entera (solo en un hilo de fondo). */
