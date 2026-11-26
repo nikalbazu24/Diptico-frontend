@@ -1887,7 +1887,7 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t508_config_estilo_abajo() = foto("508_config_estilo_abajo", cfg(PasoTuto.APARIENCIA, 1), Rol.INFERIOR, mi = 1)
     @Test fun t509_config_listo_una() = foto("509_config_listo_una", cfg(PasoTuto.LISTO).copy(nombre = "Nicolás", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
-    private fun tour(k: Int) = cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(novedades = k, recorrido = true)
+    private fun tour(k: Int) = RecorridoVivo.run { hecho = -1 }.let { cv(cv().copy(enSistemas = true, vistaConsolas = "carpetas")).copy(novedades = k, recorrido = true) }
     @Test fun t511_recorrido_arriba() = foto("511_recorrido_arriba", tour(1), Rol.SUPERIOR)
     @Test fun t511b_recorrido_globo_fuera_del_foco() = foto("511b_recorrido_globo_fuera_del_foco", tour(0), Rol.SUPERIOR)
     @Test fun t511c_recorrido_en_widgets_de_verdad() = foto("511c_recorrido_en_widgets_de_verdad", tour(3).copy(inicio = "widgets"), Rol.SUPERIOR)

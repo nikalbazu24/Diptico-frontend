@@ -1,3 +1,14 @@
+# Díptico 2.0.2 beta — widgets primero
+
+- **Agregado · Díptico abre en tus widgets:** al encender se ven primero los widgets. Deslizando se llega al inicio con tu juego y, siguiendo, de vuelta a los widgets, sin fin y para los dos lados. El botón, R2/L2 y DIPPO mueven la misma cinta. Quien tenía otro arranque elegido pasa una vez a widgets (se cambia en Ajustes › Inicio › Al abrir). El modo seguro sigue abriendo en la portada.
+- **Cambiado · Configuración de la primera vez:** todo en la pantalla principal, con «¡Bienvenido!», la fila de pasos con sus nombres, letras más grandes y los personajes dentro de su propia fila. Abajo solo el logo de Díptico animado. Con una pantalla, el logo va chico en la esquina.
+- **Cambiado · Recorrido de DIPPO:** 17 pasos que parten en los widgets. Cada paso pide hacer algo de verdad (con el mando, el dedo o «Probar ahora») y no se sigue hasta hacerlo; B ya no lo cierra y se quitó «Saltar recorrido». Los textos caben enteros.
+- **Corregido · Fluidez:** el deslizamiento widgets ↔ juego ya no rearma las páginas; la lista de fotos de consolas se lee una sola vez en vez de en cada cambio de consola (antes en el hilo principal).
+- **Quitado:** las vistas previas de cada paso de la configuración (estorbaban y achicaban las letras).
+- **Qué probar en la consola:** abrir Díptico (debe partir en widgets); deslizar muchas veces seguidas hacia ambos lados; L2/R2 seguidos rápido; «Volver a configurar» y recorrer todo el tour solo con el mando, y otra vez solo con el dedo; el tour en la Odin 2 Portal.
+
+---
+
 # Díptico 2.0.1 beta — emuladores más confiables
 
 Arreglos de una revisión del lanzador de juegos y apps.

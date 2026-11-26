@@ -96,6 +96,7 @@ object RecorridoVivo {
 
     /** Deja todo listo al pasar de un paso a otro: cierra lo que abrió el paso que termina y prepara el que sigue. */
     fun alCambiar(desde: Int, hacia: Int) {
+        hecho = -1
         val e = Diptico.estado.value
         when (idDe(desde)) {
             "personalizar", "opcionesJuego", "apps", "buscar", "ajustes" -> if (e.panel != Panel.NINGUNO) Diptico.cerrarPanel()

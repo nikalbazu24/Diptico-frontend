@@ -219,8 +219,8 @@ fun LogoAnimado(tam: Float, modifier: Modifier = Modifier) {
     val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "logo")
     val vaiven = t.animateFloat(-1f, 1f, androidx.compose.animation.core.infiniteRepeatable(tween(1500), androidx.compose.animation.core.RepeatMode.Reverse), label = "vaiven")
     val brillo = t.animateFloat(-0.5f, 1.6f, androidx.compose.animation.core.infiniteRepeatable(tween(3000)), label = "brillo")
-    val mecer = esc.d(tam * 0.16f)
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(tam * 0.22f))) {
+    val mecer = esc.d(tam * 0.08f)
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(esc.d(tam * 0.16f))) {
         Box(
             Modifier.size(esc.d(tam * 1.25f), esc.d(tam * 0.5f))
                 .graphicsLayer { translationY = if (mov) -vaiven.value * mecer.toPx() else 0f }

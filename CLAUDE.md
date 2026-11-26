@@ -903,3 +903,16 @@ Pendientes encontrados (issues abiertos para Codex/Gemini):
 - `fuenteDe` = exacta y luego prefijo más largo; APK de otro paquete se aborta. Regex de `Comando` admite `!` (PLAY!). `<queries>` con todo sistemas.json.
 - LIME3DS/AZAHAR quedan: con el chequeo de actividad solo resuelve la clase real. DOLPHIN-MMJR2 ya cubría `org.dolphinemu.mmjr`.
 - CI corre también DiagnosticoTest, EmuladoresAlDiaTest, MedidorTest (medir redondea), TermicaTest y TuAnoTest (se corrigió un valor mal sumado).
+
+## Widgets primero (26 nov 2026, rama `fix/widgets-primero`, Opus; Novedades `widgets-primero-2.0-80`)
+- Boceto aprobado: https://claude.ai/artifact/PCNMBVgRiYvNbfgb7aHq3E (Thor + una pantalla). Nicolás pidió «¡Bienvenido!», íconos del personaje dentro de su fila,
+  recorrido obligatorio que parta en widgets y sin textos cortados.
+- `ui/InicioDeslizable.kt`: ya NO es HorizontalPager. Cinta sin fin con dos páginas reales (0 widgets, 1 portada): `Animatable corrido` + `draggable`;
+  la página oculta espera al lado hacia donde se arrastra (alpha 0 quieta). `cambiar(haciaIzquierda)` → `fijarInicio`. Botón/atajo avanzan hacia la izquierda.
+- Arranque en widgets: `arranque` por defecto "widgets" + migración `arranqueWidgets1`; `aplicarArranque` respeta el modo seguro (prefs `arranque.tempranos` ≥ 2).
+- Configuración (`ui/ConfigInicial.kt`): `ConfigArribaCV` tiene TODO (¡Bienvenido! + `FilaPasos` con nombres, DIPPO + globo, título/opciones `FilaConfig`, `PieConfig`);
+  `ConfigAbajoCV` = solo `LogoAnimado` + «Díptico» con halo; una pantalla = `ConfigArribaCV(logoChico = true)`. Vistas previas por paso borradas.
+- Recorrido por NOMBRE: `RecorridoVivo.PASOS` (17, de "aJuego" a "fin") alineado con `Novedades.RECORRIDO`; `cumplido(id, antes, ahora)` lo detecta
+  `RecorridoDippo` mirando el estado (mando, dedo o «Probar ahora»), `probar(k, d)` hace la acción real, `alCambiar` cierra/prepara. Teclas: solo el botón
+  del paso; A sigue si está hecho; B no cierra (salvo el paso "volver"). Sin «Saltar recorrido». Deslizar sobre el velo en aJuego/aWidgets cambia de página.
+- `ImagenesConsola.hay` lee la carpeta de assets una sola vez. Traducciones `extras40.tsv` (siguiente: extras41). Capturas t540–t543.
