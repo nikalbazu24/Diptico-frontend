@@ -1034,6 +1034,11 @@ object Diptico {
             almacen.guardarBool("cvPredeterminado1", true)
             almacen.guardarTexto("vistaConsolas", "carpetas"); almacen.guardarTexto("vistaColeccion", "estante"); almacen.guardarTexto("vista", "carrusel")
         }
+        // Díptico abre en los widgets (y deslizando, el inicio con tu juego): una vez a todos.
+        if (!almacen.bool("arranqueWidgets1", false)) {
+            almacen.guardarBool("arranqueWidgets1", true)
+            almacen.guardarTexto("arranque", "widgets")
+        }
         // Carpetas grandes y ordenadas (las del recorrido): la vista por defecto, una vez a todos.
         if (!almacen.bool("carpetasGrandes1", false)) {
             almacen.guardarBool("carpetasGrandes1", true)
@@ -1092,7 +1097,7 @@ object Diptico {
             bisaEnJuego = almacen.bool("bisaEnJuego", true),
             claveRA = almacen.texto("claveRA"),
             inicio = almacen.texto("inicio", "heroe"),
-            arranque = almacen.texto("arranque", "igual"),
+            arranque = almacen.texto("arranque", "widgets"),
             respaldoNombre = almacen.texto("respaldoNombre"),
             respaldoUltimo = almacen.texto("respaldoUltimo").toLongOrNull() ?: 0L,
             widgets = leerWidgets(almacen.texto("widgets")),
@@ -1466,6 +1471,8 @@ object Diptico {
 
     /** Cómo abre Díptico: como lo dejaste, carátulas, widgets, tus consolas o el último juego (Menú › Inicio). */
     internal fun aplicarArranque() {
+        // Modo seguro (dos cierres seguidos al abrir): se queda en la portada, sin importar lo elegido.
+        if (app.getSharedPreferences("arranque", 0).getInt("tempranos", 0) >= 2) return
         when (estado.value.arranque) {
             "caratulas" -> actualizar { it.copy(inicio = "heroe") }
             "widgets" -> actualizar { it.copy(inicio = "widgets") }
@@ -1824,6 +1831,9 @@ object Diptico {
         almacen.configurado = true
         // Primera vez: recorrido por las opciones y funciones. Al cerrarlo se ofrece Díptico como inicio de Android.
         almacen.guardarTexto("novedadesVistas", Novedades.ID)
+        // Díptico (y su recorrido) parte en los widgets.
+        RecorridoVivo.hecho = -1
+        fijarInicio("widgets")
         actualizar { it.copy(configurado = true, panel = Panel.NINGUNO, indice = 0, novedades = if (recorrido) 0 else -1, recorrido = recorrido) }
         if (!recorrido) ofrecerInicio()
     }
@@ -1869,6 +1879,8 @@ object Diptico {
     /** Vuelve a mostrar el recorrido de la primera vez. */
     fun verRecorrido() {
         cerrarPanel()
+        RecorridoVivo.hecho = -1
+        fijarInicio("widgets")
         actualizar { it.copy(novedades = 0, recorrido = true) }
     }
 
@@ -4802,20 +4814,8 @@ object Diptico {
         if (n < 0) return
         val sig = n + d
         if (sig >= paginasTour().size) { cerrarNovedades(); return }
-        // Cerrar demostraciones anteriores antes del siguiente componente.
-        if (estado.value.recorrido) {
-            if (n in setOf(2, 9, 16, 17, 18, 20, 21) && estado.value.panel != Panel.NINGUNO) cerrarPanel()
-            if (n == 13 && estado.value.extra.galeria) cerrarGaleriaWidgets()
-            if (n == 15 && estado.value.editandoWidgets) terminarEspacio()
-            if (n == 19 && estado.value.extra.perfilEn >= 0) cerrarPerfil()
-            // Tu espacio vuelve a la biblioteca antes de pedir Select.
-            if (n in setOf(4, 15) && sig in setOf(5, 16) && estado.value.inicio == "widgets") {
-                fijarInicio("heroe")
-                if (sig == 16) volverASistemas()
-            }
-            if (n == 6 && sig == 7 && !estado.value.enSistemas) volverASistemas()
-            if (n == 10 && sig == 11 && !estado.value.enSistemas) volverASistemas()
-        }
+        // El recorrido cierra lo que abrió el paso que termina y prepara la pantalla del que sigue.
+        if (estado.value.recorrido) RecorridoVivo.alCambiar(n, sig)
         actualizar { it.copy(novedades = sig.coerceAtLeast(0)) }
         Sonidos.pagina()
     }

@@ -1896,6 +1896,10 @@ class Capturas {
     @Config(qualifiers = ABAJO)
     @Test fun t512b_recorrido_vista_carpetas() = foto("512b_recorrido_vista_carpetas", tour(5), Rol.INFERIOR, mi = 1)
     @Test fun t513_recorrido_una() = foto("513_recorrido_una", tour(0).copy(modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Test fun t540_recorrido_parte_en_widgets() = foto("540_recorrido_parte_en_widgets", tour(0).copy(inicio = "widgets"), Rol.SUPERIOR)
+    @Test fun t541_config_abajo_solo_logo() = foto("541_config_abajo_solo_logo", cfg(PasoTuto.BIENVENIDA).copy(nombre = "Nicolás"), Rol.INFERIOR, mi = 1)
+    @Test fun t542_config_una_con_logo() = foto("542_config_una_con_logo", cfg(PasoTuto.BIENVENIDA, 1).copy(nombre = "Nicolás", modoPantallas = "una_negra", dosDisponibles = false), Rol.UNICA)
+    @Test fun t543_recorrido_paso_galeria() = foto("543_recorrido_paso_galeria", tour(RecorridoVivo.indiceDe("galeria")).copy(inicio = "widgets"), Rol.SUPERIOR)
     @Config(qualifiers = ABAJO)
     @Test fun t514_galeria_abajo() = foto("514_galeria_abajo", cv { it.copy(galeria = true, tiendaCat = 1, espacioSel = 1) }.copy(inicio = "widgets"), Rol.INFERIOR, mi = 1)
     @Test fun t515_galeria_arriba() {

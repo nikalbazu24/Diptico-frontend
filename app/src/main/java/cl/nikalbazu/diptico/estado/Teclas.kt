@@ -398,100 +398,32 @@ object Teclas {
         // El recorrido ejecuta las acciones REALES, con prioridad sobre el Home.
         if (e.novedades >= 0) {
             if (e.recorrido) {
+                // Cada paso escucha SOLO su botón y hace la acción real (la misma que el botón «Probar ahora»).
+                // El paso se da por cumplido al ver el cambio en la interfaz (RecorridoDippo), no al apretar.
                 val k = e.novedades
-                if (abajo && ev.repeatCount == 0) when {
-                    k == 1 && code in setOf(KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1) -> {
-                        val antes = e.consolaSel
-                        Diptico.cambiarConsola(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1)
-                        if (Diptico.estado.value.consolaSel != antes) RecorridoVivo.avisar("gatillo")
-                    }
-                    k == 2 && code == KeyEvent.KEYCODE_BUTTON_X -> {
-                        val id = e.consolaSel.takeIf { it != "todo" }
-                            ?: e.pestanas.firstOrNull { it != "todo" }
-                        if (id != null) {
-                            if (e.consolaSel != id) Diptico.elegirConsola(id)
-                            Diptico.abrirEditarConsola(id)
-                            if (Diptico.estado.value.panel == Panel.EDITAR_CONSOLA) RecorridoVivo.avisar("x")
-                        }
-                    }
-                    k in setOf(3, 11) && code in setOf(KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2) -> {
-                        // El acceso existe como desplazamiento del Home; abre Widgets de verdad.
-                        Diptico.pasoEspacio(if (code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
-                        if (Diptico.estado.value.inicio == "widgets") RecorridoVivo.avisar("gatillo2")
-                    }
-                    k == 5 && code == KeyEvent.KEYCODE_BUTTON_SELECT -> {
-                        val antes = e.extra.vistaCarpetasCV
-                        Diptico.siguienteVistaCarpetas()
-                        if (Diptico.estado.value.extra.vistaCarpetasCV != antes) RecorridoVivo.avisar("select")
-                    }
-                    k == 7 && esA(code) -> {
-                        val id = e.consolaSel.takeIf { it != "todo" }
-                            ?: e.pestanas.firstOrNull { it != "todo" }
-                        if (id != null) {
-                            Diptico.entrarConsolaCV(id)
-                            if (!Diptico.estado.value.enSistemas) RecorridoVivo.avisar("abrirCarpeta")
-                        }
-                    }
-                    k == 8 && code == KeyEvent.KEYCODE_BUTTON_SELECT -> {
-                        val antes = e.extra.vistaColeccion
-                        val siguiente = when (antes) {
-                            "estante" -> "cuadricula"
-                            "cuadricula" -> "lista"
-                            else -> "estante"
-                        }
-                        Diptico.elegirVistaColeccion(siguiente)
-                        if (Diptico.estado.value.extra.vistaColeccion != antes) RecorridoVivo.avisar("vistaJuego")
-                    }
-                    k == 9 && code == KeyEvent.KEYCODE_BUTTON_Y -> {
-                        if (e.seleccionado != null) {
-                            Diptico.abrirRapido()
-                            if (Diptico.estado.value.panel != Panel.NINGUNO) RecorridoVivo.avisar("opcionesJuego")
-                        }
-                    }
-                    k == 12 && code in setOf(KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1) -> {
-                        val antes = e.paginaInicio
-                        Diptico.cambiarPagina(if (code == KeyEvent.KEYCODE_BUTTON_L1) -1 else 1)
-                        if (Diptico.estado.value.paginaInicio != antes) RecorridoVivo.avisar("paginaWidget")
-                    }
-                    k == 13 && code == KeyEvent.KEYCODE_BUTTON_Y -> {
-                        Diptico.abrirGaleriaWidgets()
-                        if (Diptico.estado.value.extra.galeria) RecorridoVivo.avisar("galeriaWidget")
-                    }
-                    k == 14 && code == KeyEvent.KEYCODE_BUTTON_X -> {
-                        Diptico.editarEspacio()
-                        if (Diptico.estado.value.editandoWidgets) RecorridoVivo.avisar("editarWidget")
-                    }
-                    k == 15 && code == KeyEvent.KEYCODE_DPAD_RIGHT -> RecorridoVivo.probar(15)
-                    k == 20 && code == KeyEvent.KEYCODE_BUTTON_X -> RecorridoVivo.probar(20)
-                    k == 21 && code == KeyEvent.KEYCODE_BUTTON_START -> RecorridoVivo.probar(21)
-                    k == 16 && esA(code) -> {
-                        Diptico.abrirApps()
-                        if (Diptico.estado.value.panel == Panel.APPS) RecorridoVivo.avisar("apps")
-                    }
-                    k == 17 && code == KeyEvent.KEYCODE_BUTTON_Y -> {
-                        Diptico.abrirBuscar()
-                        if (Diptico.estado.value.panel == Panel.BUSCAR) RecorridoVivo.avisar("buscar")
-                    }
-                    k == 18 && code == KeyEvent.KEYCODE_BUTTON_START -> {
-                        Diptico.abrirMenu()
-                        if (Diptico.estado.value.panel == Panel.MENU) RecorridoVivo.avisar("ajustes")
-                    }
-                    k == 19 && esA(code) && KeyEvent.KEYCODE_BUTTON_START in presionadas -> {
-                        Diptico.abrirPerfil()
-                        if (Diptico.estado.value.extra.perfilEn >= 0) RecorridoVivo.avisar("perfil")
-                    }
+                val id = RecorridoVivo.idDe(k)
+                val pide = when (id) {
+                    "aJuego" -> code == KeyEvent.KEYCODE_BUTTON_R2 || code == KeyEvent.KEYCODE_BUTTON_L2
+                    "aWidgets" -> code == KeyEvent.KEYCODE_BUTTON_L2 || code == KeyEvent.KEYCODE_BUTTON_R2
+                    "consola" -> code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_R1
+                    "personalizar", "editar" -> code == KeyEvent.KEYCODE_BUTTON_X
+                    "vistaCarpetas", "vistaJuegos" -> code == KeyEvent.KEYCODE_BUTTON_SELECT
+                    "abrirConsola", "apps", "dippo" -> esA(code)
+                    "opcionesJuego", "galeria", "buscar" -> code == KeyEvent.KEYCODE_BUTTON_Y
+                    "volver" -> esB(code) || code == KeyEvent.KEYCODE_BACK
+                    "ajustes" -> code == KeyEvent.KEYCODE_BUTTON_START
+                    "perfil" -> esA(code) && KeyEvent.KEYCODE_BUTTON_START in presionadas
+                    else -> false
                 }
-                if (arriba) when {
-                    // El paso de retorno enseña B, sin cerrar prematuramente el recorrido.
-                    k == 10 && esB(code) -> {
-                        Diptico.volverASistemas()
-                        if (Diptico.estado.value.enSistemas) RecorridoVivo.avisar("volverCarpetas")
-                    }
-                    esA(code) && k !in setOf(7, 16, 19) -> {
-                        if (RecorridoVivo.puedeSeguir(k)) Diptico.moverNovedades(1)
-                        else RecorridoVivo.avisar("falta")
-                    }
-                    esB(code) || code == KeyEvent.KEYCODE_BACK -> Diptico.cerrarNovedades()
+                val cumplible = !RecorridoVivo.puedeSeguir(k)
+                if (abajo && ev.repeatCount == 0 && pide && cumplible) {
+                    RecorridoVivo.probar(k, if (code == KeyEvent.KEYCODE_BUTTON_L1 || code == KeyEvent.KEYCODE_BUTTON_L2) -1 else 1)
+                } else if (arriba && !pide && esA(code)) {
+                    // A sigue solo cuando el paso ya está hecho; si no, DIPPO recuerda qué falta.
+                    if (RecorridoVivo.puedeSeguir(k)) Diptico.moverNovedades(1) else RecorridoVivo.avisar("falta")
+                } else if (arriba && !pide && (esB(code) || code == KeyEvent.KEYCODE_BACK) && cumplible) {
+                    // El recorrido no se cierra con B: hay que completarlo (se puede repetir desde Ajustes).
+                    RecorridoVivo.avisar("falta")
                 }
                 return true
             }

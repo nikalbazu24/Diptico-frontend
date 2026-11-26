@@ -2,119 +2,169 @@ package cl.nikalbazu.diptico.ui
 
 import cl.nikalbazu.diptico.estado.*
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import cl.nikalbazu.diptico.audio.Sonidos
 import cl.nikalbazu.diptico.estado.Diptico
 import cl.nikalbazu.diptico.estado.Estado
-import kotlin.math.absoluteValue
+import kotlin.math.abs
 import kotlinx.coroutines.launch
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
+
+/** Las dos páginas del inicio: 0 = tus widgets (donde abre Díptico), 1 = la portada con tu juego. */
+private const val WIDGETS = 0
+private const val PORTADA = 1
+
+private fun paginaDe(inicio: String) = if (inicio == "widgets") WIDGETS else PORTADA
+private fun nombreDe(pagina: Int) = if (pagina == WIDGETS) "widgets" else "heroe"
 
 /**
- * La pantalla de arriba como dos páginas seguidas: la portada del juego y, deslizando hacia el lado, tus widgets.
- * Ya no hace falta un botón para cambiar: se desliza con el dedo (y el botón o el atajo de siempre siguen sirviendo,
- * moviendo la página con la misma animación). Los widgets tienen sus propias páginas: al llegar a la primera,
- * seguir deslizando vuelve a la portada.
+ * La pantalla del inicio como una cinta sin fin: tus widgets → tu juego → tus widgets → … hacia los dos lados.
+ *
+ * Son solo dos páginas de verdad (cada una se arma una sola vez): la que no se ve espera al lado hacia donde
+ * deslizas. Así se puede seguir deslizando para siempre sin armar copias, y volver a una página ya visitada
+ * no la rehace de cero. El botón, el atajo y DIPPO mueven la cinta con la misma animación.
  */
 @Composable
 fun InicioDeslizable(e: Estado, modifier: Modifier = Modifier, portada: @Composable () -> Unit, widgets: @Composable () -> Unit) {
     val esc = LocalEscala.current
-    val pager = rememberPagerState(initialPage = if (e.inicio == "widgets") 1 else 0) { 2 }
-    // El botón, el atajo o DIPPO cambiaron el inicio: la página se mueve sola. Si ya iba moviéndose (L2/R2 seguidos),
-    // la animación nueva reemplaza a la anterior en vez de quedarse esperando: antes se cortaba a medio camino y la
-    // página quedaba pegada entre las dos.
-    var objetivoProg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
-    LaunchedEffect(e.inicio) {
-        val objetivo = if (e.inicio == "widgets") 1 else 0
-        if (pager.currentPage == objetivo && pager.currentPageOffsetFraction == 0f) return@LaunchedEffect
-        objetivoProg = objetivo
-        try { pager.animateScrollToPage(objetivo) } finally { if (objetivoProg == objetivo) objetivoProg = -1 }
-    }
-    // Deslizaste con el dedo: se guarda en qué página quedaste (solo si fue el dedo, no un cambio pedido por botón).
-    LaunchedEffect(pager) {
-        androidx.compose.runtime.snapshotFlow { pager.settledPage }.collect { p ->
-            if (objetivoProg == -1) Diptico.fijarInicio(if (p == 1) "widgets" else "heroe")
+    val alcance = rememberCoroutineScope()
+    var actual by remember { mutableIntStateOf(paginaDe(e.inicio)) }
+    // La página de al lado se arma la primera vez que se asoma y después queda lista.
+    var visitada by remember { mutableStateOf(setOf(actual)) }
+    // Corrimiento de la cinta en píxeles: negativo = la siguiente entra por la derecha.
+    val corrido = remember { Animatable(0f) }
+    var moviendo by remember { mutableStateOf(false) }
+
+    BoxWithConstraints(modifier.fillMaxSize().testTag("inicio-deslizable")) {
+        val ancho = with(LocalDensity.current) { maxWidth.toPx() }.coerceAtLeast(1f)
+        // Con los efectos de movimiento apagados, el cambio es inmediato.
+        val conMovimiento = LocalMovimiento.current
+
+        // Termina un cambio: la otra página pasa a ser la actual y la cinta vuelve a cero sin saltos.
+        suspend fun cambiar(haciaIzquierda: Boolean) {
+            if (moviendo) return
+            moviendo = true
+            try {
+                visitada = visitada + (1 - actual)
+                val destino = if (haciaIzquierda) -ancho else ancho
+                if (conMovimiento) corrido.animateTo(destino, spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 420f))
+                actual = 1 - actual
+                corrido.snapTo(0f)
+                Diptico.fijarInicio(nombreDe(actual))
+                Sonidos.deslizar()
+            } finally { moviendo = false }
         }
-    }
-    // Los widgets se componen la primera vez que se visitan y después quedan listos: volver a ellos ya no los arma
-    // de cero (eso era el tirón al ir y volver seguido).
-    var visitoWidgets by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(e.inicio == "widgets") }
-    if (e.inicio == "widgets") visitoWidgets = true
-    val alcance = androidx.compose.runtime.rememberCoroutineScope()
-    // Red de seguridad: si algo de la página se queda con el arrastre, un deslizamiento largo igual cambia de página.
-    val respaldo = Modifier.pointerInput(e.editandoWidgets) {
-        if (e.editandoWidgets) return@pointerInput
-        val umbral = 110.dp.toPx()
-        awaitEachGesture {
-            val inicio = awaitFirstDown(requireUnconsumed = false, pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
-            var ultimo = inicio.position
-            var usado = false
-            while (true) {
-                val ev = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Final)
-                val c = ev.changes.firstOrNull { it.id == inicio.id } ?: break
-                // Si algo de la página usó el arrastre (por ejemplo, girar la caja), no se cambia de página.
-                if (c.isConsumed) usado = true
-                if (c.pressed) { ultimo = c.position; continue }
-                if (usado) break
-                val dx = ultimo.x - inicio.position.x
-                val dy = kotlin.math.abs(ultimo.y - inicio.position.y)
-                if (!pager.isScrollInProgress && kotlin.math.abs(dx) > umbral && dy < kotlin.math.abs(dx) / 2) {
-                    val destino = if (dx < 0) 1 else 0
-                    if (pager.currentPage != destino) alcance.launch { pager.animateScrollToPage(destino) }
+
+        // El botón, el atajo o DIPPO pidieron la otra página: la cinta avanza sola hacia la izquierda.
+        LaunchedEffect(e.inicio) {
+            // En el alcance de la pantalla (no en el de este efecto): si el inicio cambia de nuevo a mitad de camino,
+            // la animación termina igual y la cinta nunca queda a medias.
+            if (paginaDe(e.inicio) != actual && !moviendo) alcance.launch { cambiar(haciaIzquierda = true) }
+        }
+
+        val arrastre = rememberDraggableState { d ->
+            if (!moviendo) alcance.launch { corrido.snapTo((corrido.value + d).coerceIn(-ancho, ancho)) }
+        }
+        // Red de seguridad: si algo de la página se quedó con el arrastre sin usarlo, un deslizamiento largo igual cambia.
+        val respaldo = Modifier.pointerInput(e.editandoWidgets, ancho) {
+            if (e.editandoWidgets) return@pointerInput
+            val umbral = 110.dp.toPx()
+            awaitEachGesture {
+                val inicio = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                var ultimo = inicio.position
+                var usado = false
+                while (true) {
+                    val ev = awaitPointerEvent(PointerEventPass.Final)
+                    val c = ev.changes.firstOrNull { it.id == inicio.id } ?: break
+                    if (c.isConsumed) usado = true
+                    if (c.pressed) { ultimo = c.position; continue }
+                    if (usado) break
+                    val dx = ultimo.x - inicio.position.x
+                    val dy = abs(ultimo.y - inicio.position.y)
+                    if (!moviendo && corrido.value == 0f && abs(dx) > umbral && dy < abs(dx) / 2) {
+                        alcance.launch { cambiar(haciaIzquierda = dx < 0) }
+                    }
+                    break
                 }
-                break
             }
         }
-    }
-    Box(modifier.fillMaxSize().testTag("inicio-deslizable").then(respaldo)) {
-        HorizontalPager(
-            state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = if (visitoWidgets) 1 else 0,
-            userScrollEnabled = !e.editandoWidgets,
-            // Basta con arrastrar un cuarto de la pantalla para cambiar de página.
-            flingBehavior = androidx.compose.foundation.pager.PagerDefaults.flingBehavior(state = pager, snapPositionalThreshold = 0.25f),
-        ) { pagina ->
-            // Al deslizar, la página que se va se achica y oscurece apenas: se siente como pasar de una tarjeta a otra.
-            Box(Modifier.fillMaxSize().graphicsLayer {
-                val d = ((pager.currentPage - pagina) + pager.currentPageOffsetFraction).absoluteValue.coerceIn(0f, 1f)
-                val s = 1f - 0.06f * d
-                scaleX = s; scaleY = s
-                alpha = 1f - 0.4f * d
-            }) { if (pagina == 0) portada() else widgets() }
+
+        Box(
+            Modifier.fillMaxSize().then(respaldo).draggable(
+                arrastre, Orientation.Horizontal, enabled = !e.editandoWidgets,
+                onDragStopped = { velocidad ->
+                    val c = corrido.value
+                    // Basta con arrastrar un cuarto de la pantalla, o soltar con impulso, para pasar a la otra.
+                    val pasa = abs(c) > ancho * 0.25f || (abs(velocidad) > 900f && c != 0f && velocidad * c > 0)
+                    if (pasa) cambiar(haciaIzquierda = c < 0)
+                    else corrido.animateTo(0f, spring(stiffness = 600f))
+                },
+            ),
+        ) {
+            for (pagina in listOf(WIDGETS, PORTADA)) {
+                if (pagina !in visitada && pagina != actual) continue
+                val esActual = pagina == actual
+                Box(
+                    Modifier.fillMaxSize().graphicsLayer {
+                        val c = corrido.value
+                        // La otra página espera pegada al lado hacia donde vas; quieta, no se dibuja.
+                        translationX = if (esActual) c else c + if (c <= 0f) ancho else -ancho
+                        val d = if (esActual) abs(c) / ancho else 1f - abs(c) / ancho
+                        val s = 1f - 0.06f * d
+                        scaleX = s; scaleY = s
+                        alpha = if (!esActual && c == 0f) 0f else 1f - 0.4f * d
+                    },
+                ) { if (pagina == WIDGETS) widgets() else portada() }
+            }
         }
+
         // Dos puntitos abajo: dónde estás (se tocan para cambiar).
         if (!e.editandoWidgets) Row(
             Modifier.align(Alignment.BottomCenter).padding(bottom = esc.d(6)),
             horizontalArrangement = Arrangement.spacedBy(esc.d(6)), verticalAlignment = Alignment.CenterVertically,
         ) {
-            for (k in 0..1) {
-                val activa = (pager.currentPage + pager.currentPageOffsetFraction).let { if (k == 0) it < 0.5f else it >= 0.5f }
+            for (k in listOf(WIDGETS, PORTADA)) {
+                val activa = k == actual
                 Box(
                     Modifier.size(if (activa) esc.d(18) else esc.d(6), esc.d(6)).clip(RoundedCornerShape(50))
                         .background(Color.White.copy(alpha = if (activa) 0.85f else 0.35f))
-                        .clickable { Diptico.fijarInicio(if (k == 1) "widgets" else "heroe") },
+                        .clickable(onClickLabel = if (k == WIDGETS) "Ir a tus widgets" else "Ir a tu juego") {
+                            if (k != actual) alcance.launch { cambiar(haciaIzquierda = true) }
+                        },
                 )
             }
         }

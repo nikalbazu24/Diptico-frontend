@@ -1,6 +1,9 @@
 package cl.nikalbazu.diptico.ui
 
 import cl.nikalbazu.diptico.estado.*
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.ui.input.pointer.pointerInput
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.RepeatMode
@@ -78,30 +81,26 @@ private data class Foco(val abajo: Boolean, val x: Float, val y: Float, val w: F
 private data class MarcoTour(val x: Float, val y: Float, val ancho: Float, val alto: Float)
 
 /** Destinos del tour: la ubicación se obtiene del componente real, no de coordenadas fijas. */
-private fun destinosDe(k: Int, una: Boolean, enWidgets: Boolean): List<String> = when (k) {
-    0 -> listOf("consola")
-    1 -> listOf("controles", "consola")
-    2 -> listOf("carpetas")
-    3 -> if (enWidgets) listOf("espacio") else listOf("widgets")
-    4 -> listOf("apps")
-    5 -> listOf("carpetas") // Select cambia la rejilla visible de abajo (también en Thor)
-    6 -> listOf("dippo")
-    7 -> listOf("abrir-carpeta", "carpetas")
-    8 -> listOf("juegos")
-    9 -> listOf("panel-juego", "barra-juegos", "juegos")
-    10 -> listOf("carpetas", "juegos")
-    11 -> listOf("espacio", "widgets")
-    12 -> listOf("paginas", "espacio")
-    13 -> listOf("galeria")
-    14, 15 -> listOf("editor", "mapa-widgets")
-    16 -> listOf("apps")
-    17 -> listOf("buscar")
-    18 -> listOf("ajustes")
-    19 -> listOf("perfil")
-    20 -> listOf("panel-juego", "barra-juegos")
-    21 -> listOf("ajustes")
+private fun destinosDe(id: String, enWidgets: Boolean): List<String> = when (id) {
+    "aJuego", "aWidgets" -> if (enWidgets) listOf("espacio", "widgets") else listOf("consola")
+    "consola" -> listOf("controles", "consola")
+    "personalizar", "vistaCarpetas" -> listOf("carpetas")
+    "dippo" -> listOf("dippo")
+    "abrirConsola" -> listOf("abrir-carpeta", "carpetas")
+    "vistaJuegos" -> listOf("juegos")
+    "opcionesJuego" -> listOf("panel-juego", "barra-juegos", "juegos")
+    "volver" -> listOf("carpetas", "juegos")
+    "galeria" -> listOf("galeria")
+    "editar" -> listOf("editor", "mapa-widgets")
+    "apps" -> listOf("apps")
+    "buscar" -> listOf("buscar")
+    "ajustes" -> listOf("ajustes")
+    "perfil" -> listOf("perfil")
     else -> emptyList()
 }
+
+/** Con dos pantallas: en cuál está lo que se explica (abajo = la biblioteca, DIPPO y las carpetas). */
+private fun abajoDe(id: String) = id in setOf("personalizar", "vistaCarpetas", "dippo", "abrirConsola", "vistaJuegos")
 
 /** Conversión ventana -> lienzo, con recorte para no pintar fuera de los bordes físicos. */
 private fun marcoDeAncla(ancla: Rect, ventana: Rect, unidad: Float, ancho: Float, alto: Float): MarcoTour? {
@@ -114,62 +113,40 @@ private fun marcoDeAncla(ancla: Rect, ventana: Rect, unidad: Float, ancho: Float
     return if (x2 - x1 > 1f && y2 - y1 > 1f) MarcoTour(x1, y1, x2 - x1, y2 - y1) else null
 }
 
-/** Dónde está cada parte con dos pantallas (arriba 6a, abajo 6b) y con una (6c). null = sin foco (el cierre). */
-private fun focoDe(k: Int, una: Boolean): Foco? = if (una) when (k) {
-    0 -> Foco(false, .02f, .10f, .48f, .74f)
-    1 -> Foco(false, .02f, .10f, .48f, .24f)
-    2, 5 -> Foco(false, .50f, .50f, .49f, .42f)
-    3 -> Foco(false, .38f, .91f, .24f, .09f)
-    4 -> Foco(false, .01f, .00f, .40f, .11f)
-    6 -> Foco(false, .01f, .90f, .52f, .10f)
-    else -> null
-} else when (k) {
-    0 -> Foco(false, .02f, .11f, .47f, .66f)
-    1 -> Foco(false, .02f, .11f, .47f, .24f)
-    2, 5 -> Foco(true, .01f, .10f, .98f, .78f)
-    3 -> Foco(false, .38f, .90f, .24f, .10f)
-    4 -> Foco(true, .01f, .00f, .56f, .11f)
-    6 -> Foco(true, .40f, .89f, .20f, .11f)
-    else -> null
-}
-
-/** El «pruébalo» de cada paso (obligatorio): qué hay que hacer y qué responde DIPPO al lograrlo. */
-private fun retoDe(k: Int): Pair<String, String>? = RecorridoVivo.retoDe(k)?.let { it to when (it) {
-    "gatillo" -> "¡Eso! Así saltas de consola en consola."
-    "x" -> "¡Así se abre! Ahí cambias su color, ícono y fondo."
-    "gatillo2" -> "¡Bien! Ahí viven tus widgets."
-    "select" -> "¡Así se cambia la vista!"
-    "abrirCarpeta" -> "¡Entramos! Ahora puedes recorrer los juegos."
-    "vistaJuego" -> "¡Cambiaste la presentación de tus juegos!"
-    "opcionesJuego" -> "Aquí está la configuración individual del juego."
-    "volverCarpetas" -> "¡Volvimos a las consolas!"
-    "paginaWidget" -> "¡Cambiaste de página sin tocar el Home!"
-    "galeriaWidget" -> "¡Se abrió la galería de widgets!"
-    "editarWidget" -> "¡Ahora estás editando tu espacio!"
-    "pestanaEditor" -> "¡Esa es otra herramienta real del editor!"
+/** Lo que responde DIPPO al cumplir cada paso. */
+private fun exitoDe(id: String) = when (id) {
+    "aJuego" -> "¡Eso! Aquí está tu juego."
+    "consola" -> "¡Eso! Así saltas de consola en consola."
+    "personalizar" -> "¡Así se abre! Ahí cambias su color, ícono y fondo."
+    "vistaCarpetas" -> "¡Así se cambia la vista!"
+    "dippo" -> "¡Jiji, cosquillas! Encantado."
+    "abrirConsola" -> "¡Entramos! Ahora puedes recorrer los juegos."
+    "vistaJuegos" -> "¡Cambiaste la presentación de tus juegos!"
+    "opcionesJuego" -> "Aquí está la configuración de cada juego."
+    "volver" -> "¡Volvimos a las consolas!"
+    "aWidgets" -> "¡Bien! De vuelta en tus widgets."
+    "galeria" -> "¡Se abrió la galería de widgets!"
+    "editar" -> "¡Ahora estás editando tu espacio!"
     "apps" -> "¡Ahí están todas tus aplicaciones!"
     "buscar" -> "¡Ya puedes buscar tus juegos!"
     "ajustes" -> "¡Llegaste a los ajustes!"
     "perfil" -> "¡Este es tu perfil!"
-    "emuladorJuego" -> "Cada juego puede usar su propio emulador."
-    "ajustesEmuladores" -> "Desde aquí también puedes configurarlos."
-    else -> "¡Eso! Sigamos explorando."
-} }
+    else -> "¡Eso! Sigamos."
+}
 
-private fun pistaReto(k: Int) = when (k) {
-    1 -> "Pulsa L1 o R1"
-    2 -> "Pulsa X"
-    3, 11 -> "Pulsa L2 o R2"
-    5, 8 -> "Pulsa Select"
-    6 -> "Toca a DIPPO"
-    7, 16 -> "Pulsa A"
-    9, 13, 17 -> "Pulsa Y"
-    10 -> "Pulsa B"
-    12 -> "Pulsa L1 o R1"
-    14, 20 -> "Pulsa X"
-    15 -> "Pulsa derecha"
-    18, 21 -> "Pulsa Start"
-    19 -> "Pulsa Start + A"
+/** Qué hay que hacer, en corto (la pastilla morada del globo). */
+private fun pistaReto(id: String) = when (id) {
+    "aJuego" -> "Desliza o pulsa R2"
+    "aWidgets" -> "Desliza o pulsa L2"
+    "consola" -> "Pulsa L1 o R1"
+    "personalizar", "editar" -> "Pulsa X"
+    "vistaCarpetas", "vistaJuegos" -> "Pulsa Select"
+    "dippo" -> "Toca a DIPPO o pulsa A"
+    "abrirConsola", "apps" -> "Pulsa A"
+    "opcionesJuego", "galeria", "buscar" -> "Pulsa Y"
+    "volver" -> "Pulsa B"
+    "ajustes" -> "Pulsa Start"
+    "perfil" -> "Start + A"
     else -> "Pruébalo"
 }
 
@@ -191,52 +168,61 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
     val k = e.novedades.coerceIn(0, paginas.size - 1)
     val una = rol == Rol.UNICA || e.unaPantalla
     val abajo = rol == Rol.INFERIOR
-    val foco = focoDe(k, una)
+    val id = RecorridoVivo.idDe(k)
     // Colección viva puede redistribuir sus componentes: usamos sus medidas reales.
     val conAnclas = coleccionVivaActiva(e)
-    // Cada paso pertenece a una pantalla; en el cierre DIPPO queda arriba.
-    val aqui = una || (foco?.abajo ?: false) == abajo
+    // Cada paso pertenece a una pantalla (la de lo que explica); con una sola, siempre aquí.
+    val aqui = una || abajoDe(id) == abajo
     val alcance = rememberCoroutineScope()
     val anima = LocalMovimiento.current
 
     var frase by remember { mutableStateOf<String?>(null) }
     var caraReaccion by remember { mutableStateOf<CaraDippo?>(null) }
     var retoHecho by remember(k) { mutableStateOf(false) }
-    val reto = retoDe(k)
+    val reto = RecorridoVivo.retoDe(k)
     val salto = remember { Animatable(0f) }
-    fun reaccionar(que: String) {
+    fun saltar() { if (anima) alcance.launch { salto.animateTo(-36f, tween(140)); salto.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = 360f)) } }
+    /** Se cumplió lo que pedía el paso: DIPPO celebra, se deja ver el cambio real un momento y se pasa al siguiente. */
+    fun lograr() {
+        if (retoHecho || reto == null) return
+        retoHecho = true; RecorridoVivo.hecho = k
         alcance.launch {
-            val cumple = reto != null && reto.first == que && !retoHecho
-            if (cumple) { retoHecho = true; RecorridoVivo.hecho = k }
-            frase = if (cumple) reto!!.second else fraseDe(que)
-            caraReaccion = if (cumple) CaraDippo.CELEBRANDO else if (que == "toque") CaraDippo.SORPRENDIDO else CaraDippo.FELIZ
-            if (anima) launch { salto.animateTo(-36f, tween(140)); salto.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = 360f)) }
-            // La acción real permanece visible antes de seguir con la explicación.
-            delay(if (cumple) 2200 else 2000)
+            frase = exitoDe(id); caraReaccion = CaraDippo.CELEBRANDO; saltar()
+            delay(2000)
             caraReaccion = null; frase = null
-            if (cumple && Diptico.estado.value.novedades == k) {
-                // El paso de personalización abre su panel real, y lo cierra al continuar.
-                if (k == 2 && Diptico.estado.value.panel == Panel.EDITAR_CONSOLA) Diptico.cerrarPanel()
-                Diptico.moverNovedades(1)
-            }
+            if (Diptico.estado.value.novedades == k) Diptico.moverNovedades(1)
+        }
+    }
+    fun reaccionar(que: String) {
+        if (que == "toque" && id == "dippo") { lograr(); return }
+        alcance.launch {
+            frase = fraseDe(que)
+            caraReaccion = if (que == "toque") CaraDippo.SORPRENDIDO else CaraDippo.PENSANDO
+            saltar()
+            delay(1800)
+            if (frase == fraseDe(que)) { caraReaccion = null; frase = null }
         }
     }
     val reaccion by RecorridoVivo.reaccion.collectAsState()
     LaunchedEffect(reaccion) { reaccion?.let { if (aqui && System.nanoTime() - it.vez < 2_000_000_000L) reaccionar(it.que) } }
+    // El paso se cumple cuando la interfaz cambió como se pidió (con el mando, el dedo o «Probar ahora»).
+    LaunchedEffect(k, aqui) {
+        if (!aqui || reto == null) return@LaunchedEffect
+        val antes = Diptico.estado.value
+        Diptico.estado.collect { ahora -> if (RecorridoVivo.cumplido(id, antes, ahora)) lograr() }
+    }
 
     LienzoBoceto(if (abajo) 1240f else 1920f, 1080f, Modifier.testTag("recorrido-dippo"), zoom = if (una) ZOOM_UNA else if (abajo) ZOOM_ABAJO else ZOOM_ARRIBA) {
         val esc = LocalEscala.current
         val w = anchoLienzo(); val h = altoLienzo()
         val pantalla = pantallaActual()
-        val ancla = if (conAnclas && aqui) destinosDe(k, una, e.inicio == "widgets").firstNotNullOfOrNull {
+        val ancla = if (conAnclas && aqui) destinosDe(id, e.inicio == "widgets").firstNotNullOfOrNull {
             AnclasRecorrido.buscar(pantalla, it)
         } else null
         var ventanaCanvas by remember { mutableStateOf<Rect?>(null) }
         val unidad = with(LocalDensity.current) { esc.d(1f).toPx() }
         val marco = if (conAnclas) {
             if (ancla != null && ventanaCanvas != null) marcoDeAncla(ancla, ventanaCanvas!!, unidad, w, h) else null
-        } else if (foco != null && aqui) {
-            MarcoTour(foco.x * w, foco.y * h, foco.w * w, foco.h * h)
         } else null
         val conFocoAqui = marco != null
         // Las dimensiones siguen el componente incluso al cambiar de pantalla, tema o escala.
@@ -252,7 +238,27 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
                     val actual = coordenadas.boundsInWindow()
                     if (ventanaCanvas != actual) ventanaCanvas = actual
                 }
-                .clickable(interactionSource = null, indication = null) { if (reto == null || retoHecho) Diptico.moverNovedades(1) else reaccionar("falta") },
+                .pointerInput(k) {
+                    // Tocar: sigue si el paso ya está hecho; si no, DIPPO recuerda qué falta.
+                    // Deslizar hacia el lado: en los pasos de widgets ↔ juego, cambia de página de verdad.
+                    awaitEachGesture {
+                        val ini = awaitFirstDown()
+                        var fin = ini.position
+                        while (true) {
+                            val ev = awaitPointerEvent()
+                            val c = ev.changes.firstOrNull { it.id == ini.id } ?: break
+                            if (!c.pressed) break
+                            fin = c.position; c.consume()
+                        }
+                        val dx = fin.x - ini.position.x
+                        val dy = kotlin.math.abs(fin.y - ini.position.y)
+                        when {
+                            kotlin.math.abs(dx) > 90.dp.toPx() && dy < kotlin.math.abs(dx) && id in setOf("aJuego", "aWidgets") -> RecorridoVivo.probar(k)
+                            kotlin.math.abs(dx) < 24.dp.toPx() && dy < 24.dp.toPx() ->
+                                if (RecorridoVivo.puedeSeguir(k)) Diptico.moverNovedades(1) else reaccionar("falta")
+                        }
+                    }
+                },
         ) {
             val u = size.width / w
             val velo = Color(0xFF030308).copy(alpha = .74f)
@@ -317,7 +323,7 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
         androidx.compose.animation.AnimatedVisibility(frase != null, Modifier.offset(x = esc.d(dxAnim - 40f), y = esc.d(dyAnim - 70f)),
             enter = fadeIn(tween(140)) + scaleIn(spring(dampingRatio = 0.5f), initialScale = 0.6f), exit = fadeOut(tween(160))) {
             Box(Modifier.clip(RoundedCornerShape(esc.d(20))).background(Color.White).padding(horizontal = esc.d(18), vertical = esc.d(10))) {
-                TB(frase ?: "", 20f, color = Color(0xFF1B1630), peso = FontWeight.ExtraBold, lineas = 2)
+                TB(frase ?: "", 22f, color = Color(0xFF1B1630), peso = FontWeight.ExtraBold, lineas = 3)
             }
         }
         Column(
@@ -329,7 +335,7 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
                 .clip(RoundedCornerShape(esc.d(32))).background(Color(0xFFF4F3FA)).padding(horizontal = esc.d(30), vertical = esc.d(24)),
             verticalArrangement = Arrangement.spacedBy(esc.d(10)),
         ) {
-            TB("${k + 1} de ${paginas.size} · ${pg.titulo}", 18f, color = Color(pg.color), peso = FontWeight.ExtraBold)
+            TB("${k + 1} de ${paginas.size} · ${pg.titulo}", 21f, color = Color(pg.color), peso = FontWeight.ExtraBold, lineas = 2)
             TextoQueEscribeDippo(pg.texto)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(esc.d(12))) {
                 if (reto != null) {
@@ -337,11 +343,11 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
                     Box(Modifier.graphicsLayer { alpha = if (retoHecho) 1f else p2.value }.clip(RoundedCornerShape(50))
                         .background(if (retoHecho) Color(0xFF2EC4A6) else Color(0xFF6B4EFF))
 .padding(horizontal = esc.d(18), vertical = esc.d(8))) {
-                        TB(if (retoHecho) "¡Eso! ✓" else pistaReto(k), 19f, color = Color.White, peso = FontWeight.ExtraBold)
+                        TB(if (retoHecho) "¡Eso! ✓" else pistaReto(id), 21f, color = Color.White, peso = FontWeight.ExtraBold, lineas = 1)
                     }
                 }
-                Spacer(Modifier.weight(1f))
-                TB(if (reto != null && !RecorridoVivo.puedeSeguir(k)) "Pruébalo para seguir" else if (k == paginas.size - 1) "¡A jugar!" else "Listo para seguir", 17f, color = Color(0xFF4A4B63), peso = FontWeight.ExtraBold)
+                TB(if (reto != null && !RecorridoVivo.puedeSeguir(k)) "Hazlo para seguir" else if (k == paginas.size - 1) "¡A jugar!" else "Listo para seguir",
+                    19f, color = Color(0xFF4A4B63), peso = FontWeight.ExtraBold, lineas = 2, modifier = Modifier.weight(1f))
             }
             // La acción de ejemplo es real: cambia el estado de la pantalla de fondo.
             // Mantener este botón disponible permite completar el tour también sin mando físico.
@@ -357,15 +363,9 @@ fun RecorridoDippo(e: Estado, rol: Rol = Rol.UNICA) {
                     .padding(horizontal = esc.d(18), vertical = esc.d(12)),
                     contentAlignment = Alignment.Center
                 ) {
-                    TB(if (falta) "Probar ahora" else if (k == paginas.lastIndex) "Finalizar" else "Siguiente", 18f, color = Color.White, peso = FontWeight.ExtraBold)
+                    TB(if (falta) "Probar ahora" else if (k == paginas.lastIndex) "Finalizar" else "Siguiente", 21f, color = Color.White, peso = FontWeight.ExtraBold)
                 }
-                Box(Modifier.clip(RoundedCornerShape(esc.d(16)))
-                    .border(esc.d(1.5f), Color(0xFF666A80), RoundedCornerShape(esc.d(16)))
-                    .clickable { Diptico.cerrarNovedades() }
-                    .testTag("tour-saltar")
-                    .padding(horizontal = esc.d(15), vertical = esc.d(11)),
-                    contentAlignment = Alignment.Center
-                ) { TB("Saltar recorrido", 17f, color = Color(0xFF4A4B63), peso = FontWeight.ExtraBold) }
+
             }
         }
     }
@@ -380,7 +380,7 @@ private fun TextoQueEscribeDippo(texto: String) {
     LaunchedEffect(t) { while (n < t.length) { n = (n + 2).coerceAtMost(t.length); delay(22) } }
     Box {
         // El texto completo invisible reserva el alto: el globo no cambia de tamaño mientras se escribe.
-        TB(t, 26f, color = Color.Transparent, peso = FontWeight.ExtraBold, lineas = 4, traducir = false)
-        TB(t.take(n), 26f, color = Color(0xFF12131F), peso = FontWeight.ExtraBold, lineas = 4, traducir = false)
+        TB(t, 27f, color = Color.Transparent, peso = FontWeight.ExtraBold, lineas = 7, traducir = false)
+        TB(t.take(n), 27f, color = Color(0xFF12131F), peso = FontWeight.ExtraBold, lineas = 7, traducir = false)
     }
 }

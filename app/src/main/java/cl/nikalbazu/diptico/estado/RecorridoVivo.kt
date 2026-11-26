@@ -3,143 +3,114 @@ package cl.nikalbazu.diptico.estado
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * Lo que hace la persona durante el recorrido de DIPPO (botones que aprieta, toques a DIPPO), para que él reaccione.
- * [vez] cambia en cada reacción para que se repita aunque sea el mismo botón.
+ * El recorrido de la primera vez, paso a paso. Cada paso tiene un nombre ([PASOS]) y casi todos piden hacer algo de
+ * verdad: el paso se da por cumplido cuando la interfaz cambió como se pidió ([cumplido]), sin importar si fue con
+ * el mando, con el dedo o con el botón «Probar ahora». Hasta cumplirlo no se puede seguir.
+ *
+ * Empieza en los widgets, porque ahí abre Díptico.
  */
 object RecorridoVivo {
     data class Reaccion(val que: String, val vez: Long = System.nanoTime())
+
+    /** Los pasos en orden (van de la mano con [Novedades.RECORRIDO], que tiene sus textos). */
+    val PASOS = listOf(
+        "aJuego", "consola", "personalizar", "vistaCarpetas", "dippo", "abrirConsola", "vistaJuegos", "opcionesJuego",
+        "volver", "aWidgets", "galeria", "editar", "apps", "buscar", "ajustes", "perfil", "fin",
+    )
+
+    fun idDe(k: Int): String = PASOS.getOrElse(k) { "fin" }
+    fun indiceDe(id: String): Int = PASOS.indexOf(id)
 
     val reaccion = MutableStateFlow<Reaccion?>(null)
 
     fun avisar(que: String) { reaccion.value = Reaccion(que) }
 
-    /** Cada desafío está ligado a una transición comprobada de la interfaz, nunca a una tecla vacía. */
-    fun retoDe(k: Int): String? = when (k) {
-        1 -> "gatillo"
-        2 -> "x"
-        3, 11 -> "gatillo2"
-        5 -> "select"
-        6 -> "toque"
-        7 -> "abrirCarpeta"
-        8 -> "vistaJuego"
-        9 -> "opcionesJuego"
-        10 -> "volverCarpetas"
-        12 -> "paginaWidget"
-        13 -> "galeriaWidget"
-        14 -> "editarWidget"
-        15 -> "pestanaEditor"
-        16 -> "apps"
-        17 -> "buscar"
-        18 -> "ajustes"
-        19 -> "perfil"
-        20 -> "emuladorJuego"
-        21 -> "ajustesEmuladores"
-        else -> null
+    /** El reto del paso (null = solo leer y seguir). */
+    fun retoDe(k: Int): String? = idDe(k).takeIf { it != "fin" }
+
+    /** ¿Ya se hizo lo que pide el paso? Compara cómo estaba la interfaz al empezar el paso ([antes]) con cómo está [ahora]. */
+    fun cumplido(id: String, antes: Estado, ahora: Estado): Boolean = when (id) {
+        "aJuego" -> ahora.inicio != "widgets"
+        "consola" -> ahora.consolaSel != antes.consolaSel
+        "personalizar" -> ahora.panel == Panel.EDITAR_CONSOLA
+        "vistaCarpetas" -> ahora.extra.vistaCarpetasCV != antes.extra.vistaCarpetasCV
+        "abrirConsola" -> !ahora.enSistemas
+        "vistaJuegos" -> ahora.extra.vistaColeccion != antes.extra.vistaColeccion
+        "opcionesJuego" -> ahora.panel == Panel.RAPIDO
+        "volver" -> ahora.enSistemas
+        "aWidgets" -> ahora.inicio == "widgets"
+        "galeria" -> ahora.extra.galeria
+        "editar" -> ahora.editandoWidgets
+        "apps" -> ahora.panel == Panel.APPS
+        "buscar" -> ahora.panel == Panel.BUSCAR
+        "ajustes" -> ahora.panel == Panel.MENU
+        "perfil" -> ahora.extra.perfilEn >= 0
+        else -> false // "dippo" se cumple al tocarlo (avisar("toque")); "fin" no pide nada.
     }
 
     @Volatile var hecho: Int = -1
 
-    /** Los desafíos dependientes de una biblioteca vacía o de páginas inexistentes son opcionales. */
+    /** Se puede pasar al siguiente: el paso no pide nada, ya se cumplió, o no se puede hacer (biblioteca vacía). */
     fun puedeSeguir(k: Int): Boolean {
         if (retoDe(k) == null || hecho == k) return true
         val e = Diptico.estado.value
-        return when (k) {
-            7, 8, 9 -> e.juegos.isEmpty()
-            10 -> e.enSistemas
-            12 -> e.paginas < 2
-            15 -> !e.editandoWidgets
-            20 -> e.juegos.isEmpty()
+        return when (idDe(k)) {
+            "abrirConsola", "vistaJuegos", "opcionesJuego" -> e.juegos.isEmpty()
+            "volver" -> e.enSistemas
             else -> false
         }
     }
 
+    /** La consola sobre la que actúan los pasos (la elegida, o la primera con juegos). */
+    private fun consolaActual(e: Estado) = e.consolaSel.takeIf { it != "todo" } ?: e.pestanas.firstOrNull { it != "todo" }
+
     /**
-     * Botón táctil del tour: la demostración modifica componentes reales, no una vista simulada.
-     * El control físico invoca las mismas operaciones desde Teclas.
+     * Hace la acción REAL del paso: la usan el mando (desde Teclas) y el botón «Probar ahora» (para el dedo).
+     * [d] es la dirección cuando el paso la tiene (L1 = −1, R1 = +1).
      */
-    fun probar(k: Int) {
+    fun probar(k: Int, d: Int = 1) {
         val e = Diptico.estado.value
         if (!e.recorrido || e.novedades != k) return
-        when (k) {
-            1 -> {
-                val antes = e.consolaSel
-                Diptico.cambiarConsola(1)
-                if (Diptico.estado.value.consolaSel != antes) avisar("gatillo")
+        when (idDe(k)) {
+            "aJuego" -> Diptico.fijarInicio("heroe")
+            "consola" -> Diptico.cambiarConsola(d)
+            "personalizar" -> consolaActual(e)?.let { id ->
+                if (e.consolaSel != id) Diptico.elegirConsola(id)
+                Diptico.abrirEditarConsola(id)
             }
-            2 -> {
-                val id = e.consolaSel.takeIf { it != "todo" } ?: e.pestanas.firstOrNull { it != "todo" }
-                if (id != null) {
-                    Diptico.abrirEditarConsola(id)
-                    if (Diptico.estado.value.panel == Panel.EDITAR_CONSOLA) avisar("x")
-                }
+            "vistaCarpetas" -> Diptico.siguienteVistaCarpetas()
+            "dippo" -> avisar("toque")
+            "abrirConsola" -> consolaActual(e)?.let { Diptico.entrarConsolaCV(it) }
+            "vistaJuegos" -> Diptico.siguienteVistaColeccion()
+            "opcionesJuego" -> if (e.seleccionado != null) Diptico.abrirRapido()
+            "volver" -> { if (e.panel != Panel.NINGUNO) Diptico.cerrarPanel(); Diptico.volverASistemas() }
+            "aWidgets" -> Diptico.fijarInicio("widgets")
+            "galeria" -> Diptico.abrirGaleriaWidgets()
+            "editar" -> { if (e.extra.galeria) Diptico.cerrarGaleriaWidgets(); Diptico.editarEspacio() }
+            "apps" -> Diptico.abrirApps()
+            "buscar" -> Diptico.abrirBuscar()
+            "ajustes" -> Diptico.abrirMenu()
+            "perfil" -> Diptico.abrirPerfil()
+        }
+    }
+
+    /** Deja todo listo al pasar de un paso a otro: cierra lo que abrió el paso que termina y prepara el que sigue. */
+    fun alCambiar(desde: Int, hacia: Int) {
+        val e = Diptico.estado.value
+        when (idDe(desde)) {
+            "personalizar", "opcionesJuego", "apps", "buscar", "ajustes" -> if (e.panel != Panel.NINGUNO) Diptico.cerrarPanel()
+            "galeria" -> if (e.extra.galeria) Diptico.cerrarGaleriaWidgets()
+            "editar" -> if (e.editandoWidgets) Diptico.terminarEspacio()
+            "perfil" -> if (e.extra.perfilEn >= 0) Diptico.cerrarPerfil()
+        }
+        val ahora = Diptico.estado.value
+        when (idDe(hacia)) {
+            // Los pasos de la biblioteca necesitan ver las consolas; los de widgets, los widgets.
+            "consola", "personalizar", "vistaCarpetas", "abrirConsola" -> {
+                if (ahora.inicio == "widgets") Diptico.fijarInicio("heroe")
+                if (!Diptico.estado.value.enSistemas) Diptico.volverASistemas()
             }
-            3, 11 -> {
-                Diptico.pasoEspacio(1)
-                if (Diptico.estado.value.inicio == "widgets") avisar("gatillo2")
-            }
-            5 -> {
-                val anterior = e.extra.vistaCarpetasCV
-                Diptico.siguienteVistaCarpetas()
-                if (Diptico.estado.value.extra.vistaCarpetasCV != anterior) avisar("select")
-            }
-            6 -> avisar("toque")
-            7 -> {
-                val id = e.consolaSel.takeIf { it != "todo" } ?: e.pestanas.firstOrNull { it != "todo" }
-                if (id != null) {
-                    Diptico.entrarConsolaCV(id)
-                    if (!Diptico.estado.value.enSistemas) avisar("abrirCarpeta")
-                }
-            }
-            8 -> {
-                val antes = e.extra.vistaColeccion
-                Diptico.siguienteVistaColeccion()
-                if (Diptico.estado.value.extra.vistaColeccion != antes) avisar("vistaJuego")
-            }
-            9 -> if (e.seleccionado != null) {
-                Diptico.abrirRapido()
-                if (Diptico.estado.value.panel == Panel.RAPIDO) avisar("opcionesJuego")
-            }
-            10 -> {
-                if (e.panel != Panel.NINGUNO) Diptico.cerrarPanel()
-                Diptico.volverASistemas()
-                if (Diptico.estado.value.enSistemas) avisar("volverCarpetas")
-            }
-            12 -> {
-                val antes = e.paginaInicio
-                Diptico.cambiarPagina(1)
-                if (Diptico.estado.value.paginaInicio != antes) avisar("paginaWidget")
-            }
-            13 -> {
-                Diptico.abrirGaleriaWidgets()
-                if (Diptico.estado.value.extra.galeria) avisar("galeriaWidget")
-            }
-            14 -> {
-                if (e.extra.galeria) Diptico.cerrarGaleriaWidgets()
-                Diptico.editarEspacio()
-                if (Diptico.estado.value.editandoWidgets) avisar("editarWidget")
-            }
-            15 -> if (e.editandoWidgets) {
-                val antes = e.extra.espacioEdita
-                Diptico.pestanaEspacio(1)
-                if (Diptico.estado.value.extra.espacioEdita != antes) avisar("pestanaEditor")
-            }
-            16 -> { Diptico.abrirApps(); if (Diptico.estado.value.panel == Panel.APPS) avisar("apps") }
-            17 -> { Diptico.abrirBuscar(); if (Diptico.estado.value.panel == Panel.BUSCAR) avisar("buscar") }
-            18 -> { Diptico.abrirMenu(); if (Diptico.estado.value.panel == Panel.MENU) avisar("ajustes") }
-            19 -> { Diptico.abrirPerfil(); if (Diptico.estado.value.extra.perfilEn >= 0) avisar("perfil") }
-            20 -> if (e.seleccionado != null) {
-                Diptico.fijarInicio("heroe")
-                Diptico.abrirRapido()
-                val g = Diptico.gruposJuego().indexOfFirst { it.first.titulo == "Emulador y versión" }
-                if (g >= 0) {
-                    Diptico.abrirGrupoRapido(g)
-                    if (Diptico.estado.value.extra.rapidoGrupo >= 0) avisar("emuladorJuego")
-                }
-            }
-            21 -> {
-                Diptico.abrirMenu(Seccion.EMULADORES)
-                if (Diptico.estado.value.panel == Panel.MENU) avisar("ajustesEmuladores")
-            }
+            "galeria", "editar" -> if (ahora.inicio != "widgets") Diptico.fijarInicio("widgets")
         }
     }
 }
